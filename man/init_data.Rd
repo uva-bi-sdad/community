@@ -28,7 +28,7 @@ An invisible list with the content written to the \code{datapackage.json} file.
 }
 \description{
 Initialize dataset documentation with a \code{datapackage.json} template, based on a
-\href{Data Package}{https://specs.frictionlessdata.io/data-package} standard.
+\href{https://specs.frictionlessdata.io/data-package}{Data Package} standard.
 }
 \examples{
 \dontrun{

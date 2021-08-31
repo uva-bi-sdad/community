@@ -1,7 +1,7 @@
 #' Create a datapackage.json template
 #'
 #' Initialize dataset documentation with a \code{datapackage.json} template, based on a
-#' \href{Data Package}{https://specs.frictionlessdata.io/data-package} standard.
+#' \href{https://specs.frictionlessdata.io/data-package}{Data Package} standard.
 #'
 #' @param name A unique name for the dataset; allowed characters are \code{\[a-z._/-\]}.
 #' @param title A display name for the dataset; if not specified, will be a formatted version of \code{name}.
