@@ -1,0 +1,10 @@
+{
+  "name": "template",
+  "context": "package",
+  "dir": ".",
+  "files": [
+    "R/template_{name}.R",
+    "test/testthat/test-template_{name}.R",
+    "inst/specs/{name}.JSON"
+  ]
+}

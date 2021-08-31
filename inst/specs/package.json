@@ -1,0 +1,10 @@
+{
+  "name": "package",
+  "context": "package",
+  "dir": ".",
+  "files": [
+    "inst",
+    "R",
+    "tests"
+  ]
+}

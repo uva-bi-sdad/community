@@ -1,0 +1,9 @@
+{
+  "name": "function",
+  "context": "package",
+  "dir": ".",
+  "files": [
+    "R/{name}.R",
+    "test/testthat/test-{name}.R"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "shiny",
+  "context": "shiny",
+  "dir": "app",
+  "files": [
+    [
+      ["ui.R", "server.R"],
+      "app.R"
+    ],
+    "README.md"
+  ]
+}
