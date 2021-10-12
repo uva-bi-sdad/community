@@ -3,22 +3,21 @@ template:
     bootswatch: flatly
 
 reference:
+- title: Site
+  desc: Most functions are used to add components to a website.
+  contents:
+  - starts_with("page_")
+  - starts_with("input_")
+  - starts_with("output_")
+  - site_build
+
 - title: Initializers
   desc: init_ functions create project directories and/or files based on a standard.
   contents:
   - starts_with("init_")
-
-- title: Add
-  desc: add_ functions add components to templated projects.
-  contents:
-  - starts_with("add_")
+  - data_add
 
 - title: Checks
   desc: check_ functions use some criteria to assess a resource (e.g., to validate its structure).
   contents:
   - starts_with("check_")
-
-- title: Measures
-  desc: measure_ functions calculate some measure from provided data, or indicate what is needed to do so.
-  contents:
-  - starts_with("measure_")

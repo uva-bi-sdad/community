@@ -25,7 +25,7 @@ Download R from [r-project.org](https://www.r-project.org/), then install the pa
 
 ```R
 # install.packages('remotes')
-remotes::install_github('miserman/community')
+remotes::install_github('uva-bi-sdad/community')
 ```
 
 And load the package:
@@ -47,15 +47,9 @@ data <- data.frame(
 write.csv(data, "data.csv", row.names = FALSE)
 
 # you would make a datapackage.json file to document it like this
-init_data("example_data", data_paths = "data.csv")
+init_data("example_data", path = "data.csv")
 
 # or like this
 init_data("example_data", overwrite = TRUE)
 add_data("data.csv")
-```
-
-### Making a Shiny App
-```R
-# make a basic template Shiny app
-init_shiny("example_app")
 ```

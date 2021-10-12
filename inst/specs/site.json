@@ -1,0 +1,13 @@
+{
+  "name": "site",
+  "context": "site",
+  "dir": ".",
+  "files": [
+    "README.md",
+    "site.R",
+    "settings.json",
+    "docs/index.html",
+    "docs/script.js",
+    "docs/style.css"
+  ]
+}

@@ -3,25 +3,24 @@
 #' Initialize dataset documentation with a \code{datapackage.json} template, based on a
 #' \href{https://specs.frictionlessdata.io/data-package}{Data Package} standard.
 #'
-#' @param name A unique name for the dataset; allowed characters are \code{\[a-z._/-\]}.
+#' @param name A unique name for the dataset; allowed characters are \code{[a-z._/-]}.
 #' @param title A display name for the dataset; if not specified, will be a formatted version of \code{name}.
 #' @param dir Directory in which to save the \code{datapackage.json} file.
-#' @param sources A list of source (with ).
-#' @param data_paths A character vector of data files to add; passed to \code{\link{add_data}}.
+#' @param ... passes arguments to \code{\link{data_add}}.
 #' @param write Logical; if \code{FALSE}, the package object will not be written to a file.
 #' @param overwrite Logical; if \code{TRUE} and \code{write} is \code{TRUE}, an existing
 #' \code{datapackage.json} file will be overwritten.
+#' @param quiet Logical; if \code{TRUE}, will not print messages or navigate to files.
 #' @examples
 #' \dontrun{
 #' # make a template datapackage.json file in the current working directory
 #' init_data("mtcars", "Motor Trend Car Road Tests")
 #' }
 #' @return An invisible list with the content written to the \code{datapackage.json} file.
-#' @seealso Add basic information about a dataset with \code{\link{add_data}}.
+#' @seealso Add basic information about a dataset with \code{\link{data_add}}.
 #' @export
 
-init_data <- function(name, title = name, dir = ".", sources = NULL, data_paths = character(),
-                      write = TRUE, overwrite = FALSE) {
+init_data <- function(name, title = name, dir = ".", ..., write = TRUE, overwrite = FALSE, quiet = FALSE) {
   if (missing(name)) cli_abort("{.arg name} must be specified")
   package <- list(
     name = name,
@@ -32,34 +31,18 @@ init_data <- function(name, title = name, dir = ".", sources = NULL, data_paths 
       version = "1.0",
       id = "odc-pddl"
     ),
-    sources = list(),
     resources = list()
   )
-  if (!missing(sources)) {
-    package$source <- if (is.list(sources[[1]])) sources else list(sources)
-  }
+  if (check_template("site", dir = dir)$status[["strict"]]) dir <- paste0(dir, "/docs/data")
   path <- normalizePath(paste0(dir, "/datapackage.json"), "/", FALSE)
   if (write && !overwrite && file.exists(path)) {
     cli_abort(c("datapackage ({.path {path}}) already exists", i = "add {.code overwrite = TRUE} to overwrite it"))
   }
-  if (!missing(data_paths)) {
-    check_paths <- file.exists(data_paths)
-    if (any(!check_paths)) {
-      for (i in which(!check_paths)) {
-        if (file.exists(paste0(path, "/", data_paths[i]))) {
-          data_paths[i] <- paste0(path, "/", data_paths[i])
-          check_paths[i] <- TRUE
-        }
-      }
-      data_paths <- data_paths[check_paths]
-    }
-    if (length(data_paths)) {
-      package$resources <- add_data(data_paths, write = FALSE)
-    }
-  }
+  if (length(list(...))) package$resources <- data_add(..., dir = dir, write = FALSE)
   if (write) {
+    if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
     write_json(package, path, auto_unbox = TRUE, pretty = TRUE, digits = 6)
-    if (interactive()) {
+    if (interactive() && !quiet) {
       cli_bullets(c(v = "created metadata template for {name}:", "*" = paste0("{.path ", path, "}")))
       navigateToFile(path)
     }

@@ -127,15 +127,15 @@ Data Package standard." />
 <a href='https://specs.frictionlessdata.io/data-package'>Data Package</a> standard.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>init_data</span><span class='op'>(</span><span class='va'>name</span>, title <span class='op'>=</span> <span class='va'>name</span>, dir <span class='op'>=</span> <span class='st'>"."</span>, sources <span class='op'>=</span> <span class='cn'>NULL</span>,
-  data_paths <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/character.html'>character</a></span><span class='op'>(</span><span class='op'>)</span>, write <span class='op'>=</span> <span class='cn'>TRUE</span>, overwrite <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>init_data</span><span class='op'>(</span><span class='va'>name</span>, title <span class='op'>=</span> <span class='va'>name</span>, dir <span class='op'>=</span> <span class='st'>"."</span>, <span class='va'>...</span>, write <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  overwrite <span class='op'>=</span> <span class='cn'>FALSE</span>, quiet <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>name</th>
-      <td><p>A unique name for the dataset; allowed characters are <code>\[a-z._/-\]</code>.</p></td>
+      <td><p>A unique name for the dataset; allowed characters are <code>[a-z._/-]</code>.</p></td>
     </tr>
     <tr>
       <th>title</th>
@@ -146,12 +146,8 @@ Data Package standard." />
       <td><p>Directory in which to save the <code>datapackage.json</code> file.</p></td>
     </tr>
     <tr>
-      <th>sources</th>
-      <td><p>A list of source (with ).</p></td>
-    </tr>
-    <tr>
-      <th>data_paths</th>
-      <td><p>A character vector of data files to add; passed to <code><a href='add_data.html'>add_data</a></code>.</p></td>
+      <th>...</th>
+      <td><p>passes arguments to <code><a href='data_add.html'>data_add</a></code>.</p></td>
     </tr>
     <tr>
       <th>write</th>
@@ -162,6 +158,10 @@ Data Package standard." />
       <td><p>Logical; if <code>TRUE</code> and <code>write</code> is <code>TRUE</code>, an existing
 <code>datapackage.json</code> file will be overwritten.</p></td>
     </tr>
+    <tr>
+      <th>quiet</th>
+      <td><p>Logical; if <code>TRUE</code>, will not print messages or navigate to files.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -169,7 +169,7 @@ Data Package standard." />
     <p>An invisible list with the content written to the <code>datapackage.json</code> file.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p>Add basic information about a dataset with <code><a href='add_data.html'>add_data</a></code>.</p></div>
+    <div class='dont-index'><p>Add basic information about a dataset with <code><a href='data_add.html'>data_add</a></code>.</p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span>

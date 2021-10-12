@@ -1,6 +1,6 @@
 # rebuild
-devtools::document()
 styler::style_pkg()
+devtools::document()
 spelling::spell_check_package()
 pkgdown::build_site()
 

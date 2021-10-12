@@ -1,0 +1,74 @@
+#' Add checkboxes or radio buttons to a website
+#'
+#' Adds a set of checkbox or radio buttons buttons.
+#'
+#' @param label Label of the input for the user.
+#' @param options A vector of options, the name of a variable from which to pull levels, or either \code{"datasets"}
+#' or \code{"variables"} to select names of datasets or variables.
+#' @param default A vector of items to check by default (or "all" or "none") if \code{multi} is \code{TRUE}, or
+#' the option to select by default.
+#' @param display A display version of the options.
+#' @param id Unique id of the element to be created.
+#' @param variable The name of a variable from which to get levels (overwritten by \code{depends}).
+#' @param dataset The name of an included dataset, where \code{variable} should be looked for; only applies when
+#' there are multiple datasets with the same variable name.
+#' @param depends The id of another input on which the options depend; this will take president over \code{dataset}
+#' and \code{variable}, depending on this type of input \code{depends} points to.
+#' @param multi Logical; if \code{FALSE}, only one option can be selected at a time, turning the checkboxes into radio
+#' buttons.
+#' @examples
+#' \dontrun{
+#' input_checkbox()
+#' }
+#' @return A character vector of the contents to be added.
+#' @export
+
+input_checkbox <- function(label, options, default = "all", display = options, id = label, variable = NULL,
+                           dataset = NULL, depends = NULL, multi = TRUE) {
+  if (multi && length(default) == 1) {
+    if ((is.logical(default) && default) || default == "all") {
+      default <- options
+    } else if ((is.logical(default) && !default) || default == "none") {
+      default <- NULL
+    }
+  } else if (!multi && is.character(default)) {
+    default <- which((if (default %in% display) display else options) == default)
+  }
+  id <- gsub("\\s", "", id)
+  type <- if (multi) "checkbox" else "radio"
+  r <- c(
+    '<div class="wrapper checkbox-wrapper">',
+    paste0('<label for="', id, '">', label, "</label>"),
+    paste0(
+      '<div class="auto-input" role="group" auto-type="', type, '"',
+      ' id="', id, '" default="', paste(default, collapse = ","), '" ',
+      if (is.character(options) && length(options) == 1) paste0('auto-options="', options, '"'),
+      if (!is.null(depends)) paste0(' depends="', depends, '"'),
+      if (!is.null(dataset)) paste0(' dataset="', dataset, '"'),
+      if (!is.null(variable)) paste0(' variable="', variable, '"'),
+      ">"
+    ),
+    if (length(options) > 1) {
+      unlist(lapply(seq_along(options), function(i) {
+        c(
+          '<div class="form-check">',
+          paste0(
+            '<input type="', type, '" autocomplete="off" class="form-check-input" name="',
+            id, '_options" id="', id, "_option", i, '" value="',
+            options[i], '"', if ((multi && options[i] %in% default) || i == default) " checked", ">"
+          ),
+          paste0('<label class="form-check-label" for="', id, "_option", i, '">', display[i], "</label>"),
+          "</div>"
+        )
+      }), use.names = FALSE)
+    },
+    "</div>",
+    "</div>"
+  )
+  caller <- parent.frame()
+  if (!is.null(attr(caller, "name")) &&
+    attr(caller, "name") == "community_site_parts") {
+    caller$content <- c(caller$content, r)
+  }
+  r
+}

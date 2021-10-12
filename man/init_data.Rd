@@ -4,24 +4,24 @@
 \alias{init_data}
 \title{Create a datapackage.json template}
 \usage{
-init_data(name, title = name, dir = ".", sources = NULL,
-  data_paths = character(), write = TRUE, overwrite = FALSE)
+init_data(name, title = name, dir = ".", ..., write = TRUE,
+  overwrite = FALSE, quiet = FALSE)
 }
 \arguments{
-\item{name}{A unique name for the dataset; allowed characters are \code{\[a-z._/-\]}.}
+\item{name}{A unique name for the dataset; allowed characters are \code{[a-z._/-]}.}
 
 \item{title}{A display name for the dataset; if not specified, will be a formatted version of \code{name}.}
 
 \item{dir}{Directory in which to save the \code{datapackage.json} file.}
 
-\item{sources}{A list of source (with ).}
-
-\item{data_paths}{A character vector of data files to add; passed to \code{\link{add_data}}.}
+\item{...}{passes arguments to \code{\link{data_add}}.}
 
 \item{write}{Logical; if \code{FALSE}, the package object will not be written to a file.}
 
 \item{overwrite}{Logical; if \code{TRUE} and \code{write} is \code{TRUE}, an existing
 \code{datapackage.json} file will be overwritten.}
+
+\item{quiet}{Logical; if \code{TRUE}, will not print messages or navigate to files.}
 }
 \value{
 An invisible list with the content written to the \code{datapackage.json} file.
@@ -37,5 +37,5 @@ init_data("mtcars", "Motor Trend Car Road Tests")
 }
 }
 \seealso{
-Add basic information about a dataset with \code{\link{add_data}}.
+Add basic information about a dataset with \code{\link{data_add}}.
 }

@@ -1,0 +1,160 @@
+#' Adds documentation of a dataset to a datapackage
+#'
+#' Add information about variables in a dataset to a \code{datapackage.json} metadata file.
+#'
+#' @param path A character vector of paths to plain-text tabular data files.
+#' @param meta A list with a list entry for each entry in \code{path}; see details.
+#' @param package_path Package to add the metadata to; path to the .json file, or a list with the read-in version.
+#' @param dir Directory in which to look for \code{path}, and write \code{package_path}.
+#' @param write Logical; if \code{FALSE}, returns the \code{paths} metadata without reading or rewriting \code{package}.
+#' @param refresh Logical; if \code{TRUE}, will remove any existing dataset information.
+#' @param sha A number specifying the Secure Hash Algorithm function,
+#' if \code{openssl} is available (checked with \code{Sys.which('openssl')}).
+#' @details
+#' \code{meta} should be a list with unnamed entries for entry in \code{path}, and each entry can include a named entry
+#' for any of these:
+#' \describe{
+#'   \item{source}{
+#'   A list or list of lists with entries for at least \code{name}, and ideally for \code{url}.
+#'   }
+#'   \item{ids}{
+#'   A list or list of lists with entries for at least \code{variable} (the name of a variable in the dataset).
+#'   Might also include \code{name} (for a display name), and \code{value} with a parsing scheme. A parsing
+#'   scheme is either a regular expression (e.g., \code{'^.*\\\\.'} for the first part of an id, before a period)
+#'   or a string range (e.g., \code{c(0, 6)} for the first 6 characters of an id).
+#'   }
+#'   \item{time}{
+#'   A string giving the name of a variable in the dataset representing a repeated observation of the same entity.
+#'   }
+#' }
+#' @examples
+#' \dontrun{
+#' # write example data
+#' write.csv(mtcars, "mtcars.csv")
+#'
+#' # add it to an existing datapackage.json file in the current working directory
+#' data_add("mtcars.csv")
+#' }
+#' @return An invisible version of the metadata, which is also added to \code{datapackage.json} if \code{write = TRUE}.
+#' @seealso Initialize the \code{datapackage.json} file with \code{\link{init_data}}.
+#' @export
+
+data_add <- function(path, meta = list(), package_path = "datapackage.json", dir = ".", write = TRUE,
+                     refresh = FALSE, sha = "512") {
+  if (missing(path)) cli_abort("{.arg path} must be specified")
+  if (check_template("site", dir = dir)$status[["strict"]]) dir <- paste0(dir, "/docs/data")
+  opath <- path
+  path <- normalizePath(paste0(dir, "/", path), "/", FALSE)
+  ck <- !file.exists(path)
+  if (any(ck)) path[ck] <- opath[ck]
+  if (any(!file.exists(path))) cli_abort("{?a path/paths} did not exist: {path[!file.exists(path)]}")
+  package <- if (is.character(package_path) && !file.exists(package_path)) {
+    normalizePath(paste0(dir, "/", package_path), "/", FALSE)
+  } else {
+    package_path
+  }
+  if (write) {
+    if (is.character(package)) {
+      if (file.exists(package)) {
+        package_path <- package
+        package <- read_json(package)
+      } else {
+        cli_abort(c("{.arg package} ({.path {package}}) does not exist", i = "create it with {.fn init_data}"))
+      }
+    }
+    if (!is.list(package) || is.null(package$resource)) {
+      cli_abort(c(
+        "{.arg package} does not appear to be in the right format",
+        i = "this should be (or be read in from json as) a list with a {.code resource} entry"
+      ))
+    }
+  }
+  collect_metadata <- function(i) {
+    f <- path[[i]]
+    m <- metas[[i]]
+    name <- basename(f)
+    format <- tolower(strsplit(name, ".", fixed = TRUE)[[1]][2])
+    if (is.na(format)) format <- "rds"
+    info <- file.info(f)
+    data <- tryCatch(if (format == "rds") readRDS(f) else fread(f), error = function(e) NULL)
+    if (is.null(data)) {
+      cli_abort(c(paste0("failed to read in the data file (", f, ")"),
+        i = "check that it is in a compatible format"
+      ))
+    }
+    if (!all(rownames(data) == seq_len(nrow(data)))) data <- cbind(`_row` = rownames(data), data)
+    unpack_meta <- function(n) {
+      if (is.null(m[[n]])) list() else if (is.list(m[[n]][[1]])) m[[n]] else list(m[[n]])
+    }
+    res <- list(
+      bytes = as.integer(info$size),
+      encoding = stri_enc_detect(f)[[1]][1, 1],
+      md5 = md5sum(f)[[1]],
+      format = format,
+      name = if (!is.null(names(opath))) names(opath)[i] else if (!is.null(m$name)) m$name else name,
+      filename = name,
+      source = unpack_meta("source"),
+      ids = unpack_meta("ids"),
+      time = unlist(unpack_meta("time")),
+      profile = "data-resource",
+      created = as.character(info$mtime),
+      last_modified = as.character(info$ctime),
+      rowcount = nrow(data),
+      schema = list(
+        fields = lapply(colnames(data), function(cn) {
+          v <- data[[cn]]
+          invalid <- !is.finite(v)
+          r <- list(name = cn, duplicates = sum(duplicated(v)))
+          if (is.numeric(v)) {
+            r$type <- if (all(invalid | v %% 1 == 0)) "integer" else "float"
+            r$missing <- sum(invalid)
+            r$mean <- round(mean(v, na.rm = TRUE), 6)
+            r$sd <- round(sd(v, na.rm = TRUE), 6)
+            r$min <- round(min(v, na.rm = TRUE), 6)
+            r$max <- round(max(v, na.rm = TRUE), 6)
+          } else {
+            r$type <- "string"
+            v <- as.factor(as.character(v))
+            r$missing <- sum(is.na(v) | is.nan(v) | grepl("^[\\s.-]$", v))
+            r$table <- structure(as.list(tabulate(v)), names = levels(v))
+          }
+          r
+        })
+      )
+    )
+    if (Sys.which("openssl") != "") {
+      res[[paste0("sha", sha)]] <- tryCatch(
+        {
+          hash <- tempfile()
+          on.exit(unlink(hash))
+          system2("openssl", c("dgst", paste0("-sha", sha), "-binary", shQuote(f)), hash)
+          system2("openssl", c("base64", "-A", "-in", shQuote(hash)), TRUE)
+        },
+        error = function(e) ""
+      )
+      res <- res[c(1:3, length(res), seq(4, length(res) - 1))]
+    }
+    res
+  }
+  metas <- vector("list", length(path))
+  if (!is.null(names(meta))) {
+    metas[[1]] <- meta
+  } else {
+    for (i in seq_along(meta)) metas[[i]] <- meta[[i]]
+  }
+  metadata <- lapply(seq_along(path), collect_metadata)
+  if (write) {
+    package$resources <- c(metadata, if (!refresh) package$resources)
+    names <- vapply(package$resources, "[[", "", "filename")
+    if (anyDuplicated(names)) {
+      package$resources <- package$resources[!duplicated(names)]
+    }
+    package_path <- if (is.character(package_path)) package_path else "datapackage.json"
+    write_json(package, package_path, pretty = TRUE, auto_unbox = TRUE, digits = 6)
+    if (interactive()) {
+      cli_bullets(c(v = "added resource to {.file datapackage.json}:", "*" = paste0("{.path ", package_path, "}")))
+      navigateToFile(package_path)
+    }
+  }
+  invisible(metadata)
+}

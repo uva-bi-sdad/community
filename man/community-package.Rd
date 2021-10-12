@@ -6,9 +6,7 @@
 \alias{community-package}
 \title{community: Community Analysis Framework}
 \description{
-Offers a framework and toolset for the analysis of communities. Helps (1a) assess, clean, and unify
-  diverse data sources relating to a community, or (1b) simulate a community, then (2) calculate a range of measures
-  of that community, and (3) present and disseminate final data.
+Offers a framework and toolset for the analysis of communities. Helps (1a) assess, clean, and unify diverse data sources relating to a community, or (1b) simulate a community, then (2) calculate a range of measures of that community, and (3) present and disseminate final data.
 }
 \seealso{
 Useful links:

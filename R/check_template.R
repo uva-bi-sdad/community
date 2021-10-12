@@ -88,7 +88,7 @@ check_template <- function(template, name = "", dir = ".", spec = NULL) {
       ))
     } else {
       for (f in files[present]) {
-        if (!dir.exists(f) && grepl("<template:", paste(readLines(f), collapse = ""), fixed = TRUE)) {
+        if (!dir.exists(f) && grepl("<template:", paste(readLines(f, warn = FALSE), collapse = ""), fixed = TRUE)) {
           report$incomplete <- c(report$incomplete, f)
         }
       }
@@ -108,7 +108,7 @@ check_template <- function(template, name = "", dir = ".", spec = NULL) {
         ))
       } else {
         for (f in files[present]) {
-          if (!dir.exists(f) && grepl("<template:", paste(readLines(f), collapse = ""), fixed = TRUE)) {
+          if (!dir.exists(f) && grepl("<template:", paste(readLines(f, warn = FALSE), collapse = ""), fixed = TRUE)) {
             report$incomplete <- c(report$incomplete, f)
           }
         }
@@ -126,7 +126,7 @@ check_template <- function(template, name = "", dir = ".", spec = NULL) {
       } else {
         for (fl in file_set[present]) {
           for (f in fl) {
-            if (!dir.exists(f) && grepl("<template:", paste(readLines(f), collapse = ""), fixed = TRUE)) {
+            if (!dir.exists(f) && grepl("<template:", paste(readLines(f, warn = FALSE), collapse = ""), fixed = TRUE)) {
               report$incomplete <- c(report$incomplete, f)
             }
           }
