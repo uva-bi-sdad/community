@@ -23,7 +23,7 @@ init_site <- function(title = "app", dir = ".", with_data = TRUE, overwrite = FA
   paths <- paste0(dir, "/", c("README.md", "site.R", "settings.json", "package.json", "server.js", ".gitignore"))
   if (!file.exists(paths[1])) {
     writeLines(paste(c(
-      "# ", title,
+      paste("#", title),
       "<template: Describe the site>",
       "\n## Run",
       "```R",
@@ -61,7 +61,7 @@ init_site <- function(title = "app", dir = ".", with_data = TRUE, overwrite = FA
   }
   if (!file.exists(paths[4])) {
     write_json(list(
-      name = title,
+      name = gsub("\\s+", "_", tolower(title)),
       version = "1.0.0",
       description = "",
       main = "server.js",
