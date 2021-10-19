@@ -19,7 +19,7 @@ init_site(title = "app", dir = ".", with_data = TRUE, overwrite = FALSE)
 Path to the created site directory.
 }
 \description{
-Create a repository for a static, website for data documentation and exploration.
+Create a repository for a static website for data documentation and exploration.
 }
 \examples{
 \dontrun{

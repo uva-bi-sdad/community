@@ -55,8 +55,7 @@ input_buttongroup <- function(label, options, default = 0, display = options, id
     "</div>"
   )
   caller <- parent.frame()
-  if (!is.null(attr(caller, "name")) &&
-    attr(caller, "name") == "community_site_parts") {
+  if (!is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts") {
     caller$content <- c(caller$content, r)
   }
   r

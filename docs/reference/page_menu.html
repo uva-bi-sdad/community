@@ -127,7 +127,7 @@
 
     <pre class="usage"><span class='fu'>page_menu</span><span class='op'>(</span><span class='va'>...</span>, position <span class='op'>=</span> <span class='st'>"right"</span>, width <span class='op'>=</span> <span class='cn'>NULL</span>, height <span class='op'>=</span> <span class='cn'>NULL</span>,
   collapsible <span class='op'>=</span> <span class='cn'>TRUE</span>, default_open <span class='op'>=</span> <span class='cn'>FALSE</span>, wraps <span class='op'>=</span> <span class='cn'>TRUE</span>, sizes <span class='op'>=</span> <span class='cn'>NA</span>,
-  breakpoints <span class='op'>=</span> <span class='cn'>NA</span><span class='op'>)</span></pre>
+  breakpoints <span class='op'>=</span> <span class='cn'>NA</span>, conditions <span class='op'>=</span> <span class='st'>""</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -169,6 +169,11 @@ elements of the menu will not be wrapped in row or column elements.</p></td>
     <tr>
       <th>breakpoints</th>
       <td><p>Bootstrap breakpoint of each wrapper; one of <code>""</code> (extra small), <code>"sm"</code>,</p></td>
+    </tr>
+    <tr>
+      <th>conditions</th>
+      <td><p>A character for each element representing the conditions in which that should be showing
+(e.g., <code>c("", "input_a == a", "")</code>); <code>""</code> means the element's display is not conditional.</p></td>
     </tr>
     </table>
 

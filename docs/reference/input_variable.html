@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Adds an organizational section to a website — page_section • community</title>
+<title>Add an internal variable to a website — input_variable • community</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,8 @@
 
 
 
-<meta property="og:title" content="Adds an organizational section to a website — page_section" />
-<meta property="og:description" content="Adds a section (such as a row or column) to a website, optionally placing its elements within rows or columns." />
+<meta property="og:title" content="Add an internal variable to a website — input_variable" />
+<meta property="og:description" content="Creates an internal variable (virtual input), which can be used for display logic." />
 <meta property="og:image" content="/logo.svg" />
 
 
@@ -116,70 +116,46 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Adds an organizational section to a website</h1>
-    <small class="dont-index">Source: <a href='https://github.com/miserman/community/blob/master/R/page_section.R'><code>R/page_section.R</code></a></small>
-    <div class="hidden name"><code>page_section.Rd</code></div>
+    <h1>Add an internal variable to a website</h1>
+    <small class="dont-index">Source: <a href='https://github.com/miserman/community/blob/master/R/input_variable.R'><code>R/input_variable.R</code></a></small>
+    <div class="hidden name"><code>input_variable.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Adds a section (such as a row or column) to a website, optionally placing its elements within rows or columns.</p>
+    <p>Creates an internal variable (virtual input), which can be used for display logic.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>page_section</span><span class='op'>(</span><span class='va'>...</span>, type <span class='op'>=</span> <span class='st'>"row"</span>, wraps <span class='op'>=</span> <span class='cn'>NA</span>, sizes <span class='op'>=</span> <span class='cn'>NA</span>,
-  breakpoints <span class='op'>=</span> <span class='cn'>NA</span>, conditions <span class='op'>=</span> <span class='st'>""</span>, id <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>input_variable</span><span class='op'>(</span><span class='va'>id</span>, <span class='va'>cases</span>, default <span class='op'>=</span> <span class='st'>""</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>...</th>
-      <td><p>Elements to appear in the section.</p></td>
-    </tr>
-    <tr>
-      <th>type</th>
-      <td><p>The class of the top-level section; usually either <code>"row"</code> or <code>"col"</code>;
-<code>NULL</code> for no class.</p></td>
-    </tr>
-    <tr>
-      <th>wraps</th>
-      <td><p>The class of wrapper to place elements in; either <code>"row"</code>, <code>"col"</code>, or <code>""</code>
-(to not wrap the element). Can specify 1 for every element, or a different class for each element.</p></td>
-    </tr>
-    <tr>
-      <th>sizes</th>
-      <td><p>The relative size of each wrapper, between 1 and 12, or <code>"auto"</code>; default is equal size.</p></td>
-    </tr>
-    <tr>
-      <th>breakpoints</th>
-      <td><p>Bootstrap breakpoint of each wrapper; one of <code>""</code> (extra small), <code>"sm"</code>,
-<code>"md"</code>, <code>"lg"</code>, <code>"xl"</code>, or <code>"xxl"</code>.</p></td>
-    </tr>
-    <tr>
-      <th>conditions</th>
-      <td><p>A character for each element representing the conditions in which that should be showing
-(e.g., <code>c("", "input_a == a", "")</code>); <code>""</code> means the element's display is not conditional.</p></td>
-    </tr>
-    <tr>
       <th>id</th>
-      <td><p>Unique ID of the section.</p></td>
+      <td><p>Name of the variable, which can be referred to by other inputs of outputs.</p></td>
+    </tr>
+    <tr>
+      <th>cases</th>
+      <td><p>A list of conditions with names specifying conditions, and values to set the variable to
+in that condition (e.g., <code>list("input_a == 1" = 1)</code>).
+These can also be specified separately with an <code><a href='input_rule.html'>input_rule</a></code>.</p></td>
+    </tr>
+    <tr>
+      <th>default</th>
+      <td><p>The value to set if no condition is <code>TRUE</code>.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A character vector of the content to be added.</p>
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
-
-    <p>See the <a href='https://getbootstrap.com/docs/5.1/layout/grid'>Bootstrap grid documentation</a>.</p>
+    <p>A version of the resulting variable object.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span>
-<span class='r-in'><span class='fu'>page_section</span><span class='op'>(</span></span>
-<span class='r-in'>  <span class='st'>"&lt;p&gt;column&lt;/p&gt;"</span>,</span>
-<span class='r-in'>  <span class='st'>"&lt;p&gt;row&lt;/p&gt;"</span>,</span>
-<span class='r-in'>  type <span class='op'>=</span> <span class='st'>"row"</span>,</span>
-<span class='r-in'>  wraps <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"col"</span>, <span class='st'>"row"</span><span class='op'>)</span></span>
-<span class='r-in'><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='input_select.html'>input_select</a></span><span class='op'>(</span><span class='st'>"input_a"</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"a"</span>, <span class='st'>"b"</span>, <span class='st'>"c"</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'>input_variable</span><span class='op'>(</span><span class='st'>"vinput_a"</span>, <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='st'>"input_a == c"</span> <span class='op'>=</span> <span class='st'>"b"</span><span class='op'>)</span>, <span class='st'>"a"</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># vinput_a will be "a" unless input_a is "c"</span></span>
 <span class='r-in'><span class='op'>}</span></span>
 </pre>
   </div>

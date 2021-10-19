@@ -29,16 +29,6 @@ output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dat
   if ("x" %in% names(options)) options <- options$x
   options <- options[entries[entries %in% names(options)]]
   options$subto <- if (!is.null(subto) && length(subto) == 1) list(subto) else subto
-  if (building) {
-    caller$dependencies$plotly <- list(
-      type = "script",
-      src = "https://cdn.plot.ly/plotly-2.4.2.min.js",
-      hash = "sha384-X9COQf511UOEwK4K4fkWIg2ySl5SMo0Rs9PDwMXSwMKKbBgvpMLpmGuD3Z6VM/uR"
-    )
-    if (is.null(attr(caller, "plots"))) caller$plots <- list()
-    id <- length(caller$plots)
-    caller$plots[[paste0("plot", id)]] <- options
-  }
   r <- paste(c(
     '<div class="auto-output plotly"',
     if (!is.null(dataview)) paste0('data-view="', dataview, '"'),
@@ -51,6 +41,15 @@ output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dat
     paste0('id="plot', id, '"'),
     'auto-type="plot"></div>'
   ), collapse = " ")
-  if (building) caller$content <- c(caller$content, r)
+  if (building) {
+    caller$dependencies$plotly <- list(
+      type = "script",
+      src = "https://cdn.plot.ly/plotly-2.4.2.min.js",
+      hash = "sha384-X9COQf511UOEwK4K4fkWIg2ySl5SMo0Rs9PDwMXSwMKKbBgvpMLpmGuD3Z6VM/uR"
+    )
+    id <- length(caller$plots)
+    caller$plots[[paste0("plot", id)]] <- options
+    caller$content <- c(caller$content, r)
+  }
   r
 }

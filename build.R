@@ -1,7 +1,7 @@
 # rebuild
 styler::style_pkg()
-devtools::document()
 spelling::spell_check_package()
+devtools::document()
 pkgdown::build_site()
 
 # check

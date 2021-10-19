@@ -66,8 +66,7 @@ input_checkbox <- function(label, options, default = "all", display = options, i
     "</div>"
   )
   caller <- parent.frame()
-  if (!is.null(attr(caller, "name")) &&
-    attr(caller, "name") == "community_site_parts") {
+  if (!is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts") {
     caller$content <- c(caller$content, r)
   }
   r

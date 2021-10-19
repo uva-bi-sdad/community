@@ -6,7 +6,7 @@
 \usage{
 page_menu(..., position = "right", width = NULL, height = NULL,
   collapsible = TRUE, default_open = FALSE, wraps = TRUE, sizes = NA,
-  breakpoints = NA)
+  breakpoints = NA, conditions = "")
 }
 \arguments{
 \item{...}{Elements to appear in the menu.}
@@ -28,6 +28,9 @@ elements of the menu will not be wrapped in row or column elements.}
 \item{sizes}{The relative size of each wrapper, between 1 and 12, or \code{"auto"}; default is equal size.}
 
 \item{breakpoints}{Bootstrap breakpoint of each wrapper; one of \code{""} (extra small), \code{"sm"},}
+
+\item{conditions}{A character for each element representing the conditions in which that should be showing
+(e.g., \code{c("", "input_a == a", "")}); \code{""} means the element's display is not conditional.}
 }
 \value{
 A character vector of the content to be added.

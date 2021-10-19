@@ -2,28 +2,35 @@
 % Please edit documentation in R/page_section.R
 \name{page_section}
 \alias{page_section}
-\title{Adds a row or column to a website}
+\title{Adds an organizational section to a website}
 \usage{
-page_section(..., type = "row", wraps = NA, sizes = NA, breakpoints = NA)
+page_section(..., type = "row", wraps = NA, sizes = NA,
+  breakpoints = NA, conditions = "", id = NULL)
 }
 \arguments{
-\item{...}{Elements to appear in the menu.}
+\item{...}{Elements to appear in the section.}
 
-\item{type}{The class of the top-level section; either \code{"row"} or \code{"column"}.}
+\item{type}{The class of the top-level section; usually either \code{"row"} or \code{"col"};
+\code{NULL} for no class.}
 
-\item{wraps}{The class of wrapper to place elements in; either \code{"row"}, \code{"column"}, or \code{""}
+\item{wraps}{The class of wrapper to place elements in; either \code{"row"}, \code{"col"}, or \code{""}
 (to not wrap the element). Can specify 1 for every element, or a different class for each element.}
 
 \item{sizes}{The relative size of each wrapper, between 1 and 12, or \code{"auto"}; default is equal size.}
 
 \item{breakpoints}{Bootstrap breakpoint of each wrapper; one of \code{""} (extra small), \code{"sm"},
 \code{"md"}, \code{"lg"}, \code{"xl"}, or \code{"xxl"}.}
+
+\item{conditions}{A character for each element representing the conditions in which that should be showing
+(e.g., \code{c("", "input_a == a", "")}); \code{""} means the element's display is not conditional.}
+
+\item{id}{Unique ID of the section.}
 }
 \value{
 A character vector of the content to be added.
 }
 \description{
-Adds a row or column section to a website, optionally placing their elements within rows or columns.
+Adds a section (such as a row or column) to a website, optionally placing its elements within rows or columns.
 }
 \details{
 See the \href{https://getbootstrap.com/docs/5.1/layout/grid}{Bootstrap grid documentation}.
@@ -34,7 +41,7 @@ page_section(
   "<p>column</p>",
   "<p>row</p>",
   type = "row",
-  wraps = c("column", "row")
+  wraps = c("col", "row")
 )
 }
 }

@@ -104,6 +104,7 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
   parts$body <- NULL
   src <- parse(text = gsub("community::site_build", "site_build", readLines(page), fixed = TRUE))
   parts$site_build <- function(...) {}
+  parts$uid <- 0
   source(local = parts, exprs = src)
   r <- c(
     "<!doctype html>",
@@ -118,6 +119,7 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
       toJSON(c(
         settings,
         rules = if ("rules" %in% names(parts)) list(parts$rules),
+        variables = if ("variables" %in% names(parts)) list(parts$variables),
         dataviews = if ("dataviews" %in% names(parts)) list(parts$dataviews),
         info = if ("info" %in% names(parts)) list(parts$info),
         tables = if (length(parts$tables)) list(parts$tables),

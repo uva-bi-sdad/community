@@ -22,6 +22,12 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, opti
   id <- 0
   options$variables <- variables
   options$dataset <- dataset
+  r <- paste(c(
+    '<table class="auto-output datatables"',
+    if (!is.null(dataview)) paste0('data-view="', dataview, '"'),
+    paste0('id="table', id, '"'),
+    'auto-type="table"></table>'
+  ), collapse = " ")
   if (building) {
     caller$dependencies$jquery <- list(
       type = "script",
@@ -43,13 +49,7 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, opti
     if (is.null(attr(caller, "tables"))) caller$tables <- list()
     id <- length(caller$tables)
     caller$tables[[paste0("table", id)]] <- options
+    caller$content <- c(caller$content, r)
   }
-  r <- paste(c(
-    '<table class="auto-output datatables"',
-    if (!is.null(dataview)) paste0('data-view="', dataview, '"'),
-    paste0('id="table', id, '"'),
-    'auto-type="table"></table>'
-  ), collapse = " ")
-  if (building) caller$content <- c(caller$content, r)
   r
 }

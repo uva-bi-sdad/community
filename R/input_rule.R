@@ -18,22 +18,9 @@
 input_rule <- function(condition, effects) {
   conditions <- substitute(condition)
   if (!is.character(condition)) condition <- deparse(condition)
-  conds <- strsplit(gsub("\\s*([&|><=!]+)\\s*", " \\1 ", gsub("=+", "=", condition)), "\\s")[[1]]
-  r <- list(condition = lapply(seq_len(length(conds) / 3), function(i) {
-    ir <- i + (i - 1) * 3
-    list(
-      id = conds[ir],
-      type = conds[ir + 1],
-      value = if (grepl("^\\d+$", conds[ir + 2])) {
-        as.numeric(conds[ir + 2])
-      } else {
-        gsub("[\"']", "", conds[ir + 2])
-      }
-    )
-  }), effects = as.list(effects))
+  r <- list(condition = parse_rule(condition), effects = as.list(effects))
   caller <- parent.frame()
   if (!is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts") {
-    if (is.null(attr(caller, "rules"))) caller$rules <- list()
     caller$rules <- c(caller$rules, list(r))
   }
   r

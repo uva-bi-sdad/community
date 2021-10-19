@@ -13,6 +13,8 @@
 #' elements of the menu will not be wrapped in row or column elements.
 #' @param sizes The relative size of each wrapper, between 1 and 12, or \code{"auto"}; default is equal size.
 #' @param breakpoints Bootstrap breakpoint of each wrapper; one of \code{""} (extra small), \code{"sm"},
+#' @param conditions A character for each element representing the conditions in which that should be showing
+#' (e.g., \code{c("", "input_a == a", "")}); \code{""} means the element's display is not conditional.
 #' @examples
 #' \dontrun{
 #' page_menu(
@@ -23,18 +25,26 @@
 #' @export
 
 page_menu <- function(..., position = "right", width = NULL, height = NULL, collapsible = TRUE,
-                      default_open = FALSE, wraps = TRUE, sizes = NA, breakpoints = NA) {
+                      default_open = FALSE, wraps = TRUE, sizes = NA, breakpoints = NA, conditions = "") {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   id <- length(caller$body)
   parts <- new.env()
   attr(parts, "name") <- "community_site_parts"
+  parts$uid <- caller$uid
   elements <- substitute(...())
   n <- length(elements)
   vertical <- position %in% c("left", "right")
-  wraps <- rep_len(if (length(wraps) == 1 && !is.character(wraps) && wraps) if (vertical) "row" else "col" else wraps, n)
+  wraps <- rep_len(if (length(wraps) == 1 && !is.character(wraps) && wraps) {
+    if (vertical) "row" else "col"
+  } else {
+    wraps
+  }, n)
   sizes <- rep_len(sizes, n)
   breakpoints <- rep_len(breakpoints, n)
+  conditions <- rep_len(conditions, n)
+  ids <- paste0("menu", parts$uid, seq_len(n))
+  parts$uid <- parts$uid + 1
   r <- c(
     paste0(c(
       '<div class="menu-wrapper menu-', position, '"',
@@ -63,10 +73,10 @@ page_menu <- function(..., position = "right", width = NULL, height = NULL, coll
       c(
         if (!is.na(wraps[i])) {
           paste(c(
-            '<div class="', if (grepl("^r", wraps[i])) "row" else "col",
+            '<div class="', wraps[i],
             if (!is.na(breakpoints[i])) c("-", breakpoints[i]),
             if (!is.na(sizes[i])) c("-", sizes[i]),
-            '">'
+            '"', if (conditions[i] != "") paste0(' id="', ids[i], '"'), ">"
           ), collapse = "")
         },
         eval(elements[[i]], parts),
@@ -79,6 +89,17 @@ page_menu <- function(..., position = "right", width = NULL, height = NULL, coll
   if (building) {
     caller$body <- c(caller$body, r)
     for (n in names(parts)) if (n != "content") caller[[n]] <- c(caller[[n]], parts[[n]])
+    caller$uid <- parts$uid
+    if (any(conditions != "")) {
+      ids <- ids[conditions != ""]
+      conditions <- conditions[conditions != ""]
+      for (i in seq_along(conditions)) {
+        caller$rules <- c(caller$rules, list(list(
+          condition = parse_rule(conditions[i]),
+          effects = list(display = ids[i])
+        )))
+      }
+    }
   }
   r
 }

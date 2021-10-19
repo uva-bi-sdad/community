@@ -42,7 +42,6 @@ output_map <- function(shapes = NULL, color = NULL, color_time = NULL, dataview 
       src = "https://unpkg.com/leaflet@1.7.1/dist/leaflet.js",
       hash = "sha384-RFZC58YeKApoNsIbBxf4z6JJXmh+geBSgkCQXFyh+4tiFSJmJBt+2FbjxW7Ar16M"
     )
-    if (is.null(attr(caller, "maps"))) caller$maps <- list()
     id <- length(caller$maps)
     options$subto <- if (!is.null(subto) && length(subto) == 1) list(subto) else subto
     caller$maps[[paste0("map", id)]] <- list(shapes = as.list(shapes), options = options, tiles = tiles)

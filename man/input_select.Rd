@@ -5,7 +5,7 @@
 \title{Add a select input to a website}
 \usage{
 input_select(label, options, default = -1, display = options, id = label,
-  variable = NULL, dataset = NULL, depends = NULL,
+  variable = NULL, dataset = NULL, depends = NULL, dataview = NULL,
   reset_button = FALSE)
 }
 \arguments{
@@ -18,15 +18,18 @@ or \code{"variables"} to select names of datasets or variables.}
 
 \item{display}{A display version of the options.}
 
-\item{id}{Unique id of the element to be created.}
+\item{id}{Unique ID of the element to be created.}
 
 \item{variable}{The name of a variable from which to get levels (overwritten by \code{depends}).}
 
 \item{dataset}{The name of an included dataset, where \code{variable} should be looked for; only applies when
 there are multiple datasets with the same variable name.}
 
-\item{depends}{The id of another input on which the options depend; this will take president over \code{dataset}
+\item{depends}{The ID of another input on which the options depend; this will take president over \code{dataset}
 and \code{variable}, depending on this type of input \code{depends} points to.}
+
+\item{dataview}{The ID of an \code{\link{input_dataview}}, used to filter the set of options, and potentially
+specify dataset if none is specified here.}
 
 \item{reset_button}{If specified, adds a button after the select element that will revert the selection
 to its default; either \code{TRUE}, or text for the reset button's label.}

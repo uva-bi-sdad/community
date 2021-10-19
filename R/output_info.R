@@ -35,12 +35,9 @@ output_info <- function(title = "Overall", message = "", dataview = NULL, subto 
     }), use.names = FALSE),
     "</div>"
   )
-  caller <- parent.frame()
-  if (!is.null(attr(caller, "name")) &&
-    attr(caller, "name") == "community_site_parts") {
+  if (building) {
     caller$content <- c(caller$content, r)
     if (!is.null(subto)) {
-      if (is.null(attr(caller, "info"))) caller$info <- list()
       id <- length(caller$info)
       caller$info[[paste0("info", id)]] <- list(subto = subto)
     }

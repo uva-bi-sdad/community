@@ -27,7 +27,6 @@ input_dataview <- function(dataset = NULL, ids = NULL, features = NULL, id = NUL
   if (!is.null(ids)) r$ids <- ids
   if (!is.null(features)) r$features <- as.list(features)
   if (length(r) && building) {
-    if (is.null(attr(caller, "dataviews"))) caller$dataviews <- list()
     caller$dataviews[[if (is.null(id)) paste0("view", length(caller$dataviews)) else id]] <- r
   }
   r

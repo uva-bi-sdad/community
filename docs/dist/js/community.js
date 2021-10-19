@@ -30,99 +30,74 @@ void (function () {
       levels: /^lev/,
     },
     conditionals = {
-      display: function (u, c) {
-        u.e.classList[u.current === c.current ? 'remove' : 'add']('hidden')
-      },
       options: function (u, c) {
-        var i, s, n, m, l, k
+        var v,
+          i,
+          s,
+          n,
+          ns,
+          k,
+          d = valueOf(u.dataset) || valueOf(c.dataset),
+          va = valueOf(u.variable)
         if (!Object.hasOwn(u, 'option_sets')) u.option_sets = {}
         u.e.innerHTML = ''
-        if (Object.hasOwn(u.option_sets, c.current)) {
-          u.values = u.option_sets[c.current].values
-          u.display = u.option_sets[c.current].display
-          for (s = u.option_sets[c.current].options, n = s.length, i = 0; i < n; i++) {
-            u.e.appendChild(s[i])
-          }
-        } else if (Object.hasOwn(_u, u.depends)) {
-          if (-1 === _u[u.depends].current_index) {
-            setTimeout(_u[u.depends].get, 0)
-            return void 0
-          }
-          if (patterns.variables.test(u.options_source)) {
-            u.option_sets[c.current] = {options: [], values: [], display: []}
-            s = u.option_sets[c.current].options
-            u.values = u.option_sets[c.current].values
-            u.display = u.option_sets[c.current].display
-            for (m = site.metadata.info[_u[u.depends].current].schema.fields, n = m.length, i = 0; i < n; i++) {
-              l = format_label(m[i].name)
-              s[i] = u.add(i, l, m[i].name)
-              u.values.push(m[i].name)
-              u.display.push(l)
-            }
-          } else if (patterns.levels.test(u.options_source)) {
-            m = variables[u.variable ? u.variable : c.current].info[(c.depends ? _u[c.depends] : c).current]
-            l = m['string' === m.type ? 'levels' : 'ids']
-            if (l) {
-              k = (c.depends ? _u[c.depends].current : '') + c.current
-              if (Object.hasOwn(u.option_sets, k)) {
-                u.values = u.option_sets[k].values
-                u.display = u.option_sets[k].display
-                for (s = u.option_sets[k].options, n = s.length, i = 0; i < n; i++) {
-                  if (s[i].length) {
-                    u.e.appendChild(s[i][0])
-                    u.e.appendChild(s[i][1])
-                  } else u.e.appendChild(s[i])
-                }
+        if (c && Object.hasOwn(u.option_sets, (k = d + (va ? va : '')))) {
+          u.values = u.option_sets[k].values
+          u.display = u.option_sets[k].display
+          if (u.view && 'ID' === u.variable) {
+            for (
+              v = site.dataviews[u.view].selection.all, s = u.option_sets[k].options, n = s.length, ns = 0, i = 0;
+              i < n;
+              i++
+            ) {
+              u.e.appendChild(s[i])
+              if (Object.hasOwn(v, s[i].value)) {
+                s[i].classList.remove('hidden')
+                ns++
               } else {
-                u.option_sets[k] = {options: [], values: [], display: []}
-                s = u.option_sets[k].options
-                u.values = u.option_sets[k].values
-                u.display = u.option_sets[k].display
-                i = 0
-                for (k in l)
-                  if (Object.hasOwn(l, k)) {
-                    s[i++] = u.add(l[k].id, l[k].name)
-                    u.values.push(l[k].id)
-                    u.display.push(l[k].name)
-                  }
+                s[i].classList.add('hidden')
               }
             }
+          } else {
+            for (s = u.option_sets[k].options, n = s.length, i = 0; i < n; i++) {
+              u.e.appendChild(s[i])
+              ns++
+            }
+          }
+          u.e[ns < 2 ? 'setAttribute' : 'removeAttribute']('disabled', true)
+        } else if (Object.hasOwn(_u, u.depends)) {
+          if (patterns.variables.test(u.options_source)) {
+            d = c.value()
+            if (d) fill_variables_options(u, d, u.option_sets)
+          } else if (patterns.levels.test(u.options_source)) {
+            fill_levels_options(u, d, va, u.option_sets)
           }
         }
-        if (-1 !== u.default && -1 === u.current_index) {
-          if ('number' !== typeof u.default) {
-            u.current_index = u.values.indexOf(u.default)
-            if (-1 === u.current_index) u.current_index = u.display.indexOf(u.default)
-            if (-1 === u.current_index) u.current_index = parseInt(u.default)
-            u.default = isNaN(u.current_index) ? -1 : u.current_index
-            u.current_index = -1
-            u.set(u.default)
-          }
-        }
-        u.current_index = -2
-        u.reset()
+        u.set(u.value())
       },
-      map_colors: function (u, c) {
-        if (u.colors && Object.hasOwn(_u, u.colors)) {
-          c = _u[u.colors]
-          var d = _s[site.dataviews[u.view].dataset],
-            l = variables[c.current][u.view].summaries[d],
-            y = u.time ? _u[u.time].current_index : 0,
+      map_colors: function (u) {
+        const c = _u[u.colors] && _u[u.colors].value()
+        if (c && Object.hasOwn(site.dataviews[u.view], 'get')) {
+          var d = valueOf(site.dataviews[u.view].get.dataset()),
+            l,
+            y = u.time ? _u[u.time].value() - _u[u.time].min : 0,
             v = site.dataviews[u.view],
-            s = v.selection,
-            i = s.length
-          if (Object.hasOwn(site.maps, d)) {
-            for (; i--; )
-              if (Object.hasOwn(variables[c.current], u.view)) {
-                if (s[i].layer) {
-                  s[i].layer.setStyle({
-                    fillOpacity: 0.7,
-                    color: '#000000',
-                    fillColor: pal(s[i].data[c.current][y], 'divergent', l, y),
-                    weight: 1,
-                  })
+            s = v.selection.all,
+            k
+          if (Object.hasOwn(site.maps, d) && Object.hasOwn(variables[c], u.view)) {
+            l = variables[c][u.view].summaries[d]
+            for (k in s)
+              if (Object.hasOwn(s, k))
+                if (Object.hasOwn(variables[c], u.view)) {
+                  if (s[k].layer) {
+                    s[k].layer.setStyle({
+                      fillOpacity: 0.7,
+                      color: '#000000',
+                      fillColor: pal(s[k].data[c][y], 'divergent', l, y),
+                      weight: 1,
+                    })
+                  }
                 }
-              }
           } else {
             if (!Object.hasOwn(site.maps, '_waiting')) site.maps._waiting = {}
             if (!Object.hasOwn(site.maps._waiting, d)) site.maps._waiting[d] = []
@@ -134,54 +109,88 @@ void (function () {
       map_shapes: function (u) {
         if (u.view && u.displaying) {
           u.displaying.clearLayers()
-          for (var s = site.dataviews[u.view].selection, i = s.length, n = 0; i--; ) {
-            if (s[i].layer) {
-              n++
-              s[i].layer.addTo(u.displaying)
-            }
-          }
+          var s = site.dataviews[u.view].selection.all,
+            k,
+            n = 0
+          if (s)
+            for (k in s)
+              if (Object.hasOwn(s, k)) {
+                if (s[k].layer) {
+                  n++
+                  s[k].layer.addTo(u.displaying)
+                }
+              }
           if (n) u.map.flyToBounds(u.displaying.getBounds())
         }
       },
-      update: function (u) {
-        u.update()
-      },
-      dataview: function (view) {
-        const f = site.dataviews[view]
+      dataview: function (f) {
         if (!f.check) compile_dataview(f)
-        f.selection = []
-        for (var k in entities)
-          if (Object.hasOwn(entities, k) && f.check(entities[k])) {
-            f.selection.push(entities[k])
+        f.n_selected.ids = 0
+        f.n_selected.features = 0
+        f.n_selected.dataset = 0
+        f.n_selected.all = 0
+        f.selection.ids = {}
+        f.selection.features = {}
+        f.selection.dataset = {}
+        f.selection.all = {}
+        var c,
+          k,
+          id,
+          first_all = ''
+        for (id in entities)
+          if (Object.hasOwn(entities, id)) {
+            c = f.check(entities[id])
+            c.all = 0
+            if (c.ids) {
+              f.selection.ids[id] = entities[id]
+              f.n_selected.ids++
+              c.all++
+            }
+            if (c.features) {
+              f.selection.features[id] = entities[id]
+              f.n_selected.features++
+              c.all++
+            }
+            if (c.dataset) {
+              f.selection.dataset[id] = entities[id]
+              f.n_selected.dataset++
+              c.all++
+            }
+            if (3 === c.all) {
+              if (!first_all) first_all = id
+              f.selection.all[id] = entities[id]
+              f.n_selected.all++
+            }
           }
-        if (f.selection.length) {
-          for (k in variables) if (Object.hasOwn(f.selection[0].data, k)) calculate_summary(k, view, true)
-          update_subs(view, 'update')
+        if (first_all) {
+          for (k in variables) if (Object.hasOwn(f.selection.all[first_all].data, k)) calculate_summary(k, f.id, true)
+          update_subs(f.id, 'update')
         }
-        request_queue(view)
+        request_queue(f.id)
       },
     },
     elements = {
       buttongroup: {
-        getter: function () {
+        retrieve: function () {
           for (var i = this.options.length; i--; )
             if (this.options[i].checked) {
-              this.update(i, true)
+              this.set(i)
               break
             }
-          return this.current
         },
-        setter: function (v, passive) {
-          if ('string' === typeof v) {
-            v = this.values.indexOf(v)
-          }
-          if (this.current_index !== v && v !== -1) {
-            this.options[v].checked = true
-            this.update(v, passive)
-          }
+        setter: function (v) {
+          this.previous = this.value()
+          this.current_index = 'string' === typeof v ? this.values.indexOf(v) : v
+          if (-1 !== this.current_index) {
+            this.source = Object.hasOwn(_u, this.values[this.current_index])
+              ? _u[this.values[this.current_index]]
+              : this.values[this.current_index]
+            this.options[this.current_index].checked = true
+          } else this.source = undefined
+          request_queue(this.id)
         },
         listener: function (e) {
-          this.update(this.values.indexOf(e.target.value))
+          this.set(e.target.value)
         },
         adder: function (i, value, display) {
           var e = [document.createElement('input'), document.createElement('label')]
@@ -200,26 +209,26 @@ void (function () {
         },
       },
       radio: {
-        getter: function () {
+        retrieve: function () {
           for (var i = this.options.length; i--; ) {
             if (this.options[i].checked) {
-              this.update(i, true)
+              this.set(i)
               break
             }
           }
-          return this.current
         },
-        setter: function (v, passive) {
-          if ('string' === typeof v) {
-            v = this.values.indexOf(v)
-          }
-          if (this.current_index !== v && v !== -1) {
-            this.options[v].checked = true
-            this.update(v, passive)
-          }
+        setter: function (v) {
+          this.current_index = 'string' === typeof v ? this.values.indexOf(v) : v
+          if (-1 !== this.current_index) {
+            this.source = Object.hasOwn(_u, this.values[this.current_index])
+              ? _u[this.values[this.current_index]]
+              : this.values[this.current_index]
+            this.options[this.current_index].checked = true
+          } else this.source = undefined
+          request_queue(this.id)
         },
         listener: function (e) {
-          this.update(this.values.indexOf(e.target.value))
+          this.set(e.target.value)
         },
         adder: function (value, display) {
           var e = document.createElement('div')
@@ -239,44 +248,47 @@ void (function () {
         },
       },
       checkbox: {
-        getter: function () {
-          this.current = []
+        retrieve: function () {
+          this.source = []
           this.current_index = []
           for (var i = this.options.length; i--; ) {
             if (this.options[i].checked) {
-              this.current.push(this.values[i])
+              this.source.push(this.values[i])
               this.current_index.push(i)
             }
           }
-          this.update(true)
-          return this.current
+          request_queue(this.id)
         },
-        setter: function (v, passive) {
-          this.current = []
-          this.current_index = []
-          for (var i = this.values.length; i--; ) {
-            if (-1 === v.indexOf(this.values[i])) {
-              this.options[i].checked = false
-            } else {
-              this.options[i].checked = true
-              this.current.push(this.values[i])
+        setter: function (v) {
+          if ('object' === typeof v) {
+            this.source = []
+            this.current_index = []
+            for (var i = v.length; i--; ) {
+              this.source.push(this.values[i])
               this.current_index.push(i)
             }
+          } else {
+            if ('string' === typeof v) {
+              const i = this.values.indexOf(v)
+              if (-1 !== i) this.options[i].checked = true
+            } else {
+              if (-1 !== v) this.options[v].checked = true
+            }
           }
-          this.update(passive)
+          request_queue(this.id)
         },
         listener: function (e) {
           if (e.target.checked) {
-            this.current.push(e.target.value)
+            this.source.push(e.target.value)
             this.current_index.push(this.values.indexOf(e.target.value))
           } else {
-            var i = this.current.indexOf(e.target.value)
+            var i = this.source.indexOf(e.target.value)
             if (i !== -1) {
-              this.current.splice(i, 1)
+              this.source.splice(i, 1)
               this.current_index.splice(i, 1)
             }
           }
-          this.update()
+          request_queue(this.id)
         },
         adder: function (value, display) {
           var e = document.createElement('div')
@@ -294,45 +306,37 @@ void (function () {
           e.lastElementChild.setAttribute('for', e.firstElementChild.id)
           return this.e
         },
-        updater: function (passive) {
-          this.previous = this.current
-          if (Object.hasOwn(_c, this.id)) request_queue(this.id)
-        },
       },
       slider: {
-        getter: function () {
-          this.update(parseInt(this.e.value) - this.min, true)
-          return this.current
+        retrieve: function () {
+          this.set(this.e.value)
         },
-        setter: function (v, i, passive) {
-          if ('string' === typeof v) {
-            v = this.values.indexOf(v)
+        setter: function (v) {
+          if ('number' === typeof v) {
+            v = this.values[v]
           }
-          if (this.current_index !== v) {
-            this.e.value = v
-            this.update(i, passive)
-          }
+          this.e.value = this.source = parseFloat(this.e.value)
+          this.current_index = this.source - this.min
+          request_queue(this.id)
         },
         listener: function (e) {
-          this.update(parseInt(e.target.value) - this.min)
+          this.set(e.target.value)
         },
       },
       select: {
-        getter: function () {
-          this.update(this.e.selectedIndex, true)
-          return this.current
+        retrieve: function () {
+          this.set(this.e.selectedIndex)
         },
-        setter: function (v, passive) {
+        setter: function (v) {
           if ('string' === typeof v) {
             v = this.values.indexOf(v)
           }
-          if (this.current_index !== v) {
-            this.e.selectedIndex = v
-            this.update(v, passive)
-          }
+          this.e.selectedIndex = v
+          this.source = this.values[v]
+          request_queue(this.id)
         },
         listener: function (e) {
-          this.update(e.target.selectedIndex)
+          this.set(e.target.selectedIndex)
         },
         adder: function (value, display) {
           var e = document.createElement('option')
@@ -358,35 +362,32 @@ void (function () {
           }
         },
         click: function (d) {
-          if (this.clickto && -1 !== this.clickto.values.indexOf(d.points[0].data.id))
-            this.clickto.set(d.points[0].data.id)
+          this.clickto.set(d.points[0].data.id)
         },
         update: function () {
           if (this.e.layout) {
             const v = site.dataviews[this.view],
-              s = v.selection
-            if (s && s.length) {
-              this.parsed.x = Object.hasOwn(s[0].data, this.x) ? this.x : _s[this.x]
-              this.parsed.y = Object.hasOwn(s[0].data, this.y) ? this.y : _s[this.y]
-              var i,
+              s = v.selection && v.selection.all
+            if (s && v.n_selected.all) {
+              this.parsed.x = valueOf(this.x)
+              this.parsed.y = valueOf(this.y)
+              var k,
                 b,
                 traces = [],
-                summary =
-                  variables[this.parsed.y][this.view].summaries[
-                    'string' === typeof v.parsed.dataset ? v.parsed.dataset : v.parsed.dataset.current
-                  ]
-              for (i = s.length; i--; ) {
-                traces.push(make_data_entry(this, s[i]))
-                if (Object.hasOwn(this.traces, 'box')) {
-                  traces.push((b = JSON.parse(this.traces.box)))
-                  b.x = s[i].data[this.x]
-                  b.upperfence = summary.max
-                  b.q3 = summary.q3
-                  b.median = summary.median
-                  b.q1 = summary.q1
-                  b.lowerfence = summary.min
+                summary = variables[this.parsed.y][this.view].summaries[valueOf(v.get.dataset())]
+              for (k in s)
+                if (Object.hasOwn(s, k)) {
+                  traces.push(make_data_entry(this, s[k]))
+                  if (Object.hasOwn(this.traces, 'box')) {
+                    traces.push((b = JSON.parse(this.traces.box)))
+                    b.x = s[k].data[this.parsed.x]
+                    b.upperfence = summary.max
+                    b.q3 = summary.q3
+                    b.median = summary.median
+                    b.q1 = summary.q1
+                    b.lowerfence = summary.min
+                  }
                 }
-              }
               if (!Object.hasOwn(this.e.layout.yaxis, 'title')) this.e.layout.yaxis.title = {text: ''}
               this.e.layout.yaxis.title.text = variables[this.parsed.y].name
               Plotly.react(this.e, traces, this.e.layout)
@@ -409,8 +410,7 @@ void (function () {
           })
         },
         click: function (e) {
-          if (this.clickto && -1 !== this.clickto.values.indexOf(e.target.feature.properties.id))
-            this.clickto.set(e.target.feature.properties.id)
+          this.clickto.set(e.target.feature.properties.id)
         },
       },
       info: {
@@ -434,9 +434,9 @@ void (function () {
             if (this.view) {
               v = site.dataviews[this.view]
               p = this.base.children
-              if (v.parsed.ids && v.parsed.ids.current) {
+              if (v.ids && (k = valueOf(v.get.ids()))) {
                 // when showing a selected region
-                entity = entities[v.parsed.ids.current]
+                entity = entities[k]
                 p[0].innerText = entity.features.name
                 for (i = p[2].childElementCount; i--; ) {
                   k = p[2].children[i].firstElementChild.innerText
@@ -461,29 +461,31 @@ void (function () {
       },
       table: {
         update: function () {
-          const v = site.dataviews[this.view]
-          this.table.clear()
-          if (v.selection) {
-            for (var i = v.selection.length, y; i--; ) {
-              for (y = meta.time.length; y--; ) {
-                this.i = y
-                this.table.row.add(v.selection[i])
-              }
+          if (this.table) {
+            const v = site.dataviews[this.view]
+            this.table.clear()
+            if (v.selection) {
+              var k, y
+              for (k in v.selection.all)
+                if (Object.hasOwn(v.selection.all, k)) {
+                  for (y = meta.time.length; y--; ) {
+                    this.i = y
+                    this.table.row.add(v.selection.all[k])
+                  }
+                }
             }
+            this.table.draw()
           }
-          this.table.draw()
         },
       },
     },
-    updaters = {
-      selects: function (i) {
-        this.previous = this.current
-        this.current = _s[this.id] = this.values[i]
-        this.current_index = i
-        if (Object.hasOwn(_c, this.id)) request_queue(this.id)
-      },
-    },
     check_funs = {
+      '!': function (a) {
+        return !a || -1 != a
+      },
+      '': function (a) {
+        return !!a && -1 != a
+      },
       '=': function (a, b) {
         return a === b
       },
@@ -508,18 +510,11 @@ void (function () {
       includes: function (s, e) {
         return !s.length || s.indexOf(e) !== -1
       },
-      source_equals: function (s, e) {
-        return !s.current || s.current === e
-      },
-      source_includes: function (s, e) {
-        return !s.current.length || s.current.indexOf(e) !== -1
-      },
     }
 
-  var page = {},
+  var page = {state: 'not loaded'},
     variables = {},
     queue = {_timeout: 0},
-    rank_rows = {},
     colors = {},
     meta = {
       time_range: [],
@@ -530,10 +525,8 @@ void (function () {
     data_maps = {},
     entities = {},
     entitiesByName = {},
+    rule_conditions = {},
     _u = {},
-    _s = {
-      n_extremes: 10,
-    },
     _c = {}
 
   function pal(value, which, summary, index) {
@@ -568,9 +561,58 @@ void (function () {
     })
   }
 
+  function fill_variables_options(u, d, out) {
+    var s, i, m, n, l
+    out[d] = {options: [], values: [], display: []}
+    s = out[d].options
+    u.values = out[d].values
+    u.display = out[d].display
+    for (m = site.metadata.info[d].schema.fields, n = m.length, i = 0; i < n; i++) {
+      l = format_label(m[i].name)
+      s[i] = u.add(i, l, m[i].name)
+      u.values.push(m[i].name)
+      u.display.push(l)
+    }
+  }
+
+  function fill_levels_options(u, d, v, out) {
+    var m = variables[v].info[d],
+      l = m['string' === m.type ? 'levels' : 'ids'],
+      k,
+      i,
+      n,
+      s
+    if (l) {
+      k = d + v
+      if (Object.hasOwn(out, k)) {
+        u.values = out[k].values
+        u.display = out[k].display
+        for (s = out[k].options, n = s.length, i = 0; i < n; i++) {
+          if (s[i].length) {
+            u.e.appendChild(s[i][0])
+            u.e.appendChild(s[i][1])
+          } else u.e.appendChild(s[i])
+        }
+      } else {
+        out[k] = {options: [], values: [], display: []}
+        s = out[k].options
+        u.values = out[k].values
+        u.display = out[k].display
+        i = 0
+        for (k in l)
+          if (Object.hasOwn(l, k)) {
+            s[i++] = u.add(l[k].id, l[k].name)
+            u.values.push(l[k].id)
+            u.display.push(l[k].name)
+          }
+      }
+    }
+  }
+
   function add_dependency(id, o) {
     if (!Object.hasOwn(_c, id)) _c[id] = []
     _c[id].push(o)
+    request_queue(id)
   }
 
   function add_subs(id, o) {
@@ -587,30 +629,31 @@ void (function () {
   }
 
   function make_data_entry(u, e, name, color) {
-    for (
-      var i = e.data[u.parsed.x].length, y = u.time ? _u[u.time].current_index : 0, t = JSON.parse(u.traces.scatter);
-      i--;
-
-    ) {
-      t.text[i] = e.features.name
-      t.x[i] = e.data[u.parsed.x][i]
-      t.y[i] = e.data[u.parsed.y][i]
+    var i,
+      y = u.time ? _u[u.time].current_index : 0,
+      t = JSON.parse(u.traces.scatter)
+    if (Object.hasOwn(e.data, u.parsed.x)) {
+      for (i = e.data[u.parsed.x].length; i--; ) {
+        t.text[i] = e.features.name
+        t.x[i] = e.data[u.parsed.x][i]
+        t.y[i] = e.data[u.parsed.y][i]
+      }
+      t.color =
+        t.line.color =
+        t.marker.color =
+        t.marker.line.color =
+        t.textfont.color =
+          color ||
+          pal(
+            e.data[_u[u.colors].value()][y],
+            'divergent',
+            variables[_u[u.colors].value()][u.view].summaries[valueOf(site.dataviews[u.view].get.dataset())],
+            y
+          ) ||
+          '#808080'
+      t.name = name || e.features.name
+      t.id = e.features.id
     }
-    t.color =
-      t.line.color =
-      t.marker.color =
-      t.marker.line.color =
-      t.textfont.color =
-        color ||
-        pal(
-          e.data[_s[u.colors]][y],
-          'divergent',
-          variables[_s[u.colors]][u.view].summaries[_s[site.dataviews[u.view].dataset]],
-          y
-        ) ||
-        '#808080'
-    t.name = name || e.features.name
-    t.id = e.features.id
     return t
   }
 
@@ -639,8 +682,8 @@ void (function () {
     }
   }
 
-  function init() {
-    var k, i, e, c, p, ce, ci, n, o, cond
+  document.onreadystatechange = function () {
+    var k, i, e, c, p, ci, n, o
 
     page.navbar = document.getElementsByClassName('navbar')[0]
     page.navbar = page.navbar ? page.navbar.getBoundingClientRect() : {height: 0}
@@ -756,13 +799,17 @@ void (function () {
       e = c[i]
       o = {
         type: e.getAttribute('auto-type'),
+        source: void 0,
+        value: function () {
+          return valueOf(this.source) || valueOf(this.default)
+        },
         default: e.getAttribute('default'),
         options_source: e.getAttribute('auto-options'),
         depends: e.getAttribute('depends'),
         variable: e.getAttribute('variable'),
         dataset: e.getAttribute('dataset') || site.metadata.datasets[0],
+        view: e.getAttribute('data-view'),
         id: e.id || e.options_source || 'ui' + n++,
-        current: '',
         current_index: -1,
         previous: '',
         e: e,
@@ -772,16 +819,133 @@ void (function () {
       }
       if (Object.hasOwn(elements, o.type)) {
         p = elements[o.type]
-        o.options = o.type === 'select' ? e.children : e.getElementsByTagName('input')
-        o.update = o.type === 'checkbox' ? p.updater.bind(o) : updaters.selects.bind(o)
+        o.options = o.type === 'select' ? o.e.children : o.e.getElementsByTagName('input')
         o.set = p.setter.bind(o)
-        o.get = p.getter.bind(o)
+        o.get = p.retrieve.bind(o)
         if (p.adder) o.add = p.adder.bind(o)
         o.reset = function () {
-          if (this.default !== this.current_index) this.set(this.default)
+          this.set(valueOf(this.default))
         }.bind(o)
         o.listen = p.listener.bind(o)
         _u[o.id] = o
+      }
+    }
+
+    // resolving references in _u
+    // for (k in _u)
+    //   if (Object.hasOwn(_u, k)) {
+    //     if ('string' === typeof _u[k].default && Object.hasOwn(_u, _u[k].default)) {
+    //       _u[k].default = _u[_u[k].default]
+    //     }
+    //     if ('string' === typeof _u[k].dataset && Object.hasOwn(_u, _u[k].dataset))
+    //       _u[k].dataset = _u[_u[k].dataset]
+    //   }
+
+    // initialize variables
+    if (site.variables && site.variables.length) {
+      for (n = site.variables.length; n--; ) {
+        k = site.variables[n].id
+        _u[k] = {
+          id: k,
+          type: 'virtual',
+          source: site.variables[n].default,
+          previous: void 0,
+          default: site.variables[n].default,
+          current_index: -1,
+          values: [],
+          states: site.variables[n].states,
+          update: function () {
+            this.source = void 0
+            for (var p, r, c, i = this.states.length; i--; ) {
+              for (c = this.states[i].condition.length, p = true; c--; ) {
+                r = this.states[i].condition[c]
+                if (!check_funs[r.type](valueOf(r.id), valueOf(r.value))) p = false
+              }
+              if (p) {
+                this.source = this.states[i].value
+                break
+              }
+            }
+            if (!this.source) this.source = this.default
+            if (this.source !== this.previous) {
+              this.previous = this.source
+              request_queue(this.id)
+            }
+          },
+          value: function () {
+            return valueOf(this.source)
+          },
+          set: function (v) {
+            if (-1 !== this.values.indexOf(v)) {
+              this.previous = this.source
+              this.source = v
+            } else {
+              if (Object.hasOwn(_u, this.source) && -1 !== _u[this.source].values.indexOf(v)) {
+                _u[this.source].set(v)
+              }
+            }
+            request_queue(this.id)
+          },
+        }
+        if (_u[k].source) _u[k].values.push(_u[k].source)
+        for (p = {}, i = _u[k].states.length; i--; ) {
+          _u[k].values.push(_u[k].states[i].value)
+          for (ci = _u[k].states[i].condition.length; ci--; ) {
+            if (!Object.hasOwn(p, _u[k].states[i].condition[ci].id)) {
+              p[_u[k].states[i].condition[ci].id] = {type: 'update', id: k}
+            }
+          }
+        }
+        // setTimeout(_u[k].update, 0)
+        for (k in p) if (Object.hasOwn(p, k)) add_dependency(k, p[k])
+      }
+    }
+
+    // initialize rules
+    if (site.rules && site.rules.length) {
+      for (ci = site.rules.length; ci--; ) {
+        for (k in site.rules[ci].effects)
+          if ('display' === k) {
+            site.rules[ci].effects[k] = {e: document.getElementById(site.rules[ci].effects[k])}
+            e = site.rules[ci].effects[k].e.getElementsByClassName('auto-input')
+            if (e.length) site.rules[ci].effects[k].u = _u[e[0].id]
+          }
+        for (e = site.rules[ci].condition, n = e.length, i = 0; i < n; i++) {
+          if (Object.hasOwn(check_funs, e[i].type)) {
+            e[i].check = function () {
+              return check_funs[this.type](valueOf(this.id), valueOf(this.value))
+            }.bind(e[i])
+            if (Object.hasOwn(_u, e[i].id)) {
+              add_dependency(e[i].id, {type: 'rule', id: e[i].id, condition: e[i], rule: ci})
+              if (!Object.hasOwn(rule_conditions, e[i].id)) rule_conditions[e[i].id] = {}
+              rule_conditions[e[i].id][ci] = site.rules[ci]
+            }
+            if (e[i].check()) {
+              for (k in site.rules[ci].effects) if (Object.hasOwn(_u, k)) _u[k].set(valueOf(site.rules[ci].effects[k]))
+            } else if (e[i].default) {
+              for (k in site.rules[ci].effects) if (Object.hasOwn(_u, k)) _u[k].set(valueOf(e[i].default))
+            }
+          }
+        }
+      }
+    }
+
+    if (site && site.data) {
+      queue_init()
+    } else if (site && site.metadata.file) {
+      load_data(site.metadata.file)
+    } else {
+      throw new Error('No data or metadata information present')
+    }
+  }
+
+  function init() {
+    var k, i, e, c, p, ce, ci, n, o, cond, v
+
+    // initialize inputs
+    for (k in _u)
+      if (Object.hasOwn(_u, k) && Object.hasOwn(elements, _u[k].type)) {
+        o = _u[k]
 
         // resolve options
         if (o.options_source) {
@@ -789,102 +953,97 @@ void (function () {
             for (ci = site.metadata.datasets.length; ci--; ) {
               o.add(ci, site.metadata.datasets[ci], format_label(site.metadata.datasets[ci]))
             }
-            o.options = e.getElementsByTagName(o.type === 'select' ? 'option' : 'input')
-          } else if (o.depends) {
-            add_dependency(o.depends, {type: 'options', current: '', id: o.id})
+            o.options = o.e.getElementsByTagName(o.type === 'select' ? 'option' : 'input')
+          } else {
+            o.option_sets = {}
+            v = valueOf(o.dataset)
+            if (Object.hasOwn(site.metadata.info, v)) {
+              if (patterns.variables.test(o.options_source)) {
+                fill_variables_options(o, v, o.option_sets)
+              } else if (patterns.levels.test(o.options_source) && Object.hasOwn(variables, o.variable)) {
+                fill_levels_options(o, v, o.variable, o.option_sets)
+              }
+              o.reset()
+            }
+            if (o.depends) add_dependency(o.depends, {type: 'options', id: o.id})
+            if (o.view) add_dependency(o.view, {type: 'options', id: o.id})
           }
         }
 
         // retrieve option values
         if (o.type === 'slider') {
           o.values = o.display = o.options = []
+          v = valueOf(o.dataset)
           if (o.variable) {
-            o.min = o.e.min = variables[o.variable].info[o.dataset].min
-            o.max = o.e.max = variables[o.variable].info[o.dataset].max
+            o.min = o.e.min = variables[o.variable].info[v].min
+            o.max = o.e.max = variables[o.variable].info[v].max
           } else {
             o.min = parseInt(o.e.min)
             o.max = parseInt(o.e.max)
           }
-          if ('number' !== typeof o.default || o.default > o.max || o.default < o.min) o.default = o.max
-          o.e.value = o.current = o.default
+          if ('number' !== typeof v || v > o.max || v < o.min) o.default = o.max
+          o.e.value = o.source = o.default
           for (ci = o.min, n = o.max; ci <= n; ci++) {
             o.values.push(ci)
           }
         } else {
-          for (ci = o.options.length; ci--; ) {
-            o.values[ci] = o.options[ci].value
-            o.display[ci] = format_label(o.options[ci].innerText.trim() || o.values[ci])
-          }
+          if (!o.values.length)
+            for (ci = o.options.length; ci--; ) {
+              o.values[ci] = o.options[ci].value
+              o.display[ci] = format_label(o.options[ci].innerText.trim() || o.values[ci])
+            }
           if ('checkbox' === o.type) {
             o.default = o.default.split(',')
-          } else if (o.values.length) {
-            o.current_index = o.values.indexOf(o.default)
-            if (-1 === o.current_index) o.current_index = o.display.indexOf(o.default)
-            if (-1 === o.current_index) o.current_index = parseInt(o.default)
-            o.default = isNaN(o.current_index) ? -1 : o.current_index
-            o.current_index = -1
-            o.set(o.default)
+            if (o.options.length)
+              for (ci = o.options.length; ci--; ) {
+                o.values[ci] = o.options[ci].value
+              }
+          } else if (o.values.length && !Object.hasOwn(_u, o.default) && -1 === o.values.indexOf(o.default)) {
+            o.default = parseInt(o.default)
+            o.default = o.values[o.default] ? o.values[o.default] : ''
           }
         }
-        o.get()
 
         // add listeners
         if ('select' === o.type || 'slider' === o.type) {
-          e.addEventListener('input', o.listen)
-          if (e.nextElementSibling && e.nextElementSibling.classList.contains('select-reset')) {
-            e.nextElementSibling.addEventListener('click', o.reset)
+          o.e.addEventListener('input', o.listen)
+          if (o.e.nextElementSibling && o.e.nextElementSibling.classList.contains('select-reset')) {
+            o.e.nextElementSibling.addEventListener('click', o.reset)
           }
         } else {
           for (ci = o.options.length; ci--; ) o.options[ci].addEventListener('click', o.listen)
         }
-
-        // update display condition
-        if ((cond = e.getAttribute('condition'))) {
-          add_dependency(cond, {type: 'display', current: '', id: o.id})
-          if (Object.hasOwn(_s, cond) && _s[cond] === o.id) {
-            e.parentElement.parentElement.classList.remove('hidden')
-          }
-        }
+        o.reset()
+        o.get()
       }
-    }
 
     // initialize dataviews
     if (site.dataviews)
       for (k in site.dataviews)
         if (Object.hasOwn(site.dataviews, k)) {
-          e = site.dataviews[k]
+          _u[k] = e = site.dataviews[k]
+          e.id = k
+          e.value = function () {
+            if (this.get) {
+              var k,
+                s = '' + this.get.dataset() + this.get.ids()
+              for (k in this.get.features) if (Object.hasOwn(this.get.features, k)) s += this.get.features[k]()
+              return s
+            }
+          }.bind(e)
           if (e.dataset && 'string' === typeof e.dataset && Object.hasOwn(_u, e.dataset)) {
-            add_dependency(e.dataset, {type: 'dataview', current: '', id: k})
+            add_dependency(e.dataset, {type: 'dataview', id: k})
           }
           if (e.ids && 'string' === typeof e.ids && Object.hasOwn(_u, e.ids)) {
-            add_dependency(e.ids, {type: 'dataview', current: '', id: k})
+            add_dependency(e.ids, {type: 'dataview', id: k})
           }
           for (cond in e.features)
             if (Object.hasOwn(e.features, cond)) {
               if ('string' === typeof e.features[cond] && Object.hasOwn(_u, e.features[cond])) {
-                add_dependency(e.features[cond], {type: 'dataview', current: '', id: k})
+                add_dependency(e.features[cond], {type: 'dataview', id: k})
               }
             }
         }
-
-    // initialize rules
-    if (site.rules && site.rules.length) {
-      for (ci = site.rules.length; ci--; ) {
-        for (e = site.rules[ci].condition, n = e.length, i = 0; i < n; i++) {
-          if (Object.hasOwn(check_funs, e[i].type)) {
-            e[i].check = function () {
-              return check_funs[this.type](
-                Object.hasOwn(_u, this.id) ? _u[this.id].current : this.id,
-                Object.hasOwn(_u, this.value) ? _u[this.value].current : this.value
-              )
-            }.bind(e[i])
-            if (Object.hasOwn(_u, e[i].id)) {
-              add_dependency(e[i].id, {type: 'rule', current: '', id: e[i].id, condition: e[i], rule: ci})
-            }
-          }
-        }
-      }
-    }
 
     // initialize outputs
     for (c = document.getElementsByClassName('auto-output'), i = c.length, n = 0; i--; ) {
@@ -925,14 +1084,6 @@ void (function () {
         for (ce = e.getElementsByClassName('measure-table'), ci = ce.length; ci--; ) {
           init_measure_table(ce[ci])
         }
-      } else if ('rank' === o.type) {
-        e.firstElementChild.firstElementChild.appendChild((e = document.createElement('tr')))
-        e.appendChild(document.createElement('th'))
-        e.lastElementChild.innerText = _u.shapes.display[_u.shapes.current_index]
-        for (ci = 0; ci < n; ci++) {
-          e.appendChild(document.createElement('th'))
-          e.lastElementChild.innerText = meta.time[ci]
-        }
       } else if ('table' === o.type) {
         e.appendChild(document.createElement('tHead'))
         e.appendChild(document.createElement('tBody'))
@@ -944,22 +1095,24 @@ void (function () {
         } else {
           for (k in variables)
             if (Object.hasOwn(variables, k)) {
-              for (ci = variables[k].datasets.length; ci--; ) p = variables[k].datasets[ci]
-              if (!Object.hasOwn(o.headers, p)) o.headers[p] = []
-              o.headers[p].push(
-                'ID' === k
-                  ? {title: 'ID', data: 'features.id'}
-                  : {
-                      title: format_label(k),
-                      data: 'data.' + k,
-                      render: function (d) {
-                        return d[this.i]
-                      }.bind(o),
-                    }
-              )
+              for (ci = variables[k].datasets.length; ci--; ) {
+                p = variables[k].datasets[ci]
+                if (!Object.hasOwn(o.headers, p)) o.headers[p] = []
+                o.headers[p].push(
+                  'ID' === k
+                    ? {title: k, data: 'features.' + k.toLowerCase()}
+                    : {
+                        title: format_label(k),
+                        data: 'data.' + k,
+                        render: function (d) {
+                          return d[this.i]
+                        }.bind(o),
+                      }
+                )
+              }
             }
         }
-        _c[o.view].push({type: 'update', current: '', id: o.id})
+        _c[o.view].push({type: 'update', id: o.id})
         queue_init_table.bind(o)()
       } else if ('plot' === o.type) {
         if (Object.hasOwn(site.plots, o.id)) {
@@ -999,15 +1152,15 @@ void (function () {
             o.traces[site.plots[o.id].data[ci].type] = JSON.stringify(site.plots[o.id].data[ci])
           }
           if (o.x && !Object.hasOwn(variables, o.x)) {
-            add_dependency(o.x, {type: 'update', current: '', id: o.id})
+            add_dependency(o.x, {type: 'update', id: o.id})
           }
           if (o.y && !Object.hasOwn(variables, o.y)) {
-            add_dependency(o.y, {type: 'update', current: '', id: o.id})
+            add_dependency(o.y, {type: 'update', id: o.id})
           }
           if (o.time && Object.hasOwn(_u, o.time)) {
-            add_dependency(o.time, {type: 'update', current: '', id: o.id})
+            add_dependency(o.time, {type: 'update', id: o.id})
           }
-          _c[o.view].push({type: 'update', current: '', id: o.id})
+          _c[o.view].push({type: 'update', id: o.id})
           queue_init_plot.bind(o)()
         }
       } else if ('map' === o.type) {
@@ -1032,17 +1185,25 @@ void (function () {
         }
         if (o.options && o.options.subto) for (ci = o.options.subto.length; ci--; ) add_subs(o.options.subto[ci], o)
         if (o.colors) {
-          if (o.view) add_dependency(o.view, {type: 'map_colors', current: '', id: o.id})
-          add_dependency(o.colors, {type: 'map_colors', current: '', id: o.id})
+          if (o.view) add_dependency(o.view, {type: 'map_colors', id: o.id})
+          add_dependency(o.colors, {type: 'map_colors', id: o.id})
         }
         if (o.time) {
-          add_dependency(o.time, {type: 'map_colors', current: '', id: o.id})
+          add_dependency(o.time, {type: 'map_colors', id: o.id})
         }
         if (!e.style.height) e.style.height = o.options.height ? o.options.height : '400px'
-        _c[o.view].push({type: 'map_shapes', current: '', id: o.id})
+        _c[o.view].push({type: 'map_shapes', id: o.id})
         queue_init_map.bind(o)()
       }
     }
+  }
+
+  function valueOf(v) {
+    v = 'string' === typeof v && Object.hasOwn(_u, v) ? _u[v] : v
+    if (v && v.value) {
+      v = valueOf(v.value())
+    }
+    return v
   }
 
   function add_layer_listeners(feature, layer) {
@@ -1084,7 +1245,7 @@ void (function () {
   }
 
   function quantile_inds(p, n) {
-    var q = [p * (n - 1), 0, 0, 0]
+    const q = [p * (n - 1), 0, 0, 0]
     q[1] = q[0] % 1
     q[2] = 1 - q[1]
     q[3] = Math.ceil(q[0])
@@ -1129,42 +1290,34 @@ void (function () {
     if (!Object.hasOwn(variables[measure], view))
       variables[measure][view] = JSON.parse(JSON.stringify(variables[measure].default))
     const v = site.dataviews[view],
-      dataset = 'string' === typeof v.parsed.dataset ? v.parsed.dataset : v.parsed.dataset.current,
+      dataset = valueOf(v.get.dataset()),
       m = variables[measure][view],
       mo = m.order[dataset],
       ms = m.summaries[dataset],
       ny = meta.time.length
-    var n, i, id, dim, en, e, y, q1, q3
-    for (y = meta.time.length; y--; ) {
+    for (var n, k, id, dim, en, q1, q3, y = meta.time.length; y--; ) {
       mo[y] = []
       ms.mean[y] = 0
       ms.max[y] = -Infinity
       ms.min[y] = Infinity
     }
     n = []
-    for (i = v.selection.length; i--; ) {
-      en = v.selection[i]
-      id = en.features.id
-      e = rank_rows[id] = document.createElement('tr')
-      e.appendChild(document.createElement('td'))
-      e.lastElementChild.innerText = en.features.name
-      for (y = 0; y < ny; y++) {
-        dim = en.data[measure][y]
-        e.appendChild(document.createElement('td'))
-        e.lastElementChild.appendChild(document.createElement('span'))
-        e.lastElementChild.lastElementChild.className = 'value'
-        e.lastElementChild.appendChild(document.createElement('div'))
-        e.lastElementChild.lastElementChild.className = 'rank-bar'
-        if (full) {
-          mo[y].push([id, dim])
-        }
-        if ('number' === typeof dim) {
-          if (!n[y]) n[y] = 0
-          ms.mean[y] += dim
-          n[y]++
+    for (k in v.selection.all)
+      if (Object.hasOwn(v.selection.all, k)) {
+        en = v.selection.all[k]
+        id = en.features.id
+        for (y = 0; y < ny; y++) {
+          dim = en.data[measure][y]
+          if (full) {
+            mo[y].push([id, dim])
+          }
+          if ('number' === typeof dim) {
+            if (!n[y]) n[y] = 0
+            ms.mean[y] += dim
+            n[y]++
+          }
         }
       }
-    }
     if (full) {
       for (y = 0; y < ny; y++) {
         mo[y].sort(function sf(a, b) {
@@ -1178,8 +1331,8 @@ void (function () {
           ms.max[y] = mo[y][n[y] - 1][1]
           ms.q3[y] = q3[2] * mo[y][q3[0]][1] + q3[1] * mo[y][q3[3]][1]
           ms.mean[y] = ms.mean[y] / n[y]
-          ms.median[y] = mo[y][Math.floor(0.5 * n[y])][1]
-          ms.q1[y] = q1[2] * mo[y][q1[0]][1] + q1[1] * mo[y][q1[3]][1]
+          ms.median[y] = Math.min(ms.q3[y], mo[y][Math.floor(0.5 * n[y])][1])
+          ms.q1[y] = Math.min(ms.median[y], q1[2] * mo[y][q1[0]][1] + q1[1] * mo[y][q1[3]][1])
           ms.min[y] = mo[y][0][1]
         } else {
           ms.max[y] = 1
@@ -1196,35 +1349,35 @@ void (function () {
     }
   }
 
-  function make_aggregates(map) {
-    var id,
-      m,
-      s,
-      v,
-      y,
-      sets = {}
-    for (id in map)
-      if (Object.hasOwn(site.data, id)) {
-        d = site.data[id]
-        m = map[id]
-        for (s in m)
-          if (Object.hasOwn(d, s)) {
-            if (!Object.hasOwn(sets, s)) {
-              sets[s] = {}
-            }
-            if (!Object.hasOwn(sets[s], m[s])) {
-              sets[s][m[s]] = JSON.parse(JSON.stringify(d[s]))
-            } else {
-              for (v in d[s])
-                if (Object.hasOwn(d[s], v)) {
-                  for (y = d[s][v].length; y--; ) {
-                    sets[s][m[s]][v][y] += d[s][v][y]
-                  }
-                }
-            }
-          }
-      }
-  }
+  // function make_aggregates(map) {
+  //   var id,
+  //     m,
+  //     s,
+  //     v,
+  //     y,
+  //     sets = {}
+  //   for (id in map)
+  //     if (Object.hasOwn(site.data, id)) {
+  //       d = site.data[id]
+  //       m = map[id]
+  //       for (s in m)
+  //         if (Object.hasOwn(d, s)) {
+  //           if (!Object.hasOwn(sets, s)) {
+  //             sets[s] = {}
+  //           }
+  //           if (!Object.hasOwn(sets[s], m[s])) {
+  //             sets[s][m[s]] = JSON.parse(JSON.stringify(d[s]))
+  //           } else {
+  //             for (v in d[s])
+  //               if (Object.hasOwn(d[s], v)) {
+  //                 for (y = d[s][v].length; y--; ) {
+  //                   sets[s][m[s]][v][y] += d[s][v][y]
+  //                 }
+  //               }
+  //           }
+  //         }
+  //     }
+  // }
 
   function load_id_maps() {
     var ids,
@@ -1332,71 +1485,80 @@ void (function () {
   }
 
   function get_checkfun(e) {
-    return check_funs[
-      'string' === typeof e
-        ? 'equals'
-        : Object.hasOwn(e, 'current')
-        ? 'object' === typeof e.current
-          ? 'source_includes'
-          : 'source_equals'
-        : 'includes'
-    ]
+    return check_funs[!e || 'string' === typeof e ? 'equals' : 'includes']
   }
 
   function compile_dataview(v) {
-    v.parsed = {
-      dataset: v.dataset ? (Object.hasOwn(site.data, v.dataset) ? v.dataset : _u[v.dataset]) : false,
-      ids: 'string' === typeof v.ids && Object.hasOwn(_u, v.ids) ? _u[v.ids] : v.ids,
-      features: v.features ? {} : false,
+    v.selection = {ids: {}, features: {}, dataset: {}, all: {}}
+    v.n_selected = {ids: 0, features: 0, dataset: 0, all: 0}
+    v.get = {
+      dataset: function () {
+        return 'string' === typeof v.dataset && Object.hasOwn(_u, v.dataset) ? _u[v.dataset].value() : v.dataset
+      },
+      ids: function () {
+        return 'string' === typeof v.ids && Object.hasOwn(_u, v.ids) ? _u[v.ids].value() : v.ids
+      },
+      features: {},
     }
-    v.ids_check = get_checkfun(v.parsed.ids)
+    v.ids_check = get_checkfun(v.get.ids())
     v.feature_checks = {}
-    if (v.parsed.features)
+    if (v.features)
       for (var k in v.features)
         if (Object.hasOwn(v.features, k)) {
-          v.parsed.features[k] =
-            'object' === typeof v.features[k] || !Object.hasOwn(_u, v.features[k]) ? v.features[k] : _u[v.features[k]]
-          v.feature_checks[k] = get_checkfun(v.parsed.features[k])
+          v.get.features[k] = function () {
+            return valueOf(v.features[k])
+          }
+          v.feature_checks[k] = get_checkfun(valueOf(v.features[k]))
         }
     v.k = ''
     v.checks = {
-      dataset: ('string' === typeof v.parsed.dataset
-        ? function (e) {
-            return this.parsed.dataset === e.group
-          }
-        : function (e) {
-            return this.parsed.dataset.current === e.group
-          }
-      ).bind(v),
-      ids: ('object' === typeof v.parsed.ids && Object.hasOwn(v.parsed.ids, 'dataset')
-        ? function (e) {
-            return (
-              e.features &&
-              this.ids_check(
-                this.parsed.ids,
-                Object.hasOwn(e.features, _s[this.parsed.ids.depends])
-                  ? e.features[_s[this.parsed.ids.depends]]
-                  : e.features.id
+      dataset: function (e) {
+        return this.get.dataset() === e.group
+      }.bind(v),
+      ids: ('string' === typeof v.ids &&
+      Object.hasOwn(_u, v.ids) &&
+      (('virtual' === _u[v.ids].type && Object.hasOwn(_u, _u[v.ids].source)) ||
+        (Object.hasOwn(_u[v.ids], 'depends') && Object.hasOwn(_u, _u[v.ids].depends)))
+        ? 'virtual' === _u[v.ids].type
+          ? function (e) {
+              const c = _u[_u[this.ids].source]
+              return (
+                e.features &&
+                this.ids_check(
+                  this.get.ids(),
+                  e.features[!c || e.group === valueOf(c.dataset) ? 'id' : valueOf(c.dataset)]
+                )
               )
-            )
-          }
+            }
+          : function (e) {
+              const f = _u[_u[this.ids].depends].value()
+              return (
+                e.features &&
+                this.ids_check(
+                  valueOf(this.get.ids()),
+                  Object.hasOwn(e.features, f) ? valueOf(e.features[f]) : e.features.id
+                )
+              )
+            }
         : function (e) {
-            return e.features && this.ids_check(this.parsed.ids, e.features.id)
+            return e.features && this.ids_check(this.get.ids(), e.features.id)
           }
       ).bind(v),
       features: function (e) {
         for (this.k in this.features)
           if (Object.hasOwn(this.features, this.k)) {
-            return e.features && this.feature_checks[k](this.parsed.features[k], e.features[k])
+            return (
+              e.features && this.feature_checks[this.k](valueOf(this.features[this.k]), valueOf(e.features[this.k]))
+            )
           }
       }.bind(v),
     }
     v.check = function (e) {
-      return (
-        (!this.parsed.ids || this.checks.ids(e)) &&
-        (!this.parsed.features || this.checks.features(e)) &&
-        (!this.parsed.dataset || this.checks.dataset(e))
-      )
+      return {
+        ids: !this.ids || this.checks.ids(e),
+        features: !this.features || this.checks.features(e),
+        dataset: !this.dataset || this.checks.dataset(e),
+      }
     }.bind(v)
   }
 
@@ -1418,40 +1580,51 @@ void (function () {
     if (Object.hasOwn(_c, id)) {
       var c = _u[id],
         d = _c[id],
+        v,
         i,
         ci,
         n,
         r = [],
         pass,
-        k
-      for (i = d.length; i--; ) {
-        if ('rule' === d[i].type) {
-          if (-1 === r.indexOf(d[i].rule)) {
-            r.push(site.rules[d[i].rule])
-          }
-        } else {
-          if (
-            Object.hasOwn(conditionals, d[i].type) &&
-            (force || !c || 'string' !== typeof c.current || d[i].current !== c.current)
-          ) {
-            conditionals[d[i].type]('dataview' === d[i].type ? d[i].id : _u[d[i].id], c)
-            if (c) d[i].current = c.current
+        k,
+        v = c && c.value() + ''
+      if (force || c.state !== v) {
+        c.state = v
+        for (i = d.length; i--; ) {
+          if ('rule' === d[i].type) {
+            if (-1 === r.indexOf(d[i].rule)) {
+              r.push(site.rules[d[i].rule])
+            }
+          } else {
+            if (!Object.hasOwn(conditionals, d[i].type)) {
+              _u[d[i].id].update()
+            } else {
+              conditionals[d[i].type](_u[d[i].id], c)
+            }
           }
         }
-      }
-      if (r)
         for (i = r.length; i--; ) {
           for (n = r[i].condition.length, ci = 0; ci < n; ci++) {
             pass = r[i].condition[ci].check()
             if (!pass) break
           }
-          if (pass) {
-            for (k in r[i].effects)
-              if (Object.hasOwn(_u, k)) {
-                _u[k].set(r[i].effects[k])
+          for (k in r[i].effects)
+            if (pass) {
+              if (k === 'display') {
+                r[i].effects[k].e.classList.remove('hidden')
+              } else if (Object.hasOwn(_u, k)) {
+                _u[k].set(valueOf(r[i].effects[k]))
               }
-          }
+            } else if (k === 'display') {
+              r[i].effects[k].e.classList.add('hidden')
+              if (r[i].effects[k].u) r[i].effects[k].u.reset()
+            } else if (Object.hasOwn(r[i], 'default')) {
+              if (Object.hasOwn(_u, k)) {
+                _u[k].set(valueOf(r[i].default))
+              }
+            }
         }
+      }
     }
   }
 
@@ -1485,9 +1658,9 @@ void (function () {
   }
 
   function queue_init_table() {
-    if (window.jQuery && window.DataTable) {
+    if (window.jQuery && window.DataTable && Object.hasOwn(site.dataviews[this.view], 'get')) {
       this.table = $(this.e).DataTable({
-        columns: this.headers[_s[site.dataviews[this.view].dataset]],
+        columns: this.headers[valueOf(site.dataviews[this.view].get.dataset())],
       })
     } else {
       setTimeout(queue_init_table.bind(this), 10)
@@ -1495,7 +1668,7 @@ void (function () {
   }
 
   function queue_init() {
-    if (document.readyState !== 'loading') {
+    if ('loading' !== document.readyState) {
       if (!load_id_maps()) {
         init()
         init_summaries()
@@ -1524,13 +1697,5 @@ void (function () {
     }
     f.open('GET', url, true)
     f.send()
-  }
-
-  if (site && site.data) {
-    queue_init()
-  } else if (site && site.metadata.file) {
-    load_data(site.metadata.file)
-  } else {
-    throw new Error('No data or metadata information present')
   }
 })()

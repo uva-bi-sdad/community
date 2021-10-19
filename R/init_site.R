@@ -1,6 +1,6 @@
 #' Create a website
 #'
-#' Create a repository for a static, website for data documentation and exploration.
+#' Create a repository for a static website for data documentation and exploration.
 #'
 #' @param title Title of the site.
 #' @param dir Directory in which to create the site's directory.
