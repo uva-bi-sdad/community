@@ -19,7 +19,7 @@
 output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, options = NULL) {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
-  id <- 0
+  id <- caller$uid
   options$variables <- variables
   options$dataset <- dataset
   r <- paste(c(
@@ -46,10 +46,9 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, opti
       hash = "sha384-vMizDKeY0PRwYLZfb7o226IbTYSHZZSJ8iH3TX3xNT8ydJ9G4vUNLHtUkUPHDNI6",
       loading = "defer"
     )
-    if (is.null(attr(caller, "tables"))) caller$tables <- list()
-    id <- length(caller$tables)
     caller$tables[[paste0("table", id)]] <- options
     caller$content <- c(caller$content, r)
+    caller$uid <- caller$uid + 1
   }
   r
 }

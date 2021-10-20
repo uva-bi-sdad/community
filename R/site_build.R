@@ -6,6 +6,8 @@
 #' @param file Name of the R file to build the site from.
 #' @param outdir Path to place the .
 #' @param name Path to the site project directory.
+#' @param variables A character vector of variable names to include from the data. If no specified,
+#' all variables are included.
 #' @param bundle_data Logical; if \code{TRUE}, will write the data to the site file; useful when
 #' running the site locally without server. Otherwise, the data will be loaded separately through an http request.
 #' @param open_after Logical; if \code{TRUE}, will open the site in a browser after it is built.
@@ -20,8 +22,8 @@
 #' @seealso To initialize a site project, use \code{\link{init_site}}.
 #' @export
 
-site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "index.html", bundle_data = FALSE,
-                       open_after = FALSE, force = FALSE) {
+site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "index.html", variables = NULL,
+                       bundle_data = FALSE, open_after = FALSE, force = FALSE) {
   page <- paste0(dir, "/", file)
   if (!file.exists(page)) cli_abort("{.file {page}} does not exist")
   out <- paste(c(dir, outdir, name), collapse = "/")
@@ -41,9 +43,13 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
         d <- meta$resources[[i]]
         file <- paste0(ddir, d$filename)
         if (file.exists(file)) {
-          if (force || file.mtime(file) > last_updated) {
+          if (force || !is.null(variables) || file.mtime(file) > last_updated) {
             updated <- TRUE
             data <- fread(file)
+            if (!is.null(variables)) {
+              d$schema$fields <- Filter(function(v) v$name %in% variables, d$schema$fields)
+              data <- data[, ..variables]
+            }
             if (length(d$time) && d$time[[1]] %in% colnames(data)) {
               data <- data[order(data[[d$time[[1]]]]), ]
             }

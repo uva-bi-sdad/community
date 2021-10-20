@@ -59,7 +59,7 @@ page_section <- function(..., type = "row", wraps = NA, sizes = NA, breakpoints 
   )
   if (building) {
     caller$content <- c(caller$content, r)
-    for (n in names(parts)) if (n != "content") caller[[n]] <- c(caller[[n]], parts[[n]])
+    for (n in names(parts)) if (n != "content" && n != "uid") caller[[n]] <- c(caller[[n]], parts[[n]])
     if (any(conditions != "")) {
       ids <- ids[conditions != ""]
       conditions <- conditions[conditions != ""]

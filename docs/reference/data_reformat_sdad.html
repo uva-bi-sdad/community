@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Render a Website — site_build • community</title>
+<title>Reformat an SDAD-formatted dataset — data_reformat_sdad • community</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,8 @@
 
 
 
-<meta property="og:title" content="Render a Website — site_build" />
-<meta property="og:description" content="Write HTML output from the site.R file in a site project." />
+<meta property="og:title" content="Reformat an SDAD-formatted dataset — data_reformat_sdad" />
+<meta property="og:description" content="Unify multiple files, which each contain a tall set of variables associated with regions." />
 <meta property="og:image" content="/logo.svg" />
 
 
@@ -116,70 +116,78 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Render a Website</h1>
-    <small class="dont-index">Source: <a href='https://github.com/miserman/community/blob/master/R/site_build.R'><code>R/site_build.R</code></a></small>
-    <div class="hidden name"><code>site_build.Rd</code></div>
+    <h1>Reformat an SDAD-formatted dataset</h1>
+    <small class="dont-index">Source: <a href='https://github.com/miserman/community/blob/master/R/data_reformat_sdad.R'><code>R/data_reformat_sdad.R</code></a></small>
+    <div class="hidden name"><code>data_reformat_sdad.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Write HTML output from the <code>site.R</code> file in a site project.</p>
+    <p>Unify multiple files, which each contain a tall set of variables associated with regions.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>site_build</span><span class='op'>(</span>dir <span class='op'>=</span> <span class='st'>"."</span>, file <span class='op'>=</span> <span class='st'>"site.r"</span>, outdir <span class='op'>=</span> <span class='st'>"docs"</span>,
-  name <span class='op'>=</span> <span class='st'>"index.html"</span>, variables <span class='op'>=</span> <span class='cn'>NULL</span>, bundle_data <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  open_after <span class='op'>=</span> <span class='cn'>FALSE</span>, force <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>data_reformat_sdad</span><span class='op'>(</span><span class='va'>files</span>, value <span class='op'>=</span> <span class='st'>"value"</span>, value_name <span class='op'>=</span> <span class='st'>"measure"</span>,
+  id <span class='op'>=</span> <span class='st'>"geoid"</span>, time <span class='op'>=</span> <span class='st'>"year"</span>, dataset <span class='op'>=</span> <span class='st'>"region_type"</span>,
+  value_info <span class='op'>=</span> <span class='st'>"measure_type"</span>, entity_info <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"region_type"</span>,
+  <span class='st'>"region_name"</span><span class='op'>)</span>, out <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>dir</th>
-      <td><p>Path to the site project directory.</p></td>
+      <th>files</th>
+      <td><p>A character vector of file paths, or the path to a directory containing data files.</p></td>
     </tr>
     <tr>
-      <th>file</th>
-      <td><p>Name of the R file to build the site from.</p></td>
+      <th>value</th>
+      <td><p>Name of the column containing variable values.</p></td>
     </tr>
     <tr>
-      <th>outdir</th>
-      <td><p>Path to place the .</p></td>
+      <th>value_name</th>
+      <td><p>Name of the column containing variable names; assumed to be a single variable per file if
+not present.</p></td>
     </tr>
     <tr>
-      <th>name</th>
-      <td><p>Path to the site project directory.</p></td>
+      <th>id</th>
+      <td><p>Column name IDs which uniquely identify entities.</p></td>
     </tr>
     <tr>
-      <th>variables</th>
-      <td><p>A character vector of variable names to include from the data. If no specified,
-all variables are included.</p></td>
+      <th>time</th>
+      <td><p>Column name of the variable representing time.</p></td>
     </tr>
     <tr>
-      <th>bundle_data</th>
-      <td><p>Logical; if <code>TRUE</code>, will write the data to the site file; useful when
-running the site locally without server. Otherwise, the data will be loaded separately through an http request.</p></td>
+      <th>dataset</th>
+      <td><p>Column name used to separate entity scales.</p></td>
     </tr>
     <tr>
-      <th>open_after</th>
-      <td><p>Logical; if <code>TRUE</code>, will open the site in a browser after it is built.</p></td>
+      <th>value_info</th>
+      <td><p>A vector of column names which provide additional information about values
+(such as their name and type).</p></td>
     </tr>
     <tr>
-      <th>force</th>
-      <td><p>Logical; if <code>TRUE</code>, will reprocess data even if the source data is older than the existing
-processed version.</p></td>
+      <th>entity_info</th>
+      <td><p>A vector of column names which provide additional information about entities
+(such as their name and type).</p></td>
+    </tr>
+    <tr>
+      <th>out</th>
+      <td><p>Path to a directory to write files to; if not specified, files will not be written.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Invisible path to the written file.</p>
-    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+    <p>An invisible list of the unified variable datasets, split into datasets.</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <div class='dont-index'><p>To initialize a site project, use <code><a href='init_site.html'>init_site</a></code>.</p></div>
+    <p>The basic assumption is that there are (a) entities which (b) exist in a hierarchy, and
+(c1) have a static set of features and (c2) a set of variable features which
+(d) are assessed at multiple time points.</p>
+<p>For example (and generally), entities are (a) regions, with (b) smaller regions making up larger regions,
+and which (c1) have names, and (c2) population and demographic counts (d) between 2009 and 2019.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span>
-<span class='r-in'><span class='co'># run from within a site project directory, initialized with `init_site()`</span></span>
-<span class='r-in'><span class='fu'>site_build</span><span class='op'>(</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'>data_reformat_sdad</span><span class='op'>(</span><span class='st'>"data/directory"</span><span class='op'>)</span></span>
 <span class='r-in'><span class='op'>}</span></span>
 </pre>
   </div>

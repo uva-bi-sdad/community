@@ -5,8 +5,8 @@
 \title{Render a Website}
 \usage{
 site_build(dir = ".", file = "site.r", outdir = "docs",
-  name = "index.html", bundle_data = FALSE, open_after = FALSE,
-  force = FALSE)
+  name = "index.html", variables = NULL, bundle_data = FALSE,
+  open_after = FALSE, force = FALSE)
 }
 \arguments{
 \item{dir}{Path to the site project directory.}
@@ -16,6 +16,9 @@ site_build(dir = ".", file = "site.r", outdir = "docs",
 \item{outdir}{Path to place the .}
 
 \item{name}{Path to the site project directory.}
+
+\item{variables}{A character vector of variable names to include from the data. If no specified,
+all variables are included.}
 
 \item{bundle_data}{Logical; if \code{TRUE}, will write the data to the site file; useful when
 running the site locally without server. Otherwise, the data will be loaded separately through an http request.}

@@ -462,15 +462,31 @@ void (function () {
       table: {
         update: function () {
           if (this.table) {
-            const v = site.dataviews[this.view]
+            const v = site.dataviews[this.view],
+              d = v.get.dataset()
             this.table.clear()
             if (v.selection) {
-              var k, y
+              var k, i, n, vn
+              if (this.options.variables) {
+                vn = valueOf(this.options.variables)
+                if ('data.' + vn !== this.headers[d][1].data) {
+                  this.table.destroy()
+                  for (n = this.headers[d].length, i = 1; i < n; i++) {
+                    this.headers[d][i].data = 'data.' + vn
+                  }
+                  this.options.columns = this.headers[d]
+                  this.table = $(this.e).DataTable(this.options)
+                }
+              }
               for (k in v.selection.all)
                 if (Object.hasOwn(v.selection.all, k)) {
-                  for (y = meta.time.length; y--; ) {
-                    this.i = y
+                  if (this.options.variables) {
                     this.table.row.add(v.selection.all[k])
+                  } else {
+                    for (i = meta.time.length; i--; ) {
+                      this.i = i
+                      this.table.row.add(v.selection.all[k])
+                    }
                   }
                 }
             }
@@ -981,7 +997,8 @@ void (function () {
             o.min = parseInt(o.e.min)
             o.max = parseInt(o.e.max)
           }
-          if ('number' !== typeof v || v > o.max || v < o.min) o.default = o.max
+          o.default = parseFloat(o.default)
+          if ('number' !== typeof o.default || o.default > o.max || o.default < o.min) o.default = o.max
           o.e.value = o.source = o.default
           for (ci = o.min, n = o.max; ci <= n; ci++) {
             o.values.push(ci)
@@ -1081,17 +1098,32 @@ void (function () {
         for (ce = e.getElementsByClassName('location-table'), ci = ce.length; ci--; ) {
           init_location_table(ce[ci])
         }
-        for (ce = e.getElementsByClassName('measure-table'), ci = ce.length; ci--; ) {
-          init_measure_table(ce[ci])
-        }
       } else if ('table' === o.type) {
         e.appendChild(document.createElement('tHead'))
         e.appendChild(document.createElement('tBody'))
-        o.options = site.tables && site.tables[o.id]
+        o.options = (site.tables && site.tables[o.id]) || {}
         o.update = elements.table.update.bind(o)
         o.headers = {}
         if (o.options && o.options.variables) {
-          // for(ci = o.options.variables; ci--;){}
+          if ('object' === typeof o.options.variables) {
+            o.options.variables = o.options.variables[0]
+          }
+          if (Object.hasOwn(_u, o.options.variables)) add_dependency(o.options.variables, {type: 'update', id: o.id})
+          k = valueOf(o.options.variables)
+          for (ci = variables[k].datasets.length; ci--; ) {
+            p = variables[k].datasets[ci]
+            if (!Object.hasOwn(o.headers, p)) o.headers[p] = []
+            o.headers[p].push({title: 'Region', data: 'features.name'})
+            for (n = meta.time.length; n--; ) {
+              o.headers[p].push({
+                title: meta.time[n] + '',
+                data: 'data.' + k,
+                render: function (d) {
+                  return d[this]
+                }.bind(n),
+              })
+            }
+          }
         } else {
           for (k in variables)
             if (Object.hasOwn(variables, k)) {
@@ -1315,6 +1347,8 @@ void (function () {
             if (!n[y]) n[y] = 0
             ms.mean[y] += dim
             n[y]++
+            if (dim > ms.max[y]) ms.max[y] = dim
+            if (dim < ms.min[y]) ms.min[y] = dim
           }
         }
       }
@@ -1328,18 +1362,31 @@ void (function () {
         if (n[y]) {
           q1 = quantile_inds(0.25, n[y])
           q3 = quantile_inds(0.75, n[y])
-          ms.max[y] = mo[y][n[y] - 1][1]
-          ms.q3[y] = q3[2] * mo[y][q3[0]][1] + q3[1] * mo[y][q3[3]][1]
           ms.mean[y] = ms.mean[y] / n[y]
-          ms.median[y] = Math.min(ms.q3[y], mo[y][Math.floor(0.5 * n[y])][1])
-          ms.q1[y] = Math.min(ms.median[y], q1[2] * mo[y][q1[0]][1] + q1[1] * mo[y][q1[3]][1])
-          ms.min[y] = mo[y][0][1]
+          if (!isFinite(ms.min[y])) ms.min[y] = ms.mean[y]
+          if (!isFinite(ms.max[y])) ms.max[y] = ms.mean[y]
+          ms.median[y] =
+            'numeric' === typeof mo[y][Math.floor(0.5 * n[y])]
+              ? Math.min(ms.q3[y], mo[y][Math.floor(0.5 * n[y])][1])
+              : ms.mean[y]
+          ms.q3[y] =
+            'numeric' === typeof q3[2]
+              ? q3[2] * mo[y][q3[0]][1] + q3[1] * mo[y][q3[3]][1]
+              : ms.median[y]
+              ? (ms.max[y] + ms.median[y]) / 2
+              : ms.mean[y]
+          ms.q1[y] =
+            'numeric' === typeof q1[2]
+              ? Math.min(ms.median[y], q1[2] * mo[y][q1[0]][1] + q1[1] * mo[y][q1[3]][1])
+              : ms.median[y]
+              ? (ms.min[y] + ms.median[y]) / 2
+              : ms.mean[y]
         } else {
-          ms.max[y] = 1
-          ms.q3[y] = 0.75
+          ms.max[y] = 0
+          ms.q3[y] = 0
           ms.mean[y] = 0
-          ms.median[y] = 0.5
-          ms.q1[y] = 0.25
+          ms.median[y] = 0
+          ms.q1[y] = 0
           ms.min[y] = 0
         }
         ms.norm_median[y] = ms.max[y] - ms.min[y] ? (ms.median[y] - ms.min[y]) / (ms.max[y] - ms.min[y]) : ms.median[y]
@@ -1659,9 +1706,9 @@ void (function () {
 
   function queue_init_table() {
     if (window.jQuery && window.DataTable && Object.hasOwn(site.dataviews[this.view], 'get')) {
-      this.table = $(this.e).DataTable({
-        columns: this.headers[valueOf(site.dataviews[this.view].get.dataset())],
-      })
+      this.options.columns = this.headers[valueOf(site.dataviews[this.view].get.dataset())]
+      this.table = $(this.e).DataTable(this.options)
+      this.update()
     } else {
       setTimeout(queue_init_table.bind(this), 10)
     }

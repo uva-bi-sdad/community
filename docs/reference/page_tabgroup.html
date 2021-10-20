@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Render a Website — site_build • community</title>
+<title>Adds a group of tabs to a website — page_tabgroup • community</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,8 @@
 
 
 
-<meta property="og:title" content="Render a Website — site_build" />
-<meta property="og:description" content="Write HTML output from the site.R file in a site project." />
+<meta property="og:title" content="Adds a group of tabs to a website — page_tabgroup" />
+<meta property="og:description" content="Adds a group of tabs, each of which contains input and/or output components." />
 <meta property="og:image" content="/logo.svg" />
 
 
@@ -116,70 +116,53 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Render a Website</h1>
-    <small class="dont-index">Source: <a href='https://github.com/miserman/community/blob/master/R/site_build.R'><code>R/site_build.R</code></a></small>
-    <div class="hidden name"><code>site_build.Rd</code></div>
+    <h1>Adds a group of tabs to a website</h1>
+    <small class="dont-index">Source: <a href='https://github.com/miserman/community/blob/master/R/page_tabgroup.R'><code>R/page_tabgroup.R</code></a></small>
+    <div class="hidden name"><code>page_tabgroup.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Write HTML output from the <code>site.R</code> file in a site project.</p>
+    <p>Adds a group of tabs, each of which contains input and/or output components.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>site_build</span><span class='op'>(</span>dir <span class='op'>=</span> <span class='st'>"."</span>, file <span class='op'>=</span> <span class='st'>"site.r"</span>, outdir <span class='op'>=</span> <span class='st'>"docs"</span>,
-  name <span class='op'>=</span> <span class='st'>"index.html"</span>, variables <span class='op'>=</span> <span class='cn'>NULL</span>, bundle_data <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  open_after <span class='op'>=</span> <span class='cn'>FALSE</span>, force <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>page_tabgroup</span><span class='op'>(</span><span class='va'>...</span>, id <span class='op'>=</span> <span class='cn'>NULL</span>, class <span class='op'>=</span> <span class='cn'>NULL</span>, condition <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>dir</th>
-      <td><p>Path to the site project directory.</p></td>
+      <th>...</th>
+      <td><p>A separately entered list for each tab and its content. Named entries in each tab entry can be
+<code>"name"</code> (for the text appearing in the navigation tab), <code>"id"</code>, <code>"class"</code>, and <code>"condition"</code>.
+Unnamed entries in each list entry are considered the content to be added to the tab's pane. See examples.</p></td>
     </tr>
     <tr>
-      <th>file</th>
-      <td><p>Name of the R file to build the site from.</p></td>
+      <th>id</th>
+      <td><p>Unique ID of the tabgroup.</p></td>
     </tr>
     <tr>
-      <th>outdir</th>
-      <td><p>Path to place the .</p></td>
+      <th>class</th>
+      <td><p>A class name to add to the tabgroup.</p></td>
     </tr>
     <tr>
-      <th>name</th>
-      <td><p>Path to the site project directory.</p></td>
-    </tr>
-    <tr>
-      <th>variables</th>
-      <td><p>A character vector of variable names to include from the data. If no specified,
-all variables are included.</p></td>
-    </tr>
-    <tr>
-      <th>bundle_data</th>
-      <td><p>Logical; if <code>TRUE</code>, will write the data to the site file; useful when
-running the site locally without server. Otherwise, the data will be loaded separately through an http request.</p></td>
-    </tr>
-    <tr>
-      <th>open_after</th>
-      <td><p>Logical; if <code>TRUE</code>, will open the site in a browser after it is built.</p></td>
-    </tr>
-    <tr>
-      <th>force</th>
-      <td><p>Logical; if <code>TRUE</code>, will reprocess data even if the source data is older than the existing
-processed version.</p></td>
+      <th>condition</th>
+      <td><p>A string representing the display condition of the entire tabgroup.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Invisible path to the written file.</p>
-    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+    <p>A character vector of the content to be added.</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <div class='dont-index'><p>To initialize a site project, use <code><a href='init_site.html'>init_site</a></code>.</p></div>
+    <p>See the <a href='https://getbootstrap.com/docs/5.1/layout/grid'>Bootstrap grid documentation</a>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span>
-<span class='r-in'><span class='co'># run from within a site project directory, initialized with `init_site()`</span></span>
-<span class='r-in'><span class='fu'>site_build</span><span class='op'>(</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='page_section.html'>page_section</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span></span>
+<span class='r-in'>  <span class='st'>"Map"</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>id <span class='op'>=</span> <span class='st'>"map_tab"</span>, <span class='fu'><a href='output_map.html'>output_map</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>,</span>
+<span class='r-in'>  <span class='st'>"Data"</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='fu'><a href='output_table.html'>output_table</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>,</span>
+<span class='r-in'><span class='op'>)</span><span class='op'>)</span></span>
 <span class='r-in'><span class='op'>}</span></span>
 </pre>
   </div>
