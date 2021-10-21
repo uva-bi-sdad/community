@@ -41,21 +41,20 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
       meta <- read_json(f)
       for (i in seq_along(meta$resources)) {
         d <- meta$resources[[i]]
+        if (!is.null(variables)) d$schema$fields <- Filter(function(v) v$name %in% variables, d$schema$fields)
         file <- paste0(ddir, d$filename)
         if (file.exists(file)) {
-          if (force || !is.null(variables) || file.mtime(file) > last_updated) {
+          if (force || file.mtime(file) > last_updated) {
             updated <- TRUE
             data <- fread(file)
-            if (!is.null(variables)) {
-              d$schema$fields <- Filter(function(v) v$name %in% variables, d$schema$fields)
-              data <- data[, ..variables]
-            }
+            if (!is.null(variables)) data <- data[, variables, with = FALSE]
             if (length(d$time) && d$time[[1]] %in% colnames(data)) {
               data <- data[order(data[[d$time[[1]]]]), ]
             }
             if (length(d$ids) && d$ids[[1]]$variable %in% colnames(data)) {
               ids <- data[[d$ids[[1]]$variable]]
-              data <- data[, d$ids[[1]]$variable := NULL]
+              # data <- data[, d$ids[[1]]$variable := NULL]
+              set(data, NULL, d$ids[[1]]$variable, NULL)
             } else {
               ids <- rownames(data)
             }
@@ -83,11 +82,16 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
     list(
       package = if (file.exists(f)) sub(paste0(dir, "/docs/"), "", f, fixed = TRUE),
       datasets = if (length(meta$resources) == 1) info$name else names(info),
+      variables = variables,
       info = info,
       file = if (file.exists(path)) sub(paste0(dir, "/docs/"), "", path, fixed = TRUE)
     )
   }
   settings <- read_json(paste0(dir, "/settings.json"))
+  if (!is.null(settings$metadata) && !is.null(settings$metadata$variables) &&
+    !identical(settings$metadata$variables, as.list(variables))) {
+    force <- TRUE
+  }
   settings$metadata <- data_preprocess()
   write_json(settings, paste0(dir, "/settings.json"), pretty = TRUE, auto_unbox = TRUE)
   parts$dependencies <- list(

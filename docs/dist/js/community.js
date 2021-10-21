@@ -78,7 +78,7 @@ void (function () {
       map_colors: function (u) {
         const c = _u[u.colors] && _u[u.colors].value()
         if (c && Object.hasOwn(site.dataviews[u.view], 'get')) {
-          var d = valueOf(site.dataviews[u.view].get.dataset()),
+          var d = site.dataviews[u.view].get.dataset(),
             l,
             y = u.time ? _u[u.time].value() - _u[u.time].min : 0,
             v = site.dataviews[u.view],
@@ -374,7 +374,7 @@ void (function () {
               var k,
                 b,
                 traces = [],
-                summary = variables[this.parsed.y][this.view].summaries[valueOf(v.get.dataset())]
+                summary = variables[this.parsed.y][this.view].summaries[v.get.dataset()]
               for (k in s)
                 if (Object.hasOwn(s, k)) {
                   traces.push(make_data_entry(this, s[k]))
@@ -434,7 +434,7 @@ void (function () {
             if (this.view) {
               v = site.dataviews[this.view]
               p = this.base.children
-              if (v.ids && (k = valueOf(v.get.ids()))) {
+              if (v.ids && (k = v.get.ids())) {
                 // when showing a selected region
                 entity = entities[k]
                 p[0].innerText = entity.features.name
@@ -663,7 +663,7 @@ void (function () {
           pal(
             e.data[_u[u.colors].value()][y],
             'divergent',
-            variables[_u[u.colors].value()][u.view].summaries[valueOf(site.dataviews[u.view].get.dataset())],
+            variables[_u[u.colors].value()][u.view].summaries[site.dataviews[u.view].get.dataset()],
             y
           ) ||
           '#808080'
@@ -1104,12 +1104,13 @@ void (function () {
         o.options = (site.tables && site.tables[o.id]) || {}
         o.update = elements.table.update.bind(o)
         o.headers = {}
-        if (o.options && o.options.variables) {
+        if (o.options.variables) {
           if ('object' === typeof o.options.variables) {
             o.options.variables = o.options.variables[0]
           }
           if (Object.hasOwn(_u, o.options.variables)) add_dependency(o.options.variables, {type: 'update', id: o.id})
           k = valueOf(o.options.variables)
+          if (!Object.hasOwn(o.options, 'order')) o.options.order = [[meta.time.length, 'asc']]
           for (ci = variables[k].datasets.length; ci--; ) {
             p = variables[k].datasets[ci]
             if (!Object.hasOwn(o.headers, p)) o.headers[p] = []
@@ -1120,7 +1121,7 @@ void (function () {
                 data: 'data.' + k,
                 render: function (d) {
                   return d[this]
-                }.bind(n),
+                }.bind(meta.time.length - n - 1),
               })
             }
           }
@@ -1295,6 +1296,10 @@ void (function () {
           if (Object.hasOwn(site.data, s)) {
             m.order[s] = []
             m.summaries[s] = {
+              time_range: [0, 0],
+              missing: [],
+              n: [],
+              sum: [],
               max: [],
               q3: [],
               mean: [],
@@ -1305,6 +1310,9 @@ void (function () {
             }
             for (y = meta.time.length; y--; ) {
               m.order[s].push([])
+              m.summaries[s].missing.push(0)
+              m.summaries[s].n.push(0)
+              m.summaries[s].sum.push(0)
               m.summaries[s].max.push(-Infinity)
               m.summaries[s].q3.push(0)
               m.summaries[s].mean.push(0)
@@ -1322,18 +1330,20 @@ void (function () {
     if (!Object.hasOwn(variables[measure], view))
       variables[measure][view] = JSON.parse(JSON.stringify(variables[measure].default))
     const v = site.dataviews[view],
-      dataset = valueOf(v.get.dataset()),
+      dataset = v.get.dataset(),
       m = variables[measure][view],
       mo = m.order[dataset],
       ms = m.summaries[dataset],
       ny = meta.time.length
     for (var n, k, id, dim, en, q1, q3, y = meta.time.length; y--; ) {
       mo[y] = []
+      ms.missing[y] = 0
+      ms.n[y] = 0
+      ms.sum[y] = 0
       ms.mean[y] = 0
       ms.max[y] = -Infinity
       ms.min[y] = Infinity
     }
-    n = []
     for (k in v.selection.all)
       if (Object.hasOwn(v.selection.all, k)) {
         en = v.selection.all[k]
@@ -1344,30 +1354,33 @@ void (function () {
             mo[y].push([id, dim])
           }
           if ('number' === typeof dim) {
-            if (!n[y]) n[y] = 0
-            ms.mean[y] += dim
-            n[y]++
+            ms.sum[y] += dim
+            ms.n[y]++
             if (dim > ms.max[y]) ms.max[y] = dim
             if (dim < ms.min[y]) ms.min[y] = dim
-          }
+          } else ms.missing[y]++
         }
       }
+    ms.time_range[0] = Infinity
+    ms.time_range[1] = -Infinity
     if (full) {
+      for (y = 0; y < ny; y++)
+        if (ms.n[y])
+          mo[y].sort(function sf(a, b) {
+            return a[1] - b[1]
+          })
       for (y = 0; y < ny; y++) {
-        mo[y].sort(function sf(a, b) {
-          return a[1] - b[1]
-        })
-      }
-      for (y = 0; y < ny; y++) {
-        if (n[y]) {
-          q1 = quantile_inds(0.25, n[y])
-          q3 = quantile_inds(0.75, n[y])
-          ms.mean[y] = ms.mean[y] / n[y]
+        if (ms.n[y]) {
+          if (y < ms.time_range[0]) ms.time_range[0] = y
+          if (y > ms.time_range[1]) ms.time_range[1] = y
+          q1 = quantile_inds(0.25, ms.n[y])
+          q3 = quantile_inds(0.75, ms.n[y])
+          ms.mean[y] = ms.sum[y] / ms.n[y]
           if (!isFinite(ms.min[y])) ms.min[y] = ms.mean[y]
           if (!isFinite(ms.max[y])) ms.max[y] = ms.mean[y]
           ms.median[y] =
-            'numeric' === typeof mo[y][Math.floor(0.5 * n[y])]
-              ? Math.min(ms.q3[y], mo[y][Math.floor(0.5 * n[y])][1])
+            'numeric' === typeof mo[y][Math.floor(0.5 * ms.n[y])]
+              ? Math.min(ms.q3[y], mo[y][Math.floor(0.5 * ms.n[y])][1])
               : ms.mean[y]
           ms.q3[y] =
             'numeric' === typeof q3[2]
@@ -1384,7 +1397,6 @@ void (function () {
         } else {
           ms.max[y] = 0
           ms.q3[y] = 0
-          ms.mean[y] = 0
           ms.median[y] = 0
           ms.q1[y] = 0
           ms.min[y] = 0
@@ -1392,7 +1404,13 @@ void (function () {
         ms.norm_median[y] = ms.max[y] - ms.min[y] ? (ms.median[y] - ms.min[y]) / (ms.max[y] - ms.min[y]) : ms.median[y]
       }
     } else {
-      for (y = 0; y < ny; y++) ms.mean[y] = n[y] ? ms.mean[y] / n[y] : 0
+      for (y = 0; y < ny; y++) {
+        if (ms.n[y]) {
+          if (y < ms.time_range[0]) ms.time_range[0] = y
+          if (y > ms.time_range[1]) ms.time_range[1] = y
+          ms.mean[y] = ms.sum[y] / ms.n[y]
+        }
+      }
     }
   }
 
@@ -1510,20 +1528,20 @@ void (function () {
   }
 
   function map_entities(g) {
-    var id, f, k
+    var id, f
     for (var id in site.data[g])
       if (Object.hasOwn(site.data[g], id)) {
         f = data_maps[g][id]
-        entities[id] = {group: g, data: site.data[g][id], features: f}
+        entities[id] = {group: g, data: site.data[g][id], features: f, summaries: {}}
         if (f) {
           entitiesByName[f.name] = entities[id]
-          if (Object.hasOwn(f, 'district') && id.length > 5) {
+          if (Object.hasOwn(f, 'district') && id.length > 4) {
             f.county = id.substr(0, 5)
           }
         }
 
         // fill out location hierarchies
-        // for (k in f)
+        // for (var k in f)
         //   if (Object.hasOwn(site.data, k)) {
         //     if (!Object.hasOwn(f, 'parents')) f.parents = []
         //     f.parents.push(f[k])
@@ -1540,10 +1558,12 @@ void (function () {
     v.n_selected = {ids: 0, features: 0, dataset: 0, all: 0}
     v.get = {
       dataset: function () {
-        return 'string' === typeof v.dataset && Object.hasOwn(_u, v.dataset) ? _u[v.dataset].value() : v.dataset
+        return valueOf(
+          'string' === typeof v.dataset && Object.hasOwn(_u, v.dataset) ? _u[v.dataset].value() : v.dataset
+        )
       },
       ids: function () {
-        return 'string' === typeof v.ids && Object.hasOwn(_u, v.ids) ? _u[v.ids].value() : v.ids
+        return valueOf('string' === typeof v.ids && Object.hasOwn(_u, v.ids) ? _u[v.ids].value() : v.ids)
       },
       features: {},
     }
@@ -1581,10 +1601,7 @@ void (function () {
               const f = _u[_u[this.ids].depends].value()
               return (
                 e.features &&
-                this.ids_check(
-                  valueOf(this.get.ids()),
-                  Object.hasOwn(e.features, f) ? valueOf(e.features[f]) : e.features.id
-                )
+                this.ids_check(this.get.ids(), Object.hasOwn(e.features, f) ? valueOf(e.features[f]) : e.features.id)
               )
             }
         : function (e) {
@@ -1706,7 +1723,7 @@ void (function () {
 
   function queue_init_table() {
     if (window.jQuery && window.DataTable && Object.hasOwn(site.dataviews[this.view], 'get')) {
-      this.options.columns = this.headers[valueOf(site.dataviews[this.view].get.dataset())]
+      this.options.columns = this.headers[site.dataviews[this.view].get.dataset()]
       this.table = $(this.e).DataTable(this.options)
       this.update()
     } else {

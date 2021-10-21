@@ -56,7 +56,7 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
       spec <- spec[!su]
     }
     names <- c(names, list(colnames(d)))
-    d[, file := f]
+    set(d, NULL, "file", f)
     data <- c(data, list(d))
   }
   common <- Reduce(intersect, names)
@@ -76,7 +76,7 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
     }
   }
   vars <- c(vars, "file")
-  data <- do.call(rbind, lapply(data, function(d) d[, ..vars]))
+  data <- do.call(rbind, lapply(data, function(d) d[, vars, with = FALSE]))
   if (!id %in% vars) {
     id <- "id"
     vars <- c(id, vars)
@@ -85,11 +85,11 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
   data[[id]] <- as.character(data[[id]])
   if (!dataset %in% vars) {
     dataset <- "dataset"
-    data[, dataset := "dataset"]
+    set(data, NULL, "dataset", "dataset")
   }
   if (!time %in% vars) {
     time <- "time"
-    data[, time := 1]
+    set(data, NULL, "time", 1)
   }
   if (!any(value_name %in% vars)) {
     value_name <- "file"
@@ -118,10 +118,12 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
     for (f in datasets) {
       write.csv(sets[[f]], paste0(out, "/", f, ".csv"), row.names = FALSE)
     }
-    cli_bullets(c(
-      v = "Reformatted data files written:",
-      structure(paste0("{.file ", out, "/", datasets, ".csv}"), names = rep("*", length(datasets)))
-    ))
+    if (interactive()) {
+      cli_bullets(c(
+        v = "Reformatted data files written:",
+        structure(paste0("{.file ", out, "/", datasets, ".csv}"), names = rep("*", length(datasets)))
+      ))
+    }
   }
   invisible(sets)
 }

@@ -6,7 +6,7 @@ button:hover{opacity: .7}
 .row{padding: 0 0 1em 0}
 
 .menu-wrapper{position: fixed; overflow: visible; z-index: 90; transition: top 400ms, right 400ms, bottom 400ms, left 400ms}
-.menu{background-color: #e9e9ed; padding: 3em .5em .5em .5em; flex-wrap: nowrap}
+.menu{background-color: #efefef; padding: 3em .5em .5em .5em; flex-wrap: nowrap}
 .menu-toggle{position: absolute; border: none; font-size: 1.7em; width: 1.5em; height: 40px}
 .menu-top .menu-toggle{border-radius: 0 0 0 15px; bottom: -40px; right: 0}
 .menu-right{height: 100vh; flex-shrink: 0; transition: right .7s}
@@ -24,6 +24,5 @@ button:hover{opacity: .7}
 }
 .plot-container{margin: 0 0 0 -1em !important}
 .leaflet-container{background: #fff}
-.dataTable{width: 100%}
 .dataTables_wrapper .row:nth-child(2){overflow-x: auto}
-.dataTable td, .dataTable th{text-align: right}
+.dataTable td, .dataTable th{text-align: right; white-space: nowrap}
