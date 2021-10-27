@@ -21,3 +21,8 @@ reference:
   desc: check_ functions use some criteria to assess a resource (e.g., to validate its structure).
   contents:
   - starts_with("check_")
+  
+- title: Utils
+  desc: Other functions automate more specific tasks.
+  contents:
+  - data_reformat_sdad

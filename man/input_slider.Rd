@@ -4,21 +4,21 @@
 \alias{input_slider}
 \title{Add a range slider to a website}
 \usage{
-input_slider(label, range = c(0, 1), stepsize = 1, default = NULL,
-  id = label, variable = NULL, dataset = NULL, depends = NULL)
+input_slider(label, id = label, min = 0, max = 1, step = 1,
+  default = max, dataset = NULL, depends = NULL)
 }
 \arguments{
 \item{label}{Label of the input for the user.}
 
-\item{range}{A numeric vector with a minimum and maximum, or the name of a variable to calculate a range from.}
-
-\item{stepsize}{How much moving the handle adjusts the selected value.}
-
-\item{default}{Starting value of the slider handle.}
-
 \item{id}{Unique id of the element to be created.}
 
-\item{variable}{The name of a variable to calculate a range from (overwrites \code{range}).}
+\item{min}{The smallest value in the range.}
+
+\item{max}{The largest value in the range.}
+
+\item{step}{How much moving the handle adjusts the selected value.}
+
+\item{default}{Starting value of the slider handle.}
 
 \item{dataset}{The name of an included dataset, where \code{variable} should be looked for; only applies when
 there are multiple datasets with the same variable name.}

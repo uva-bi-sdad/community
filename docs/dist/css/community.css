@@ -7,7 +7,7 @@ button:hover{opacity: .7}
 
 .menu-wrapper{position: fixed; overflow: visible; z-index: 90; transition: top 400ms, right 400ms, bottom 400ms, left 400ms}
 .menu{background-color: #efefef; padding: 3em .5em .5em .5em; flex-wrap: nowrap}
-.menu-toggle{position: absolute; border: none; font-size: 1.7em; width: 1.5em; height: 40px}
+.menu-toggle{position: absolute; background-color: #efefef; border: none; font-size: 1.7em; width: 1.5em; height: 40px}
 .menu-top .menu-toggle{border-radius: 0 0 0 15px; bottom: -40px; right: 0}
 .menu-right{height: 100vh; flex-shrink: 0; transition: right .7s}
 .menu-right .menu-toggle{border-radius: 0 0 0 15px; left: -40px; top: 47px}
@@ -17,6 +17,8 @@ button:hover{opacity: .7}
 .menu-left .menu-toggle{border-radius: 0 0 15px 0; top: 47px; right: -40px}
 .menu-top .wrapper, .menu-bottom .wrapper{display: inline-grid}
 
+.slider-display{text-align: center}
+
 .content{
   position: absolute; top: 0; bottom: 0; left: 0; right: 0; width: auto; z-index: 0;
   padding: .5em; overflow-x: hidden; overflow-y: auto;
@@ -24,5 +26,8 @@ button:hover{opacity: .7}
 }
 .plot-container{margin: 0 0 0 -1em !important}
 .leaflet-container{background: #fff}
-.dataTables_wrapper .row:nth-child(2){overflow-x: auto}
+/* .dataTables_wrapper .row:nth-child(2){overflow-x: auto} */
+table.dataTable.compact thead th, table.dataTable.compact thead td{padding: 4px 17px 4px 0}
+table.dataTable.compact tbody th, table.dataTable.compact tbody td{padding: 0 17px 0 0}
 .dataTable td, .dataTable th{text-align: right; white-space: nowrap}
+.dataTable td:first-of-type, .dataTable th:first-of-type{text-align: left}

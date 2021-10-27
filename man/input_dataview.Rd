@@ -4,9 +4,32 @@
 \alias{input_dataview}
 \title{Add a unified data view to a website}
 \usage{
-input_dataview(dataset = NULL, ids = NULL, features = NULL, id = NULL)
+input_dataview(id = NULL, y = NULL, x = NULL, time = NULL,
+  time_agg = "last", time_filters = list(), dataset = NULL, ids = NULL,
+  features = NULL, palette = "divergent")
 }
 \arguments{
+\item{id}{An ID of the data view, for association with output elements. Defaults to \code{'view'} appended
+with a zero-index of views, based on the order in which they were specified
+(e.g., \code{'view0'} for the first view).}
+
+\item{y}{Primary variable of interest, used by default to color elements in outputs, and shown on the y-axis
+of plots; name of a variable or ID of a variable selector.}
+
+\item{x}{Secondary variable, shown by default on the x-axis of plots, and across columns in a single-variable table;
+name of a variable or ID of a variable selector.}
+
+\item{time}{Name of a variable giving names to multiple time points (such as a vector of years). Defaults to
+the time specified in an associated metadata, or a sequence along each variable.}
+
+\item{time_agg}{Specifies how multiple time points should be treated when a single value is required.
+Default is to use the last time with data. This could point to an input which selects a time.}
+
+\item{time_filters}{A list with entries specifying which years to display. Each entry should be a list
+with entries for \code{"variable"} (which variable is being filtered, which can be \code{"index"}),
+\code{"type"} (specifying the operator, such as \code{">"}), and \code{"value"}. The value of each entry
+can be static (e.g., referring to a variable) or the ID of an input.}
+
 \item{dataset}{Select which dataset to pull from; the name of an included dataset, or ID of a
 selector of dataset names.}
 
@@ -17,9 +40,9 @@ selector of IDs. If an IDs map is included in the site's datapackage, mapped com
 the names of features included in an \code{ids} field of the site's datapackage, and values corresponding to
 a value or vector of values, or a selector of values.}
 
-\item{id}{An ID of the data view, for association with output elements. Defaults to \code{'view'} appended
-with a zero-index of views, based on the order in which they were specified
-(e.g., \code{'view0'} for the first view).}
+\item{palette}{The name of the color palette used in maps and plots (from
+\href{https://colorbrewer2.org}{colorbrewer}); one of \code{"divergent"} (default), \code{"reds"},
+\code{"greens"}, \code{"grays"}, or \code{"cat"} (for a set of non-continuous colors).}
 }
 \value{
 The entered filter.

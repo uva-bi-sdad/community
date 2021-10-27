@@ -3,11 +3,11 @@
 #' Adds an input to select from the entered options.
 #'
 #' @param label Label of the input for the user.
+#' @param id Unique ID of the element to be created.
 #' @param options A vector of options, the name of a variable from which to pull levels, or either \code{"datasets"}
 #' or \code{"variables"} to select names of datasets or variables.
 #' @param default Which of the options to default to; either its index or value.
 #' @param display A display version of the options.
-#' @param id Unique ID of the element to be created.
 #' @param variable The name of a variable from which to get levels (overwritten by \code{depends}).
 #' @param dataset The name of an included dataset, where \code{variable} should be looked for; only applies when
 #' there are multiple datasets with the same variable name.
@@ -24,7 +24,7 @@
 #' @return A character vector of the contents to be added.
 #' @export
 
-input_select <- function(label, options, default = -1, display = options, id = label,
+input_select <- function(label, id = label, options, default = -1, display = options,
                          variable = NULL, dataset = NULL, depends = NULL, dataview = NULL, reset_button = FALSE) {
   id <- gsub("\\s", "", id)
   r <- c(

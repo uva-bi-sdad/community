@@ -28,6 +28,7 @@ void (function () {
       datasets: /^dat/,
       variables: /^var/,
       levels: /^lev/,
+      minmax: /^m[inax]{2}$/,
     },
     conditionals = {
       options: function (u, c) {
@@ -76,12 +77,21 @@ void (function () {
         u.set(u.value())
       },
       map_colors: function (u) {
-        const c = _u[u.colors] && _u[u.colors].value()
-        if (c && Object.hasOwn(site.dataviews[u.view], 'get')) {
-          var d = site.dataviews[u.view].get.dataset(),
-            l,
-            y = u.time ? _u[u.time].value() - _u[u.time].min : 0,
-            v = site.dataviews[u.view],
+        const v = site.dataviews[u.view],
+          c = valueOf(u.color || v.y),
+          d = v.get.dataset(),
+          ys = u.time
+            ? _u[u.time]
+            : v.time_agg
+            ? Object.hasOwn(_u, v.time_agg)
+              ? _u[v.time_agg]
+              : 'last' === v.time_agg && c
+              ? variables[c][u.view].summaries[d].time_range[1]
+              : parseInt(v.time_agg)
+            : 0
+        if (c && Object.hasOwn(v, 'get')) {
+          var l,
+            y = ys.parsed ? ys.value() - ys.parsed.min : 0,
             s = v.selection.all,
             k
           if (Object.hasOwn(site.maps, d) && Object.hasOwn(variables[c], u.view)) {
@@ -93,7 +103,7 @@ void (function () {
                     s[k].layer.setStyle({
                       fillOpacity: 0.7,
                       color: '#000000',
-                      fillColor: pal(s[k].data[c][y], 'divergent', l, y),
+                      fillColor: pal(s[k].data[c][y], v.palette, l, y),
                       weight: 1,
                     })
                   }
@@ -121,6 +131,46 @@ void (function () {
                 }
               }
           if (n) u.map.flyToBounds(u.displaying.getBounds())
+        }
+      },
+      min: function (u, c) {
+        var cv = c.value(),
+          uv = u.value(),
+          v = _u[u.view],
+          variable
+        if (patterns.minmax.test(cv)) cv = c.parsed.min
+        if (v && v.time_range) {
+          variable = valueOf(v.y)
+          if (Object.hasOwn(variables, variable)) {
+            if (!v.time_range.time.length) conditionals.time_range(v, u, true)
+            cv = Math.max(v.time_range.time[0], parseFloat(cv))
+          }
+        }
+        u.e.min = 'undefined' === typeof u.parsed.min ? parseFloat(cv) : Math.max(u.parsed.min, parseFloat(cv))
+        if (!u.e.value) {
+          u.reset()
+        } else if ('number' === typeof uv && isFinite(uv) && uv < cv) {
+          u.set(cv)
+        }
+      },
+      max: function (u, c) {
+        var cv = c.value(),
+          uv = u.value(),
+          v = _u[u.view],
+          variable
+        if (patterns.minmax.test(cv)) cv = c.parsed.max
+        if (v && v.y) {
+          variable = valueOf(v.y)
+          if (Object.hasOwn(variables, variable)) {
+            if (!v.time_range.time.length) conditionals.time_range(v, u, true)
+            cv = Math.min(v.time_range.time[1], parseFloat(cv))
+          }
+        }
+        u.e.max = 'undefined' === typeof u.parsed.max ? parseFloat(cv) : Math.min(u.parsed.max, parseFloat(cv))
+        if (!u.e.value) {
+          u.reset()
+        } else if ('number' === typeof uv && isFinite(uv) && uv > cv) {
+          u.set(cv)
         }
       },
       dataview: function (f) {
@@ -167,6 +217,63 @@ void (function () {
           update_subs(f.id, 'update')
         }
         request_queue(f.id)
+      },
+      time_filters: function (u) {
+        u.time_range.filtered[0] = Infinity
+        u.time_range.filtered[1] = -Infinity
+        const s = variables[u.time][u.id].summaries[u.get.dataset()],
+          c = _c[u.id + '_filter']
+        for (var f, v = {}, pass, i = s.mean.length; i--; ) {
+          if (i >= u.time_range.index[0] && i <= u.time_range.index[1]) {
+            for (f = u.time_filters.length, pass = false; f--; ) {
+              if (!Object.hasOwn(v, u.time_filters[f].value))
+                v[u.time_filters[f].value] = valueOf(u.time_filters[f].value)
+              pass = check_funs[u.time_filters[f].type](s.mean[i], v[u.time_filters[f].value])
+              if (!pass) break
+            }
+          } else pass = false
+          u.times[i] = pass
+          if (pass) {
+            if (u.time_range.filtered[0] > s.mean[i]) u.time_range.filtered[0] = s.mean[i]
+            if (u.time_range.filtered[1] < s.mean[i]) u.time_range.filtered[1] = s.mean[i]
+          }
+        }
+        if (c)
+          for (var i = c.length; i--; ) {
+            if ('update' === c[i].type) {
+              _u[c[i].id].update()
+            } else if (Object.hasOwn(conditionals, c[i].type)) {
+              conditionals[c[i].type](_u[c[i].id], u)
+            }
+          }
+      },
+      time_range: function (u, c, passive) {
+        const v = c.value(),
+          d = u.get.dataset(),
+          t = variables[valueOf(u.time)].info[d].min,
+          s = _c[u.id + '_time']
+        var r = variables[Object.hasOwn(variables, v) ? v : valueOf(u.y)]
+        if (r) {
+          r = r[u.id].summaries[d].time_range
+          u.time_range.index[0] = r[0]
+          u.time_range.time[0] = t + r[0]
+          u.time_range.index[1] = r[1]
+          u.time_range.time[1] = t + r[1]
+          if (!passive && s)
+            for (var i = s.length; i--; ) {
+              if ('min' === s[i].type) {
+                if (isFinite(u.time_range.time[0]) && parseFloat(_u[s[i].id].e.min) !== u.time_range.time[0]) {
+                  _u[s[i].id].e.min = u.time_range.time[0]
+                  _u[s[i].id].set(u.time_range.time[0])
+                }
+              } else if ('max' === s[i].type) {
+                if (isFinite(u.time_range.time[1]) && parseFloat(_u[s[i].id].e.min) !== u.time_range.time[0]) {
+                  _u[s[i].id].e.max = u.time_range.time[1]
+                  _u[s[i].id].set(u.time_range.time[1])
+                }
+              }
+            }
+        }
       },
     },
     elements = {
@@ -307,17 +414,21 @@ void (function () {
           return this.e
         },
       },
-      slider: {
+      number: {
         retrieve: function () {
           this.set(this.e.value)
         },
         setter: function (v) {
-          if ('number' === typeof v) {
-            v = this.values[v]
+          this.previous = this.value()
+          if ('string' === typeof v) v = parseFloat(v)
+          if (isFinite(v) && v !== this.previous) {
+            this.e.value = this.source = v
+            this.current_index = v - this.parsed.min
+            if ('range' === this.e.type) {
+              this.e.nextElementSibling.firstElementChild.innerText = this.e.value
+            }
+            request_queue(this.id)
           }
-          this.e.value = this.source = parseFloat(this.e.value)
-          this.current_index = this.source - this.min
-          request_queue(this.id)
         },
         listener: function (e) {
           this.set(e.target.value)
@@ -366,7 +477,7 @@ void (function () {
         },
         update: function () {
           if (this.e.layout) {
-            const v = site.dataviews[this.view],
+            const v = _u[this.view],
               s = v.selection && v.selection.all
             if (s && v.n_selected.all) {
               this.parsed.x = valueOf(this.x)
@@ -388,8 +499,19 @@ void (function () {
                     b.lowerfence = summary.min
                   }
                 }
-              if (!Object.hasOwn(this.e.layout.yaxis, 'title')) this.e.layout.yaxis.title = {text: ''}
-              this.e.layout.yaxis.title.text = variables[this.parsed.y].name
+              this.e.layout.yaxis.title = this.parsed.y
+              this.e.layout.xaxis.title = this.parsed.x
+              if (this.parsed.x === meta.time_variable) {
+                if (this.e.layout.xaxis.autorange) {
+                  this.e.layout.xaxis.autorange = false
+                  this.e.layout.xaxis.type = 'linear'
+                  this.e.layout.xaxis.dtick = 1
+                  this.e.layout.xaxis.range = [v.time_range.filtered[0] - 0.5, v.time_range.filtered[1] + 0.5]
+                } else {
+                  this.e.layout.xaxis.range[0] = v.time_range.filtered[0] - 0.5
+                  this.e.layout.xaxis.range[1] = v.time_range.filtered[1] + 0.5
+                }
+              }
               Plotly.react(this.e, traces, this.e.layout)
             }
           }
@@ -462,7 +584,7 @@ void (function () {
       table: {
         update: function () {
           if (this.table) {
-            const v = site.dataviews[this.view],
+            const v = _u[this.view],
               d = v.get.dataset()
             this.table.clear()
             if (v.selection) {
@@ -477,13 +599,17 @@ void (function () {
                   this.options.columns = this.headers[d]
                   this.table = $(this.e).DataTable(this.options)
                 }
+                for (n = this.headers[d].length, i = 1; i < n; i++) {
+                  this.table.column(i).visible(v.times[i - 1])
+                }
               }
               for (k in v.selection.all)
                 if (Object.hasOwn(v.selection.all, k)) {
-                  if (this.options.variables) {
-                    this.table.row.add(v.selection.all[k])
+                  if (vn) {
+                    if (Object.hasOwn(v.selection.all[k].summaries, d) && v.selection.all[k].summaries[d][vn].n)
+                      this.table.row.add(v.selection.all[k])
                   } else {
-                    for (i = meta.time.length; i--; ) {
+                    for (i = meta.time_n; i--; ) {
                       this.i = i
                       this.table.row.add(v.selection.all[k])
                     }
@@ -528,11 +654,12 @@ void (function () {
       },
     }
 
-  var page = {state: 'not loaded'},
+  var page = {},
     variables = {},
     queue = {_timeout: 0},
     colors = {},
     meta = {
+      time_n: 0,
       time_range: [],
       time: [],
       time_variable: '',
@@ -645,9 +772,12 @@ void (function () {
   }
 
   function make_data_entry(u, e, name, color) {
-    var i,
-      y = u.time ? _u[u.time].current_index : 0,
+    const v = u.view && _u[u.view],
       t = JSON.parse(u.traces.scatter)
+    var i,
+      c = valueOf(u.colors || v.y),
+      y = _u[u.time || v.time_agg]
+    y = y ? y.value() - y.parsed.min : 0
     if (Object.hasOwn(e.data, u.parsed.x)) {
       for (i = e.data[u.parsed.x].length; i--; ) {
         t.text[i] = e.features.name
@@ -659,14 +789,7 @@ void (function () {
         t.marker.color =
         t.marker.line.color =
         t.textfont.color =
-          color ||
-          pal(
-            e.data[_u[u.colors].value()][y],
-            'divergent',
-            variables[_u[u.colors].value()][u.view].summaries[site.dataviews[u.view].get.dataset()],
-            y
-          ) ||
-          '#808080'
+          color || pal(e.data[c][y], v.palette, variables[c][v.id].summaries[v.get.dataset()], y) || '#808080'
       t.name = name || e.features.name
       t.id = e.features.id
     }
@@ -987,21 +1110,90 @@ void (function () {
         }
 
         // retrieve option values
-        if (o.type === 'slider') {
-          o.values = o.display = o.options = []
-          v = valueOf(o.dataset)
-          if (o.variable) {
-            o.min = o.e.min = variables[o.variable].info[v].min
-            o.max = o.e.max = variables[o.variable].info[v].max
-          } else {
-            o.min = parseInt(o.e.min)
-            o.max = parseInt(o.e.max)
+        if ('number' === o.type) {
+          o.min = o.e.getAttribute('min')
+          o.max = o.e.getAttribute('max')
+          o.step = parseFloat(o.e.step) || 1
+          o.parsed = {min: undefined, max: undefined}
+          o.depends = {}
+          o.update = function () {
+            const view = _u[this.view],
+              variable = view && valueOf(view.y)
+            var d = view ? view.get.dataset() : valueOf(this.dataset),
+              min = valueOf(this.min) || view.time,
+              max = valueOf(this.max) || view.time,
+              v
+            if (patterns.minmax.test(min)) min = _u[this.min][min]
+            if (patterns.minmax.test(max)) max = _u[this.max][max]
+            if (!d && this.view) {
+              d = view.get.dataset()
+            }
+            this.parsed.min =
+              'undefined' === typeof min
+                ? view.time_range.time[0]
+                : 'number' === typeof min
+                ? min
+                : Object.hasOwn(variables, min)
+                ? variables[min].info[d || variables[min].datasets[0]].min
+                : parseFloat(min)
+            this.parsed.max =
+              'undefined' === typeof max
+                ? view.time_range.time[1]
+                : 'number' === typeof max
+                ? max
+                : Object.hasOwn(variables, max)
+                ? variables[max].info[d || variables[max].datasets[0]].max
+                : parseFloat(max)
+            if (variable && Object.hasOwn(variables, variable)) {
+              this.e.min = v = Math.max(view.time_range.time[0], this.parsed.min)
+              if (v > this.source) this.set(v)
+              this.e.max = v = Math.min(view.time_range.time[1], this.parsed.max)
+              if (v < this.source) this.set(v)
+              if (!this.depends[view.y]) {
+                this.depends[view.y] = true
+                add_dependency(view.y, {type: 'update', id: this.id})
+              }
+            } else {
+              this.e.min = this.parsed.min
+              if (this.parsed.min > this.source || (!this.source && 'min' === this.default)) this.set(this.parsed.min)
+              this.e.max = this.parsed.max
+              if (this.parsed.max < this.source || (!this.source && 'max' === this.default)) this.set(this.parsed.max)
+            }
+          }.bind(o)
+          setTimeout(o.update, 0)
+          if (o.view) {
+            add_dependency(o.view, {type: 'update', id: o.id})
+          } else if (o.dataset) {
+            add_dependency(o.dataset, {type: 'update', id: o.id})
           }
-          o.default = parseFloat(o.default)
-          if ('number' !== typeof o.default || o.default > o.max || o.default < o.min) o.default = o.max
-          o.e.value = o.source = o.default
-          for (ci = o.min, n = o.max; ci <= n; ci++) {
-            o.values.push(ci)
+          if (o.max && !Object.hasOwn(variables, o.max)) {
+            if (Object.hasOwn(_u, o.max)) {
+              add_dependency(o.max, {type: 'max', id: o.id})
+            } else o.e.max = parseFloat(o.max)
+          } else if (o.view) {
+            add_dependency(o.view + '_time', {type: 'max', id: o.id})
+          }
+          if (o.min && !Object.hasOwn(variables, o.min)) {
+            if (Object.hasOwn(_u, o.min)) {
+              add_dependency(o.min, {type: 'min', id: o.id})
+            } else o.e.min = parseFloat(o.min)
+          } else if (o.view) {
+            add_dependency(o.view + '_time', {type: 'min', id: o.id})
+          }
+          if (o.default) {
+            if (!isNaN(parseFloat(o.default))) {
+              o.default = parseFloat(o.default)
+            } else
+              o.reset = function () {
+                const d = Object.hasOwn(_u, this.view) && _u[this.view].get.dataset()
+                if ('max' === this.default) {
+                  if ('undefined' !== typeof this.parsed.max) this.set(this.parsed.max)
+                } else if ('min' === this.default) {
+                  if ('undefined' !== typeof this.parsed.min) this.set(this.parsed.min)
+                } else if (Object.hasOwn(_u, this.default)) {
+                  this.set(valueOf(this.default))
+                }
+              }.bind(o)
           }
         } else {
           if (!o.values.length)
@@ -1022,7 +1214,7 @@ void (function () {
         }
 
         // add listeners
-        if ('select' === o.type || 'slider' === o.type) {
+        if ('select' === o.type || 'number' === o.type) {
           o.e.addEventListener('input', o.listen)
           if (o.e.nextElementSibling && o.e.nextElementSibling.classList.contains('select-reset')) {
             o.e.nextElementSibling.addEventListener('click', o.reset)
@@ -1031,7 +1223,6 @@ void (function () {
           for (ci = o.options.length; ci--; ) o.options[ci].addEventListener('click', o.listen)
         }
         o.reset()
-        o.get()
       }
 
     // initialize dataviews
@@ -1039,6 +1230,7 @@ void (function () {
       for (k in site.dataviews)
         if (Object.hasOwn(site.dataviews, k)) {
           _u[k] = e = site.dataviews[k]
+          if (!Object.hasOwn(e, 'time')) e.time = meta.time_variable
           e.id = k
           e.value = function () {
             if (this.get) {
@@ -1054,6 +1246,14 @@ void (function () {
           if (e.ids && 'string' === typeof e.ids && Object.hasOwn(_u, e.ids)) {
             add_dependency(e.ids, {type: 'dataview', id: k})
           }
+          e.time_range = {index: [], time: [], filtered: []}
+          add_dependency(k, {type: 'time_range', id: k})
+          if (Object.hasOwn(_u, e.x)) {
+            add_dependency(e.x, {type: 'time_range', id: k})
+          }
+          if (Object.hasOwn(_u, e.y)) {
+            add_dependency(e.y, {type: 'time_range', id: k})
+          }
           for (cond in e.features)
             if (Object.hasOwn(e.features, cond)) {
               if ('string' === typeof e.features[cond] && Object.hasOwn(_u, e.features[cond])) {
@@ -1065,7 +1265,7 @@ void (function () {
     // initialize outputs
     for (c = document.getElementsByClassName('auto-output'), i = c.length, n = 0; i--; ) {
       e = c[i]
-      n = meta.time.length
+      n = meta.time_n
       o = {
         type: e.getAttribute('auto-type'),
         view: e.getAttribute('data-view'),
@@ -1073,7 +1273,10 @@ void (function () {
         e: e,
       }
       _u[o.id] = o
-      if (o.view) if (!Object.hasOwn(_c, o.view)) _c[o.view] = []
+      if (o.view) {
+        if (!Object.hasOwn(_c, o.view)) _c[o.view] = []
+        if (!Object.hasOwn(_c, o.view + '_filter')) _c[o.view + '_filter'] = []
+      }
       if ('info' === o.type) {
         o.base = e.firstElementChild
         o.temp = e.children[1]
@@ -1110,19 +1313,19 @@ void (function () {
           }
           if (Object.hasOwn(_u, o.options.variables)) add_dependency(o.options.variables, {type: 'update', id: o.id})
           k = valueOf(o.options.variables)
-          if (!Object.hasOwn(o.options, 'order')) o.options.order = [[meta.time.length, 'asc']]
+          if (!Object.hasOwn(o.options, 'order')) o.options.order = [[meta.time_n, 'asc']]
           for (ci = variables[k].datasets.length; ci--; ) {
             p = variables[k].datasets[ci]
             if (!Object.hasOwn(o.headers, p)) o.headers[p] = []
             o.headers[p].push({title: 'Region', data: 'features.name'})
-            for (n = meta.time.length; n--; ) {
-              o.headers[p].push({
+            for (n = meta.time_n; n--; ) {
+              o.headers[p][n + 1] = {
                 title: meta.time[n] + '',
                 data: 'data.' + k,
                 render: function (d) {
-                  return d[this]
-                }.bind(meta.time.length - n - 1),
-              })
+                  return 'number' === typeof d[this] ? format_value(d[this]) : d[this]
+                }.bind(n),
+              }
             }
           }
         } else {
@@ -1138,14 +1341,17 @@ void (function () {
                         title: format_label(k),
                         data: 'data.' + k,
                         render: function (d) {
-                          return d[this.i]
+                          return 'number' === typeof d[this.i] ? format_value(d[this.i]) : d[this.i]
                         }.bind(o),
                       }
                 )
               }
             }
         }
-        _c[o.view].push({type: 'update', id: o.id})
+        if (o.view) {
+          _c[o.view].push({type: 'update', id: o.id})
+          _c[o.view + '_filter'].push({type: 'update', id: o.id})
+        }
         queue_init_table.bind(o)()
       } else if ('plot' === o.type) {
         if (Object.hasOwn(site.plots, o.id)) {
@@ -1193,7 +1399,12 @@ void (function () {
           if (o.time && Object.hasOwn(_u, o.time)) {
             add_dependency(o.time, {type: 'update', id: o.id})
           }
-          _c[o.view].push({type: 'update', id: o.id})
+          if (o.view) {
+            _c[o.view].push({type: 'update', id: o.id})
+            _c[o.view + '_filter'].push({type: 'update', id: o.id})
+            if (_u[o.view].time_agg && Object.hasOwn(_u, _u[o.view].time_agg))
+              add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
+          }
           queue_init_plot.bind(o)()
         }
       } else if ('map' === o.type) {
@@ -1217,15 +1428,16 @@ void (function () {
           }
         }
         if (o.options && o.options.subto) for (ci = o.options.subto.length; ci--; ) add_subs(o.options.subto[ci], o)
-        if (o.colors) {
-          if (o.view) add_dependency(o.view, {type: 'map_colors', id: o.id})
-          add_dependency(o.colors, {type: 'map_colors', id: o.id})
+        if (o.view) {
+          add_dependency(o.view, {type: 'map_colors', id: o.id})
+          if (_u[o.view].time_agg && Object.hasOwn(_u, _u[o.view].time_agg))
+            add_dependency(_u[o.view].time_agg, {type: 'map_colors', id: o.id})
+          _c[o.view].push({type: 'map_shapes', id: o.id})
+          if (_u[o.view].y) add_dependency(_u[o.view].y, {type: 'map_colors', id: o.id})
         }
-        if (o.time) {
-          add_dependency(o.time, {type: 'map_colors', id: o.id})
-        }
+        if (o.colors) add_dependency(o.colors, {type: 'map_colors', id: o.id})
+        if (o.time) add_dependency(o.time, {type: 'map_colors', id: o.id})
         if (!e.style.height) e.style.height = o.options.height ? o.options.height : '400px'
-        _c[o.view].push({type: 'map_shapes', id: o.id})
         queue_init_map.bind(o)()
       }
     }
@@ -1308,7 +1520,7 @@ void (function () {
               q1: [],
               min: [],
             }
-            for (y = meta.time.length; y--; ) {
+            for (y = meta.time_n; y--; ) {
               m.order[s].push([])
               m.summaries[s].missing.push(0)
               m.summaries[s].n.push(0)
@@ -1334,8 +1546,8 @@ void (function () {
       m = variables[measure][view],
       mo = m.order[dataset],
       ms = m.summaries[dataset],
-      ny = meta.time.length
-    for (var n, k, id, dim, en, q1, q3, y = meta.time.length; y--; ) {
+      ny = meta.time_n
+    for (var k, id, dim, en, q1, q3, y = meta.time_n; y--; ) {
       mo[y] = []
       ms.missing[y] = 0
       ms.n[y] = 0
@@ -1347,6 +1559,12 @@ void (function () {
     for (k in v.selection.all)
       if (Object.hasOwn(v.selection.all, k)) {
         en = v.selection.all[k]
+        if (!Object.hasOwn(en.summaries, dataset)) en.summaries[dataset] = {}
+        if (!Object.hasOwn(en.summaries[dataset], measure))
+          en.summaries[dataset][measure] = {n: 0, time_range: [Infinity, -Infinity]}
+        en.summaries[dataset][measure].n = 0
+        en.summaries[dataset][measure].time_range[0] = Infinity
+        en.summaries[dataset][measure].time_range[1] = -Infinity
         id = en.features.id
         for (y = 0; y < ny; y++) {
           dim = en.data[measure][y]
@@ -1354,6 +1572,9 @@ void (function () {
             mo[y].push([id, dim])
           }
           if ('number' === typeof dim) {
+            en.summaries[dataset][measure].n++
+            if (y < en.summaries[dataset][measure].time_range[0]) en.summaries[dataset][measure].time_range[0] = y
+            if (y > en.summaries[dataset][measure].time_range[1]) en.summaries[dataset][measure].time_range[1] = y
             ms.sum[y] += dim
             ms.n[y]++
             if (dim > ms.max[y]) ms.max[y] = dim
@@ -1520,7 +1741,8 @@ void (function () {
               meta.time_range[0] = v[i].min
               meta.time_range[1] = v[i].max
               meta.time_variable = t
-              for (ti = v[i].max - v[i].min + 1; ti--; ) meta.time.push(v[i].min + ti)
+              for (ti = v[i].max - v[i].min + 1; ti--; ) meta.time[ti] = v[i].min + ti
+              meta.time_n = meta.time.length
             }
           }
         }
@@ -1554,6 +1776,14 @@ void (function () {
   }
 
   function compile_dataview(v) {
+    var i, k
+    v.times = {}
+    if (v.time_filters) {
+      for (i = v.time_filters.length; i--; )
+        if (Object.hasOwn(_u, v.time_filters[i].value)) {
+          add_dependency(v.time_filters[i].value, {type: 'time_filters', id: v.id})
+        }
+    }
     v.selection = {ids: {}, features: {}, dataset: {}, all: {}}
     v.n_selected = {ids: 0, features: 0, dataset: 0, all: 0}
     v.get = {
@@ -1570,7 +1800,7 @@ void (function () {
     v.ids_check = get_checkfun(v.get.ids())
     v.feature_checks = {}
     if (v.features)
-      for (var k in v.features)
+      for (k in v.features)
         if (Object.hasOwn(v.features, k)) {
           v.get.features[k] = function () {
             return valueOf(v.features[k])
@@ -1652,7 +1882,7 @@ void (function () {
         pass,
         k,
         v = c && c.value() + ''
-      if (force || c.state !== v) {
+      if (c && (force || c.state !== v)) {
         c.state = v
         for (i = d.length; i--; ) {
           if ('rule' === d[i].type) {

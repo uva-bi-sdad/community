@@ -1,7 +1,7 @@
 library(xml2)
 
 test_that("structure is intact", {
-  raw <- page_tabgroup(input_select("menu item", c("a", "b", "c")))
+  raw <- page_tabgroup(input_select("menu item", "id", c("a", "b", "c")))
   expect_true(is.character(raw) && !any(raw == ""))
   html <- read_html(paste(raw, collapse = ""))
   children <- xml_child(html)

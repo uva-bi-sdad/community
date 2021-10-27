@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Add a unified data view to a website — input_dataview • community</title>
+<title>Add a number input to a website — input_number • community</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,8 @@
 
 
 
-<meta property="og:title" content="Add a unified data view to a website — input_dataview" />
-<meta property="og:description" content="Collects specified inputs to create a filtered dataset from which outputs can pull." />
+<meta property="og:title" content="Add a number input to a website — input_number" />
+<meta property="og:description" content="Adds an direct number input element to a website." />
 <meta property="og:image" content="/logo.svg" />
 
 
@@ -116,86 +116,72 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Add a unified data view to a website</h1>
-    <small class="dont-index">Source: <a href='https://github.com/miserman/community/blob/master/R/input_dataview.R'><code>R/input_dataview.R</code></a></small>
-    <div class="hidden name"><code>input_dataview.Rd</code></div>
+    <h1>Add a number input to a website</h1>
+    <small class="dont-index">Source: <a href='https://github.com/miserman/community/blob/master/R/input_number.R'><code>R/input_number.R</code></a></small>
+    <div class="hidden name"><code>input_number.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Collects specified inputs to create a filtered dataset from which outputs can pull.</p>
+    <p>Adds an direct number input element to a website.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>input_dataview</span><span class='op'>(</span>id <span class='op'>=</span> <span class='cn'>NULL</span>, y <span class='op'>=</span> <span class='cn'>NULL</span>, x <span class='op'>=</span> <span class='cn'>NULL</span>, time <span class='op'>=</span> <span class='cn'>NULL</span>,
-  time_agg <span class='op'>=</span> <span class='st'>"last"</span>, time_filters <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>, dataset <span class='op'>=</span> <span class='cn'>NULL</span>, ids <span class='op'>=</span> <span class='cn'>NULL</span>,
-  features <span class='op'>=</span> <span class='cn'>NULL</span>, palette <span class='op'>=</span> <span class='st'>"divergent"</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>input_number</span><span class='op'>(</span><span class='va'>label</span>, id <span class='op'>=</span> <span class='va'>label</span>, <span class='va'>...</span>, default <span class='op'>=</span> <span class='cn'>NULL</span>, min <span class='op'>=</span> <span class='cn'>NULL</span>,
+  max <span class='op'>=</span> <span class='cn'>NULL</span>, step <span class='op'>=</span> <span class='cn'>NULL</span>, type <span class='op'>=</span> <span class='st'>"number"</span>, class <span class='op'>=</span> <span class='cn'>NULL</span>,
+  dataview <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
+      <th>label</th>
+      <td><p>Label of the input for the user.</p></td>
+    </tr>
+    <tr>
       <th>id</th>
-      <td><p>An ID of the data view, for association with output elements. Defaults to <code>'view'</code> appended
-with a zero-index of views, based on the order in which they were specified
-(e.g., <code>'view0'</code> for the first view).</p></td>
+      <td><p>Unique ID of the element to be created.</p></td>
     </tr>
     <tr>
-      <th>y</th>
-      <td><p>Primary variable of interest, used by default to color elements in outputs, and shown on the y-axis
-of plots; name of a variable or ID of a variable selector.</p></td>
+      <th>...</th>
+      <td><p>Other attributes to add to the input.</p></td>
     </tr>
     <tr>
-      <th>x</th>
-      <td><p>Secondary variable, shown by default on the x-axis of plots, and across columns in a single-variable table;
-name of a variable or ID of a variable selector.</p></td>
+      <th>default</th>
+      <td><p>Default value of the input, the ID of an input to use as the default, or <code>"min"</code> or <code>"max"</code>
+to default to the current minimum or maximum value.</p></td>
     </tr>
     <tr>
-      <th>time</th>
-      <td><p>Name of a variable giving names to multiple time points (such as a vector of years). Defaults to
-the time specified in an associated metadata, or a sequence along each variable.</p></td>
+      <th>min</th>
+      <td><p>The smallest allowed value.</p></td>
     </tr>
     <tr>
-      <th>time_agg</th>
-      <td><p>Specifies how multiple time points should be treated when a single value is required.
-Default is to use the last time with data. This could point to an input which selects a time.</p></td>
+      <th>max</th>
+      <td><p>The largest allowed value.</p></td>
     </tr>
     <tr>
-      <th>time_filters</th>
-      <td><p>A list with entries specifying which years to display. Each entry should be a list
-with entries for <code>"variable"</code> (which variable is being filtered, which can be <code>"index"</code>),
-<code>"type"</code> (specifying the operator, such as <code>"&gt;"</code>), and <code>"value"</code>. The value of each entry
-can be static (e.g., referring to a variable) or the ID of an input.</p></td>
+      <th>step</th>
+      <td><p>Amount to increase or decrease the value by when changed with arrows.</p></td>
     </tr>
     <tr>
-      <th>dataset</th>
-      <td><p>Select which dataset to pull from; the name of an included dataset, or ID of a
-selector of dataset names.</p></td>
+      <th>type</th>
+      <td><p>Name of the input's type -- other number-based types like <code>date</code> might make sense.</p></td>
     </tr>
     <tr>
-      <th>ids</th>
-      <td><p>Select which IDs to include; a vector of IDs that appear in the specified dataset, or the ID of a
-selector of IDs. If an IDs map is included in the site's datapackage, mapped components can be referred to here.</p></td>
+      <th>class</th>
+      <td><p>Class names to add to the input's list.</p></td>
     </tr>
     <tr>
-      <th>features</th>
-      <td><p>Select IDs based on their features; a named list or vector, with names corresponding to
-the names of features included in an <code>ids</code> field of the site's datapackage, and values corresponding to
-a value or vector of values, or a selector of values.</p></td>
-    </tr>
-    <tr>
-      <th>palette</th>
-      <td><p>The name of the color palette used in maps and plots (from
-<a href='https://colorbrewer2.org'>colorbrewer</a>); one of <code>"divergent"</code> (default), <code>"reds"</code>,
-<code>"greens"</code>, <code>"grays"</code>, or <code>"cat"</code> (for a set of non-continuous colors).</p></td>
+      <th>dataview</th>
+      <td><p>ID of a <code><a href='input_dataview.html'>input_dataview</a></code>, to use as a source of variables.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>The entered filter.</p>
+    <p>A character vector of the contents to be added.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span>
-<span class='r-in'><span class='fu'>input_dataview</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='input_text.html'>input_text</a></span><span class='op'>(</span><span class='st'>"entered_text"</span>, <span class='st'>"Enter Text:"</span><span class='op'>)</span></span>
 <span class='r-in'><span class='op'>}</span></span>
 </pre>
   </div>

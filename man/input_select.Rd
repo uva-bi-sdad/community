@@ -4,12 +4,14 @@
 \alias{input_select}
 \title{Add a select input to a website}
 \usage{
-input_select(label, options, default = -1, display = options, id = label,
+input_select(label, id = label, options, default = -1, display = options,
   variable = NULL, dataset = NULL, depends = NULL, dataview = NULL,
   reset_button = FALSE)
 }
 \arguments{
 \item{label}{Label of the input for the user.}
+
+\item{id}{Unique ID of the element to be created.}
 
 \item{options}{A vector of options, the name of a variable from which to pull levels, or either \code{"datasets"}
 or \code{"variables"} to select names of datasets or variables.}
@@ -17,8 +19,6 @@ or \code{"variables"} to select names of datasets or variables.}
 \item{default}{Which of the options to default to; either its index or value.}
 
 \item{display}{A display version of the options.}
-
-\item{id}{Unique ID of the element to be created.}
 
 \item{variable}{The name of a variable from which to get levels (overwritten by \code{depends}).}
 

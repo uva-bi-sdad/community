@@ -4,7 +4,8 @@
 \alias{output_table}
 \title{Add a table to a webpage}
 \usage{
-output_table(variables = NULL, dataset = NULL, dataview = NULL, options = NULL)
+output_table(variables = NULL, dataset = NULL, dataview = NULL,
+  options = NULL, class = "compact")
 }
 \arguments{
 \item{variables}{Variable names in the included data, or the ID of a
@@ -17,6 +18,8 @@ used if \code{dataview} is not specified.}
 
 \item{options}{A list of configuration options, see
 \href{https://datatables.net/reference/option}{DataTables Documentation}.}
+
+\item{class}{Class names to add to the table.}
 }
 \value{
 A character vector of the content to be added.

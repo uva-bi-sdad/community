@@ -125,7 +125,7 @@
     <p>Adds an input to select from the entered options.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>input_select</span><span class='op'>(</span><span class='va'>label</span>, <span class='va'>options</span>, default <span class='op'>=</span> <span class='op'>-</span><span class='fl'>1</span>, display <span class='op'>=</span> <span class='va'>options</span>, id <span class='op'>=</span> <span class='va'>label</span>,
+    <pre class="usage"><span class='fu'>input_select</span><span class='op'>(</span><span class='va'>label</span>, id <span class='op'>=</span> <span class='va'>label</span>, <span class='va'>options</span>, default <span class='op'>=</span> <span class='op'>-</span><span class='fl'>1</span>, display <span class='op'>=</span> <span class='va'>options</span>,
   variable <span class='op'>=</span> <span class='cn'>NULL</span>, dataset <span class='op'>=</span> <span class='cn'>NULL</span>, depends <span class='op'>=</span> <span class='cn'>NULL</span>, dataview <span class='op'>=</span> <span class='cn'>NULL</span>,
   reset_button <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
 
@@ -135,6 +135,10 @@
     <tr>
       <th>label</th>
       <td><p>Label of the input for the user.</p></td>
+    </tr>
+    <tr>
+      <th>id</th>
+      <td><p>Unique ID of the element to be created.</p></td>
     </tr>
     <tr>
       <th>options</th>
@@ -148,10 +152,6 @@ or <code>"variables"</code> to select names of datasets or variables.</p></td>
     <tr>
       <th>display</th>
       <td><p>A display version of the options.</p></td>
-    </tr>
-    <tr>
-      <th>id</th>
-      <td><p>Unique ID of the element to be created.</p></td>
     </tr>
     <tr>
       <th>variable</th>

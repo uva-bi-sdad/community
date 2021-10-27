@@ -1,0 +1,44 @@
+#' Add a text input to a website
+#'
+#' Adds an direct text input element to a website.
+#'
+#' @param id Unique ID of the element to be created.
+#' @param label Label of the input for the user.
+#' @param ... Other attributes to add to the input.
+#' @param default Default value of the input, which will appear as a placeholder.
+#' @param multiline Logical; if \code{TRUE}, create a \code{textarea} element, instead of an \code{input} element
+#' to accept multiple lines of text.
+#' @param class Class names to add to the input's list.
+#' @examples
+#' \dontrun{
+#' input_text("entered_text", "Enter Text:")
+#' }
+#' @return A character vector of the contents to be added.
+#' @export
+
+input_text <- function(id, label = id, ..., default = NULL, multiline = FALSE, class = NULL) {
+  id <- gsub("\\s", "", id)
+  r <- c(
+    '<div class="wrapper text-wrapper">',
+    paste0('<label for="', id, '">', label, "</label>"),
+    paste0(c(
+      "<", if (multiline) "textarea" else 'input type="text"',
+      ' id="', id, '"',
+      if (!is.null(default)) {
+        c(
+          ' placeholder="', default, '"',
+          ' value="', default, '"'
+        )
+      },
+      unlist(list(...)),
+      ' class="form-control auto-input', if (!is.null(class)) paste("", class), '" auto-type="text">',
+      if (multiline) "</textarea>"
+    ), collapse = ""),
+    "</div>"
+  )
+  caller <- parent.frame()
+  if (!is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts") {
+    caller$content <- c(caller$content, r)
+  }
+  r
+}
