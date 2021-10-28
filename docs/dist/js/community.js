@@ -590,7 +590,7 @@ void (function () {
               d = v.get.dataset()
             this.table.clear()
             if (v.selection) {
-              var k, i, n, vn
+              var k, c, i, n, vn, pass
               if (this.options.single_variable) {
                 vn = valueOf(this.options.variables)
                 if ('data.' + vn !== this.headers[d][1].data) {
@@ -625,7 +625,7 @@ void (function () {
               } else {
                 for (k in v.selection.all)
                   if (Object.hasOwn(v.selection.all, k)) {
-                    if (vn) {
+                    if (this.options.single_variable) {
                       if (
                         Object.hasOwn(v.selection.all[k].summaries, d) &&
                         Object.hasOwn(v.selection.all[k].summaries[d], vn) &&
@@ -633,13 +633,31 @@ void (function () {
                       )
                         this.table.row.add(v.selection.all[k])
                     } else {
-                      for (vn in variables)
-                        if (Object.hasOwn(variables, vn) && 'ID' !== vn && 'time' !== vn)
-                          for (i = meta.time_n; i--; ) {
+                      for (c in this.filters)
+                        if (Object.hasOwn(this.filters, c)) {
+                          this.current_filter[c] = valueOf(this.filters[c])
+                        }
+                      for (vn in variables) {
+                        pass = false
+                        if (Object.hasOwn(variables, vn) && Object.hasOwn(variables[vn], 'meta')) {
+                          for (c in this.current_filter)
+                            if (Object.hasOwn(variables[vn].meta, c)) {
+                              pass = variables[vn].meta[c] === this.current_filter[c]
+                              if (!pass) break
+                            }
+                        }
+                        if (pass)
+                          for (
+                            n = v.selection.all[k].summaries[d][vn].time_range[1],
+                              i = v.selection.all[k].summaries[d][vn].time_range[0];
+                            i <= n;
+                            i++
+                          ) {
                             this.i = i
                             this.v = vn
                             this.table.row.add(v.selection.all[k])
                           }
+                      }
                     }
                   }
               }
@@ -1416,12 +1434,12 @@ void (function () {
               }
             }
         } else {
-          if (Object.hasOwn(o.options, 'filter')) {
-            o.filters = o.options.filters
-            o.current_filter = {}
-            for (c in o.filters)
-              if (Object.hasOwn(o.filters, c) && Object.hasOwn(_u, o.filters[c])) {
-                add_dependency(o.filters[c], {type: 'filter', id: o.id})
+          o.filters = o.options.filters
+          o.current_filter = {}
+          if (Object.hasOwn(o.options, 'xfilters')) {
+            for (p in o.filters)
+              if (Object.hasOwn(o.filters, p) && Object.hasOwn(_u, o.filters[p])) {
+                add_dependency(o.filters[p], {type: 'filter', id: o.id})
               }
             o.filter = function () {
               var k,
@@ -1435,10 +1453,10 @@ void (function () {
                 }
               for (k in variables) {
                 pass = false
-                if (Object.hasOwn(variables, k) && Object.hasOwn(variables[this.variable_set[i]], 'meta')) {
+                if (Object.hasOwn(variables, k) && Object.hasOwn(variables[k], 'meta')) {
                   for (c in this.current_filter)
-                    if (Object.hasOwn(variables[this.variable_set[i]].meta, c)) {
-                      pass = variables[this.variable_set[i]].meta[c] === this.current_filter[c]
+                    if (Object.hasOwn(variables[k].meta, c)) {
+                      pass = variables[k].meta[c] === this.current_filter[c]
                       if (!pass) break
                     }
                 }
