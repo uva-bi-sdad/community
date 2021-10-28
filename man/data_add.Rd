@@ -45,6 +45,9 @@ or a string range (e.g., \code{c(0, 6)} for the first 6 characters of an id).
 \item{time}{
 A string giving the name of a variable in the dataset representing a repeated observation of the same entity.
 }
+\item{variables}{
+A list with named entries providing more information about the variables in the dataset.
+}
 }
 }
 \examples{

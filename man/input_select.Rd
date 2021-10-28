@@ -6,7 +6,7 @@
 \usage{
 input_select(label, id = label, options, default = -1, display = options,
   variable = NULL, dataset = NULL, depends = NULL, dataview = NULL,
-  reset_button = FALSE)
+  filters = NULL, reset_button = FALSE)
 }
 \arguments{
 \item{label}{Label of the input for the user.}
@@ -30,6 +30,9 @@ and \code{variable}, depending on this type of input \code{depends} points to.}
 
 \item{dataview}{The ID of an \code{\link{input_dataview}}, used to filter the set of options, and potentially
 specify dataset if none is specified here.}
+
+\item{filters}{A list with names of \code{meta} entries (from \code{variable} entry in \code{\link{data_add}}'s
+\code{meta} list), and values of target values for those entries, or the IDs of value selectors.}
 
 \item{reset_button}{If specified, adds a button after the select element that will revert the selection
 to its default; either \code{TRUE}, or text for the reset button's label.}

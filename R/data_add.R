@@ -26,6 +26,9 @@
 #'   \item{time}{
 #'   A string giving the name of a variable in the dataset representing a repeated observation of the same entity.
 #'   }
+#'   \item{variables}{
+#'   A list with named entries providing more information about the variables in the dataset.
+#'   }
 #' }
 #' @examples
 #' \dontrun{
@@ -76,6 +79,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
     format <- tolower(strsplit(name, ".", fixed = TRUE)[[1]][2])
     if (is.na(format)) format <- "rds"
     info <- file.info(f)
+    metas <- list()
     data <- tryCatch(if (format == "rds") readRDS(f) else fread(f), error = function(e) NULL)
     if (is.null(data)) {
       cli_abort(c(paste0("failed to read in the data file (", f, ")"),
@@ -85,6 +89,17 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
     if (!all(rownames(data) == seq_len(nrow(data)))) data <- cbind(`_row` = rownames(data), data)
     unpack_meta <- function(n) {
       if (is.null(m[[n]])) list() else if (is.list(m[[n]][[1]])) m[[n]] else list(m[[n]])
+    }
+    varinf <- unpack_meta("variables")
+    if (length(varinf) == 1) {
+      if (!file.exists(varinf[[1]])) varinf[[1]] <- paste0(dir, "/", varinf[[1]])
+      if (file.exists(varinf[[1]])) {
+        if (varinf[[1]] %in% names(metas)) {
+          varinf <- metas[[varinf[[1]]]]
+        } else {
+          varinf <- metas[[varinf[[1]]]] <- read_json(varinf[[1]])
+        }
+      }
     }
     res <- list(
       bytes = as.integer(info$size),
@@ -105,6 +120,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
           v <- data[[cn]]
           invalid <- !is.finite(v)
           r <- list(name = cn, duplicates = sum(duplicated(v)))
+          if (cn %in% names(varinf)) r$info <- varinf[[cn]]
           if (is.numeric(v)) {
             r$type <- if (all(invalid | v %% 1 == 0)) "integer" else "float"
             r$missing <- sum(invalid)

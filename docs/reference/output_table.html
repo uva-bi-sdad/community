@@ -126,7 +126,8 @@
     </div>
 
     <pre class="usage"><span class='fu'>output_table</span><span class='op'>(</span>variables <span class='op'>=</span> <span class='cn'>NULL</span>, dataset <span class='op'>=</span> <span class='cn'>NULL</span>, dataview <span class='op'>=</span> <span class='cn'>NULL</span>,
-  options <span class='op'>=</span> <span class='cn'>NULL</span>, class <span class='op'>=</span> <span class='st'>"compact"</span><span class='op'>)</span></pre>
+  options <span class='op'>=</span> <span class='cn'>NULL</span>, filters <span class='op'>=</span> <span class='cn'>NULL</span>, wide <span class='op'>=</span> <span class='cn'>FALSE</span>, single_variable <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  class <span class='op'>=</span> <span class='st'>"compact"</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -149,6 +150,21 @@ used if <code>dataview</code> is not specified.</p></td>
       <th>options</th>
       <td><p>A list of configuration options, see
 <a href='https://datatables.net/reference/option'>DataTables Documentation</a>.</p></td>
+    </tr>
+    <tr>
+      <th>filters</th>
+      <td><p>A list with names of <code>meta</code> entries (from <code>variable</code> entry in <code><a href='data_add.html'>data_add</a></code>'s
+<code>meta</code> list), and values of target values for those entries, or the IDs of value selectors.</p></td>
+    </tr>
+    <tr>
+      <th>wide</th>
+      <td><p>Logical; if <code>TRUE</code>, multiple variables are shown in separate columns.</p></td>
+    </tr>
+    <tr>
+      <th>single_variable</th>
+      <td><p>Logical; if <code>TRUE</code> (default), <code>variables</code> is treated as a single variable,
+or source of a single variable, and time is displayed as columns. Otherwise, if a selector is specified, its
+options are treated as the set of variables.</p></td>
     </tr>
     <tr>
       <th>class</th>

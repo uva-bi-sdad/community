@@ -15,7 +15,7 @@ void (function () {
   }
   const palettes = {
       // from https://colorbrewer2.org
-      divergent: ['#1b7837', '#7fbf7b', '#d9f0d3', '#e7d4e8', '#af8dc3', '#762a83'],
+      divergent: ['#762a83', '#af8dc3', '#e7d4e8', '#d9f0d3', '#7fbf7b', '#1b7837'],
       reds: ['#f1eef6', '#d7b5d8', '#df65b0', '#dd1c77', '#980043'],
       greens: ['#ffffcc', '#c2e699', '#78c679', '#31a354', '#006837'],
       greys: ['#f7f7f7', '#cccccc', '#969696', '#525252'],
@@ -499,8 +499,10 @@ void (function () {
                     b.lowerfence = summary.min
                   }
                 }
-              this.e.layout.yaxis.title = this.parsed.y
-              this.e.layout.xaxis.title = this.parsed.x
+              if ('boolean' !== typeof this.e.layout.yaxis.title)
+                this.e.layout.yaxis.title = format_label(this.parsed.y)
+              if ('boolean' !== typeof this.e.layout.xaxis.title)
+                this.e.layout.xaxis.title = format_label(this.parsed.x)
               if (this.parsed.x === meta.time_variable) {
                 if (this.e.layout.xaxis.autorange) {
                   this.e.layout.xaxis.autorange = false
@@ -589,7 +591,7 @@ void (function () {
             this.table.clear()
             if (v.selection) {
               var k, i, n, vn
-              if (this.options.variables) {
+              if (this.options.single_variable) {
                 vn = valueOf(this.options.variables)
                 if ('data.' + vn !== this.headers[d][1].data) {
                   this.table.destroy()
@@ -603,18 +605,44 @@ void (function () {
                   this.table.column(i).visible(v.times[i - 1])
                 }
               }
-              for (k in v.selection.all)
-                if (Object.hasOwn(v.selection.all, k)) {
-                  if (vn) {
-                    if (Object.hasOwn(v.selection.all[k].summaries, d) && v.selection.all[k].summaries[d][vn].n)
-                      this.table.row.add(v.selection.all[k])
-                  } else {
-                    for (i = meta.time_n; i--; ) {
-                      this.i = i
-                      this.table.row.add(v.selection.all[k])
+              if (this.options.wide) {
+                for (k in v.selection.all)
+                  if (Object.hasOwn(v.selection.all, k)) {
+                    if (vn) {
+                      if (
+                        Object.hasOwn(v.selection.all[k].summaries, d) &&
+                        Object.hasOwn(v.selection.all[k].summaries[d], vn) &&
+                        v.selection.all[k].summaries[d][vn].n
+                      )
+                        this.table.row.add(v.selection.all[k])
+                    } else {
+                      for (i = meta.time_n; i--; ) {
+                        this.i = i
+                        this.table.row.add(v.selection.all[k])
+                      }
                     }
                   }
-                }
+              } else {
+                for (k in v.selection.all)
+                  if (Object.hasOwn(v.selection.all, k)) {
+                    if (vn) {
+                      if (
+                        Object.hasOwn(v.selection.all[k].summaries, d) &&
+                        Object.hasOwn(v.selection.all[k].summaries[d], vn) &&
+                        v.selection.all[k].summaries[d][vn].n
+                      )
+                        this.table.row.add(v.selection.all[k])
+                    } else {
+                      for (vn in variables)
+                        if (Object.hasOwn(variables, vn) && 'ID' !== vn && 'time' !== vn)
+                          for (i = meta.time_n; i--; ) {
+                            this.i = i
+                            this.v = vn
+                            this.table.row.add(v.selection.all[k])
+                          }
+                    }
+                  }
+              }
             }
             this.table.draw()
           }
@@ -656,6 +684,7 @@ void (function () {
 
   var page = {},
     variables = {},
+    variable_info = {},
     queue = {_timeout: 0},
     colors = {},
     meta = {
@@ -699,9 +728,11 @@ void (function () {
   }
 
   function format_label(l) {
-    return l.replace(patterns.seps, ' ').replace(patterns.word_start, function (w) {
-      return w.toUpperCase()
-    })
+    return Object.hasOwn(variables, l) && variables[l].meta
+      ? variables[l].meta.short_name
+      : l.replace(patterns.seps, ' ').replace(patterns.word_start, function (w) {
+          return w.toUpperCase()
+        })
   }
 
   function fill_variables_options(u, d, out) {
@@ -815,9 +846,10 @@ void (function () {
 
   function init_legend(e) {
     e.innerHTML = ''
-    for (var i = 0, n = 6; i < n; i++) {
+    const p = palettes[e.parentElement.parentElement.parentElement.getAttribute('palette') || 'divergent']
+    for (var i = 0, n = p.length; i < n; i++) {
       e.appendChild(document.createElement('span'))
-      e.lastElementChild.style.background = pal(i / n, 'divergent')
+      e.lastElementChild.style.background = p[i]
     }
   }
 
@@ -930,8 +962,9 @@ void (function () {
           'px'
       }
     }
-    content_resize()
-    window.addEventListener('resize', content_resize)
+
+    // fill legends
+    for (c = document.getElementsByClassName('legend-scale'), i = c.length; i--; ) init_legend(c[i])
 
     // initialize inputs
     for (c = document.getElementsByClassName('auto-input'), i = c.length, n = 0; i--; ) {
@@ -1068,6 +1101,9 @@ void (function () {
         }
       }
     }
+
+    content_resize()
+    window.addEventListener('resize', content_resize)
 
     if (site && site.data) {
       queue_init()
@@ -1219,6 +1255,36 @@ void (function () {
           if (o.e.nextElementSibling && o.e.nextElementSibling.classList.contains('select-reset')) {
             o.e.nextElementSibling.addEventListener('click', o.reset)
           }
+          if (Object.hasOwn(site, o.type) && Object.hasOwn(site[o.type], o.id)) {
+            o.filters = site[o.type][o.id]
+            o.current_filter = {}
+            for (c in o.filters)
+              if (Object.hasOwn(o.filters, c) && Object.hasOwn(_u, o.filters[c])) {
+                add_dependency(o.filters[c], {type: 'filter', id: o.id})
+              }
+            o.filter = function () {
+              var k, i, pass, last
+              for (k in this.filters)
+                if (Object.hasOwn(this.filters, k)) {
+                  this.current_filter[k] = valueOf(this.filters[k])
+                }
+              for (i = this.values.length; i--; ) {
+                pass = false
+                if (Object.hasOwn(variables, this.values[i]) && Object.hasOwn(variables[this.values[i]], 'meta')) {
+                  for (k in this.current_filter)
+                    if (Object.hasOwn(variables[this.values[i]].meta, k)) {
+                      pass = variables[this.values[i]].meta[k] === this.current_filter[k]
+                      if (!pass) break
+                    }
+                }
+                if (pass) last = this.values[i]
+                this.options[i].classList[pass ? 'remove' : 'add']('hidden')
+              }
+              this.current_index = this.values.indexOf(this.value())
+              if (last && (-1 === this.current_index || this.options[this.current_index].classList.contains('hidden')))
+                this.set(last)
+            }.bind(o)
+          }
         } else {
           for (ci = o.options.length; ci--; ) o.options[ci].addEventListener('click', o.listen)
         }
@@ -1307,28 +1373,30 @@ void (function () {
         o.options = (site.tables && site.tables[o.id]) || {}
         o.update = elements.table.update.bind(o)
         o.headers = {}
-        if (o.options.variables) {
+        if (o.options.single_variable) {
           if ('object' === typeof o.options.variables) {
             o.options.variables = o.options.variables[0]
           }
           if (Object.hasOwn(_u, o.options.variables)) add_dependency(o.options.variables, {type: 'update', id: o.id})
           k = valueOf(o.options.variables)
-          if (!Object.hasOwn(o.options, 'order')) o.options.order = [[meta.time_n, 'asc']]
-          for (ci = variables[k].datasets.length; ci--; ) {
-            p = variables[k].datasets[ci]
-            if (!Object.hasOwn(o.headers, p)) o.headers[p] = []
-            o.headers[p].push({title: 'Region', data: 'features.name'})
-            for (n = meta.time_n; n--; ) {
-              o.headers[p][n + 1] = {
-                title: meta.time[n] + '',
-                data: 'data.' + k,
-                render: function (d) {
-                  return 'number' === typeof d[this] ? format_value(d[this]) : d[this]
-                }.bind(n),
+          if (Object.hasOwn(variables, k)) {
+            if (!Object.hasOwn(o.options, 'order')) o.options.order = [[meta.time_n, 'asc']]
+            for (ci = variables[k].datasets.length; ci--; ) {
+              p = variables[k].datasets[ci]
+              if (!Object.hasOwn(o.headers, p)) o.headers[p] = []
+              o.headers[p].push({title: 'Region', data: 'features.name'})
+              for (n = meta.time_n; n--; ) {
+                o.headers[p][n + 1] = {
+                  title: meta.time[n] + '',
+                  data: 'data.' + k,
+                  render: function (d) {
+                    return 'number' === typeof d[this] ? format_value(d[this]) : d[this]
+                  }.bind(n),
+                }
               }
             }
           }
-        } else {
+        } else if (o.options.wide) {
           for (k in variables)
             if (Object.hasOwn(variables, k)) {
               for (ci = variables[k].datasets.length; ci--; ) {
@@ -1346,6 +1414,69 @@ void (function () {
                       }
                 )
               }
+            }
+        } else {
+          if (Object.hasOwn(o.options, 'filter')) {
+            o.filters = o.options.filters
+            o.current_filter = {}
+            for (c in o.filters)
+              if (Object.hasOwn(o.filters, c) && Object.hasOwn(_u, o.filters[c])) {
+                add_dependency(o.filters[c], {type: 'filter', id: o.id})
+              }
+            o.filter = function () {
+              var k,
+                c,
+                y,
+                i = 0,
+                pass
+              for (k in this.filters)
+                if (Object.hasOwn(this.filters, k)) {
+                  this.current_filter[k] = valueOf(this.filters[k])
+                }
+              for (k in variables) {
+                pass = false
+                if (Object.hasOwn(variables, k) && Object.hasOwn(variables[this.variable_set[i]], 'meta')) {
+                  for (c in this.current_filter)
+                    if (Object.hasOwn(variables[this.variable_set[i]].meta, c)) {
+                      pass = variables[this.variable_set[i]].meta[c] === this.current_filter[c]
+                      if (!pass) break
+                    }
+                }
+                for (y = meta.time_n; y--; ) {
+                  this.table.row(i++).visible(pass)
+                }
+              }
+            }.bind(o)
+          }
+          for (k in site.data)
+            if (Object.hasOwn(site.data, k)) {
+              o.headers[k] = [
+                {title: 'ID', data: 'features.id'},
+                {title: 'Name', data: 'features.name'},
+                {title: 'Type', data: 'features.type'},
+                {
+                  title: 'Year',
+                  data: 'data.time',
+                  render: function (d) {
+                    return 'number' === typeof d[this.i] ? format_value(d[this.i]) : d[this.i]
+                  }.bind(o),
+                },
+                {
+                  title: 'Measure',
+                  data: function (d) {
+                    return Object.hasOwn(d.variables, this.v) ? d.variables[this.v].short_name : this.v
+                  }.bind(o),
+                },
+                {
+                  title: 'Value',
+                  data: function (d) {
+                    return Object.hasOwn(d.data, this.v) ? d.data[this.v] : []
+                  }.bind(o),
+                  render: function (d) {
+                    return 'number' === typeof d[this.i] ? format_value(d[this.i]) : d[this.i]
+                  }.bind(o),
+                },
+              ]
             }
         }
         if (o.view) {
@@ -1737,6 +1868,17 @@ void (function () {
             variables[v[i].name] = {datasets: [k], info: {}, components: {}}
             variables[v[i].name].components[k] = []
             variables[v[i].name].info[k] = v[i]
+            variables[v[i].name].meta = variables[v[i].name].info[k].info
+            if (!variables[v[i].name].meta)
+              variables[v[i].name].meta = {
+                full_name: v[i].name,
+                measure: v[i].name.split(':')[1],
+                short_name: format_label(v[i].name),
+              }
+            if (!Object.hasOwn(variables[v[i].name].meta, 'full_name'))
+              variables[v[i].name].meta.full_name = variables[v[i].name].meta.short_name
+            if (!Object.hasOwn(variable_info, variables[v[i].name].meta.full_name))
+              variable_info[variables[v[i].name].meta.full_name] = variables[v[i].name].meta
             if (!meta.time.length && v[i].name === t) {
               meta.time_range[0] = v[i].min
               meta.time_range[1] = v[i].max
@@ -1754,7 +1896,7 @@ void (function () {
     for (var id in site.data[g])
       if (Object.hasOwn(site.data[g], id)) {
         f = data_maps[g][id]
-        entities[id] = {group: g, data: site.data[g][id], features: f, summaries: {}}
+        entities[id] = {group: g, data: site.data[g][id], variables: variable_info, features: f, summaries: {}}
         if (f) {
           entitiesByName[f.name] = entities[id]
           if (Object.hasOwn(f, 'district') && id.length > 4) {
@@ -1890,8 +2032,8 @@ void (function () {
               r.push(site.rules[d[i].rule])
             }
           } else {
-            if (!Object.hasOwn(conditionals, d[i].type)) {
-              _u[d[i].id].update()
+            if ('function' === typeof _u[d[i].id][d[i].type]) {
+              _u[d[i].id][d[i].type]()
             } else {
               conditionals[d[i].type](_u[d[i].id], c)
             }

@@ -15,6 +15,8 @@
 #' and \code{variable}, depending on this type of input \code{depends} points to.
 #' @param dataview The ID of an \code{\link{input_dataview}}, used to filter the set of options, and potentially
 #' specify dataset if none is specified here.
+#' @param filters A list with names of \code{meta} entries (from \code{variable} entry in \code{\link{data_add}}'s
+#' \code{meta} list), and values of target values for those entries, or the IDs of value selectors.
 #' @param reset_button If specified, adds a button after the select element that will revert the selection
 #' to its default; either \code{TRUE}, or text for the reset button's label.
 #' @examples
@@ -25,7 +27,8 @@
 #' @export
 
 input_select <- function(label, id = label, options, default = -1, display = options,
-                         variable = NULL, dataset = NULL, depends = NULL, dataview = NULL, reset_button = FALSE) {
+                         variable = NULL, dataset = NULL, depends = NULL, dataview = NULL, filters = NULL,
+                         reset_button = FALSE) {
   id <- gsub("\\s", "", id)
   r <- c(
     '<div class="wrapper select-wrapper">',
@@ -59,6 +62,7 @@ input_select <- function(label, id = label, options, default = -1, display = opt
   )
   caller <- parent.frame()
   if (!is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts") {
+    if (!is.null(filters)) caller$select[[id]] <- as.list(filters)
     caller$content <- c(caller$content, r)
   }
   r

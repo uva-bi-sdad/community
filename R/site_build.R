@@ -41,7 +41,11 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
       meta <- read_json(f)
       for (i in seq_along(meta$resources)) {
         d <- meta$resources[[i]]
-        if (!is.null(variables)) d$schema$fields <- Filter(function(v) v$name %in% variables, d$schema$fields)
+        if (!is.null(variables)) {
+          temp <- list()
+          for (v in d$schema$fields) if (v$name %in% variables) temp[[v$name]] <- v
+          d$schema$fields <- unname(temp[variables[variables %in% names(temp)]])
+        }
         file <- paste0(ddir, d$filename)
         if (file.exists(file)) {
           if (force || file.mtime(file) > last_updated) {
@@ -132,6 +136,7 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
         variables = if ("variables" %in% names(parts)) list(parts$variables),
         dataviews = if ("dataviews" %in% names(parts)) list(parts$dataviews),
         info = if ("info" %in% names(parts)) list(parts$info),
+        select = if ("select" %in% names(parts)) list(parts$select),
         tables = if (length(parts$tables)) list(parts$tables),
         plots = if ("plots" %in% names(parts)) list(parts$plots),
         maps = if ("maps" %in% names(parts)) list(parts$maps)

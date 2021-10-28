@@ -1,6 +1,6 @@
 #' Add a plot to a webpage
 #'
-#' Adds a Plotly plot to a webpage, based on specified or selected .
+#' Adds a Plotly plot to a webpage, based on specified or selected variables.
 #'
 #' @param x Default title at the top of the element.
 #' @param y Default message below the title, to be replaced by the information table.
@@ -14,7 +14,8 @@
 #' \href{https://plotly.com/javascript/confguration-options}{Plotly documentation}).
 #' @examples
 #' \dontrun{
-#' output_info("Initial State", "Make a selection for more information.")
+#' # for mpg ~ wt * am in a site based on mtcars data
+#' output_plot("wt", "mpg", "am")
 #' }
 #' @return A character vector of the content to be added.
 #' @export
@@ -36,7 +37,6 @@ output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dat
     if (!is.null(x)) paste0('x="', x, '"'),
     if (!is.null(y)) paste0('y="', y, '"'),
     if (!is.null(color)) paste0('color="', color, '"'),
-    if (!is.null(color_time)) paste0('color-time="', color_time, '"'),
     if (!is.null(color_time)) paste0('color-time="', color_time, '"'),
     paste0('id="plot', id, '"'),
     'auto-type="plot"></div>'

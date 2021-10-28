@@ -30,10 +30,11 @@ or \code{options}, potentially extracted from a saved plotly object (see
 A character vector of the content to be added.
 }
 \description{
-Adds a Plotly plot to a webpage, based on specified or selected .
+Adds a Plotly plot to a webpage, based on specified or selected variables.
 }
 \examples{
 \dontrun{
-output_info("Initial State", "Make a selection for more information.")
+# for mpg ~ wt * am in a site based on mtcars data
+output_plot("wt", "mpg", "am")
 }
 }

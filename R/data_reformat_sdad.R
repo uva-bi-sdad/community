@@ -29,7 +29,8 @@
 #' @export
 
 data_reformat_sdad <- function(files, value = "value", value_name = "measure", id = "geoid", time = "year",
-                               dataset = "region_type", value_info = "measure_type", entity_info = c("region_type", "region_name"), out = NULL) {
+                               dataset = "region_type", value_info = "measure_type",
+                               entity_info = c("region_type", "region_name"), out = NULL) {
   if (length(files) == 1 && dir.exists(files)) {
     files <- list.files(files, full.names = TRUE)
   }
@@ -57,6 +58,7 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
     }
     names <- c(names, list(colnames(d)))
     set(d, NULL, "file", f)
+    d[[value_name]] <- paste0(gsub("^.*\\d{4}_|\\.\\w{3,4}$", "", f), ":", d[[value_name]])
     data <- c(data, list(d))
   }
   common <- Reduce(intersect, names)
@@ -94,6 +96,7 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
   if (!any(value_name %in% vars)) {
     value_name <- "file"
   }
+  data[[dataset]] <- gsub("\\s+", "_", data[[dataset]])
   datasets <- unique(data[[dataset]])
   variables <- unique(data[[value_name]])
   times <- sort(unique(data[[time]]))
@@ -106,8 +109,11 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
       rownames(r) <- times
       for (v in variables) {
         r[[v]] <- NA
-        vals <- ed[ed[[value_name]] == v]
-        r[as.character(vals[[time]]), v] <- vals[[value]]
+        su <- ed[[value_name]] == v & !is.na(ed[[value]])
+        if (sum(su)) {
+          vals <- ed[su]
+          r[as.character(vals[[time]]), v] <- vals[[value]]
+        }
       }
       r
     }))
