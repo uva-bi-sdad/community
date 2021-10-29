@@ -136,6 +136,7 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
         variables = if ("variables" %in% names(parts)) list(parts$variables),
         dataviews = if ("dataviews" %in% names(parts)) list(parts$dataviews),
         info = if ("info" %in% names(parts)) list(parts$info),
+        text = if ("text" %in% names(parts)) list(parts$text),
         select = if ("select" %in% names(parts)) list(parts$select),
         tables = if (length(parts$tables)) list(parts$tables),
         plots = if ("plots" %in% names(parts)) list(parts$plots),

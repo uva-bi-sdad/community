@@ -489,16 +489,16 @@ void (function () {
               for (k in s)
                 if (Object.hasOwn(s, k)) {
                   traces.push(make_data_entry(this, s[k]))
-                  if (Object.hasOwn(this.traces, 'box')) {
-                    traces.push((b = JSON.parse(this.traces.box)))
-                    b.x = s[k].data[this.parsed.x]
-                    b.upperfence = summary.max
-                    b.q3 = summary.q3
-                    b.median = summary.median
-                    b.q1 = summary.q1
-                    b.lowerfence = summary.min
-                  }
                 }
+              if (Object.hasOwn(this.traces, 'box') && s[k]) {
+                traces.push((b = JSON.parse(this.traces.box)))
+                b.x = s[k].data[this.parsed.x]
+                b.upperfence = summary.max
+                b.q3 = summary.q3
+                b.median = summary.median
+                b.q1 = summary.q1
+                b.lowerfence = summary.min
+              }
               if ('boolean' !== typeof this.e.layout.yaxis.title)
                 this.e.layout.yaxis.title = format_label(this.parsed.y)
               if ('boolean' !== typeof this.e.layout.xaxis.title)
@@ -1391,6 +1391,14 @@ void (function () {
         o.options = (site.tables && site.tables[o.id]) || {}
         o.update = elements.table.update.bind(o)
         o.headers = {}
+        if ('tabpanel' === o.e.parentElement.getAttribute('role')) {
+          document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
+            'click',
+            function () {
+              setTimeout(this.update, 155)
+            }.bind(o)
+          )
+        }
         if (o.options.single_variable) {
           if ('object' === typeof o.options.variables) {
             o.options.variables = o.options.variables[0]
@@ -1588,6 +1596,71 @@ void (function () {
         if (o.time) add_dependency(o.time, {type: 'map_colors', id: o.id})
         if (!e.style.height) e.style.height = o.options.height ? o.options.height : '400px'
         queue_init_map.bind(o)()
+      } else if ('text' === o.type) {
+        if (site.text && Object.hasOwn(site.text, o.id)) {
+          o.text = site.text[o.id].text
+          o.depends = site.text[o.id].depends
+          for (n = o.text.length, ci = 0; ci < n; ci++) {
+            if (!Object.hasOwn(o.text[ci], 'button')) o.text[ci].button = {}
+            o.e.appendChild((o.text[ci].parts = document.createElement('span')))
+            for (ce = o.text[ci].text.length, c = 0; c < ce; c++) {
+              if (Object.hasOwn(o.text[ci].button, o.text[ci].text[c])) {
+                p = o.text[ci].button[o.text[ci].text[c]]
+                o.text[ci].parts.appendChild(document.createElement('button'))
+                o.text[ci].parts.lastElementChild.type = 'button'
+                o.text[ci].parts.lastElementChild.className = 'btn btn-light'
+                if (Object.hasOwn(_u, p.target) && 'function' === typeof _u[p.target][p.type]) {
+                  o.text[ci].parts.lastElementChild.setAttribute('aria-label', p.text.join(''))
+                  o.text[ci].parts.lastElementChild.addEventListener('click', _u[p.target][p.type])
+                }
+              } else {
+                o.text[ci].parts.appendChild(document.createElement('span'))
+              }
+            }
+            if (Object.hasOwn(o.text[ci], 'condition')) {
+              for (v = o.text[ci].condition.length; v--; ) {
+                o.text[ci].condition[v].check = function () {
+                  return check_funs[this.type](valueOf(this.id), valueOf(this.value))
+                }.bind(o.text[ci].condition[v])
+              }
+            }
+          }
+          for (v in o.depends) if (Object.hasOwn(_u, v)) add_dependency(v, {type: 'update', id: o.id})
+          o.update = function () {
+            var k, i, t, s, pass, bt
+            for (k in this.depends)
+              if (Object.hasOwn(this.depends, k)) {
+                this.depends[k] = valueOf(k)
+                if (Object.hasOwn(entities, this.depends[k])) this.depends[k] = entities[this.depends[k]].features.name
+              }
+            for (i = this.text.length; i--; ) {
+              pass = true
+              if (Object.hasOwn(this.text[i], 'condition')) {
+                for (t = this.text[i].condition.length; t--; ) {
+                  pass = this.text[i].condition[t].check()
+                  if (!pass) break
+                }
+              }
+              if (pass) {
+                for (t = this.text[i].text.length; t--; ) {
+                  k = this.text[i].text[t]
+                  if (Object.hasOwn(this.depends, k)) {
+                    this.text[i].parts.children[t].innerText = this.depends[k]
+                  } else if (Object.hasOwn(this.text[i].button, k)) {
+                    for (s = '', bt = this.text[i].button[k].text.length; bt--; ) {
+                      s =
+                        (Object.hasOwn(this.depends, this.text[i].button[k].text[bt])
+                          ? this.depends[this.text[i].button[k].text[bt]]
+                          : this.text[i].button[k].text[bt]) + s
+                    }
+                    this.text[i].parts.children[t].innerText = s
+                  } else this.text[i].parts.children[t].innerText = k
+                }
+                this.text[i].parts.classList.remove('hidden')
+              } else this.text[i].parts.classList.add('hidden')
+            }
+          }.bind(o)
+        }
       }
     }
   }

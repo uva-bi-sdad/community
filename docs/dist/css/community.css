@@ -17,7 +17,6 @@ button:hover{opacity: .7}
 .menu-left{height: 100vh; flex-shrink: 0}
 .menu-left .menu-toggle{border-radius: 0 0 15px 0; top: 47px; right: -40px}
 .menu-top .wrapper, .menu-bottom .wrapper{display: inline-grid}
-
 .slider-display{text-align: center}
 
 .content{
@@ -32,7 +31,7 @@ button:hover{opacity: .7}
 .legend-scale span{height: 100%; width: 16.667%; display: inline-block}
 .plot-container{margin: 0 0 0 -1em !important}
 .leaflet-container{background: #fff}
-/* .dataTables_wrapper .row:nth-child(2){overflow-x: auto} */
+table.dataTable tbody tr.dtrg-group.dtrg-group{background-color: #f0f0f0; font-weight: bold}
 table.dataTable.compact thead th, table.dataTable.compact thead td{padding: 4px 17px 4px 0}
 table.dataTable.compact tbody th, table.dataTable.compact tbody td{padding: 0 17px 0 0}
 .dataTable td, .dataTable th{text-align: right; white-space: nowrap}
