@@ -28,3 +28,10 @@ parse_rule <- function(condition) {
     }
   })
 }
+
+to_input_row <- function(e) {
+  c(
+    '<div class="col">', e[2], "</div>",
+    '<div class="col">', e[-c(1:2, length(e))], "</div>"
+  )
+}

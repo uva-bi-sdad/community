@@ -14,14 +14,14 @@ test_that("produces expected datasets", {
     region_type = "b"
   )
   dir <- tempdir(TRUE)
-  paths <- paste0(dir, "/", c("f1", "f2"), ".csv")
+  paths <- paste0(dir, "/", c("f1_0000_", "f2_0000_"), ".csv")
   write.csv(f1, paths[1], row.names = FALSE)
   write.csv(f2, paths[2], row.names = FALSE)
   r <- data_reformat_sdad(paths, out = dir)
   expect_true(all(file.exists(paths)))
   b <- rep(NA, nrow(r$a))
   b[c(4, 6, 8)] <- f1[c(4, 3, 5), "value"]
-  expect_equal(r, list(
+  expect_equal(r, lapply(list(
     a = data.frame(
       ID = rep(as.character(1:3), each = 3),
       time = rep(1:3, 3),
@@ -36,5 +36,8 @@ test_that("produces expected datasets", {
       b = c(NA, NA, f2[3:4, "value"], NA, NA),
       c = c(rep(NA, 4), f2[5, "value"], NA)
     )
-  ))
+  ), function(d) {
+    colnames(d)[3:5] <- paste0(":", colnames(d)[3:5])
+    d
+  }))
 })

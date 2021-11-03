@@ -53,19 +53,9 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, opti
     )
     caller$dependencies$datatables <- list(
       type = "script",
-      src = "https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.3/b-2.0.1/b-html5-2.0.1/b-print-2.0.1/fc-4.0.1/fh-3.2.0/rg-1.1.4/sc-2.0.5/datatables.min.js",
-      hash = "sha384-9GO1NSIJXsPyhmo2eOJifcKgzAemFYsgBEybao5erg+yDIMzbf5JdVyYKMqOA+TZ",
+      src = "https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.3/b-2.0.1/b-html5-2.0.1/b-print-2.0.1/rg-1.1.4/datatables.min.js",
+      hash = "sha384-uf/Bcd4lCplN1dOhtGBZdheEsWnZs1FocqbGCOoBFX5rVwUAXJ1K79UJLzOMoDZO",
       loading = "defer"
-    )
-    caller$dependencies$pdfmake <- list(
-      type = "script",
-      src = "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js",
-      hash = "sha384-htFkmzBKFrwO7EbvHZPvJXWg0sJIkPPUTBDe6LXOU2ghApFVGQx9++EDSrKMZtHE"
-    )
-    caller$dependencies$pdfmake_fonts <- list(
-      type = "script",
-      src = "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js",
-      hash = "sha384-qNRjPXKOnea7MmtbXG6HLwVyoGNFsu7ntdDOFOt3FS4vmj4MWUKyyKMjRKu0Hr4h"
     )
     caller$tables[[paste0("table", id)]] <- options
     caller$content <- c(caller$content, r)

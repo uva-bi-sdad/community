@@ -8,6 +8,7 @@
 #' @param default Which of the options to default to; either its index or value.
 #' @param display A display version of the options.
 #' @param id Unique id of the element to be created.
+#' @param button_class Class name to add to each label (which appears as the button).
 #' @param variable The name of a variable from which to get levels (overwritten by \code{depends}).
 #' @param dataset The name of an included dataset, where \code{variable} should be looked for; only applies when
 #' there are multiple datasets with the same variable name.
@@ -20,8 +21,8 @@
 #' @return A character vector of the contents to be added.
 #' @export
 
-input_buttongroup <- function(label, options, default = 0, display = options, id = label, variable = NULL,
-                              dataset = NULL, depends = NULL) {
+input_buttongroup <- function(label, options, default = 0, display = options, id = label, button_class = NULL,
+                              variable = NULL, dataset = NULL, depends = NULL) {
   if (!is.character(options) && is.character(default)) {
     default <- which((if (default %in% display) display else options) == default)
   }
@@ -47,7 +48,10 @@ input_buttongroup <- function(label, options, default = 0, display = options, id
             id, '_options" id="', id, "_option", i, '" value="',
             options[i], '"', if (i == default) " checked", ">"
           ),
-          paste0('<label class="btn btn-primary" for="', id, "_option", i, '">', display[i], "</label>")
+          paste0(
+            '<label class="btn', if (!is.null(button_class)) paste("", button_class),
+            '" for="', id, "_option", i, '">', display[i], "</label>"
+          )
         )
       }), use.names = FALSE)
     },

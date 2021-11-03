@@ -1,22 +1,29 @@
 .hidden{display: none}
-.wrapper > label{width: 100%; display: block}
+.wrapper > label{width: 100%; display: block; margin: 0}
 button:hover{opacity: .7}
+label{white-space: nowrap}
+input[type=number],
+input[type=text],
+.input-group > .form-control, .input-group > .form-select{
+  min-width: 80px
+}
 
 .navbar{position: fixed; width: 100%; z-index: 100}
 .row{width: 100%; padding: 0 0 1em 0; margin-top: 0; margin-right: 0; margin-left: 0}
 .col{height: 100%}
+.row > div{min-width: 90px}
 
 .menu-wrapper{position: fixed; overflow: visible; z-index: 90; transition: top 400ms, right 400ms, bottom 400ms, left 400ms}
-.menu{background-color: #efefef; padding: 3em .5em .5em .5em; flex-wrap: nowrap}
-.menu-toggle{position: absolute; background-color: #efefef; border: none; font-size: 1.7em; width: 1.5em; height: 40px}
-.menu-top .menu-toggle{border-radius: 0 0 0 15px; bottom: -40px; right: 0}
+.menu{background-color: #efefef; padding: 3em 3em .5em .5em; flex-wrap: nowrap}
+.menu-toggle{position: fixed; background-color: #efefef; border: none; font-size: 1.7em; width: 1.5em; height: 40px}
+.menu-top .menu-toggle{border-radius: 0 0 0 15px; top: 46px; right: 0}
 .menu-right{height: 100vh; flex-shrink: 0; transition: right .7s}
-.menu-right .menu-toggle{border-radius: 0 0 0 15px; left: -40px; top: 47px}
-.menu-bottom .menu-toggle{border-radius: 15px 0 0 0; top: -40px; right: 0}
+.menu-right .menu-toggle{border-radius: 0 0 0 15px; right: 0px; top: 47px}
+.menu-bottom .menu-toggle{border-radius: 15px 0 0 0; bottom: 0px; right: 0}
 .menu.menu-bottom{padding: .5em}
 .menu-left{height: 100vh; flex-shrink: 0}
-.menu-left .menu-toggle{border-radius: 0 0 15px 0; top: 47px; right: -40px}
-.menu-top .wrapper, .menu-bottom .wrapper{display: inline-grid}
+.menu-left .menu-toggle{border-radius: 0 0 15px 0; top: 47px; left: 0px}
+.menu > div{min-width: 125px}
 .slider-display{text-align: center}
 
 .content{
@@ -36,7 +43,100 @@ table.dataTable.compact thead th, table.dataTable.compact thead td{padding: 4px 
 table.dataTable.compact tbody th, table.dataTable.compact tbody td{padding: 0 17px 0 0}
 .dataTable td, .dataTable th{text-align: right; white-space: nowrap}
 .dataTable td:first-of-type, .dataTable th:first-of-type{text-align: left}
+.dataTable, .dataTables_scrollHead{width: 100% !important}
 
 .form-row{padding: 0}
-.form-row > .wrapper{display: flex; white-space: nowrap}
-.form-row > .wrapper label{padding: 0 .5em 0 0; text-align: right}
+
+
+
+:root{
+  --link: #315395;
+  --highlight: #595959;
+  --highlight-text: #ffffff;
+}
+
+.dt-button{
+  border: 1px solid transparent;
+  padding: .375rem .75rem;
+  border-radius: .25rem;
+}
+
+.output-text button{
+  text-decoration: none;
+  vertical-align: baseline;
+  background-color: inherit;
+  border: none;
+  color: var(--link);
+  padding: 0 .2em;
+}
+
+.btn, .dt-button, .form-check-input:checked, .input[type=range], .btn:hover, .dt-button:hover,
+.form-check-input:checked, .input[type=range]{
+  color: var(--highlight-text);
+  background: var(--highlight);
+  border-color: var(--highlight)
+}
+.nav-link{
+  color: var(--link)
+}
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 10px;
+  cursor: pointer;
+  background: var(--highlight-text);
+  border-radius: 5px;
+  border: 1px solid var(--highlight);
+}
+input[type=range]::-webkit-slider-thumb {
+  border: 1px solid var(--highlight);
+  height: 30px;
+  width: 15px;
+  border-radius: 5px;
+  background: var(--highlight);
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -11px;
+}
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 10px;
+  cursor: pointer;
+  background: var(--highlight-text);
+  border-radius: 5px;
+  border: 1px solid var(--highlight);
+}
+input[type=range]::-moz-range-thumb {
+  border: 1px solid var(--highlight);
+  height: 30px;
+  width: 15px;
+  border-radius: 5px;
+  background: var(--highlight);
+  cursor: pointer;
+}
+input[type=range]::-ms-track {
+  width: 100%;
+  height: 10px;
+  cursor: pointer;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+input[type=range]::-ms-fill-lower {
+  background: var(--highlight-text);
+  border: 1px solid var(--highlight);
+  border-radius: 10px;
+}
+input[type=range]::-ms-fill-upper {
+  background: var(--highlight-text);
+  border: 1px solid var(--highlight);
+  border-radius: 10px;
+}
+input[type=range]::-ms-thumb {
+  margin-top: 1px;
+  border: 1px solid var(--highlight);
+  height: 30px;
+  width: 15px;
+  border-radius: 5px;
+  background: var(--highlight);
+  cursor: pointer;
+}

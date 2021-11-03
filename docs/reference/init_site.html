@@ -125,7 +125,8 @@
     <p>Create a repository for a static website for data documentation and exploration.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>init_site</span><span class='op'>(</span>title <span class='op'>=</span> <span class='st'>"app"</span>, dir <span class='op'>=</span> <span class='st'>"."</span>, with_data <span class='op'>=</span> <span class='cn'>TRUE</span>, overwrite <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>init_site</span><span class='op'>(</span>title <span class='op'>=</span> <span class='st'>"app"</span>, dir <span class='op'>=</span> <span class='st'>"."</span>, with_data <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  settings <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>, overwrite <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -141,6 +142,10 @@
     <tr>
       <th>with_data</th>
       <td><p>logical; if <code>FALSE</code>, a data sub-directory and package will not be created.</p></td>
+    </tr>
+    <tr>
+      <th>settings</th>
+      <td><p>A list with options to be passed to the site.</p></td>
     </tr>
     <tr>
       <th>overwrite</th>

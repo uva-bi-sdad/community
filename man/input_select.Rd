@@ -6,7 +6,8 @@
 \usage{
 input_select(label, id = label, options, default = -1, display = options,
   variable = NULL, dataset = NULL, depends = NULL, dataview = NULL,
-  filters = NULL, reset_button = FALSE)
+  filters = NULL, reset_button = FALSE, button_class = NULL,
+  as_row = FALSE)
 }
 \arguments{
 \item{label}{Label of the input for the user.}
@@ -36,6 +37,10 @@ specify dataset if none is specified here.}
 
 \item{reset_button}{If specified, adds a button after the select element that will revert the selection
 to its default; either \code{TRUE}, or text for the reset button's label.}
+
+\item{button_class}{Class name to add to the reset button.}
+
+\item{as_row}{Logical; if \code{TRUE}, the label and input are in separate columns within a row.}
 }
 \value{
 A character vector of the contents to be added.

@@ -37,11 +37,12 @@ output_text <- function(text, tag = "p", id = NULL, class = NULL) {
         e <- gsub("?", "", e, fixed = TRUE)
       }
     }
-    for (d in unique(ex)) depends[[d]] <- ""
+    for (d in unique(vapply(parsed[[i]]$condition, "[[", "", "id"))) depends[[d]] <- ""
 
     # extracting buttons
     if (grepl("[", e, fixed = TRUE)) {
-      rb <- regmatches(e, gregexpr("(?:\\([^)[]*?\\)|\\b\\w+?)?\\[.*?\\]", e))[[1]]
+      m <- gregexpr("(?:\\([^)[]*?\\)|\\{[^}[]*?\\}|\\b\\w+?)?\\[.*?\\]", e)
+      rb <- regmatches(e, m)[[1]]
       if (length(rb)) {
         parsed[[i]]$button <- list()
         for (b in seq_along(rb)) {
@@ -63,9 +64,7 @@ output_text <- function(text, tag = "p", id = NULL, class = NULL) {
             }
           }
         }
-        regmatches(e, gregexpr("(?:\\([^)[]*?\\)|\\b\\w+?)?\\[.*?\\]", e)) <- as.list(paste0(
-          "_SPLT_", paste0("b", seq_along(rb)), "_SPLT_"
-        ))
+        regmatches(e, m) <- as.list(paste0("_SPLT_", paste0("b", seq_along(rb)), "_SPLT_"))
       }
     }
 
@@ -73,7 +72,7 @@ output_text <- function(text, tag = "p", id = NULL, class = NULL) {
   }
   r <- paste0(c(
     "<", tag, ' auto-type="text" id="', id, '"',
-    ' class="auto-output', if (!is.null(class)) paste("", class), '"',
+    ' class="auto-output output-text', if (!is.null(class)) paste("", class), '"',
     "></", tag, ">"
   ), collapse = "")
   if (building) {

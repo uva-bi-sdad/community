@@ -43,9 +43,9 @@ page_section <- function(..., type = "row", wraps = NA, sizes = NA, breakpoints 
     paste(c("<div", if (!is.null(type)) c(' class="', type, '"'), ">"), collapse = ""),
     unlist(lapply(seq_len(n), function(i) {
       c(
-        if (!is.na(wraps[i])) {
+        if (!is.na(wraps[i]) || conditions[i] != "") {
           paste(c(
-            '<div class="', wraps[i],
+            '<div class="', if (is.na(wraps[i])) "" else wraps[i],
             if (!is.na(breakpoints[i])) c("-", breakpoints[i]),
             if (!is.na(sizes[i])) c("-", sizes[i]),
             '"', if (conditions[i] != "") paste0(' id="', ids[i], '"'), ">"

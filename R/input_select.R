@@ -19,6 +19,8 @@
 #' \code{meta} list), and values of target values for those entries, or the IDs of value selectors.
 #' @param reset_button If specified, adds a button after the select element that will revert the selection
 #' to its default; either \code{TRUE}, or text for the reset button's label.
+#' @param button_class Class name to add to the reset button.
+#' @param as_row Logical; if \code{TRUE}, the label and input are in separate columns within a row.
 #' @examples
 #' \dontrun{
 #' input_select()
@@ -28,12 +30,12 @@
 
 input_select <- function(label, id = label, options, default = -1, display = options,
                          variable = NULL, dataset = NULL, depends = NULL, dataview = NULL, filters = NULL,
-                         reset_button = FALSE) {
+                         reset_button = FALSE, button_class = NULL, as_row = FALSE) {
   id <- gsub("\\s", "", id)
   r <- c(
     '<div class="wrapper select-wrapper">',
     paste0('<label for="', id, '">', label, "</label>"),
-    '<div class="input-group mb-3">',
+    '<div class="input-group">',
     paste0(
       '<select class="auto-input form-select" auto-type="select" id="', id, '" default="', default, '" ',
       if (is.character(options) && length(options) == 1) paste0('auto-options="', options, '"'),
@@ -51,15 +53,16 @@ input_select <- function(label, id = label, options, default = -1, display = opt
     },
     "</select>",
     if (!missing(reset_button)) {
-      paste0(
-        '<button type="button" class="btn btn-primary select-reset">',
+      paste(c(
+        '<button type="button" class="btn', if (!is.null(button_class)) paste("", button_class), ' select-reset">',
         if (is.character(reset_button)) reset_button else "Reset",
         "</button>"
-      )
+      ), collapse = "")
     },
     "</div>",
     "</div>"
   )
+  if (as_row) r <- to_input_row(r)
   caller <- parent.frame()
   if (!is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts") {
     if (!is.null(filters)) caller$select[[id]] <- as.list(filters)

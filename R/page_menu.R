@@ -59,12 +59,6 @@ page_menu <- function(..., position = "right", width = NULL, height = NULL, coll
       ),
       ">"
     ), collapse = ""),
-    if (collapsible) {
-      paste0(
-        '<button type="button" class="menu-toggle">',
-        if (is.character(collapsible)) collapsible else "&equiv;", "</button>"
-      )
-    },
     paste0(
       '<div class="menu', if (vertical) " col" else " row",
       if (!default_open) " hidden", " menu-", position, '">'
@@ -84,6 +78,12 @@ page_menu <- function(..., position = "right", width = NULL, height = NULL, coll
       )
     }), use.names = FALSE),
     "</div>",
+    if (collapsible) {
+      paste0(
+        '<button type="button" class="menu-toggle" aria-label="', position, ' menu">',
+        if (is.character(collapsible)) collapsible else "&equiv;", "</button>"
+      )
+    },
     "</div>"
   )
   if (building) {

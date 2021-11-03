@@ -4,6 +4,7 @@
 #'
 #' @param title Title of the site.
 #' @param dir Directory in which to create the site's directory.
+#' @param settings A list with options to be passed to the site.
 #' @param with_data logical; if \code{FALSE}, a data sub-directory and package will not be created.
 #' @param overwrite logical; if \code{TRUE}, will overwrite existing site files in \code{dir}.
 #' @examples
@@ -13,7 +14,7 @@
 #' @return Path to the created site directory.
 #' @export
 
-init_site <- function(title = "app", dir = ".", with_data = TRUE, overwrite = FALSE) {
+init_site <- function(title = "app", dir = ".", with_data = TRUE, settings = list(), overwrite = FALSE) {
   check <- check_template("site", dir = dir)
   if (check$exists && !overwrite) {
     cli_bullets(c(`!` = "site files already exist", i = "add {.code overwrite = TRUE} to overwrite them"))
@@ -54,10 +55,12 @@ init_site <- function(title = "app", dir = ".", with_data = TRUE, overwrite = FA
     ), collapse = "\n"), paths[2])
   }
   if (!file.exists(paths[3])) {
-    write_json(list(
-      title = title,
-      theme = "default"
-    ), paths[3], pretty = TRUE, auto_unbox = TRUE)
+    if (is.null(settings$digits)) settings$digits <- 3
+    write_json(
+      c(list(title = title), settings),
+      paths[3],
+      pretty = TRUE, auto_unbox = TRUE
+    )
   }
   if (!file.exists(paths[4])) {
     write_json(list(

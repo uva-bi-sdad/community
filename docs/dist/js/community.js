@@ -22,7 +22,6 @@ void (function () {
       cats: ['#a6cee3', '#1f78b4', '#b2df8a', '#33a02c'],
     },
     patterns = {
-      single_decimal: /(\.\d$)/,
       seps: /[\s._-]/g,
       word_start: /\b(\w)/g,
       datasets: /^dat/,
@@ -669,7 +668,7 @@ void (function () {
     },
     check_funs = {
       '!': function (a) {
-        return !a || -1 != a
+        return !a || -1 == a
       },
       '': function (a) {
         return !!a && -1 != a
@@ -698,6 +697,14 @@ void (function () {
       includes: function (s, e) {
         return !s.length || s.indexOf(e) !== -1
       },
+      sort_a1: function (a, b) {
+        return a[1] - b[1]
+      },
+      sort_tree_children: function (a, b) {
+        return !Object.hasOwn(tree, a.id) || !Object.hasOwn(tree, b.id)
+          ? -Infinity
+          : tree[a.id]._n.children - tree[b.id]._n.children
+      },
     }
 
   var page = {},
@@ -717,7 +724,8 @@ void (function () {
     entitiesByName = {},
     rule_conditions = {},
     _u = {},
-    _c = {}
+    _c = {},
+    tree = {}
 
   function pal(value, which, summary, index) {
     const colors = palettes[Object.hasOwn(palettes, which) ? which : 'reds'],
@@ -741,8 +749,14 @@ void (function () {
       : '#808080'
   }
 
-  function format_value(v) {
-    return 'number' === typeof v ? (Math.round(v * 1e2) / 1e2 + '').replace(patterns.single_decimal, '$10') : v
+  function format_value(v, int) {
+    if (!int && 'number' === typeof v) {
+      const d = Math.pow(10, site.digits),
+        r = Math.round((v % 1) * d) / d + ''
+      return (v >> 0) + '.' + (('0' === r ? '' : r.split('.')[1]) + '0000000000').substr(0, site.digits)
+    } else {
+      return v
+    }
   }
 
   function format_label(l) {
@@ -804,6 +818,13 @@ void (function () {
   function add_dependency(id, o) {
     if (!Object.hasOwn(_c, id)) _c[id] = []
     _c[id].push(o)
+    if (!Object.hasOwn(tree, id)) tree[id] = {_n: {children: 0, parents: 0}, children: {}, parents: {}}
+    if (!Object.hasOwn(tree, o.id)) tree[o.id] = {_n: {children: 0, parents: 0}, children: {}, parents: {}}
+    tree[id].children[o.id] = tree[o.id]
+    tree[id]._n.children++
+    tree[o.id].parents[id] = tree[id]
+    tree[o.id]._n.parents++
+    _c[id].sort(check_funs.sort_tree_children)
     request_queue(id)
   }
 
@@ -890,21 +911,18 @@ void (function () {
       },
       toggle: function (type) {
         clearTimeout(page.menu_toggler.timeout)
-        if (this.nextElementSibling.classList.contains('hidden')) {
-          this.nextElementSibling.classList.remove('hidden')
+        if (this.parentElement.firstElementChild.classList.contains('hidden')) {
+          this.parentElement.firstElementChild.classList.remove('hidden')
           this.parentElement.style[type] = '0px'
           page.content.style[type] =
-            page.content_bounds[type] -
-            (type === 'top' ? 40 : 0) +
-            this.parentElement.getBoundingClientRect()[type === 'left' || type === 'right' ? 'width' : 'height'] +
-            'px'
+            this.parentElement.getBoundingClientRect()[type === 'left' || type === 'right' ? 'width' : 'height'] + 'px'
         } else {
           this.parentElement.style[type] =
             -this.parentElement.getBoundingClientRect()[type === 'left' || type === 'right' ? 'width' : 'height'] +
             (type === 'top' ? page.content_bounds.top - 40 : 0) +
             'px'
           page.content.style[type] = page.content_bounds[type] + 'px'
-          page.menu_toggler.timeout = setTimeout(page.menu_toggler.hide.bind(this.nextElementSibling), 700)
+          page.menu_toggler.timeout = setTimeout(page.menu_toggler.hide.bind(this.parentElement.firstElementChild), 700)
         }
       },
       timeout: -1,
@@ -913,68 +931,64 @@ void (function () {
       if (page.menus[i].classList.contains('menu-top')) {
         page.top_menu = page.menus[i]
         page.content_bounds.top += 40
-        if (page.menus[i].firstElementChild.tagName === 'BUTTON') {
-          page.menus[i].firstElementChild.addEventListener(
+        if (page.menus[i].lastElementChild.tagName === 'BUTTON') {
+          page.menus[i].lastElementChild.addEventListener(
             'click',
-            page.menu_toggler.toggle.bind(page.menus[i].firstElementChild, 'top')
+            page.menu_toggler.toggle.bind(page.menus[i].lastElementChild, 'top')
           )
-          page.menus[i].style.height = page.menus[i].getBoundingClientRect().height + 'px'
         }
       } else if (page.menus[i].classList.contains('menu-right')) {
         page.right_menu = page.menus[i]
         page.content_bounds.right = 40
-        if (page.menus[i].firstElementChild.tagName === 'BUTTON') {
-          page.menus[i].firstElementChild.addEventListener(
+        if (page.menus[i].lastElementChild.tagName === 'BUTTON') {
+          page.menus[i].lastElementChild.addEventListener(
             'click',
-            page.menu_toggler.toggle.bind(page.menus[i].firstElementChild, 'right')
+            page.menu_toggler.toggle.bind(page.menus[i].lastElementChild, 'right')
           )
         }
       } else if (page.menus[i].classList.contains('menu-bottom')) {
         page.bottom_menu = page.menus[i]
         page.content_bounds.bottom = 40
-        if (page.menus[i].firstElementChild.tagName === 'BUTTON') {
-          page.menus[i].firstElementChild.addEventListener(
+        if (page.menus[i].lastElementChild.tagName === 'BUTTON') {
+          page.menus[i].lastElementChild.addEventListener(
             'click',
-            page.menu_toggler.toggle.bind(page.menus[i].firstElementChild, 'bottom')
+            page.menu_toggler.toggle.bind(page.menus[i].lastElementChild, 'bottom')
           )
-          page.menus[i].style.height = page.menus[i].getBoundingClientRect().height + 'px'
         }
       } else if (page.menus[i].classList.contains('menu-left')) {
         page.left_menu = page.menus[i]
         page.content_bounds.left = 40
-        if (page.menus[i].firstElementChild.tagName === 'BUTTON') {
-          page.menus[i].firstElementChild.addEventListener(
+        if (page.menus[i].lastElementChild.tagName === 'BUTTON') {
+          page.menus[i].lastElementChild.addEventListener(
             'click',
-            page.menu_toggler.toggle.bind(page.menus[i].firstElementChild, 'left')
+            page.menu_toggler.toggle.bind(page.menus[i].lastElementChild, 'left')
           )
         }
       }
     }
     function content_resize() {
       page.content.style.top =
-        page.content_bounds.top +
-        (page.top_menu && !page.top_menu.lastElementChild.classList.contains('hidden')
-          ? page.top_menu.getBoundingClientRect().height - 40
-          : 0) +
-        'px'
+        (page.top_menu && !page.top_menu.firstElementChild.classList.contains('hidden')
+          ? page.top_menu.getBoundingClientRect().height
+          : page.content_bounds.top) + 'px'
       if (page.right_menu) {
         page.content.style.right =
           page.content_bounds.right +
-          (page.right_menu.lastElementChild.classList.contains('hidden')
+          (page.right_menu.firstElementChild.classList.contains('hidden')
             ? 0
             : page.right_menu.getBoundingClientRect().width) +
           'px'
       } else if (page.bottom_menu) {
         page.content.style.bottom =
           page.content_bounds.bottom +
-          (page.bottom_menu.lastElementChild.classList.contains('hidden')
+          (page.bottom_menu.firstElementChild.classList.contains('hidden')
             ? 0
             : page.bottom_menu.getBoundingClientRect().height) +
           'px'
       } else if (page.left_menu) {
         page.content.style.left =
           page.content_bounds.left +
-          (page.left_menu.lastElementChild.classList.contains('hidden')
+          (page.left_menu.firstElementChild.classList.contains('hidden')
             ? 0
             : page.left_menu.getBoundingClientRect().width) +
           'px'
@@ -1167,6 +1181,7 @@ void (function () {
         if ('number' === o.type) {
           o.min = o.e.getAttribute('min')
           o.max = o.e.getAttribute('max')
+          o.range = [o.min, o.max]
           o.step = parseFloat(o.e.step) || 1
           o.parsed = {min: undefined, max: undefined}
           o.depends = {}
@@ -1176,7 +1191,8 @@ void (function () {
             var d = view ? view.get.dataset() : valueOf(this.dataset),
               min = valueOf(this.min) || view.time,
               max = valueOf(this.max) || view.time,
-              v
+              v,
+              reset = false
             if (patterns.minmax.test(min)) min = _u[this.min][min]
             if (patterns.minmax.test(max)) max = _u[this.max][max]
             if (!d && this.view) {
@@ -1200,13 +1216,25 @@ void (function () {
                 : parseFloat(max)
             if (variable && Object.hasOwn(variables, variable)) {
               this.e.min = v = Math.max(view.time_range.time[0], this.parsed.min)
-              if (v > this.source) this.set(v)
+              if (this.range[0] !== v) reset = true
+              this.range[0] = v
+              if (v > this.source) {
+                reset = false
+                this.set(v)
+              }
               this.e.max = v = Math.min(view.time_range.time[1], this.parsed.max)
-              if (v < this.source) this.set(v)
+              if (this.range[1] !== v) reset = true
+              this.range[1] = v
+              if (v < this.source) {
+                reset = false
+                this.set(v)
+              }
               if (!this.depends[view.y]) {
                 this.depends[view.y] = true
                 add_dependency(view.y, {type: 'update', id: this.id})
               }
+              v = this.value()
+              if (reset) this.reset()
             } else {
               this.e.min = this.parsed.min
               if (this.parsed.min > this.source || (!this.source && 'min' === this.default)) this.set(this.parsed.min)
@@ -1241,9 +1269,9 @@ void (function () {
               o.reset = function () {
                 const d = Object.hasOwn(_u, this.view) && _u[this.view].get.dataset()
                 if ('max' === this.default) {
-                  if ('undefined' !== typeof this.parsed.max) this.set(this.parsed.max)
+                  if (this.range) this.set(this.range[1])
                 } else if ('min' === this.default) {
-                  if ('undefined' !== typeof this.parsed.min) this.set(this.parsed.min)
+                  if (this.range) this.set(this.range[0])
                 } else if (Object.hasOwn(_u, this.default)) {
                   this.set(valueOf(this.default))
                 }
@@ -1416,8 +1444,12 @@ void (function () {
                   title: meta.time[n] + '',
                   data: 'data.' + k,
                   render: function (d) {
-                    return 'number' === typeof d[this] ? format_value(d[this]) : d[this]
-                  }.bind(n),
+                    var k = valueOf(this.v.variables),
+                      p = variables[k].datasets[0]
+                    return 'number' === typeof d[this.n]
+                      ? format_value(d[this.n], 'integer' === variables[k].info[p].type)
+                      : d[this.n]
+                  }.bind({n, v: o.options}),
                 }
               }
             }
@@ -1434,9 +1466,9 @@ void (function () {
                     : {
                         title: format_label(k),
                         data: 'data.' + k,
-                        render: function (d) {
-                          return 'number' === typeof d[this.i] ? format_value(d[this.i]) : d[this.i]
-                        }.bind(o),
+                        render: function (d, int) {
+                          return 'number' === typeof d[this.i] ? format_value(d[this.i], int) : d[this.i]
+                        }.bind(o, 'integer' === variables[k].info[p].type),
                       }
                 )
               }
@@ -1484,7 +1516,7 @@ void (function () {
                   title: 'Year',
                   data: 'data.time',
                   render: function (d) {
-                    return 'number' === typeof d[this.i] ? format_value(d[this.i]) : d[this.i]
+                    return 'number' === typeof d[this.i] ? format_value(d[this.i], true) : d[this.i]
                   }.bind(o),
                 },
                 {
@@ -1499,7 +1531,12 @@ void (function () {
                     return Object.hasOwn(d.data, this.v) ? d.data[this.v] : []
                   }.bind(o),
                   render: function (d) {
-                    return 'number' === typeof d[this.i] ? format_value(d[this.i]) : d[this.i]
+                    return 'number' === typeof d[this.i]
+                      ? format_value(
+                          d[this.i],
+                          'integer' === variables[this.v].info[variables[this.v].datasets[0]].type
+                        )
+                      : d[this.i]
                   }.bind(o),
                 },
               ]
@@ -1571,14 +1608,14 @@ void (function () {
         o.click = e.getAttribute('click')
         if (o.click && Object.hasOwn(_u, o.click)) o.clickto = _u[o.click]
         o.show = function (e) {
-          if (e.layer) {
+          if (e && e.layer) {
             e.layer.setStyle({
               color: '#ffffff',
             })
           }
         }
         o.revert = function (e) {
-          if (e.layer) {
+          if (e && e.layer) {
             e.layer.setStyle({
               color: '#000000',
             })
@@ -1603,12 +1640,13 @@ void (function () {
           for (n = o.text.length, ci = 0; ci < n; ci++) {
             if (!Object.hasOwn(o.text[ci], 'button')) o.text[ci].button = {}
             o.e.appendChild((o.text[ci].parts = document.createElement('span')))
-            for (ce = o.text[ci].text.length, c = 0; c < ce; c++) {
-              if (Object.hasOwn(o.text[ci].button, o.text[ci].text[c])) {
-                p = o.text[ci].button[o.text[ci].text[c]]
+            if ('string' === typeof o.text[ci].text) o.text[ci].text = [o.text[ci].text]
+            for (ce = o.text[ci].text.length, v = 0; v < ce; v++) {
+              if (Object.hasOwn(o.text[ci].button, o.text[ci].text[v])) {
+                p = o.text[ci].button[o.text[ci].text[v]]
                 o.text[ci].parts.appendChild(document.createElement('button'))
                 o.text[ci].parts.lastElementChild.type = 'button'
-                o.text[ci].parts.lastElementChild.className = 'btn btn-light'
+                o.text[ci].parts.lastElementChild.className = 'btn btn-link'
                 if (Object.hasOwn(_u, p.target) && 'function' === typeof _u[p.target][p.type]) {
                   o.text[ci].parts.lastElementChild.setAttribute('aria-label', p.text.join(''))
                   o.text[ci].parts.lastElementChild.addEventListener('click', _u[p.target][p.type])
@@ -1807,11 +1845,7 @@ void (function () {
     ms.time_range[0] = Infinity
     ms.time_range[1] = -Infinity
     if (full) {
-      for (y = 0; y < ny; y++)
-        if (ms.n[y])
-          mo[y].sort(function sf(a, b) {
-            return a[1] - b[1]
-          })
+      for (y = 0; y < ny; y++) if (ms.n[y]) mo[y].sort(check_funs.sort_a1)
       for (y = 0; y < ny; y++) {
         if (ms.n[y]) {
           if (y < ms.time_range[0]) ms.time_range[0] = y
@@ -1844,7 +1878,8 @@ void (function () {
           ms.q1[y] = 0
           ms.min[y] = 0
         }
-        ms.norm_median[y] = ms.max[y] - ms.min[y] ? (ms.median[y] - ms.min[y]) / (ms.max[y] - ms.min[y]) : ms.median[y]
+        ms.norm_median[y] =
+          'number' === typeof ms.max[y] ? (ms.median[y] - ms.min[y]) / (ms.max[y] - ms.min[y]) : ms.median[y]
       }
     } else {
       for (y = 0; y < ny; y++) {

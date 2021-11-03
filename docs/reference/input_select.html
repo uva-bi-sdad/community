@@ -127,7 +127,8 @@
 
     <pre class="usage"><span class='fu'>input_select</span><span class='op'>(</span><span class='va'>label</span>, id <span class='op'>=</span> <span class='va'>label</span>, <span class='va'>options</span>, default <span class='op'>=</span> <span class='op'>-</span><span class='fl'>1</span>, display <span class='op'>=</span> <span class='va'>options</span>,
   variable <span class='op'>=</span> <span class='cn'>NULL</span>, dataset <span class='op'>=</span> <span class='cn'>NULL</span>, depends <span class='op'>=</span> <span class='cn'>NULL</span>, dataview <span class='op'>=</span> <span class='cn'>NULL</span>,
-  filters <span class='op'>=</span> <span class='cn'>NULL</span>, reset_button <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
+  filters <span class='op'>=</span> <span class='cn'>NULL</span>, reset_button <span class='op'>=</span> <span class='cn'>FALSE</span>, button_class <span class='op'>=</span> <span class='cn'>NULL</span>,
+  as_row <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -181,6 +182,14 @@ specify dataset if none is specified here.</p></td>
       <th>reset_button</th>
       <td><p>If specified, adds a button after the select element that will revert the selection
 to its default; either <code>TRUE</code>, or text for the reset button's label.</p></td>
+    </tr>
+    <tr>
+      <th>button_class</th>
+      <td><p>Class name to add to the reset button.</p></td>
+    </tr>
+    <tr>
+      <th>as_row</th>
+      <td><p>Logical; if <code>TRUE</code>, the label and input are in separate columns within a row.</p></td>
     </tr>
     </table>
 

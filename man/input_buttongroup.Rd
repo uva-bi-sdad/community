@@ -5,7 +5,8 @@
 \title{Add a button toggle group to a website}
 \usage{
 input_buttongroup(label, options, default = 0, display = options,
-  id = label, variable = NULL, dataset = NULL, depends = NULL)
+  id = label, button_class = NULL, variable = NULL, dataset = NULL,
+  depends = NULL)
 }
 \arguments{
 \item{label}{Label of the input for the user.}
@@ -18,6 +19,8 @@ or \code{"variables"} to select names of datasets or variables.}
 \item{display}{A display version of the options.}
 
 \item{id}{Unique id of the element to be created.}
+
+\item{button_class}{Class name to add to each label (which appears as the button).}
 
 \item{variable}{The name of a variable from which to get levels (overwritten by \code{depends}).}
 
