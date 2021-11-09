@@ -8,7 +8,8 @@ input[type=text],
   min-width: 80px
 }
 
-.navbar{position: fixed; width: 100%; z-index: 100}
+.navbar{position: fixed; width: 100%; z-index: 100; padding: .5rem}
+.navbar .btn{padding: 0 .5em}
 .row{width: 100%; padding: 0 0 1em 0; margin-top: 0; margin-right: 0; margin-left: 0}
 .col{height: 100%}
 .row > div{min-width: 90px}
@@ -31,11 +32,13 @@ input[type=text],
   padding: .5em; overflow-x: hidden; overflow-y: auto;
   transition: top 400ms, right 400ms, bottom 400ms, left 400ms
 }
-.legend{padding: .5em 1em .5em 0; text-align: center}
-.legend td:first-of-type{text-align: left}
-.legend td:last-of-type{text-align: right}
-.legend-scale{width: 100%; height: 30px}
-.legend-scale span{height: 100%; width: 16.667%; display: inline-block}
+.legend{padding: .5em; text-align: center}
+.legend-text{display: table; width: 100%}
+.legend-text span{display: table-cell}
+.legend-text span:first-of-type{text-align: left}
+.legend-text span:last-of-type{text-align: right}
+.legend-scale{width: 100%; height: 30px; display: table}
+.legend-scale span{height: 100%; display: table-cell}
 .plot-container{margin: 0 0 0 -1em !important}
 .leaflet-container{background: #fff}
 table.dataTable tbody tr.dtrg-group.dtrg-group{background-color: #f0f0f0; font-weight: bold}

@@ -127,7 +127,7 @@
 
     <pre class="usage"><span class='fu'>input_dataview</span><span class='op'>(</span>id <span class='op'>=</span> <span class='cn'>NULL</span>, y <span class='op'>=</span> <span class='cn'>NULL</span>, x <span class='op'>=</span> <span class='cn'>NULL</span>, time <span class='op'>=</span> <span class='cn'>NULL</span>,
   time_agg <span class='op'>=</span> <span class='st'>"last"</span>, time_filters <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>, dataset <span class='op'>=</span> <span class='cn'>NULL</span>, ids <span class='op'>=</span> <span class='cn'>NULL</span>,
-  features <span class='op'>=</span> <span class='cn'>NULL</span>, palette <span class='op'>=</span> <span class='st'>"divergent"</span><span class='op'>)</span></pre>
+  features <span class='op'>=</span> <span class='cn'>NULL</span>, palette <span class='op'>=</span> <span class='st'>"rdylbu7"</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -184,18 +184,18 @@ a value or vector of values, or a selector of values.</p></td>
     <tr>
       <th>palette</th>
       <td><p>The name of the color palette used in maps and plots (from
-<a href='https://colorbrewer2.org'>colorbrewer</a>); one of <code>"divergent"</code> (default), <code>"reds"</code>,
-<code>"greens"</code>, <code>"grays"</code>, or <code>"cat"</code> (for a set of non-continuous colors).</p></td>
+<a href='https://colorbrewer2.org'>colorbrewer</a>); one of <code>"rdylbu7"</code> (default), <code>"orrd7"</code>, <code>"gnbu7"</code>,
+<code>"brbg7"</code>, <code>"puor7"</code>, <code>"prgn6"</code>, <code>"reds6"</code>, <code>"greens6"</code>, <code>"greys4"</code>, <code>"paired4"</code>.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>The entered filter.</p>
+    <p>A list of the entered options.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span>
-<span class='r-in'><span class='fu'>input_dataview</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'>input_dataview</span><span class='op'>(</span><span class='op'>)</span></span>
 <span class='r-in'><span class='op'>}</span></span>
 </pre>
   </div>

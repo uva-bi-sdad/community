@@ -4,16 +4,18 @@
 \alias{output_text}
 \title{Add dynamic text to a website}
 \usage{
-output_text(text, tag = "p", id = NULL, class = NULL)
+output_text(text, tag = "p", id = NULL, class = NULL, condition = NULL)
 }
 \arguments{
-\item{text}{A vector of text to be parsed.}
+\item{text}{A vector of text to be parsed; see details.}
 
 \item{tag}{Tag name of the element containing the text.}
 
 \item{id}{Unique ID of the output element.}
 
 \item{class}{Class names to add to the output's element.}
+
+\item{condition}{A conditional statement to decide visibility of the entire output element.}
 }
 \value{
 A character vector of the containing element of the text.
@@ -21,8 +23,22 @@ A character vector of the containing element of the text.
 \description{
 Adds a textual output based on the current state of input elements.
 }
+\details{
+\describe{
+\item{Input References}{\code{text} can include references to inputs by ID within curly brackets
+(e.g., \code{"{input_id}").}}
+\item{Conditions}{Multiple entries in \code{text} translate to separate elements. Each entry can be
+conditioned on a statement within curly brackets following an initial question mark
+(e.g., \code{"?{input_a != 1}Input A is not 1"}). If no statement is included after the question mark,
+the entry will be conditioned on a referred to input (\code{TRUE} if anything is selected).}
+\item{Buttons}{Embedded reset buttons can be specified within square brackets (e.g., \code{"Reset[r input_id]"}).
+Text before the brackets will be the button's display text, with multiple words included within parentheses
+(e.g., \code{"(Reset Input A)[r input_a]"}). If the text is a reference, this will be the default reset
+reference (e.g., \code{"{input_a}[r]"} is the same as \code{"{input_a}[r input_a]"}).}
+}
+}
 \examples{
 \dontrun{
-output_text("Selection: input_a{{input_a}, }")
+output_text("Selection: {input_a}[r]")
 }
 }

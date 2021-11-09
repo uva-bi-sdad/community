@@ -15,15 +15,21 @@ void (function () {
   }
   const palettes = {
       // from https://colorbrewer2.org
-      divergent: ['#762a83', '#af8dc3', '#e7d4e8', '#d9f0d3', '#7fbf7b', '#1b7837'],
-      reds: ['#f1eef6', '#d7b5d8', '#df65b0', '#dd1c77', '#980043'],
-      greens: ['#ffffcc', '#c2e699', '#78c679', '#31a354', '#006837'],
-      greys: ['#f7f7f7', '#cccccc', '#969696', '#525252'],
-      cats: ['#a6cee3', '#1f78b4', '#b2df8a', '#33a02c'],
+      rdylbu7: ['#d73027', '#fc8d59', '#fee090', '#ffffbf', '#e0f3f8', '#91bfdb', '#4575b4'],
+      orrd7: ['#fef0d9', '#fdd49e', '#fdbb84', '#fc8d59', '#ef6548', '#d7301f', '#990000'],
+      gnbu7: ['#f0f9e8', '#ccebc5', '#a8ddb5', '#7bccc4', '#4eb3d3', '#2b8cbe', '#08589e'],
+      brbg7: ['#8c510a', '#d8b365', '#f6e8c3', '#f5f5f5', '#c7eae5', '#5ab4ac', '#01665e'],
+      puor7: ['#b35806', '#f1a340', '#fee0b6', '#f7f7f7', '#d8daeb', '#998ec3', '#542788'],
+      prgn6: ['#762a83', '#af8dc3', '#e7d4e8', '#d9f0d3', '#7fbf7b', '#1b7837'],
+      reds6: ['#f1eef6', '#d7b5d8', '#df65b0', '#dd1c77', '#980043'],
+      greens6: ['#ffffcc', '#c2e699', '#78c679', '#31a354', '#006837'],
+      greys4: ['#f7f7f7', '#cccccc', '#969696', '#525252'],
+      paired4: ['#a6cee3', '#1f78b4', '#b2df8a', '#33a02c'],
     },
     patterns = {
       seps: /[\s._-]/g,
       word_start: /\b(\w)/g,
+      palette: /^pal/,
       datasets: /^dat/,
       variables: /^var/,
       levels: /^lev/,
@@ -89,6 +95,7 @@ void (function () {
               : parseInt(v.time_agg)
             : 0
         if (c && Object.hasOwn(v, 'get')) {
+          const p = valueOf(v.palette)
           var l,
             y = ys.parsed ? ys.value() - ys.parsed.min : 0,
             s = v.selection.all,
@@ -102,7 +109,7 @@ void (function () {
                     s[k].layer.setStyle({
                       fillOpacity: 0.7,
                       color: '#000000',
-                      fillColor: pal(s[k].data[c][y], v.palette, l, y),
+                      fillColor: pal(s[k].data[c][y], p, l, y),
                       weight: 1,
                     })
                   }
@@ -433,6 +440,123 @@ void (function () {
           this.set(e.target.value)
         },
       },
+      text: {
+        init: function (o) {
+          if (site.text && Object.hasOwn(site.text, o.id)) {
+            o.text = site.text[o.id].text
+            o.condition = site.text[o.id].condition || []
+            o.depends = {}
+            function init_text(text, parts) {
+              if (!Object.hasOwn(text, 'button')) text.button = {}
+              if ('string' === typeof text.text) text.text = [text.text]
+              text.parts = document.createElement('span')
+              for (var n = text.text.length, i = 0, p; i < n; i++) {
+                if (Object.hasOwn(text.button, text.text[i])) {
+                  p = text.button[text.text[i]]
+                  text.parts.appendChild(document.createElement('button'))
+                  text.parts.lastElementChild.type = 'button'
+                  text.parts.lastElementChild.className = 'btn btn-link'
+                  if (Object.hasOwn(_u, p.target) && 'function' === typeof _u[p.target][p.type]) {
+                    text.parts.lastElementChild.setAttribute('aria-label', p.text.join(''))
+                    text.parts.lastElementChild.addEventListener('click', _u[p.target][p.type])
+                  }
+                } else {
+                  text.parts.appendChild(document.createElement('span'))
+                }
+              }
+              if (Object.hasOwn(text, 'condition')) {
+                for (i = text.condition.length; i--; )
+                  if (text.condition[i].id) {
+                    if ('default' === text.condition[i].id) {
+                      text.condition[i].check = function () {
+                        return true
+                      }
+                    } else {
+                      o.depends[text.condition[i].id] = ''
+                      text.condition[i].check = function () {
+                        return 'default' === this.id || check_funs[this.type](valueOf(this.id), valueOf(this.value))
+                      }.bind(text.condition[i])
+                    }
+                  }
+              }
+            }
+            for (var n = o.text.length, i = 0, tn, t, k; i < n; i++) {
+              if (Object.hasOwn(o.text[i], 'text')) {
+                init_text(o.text[i])
+                o.e.appendChild(o.text[i].parts)
+              } else {
+                o.e.appendChild(document.createElement('span'))
+                for (tn = o.text[i].length, t = 0; t < tn; t++) {
+                  init_text(o.text[i][t])
+                }
+              }
+            }
+            for (i = o.condition.length; i--; )
+              if (Object.hasOwn(_u, o.condition[i].id)) add_dependency(o.condition[i].id, {type: 'display', id: o.id})
+            for (k in o.depends) if (Object.hasOwn(_u, k)) add_dependency(k, {type: 'update', id: o.id})
+            o.update = elements.text.update.bind(o)
+          }
+        },
+        update: function () {
+          var k, i, o, t, c, s, pass, bt
+          for (k in this.depends)
+            if (Object.hasOwn(this.depends, k)) {
+              this.depends[k] = valueOf(k)
+              if (Object.hasOwn(entities, this.depends[k])) this.depends[k] = entities[this.depends[k]].features.name
+            }
+          for (i = this.text.length; i--; ) {
+            pass = true
+            o = this.text[i]
+            if (o.length) {
+              for (t = o.length; t--; ) {
+                if (Object.hasOwn(o[t], 'condition')) {
+                  for (c = o[t].condition.length; c--; ) {
+                    pass = o[t].condition[c].check()
+                    if (!pass) break
+                  }
+                  if (pass) {
+                    o = o[t]
+                    break
+                  }
+                }
+              }
+            } else {
+              if (Object.hasOwn(o, 'condition')) {
+                for (t = o.condition.length; t--; ) {
+                  pass = o.condition[t].check()
+                  if (!pass) break
+                }
+              }
+            }
+            if (pass) {
+              for (t = o.text.length; t--; ) {
+                k = o.text[t]
+                if ('object' === typeof k) {
+                  for (bt = k.length; bt--; ) {
+                    if ('default' === k[bt].id || check_funs[k[bt].type](valueOf(k[bt].id), valueOf(k[bt].value)))
+                      k = k[bt].text
+                  }
+                }
+                if (Object.hasOwn(this.depends, k)) {
+                  o.parts.children[t].innerText = this.depends[k]
+                } else if (Object.hasOwn(o.button, k)) {
+                  for (s = '', bt = o.button[k].text.length; bt--; ) {
+                    s =
+                      (Object.hasOwn(this.depends, o.button[k].text[bt])
+                        ? this.depends[o.button[k].text[bt]]
+                        : o.button[k].text[bt]) + s
+                  }
+                  o.parts.children[t].innerText = s
+                } else o.parts.children[t].innerText = k
+              }
+              if (this.text[i].length) {
+                this.e.children[i].innerHTML = ''
+                this.e.children[i].appendChild(o.parts)
+              } else o.parts.classList.remove('hidden')
+            } else o.parts.classList.add('hidden')
+          }
+        },
+      },
       select: {
         retrieve: function () {
           this.set(this.e.selectedIndex)
@@ -448,10 +572,13 @@ void (function () {
         listener: function (e) {
           this.set(e.target.selectedIndex)
         },
-        adder: function (value, display) {
+        adder: function (value, display, meta) {
           var e = document.createElement('option')
           e.value = value
           e.innerText = display
+          if (meta && meta.info) {
+            e.title = meta.info.short_description
+          }
           this.e.appendChild(e)
           return e
         },
@@ -665,6 +792,16 @@ void (function () {
           }
         },
       },
+      legend: {
+        update: function (e) {
+          e.innerHTML = ''
+          const p = palettes[valueOf(e.parentElement.getAttribute('palette')).toLowerCase() || 'rdylbu7']
+          for (var i = 0, n = p.length; i < n; i++) {
+            e.appendChild(document.createElement('span'))
+            e.lastElementChild.style.background = p[i]
+          }
+        },
+      },
     },
     check_funs = {
       '!': function (a) {
@@ -728,6 +865,7 @@ void (function () {
     tree = {}
 
   function pal(value, which, summary, index) {
+    which = which.toLowerCase()
     const colors = palettes[Object.hasOwn(palettes, which) ? which : 'reds'],
       min = summary ? summary.min[index] : 0,
       max = summary ? summary.max[index] : 1,
@@ -738,11 +876,7 @@ void (function () {
             0,
             Math.min(
               colors.length - 1,
-              Math.floor(
-                which === 'divergent'
-                  ? colors.length / 2 + colors.length * (max - min ? (value - min) / (max - min) - nm : 0)
-                  : colors.length * (max - min ? (value - min) / (max - min) : 0)
-              )
+              Math.floor(colors.length / 2 + colors.length * (max - min ? (value - min) / (max - min) - nm : 0))
             )
           )
         ]
@@ -775,7 +909,7 @@ void (function () {
     u.display = out[d].display
     for (m = site.metadata.info[d].schema.fields, n = m.length, i = 0; i < n; i++) {
       l = format_label(m[i].name)
-      s[i] = u.add(i, l, m[i].name)
+      s[i] = u.add(i, l, m[i])
       u.values.push(m[i].name)
       u.display.push(l)
     }
@@ -843,7 +977,8 @@ void (function () {
 
   function make_data_entry(u, e, name, color) {
     const v = u.view && _u[u.view],
-      t = JSON.parse(u.traces.scatter)
+      t = JSON.parse(u.traces.scatter),
+      p = valueOf(v.palette)
     var i,
       c = valueOf(u.colors || v.y),
       y = _u[u.time || v.time_agg]
@@ -859,7 +994,7 @@ void (function () {
         t.marker.color =
         t.marker.line.color =
         t.textfont.color =
-          color || pal(e.data[c][y], v.palette, variables[c][v.id].summaries[v.get.dataset()], y) || '#808080'
+          color || pal(e.data[c][y], p, variables[c][v.id].summaries[v.get.dataset()], y) || '#808080'
       t.name = name || e.features.name
       t.id = e.features.id
     }
@@ -881,15 +1016,6 @@ void (function () {
           }
         break
       }
-  }
-
-  function init_legend(e) {
-    e.innerHTML = ''
-    const p = palettes[e.parentElement.parentElement.parentElement.getAttribute('palette') || 'divergent']
-    for (var i = 0, n = p.length; i < n; i++) {
-      e.appendChild(document.createElement('span'))
-      e.lastElementChild.style.background = p[i]
-    }
   }
 
   document.onreadystatechange = function () {
@@ -994,9 +1120,6 @@ void (function () {
           'px'
       }
     }
-
-    // fill legends
-    for (c = document.getElementsByClassName('legend-scale'), i = c.length; i--; ) init_legend(c[i])
 
     // initialize inputs
     for (c = document.getElementsByClassName('auto-input'), i = c.length, n = 0; i--; ) {
@@ -1134,6 +1257,13 @@ void (function () {
       }
     }
 
+    // fill legends
+    for (c = document.getElementsByClassName('legend-scale'), i = c.length; i--; ) {
+      k = c[i].parentElement.getAttribute('palette')
+      if (Object.hasOwn(_u, k)) _u[k].e.addEventListener('change', elements.legend.update.bind(null, c[i]))
+      elements.legend.update(c[i])
+    }
+
     content_resize()
     window.addEventListener('resize', content_resize)
 
@@ -1156,7 +1286,11 @@ void (function () {
 
         // resolve options
         if (o.options_source) {
-          if (patterns.datasets.test(o.options_source)) {
+          if (patterns.palette.test(o.options_source)) {
+            for (v in palettes) if (Object.hasOwn(palettes, v)) o.add(v, v)
+            o.options = o.e.getElementsByTagName(o.type === 'select' ? 'option' : 'input')
+            o.reset()
+          } else if (patterns.datasets.test(o.options_source)) {
             for (ci = site.metadata.datasets.length; ci--; ) {
               o.add(ci, site.metadata.datasets[ci], format_label(site.metadata.datasets[ci]))
             }
@@ -1347,11 +1481,14 @@ void (function () {
           e.value = function () {
             if (this.get) {
               var k,
-                s = '' + this.get.dataset() + this.get.ids()
+                s = '' + this.get.dataset() + this.get.ids() + valueOf(this.palette)
               for (k in this.get.features) if (Object.hasOwn(this.get.features, k)) s += this.get.features[k]()
               return s
             }
           }.bind(e)
+          if (e.palette && 'string' === typeof e.palette && Object.hasOwn(_u, e.palette)) {
+            add_dependency(e.palette, {type: 'dataview', id: k})
+          }
           if (e.dataset && 'string' === typeof e.dataset && Object.hasOwn(_u, e.dataset)) {
             add_dependency(e.dataset, {type: 'dataview', id: k})
           }
@@ -1634,71 +1771,7 @@ void (function () {
         if (!e.style.height) e.style.height = o.options.height ? o.options.height : '400px'
         queue_init_map.bind(o)()
       } else if ('text' === o.type) {
-        if (site.text && Object.hasOwn(site.text, o.id)) {
-          o.text = site.text[o.id].text
-          o.depends = site.text[o.id].depends
-          for (n = o.text.length, ci = 0; ci < n; ci++) {
-            if (!Object.hasOwn(o.text[ci], 'button')) o.text[ci].button = {}
-            o.e.appendChild((o.text[ci].parts = document.createElement('span')))
-            if ('string' === typeof o.text[ci].text) o.text[ci].text = [o.text[ci].text]
-            for (ce = o.text[ci].text.length, v = 0; v < ce; v++) {
-              if (Object.hasOwn(o.text[ci].button, o.text[ci].text[v])) {
-                p = o.text[ci].button[o.text[ci].text[v]]
-                o.text[ci].parts.appendChild(document.createElement('button'))
-                o.text[ci].parts.lastElementChild.type = 'button'
-                o.text[ci].parts.lastElementChild.className = 'btn btn-link'
-                if (Object.hasOwn(_u, p.target) && 'function' === typeof _u[p.target][p.type]) {
-                  o.text[ci].parts.lastElementChild.setAttribute('aria-label', p.text.join(''))
-                  o.text[ci].parts.lastElementChild.addEventListener('click', _u[p.target][p.type])
-                }
-              } else {
-                o.text[ci].parts.appendChild(document.createElement('span'))
-              }
-            }
-            if (Object.hasOwn(o.text[ci], 'condition')) {
-              for (v = o.text[ci].condition.length; v--; ) {
-                o.text[ci].condition[v].check = function () {
-                  return check_funs[this.type](valueOf(this.id), valueOf(this.value))
-                }.bind(o.text[ci].condition[v])
-              }
-            }
-          }
-          for (v in o.depends) if (Object.hasOwn(_u, v)) add_dependency(v, {type: 'update', id: o.id})
-          o.update = function () {
-            var k, i, t, s, pass, bt
-            for (k in this.depends)
-              if (Object.hasOwn(this.depends, k)) {
-                this.depends[k] = valueOf(k)
-                if (Object.hasOwn(entities, this.depends[k])) this.depends[k] = entities[this.depends[k]].features.name
-              }
-            for (i = this.text.length; i--; ) {
-              pass = true
-              if (Object.hasOwn(this.text[i], 'condition')) {
-                for (t = this.text[i].condition.length; t--; ) {
-                  pass = this.text[i].condition[t].check()
-                  if (!pass) break
-                }
-              }
-              if (pass) {
-                for (t = this.text[i].text.length; t--; ) {
-                  k = this.text[i].text[t]
-                  if (Object.hasOwn(this.depends, k)) {
-                    this.text[i].parts.children[t].innerText = this.depends[k]
-                  } else if (Object.hasOwn(this.text[i].button, k)) {
-                    for (s = '', bt = this.text[i].button[k].text.length; bt--; ) {
-                      s =
-                        (Object.hasOwn(this.depends, this.text[i].button[k].text[bt])
-                          ? this.depends[this.text[i].button[k].text[bt]]
-                          : this.text[i].button[k].text[bt]) + s
-                    }
-                    this.text[i].parts.children[t].innerText = s
-                  } else this.text[i].parts.children[t].innerText = k
-                }
-                this.text[i].parts.classList.remove('hidden')
-              } else this.text[i].parts.classList.add('hidden')
-            }
-          }.bind(o)
-        }
+        elements.text.init(o)
       }
     }
   }

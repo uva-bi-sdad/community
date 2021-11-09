@@ -11,7 +11,9 @@ page_navbar(title = "", logo = "", ...)
 
 \item{logo}{URL of an image to appear in the header.}
 
-\item{...}{Adds additional elements to the header, after the title section.}
+\item{...}{Lists specifying submenus and their items. Each list should have entries for
+\code{"name"} (the navbar button text), \code{"title"} (the menu title), \code{"placement"}
+(start, top, end, or bottom), \code{"backdrop"} (logical), and \code{items} (a list of menu items).}
 }
 \value{
 A character vector of the content to be added.
@@ -20,5 +22,12 @@ A character vector of the content to be added.
 Adds a bar at the top of the page, potentially with a title and logo image.
 }
 \examples{
-page_navbar("Site Name")
+page_navbar(
+  "Site Name",
+  submenus = list(
+    name = "menu",
+    title = "Menu",
+    items = list(input_select("menu select", c("a", "b")))
+  )
+)
 }

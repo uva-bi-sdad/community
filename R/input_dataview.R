@@ -18,8 +18,8 @@
 #' \code{"type"} (specifying the operator, such as \code{">"}), and \code{"value"}. The value of each entry
 #' can be static (e.g., referring to a variable) or the ID of an input.
 #' @param palette The name of the color palette used in maps and plots (from
-#' \href{https://colorbrewer2.org}{colorbrewer}); one of \code{"divergent"} (default), \code{"reds"},
-#' \code{"greens"}, \code{"grays"}, or \code{"cat"} (for a set of non-continuous colors).
+#' \href{https://colorbrewer2.org}{colorbrewer}); one of \code{"rdylbu7"} (default), \code{"orrd7"}, \code{"gnbu7"},
+#' \code{"brbg7"}, \code{"puor7"}, \code{"prgn6"}, \code{"reds6"}, \code{"greens6"}, \code{"greys4"}, \code{"paired4"}.
 #' @param dataset Select which dataset to pull from; the name of an included dataset, or ID of a
 #' selector of dataset names.
 #' @param ids Select which IDs to include; a vector of IDs that appear in the specified dataset, or the ID of a
@@ -29,16 +29,16 @@
 #' a value or vector of values, or a selector of values.
 #' @examples
 #' \dontrun{
-#' input_dataview(list())
+#' input_dataview()
 #' }
-#' @return The entered filter.
+#' @return A list of the entered options.
 #' @export
 
 input_dataview <- function(id = NULL, y = NULL, x = NULL, time = NULL, time_agg = "last", time_filters = list(),
-                           dataset = NULL, ids = NULL, features = NULL, palette = "divergent") {
+                           dataset = NULL, ids = NULL, features = NULL, palette = "rdylbu7") {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
-  r <- list(palette = palette)
+  r <- list(palette = tolower(palette))
   if (!is.null(y)) r$y <- y
   if (!is.null(x)) r$x <- x
   if (!is.null(time)) r$time <- time

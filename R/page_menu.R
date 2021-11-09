@@ -80,7 +80,7 @@ page_menu <- function(..., position = "right", width = NULL, height = NULL, coll
     "</div>",
     if (collapsible) {
       paste0(
-        '<button type="button" class="menu-toggle" aria-label="', position, ' menu">',
+        '<button type="button" class="menu-toggle" title="', position, ' menu">',
         if (is.character(collapsible)) collapsible else "&equiv;", "</button>"
       )
     },

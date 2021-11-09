@@ -6,7 +6,7 @@
 \usage{
 input_dataview(id = NULL, y = NULL, x = NULL, time = NULL,
   time_agg = "last", time_filters = list(), dataset = NULL, ids = NULL,
-  features = NULL, palette = "divergent")
+  features = NULL, palette = "rdylbu7")
 }
 \arguments{
 \item{id}{An ID of the data view, for association with output elements. Defaults to \code{'view'} appended
@@ -41,17 +41,17 @@ the names of features included in an \code{ids} field of the site's datapackage,
 a value or vector of values, or a selector of values.}
 
 \item{palette}{The name of the color palette used in maps and plots (from
-\href{https://colorbrewer2.org}{colorbrewer}); one of \code{"divergent"} (default), \code{"reds"},
-\code{"greens"}, \code{"grays"}, or \code{"cat"} (for a set of non-continuous colors).}
+\href{https://colorbrewer2.org}{colorbrewer}); one of \code{"rdylbu7"} (default), \code{"orrd7"}, \code{"gnbu7"},
+\code{"brbg7"}, \code{"puor7"}, \code{"prgn6"}, \code{"reds6"}, \code{"greens6"}, \code{"greys4"}, \code{"paired4"}.}
 }
 \value{
-The entered filter.
+A list of the entered options.
 }
 \description{
 Collects specified inputs to create a filtered dataset from which outputs can pull.
 }
 \examples{
 \dontrun{
-input_dataview(list())
+input_dataview()
 }
 }

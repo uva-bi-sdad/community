@@ -91,13 +91,12 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
       file = if (file.exists(path)) sub(paste0(dir, "/docs/"), "", path, fixed = TRUE)
     )
   }
-  settings <- read_json(paste0(dir, "/settings.json"))
+  settings <- fromJSON(sub("^[^{]*", "", paste(readLines(paste0(dir, "/docs/settings.js")), collapse = "")))
   if (!is.null(settings$metadata) && !is.null(settings$metadata$variables) &&
-    !identical(settings$metadata$variables, as.list(variables))) {
+    !identical(settings$metadata$variables, variables)) {
     force <- TRUE
   }
   settings$metadata <- data_preprocess()
-  write_json(settings, paste0(dir, "/settings.json"), pretty = TRUE, auto_unbox = TRUE)
   parts$dependencies <- list(
     base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.min.css"),
     base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js"),
@@ -120,6 +119,13 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
   parts$site_build <- function(...) {}
   parts$uid <- 0
   source(local = parts, exprs = src)
+  for (e in c("rules", "variables", "dataviews", "info", "text", "select", "tables", "plots", "maps")) {
+    settings[[e]] <- if (length(parts[[e]])) if (is.list(parts[[e]])) parts[[e]] else list(parts[[e]]) else NULL
+  }
+  writeLines(
+    paste0("const site = ", toJSON(settings, pretty = TRUE, auto_unbox = TRUE)),
+    paste0(dir, "/docs/settings.js")
+  )
   r <- c(
     "<!doctype html>",
     paste("<!-- page generated from", sub("^.*/", "", file), "by community::site_build() -->"),
@@ -128,22 +134,7 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
     '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />',
     '<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />',
     '<meta name="viewport" content="width=device-width,initial-scale=1" />',
-    paste(c(
-      '<script type="application/javascript">\nconst site = ',
-      toJSON(c(
-        settings,
-        rules = if ("rules" %in% names(parts)) list(parts$rules),
-        variables = if ("variables" %in% names(parts)) list(parts$variables),
-        dataviews = if ("dataviews" %in% names(parts)) list(parts$dataviews),
-        info = if ("info" %in% names(parts)) list(parts$info),
-        text = if ("text" %in% names(parts)) list(parts$text),
-        select = if ("select" %in% names(parts)) list(parts$select),
-        tables = if (length(parts$tables)) list(parts$tables),
-        plots = if ("plots" %in% names(parts)) list(parts$plots),
-        maps = if ("maps" %in% names(parts)) list(parts$maps)
-      ), auto_unbox = TRUE),
-      "\n</script>"
-    ), collapse = ""),
+    '<script type="application/javascript" src="settings.js"></script>',
     if (bundle_data) {
       paste0(
         '<script type="application/javascript">\nsite.data = ',

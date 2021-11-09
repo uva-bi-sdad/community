@@ -140,7 +140,9 @@
     </tr>
     <tr>
       <th>...</th>
-      <td><p>Adds additional elements to the header, after the title section.</p></td>
+      <td><p>Lists specifying submenus and their items. Each list should have entries for
+<code>"name"</code> (the navbar button text), <code>"title"</code> (the menu title), <code>"placement"</code>
+(start, top, end, or bottom), <code>"backdrop"</code> (logical), and <code>items</code> (a list of menu items).</p></td>
     </tr>
     </table>
 
@@ -149,11 +151,15 @@
     <p>A character vector of the content to be added.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><span class='r-in'><span class='fu'>page_navbar</span><span class='op'>(</span><span class='st'>"Site Name"</span><span class='op'>)</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] "&lt;div class=\"navbar-header\" role=\"heading\" aria-level=\"1\"&gt;"</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> [2] "&lt;div class=\"container-fluid\"&gt;"                                </span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> [3] "&lt;span class=\"navbar-brand\"&gt;Site Name&lt;/span&gt;"                  </span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> [4] "&lt;/div&gt;&lt;/div&gt;"                                                   </span>
+    <pre class="examples"><span class='r-in'><span class='fu'>page_navbar</span><span class='op'>(</span></span>
+<span class='r-in'>  <span class='st'>"Site Name"</span>,</span>
+<span class='r-in'>  submenus <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span></span>
+<span class='r-in'>    name <span class='op'>=</span> <span class='st'>"menu"</span>,</span>
+<span class='r-in'>    title <span class='op'>=</span> <span class='st'>"Menu"</span>,</span>
+<span class='r-in'>    items <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='fu'><a href='input_select.html'>input_select</a></span><span class='op'>(</span><span class='st'>"menu select"</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"a"</span>, <span class='st'>"b"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'>  <span class='op'>)</span></span>
+<span class='r-in'><span class='op'>)</span></span>
+<span class='r-err co'><span class='r-pr'>#&gt;</span> <span class='error'>Error in paste0("&lt;select class=\"auto-input form-select\" auto-type=\"select\" id=\"",     id, "\" default=\"", default, "\" ", if (is.character(options) &amp;&amp;         length(options) == 1) paste0("auto-options=\"", options,         "\""), if (!is.null(default)) paste0(" default=\"", default,         "\""), if (!is.null(dataview)) paste0(" data-view=\"",         dataview, "\""), if (!is.null(depends)) paste0(" depends=\"",         depends, "\""), if (!is.null(dataset)) paste0(" dataset=\"",         dataset, "\""), if (!is.null(variable)) paste0(" variable=\"",         variable, "\""), "&gt;"):</span> argument "options" is missing, with no default</span>
 </pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

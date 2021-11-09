@@ -26,7 +26,7 @@ input_slider <- function(label, id = label, min = 0, max = 1, step = 1, default 
     '<div class="wrapper slider-wrapper">',
     paste0('<label class="form-label" for="', id, '">', label, "</label>"),
     paste0(
-      '<input type="range" class="auto-input form-range" auto-type="number" id="', id, '" default=', default,
+      '<input role="slider" type="range" class="auto-input form-range" auto-type="number" id="', id, '" default=', default,
       " step=", step, " min=", min, " max=", max,
       if (!is.null(depends)) {
         paste0(' depends="', depends, '"')

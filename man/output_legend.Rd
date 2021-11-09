@@ -9,8 +9,8 @@ output_legend(palette = "divergent", lower = "Lower", center = "",
 }
 \arguments{
 \item{palette}{Name of an included color palette (from
-\href{https://colorbrewer2.org}{colorbrewer}); one of \code{"divergent"} (default), \code{"reds"},
-\code{"greens"}, \code{"grays"}, or \code{"cat"}.}
+\href{https://colorbrewer2.org}{colorbrewer}); one of \code{"rdylbu7"} (default), \code{"orrd7"}, \code{"gnbu7"},
+\code{"brbg7"}, \code{"puor7"}, \code{"prgn6"}, \code{"reds6"}, \code{"greens6"}, \code{"greys4"}, \code{"paired4"}.}
 
 \item{lower}{Text to appear at the beginning of the legend, labeling smaller.}
 

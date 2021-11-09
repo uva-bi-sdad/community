@@ -5,8 +5,8 @@
   "files": [
     "README.md",
     "site.R",
-    "settings.json",
     "docs/index.html",
+    "docs/settings.js",
     "docs/script.js",
     "docs/style.css"
   ]

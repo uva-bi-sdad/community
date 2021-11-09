@@ -2,9 +2,9 @@
 #'
 #' Create a repository for a static website for data documentation and exploration.
 #'
-#' @param title Title of the site.
 #' @param dir Directory in which to create the site's directory.
-#' @param settings A list with options to be passed to the site.
+#' @param settings A list with options to be passed to the site. These will be written to \code{settings.json},
+#' which can be edited by hand.
 #' @param with_data logical; if \code{FALSE}, a data sub-directory and package will not be created.
 #' @param overwrite logical; if \code{TRUE}, will overwrite existing site files in \code{dir}.
 #' @examples
@@ -14,17 +14,17 @@
 #' @return Path to the created site directory.
 #' @export
 
-init_site <- function(title = "app", dir = ".", with_data = TRUE, settings = list(), overwrite = FALSE) {
+init_site <- function(dir = ".", with_data = TRUE, settings = list(), overwrite = FALSE) {
   check <- check_template("site", dir = dir)
   if (check$exists && !overwrite) {
     cli_bullets(c(`!` = "site files already exist", i = "add {.code overwrite = TRUE} to overwrite them"))
   }
   dir <- normalizePath(paste0(dir, "/", check$spec$dir), "/", FALSE)
   dir.create(dir, FALSE, TRUE)
-  paths <- paste0(dir, "/", c("README.md", "site.R", "settings.json", "package.json", "server.js", ".gitignore"))
+  paths <- paste0(dir, "/", c("README.md", "site.R", "package.json", "server.js", ".gitignore"))
   if (!file.exists(paths[1])) {
     writeLines(paste(c(
-      paste("#", title),
+      "# Community Site",
       "<template: Describe the site>",
       "\n## Run",
       "```R",
@@ -101,7 +101,7 @@ init_site <- function(title = "app", dir = ".", with_data = TRUE, settings = lis
     ), collapse = "\n"), paths[6])
   }
   dir.create(paste0(dir, "/docs"), FALSE)
-  docs <- paste0(dir, "/docs/", c("index.html", "script.js", "style.css"))
+  docs <- paste0(dir, "/docs/", c("index.html", "settings.js", "script.js", "style.css"))
   if (any(!file.exists(docs))) file.create(docs[!file.exists(docs)])
   if (with_data && !file.exists(paste0(dir, "/docs/data/datapackage.json"))) {
     dir.create(paste0(dir, "/docs/data"), FALSE)
