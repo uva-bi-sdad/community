@@ -5,7 +5,7 @@
 \title{Add a text input to a website}
 \usage{
 input_text(id, label = id, ..., default = NULL, multiline = FALSE,
-  class = NULL)
+  class = NULL, floating_label = TRUE)
 }
 \arguments{
 \item{id}{Unique ID of the element to be created.}
@@ -20,6 +20,8 @@ input_text(id, label = id, ..., default = NULL, multiline = FALSE,
 to accept multiple lines of text.}
 
 \item{class}{Class names to add to the input's list.}
+
+\item{floating_label}{Logical; if \code{FALSE}, labels are separate from their input elements.}
 }
 \value{
 A character vector of the contents to be added.

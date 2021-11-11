@@ -14,6 +14,8 @@
 #' @param tiles A list or list of lists containing provider information (see
 #' \href{https://leaflet-extras.github.io/leaflet-providers/preview/}{leaflet providers}; e.g.,
 #' \code{list(}\code{url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}, \code{options = list(maxZoom = 19))}).
+#' @param attribution A list with tile attribution information to be included in a credits section. Include in
+#' \code{tile}'s \code{options} list to add to the map.
 #' @examples
 #' \dontrun{
 #' output_map()
@@ -26,6 +28,9 @@ output_map <- function(shapes = NULL, color = NULL, color_time = NULL, dataview 
                        options = list(), tiles = list(
                          url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                          options = list(maxZoom = 19)
+                       ), attribution = list(
+                         name = "OpenStreetMap",
+                         url = "https://www.openstreetmap.org/copyright"
                        )) {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
@@ -55,6 +60,21 @@ output_map <- function(shapes = NULL, color = NULL, color_time = NULL, dataview 
     paste0('id="map', id, '"'),
     'auto-type="map"></div>'
   ), collapse = "")
-  if (building) caller$content <- c(caller$content, r)
+  if (building) {
+    caller$content <- c(caller$content, r)
+    caller$credits$leaflet <- list(
+      name = "Leaflet",
+      url = "https://leafletjs.com",
+      version = "1.7.1",
+      description = "A JS library for interactive maps"
+    )
+    if (!missing(attribution) || missing(tiles)) {
+      if (!is.null(attribution$name)) {
+        caller$credits[[attribution$name]] <- attribution
+      } else if (!is.null(attribution[[1]]$name)) {
+        for (a in attribution) caller$credits[[a$name]] <- a
+      }
+    }
+  }
   r
 }

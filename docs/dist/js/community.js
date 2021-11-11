@@ -21,14 +21,18 @@ void (function () {
       brbg7: ['#8c510a', '#d8b365', '#f6e8c3', '#f5f5f5', '#c7eae5', '#5ab4ac', '#01665e'],
       puor7: ['#b35806', '#f1a340', '#fee0b6', '#f7f7f7', '#d8daeb', '#998ec3', '#542788'],
       prgn6: ['#762a83', '#af8dc3', '#e7d4e8', '#d9f0d3', '#7fbf7b', '#1b7837'],
-      reds6: ['#f1eef6', '#d7b5d8', '#df65b0', '#dd1c77', '#980043'],
-      greens6: ['#ffffcc', '#c2e699', '#78c679', '#31a354', '#006837'],
+      reds5: ['#f1eef6', '#d7b5d8', '#df65b0', '#dd1c77', '#980043'],
+      greens5: ['#ffffcc', '#c2e699', '#78c679', '#31a354', '#006837'],
       greys4: ['#f7f7f7', '#cccccc', '#969696', '#525252'],
       paired4: ['#a6cee3', '#1f78b4', '#b2df8a', '#33a02c'],
     },
     patterns = {
       seps: /[\s._-]/g,
+      period: /\./,
       word_start: /\b(\w)/g,
+      settings: /^settings\./,
+      features: /^features\./,
+      variables: /^variables\./,
       palette: /^pal/,
       datasets: /^dat/,
       variables: /^var/,
@@ -184,15 +188,18 @@ void (function () {
         f.n_selected.ids = 0
         f.n_selected.features = 0
         f.n_selected.dataset = 0
+        f.n_selected.filtered = 0
         f.n_selected.all = 0
         f.selection.ids = {}
         f.selection.features = {}
         f.selection.dataset = {}
+        f.selection.filtered = {}
         f.selection.all = {}
         var c,
           k,
           id,
-          first_all = ''
+          first_all = '',
+          summary_state = site.summary_selection
         for (id in entities)
           if (Object.hasOwn(entities, id)) {
             c = f.check(entities[id])
@@ -212,13 +219,19 @@ void (function () {
               f.n_selected.dataset++
               c.all++
             }
+            if (c.features && c.dataset) {
+              f.selection.filtered[id] = entities[id]
+              f.n_selected.filtered++
+            }
             if (3 === c.all) {
               if (!first_all) first_all = id
               f.selection.all[id] = entities[id]
               f.n_selected.all++
+              summary_state += id
             }
           }
-        if (first_all) {
+        if (first_all && summary_state !== f.summary_state) {
+          f.summary_state = summary_state
           for (k in variables) if (Object.hasOwn(f.selection.all[first_all].data, k)) calculate_summary(k, f.id, true)
           update_subs(f.id, 'update')
         }
@@ -254,7 +267,7 @@ void (function () {
           }
       },
       time_range: function (u, c, passive) {
-        const v = c.value(),
+        const v = c && c.value(),
           d = u.get.dataset(),
           t = variables[valueOf(u.time)].info[d].min,
           s = _c[u.id + '_time']
@@ -265,7 +278,7 @@ void (function () {
           u.time_range.time[0] = t + r[0]
           u.time_range.index[1] = r[1]
           u.time_range.time[1] = t + r[1]
-          if (!passive && s)
+          if (!passive && s) {
             for (var i = s.length; i--; ) {
               if ('min' === s[i].type) {
                 if (isFinite(u.time_range.time[0]) && parseFloat(_u[s[i].id].e.min) !== u.time_range.time[0]) {
@@ -279,6 +292,7 @@ void (function () {
                 }
               }
             }
+          }
         }
       },
     },
@@ -425,9 +439,9 @@ void (function () {
           this.set(this.e.value)
         },
         setter: function (v) {
-          this.previous = this.value()
           if ('string' === typeof v) v = parseFloat(v)
           if (isFinite(v) && v !== this.previous) {
+            this.previous = parseFloat(this.e.value)
             this.e.value = this.source = v
             this.current_index = v - this.parsed.min
             if ('range' === this.e.type) {
@@ -664,17 +678,89 @@ void (function () {
         },
       },
       info: {
+        init: function (o) {
+          var i, n, t, b
+          o.base = o.e.firstElementChild
+          o.temp = o.e.children[1]
+          o.temp.lastElementChild.classList.remove('hidden')
+          o.info = o.e.lastElementChild
+          o.update = elements.info.update.bind(o)
+          o.show = function (e) {
+            this.update(e)
+            this.base.classList.add('hidden')
+            this.temp.classList.remove('hidden')
+          }
+          o.revert = function () {
+            this.base.classList.remove('hidden')
+            this.temp.classList.add('hidden')
+          }
+          if (o.view) add_subs(o.view, o)
+          o.options = site.info[o.id]
+          if (o.options && o.options.subto) for (i = o.options.subto.length; i--; ) add_subs(o.options.subto[i], o)
+          t = o.temp.lastElementChild
+          b = o.base.lastElementChild
+          o.options.parsed = {}
+          if (patterns.features.test(o.options.title)) {
+            o.options.parsed.features = o.options.title.replace(patterns.features, '')
+          } else if (patterns.variables.test(o.options.title))
+            o.options.parsed.variables = o.options.title.replace(patterns.variables, '')
+          for (n = o.options.body.length, i = 0; i < n; i++) {
+            t.appendChild(document.createElement('tr'))
+            b.appendChild(document.createElement('tr'))
+            t.lastElementChild.appendChild(document.createElement('td'))
+            b.lastElementChild.appendChild(document.createElement('td'))
+            if (o.options.body[i].name) {
+              t.lastElementChild.firstElementChild.innerText = b.lastElementChild.firstElementChild.innerText =
+                o.options.body[i].name
+              t.lastElementChild.appendChild(document.createElement('td'))
+              b.lastElementChild.appendChild(document.createElement('td'))
+            } else {
+              t.lastElementChild.lastElementChild.className = b.lastElementChild.lastElementChild.className =
+                'info-value-row'
+              t.lastElementChild.lastElementChild.colSpan = b.lastElementChild.lastElementChild.colSpan = 2
+            }
+            if (o.options.body[i].value) {
+              o.options.body[i].parsed = {}
+              if (patterns.features.test(o.options.body[i].value)) {
+                o.options.body[i].parsed.features = o.options.body[i].value.replace(patterns.features, '')
+              } else if (patterns.variables.test(o.options.body[i].value))
+                o.options.body[i].parsed.variables = o.options.body[i].value.replace(patterns.variables, '')
+            }
+          }
+          if (o.options.variable_info) {
+            if (o.options.variable_info.title) {
+              o.info.appendChild(document.createElement('p'))
+              o.info.firstElementChild.className = 'h5'
+            }
+            if (o.options.variable_info.body) {
+              o.info.appendChild(document.createElement('p'))
+            }
+          } else {
+            o.info.classList.add('hidden')
+          }
+        },
         update: function (entity) {
-          var p, k, i, v
+          const v = site.dataviews[this.view],
+            variable = valueOf(v.y),
+            info = variable_info[variable]
+          var p,
+            e,
+            i,
+            k,
+            y = _u[v.time_agg]
+          y = y ? y.value() - y.parsed.min : 0
           if (entity) {
             // hover information
             p = this.temp.children
             p[0].innerText = entity.features.name
-            for (i = p[1].childElementCount; i--; ) {
-              k = p[1].children[i].firstElementChild.innerText
-              if (Object.hasOwn(entity.features, k)) {
+            for (i = this.options.body.length; i--; ) {
+              e = this.options.body[i]
+              if ('value' === e.value) {
+                p[1].children[i].lastElementChild.innerText =
+                  format_value(entity.data[variable][y], 'count' === info.type) + ('percent' === info.type ? '%' : '')
+              } else if (Object.hasOwn(e.parsed, 'features') && Object.hasOwn(entity.features, e.parsed.features)) {
                 p[1].children[i].classList.remove('hidden')
-                p[1].children[i].lastElementChild.innerText = entity.features[k]
+                p[1].children[i].lastElementChild.innerText = entity.features[e.parsed.features]
               } else {
                 p[1].children[i].classList.add('hidden')
               }
@@ -682,17 +768,20 @@ void (function () {
           } else {
             // base information
             if (this.view) {
-              v = site.dataviews[this.view]
               p = this.base.children
               if (v.ids && (k = v.get.ids())) {
                 // when showing a selected region
                 entity = entities[k]
                 p[0].innerText = entity.features.name
-                for (i = p[2].childElementCount; i--; ) {
-                  k = p[2].children[i].firstElementChild.innerText
-                  if (Object.hasOwn(entity.features, k)) {
+                for (i = this.options.body.length; i--; ) {
+                  e = this.options.body[i]
+                  if ('value' === e.value) {
+                    p[2].children[i].lastElementChild.innerText =
+                      format_value(entity.data[variable][y], 'count' === info.type) +
+                      ('percent' === info.type ? '%' : '')
+                  } else if (Object.hasOwn(e.parsed, 'features') && Object.hasOwn(entity.features, e.parsed.features)) {
                     p[2].children[i].classList.remove('hidden')
-                    p[2].children[i].lastElementChild.innerText = entity.features[k]
+                    p[2].children[i].lastElementChild.innerText = entity.features[e.parsed.features]
                   } else {
                     p[2].children[i].classList.add('hidden')
                   }
@@ -701,11 +790,25 @@ void (function () {
                 p[2].classList.remove('hidden')
               } else {
                 // when showing all regions
-                p[0].innerText = this.defaults.title
+                p[0].innerText = this.options.default.title
                 p[1].classList.remove('hidden')
                 p[2].classList.add('hidden')
               }
             }
+          }
+          if (this.options.variable_info && variable !== this.options.variable_info.current) {
+            if (!this.depends) {
+              this.depends = v.y
+              add_dependency(v.y, {type: 'update', id: this.id})
+            }
+            if (this.options.variable_info.title)
+              this.info.firstElementChild.innerText = Object.hasOwn(info, this.options.variable_info.title)
+                ? info[this.options.variable_info.title]
+                : this.options.variable_info.title
+            if (this.options.variable_info.body)
+              this.info.children[1].innerText = Object.hasOwn(info, this.options.variable_info.body)
+                ? info[this.options.variable_info.body]
+                : this.options.variable_info.body
           }
         },
       },
@@ -802,6 +905,38 @@ void (function () {
           }
         },
       },
+      credits: {
+        init: function (o) {
+          var s = site.credit_output && site.credit_output[o.id],
+            k,
+            e
+          o.exclude = []
+          o.add = {}
+          o.exclude = s && s.exclude ? s.exclude : []
+          o.add = s && s.add ? s.add : {}
+          o.e.appendChild(document.createElement('ul'))
+          for (k in site.credits)
+            if (Object.hasOwn(site.credits, k) && -1 === o.exclude.indexOf(k)) {
+              o.e.lastElementChild.appendChild((e = document.createElement('li')))
+              if (Object.hasOwn(site.credits[k], 'url')) {
+                e.appendChild((e = document.createElement('a')))
+                e.href = site.credits[k].url
+                e.target = '_blank'
+                e.rel = 'nofollow'
+              }
+              e.innerText = site.credits[k].name
+              if (Object.hasOwn(site.credits[k], 'version')) {
+                e.appendChild(document.createElement('span'))
+                e.lastElementChild.className = 'version-tag'
+                e.lastElementChild.innerText = site.credits[k].version
+              }
+              if (Object.hasOwn(site.credits[k], 'description')) {
+                e.parentElement.appendChild(document.createElement('p'))
+                e.parentElement.lastElementChild.innerText = site.credits[k].description
+              }
+            }
+        },
+      },
     },
     check_funs = {
       '!': function (a) {
@@ -869,7 +1004,7 @@ void (function () {
     const colors = palettes[Object.hasOwn(palettes, which) ? which : 'reds'],
       min = summary ? summary.min[index] : 0,
       max = summary ? summary.max[index] : 1,
-      nm = summary ? summary.norm_median[index] : 0.5
+      nm = summary ? (isNaN(summary.norm_median[index]) ? 0 : summary.norm_median[index]) : 0.5
     return 'number' === typeof value
       ? colors[
           Math.max(
@@ -885,9 +1020,11 @@ void (function () {
 
   function format_value(v, int) {
     if (!int && 'number' === typeof v) {
-      const d = Math.pow(10, site.digits),
-        r = Math.round((v % 1) * d) / d + ''
-      return (v >> 0) + '.' + (('0' === r ? '' : r.split('.')[1]) + '0000000000').substr(0, site.digits)
+      if (site.digits > 0) {
+        const d = Math.pow(10, site.digits),
+          r = Math.round((v % 1) * d) / d + ''
+        return (v >> 0) + '.' + ((patterns.period.test(r) ? r.split('.')[1] : '') + '0000000000').substr(0, site.digits)
+      } else return Math.round(v)
     } else {
       return v
     }
@@ -1001,23 +1138,6 @@ void (function () {
     return t
   }
 
-  function init_location_table(t) {
-    var l, k, e
-    for (l in data_maps.tract)
-      if (Object.hasOwn(data_maps.tract, l)) {
-        t.innerHTML = ''
-        for (k in data_maps.tract[l])
-          if (Object.hasOwn(data_maps.tract[l], k) && k !== 'name') {
-            e = document.createElement('tr')
-            e.appendChild(document.createElement('td'))
-            e.firstElementChild.innerText = k
-            e.appendChild(document.createElement('td'))
-            t.appendChild(e)
-          }
-        break
-      }
-  }
-
   document.onreadystatechange = function () {
     var k, i, e, c, p, ci, n, o
 
@@ -1037,12 +1157,14 @@ void (function () {
       },
       toggle: function (type) {
         clearTimeout(page.menu_toggler.timeout)
-        if (this.parentElement.firstElementChild.classList.contains('hidden')) {
+        if ('closed' === this.parentElement.state) {
+          this.parentElement.state = 'open'
           this.parentElement.firstElementChild.classList.remove('hidden')
           this.parentElement.style[type] = '0px'
           page.content.style[type] =
             this.parentElement.getBoundingClientRect()[type === 'left' || type === 'right' ? 'width' : 'height'] + 'px'
         } else {
+          this.parentElement.state = 'closed'
           this.parentElement.style[type] =
             -this.parentElement.getBoundingClientRect()[type === 'left' || type === 'right' ? 'width' : 'height'] +
             (type === 'top' ? page.content_bounds.top - 40 : 0) +
@@ -1128,7 +1250,8 @@ void (function () {
         type: e.getAttribute('auto-type'),
         source: void 0,
         value: function () {
-          return valueOf(this.source) || valueOf(this.default)
+          const v = valueOf(this.source)
+          return 'undefined' === typeof v ? valueOf(this.default) : v
         },
         default: e.getAttribute('default'),
         options_source: e.getAttribute('auto-options'),
@@ -1157,16 +1280,6 @@ void (function () {
         _u[o.id] = o
       }
     }
-
-    // resolving references in _u
-    // for (k in _u)
-    //   if (Object.hasOwn(_u, k)) {
-    //     if ('string' === typeof _u[k].default && Object.hasOwn(_u, _u[k].default)) {
-    //       _u[k].default = _u[_u[k].default]
-    //     }
-    //     if ('string' === typeof _u[k].dataset && Object.hasOwn(_u, _u[k].dataset))
-    //       _u[k].dataset = _u[_u[k].dataset]
-    //   }
 
     // initialize variables
     if (site.variables && site.variables.length) {
@@ -1432,8 +1545,11 @@ void (function () {
         // add listeners
         if ('select' === o.type || 'number' === o.type) {
           o.e.addEventListener('input', o.listen)
-          if (o.e.nextElementSibling && o.e.nextElementSibling.classList.contains('select-reset')) {
-            o.e.nextElementSibling.addEventListener('click', o.reset)
+          if (
+            o.e.parentElement.lastElementChild &&
+            o.e.parentElement.lastElementChild.classList.contains('select-reset')
+          ) {
+            o.e.parentElement.lastElementChild.addEventListener('click', o.reset)
           }
           if (Object.hasOwn(site, o.type) && Object.hasOwn(site[o.type], o.id)) {
             o.filters = site[o.type][o.id]
@@ -1468,6 +1584,14 @@ void (function () {
         } else {
           for (ci = o.options.length; ci--; ) o.options[ci].addEventListener('click', o.listen)
         }
+
+        // initialize settings inputs
+        if (patterns.settings.test(o.id)) {
+          o.setting = o.id.replace(patterns.settings, '')
+          if (!o.default && Object.hasOwn(site, o.setting)) o.default = site[o.setting]
+          for (v in site.dataviews)
+            if (Object.hasOwn(site.dataviews, v)) add_dependency(o.id, {type: 'dataview', id: v})
+        }
         o.reset()
       }
 
@@ -1481,7 +1605,13 @@ void (function () {
           e.value = function () {
             if (this.get) {
               var k,
-                s = '' + this.get.dataset() + this.get.ids() + valueOf(this.palette)
+                s =
+                  '' +
+                  this.get.dataset() +
+                  this.get.ids() +
+                  valueOf(this.palette) +
+                  site.summary_selection +
+                  site.digits
               for (k in this.get.features) if (Object.hasOwn(this.get.features, k)) s += this.get.features[k]()
               return s
             }
@@ -1526,31 +1656,7 @@ void (function () {
         if (!Object.hasOwn(_c, o.view)) _c[o.view] = []
         if (!Object.hasOwn(_c, o.view + '_filter')) _c[o.view + '_filter'] = []
       }
-      if ('info' === o.type) {
-        o.base = e.firstElementChild
-        o.temp = e.children[1]
-        o.temp.lastElementChild.classList.remove('hidden')
-        o.defaults = {
-          title: e.firstElementChild.children[0].innerText,
-          message: e.firstElementChild.children[1].innerText,
-        }
-        o.update = elements.info.update.bind(o)
-        o.show = function (e) {
-          this.update(e)
-          this.base.classList.add('hidden')
-          this.temp.classList.remove('hidden')
-        }
-        o.revert = function () {
-          this.base.classList.remove('hidden')
-          this.temp.classList.add('hidden')
-        }
-        if (o.view) add_subs(o.view, o)
-        o.options = site.info[o.id]
-        if (o.options && o.options.subto) for (ci = o.options.subto.length; ci--; ) add_subs(o.options.subto[ci], o)
-        for (ce = e.getElementsByClassName('location-table'), ci = ce.length; ci--; ) {
-          init_location_table(ce[ci])
-        }
-      } else if ('table' === o.type) {
+      if ('table' === o.type) {
         e.appendChild(document.createElement('tHead'))
         e.appendChild(document.createElement('tBody'))
         o.options = (site.tables && site.tables[o.id]) || {}
@@ -1770,8 +1876,8 @@ void (function () {
         if (o.time) add_dependency(o.time, {type: 'map_colors', id: o.id})
         if (!e.style.height) e.style.height = o.options.height ? o.options.height : '400px'
         queue_init_map.bind(o)()
-      } else if ('text' === o.type) {
-        elements.text.init(o)
+      } else if (Object.hasOwn(elements, o.type) && Object.hasOwn(elements[o.type], 'init')) {
+        elements[o.type].init(o)
       }
     }
   }
@@ -1875,6 +1981,7 @@ void (function () {
     if (!Object.hasOwn(variables[measure], view))
       variables[measure][view] = JSON.parse(JSON.stringify(variables[measure].default))
     const v = site.dataviews[view],
+      s = v.selection[site.summary_selection],
       dataset = v.get.dataset(),
       m = variables[measure][view],
       mo = m.order[dataset],
@@ -1889,9 +1996,9 @@ void (function () {
       ms.max[y] = -Infinity
       ms.min[y] = Infinity
     }
-    for (k in v.selection.all)
-      if (Object.hasOwn(v.selection.all, k)) {
-        en = v.selection.all[k]
+    for (k in s)
+      if (Object.hasOwn(s, k)) {
+        en = s[k]
         if (!Object.hasOwn(en.summaries, dataset)) en.summaries[dataset] = {}
         if (!Object.hasOwn(en.summaries[dataset], measure))
           en.summaries[dataset][measure] = {n: 0, time_range: [Infinity, -Infinity]}
@@ -2125,8 +2232,8 @@ void (function () {
           add_dependency(v.time_filters[i].value, {type: 'time_filters', id: v.id})
         }
     }
-    v.selection = {ids: {}, features: {}, dataset: {}, all: {}}
-    v.n_selected = {ids: 0, features: 0, dataset: 0, all: 0}
+    v.selection = {ids: {}, features: {}, dataset: {}, filtered: {}, all: {}}
+    v.n_selected = {ids: 0, features: 0, dataset: 0, filtered: 0, all: 0}
     v.get = {
       dataset: function () {
         return valueOf(
@@ -2198,6 +2305,9 @@ void (function () {
   }
 
   function request_queue(id, force) {
+    if (_u[id] && _u[id].setting) {
+      site[_u[id].setting] = _u[id].value()
+    }
     queue[id] = true
     cancelAnimationFrame(queue._timeout)
     queue._timeout = requestAnimationFrame(run_queue.bind(null, force))

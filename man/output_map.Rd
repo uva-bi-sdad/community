@@ -8,7 +8,8 @@ output_map(shapes = NULL, color = NULL, color_time = NULL,
   dataview = NULL, legend = TRUE, click = NULL, subto = NULL,
   options = list(), tiles = list(url =
   "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", options = list(maxZoom
-  = 19)))
+  = 19)), attribution = list(name = "OpenStreetMap", url =
+  "https://www.openstreetmap.org/copyright"))
 }
 \arguments{
 \item{shapes}{A named list or vector with URLs of GeoJSON files.}
@@ -31,6 +32,9 @@ output_map(shapes = NULL, color = NULL, color_time = NULL,
 \item{tiles}{A list or list of lists containing provider information (see
 \href{https://leaflet-extras.github.io/leaflet-providers/preview/}{leaflet providers}; e.g.,
 \code{list(}\code{url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}, \code{options = list(maxZoom = 19))}).}
+
+\item{attribution}{A list with tile attribution information to be included in a credits section. Include in
+\code{tile}'s \code{options} list to add to the map.}
 }
 \value{
 A character vector of the content to be added.

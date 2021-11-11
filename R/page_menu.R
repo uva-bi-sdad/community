@@ -60,7 +60,7 @@ page_menu <- function(..., position = "right", width = NULL, height = NULL, coll
       ">"
     ), collapse = ""),
     paste0(
-      '<div class="menu', if (vertical) " col" else " row",
+      '<div state="', if (default_open) "open" else "closed", '" class="menu', if (vertical) " col" else " row",
       if (!default_open) " hidden", " menu-", position, '">'
     ),
     unlist(lapply(seq_len(n), function(i) {

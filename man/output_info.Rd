@@ -4,12 +4,21 @@
 \alias{output_info}
 \title{Add a tooltip-like display to a website}
 \usage{
-output_info(title = "Overall", message = "", dataview = NULL, subto = NULL)
+output_info(title = "features.name", body = "value",
+  variable_info = list(title = "short_name", body = "short_description"),
+  default = c(title = "Overall", body = "No selection."), dataview = NULL,
+  subto = NULL)
 }
 \arguments{
-\item{title}{Default title at the top of the element.}
+\item{title}{Title text, or the source of title text.}
 
-\item{message}{Default message below the title, to be replaced by the information table.}
+\item{body}{A list of entries in the info body section, which can be raw text or references to features or
+data variables. Named entries appear in two columns, with the name in the first.}
+
+\item{variable_info}{A list with entries for \code{"title"} and \code{"body"}, which can be raw text or reference
+to variable metadata entries.}
+
+\item{default}{A list with entries for \code{"title"} and \code{"body"}, which are treated as raw text.}
 
 \item{dataview}{The ID of a dataview, used for the persistent display.}
 

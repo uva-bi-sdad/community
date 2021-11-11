@@ -13,6 +13,7 @@
 #' @param type Name of the input's type -- other number-based types like \code{date} might make sense.
 #' @param class Class names to add to the input's list.
 #' @param dataview ID of a \code{\link{input_dataview}}, to use as a source of variables.
+#' @param floating_label Logical; if \code{FALSE}, labels are separate from their input elements.
 #' @examples
 #' \dontrun{
 #' input_text("entered_text", "Enter Text:")
@@ -21,11 +22,11 @@
 #' @export
 
 input_number <- function(label, id = label, ..., default = NULL, min = NULL, max = NULL, step = NULL,
-                         type = "number", class = NULL, dataview = NULL) {
+                         type = "number", class = NULL, dataview = NULL, floating_label = TRUE) {
   id <- gsub("\\s", "", id)
   r <- c(
-    '<div class="wrapper text-wrapper">',
-    paste0('<label for="', id, '">', label, "</label>"),
+    paste0('<div class="wrapper text-wrapper', if (floating_label) " form-floating", '">'),
+    if (!floating_label) paste0('<label for="', id, '">', label, "</label>"),
     paste0(c(
       '<input type="', type, '"',
       ' id="', id, '"',
@@ -35,7 +36,8 @@ input_number <- function(label, id = label, ..., default = NULL, min = NULL, max
       if (!is.null(step)) paste0(' step="', step, '"'),
       if (!is.null(dataview)) paste0(' data-view="', dataview, '"'),
       unlist(list(...)),
-      ' class="form-control auto-input', if (!is.null(class)) paste("", class), '" auto-type="number">'
+      ' class="form-control auto-input', if (!is.null(class)) paste("", class), '" auto-type="number">',
+      if (floating_label) paste0('<label for="', id, '">', label, "</label>")
     ), collapse = ""),
     "</div>"
   )

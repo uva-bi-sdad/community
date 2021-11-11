@@ -125,7 +125,7 @@
     <p>Adds a bar at the top of the page, potentially with a title and logo image.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>page_navbar</span><span class='op'>(</span>title <span class='op'>=</span> <span class='st'>""</span>, logo <span class='op'>=</span> <span class='st'>""</span>, <span class='va'>...</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>page_navbar</span><span class='op'>(</span>title <span class='op'>=</span> <span class='st'>""</span>, logo <span class='op'>=</span> <span class='st'>""</span>, <span class='va'>...</span>, breakpoint <span class='op'>=</span> <span class='st'>"md"</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -144,6 +144,11 @@
 <code>"name"</code> (the navbar button text), <code>"title"</code> (the menu title), <code>"placement"</code>
 (start, top, end, or bottom), <code>"backdrop"</code> (logical), and <code>items</code> (a list of menu items).</p></td>
     </tr>
+    <tr>
+      <th>breakpoint</th>
+      <td><p>Bootstrap breakpoint code specifying the width at which the menu collapses;
+default is <code>"md"</code>.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -159,7 +164,33 @@
 <span class='r-in'>    items <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='fu'><a href='input_select.html'>input_select</a></span><span class='op'>(</span><span class='st'>"menu select"</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"a"</span>, <span class='st'>"b"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span></span>
 <span class='r-in'>  <span class='op'>)</span></span>
 <span class='r-in'><span class='op'>)</span></span>
-<span class='r-err co'><span class='r-pr'>#&gt;</span> <span class='error'>Error in paste0("&lt;select class=\"auto-input form-select\" auto-type=\"select\" id=\"",     id, "\" default=\"", default, "\" ", if (is.character(options) &amp;&amp;         length(options) == 1) paste0("auto-options=\"", options,         "\""), if (!is.null(default)) paste0(" default=\"", default,         "\""), if (!is.null(dataview)) paste0(" data-view=\"",         dataview, "\""), if (!is.null(depends)) paste0(" depends=\"",         depends, "\""), if (!is.null(dataset)) paste0(" dataset=\"",         dataset, "\""), if (!is.null(variable)) paste0(" variable=\"",         variable, "\""), "&gt;"):</span> argument "options" is missing, with no default</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [1] "&lt;nav class=\"navbar navbar-dark navbar-expand-md\"&gt;"                                                                                                                                                </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [2] "&lt;div class=\"container-fluid\"&gt;"                                                                                                                                                                    </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [3] "Site Name"                                                                                                                                                                                          </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [4] "&lt;button type=\"button\" class=\"navbar-toggler\" data-bs-toggle=\"collapse\"data-bs-target=\"#navbar_menu\"aria-controls=\"narbar_menu\" aria-expanded=\"false\" aria-lable=\"toggle navbar menu\"&gt;"</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [5] "&lt;span class=\"navbar-toggler-icon\"&gt;&lt;/span&gt;"                                                                                                                                                        </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [6] "&lt;/button&gt;"                                                                                                                                                                                          </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [7] "&lt;div class=\"collapse navbar-collapse\" id=\"navbar_menu\"&gt;"                                                                                                                                        </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [8] "&lt;ul class=\"navbar-nav\"&gt;"                                                                                                                                                                          </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [9] "&lt;li class=\"nav-item\"&gt;&lt;button class=\"btn btn-link\" type=\"button\" data-bs-toggle=\"offcanvas\" data-bs-target=\"#submenu1\" aria-control=\"submenu1\"&gt;menu&lt;/button&gt;&lt;/li&gt;"                       </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [10] "&lt;/ul&gt;&lt;/div&gt;&lt;/div&gt;&lt;/nav&gt;"                                                                                                                                                                            </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [11] "&lt;div tabindex=\"-1\" id=\"submenu1\" aria-labelledby=\"submenu1_label\" class=\"offcanvas offcanvas-end\"&gt;"                                                                                         </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [12] "&lt;div class=\"offcanvas-header\"&gt;"                                                                                                                                                                   </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [13] "&lt;h5 class=\"offcanvas-title\" id=\"submenu1_label\"&gt;Menu&lt;/h5&gt;"                                                                                                                                      </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [14] "&lt;button class=\"btn-close text-reset\" type=\"button\" data-bs-dismiss=\"offcanvas\" title=\"Close\"&gt;&lt;/button&gt;"                                                                                     </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [15] "&lt;/div&gt;"                                                                                                                                                                                             </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [16] "&lt;div class=\"offcanvas-body\"&gt;"                                                                                                                                                                     </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [17] "&lt;div class=\"wrapper select-wrapper\"&gt;"                                                                                                                                                             </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [18] "&lt;div class=\"input-group form-floating\"&gt;"                                                                                                                                                          </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [19] "&lt;select class=\"auto-input form-select\" auto-type=\"select\" id=\"menuselect\" default=\"-1\"  default=\"-1\"&gt;"                                                                                    </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [20] "&lt;option value=\"a\"&gt;a&lt;/option&gt;"                                                                                                                                                                     </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [21] "&lt;option value=\"b\"&gt;b&lt;/option&gt;"                                                                                                                                                                     </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [22] "&lt;/select&gt;"                                                                                                                                                                                          </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [23] "&lt;label for=\"menuselect\"&gt;menu select&lt;/label&gt;"                                                                                                                                                      </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [24] "&lt;/div&gt;"                                                                                                                                                                                             </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [25] "&lt;/div&gt;"                                                                                                                                                                                             </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [26] "&lt;/div&gt;"                                                                                                                                                                                             </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [27] "&lt;/div&gt;"                                                                                                                                                                                             </span>
 </pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

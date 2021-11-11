@@ -4,7 +4,7 @@
 \alias{page_navbar}
 \title{Add a navbar (header) section to a website}
 \usage{
-page_navbar(title = "", logo = "", ...)
+page_navbar(title = "", logo = "", ..., breakpoint = "md")
 }
 \arguments{
 \item{title}{A title to appear in the header.}
@@ -14,6 +14,9 @@ page_navbar(title = "", logo = "", ...)
 \item{...}{Lists specifying submenus and their items. Each list should have entries for
 \code{"name"} (the navbar button text), \code{"title"} (the menu title), \code{"placement"}
 (start, top, end, or bottom), \code{"backdrop"} (logical), and \code{items} (a list of menu items).}
+
+\item{breakpoint}{Bootstrap breakpoint code specifying the width at which the menu collapses;
+default is \code{"md"}.}
 }
 \value{
 A character vector of the content to be added.

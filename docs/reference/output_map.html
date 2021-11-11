@@ -129,7 +129,8 @@
   dataview <span class='op'>=</span> <span class='cn'>NULL</span>, legend <span class='op'>=</span> <span class='cn'>TRUE</span>, click <span class='op'>=</span> <span class='cn'>NULL</span>, subto <span class='op'>=</span> <span class='cn'>NULL</span>,
   options <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>, tiles <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>url <span class='op'>=</span>
   <span class='st'>"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"</span>, options <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>maxZoom
-  <span class='op'>=</span> <span class='fl'>19</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span></pre>
+  <span class='op'>=</span> <span class='fl'>19</span><span class='op'>)</span><span class='op'>)</span>, attribution <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>name <span class='op'>=</span> <span class='st'>"OpenStreetMap"</span>, url <span class='op'>=</span>
+  <span class='st'>"https://www.openstreetmap.org/copyright"</span><span class='op'>)</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -172,6 +173,11 @@
       <td><p>A list or list of lists containing provider information (see
 <a href='https://leaflet-extras.github.io/leaflet-providers/preview/'>leaflet providers</a>; e.g.,
 <code>list(</code><code>url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"</code>, <code>options = list(maxZoom = 19))</code>).</p></td>
+    </tr>
+    <tr>
+      <th>attribution</th>
+      <td><p>A list with tile attribution information to be included in a credits section. Include in
+<code>tile</code>'s <code>options</code> list to add to the map.</p></td>
     </tr>
     </table>
 

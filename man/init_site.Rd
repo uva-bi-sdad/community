@@ -4,9 +4,12 @@
 \alias{init_site}
 \title{Create a website}
 \usage{
-init_site(dir = ".", with_data = TRUE, settings = list(), overwrite = FALSE)
+init_site(title = "app", dir = ".", with_data = TRUE,
+  settings = list(), overwrite = FALSE)
 }
 \arguments{
+\item{title}{Title of the site.}
+
 \item{dir}{Directory in which to create the site's directory.}
 
 \item{with_data}{logical; if \code{FALSE}, a data sub-directory and package will not be created.}

@@ -2,11 +2,11 @@
 % Please edit documentation in R/input_checkbox.R
 \name{input_checkbox}
 \alias{input_checkbox}
-\title{Add checkboxes or radio buttons to a website}
+\title{Add checkboxes, radio buttons, or switches to a website}
 \usage{
 input_checkbox(label, options, default = "all", display = options,
   id = label, variable = NULL, dataset = NULL, depends = NULL,
-  multi = TRUE)
+  multi = TRUE, as.switch = FALSE)
 }
 \arguments{
 \item{label}{Label of the input for the user.}
@@ -31,15 +31,17 @@ and \code{variable}, depending on this type of input \code{depends} points to.}
 
 \item{multi}{Logical; if \code{FALSE}, only one option can be selected at a time, turning the checkboxes into radio
 buttons.}
+
+\item{as.switch}{Logical; if \code{TRUE}, displays checkboxes or radio buttons as switches.}
 }
 \value{
 A character vector of the contents to be added.
 }
 \description{
-Adds a set of checkbox or radio buttons buttons.
+Adds a set of checkbox, radio buttons, or switches to a website.
 }
 \examples{
 \dontrun{
-input_checkbox()
+input_checkbox("Label", c("a", "b", "c"))
 }
 }

@@ -1,6 +1,6 @@
-#' Add checkboxes or radio buttons to a website
+#' Add checkboxes, radio buttons, or switches to a website
 #'
-#' Adds a set of checkbox or radio buttons buttons.
+#' Adds a set of checkbox, radio buttons, or switches to a website.
 #'
 #' @param label Label of the input for the user.
 #' @param options A vector of options, the name of a variable from which to pull levels, or either \code{"datasets"}
@@ -16,15 +16,16 @@
 #' and \code{variable}, depending on this type of input \code{depends} points to.
 #' @param multi Logical; if \code{FALSE}, only one option can be selected at a time, turning the checkboxes into radio
 #' buttons.
+#' @param as.switch Logical; if \code{TRUE}, displays checkboxes or radio buttons as switches.
 #' @examples
 #' \dontrun{
-#' input_checkbox()
+#' input_checkbox("Label", c("a", "b", "c"))
 #' }
 #' @return A character vector of the contents to be added.
 #' @export
 
 input_checkbox <- function(label, options, default = "all", display = options, id = label, variable = NULL,
-                           dataset = NULL, depends = NULL, multi = TRUE) {
+                           dataset = NULL, depends = NULL, multi = TRUE, as.switch = FALSE) {
   if (multi && length(default) == 1) {
     if ((is.logical(default) && default) || default == "all") {
       default <- options
@@ -33,6 +34,7 @@ input_checkbox <- function(label, options, default = "all", display = options, i
     }
   } else if (!multi && is.character(default)) {
     default <- which((if (default %in% display) display else options) == default)
+    if (!length(default)) default <- 1
   }
   id <- gsub("\\s", "", id)
   type <- if (multi) "checkbox" else "radio"
@@ -51,10 +53,10 @@ input_checkbox <- function(label, options, default = "all", display = options, i
     if (length(options) > 1) {
       unlist(lapply(seq_along(options), function(i) {
         c(
-          '<div class="form-check">',
+          paste0('<div class="form-check', if (as.switch) " form-switch", '">'),
           paste0(
             '<input type="', type, '" autocomplete="off" class="form-check-input" name="',
-            id, '_options" id="', id, "_option", i, '" value="',
+            id, '_options" id="', id, "_option", i, if (as.switch) '" role="switch', '" value="',
             options[i], '"', if ((multi && options[i] %in% default) || i == default) " checked", ">"
           ),
           paste0('<label class="form-check-label" for="', id, "_option", i, '">', display[i], "</label>"),

@@ -4,13 +4,13 @@
 \alias{output_legend}
 \title{Adds a legend to a website}
 \usage{
-output_legend(palette = "divergent", lower = "Lower", center = "",
+output_legend(palette = "rdylbu7", lower = "Lower", center = "",
   higher = "Higher", class = "")
 }
 \arguments{
 \item{palette}{Name of an included color palette (from
 \href{https://colorbrewer2.org}{colorbrewer}); one of \code{"rdylbu7"} (default), \code{"orrd7"}, \code{"gnbu7"},
-\code{"brbg7"}, \code{"puor7"}, \code{"prgn6"}, \code{"reds6"}, \code{"greens6"}, \code{"greys4"}, \code{"paired4"}.}
+\code{"brbg7"}, \code{"puor7"}, \code{"prgn6"}, \code{"reds5"}, \code{"greens5"}, \code{"greys4"}, \code{"paired4"}.}
 
 \item{lower}{Text to appear at the beginning of the legend, labeling smaller.}
 

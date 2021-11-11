@@ -42,7 +42,7 @@ a value or vector of values, or a selector of values.}
 
 \item{palette}{The name of the color palette used in maps and plots (from
 \href{https://colorbrewer2.org}{colorbrewer}); one of \code{"rdylbu7"} (default), \code{"orrd7"}, \code{"gnbu7"},
-\code{"brbg7"}, \code{"puor7"}, \code{"prgn6"}, \code{"reds6"}, \code{"greens6"}, \code{"greys4"}, \code{"paired4"}.}
+\code{"brbg7"}, \code{"puor7"}, \code{"prgn6"}, \code{"reds5"}, \code{"greens5"}, \code{"greys4"}, \code{"paired4"}.}
 }
 \value{
 A list of the entered options.

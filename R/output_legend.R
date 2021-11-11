@@ -4,7 +4,7 @@
 #'
 #' @param palette Name of an included color palette (from
 #' \href{https://colorbrewer2.org}{colorbrewer}); one of \code{"rdylbu7"} (default), \code{"orrd7"}, \code{"gnbu7"},
-#' \code{"brbg7"}, \code{"puor7"}, \code{"prgn6"}, \code{"reds6"}, \code{"greens6"}, \code{"greys4"}, \code{"paired4"}.
+#' \code{"brbg7"}, \code{"puor7"}, \code{"prgn6"}, \code{"reds5"}, \code{"greens5"}, \code{"greys4"}, \code{"paired4"}.
 #' @param lower Text to appear at the beginning of the legend, labeling smaller.
 #' @param center Text to appear at the midpoint of the legend, labeling central values.
 #' @param higher Text to appear at the end of the legend, labeling larger values.
@@ -16,7 +16,7 @@
 #' @return A character vector of the contents to be added.
 #' @export
 
-output_legend <- function(palette = "divergent", lower = "Lower", center = "", higher = "Higher", class = "") {
+output_legend <- function(palette = "rdylbu7", lower = "Lower", center = "", higher = "Higher", class = "") {
   r <- c(
     paste(c('<div palette="', palette, '" class="legend', if (class != "") c(" ", class), '">'), collapse = ""),
     '<div class="legend-scale"></div>',

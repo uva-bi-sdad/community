@@ -57,6 +57,11 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, opti
       hash = "sha384-uf/Bcd4lCplN1dOhtGBZdheEsWnZs1FocqbGCOoBFX5rVwUAXJ1K79UJLzOMoDZO",
       loading = "defer"
     )
+    caller$credits$datatables <- list(
+      name = "DataTables",
+      url = "https://datatables.net",
+      version = "1.11.3"
+    )
     caller$tables[[paste0("table", id)]] <- options
     caller$content <- c(caller$content, r)
     caller$uid <- caller$uid + 1

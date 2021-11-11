@@ -51,7 +51,7 @@ page_section <- function(..., type = "row", wraps = NA, sizes = NA, breakpoints 
             '"', if (conditions[i] != "") paste0(' id="', ids[i], '"'), ">"
           ), collapse = "")
         },
-        eval(elements[[i]], parts),
+        eval(elements[[i]], parts, caller),
         if (!is.na(wraps[i])) "</div>"
       )
     }), use.names = FALSE),

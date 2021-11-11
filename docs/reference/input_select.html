@@ -125,10 +125,10 @@
     <p>Adds an input to select from the entered options.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>input_select</span><span class='op'>(</span><span class='va'>label</span>, id <span class='op'>=</span> <span class='va'>label</span>, <span class='va'>options</span>, default <span class='op'>=</span> <span class='op'>-</span><span class='fl'>1</span>, display <span class='op'>=</span> <span class='va'>options</span>,
+    <pre class="usage"><span class='fu'>input_select</span><span class='op'>(</span><span class='va'>label</span>, <span class='va'>options</span>, default <span class='op'>=</span> <span class='op'>-</span><span class='fl'>1</span>, display <span class='op'>=</span> <span class='va'>options</span>, id <span class='op'>=</span> <span class='va'>label</span>,
   variable <span class='op'>=</span> <span class='cn'>NULL</span>, dataset <span class='op'>=</span> <span class='cn'>NULL</span>, depends <span class='op'>=</span> <span class='cn'>NULL</span>, dataview <span class='op'>=</span> <span class='cn'>NULL</span>,
   filters <span class='op'>=</span> <span class='cn'>NULL</span>, reset_button <span class='op'>=</span> <span class='cn'>FALSE</span>, button_class <span class='op'>=</span> <span class='cn'>NULL</span>,
-  as_row <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
+  as.row <span class='op'>=</span> <span class='cn'>FALSE</span>, floating_label <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -136,10 +136,6 @@
     <tr>
       <th>label</th>
       <td><p>Label of the input for the user.</p></td>
-    </tr>
-    <tr>
-      <th>id</th>
-      <td><p>Unique ID of the element to be created.</p></td>
     </tr>
     <tr>
       <th>options</th>
@@ -153,6 +149,10 @@ or <code>"variables"</code> to select names of datasets or variables.</p></td>
     <tr>
       <th>display</th>
       <td><p>A display version of the options.</p></td>
+    </tr>
+    <tr>
+      <th>id</th>
+      <td><p>Unique ID of the element to be created.</p></td>
     </tr>
     <tr>
       <th>variable</th>
@@ -188,8 +188,13 @@ to its default; either <code>TRUE</code>, or text for the reset button's label.<
       <td><p>Class name to add to the reset button.</p></td>
     </tr>
     <tr>
-      <th>as_row</th>
+      <th>as.row</th>
       <td><p>Logical; if <code>TRUE</code>, the label and input are in separate columns within a row.</p></td>
+    </tr>
+    <tr>
+      <th>floating_label</th>
+      <td><p>Logical; if <code>FALSE</code> or <code>as.row</code> is <code>TRUE</code>, labels are separate from
+their inputs.</p></td>
     </tr>
     </table>
 

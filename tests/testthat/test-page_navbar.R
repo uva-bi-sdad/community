@@ -9,7 +9,6 @@ test_that("structure is intact", {
   children <- xml_child(children)
   expect_true(xml_length(children) == 1)
   children <- xml_child(children)
-  expect_true(xml_length(children) == 2)
+  expect_true(xml_length(children) == 1)
   expect_true(xml_length(xml_child(children)) == 1)
-  expect_true(xml_length(xml_child(children, 2)) == 0)
 })

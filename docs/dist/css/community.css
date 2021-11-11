@@ -1,31 +1,40 @@
 .hidden{display: none}
 .wrapper > label{width: 100%; display: block; margin: 0}
 button:hover{opacity: .7}
-label{white-space: nowrap}
+label{white-space: nowrap; z-index: 3}
 input[type=number],
 input[type=text],
 .input-group > .form-control, .input-group > .form-select{
   min-width: 80px
 }
 
-.navbar{position: fixed; width: 100%; z-index: 100; padding: .5rem}
-.navbar .btn{padding: 0 .5em}
+.navbar{position: fixed; width: 100%; z-index: 100}
+.navbar .btn-link{text-decoration: none; background: inherit; border: none}
+
+.navbar-expand-md .navbar-collapse{flex: 0}
+
 .row{width: 100%; padding: 0 0 1em 0; margin-top: 0; margin-right: 0; margin-left: 0}
 .col{height: 100%}
 .row > div{min-width: 90px}
 
 .menu-wrapper{position: fixed; overflow: visible; z-index: 90; transition: top 400ms, right 400ms, bottom 400ms, left 400ms}
-.menu{background-color: #efefef; padding: 3em 3em .5em .5em; flex-wrap: nowrap}
-.menu-toggle{position: fixed; background-color: #efefef; border: none; font-size: 1.7em; width: 1.5em; height: 40px}
-.menu-top .menu-toggle{border-radius: 0 0 0 15px; top: 46px; right: 0}
+.menu{background-color: var(--background-highlight); padding: 3.9em 3em .5em .5em; flex-wrap: nowrap}
+.menu-toggle{position: fixed; background-color: var(--background-highlight); border: none; font-size: 1.7em; width: 1.5em; height: 40px}
+.menu-top .menu-toggle{border-radius: 0 0 0 15px; top: 55px; right: 0}
 .menu-right{height: 100vh; flex-shrink: 0; transition: right .7s}
-.menu-right .menu-toggle{border-radius: 0 0 0 15px; right: 0px; top: 47px}
+.menu-right .menu-toggle{border-radius: 0 0 0 15px; right: 0px; top: 55px}
 .menu-bottom .menu-toggle{border-radius: 15px 0 0 0; bottom: 0px; right: 0}
 .menu.menu-bottom{padding: .5em}
 .menu-left{height: 100vh; flex-shrink: 0}
-.menu-left .menu-toggle{border-radius: 0 0 15px 0; top: 47px; left: 0px}
+.menu-left .menu-toggle{border-radius: 0 0 15px 0; top: 55px; left: 0px}
 .menu > div{min-width: 125px}
 .slider-display{text-align: center}
+.form-switch .form-check-input:checked{background-repeat: no-repeat}
+.form-floating > .form-select{padding-top: 1.5rem; padding-bottom: 0}
+.info-value-row{text-align: center; font-size: 1.5em}
+.table > :not(:first-child){border-top: none}
+.text-display{min-height: 300px; display: flex; flex-direction: column}
+.variable-info{margin-top: auto}
 
 .content{
   position: absolute; top: 0; bottom: 0; left: 0; right: 0; width: auto; z-index: 0;
@@ -40,22 +49,39 @@ input[type=text],
 .legend-scale{width: 100%; height: 30px; display: table}
 .legend-scale span{height: 100%; display: table-cell}
 .plot-container{margin: 0 0 0 -1em !important}
-.leaflet-container{background: #fff}
-table.dataTable tbody tr.dtrg-group.dtrg-group{background-color: #f0f0f0; font-weight: bold}
+.leaflet-container{background: var(--background)}
+table.dataTable tbody tr.dtrg-group.dtrg-group{background-color: var(--background-highlight); font-weight: bold}
 table.dataTable.compact thead th, table.dataTable.compact thead td{padding: 4px 17px 4px 0}
 table.dataTable.compact tbody th, table.dataTable.compact tbody td{padding: 0 17px 0 0}
 .dataTable td, .dataTable th{text-align: right; white-space: nowrap}
 .dataTable td:first-of-type, .dataTable th:first-of-type{text-align: left}
 .dataTable, .dataTables_scrollHead{width: 100% !important}
 
-.form-row{padding: 0}
+.credits ul{padding-left: 1rem; list-style: none}
+.credits .version-tag{
+  font-size: .8em;
+  margin: .5em .5em;
+  padding: .1em .45em;
+  border-radius: 25px;
+  line-height: 2;
+  background-color: var(--highlight-secondary);
+  color: var(--highlight-secondary-text)
+}
+.credits p{margin: 0 0 .5em .5em; font-size: .8em}
+
+.form-row, .wrapper{padding: 0; margin: 0 0 .5em 0}
+.form-row:last-of-type, .wrapper:last-of-type{margin: 0}
 
 
 
 :root{
+  --background: #ffffff;
+  --background-highlight: #f0f0f0;
   --link: #315395;
   --highlight: #595959;
   --highlight-text: #ffffff;
+  --highlight-secondary: #eaeaea;
+  --highlight-secondary-text: #000000;
 }
 
 .dt-button{
@@ -79,8 +105,9 @@ table.dataTable.compact tbody th, table.dataTable.compact tbody td{padding: 0 17
   background: var(--highlight);
   border-color: var(--highlight)
 }
-.nav-link{
-  color: var(--link)
+.nav-link, a:link, a:visited{
+  color: var(--link);
+  text-decoration: none
 }
 input[type=range]::-webkit-slider-runnable-track {
   width: 100%;

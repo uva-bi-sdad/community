@@ -6,7 +6,7 @@
 \usage{
 input_number(label, id = label, ..., default = NULL, min = NULL,
   max = NULL, step = NULL, type = "number", class = NULL,
-  dataview = NULL)
+  dataview = NULL, floating_label = TRUE)
 }
 \arguments{
 \item{label}{Label of the input for the user.}
@@ -29,6 +29,8 @@ to default to the current minimum or maximum value.}
 \item{class}{Class names to add to the input's list.}
 
 \item{dataview}{ID of a \code{\link{input_dataview}}, to use as a source of variables.}
+
+\item{floating_label}{Logical; if \code{FALSE}, labels are separate from their input elements.}
 }
 \value{
 A character vector of the contents to be added.

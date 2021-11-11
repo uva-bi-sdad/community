@@ -47,6 +47,11 @@ output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dat
       src = "https://cdn.plot.ly/plotly-2.4.2.min.js",
       hash = "sha384-X9COQf511UOEwK4K4fkWIg2ySl5SMo0Rs9PDwMXSwMKKbBgvpMLpmGuD3Z6VM/uR"
     )
+    caller$credits$plotly <- list(
+      name = "Plotly",
+      url = "https://plotly.com",
+      version = "2.4.2"
+    )
     id <- length(caller$plots)
     caller$plots[[paste0("plot", id)]] <- options
     caller$content <- c(caller$content, r)

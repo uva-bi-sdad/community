@@ -19,7 +19,7 @@
 #' can be static (e.g., referring to a variable) or the ID of an input.
 #' @param palette The name of the color palette used in maps and plots (from
 #' \href{https://colorbrewer2.org}{colorbrewer}); one of \code{"rdylbu7"} (default), \code{"orrd7"}, \code{"gnbu7"},
-#' \code{"brbg7"}, \code{"puor7"}, \code{"prgn6"}, \code{"reds6"}, \code{"greens6"}, \code{"greys4"}, \code{"paired4"}.
+#' \code{"brbg7"}, \code{"puor7"}, \code{"prgn6"}, \code{"reds5"}, \code{"greens5"}, \code{"greys4"}, \code{"paired4"}.
 #' @param dataset Select which dataset to pull from; the name of an included dataset, or ID of a
 #' selector of dataset names.
 #' @param ids Select which IDs to include; a vector of IDs that appear in the specified dataset, or the ID of a

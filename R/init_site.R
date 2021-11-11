@@ -2,6 +2,7 @@
 #'
 #' Create a repository for a static website for data documentation and exploration.
 #'
+#' @param title Title of the site.
 #' @param dir Directory in which to create the site's directory.
 #' @param settings A list with options to be passed to the site. These will be written to \code{settings.json},
 #' which can be edited by hand.
@@ -14,7 +15,7 @@
 #' @return Path to the created site directory.
 #' @export
 
-init_site <- function(dir = ".", with_data = TRUE, settings = list(), overwrite = FALSE) {
+init_site <- function(title = "app", dir = ".", with_data = TRUE, settings = list(), overwrite = FALSE) {
   check <- check_template("site", dir = dir)
   if (check$exists && !overwrite) {
     cli_bullets(c(`!` = "site files already exist", i = "add {.code overwrite = TRUE} to overwrite them"))
@@ -24,7 +25,7 @@ init_site <- function(dir = ".", with_data = TRUE, settings = list(), overwrite 
   paths <- paste0(dir, "/", c("README.md", "site.R", "package.json", "server.js", ".gitignore"))
   if (!file.exists(paths[1])) {
     writeLines(paste(c(
-      "# Community Site",
+      paste("#", title),
       "<template: Describe the site>",
       "\n## Run",
       "```R",
@@ -55,14 +56,6 @@ init_site <- function(dir = ".", with_data = TRUE, settings = list(), overwrite 
     ), collapse = "\n"), paths[2])
   }
   if (!file.exists(paths[3])) {
-    if (is.null(settings$digits)) settings$digits <- 3
-    write_json(
-      c(list(title = title), settings),
-      paths[3],
-      pretty = TRUE, auto_unbox = TRUE
-    )
-  }
-  if (!file.exists(paths[4])) {
     write_json(list(
       name = gsub("\\s+", "_", tolower(title)),
       version = "1.0.0",
@@ -74,9 +67,9 @@ init_site <- function(dir = ".", with_data = TRUE, settings = list(), overwrite 
       prettier = list(printWidth = 120, semi = FALSE, trailingComma = "es5"),
       author = "",
       license = "ISC"
-    ), paths[4], pretty = TRUE, auto_unbox = TRUE)
+    ), paths[3], pretty = TRUE, auto_unbox = TRUE)
   }
-  if (!file.exists(paths[5])) {
+  if (!file.exists(paths[4])) {
     writeLines(paste(c(
       "'use strict'",
       "const express = require('express'), app = express()",
@@ -85,9 +78,9 @@ init_site <- function(dir = ".", with_data = TRUE, settings = list(), overwrite 
       "  console.log('listening on port 3000')",
       "})",
       ""
-    ), collapse = "\n"), paths[5])
+    ), collapse = "\n"), paths[4])
   }
-  if (!file.exists(paths[6])) {
+  if (!file.exists(paths[5])) {
     writeLines(paste(c(
       ".Rproj.user",
       ".Rhistory",
@@ -98,7 +91,7 @@ init_site <- function(dir = ".", with_data = TRUE, settings = list(), overwrite 
       "node-module",
       "package-lock.json",
       ""
-    ), collapse = "\n"), paths[6])
+    ), collapse = "\n"), paths[5])
   }
   dir.create(paste0(dir, "/docs"), FALSE)
   docs <- paste0(dir, "/docs/", c("index.html", "settings.js", "script.js", "style.css"))

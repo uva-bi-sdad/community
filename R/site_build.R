@@ -57,7 +57,6 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
             }
             if (length(d$ids) && d$ids[[1]]$variable %in% colnames(data)) {
               ids <- data[[d$ids[[1]]$variable]]
-              # data <- data[, d$ids[[1]]$variable := NULL]
               set(data, NULL, d$ids[[1]]$variable, NULL)
             } else {
               ids <- rownames(data)
@@ -91,7 +90,14 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
       file = if (file.exists(path)) sub(paste0(dir, "/docs/"), "", path, fixed = TRUE)
     )
   }
-  settings <- fromJSON(sub("^[^{]*", "", paste(readLines(paste0(dir, "/docs/settings.js")), collapse = "")))
+  path <- paste0(dir, "/docs/settings.js")
+  settings <- if (file.exists(path) && file.size(path)) {
+    fromJSON(sub("^[^{]*", "", paste(readLines(path), collapse = "")))
+  } else {
+    list()
+  }
+  defaults <- list(digits = 3, summary_selection = "all")
+  for (s in names(defaults)) if (is.null(settings[[s]])) settings[[s]] <- defaults[[s]]
   if (!is.null(settings$metadata) && !is.null(settings$metadata$variables) &&
     !identical(settings$metadata$variables, variables)) {
     force <- TRUE
@@ -104,14 +110,19 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
     custom = list(type = "script", src = "script.js"),
     bootstrap_style = list(
       type = "stylesheet",
-      src = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css",
-      hash = "sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU"
+      src = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css",
+      hash = "sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
     ),
     bootstrap = list(
       type = "script",
-      src = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js",
-      hash = "sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ"
+      src = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js",
+      hash = "sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
     )
+  )
+  parts$credits$bootstrap <- list(
+    name = "Bootstrap",
+    url = "https://getbootstrap.com",
+    version = "5.1.3"
   )
   parts$header <- NULL
   parts$body <- NULL
@@ -119,7 +130,10 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
   parts$site_build <- function(...) {}
   parts$uid <- 0
   source(local = parts, exprs = src)
-  for (e in c("rules", "variables", "dataviews", "info", "text", "select", "tables", "plots", "maps")) {
+  for (e in c(
+    "rules", "variables", "dataviews", "info", "text", "select", "tables", "plots", "maps", "credits",
+    "credit_output"
+  )) {
     settings[[e]] <- if (length(parts[[e]])) if (is.list(parts[[e]])) parts[[e]] else list(parts[[e]]) else NULL
   }
   writeLines(
@@ -157,13 +171,7 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
     unlist(parts$head[!duplicated(names(parts$head))], use.names = FALSE),
     "</head>",
     "<body>",
-    if (!is.null(parts$header)) {
-      c(
-        '<div class="navbar">',
-        parts$header,
-        "</div>"
-      )
-    },
+    if (!is.null(parts$header)) parts$header,
     if (!is.null(parts$body)) parts$body,
     if (!is.null(parts$content)) {
       c(
