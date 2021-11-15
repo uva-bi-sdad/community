@@ -45,3 +45,6 @@ Adds a set of checkbox, radio buttons, or switches to a website.
 input_checkbox("Label", c("a", "b", "c"))
 }
 }
+\seealso{
+For a single switch or checkbox, use \code{\link{input_switch}}.
+}

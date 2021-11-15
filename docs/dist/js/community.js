@@ -32,12 +32,18 @@ void (function () {
       word_start: /\b(\w)/g,
       settings: /^settings\./,
       features: /^features\./,
+      data: /^data\./,
       variables: /^variables\./,
       palette: /^pal/,
       datasets: /^dat/,
-      variables: /^var/,
+      variable: /^var/,
       levels: /^lev/,
       minmax: /^m[inax]{2}$/,
+      int_types: /^(?:count|year)$/,
+      end_punct: /[.?!]$/,
+      mustache: /\{(.*?)\}/g,
+      measure_name: /(?:^measure|_name)$/,
+      http: /^https?:\/\//,
     },
     conditionals = {
       options: function (u, c) {
@@ -76,7 +82,7 @@ void (function () {
           }
           u.e[ns < 2 ? 'setAttribute' : 'removeAttribute']('disabled', true)
         } else if (Object.hasOwn(_u, u.depends)) {
-          if (patterns.variables.test(u.options_source)) {
+          if (patterns.variable.test(u.options_source)) {
             d = c.value()
             if (d) fill_variables_options(u, d, u.option_sets)
           } else if (patterns.levels.test(u.options_source)) {
@@ -101,23 +107,25 @@ void (function () {
         if (c && Object.hasOwn(v, 'get')) {
           const p = valueOf(v.palette)
           var l,
+            o,
+            i,
             y = ys.parsed ? ys.value() - ys.parsed.min : 0,
             s = v.selection.all,
             k
           if (Object.hasOwn(site.maps, d) && Object.hasOwn(variables[c], u.view)) {
             l = variables[c][u.view].summaries[d]
-            for (k in s)
-              if (Object.hasOwn(s, k))
-                if (Object.hasOwn(variables[c], u.view)) {
-                  if (s[k].layer) {
-                    s[k].layer.setStyle({
-                      fillOpacity: 0.7,
-                      color: '#000000',
-                      fillColor: pal(s[k].data[c][y], p, l, y),
-                      weight: 1,
-                    })
-                  }
-                }
+            o = variables[c][u.view].order[d][y]
+            for (i = o.length; i--; ) {
+              k = o[i][0]
+              if (Object.hasOwn(s, k) && Object.hasOwn(variables[c], u.view) && s[k].layer) {
+                s[k].layer.setStyle({
+                  fillOpacity: 0.7,
+                  color: '#000000',
+                  fillColor: pal(s[k].data[c][y], p, l, y, i),
+                  weight: 1,
+                })
+              }
+            }
           } else {
             if (!Object.hasOwn(site.maps, '_waiting')) site.maps._waiting = {}
             if (!Object.hasOwn(site.maps._waiting, d)) site.maps._waiting[d] = []
@@ -434,6 +442,22 @@ void (function () {
           return this.e
         },
       },
+      switch: {
+        retrieve: function () {
+          this.set(this.e.checked)
+        },
+        setter: function (v) {
+          if ('string' === typeof v) v = 'on' === v
+          if (v !== this.previous) {
+            this.previous = this.e.checked
+            this.e.checked = this.source = v
+            request_queue(this.id)
+          }
+        },
+        listener: function (e) {
+          this.set(e.target.checked)
+        },
+      },
       number: {
         retrieve: function () {
           this.set(this.e.value)
@@ -618,18 +642,32 @@ void (function () {
         update: function () {
           if (this.e.layout) {
             const v = _u[this.view],
-              s = v.selection && v.selection.all
+              s = v.selection && v.selection.all,
+              d = v.get.dataset(),
+              y = _u[this.time || v.time_agg]
             if (s && v.n_selected.all) {
               this.parsed.x = valueOf(this.x)
               this.parsed.y = valueOf(this.y)
-              var k,
-                b,
-                traces = [],
-                summary = variables[this.parsed.y][this.view].summaries[v.get.dataset()]
-              for (k in s)
-                if (Object.hasOwn(s, k)) {
-                  traces.push(make_data_entry(this, s[k]))
+              this.parsed.view = v
+              this.parsed.time = y ? y.value() - y.parsed.min : 0
+              this.parsed.palette = valueOf(v.palette)
+              this.parsed.color = valueOf(this.colors || v.y)
+              this.parsed.summary = variables[this.parsed.color][this.view].summaries[d]
+              for (
+                var order = variables[this.parsed.color][this.view].order[d][this.parsed.time],
+                  summary = variables[this.parsed.y][this.view].summaries[d],
+                  i = order ? order.length : 0,
+                  k,
+                  b,
+                  traces = [];
+                i--;
+
+              ) {
+                if (Object.hasOwn(s, order[i][0])) {
+                  k = order[i][0]
+                  traces.push(make_data_entry(this, s[k], i))
                 }
+              }
               if (Object.hasOwn(this.traces, 'box') && s[k]) {
                 traces.push((b = JSON.parse(this.traces.box)))
                 b.x = s[k].data[this.parsed.x]
@@ -679,136 +717,296 @@ void (function () {
       },
       info: {
         init: function (o) {
-          var i, n, t, b
-          o.base = o.e.firstElementChild
-          o.temp = o.e.children[1]
-          o.temp.lastElementChild.classList.remove('hidden')
-          o.info = o.e.lastElementChild
+          var i, n, h, p
           o.update = elements.info.update.bind(o)
+          o.options = site.info[o.id]
+          o.view = o.options.dataview
+          o.depends = {}
+          o.has_default = o.options.default && (o.options.default.title || o.options.default.body)
+          if (o.view) add_subs(o.view, o)
+          if (o.options && o.options.subto) for (i = o.options.subto.length; i--; ) add_subs(o.options.subto[i], o)
           o.show = function (e) {
             this.update(e)
-            this.base.classList.add('hidden')
-            this.temp.classList.remove('hidden')
+            if (this.parts.title) {
+              if (this.selection) {
+                this.parts.title.base.classList.add('hidden')
+              } else this.parts.title.default.classList.add('hidden')
+              this.parts.title.temp.classList.remove('hidden')
+            }
+            if (this.parts.body) {
+              if (this.selection) {
+                this.parts.body.base.classList.add('hidden')
+              } else this.parts.body.default.classList.add('hidden')
+              this.parts.body.temp.classList.remove('hidden')
+            }
           }
           o.revert = function () {
-            this.base.classList.remove('hidden')
-            this.temp.classList.add('hidden')
-          }
-          if (o.view) add_subs(o.view, o)
-          o.options = site.info[o.id]
-          if (o.options && o.options.subto) for (i = o.options.subto.length; i--; ) add_subs(o.options.subto[i], o)
-          t = o.temp.lastElementChild
-          b = o.base.lastElementChild
-          o.options.parsed = {}
-          if (patterns.features.test(o.options.title)) {
-            o.options.parsed.features = o.options.title.replace(patterns.features, '')
-          } else if (patterns.variables.test(o.options.title))
-            o.options.parsed.variables = o.options.title.replace(patterns.variables, '')
-          for (n = o.options.body.length, i = 0; i < n; i++) {
-            t.appendChild(document.createElement('tr'))
-            b.appendChild(document.createElement('tr'))
-            t.lastElementChild.appendChild(document.createElement('td'))
-            b.lastElementChild.appendChild(document.createElement('td'))
-            if (o.options.body[i].name) {
-              t.lastElementChild.firstElementChild.innerText = b.lastElementChild.firstElementChild.innerText =
-                o.options.body[i].name
-              t.lastElementChild.appendChild(document.createElement('td'))
-              b.lastElementChild.appendChild(document.createElement('td'))
-            } else {
-              t.lastElementChild.lastElementChild.className = b.lastElementChild.lastElementChild.className =
-                'info-value-row'
-              t.lastElementChild.lastElementChild.colSpan = b.lastElementChild.lastElementChild.colSpan = 2
+            if (this.parts.title) {
+              if (this.selection) {
+                this.parts.title.base.classList.remove('hidden')
+              } else if (this.has_default) this.parts.title.default.classList.remove('hidden')
+              this.parts.title.temp.classList.add('hidden')
             }
-            if (o.options.body[i].value) {
-              o.options.body[i].parsed = {}
-              if (patterns.features.test(o.options.body[i].value)) {
-                o.options.body[i].parsed.features = o.options.body[i].value.replace(patterns.features, '')
-              } else if (patterns.variables.test(o.options.body[i].value))
-                o.options.body[i].parsed.variables = o.options.body[i].value.replace(patterns.variables, '')
+            if (this.parts.body) {
+              if (this.selection) {
+                this.parts.body.base.classList.remove('hidden')
+              } else if (this.has_default) this.parts.body.default.classList.remove('hidden')
+              this.parts.body.temp.classList.add('hidden')
             }
           }
-          if (o.options.variable_info) {
-            if (o.options.variable_info.title) {
-              o.info.appendChild(document.createElement('p'))
-              o.info.firstElementChild.className = 'h5'
+          o.parts = {}
+          function parse_part(o, t) {
+            const p = {
+              parent: o,
+              text: t,
+              parsed: {},
+              ref: true,
+              selection: false,
+              get: function (entity) {
+                if (this.ref) {
+                  if (entity)
+                    if (Object.hasOwn(this.parsed, 'features')) {
+                      return entity.features[this.parsed.features]
+                    } else if (Object.hasOwn(this.parsed, 'data')) {
+                      if (this.value_source) this.parsed.data = valueOf(this.text)
+                      if (Object.hasOwn(entity.data, this.parsed.data)) {
+                        const type = entity.variables[this.parsed.data].type
+                        return (
+                          format_value(
+                            entity.data[this.parsed.data][this.parent.time],
+                            !Object.hasOwn(entity.variables, this.parsed.data) || patterns.int_types.test(type)
+                          ) + ('percent' === type ? '%' : '')
+                        )
+                      }
+                    }
+                  if (Object.hasOwn(this.parsed, 'data')) {
+                    if (this.parent.time) return meta.time[this.parent.time]
+                  } else if (
+                    Object.hasOwn(this.parsed, 'variables') &&
+                    (this.value_source || Object.hasOwn(variable_info, this.parent.variable))
+                  ) {
+                    return variable_info[this.value_source ? valueOf(this.value_source) : this.parent.variable][
+                      this.parsed.variables
+                    ]
+                  }
+                  return this.text
+                } else return this.text
+              },
             }
-            if (o.options.variable_info.body) {
-              o.info.appendChild(document.createElement('p'))
+            if (patterns.features.test(t)) {
+              p.parsed.features = t.replace(patterns.features, '')
+            } else if (patterns.data.test(t)) {
+              p.parsed.data = t.replace(patterns.data, '')
+            } else if (patterns.variables.test(t)) {
+              p.parsed.variables = t.replace(patterns.variables, '')
+            } else p.ref = false
+            return p
+          }
+          if (o.options.title) {
+            o.parts.title = parse_part(o, o.options.title)
+            if (
+              Object.hasOwn(o.parts.title.parsed, 'variables') &&
+              patterns.measure_name.test(o.parts.title.parsed.variables)
+            ) {
+              o.parts.title.base = document.createElement('button')
+              o.parts.title.base.type = 'button'
+              o.parts.title.base.setAttribute('data-bs-toggle', 'modal')
+              o.parts.title.base.setAttribute('data-bs-target', '#variable_info_display')
+              o.parts.title.base.addEventListener('click', show_variable_info.bind(o))
+            } else o.parts.title.base = document.createElement('p')
+            o.parts.title.temp = document.createElement('p')
+            o.parts.title.default = document.createElement('p')
+            o.parts.title.temp.className = o.parts.title.base.className = o.parts.title.default.className = 'info-title'
+            if (o.has_default && o.options.default.title) {
+              o.e.appendChild(o.parts.title.default)
+              o.parts.title.default.innerText = o.options.default.title
             }
-          } else {
-            o.info.classList.add('hidden')
+            if (!o.parts.title.ref) o.parts.title.base.innerText = o.parts.title.get()
+            o.e.appendChild(o.parts.title.base)
+            o.e.appendChild(o.parts.title.temp)
+            o.parts.title.temp.classList.add('hidden')
+          }
+
+          if (o.options.body) {
+            o.parts.body = {
+              base: document.createElement('div'),
+              temp: document.createElement('div'),
+              default: document.createElement('div'),
+              rows: [],
+            }
+            o.parts.body.temp.className =
+              o.parts.body.base.className =
+              o.parts.body.default.className =
+                'info-body hidden'
+            if (o.has_default && o.options.default.body) o.parts.body.default.innerText = o.options.default.body
+            for (n = o.options.body.length, i = 0, h = 0; i < n; i++) {
+              o.parts.body.rows[i] = p = {
+                name: parse_part(o, o.options.body[i].name),
+                value: parse_part(o, o.options.body[i].value),
+              }
+              p.base = document.createElement('div')
+              o.parts.body.base.appendChild(p.base)
+              p.temp = document.createElement('div')
+              o.parts.body.temp.appendChild(p.temp)
+              p.temp.className = p.base.className = 'info-body-row-' + o.options.body[i].style
+              h += 24 + ('stack' === o.options.body[i].style ? 24 : 0)
+              if (p.name) {
+                if (Object.hasOwn(p.name.parsed, 'variables') && patterns.measure_name.test(p.name.parsed.variables)) {
+                  p.base.appendChild(document.createElement('button'))
+                  p.base.lastElementChild.type = 'button'
+                  p.base.lastElementChild.setAttribute('data-bs-toggle', 'modal')
+                  p.base.lastElementChild.setAttribute('data-bs-target', '#variable_info_display')
+                  p.base.lastElementChild.addEventListener('click', show_variable_info.bind(o))
+                } else p.base.appendChild(document.createElement('div'))
+                p.temp.appendChild(document.createElement('div'))
+                p.temp.lastElementChild.className = p.base.lastElementChild.className = 'info-body-row-name'
+                p.temp.lastElementChild.innerText = p.base.lastElementChild.innerText = p.name.get()
+              }
+              if (p.value) {
+                p.base.appendChild(document.createElement('div'))
+                p.temp.appendChild(document.createElement('div'))
+                p.temp.lastElementChild.className = p.base.lastElementChild.className =
+                  'info-body-row-value' + ('statement' === p.value.parsed.variables ? ' statement' : '')
+                if (!p.value.ref) p.temp.lastElementChild.innerText = p.base.lastElementChild.innerText = p.value.get()
+              }
+            }
+            o.e.style.minHeight = h + 'px'
+            o.e.appendChild(o.parts.body.base)
+            o.e.appendChild(o.parts.body.default)
+            o.e.appendChild(o.parts.body.temp)
           }
         },
         update: function (entity) {
-          const v = site.dataviews[this.view],
-            variable = valueOf(v.y),
-            info = variable_info[variable]
+          const v = site.dataviews[this.view]
           var p,
             e,
             i,
+            n,
+            ci,
             k,
             y = _u[v.time_agg]
-          y = y ? y.value() - y.parsed.min : 0
+          this.variable = valueOf(v.y)
+          this.dataset = v.get.dataset()
+          this.time = y ? y.value() - y.parsed.min : 0
+          if (!this.processed) {
+            this.processed = true
+            if (this.view) add_dependency(this.view, {type: 'update', id: this.id})
+            if (this.parts.body)
+              for (i = this.parts.body.rows.length; i--; ) {
+                p = this.parts.body.rows[i]
+                if (!p.value.ref) {
+                  if (Object.hasOwn(_u, p.value.text)) {
+                    if (Object.hasOwn(p.name.parsed, 'variables')) {
+                      p.name.value_source = p.value.value_source = p.value.text
+                      p.value.ref = true
+                      p.value.parsed.data = ''
+                    }
+                  }
+                }
+              }
+          }
           if (entity) {
             // hover information
-            p = this.temp.children
-            p[0].innerText = entity.features.name
-            for (i = this.options.body.length; i--; ) {
-              e = this.options.body[i]
-              if ('value' === e.value) {
-                p[1].children[i].lastElementChild.innerText =
-                  format_value(entity.data[variable][y], 'count' === info.type) + ('percent' === info.type ? '%' : '')
-              } else if (Object.hasOwn(e.parsed, 'features') && Object.hasOwn(entity.features, e.parsed.features)) {
-                p[1].children[i].classList.remove('hidden')
-                p[1].children[i].lastElementChild.innerText = entity.features[e.parsed.features]
-              } else {
-                p[1].children[i].classList.add('hidden')
+            if (this.parts.title) {
+              this.parts.title.temp.innerText = this.parts.title.get(entity)
+            }
+            if (this.parts.body) {
+              if (this.parts.body) {
+                for (i = this.parts.body.rows.length; i--; ) {
+                  p = this.parts.body.rows[i]
+                  if (p.name.ref) {
+                    if (p.name.value_source) p.name.value_source = p.value.text
+                    e = p.name.get(entity)
+                    if ('object' !== typeof e) {
+                      p.temp.firstElementChild.innerText = parse_variables(e, p.value.parsed.variables, this, entity)
+                    }
+                  }
+                  if (p.value.ref) {
+                    if (p.value.value_source) p.value.value_source = p.value.text
+                    e = p.value.get(entity)
+                    if ('object' !== typeof e) {
+                      p.temp.lastElementChild.innerText = parse_variables(e, p.value.parsed.variables, this, entity)
+                    }
+                  }
+                }
               }
             }
           } else {
             // base information
             if (this.view) {
-              p = this.base.children
               if (v.ids && (k = v.get.ids())) {
                 // when showing a selected region
+                this.selection = true
                 entity = entities[k]
-                p[0].innerText = entity.features.name
-                for (i = this.options.body.length; i--; ) {
-                  e = this.options.body[i]
-                  if ('value' === e.value) {
-                    p[2].children[i].lastElementChild.innerText =
-                      format_value(entity.data[variable][y], 'count' === info.type) +
-                      ('percent' === info.type ? '%' : '')
-                  } else if (Object.hasOwn(e.parsed, 'features') && Object.hasOwn(entity.features, e.parsed.features)) {
-                    p[2].children[i].classList.remove('hidden')
-                    p[2].children[i].lastElementChild.innerText = entity.features[e.parsed.features]
-                  } else {
-                    p[2].children[i].classList.add('hidden')
+                if (this.parts.title) {
+                  if (this.parts.title.value_source) p.title.value_source = p.value.text
+                  this.parts.title.base.classList.remove('hidden')
+                  this.parts.title.default.classList.add('hidden')
+                }
+              } else {
+                // when no ID is selected
+                this.selection = false
+                if (this.parts.title && this.has_default) {
+                  this.parts.title.base.classList.add('hidden')
+                  this.parts.title.default.classList.remove('hidden')
+                }
+                if (this.parts.body) {
+                  this.parts.body.base.classList.add('hidden')
+                  if (this.has_default) this.parts.body.default.classList.remove('hidden')
+                }
+              }
+              if (this.parts.title) {
+                this.parts.title.base.innerText = this.parts.title.get(entity)
+              }
+              if (this.parts.body) {
+                if (!this.options.subto.length) this.parts.body.base.classList.remove('hidden')
+                for (i = this.parts.body.rows.length; i--; ) {
+                  p = this.parts.body.rows[i]
+                  if (
+                    Object.hasOwn(p.value.parsed, 'variables') &&
+                    !Object.hasOwn(this.depends, p.value.parsed.variables)
+                  ) {
+                    this.depends[v.y] = true
+                    add_dependency(v.y, {type: 'update', id: this.id})
+                  }
+                  if (p.name.ref) {
+                    if (p.name.value_source) p.name.value_source = p.value.text
+                    e = p.name.get(entity)
+                    if ('object' !== typeof e) {
+                      p.base.firstElementChild.innerText = e
+                    }
+                  }
+                  if (p.value.ref) {
+                    e = p.value.get(entity)
+                    if ('object' === typeof e) {
+                      if ('source' === p.value.parsed.variables) {
+                        p.base.innerHTML = ''
+                        p.base.appendChild(document.createElement('table'))
+                        p.base.lastElementChild.className = 'source-table'
+                        p.base.firstElementChild.appendChild(document.createElement('thead'))
+                        p.base.firstElementChild.firstElementChild.appendChild(document.createElement('tr'))
+                        p.base.firstElementChild.firstElementChild.firstElementChild.appendChild(
+                          document.createElement('th')
+                        )
+                        p.base.firstElementChild.firstElementChild.firstElementChild.appendChild(
+                          document.createElement('th')
+                        )
+                        p.base.firstElementChild.firstElementChild.firstElementChild.firstElementChild.innerText =
+                          'Source'
+                        p.base.firstElementChild.firstElementChild.firstElementChild.lastElementChild.innerText =
+                          'Accessed'
+                        p.base.firstElementChild.appendChild(document.createElement('tbody'))
+                        for (n = e.length, ci = 0; ci < n; ci++) {
+                          p.base.firstElementChild.lastElementChild.appendChild(make_variable_source(e[ci]))
+                        }
+                      }
+                    } else {
+                      p.base.lastElementChild.innerText = parse_variables(e, p.value.parsed.variables, this, entity)
+                    }
                   }
                 }
-                p[1].classList.add('hidden')
-                p[2].classList.remove('hidden')
-              } else {
-                // when showing all regions
-                p[0].innerText = this.options.default.title
-                p[1].classList.remove('hidden')
-                p[2].classList.add('hidden')
               }
             }
-          }
-          if (this.options.variable_info && variable !== this.options.variable_info.current) {
-            if (!this.depends) {
-              this.depends = v.y
-              add_dependency(v.y, {type: 'update', id: this.id})
-            }
-            if (this.options.variable_info.title)
-              this.info.firstElementChild.innerText = Object.hasOwn(info, this.options.variable_info.title)
-                ? info[this.options.variable_info.title]
-                : this.options.variable_info.title
-            if (this.options.variable_info.body)
-              this.info.children[1].innerText = Object.hasOwn(info, this.options.variable_info.body)
-                ? info[this.options.variable_info.body]
-                : this.options.variable_info.body
           }
         },
       },
@@ -999,9 +1197,10 @@ void (function () {
     _c = {},
     tree = {}
 
-  function pal(value, which, summary, index) {
+  function pal(value, which, summary, index, rank) {
     which = which.toLowerCase()
     const colors = palettes[Object.hasOwn(palettes, which) ? which : 'reds'],
+      n = summary ? summary.n[index] : 1,
       min = summary ? summary.min[index] : 0,
       max = summary ? summary.max[index] : 1,
       nm = summary ? (isNaN(summary.norm_median[index]) ? 0 : summary.norm_median[index]) : 0.5
@@ -1011,7 +1210,11 @@ void (function () {
             0,
             Math.min(
               colors.length - 1,
-              Math.floor(colors.length / 2 + colors.length * (max - min ? (value - min) / (max - min) - nm : 0))
+              Math.floor(
+                colors.length / 2 +
+                  colors.length *
+                    (site.color_by_order ? (n ? rank / n - 0.5 : 0) : max - min ? (value - min) / (max - min) - nm : 0)
+              )
             )
           )
         ]
@@ -1112,16 +1315,9 @@ void (function () {
     }
   }
 
-  function make_data_entry(u, e, name, color) {
-    const v = u.view && _u[u.view],
-      t = JSON.parse(u.traces.scatter),
-      p = valueOf(v.palette)
-    var i,
-      c = valueOf(u.colors || v.y),
-      y = _u[u.time || v.time_agg]
-    y = y ? y.value() - y.parsed.min : 0
+  function make_data_entry(u, e, rank, name, color) {
     if (Object.hasOwn(e.data, u.parsed.x)) {
-      for (i = e.data[u.parsed.x].length; i--; ) {
+      for (var i = e.data[u.parsed.x].length, t = JSON.parse(u.traces.scatter); i--; ) {
         t.text[i] = e.features.name
         t.x[i] = e.data[u.parsed.x][i]
         t.y[i] = e.data[u.parsed.y][i]
@@ -1131,11 +1327,112 @@ void (function () {
         t.marker.color =
         t.marker.line.color =
         t.textfont.color =
-          color || pal(e.data[c][y], p, variables[c][v.id].summaries[v.get.dataset()], y) || '#808080'
+          color ||
+          pal(e.data[u.parsed.color][u.parsed.time], u.parsed.palette, u.parsed.summary, u.parsed.time, rank) ||
+          '#808080'
       t.name = name || e.features.name
       t.id = e.features.id
     }
     return t
+  }
+
+  function make_variable_source(s) {
+    var e = document.createElement('tr')
+    if (s.name) {
+      e.appendChild(document.createElement('td'))
+      if (s.url) {
+        e.firstElementChild.appendChild(document.createElement('a'))
+        e.firstElementChild.firstElementChild.target = '_blank'
+        e.firstElementChild.firstElementChild.rel = 'nofollow'
+        e.firstElementChild.firstElementChild.href = s.url
+      } else {
+        e.firstElementChild.appendChild(document.createElement('span'))
+      }
+      e.firstElementChild.firstElementChild.innerText = s.name
+    }
+    if (s.date_accessed) {
+      e.appendChild(document.createElement('td'))
+      e.lastElementChild.appendChild(document.createElement('span'))
+      e.lastElementChild.firstElementChild.innerText = s.date_accessed
+    }
+    return e
+  }
+
+  function make_variable_reference(c) {
+    var e = document.createElement('li')
+    e.innerHTML =
+      c.author +
+      '. "' +
+      c.title +
+      '." <em>' +
+      c.journal +
+      '</em> (' +
+      c.year +
+      ')' +
+      ('string' === typeof c.page ? ': ' + c.page : '') +
+      '. ' +
+      (c.doi || c.url
+        ? (c.doi ? 'doi: ' : 'url: ') +
+          (c.doi || c.url
+            ? '<a rel="nofollow" target="_blank" href="' +
+              ('https://doi.org/' + c.doi || c.url) +
+              '">' +
+              (c.doi || c.url.replace(patterns.http, '')) +
+              '</a>'
+            : '')
+        : '')
+    return e
+  }
+
+  function show_variable_info() {
+    const v = _u[this.view],
+      info = variable_info[valueOf(v.y)]
+    var n, i
+    page.modal.info.header.firstElementChild.innerText = info.short_name
+    page.modal.info.title.innerText = info.long_name
+    page.modal.info.description.innerText =
+      'string' === typeof info.long_description
+        ? info.long_description
+        : 'string' === typeof info.short_description
+        ? info.short_description
+        : ''
+    page.modal.info.name.lastElementChild.innerText = info.measure
+    page.modal.info.table.lastElementChild.innerText = info.measure_table
+    page.modal.info.type.lastElementChild.innerText = info.type
+    if (info.source.length) {
+      page.modal.info.source.lastElementChild.lastElementChild.innerHTML = ''
+      page.modal.info.source.classList.remove('hidden')
+      for (n = info.source.length, i = 0; i < n; i++) {
+        page.modal.info.source.lastElementChild.lastElementChild.appendChild(make_variable_source(info.source[i]))
+      }
+    } else page.modal.info.source.classList.add('hidden')
+    if (info.citations.length) {
+      page.modal.info.references.lastElementChild.innerHTML = ''
+      page.modal.info.references.classList.remove('hidden')
+      for (n = info.citations.length, i = 0; i < n; i++) {
+        page.modal.info.references.lastElementChild.appendChild(make_variable_reference(info.citations[i]))
+      }
+    } else page.modal.info.references.classList.add('hidden')
+  }
+
+  function parse_variables(s, type, e, entity) {
+    if ('statement' === type)
+      for (var m; (m = patterns.mustache.exec(s)); ) {
+        if ('value' === m[1]) {
+          s = s.replace(
+            m[0],
+            entity
+              ? format_value(entity.data[e.variable][e.time], patterns.int_types.test(variable_info[e.variable].type)) +
+                  ('percent' === variable_info[e.variable].type ? '%' : '')
+              : 'unknown'
+          )
+          patterns.mustache.lastIndex = 0
+        } else if (entity && patterns.features.test(m[1])) {
+          s = s.replace(m[0], entity.features[m[1].replace(patterns.features, '')])
+          patterns.mustache.lastIndex = 0
+        }
+      }
+    return s
   }
 
   document.onreadystatechange = function () {
@@ -1175,6 +1472,78 @@ void (function () {
       },
       timeout: -1,
     }
+    page.modal = {
+      info: {
+        init: false,
+        e: document.createElement('div'),
+      },
+    }
+    e = page.modal.info.e
+    document.body.appendChild(e)
+    page.modal.info.init = true
+    e.id = 'variable_info_display'
+    e.className = 'modal fade'
+    e.setAttribute('tabindex', '-1')
+    e.setAttribute('aria-labelledby', 'variable_info_title')
+    e.ariaHidden = 'true'
+    e.appendChild(document.createElement('div'))
+    e.firstElementChild.className = 'modal-dialog modal-dialog-scrollable'
+    e.firstElementChild.appendChild(document.createElement('div'))
+    e.firstElementChild.firstElementChild.className = 'modal-content'
+    e.firstElementChild.firstElementChild.appendChild((page.modal.info.header = document.createElement('div')))
+    e = page.modal.info
+    e.header.className = 'modal-header'
+    e.header.appendChild(document.createElement('p'))
+    e.header.firstElementChild.className = 'h5 modal-title'
+    e.header.firstElementChild.id = 'variable_info_title'
+    e.header.appendChild(document.createElement('button'))
+    e.header.lastElementChild.type = 'button'
+    e.header.lastElementChild.className = 'btn-close'
+    e.header.lastElementChild.setAttribute('data-bs-dismiss', 'modal')
+    e.header.lastElementChild.title = 'close'
+    e.header.insertAdjacentElement('afterEnd', (e.body = document.createElement('div')))
+    e.body.className = 'modal-body'
+    e.body.appendChild((e.title = document.createElement('p')))
+    e.title.className = 'h4'
+    e.body.appendChild((e.description = document.createElement('p')))
+
+    e.body.appendChild(document.createElement('table'))
+    e.body.lastElementChild.className = 'info-feature-table'
+
+    e.body.lastElementChild.appendChild((e.name = document.createElement('tr')))
+    e.name.appendChild(document.createElement('td'))
+    e.name.firstElementChild.innerText = 'Name'
+    e.name.appendChild(document.createElement('td'))
+
+    e.body.lastElementChild.appendChild((e.table = document.createElement('tr')))
+    e.table.appendChild(document.createElement('td'))
+    e.table.firstElementChild.innerText = 'Table'
+    e.table.appendChild(document.createElement('td'))
+
+    e.body.lastElementChild.appendChild((e.type = document.createElement('tr')))
+    e.type.appendChild(document.createElement('td'))
+    e.type.firstElementChild.innerText = 'Type'
+    e.type.appendChild(document.createElement('td'))
+
+    e.body.appendChild((e.source = document.createElement('div')))
+    e.source.appendChild((e = document.createElement('table')))
+    e.className = 'source-table'
+    e.appendChild(document.createElement('thead'))
+    e.firstElementChild.appendChild(document.createElement('tr'))
+    e.firstElementChild.firstElementChild.appendChild(document.createElement('th'))
+    e.firstElementChild.firstElementChild.appendChild(document.createElement('th'))
+    e.firstElementChild.firstElementChild.firstElementChild.innerText = 'Source'
+    e.firstElementChild.firstElementChild.lastElementChild.innerText = 'Accessed'
+    e.appendChild(document.createElement('tbody'))
+
+    e = page.modal.info
+    e.body.appendChild((e.references = document.createElement('div')))
+    e.references.appendChild(document.createElement('p'))
+    e.references.firstElementChild.className = 'h3'
+    e.references.firstElementChild.innerText = 'References'
+    e.references.appendChild((e = document.createElement('ul')))
+    e.className = 'reference-list'
+
     for (i = page.menus.length; i--; ) {
       if (page.menus[i].classList.contains('menu-top')) {
         page.top_menu = page.menus[i]
@@ -1390,7 +1759,7 @@ void (function () {
   }
 
   function init() {
-    var k, i, e, c, p, ce, ci, n, o, cond, v
+    var k, i, e, c, p, ci, n, o, cond, v
 
     // initialize inputs
     for (k in _u)
@@ -1412,7 +1781,7 @@ void (function () {
             o.option_sets = {}
             v = valueOf(o.dataset)
             if (Object.hasOwn(site.metadata.info, v)) {
-              if (patterns.variables.test(o.options_source)) {
+              if (patterns.variable.test(o.options_source)) {
                 fill_variables_options(o, v, o.option_sets)
               } else if (patterns.levels.test(o.options_source) && Object.hasOwn(variables, o.variable)) {
                 fill_levels_options(o, v, o.variable, o.option_sets)
@@ -1581,6 +1950,9 @@ void (function () {
                 this.set(last)
             }.bind(o)
           }
+        } else if ('switch' === o.type) {
+          o.default = o.e.checked
+          o.e.addEventListener('change', o.listen)
         } else {
           for (ci = o.options.length; ci--; ) o.options[ci].addEventListener('click', o.listen)
         }
@@ -1611,7 +1983,8 @@ void (function () {
                   this.get.ids() +
                   valueOf(this.palette) +
                   site.summary_selection +
-                  site.digits
+                  site.digits +
+                  site.color_by_order
               for (k in this.get.features) if (Object.hasOwn(this.get.features, k)) s += this.get.features[k]()
               return s
             }
@@ -1803,7 +2176,7 @@ void (function () {
           o.config = site.plots[o.id]
           o.traces = {}
           o.show = function (e) {
-            var trace = make_data_entry(this, e, 'hover_line', '#000')
+            var trace = make_data_entry(this, e, 0, 'hover_line', '#000')
             trace.line.width = 4
             Plotly.addTraces(this.e, trace, this.e.data.length)
           }.bind(o)
@@ -2201,7 +2574,7 @@ void (function () {
     var id, f
     for (var id in site.data[g])
       if (Object.hasOwn(site.data[g], id)) {
-        f = data_maps[g][id]
+        f = data_maps[g][id] || {id: id}
         entities[id] = {group: g, data: site.data[g][id], variables: variable_info, features: f, summaries: {}}
         if (f) {
           entitiesByName[f.name] = entities[id]

@@ -22,6 +22,7 @@
 #' input_checkbox("Label", c("a", "b", "c"))
 #' }
 #' @return A character vector of the contents to be added.
+#' @seealso For a single switch or checkbox, use \code{\link{input_switch}}.
 #' @export
 
 input_checkbox <- function(label, options, default = "all", display = options, id = label, variable = NULL,

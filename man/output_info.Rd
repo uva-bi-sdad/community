@@ -4,25 +4,29 @@
 \alias{output_info}
 \title{Add a tooltip-like display to a website}
 \usage{
-output_info(title = "features.name", body = "value",
-  variable_info = list(title = "short_name", body = "short_description"),
-  default = c(title = "Overall", body = "No selection."), dataview = NULL,
-  subto = NULL)
+output_info(title = NULL, body = NULL, row_style = "table",
+  default = NULL, dataview = NULL, subto = NULL, id = NULL,
+  variable_info = FALSE)
 }
 \arguments{
 \item{title}{Title text, or the source of title text.}
 
 \item{body}{A list of entries in the info body section, which can be raw text or references to features or
-data variables. Named entries appear in two columns, with the name in the first.}
+data variables.}
 
-\item{variable_info}{A list with entries for \code{"title"} and \code{"body"}, which can be raw text or reference
-to variable metadata entries.}
+\item{row_style}{A character specifying how rows should be displayed: \code{"table"} (default)
+to place names and values in separate columns of a table row, or \code{"stack"} to place names over values.
+Repeats over rows.}
 
 \item{default}{A list with entries for \code{"title"} and \code{"body"}, which are treated as raw text.}
 
 \item{dataview}{The ID of a dataview, used for the persistent display.}
 
 \item{subto}{A vector of output IDs to receive hover events from.}
+
+\item{id}{Unique id of the element.}
+
+\item{variable_info}{Logical; if \code{TRUE} (default), variable names can be clicked for more information.}
 }
 \value{
 A character vector of the content to be added.
