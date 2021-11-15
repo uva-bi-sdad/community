@@ -1375,7 +1375,7 @@ void (function () {
         ? (c.doi ? 'doi: ' : 'url: ') +
           (c.doi || c.url
             ? '<a rel="nofollow" target="_blank" href="' +
-              ('https://doi.org/' + c.doi || c.url) +
+              (c.doi ? 'https://doi.org/' + c.doi : c.url) +
               '">' +
               (c.doi || c.url.replace(patterns.http, '')) +
               '</a>'
