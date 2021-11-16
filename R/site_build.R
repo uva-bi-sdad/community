@@ -44,7 +44,8 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
         if (!is.null(variables)) {
           temp <- list()
           for (v in d$schema$fields) if (v$name %in% variables) temp[[v$name]] <- v
-          d$schema$fields <- unname(temp[variables[variables %in% names(temp)]])
+          variables <- variables[variables %in% names(temp)]
+          d$schema$fields <- unname(temp[variables])
         }
         file <- paste0(ddir, d$filename)
         if (file.exists(file)) {
@@ -99,7 +100,7 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
   defaults <- list(digits = 3, summary_selection = "all", color_by_order = FALSE)
   for (s in names(defaults)) if (is.null(settings[[s]])) settings[[s]] <- defaults[[s]]
   if (!is.null(settings$metadata) && !is.null(settings$metadata$variables) &&
-    !identical(settings$metadata$variables, variables)) {
+    !identical(settings$metadata$variables, variables[variables != "_references"])) {
     force <- TRUE
   }
   settings$metadata <- data_preprocess()

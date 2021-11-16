@@ -109,7 +109,7 @@ void (function () {
           var l,
             o,
             i,
-            y = ys.parsed ? ys.value() - ys.parsed.min : 0,
+            y = ys.parsed ? ys.value() - meta.time_range[0] : 0,
             s = v.selection.all,
             k
           if (Object.hasOwn(site.maps, d) && Object.hasOwn(variables[c], u.view)) {
@@ -160,15 +160,16 @@ void (function () {
       min: function (u, c) {
         var cv = c.value(),
           uv = u.value(),
-          v = _u[u.view],
+          v = _u[u.view || c.view],
           variable
         if (patterns.minmax.test(cv)) cv = c.parsed.min
-        if (v && v.time_range) {
+        if (v && v.y) {
           variable = valueOf(v.y)
           if (Object.hasOwn(variables, variable)) {
             if (!v.time_range.time.length) conditionals.time_range(v, u, true)
             cv = Math.max(v.time_range.time[0], parseFloat(cv))
           }
+          u.update()
         }
         u.e.min = 'undefined' === typeof u.parsed.min ? parseFloat(cv) : Math.max(u.parsed.min, parseFloat(cv))
         if (!u.e.value) {
@@ -180,7 +181,7 @@ void (function () {
       max: function (u, c) {
         var cv = c.value(),
           uv = u.value(),
-          v = _u[u.view],
+          v = _u[u.view || c.view],
           variable
         if (patterns.minmax.test(cv)) cv = c.parsed.max
         if (v && v.y) {
@@ -189,6 +190,7 @@ void (function () {
             if (!v.time_range.time.length) conditionals.time_range(v, u, true)
             cv = Math.min(v.time_range.time[1], parseFloat(cv))
           }
+          u.update()
         }
         u.e.max = 'undefined' === typeof u.parsed.max ? parseFloat(cv) : Math.min(u.parsed.max, parseFloat(cv))
         if (!u.e.value) {
@@ -284,11 +286,12 @@ void (function () {
         const v = c && c.value(),
           d = u.get.dataset(),
           t = variables[valueOf(u.time)].info[d].min,
-          s = _c[u.id + '_time']
-        var r = variables[Object.hasOwn(variables, v) ? v : valueOf(u.y)]
+          s = _c[u.id + '_time'],
+          variable = Object.hasOwn(variables, v) ? v : valueOf(u.y)
+        var r = variables[variable]
         if (r) {
           r = r[u.id].summaries[d].time_range
-          u.time_range.variable = v
+          u.time_range.variable = variable
           u.time_range.index[0] = r[0]
           u.time_range.time[0] = t + r[0]
           u.time_range.index[1] = r[1]
@@ -455,7 +458,7 @@ void (function () {
         },
         setter: function (v) {
           if ('string' === typeof v) v = 'on' === v
-          if (v !== this.previous) {
+          if (v !== this.source) {
             this.previous = this.e.checked
             this.e.checked = this.source = v
             request_queue(this.id)
@@ -471,7 +474,7 @@ void (function () {
         },
         setter: function (v) {
           if ('string' === typeof v) v = parseFloat(v)
-          if (isFinite(v) && v !== this.previous) {
+          if (isFinite(v) && v !== this.source) {
             this.previous = parseFloat(this.e.value)
             this.e.value = this.source = v
             this.current_index = v - this.parsed.min
@@ -660,7 +663,7 @@ void (function () {
                 this.parsed.x = valueOf(this.x)
                 this.parsed.y = valueOf(this.y)
                 this.parsed.view = v
-                this.parsed.time = y ? y.value() - y.parsed.min : 0
+                this.parsed.time = y ? y.value() - meta.time_range[0] : 0
                 this.parsed.palette = valueOf(v.palette)
                 this.parsed.color = valueOf(this.colors || v.y)
                 this.parsed.summary = variables[this.parsed.color][this.view].summaries[d]
@@ -903,7 +906,7 @@ void (function () {
             y = _u[v.time_agg]
           this.variable = valueOf(v.y)
           this.dataset = v.get.dataset()
-          this.time = y ? y.value() - y.parsed.min : 0
+          this.time = y ? y.value() - meta.time_range[0] : 0
           if (!this.processed) {
             this.processed = true
             if (this.view) {
@@ -989,8 +992,8 @@ void (function () {
                       Object.hasOwn(p.value.parsed, 'variables') &&
                       !Object.hasOwn(this.depends, p.value.parsed.variables)
                     ) {
-                      this.depends[v.y] = true
-                      add_dependency(v.y, {type: 'update', id: this.id})
+                      this.depends[p.value.parsed.variables] = true
+                      add_dependency(p.value.parsed.variables, {type: 'update', id: this.id})
                     }
                     if (p.name.ref) {
                       if (p.name.value_source) p.name.value_source = p.value.text
@@ -1388,20 +1391,24 @@ void (function () {
   }
 
   function make_variable_reference(c) {
-    var e = document.createElement('li')
+    for(var e = document.createElement('li'), s = '', i = c.author.length, j = 1 === i ? '' : 2 === i ? ' & ' : ', & '; i--;){
+      s = (i ? j : '') + c.author[i].family + ', ' + c.author[i].given.substr(0, 1) + '.' + s
+      j = ', '
+    }
     e.innerHTML =
-      c.author +
-      '. "' +
-      c.title +
-      '." <em>' +
-      c.journal +
-      '</em> (' +
+      s +
+      ' (' +
       c.year +
-      ')' +
-      ('string' === typeof c.page ? ': ' + c.page : '') +
-      '. ' +
+      '). ' +
+      c.title +
+      '. <em>' +
+      c.journal +
+      (c.volume ? ', ' + c.volume : '') +
+      '</em>' +
+      (c.page ? ', ' + c.page : '') +
+      '.' +
       (c.doi || c.url
-        ? (c.doi ? 'doi: ' : 'url: ') +
+        ? (c.doi ? ' doi: ' : ' url: ') +
           (c.doi || c.url
             ? '<a rel="nofollow" target="_blank" href="' +
               (c.doi ? 'https://doi.org/' + c.doi : c.url) +
@@ -1420,26 +1427,26 @@ void (function () {
     page.modal.info.header.firstElementChild.innerText = info.short_name
     page.modal.info.title.innerText = info.long_name
     page.modal.info.description.innerText =
-      'string' === typeof info.long_description
+      info.long_description
         ? info.long_description
-        : 'string' === typeof info.short_description
+        : info.short_description
         ? info.short_description
         : ''
     page.modal.info.name.lastElementChild.innerText = info.measure
     page.modal.info.table.lastElementChild.innerText = info.measure_table
     page.modal.info.type.lastElementChild.innerText = info.type
-    if (info.source.length) {
+    if (info.source) {
       page.modal.info.source.lastElementChild.lastElementChild.innerHTML = ''
       page.modal.info.source.classList.remove('hidden')
       for (n = info.source.length, i = 0; i < n; i++) {
         page.modal.info.source.lastElementChild.lastElementChild.appendChild(make_variable_source(info.source[i]))
       }
     } else page.modal.info.source.classList.add('hidden')
-    if (info.citations.length) {
+    if (info.citations) {
       page.modal.info.references.lastElementChild.innerHTML = ''
       page.modal.info.references.classList.remove('hidden')
-      for (n = info.citations.length, i = 0; i < n; i++) {
-        page.modal.info.references.lastElementChild.appendChild(make_variable_reference(info.citations[i]))
+      for (n = info.citations.length, i = 0; i < n; i++) if(variable_info._references && Object.hasOwn(variable_info._references, info.citations[i])){
+        page.modal.info.references.lastElementChild.appendChild(variable_info._references[info.citations[i]].element)
       }
     } else page.modal.info.references.classList.add('hidden')
   }
@@ -2592,6 +2599,10 @@ void (function () {
               meta.time_n = meta.time.length
             }
           }
+        }
+        if(Object.hasOwn(m, '_references')){
+          if(!Object.hasOwn(variable_info, '_references')) variable_info._references = {}
+          for(t in m._references) if(Object.hasOwn(m._references, t)) variable_info._references[t] = {reference: m._references[t], element: make_variable_reference(m._references[t])}
         }
       }
   }
