@@ -115,17 +115,18 @@ void (function () {
           if (Object.hasOwn(site.maps, d) && Object.hasOwn(variables[c], u.view)) {
             l = variables[c][u.view].summaries[d]
             o = variables[c][u.view].order[d][y]
-            for (i = o.length; i--; ) {
-              k = o[i][0]
-              if (Object.hasOwn(s, k) && Object.hasOwn(variables[c], u.view) && s[k].layer) {
-                s[k].layer.setStyle({
-                  fillOpacity: 0.7,
-                  color: '#000000',
-                  fillColor: pal(s[k].data[c][y], p, l, y, i),
-                  weight: 1,
-                })
+            if (o)
+              for (i = o.length; i--; ) {
+                k = o[i][0]
+                if (Object.hasOwn(s, k) && Object.hasOwn(variables[c], u.view) && s[k].layer) {
+                  s[k].layer.setStyle({
+                    fillOpacity: 0.7,
+                    color: '#000000',
+                    fillColor: pal(s[k].data[c][y], p, l, y, i),
+                    weight: 1,
+                  })
+                }
               }
-            }
           } else {
             if (!Object.hasOwn(site.maps, '_waiting')) site.maps._waiting = {}
             if (!Object.hasOwn(site.maps._waiting, d)) site.maps._waiting[d] = []
@@ -134,21 +135,26 @@ void (function () {
           }
         }
       },
-      map_shapes: function (u) {
-        if (u.view && u.displaying) {
-          u.displaying.clearLayers()
-          var s = site.dataviews[u.view].selection.all,
-            k,
-            n = 0
-          if (s)
-            for (k in s)
-              if (Object.hasOwn(s, k)) {
-                if (s[k].layer) {
-                  n++
-                  s[k].layer.addTo(u.displaying)
+      map_shapes: function (u, c, pass) {
+        clearTimeout(u.queue)
+        if (!pass) {
+          u.queue = setTimeout(conditionals.map_shapes.bind(null, u, void 0, true), 10)
+        } else {
+          if (u.view && u.displaying) {
+            u.displaying.clearLayers()
+            var s = site.dataviews[u.view].selection.all,
+              k,
+              n = 0
+            if (s)
+              for (k in s)
+                if (Object.hasOwn(s, k)) {
+                  if (s[k].layer) {
+                    n++
+                    s[k].layer.addTo(u.displaying)
+                  }
                 }
-              }
-          if (n) u.map.flyToBounds(u.displaying.getBounds())
+            if (n) u.map.flyToBounds(u.displaying.getBounds())
+          }
         }
       },
       min: function (u, c) {
@@ -193,6 +199,11 @@ void (function () {
       },
       dataview: function (f) {
         if (!f.check) compile_dataview(f)
+        var c,
+          k,
+          id,
+          first_all = '',
+          summary_state = site.summary_selection
         f.n_selected.ids = 0
         f.n_selected.features = 0
         f.n_selected.dataset = 0
@@ -203,11 +214,6 @@ void (function () {
         f.selection.dataset = {}
         f.selection.filtered = {}
         f.selection.all = {}
-        var c,
-          k,
-          id,
-          first_all = '',
-          summary_state = site.summary_selection
         for (id in entities)
           if (Object.hasOwn(entities, id)) {
             c = f.check(entities[id])
@@ -282,6 +288,7 @@ void (function () {
         var r = variables[Object.hasOwn(variables, v) ? v : valueOf(u.y)]
         if (r) {
           r = r[u.id].summaries[d].time_range
+          u.time_range.variable = v
           u.time_range.index[0] = r[0]
           u.time_range.time[0] = t + r[0]
           u.time_range.index[1] = r[1]
@@ -639,60 +646,65 @@ void (function () {
         click: function (d) {
           this.clickto.set(d.points[0].data.id)
         },
-        update: function () {
-          if (this.e.layout) {
-            const v = _u[this.view],
-              s = v.selection && v.selection.all,
-              d = v.get.dataset(),
-              y = _u[this.time || v.time_agg]
-            if (s && v.n_selected.all) {
-              this.parsed.x = valueOf(this.x)
-              this.parsed.y = valueOf(this.y)
-              this.parsed.view = v
-              this.parsed.time = y ? y.value() - y.parsed.min : 0
-              this.parsed.palette = valueOf(v.palette)
-              this.parsed.color = valueOf(this.colors || v.y)
-              this.parsed.summary = variables[this.parsed.color][this.view].summaries[d]
-              for (
-                var order = variables[this.parsed.color][this.view].order[d][this.parsed.time],
-                  summary = variables[this.parsed.y][this.view].summaries[d],
-                  i = order ? order.length : 0,
-                  k,
-                  b,
-                  traces = [];
-                i--;
+        update: function (pass) {
+          clearTimeout(this.queue)
+          if (!pass) {
+            this.queue = setTimeout(this.update.bind(null, true), 10)
+          } else {
+            if (this.e.layout) {
+              const v = _u[this.view],
+                s = v.selection && v.selection.all,
+                d = v.get.dataset(),
+                y = _u[this.time || v.time_agg]
+              if (s) {
+                this.parsed.x = valueOf(this.x)
+                this.parsed.y = valueOf(this.y)
+                this.parsed.view = v
+                this.parsed.time = y ? y.value() - y.parsed.min : 0
+                this.parsed.palette = valueOf(v.palette)
+                this.parsed.color = valueOf(this.colors || v.y)
+                this.parsed.summary = variables[this.parsed.color][this.view].summaries[d]
+                for (
+                  var order = variables[this.parsed.color][this.view].order[d][this.parsed.time],
+                    summary = variables[this.parsed.y][this.view].summaries[d],
+                    i = order ? order.length : 0,
+                    k,
+                    b,
+                    traces = [];
+                  i--;
 
-              ) {
-                if (Object.hasOwn(s, order[i][0])) {
-                  k = order[i][0]
-                  traces.push(make_data_entry(this, s[k], i))
+                ) {
+                  if (Object.hasOwn(s, order[i][0])) {
+                    k = order[i][0]
+                    traces.push(make_data_entry(this, s[k], i))
+                  }
                 }
-              }
-              if (Object.hasOwn(this.traces, 'box') && s[k]) {
-                traces.push((b = JSON.parse(this.traces.box)))
-                b.x = s[k].data[this.parsed.x]
-                b.upperfence = summary.max
-                b.q3 = summary.q3
-                b.median = summary.median
-                b.q1 = summary.q1
-                b.lowerfence = summary.min
-              }
-              if ('boolean' !== typeof this.e.layout.yaxis.title)
-                this.e.layout.yaxis.title = format_label(this.parsed.y)
-              if ('boolean' !== typeof this.e.layout.xaxis.title)
-                this.e.layout.xaxis.title = format_label(this.parsed.x)
-              if (this.parsed.x === meta.time_variable) {
-                if (this.e.layout.xaxis.autorange) {
-                  this.e.layout.xaxis.autorange = false
-                  this.e.layout.xaxis.type = 'linear'
-                  this.e.layout.xaxis.dtick = 1
-                  this.e.layout.xaxis.range = [v.time_range.filtered[0] - 0.5, v.time_range.filtered[1] + 0.5]
-                } else {
-                  this.e.layout.xaxis.range[0] = v.time_range.filtered[0] - 0.5
-                  this.e.layout.xaxis.range[1] = v.time_range.filtered[1] + 0.5
+                if (Object.hasOwn(this.traces, 'box') && s[k]) {
+                  traces.push((b = JSON.parse(this.traces.box)))
+                  b.x = s[k].data[this.parsed.x]
+                  b.upperfence = summary.max
+                  b.q3 = summary.q3
+                  b.median = summary.median
+                  b.q1 = summary.q1
+                  b.lowerfence = summary.min
                 }
+                if ('boolean' !== typeof this.e.layout.yaxis.title)
+                  this.e.layout.yaxis.title = format_label(this.parsed.y)
+                if ('boolean' !== typeof this.e.layout.xaxis.title)
+                  this.e.layout.xaxis.title = format_label(this.parsed.x)
+                if (this.parsed.x === meta.time_variable) {
+                  if (this.e.layout.xaxis.autorange) {
+                    this.e.layout.xaxis.autorange = false
+                    this.e.layout.xaxis.type = 'linear'
+                    this.e.layout.xaxis.dtick = 1
+                    this.e.layout.xaxis.range = [v.time_range.filtered[0] - 0.5, v.time_range.filtered[1] + 0.5]
+                  } else {
+                    this.e.layout.xaxis.range[0] = v.time_range.filtered[0] - 0.5
+                    this.e.layout.xaxis.range[1] = v.time_range.filtered[1] + 0.5
+                  }
+                }
+                Plotly.react(this.e, traces, this.e.layout)
               }
-              Plotly.react(this.e, traces, this.e.layout)
             }
           }
         },
@@ -780,7 +792,7 @@ void (function () {
                       }
                     }
                   if (Object.hasOwn(this.parsed, 'data')) {
-                    if (this.parent.time) return meta.time[this.parent.time]
+                    return meta.time[this.parent.time]
                   } else if (
                     Object.hasOwn(this.parsed, 'variables') &&
                     (this.value_source || Object.hasOwn(variable_info, this.parent.variable))
@@ -851,7 +863,11 @@ void (function () {
               p.temp.className = p.base.className = 'info-body-row-' + o.options.body[i].style
               h += 24 + ('stack' === o.options.body[i].style ? 24 : 0)
               if (p.name) {
-                if (Object.hasOwn(p.name.parsed, 'variables') && patterns.measure_name.test(p.name.parsed.variables)) {
+                if (
+                  o.options.variable_info &&
+                  Object.hasOwn(p.name.parsed, 'variables') &&
+                  patterns.measure_name.test(p.name.parsed.variables)
+                ) {
                   p.base.appendChild(document.createElement('button'))
                   p.base.lastElementChild.type = 'button'
                   p.base.lastElementChild.setAttribute('data-bs-toggle', 'modal')
@@ -876,7 +892,7 @@ void (function () {
             o.e.appendChild(o.parts.body.temp)
           }
         },
-        update: function (entity) {
+        update: function (entity, pass) {
           const v = site.dataviews[this.view]
           var p,
             e,
@@ -890,7 +906,10 @@ void (function () {
           this.time = y ? y.value() - y.parsed.min : 0
           if (!this.processed) {
             this.processed = true
-            if (this.view) add_dependency(this.view, {type: 'update', id: this.id})
+            if (this.view) {
+              add_dependency(this.view, {type: 'update', id: this.id})
+              if (y) add_dependency(v.time_agg, {type: 'update', id: this.id})
+            }
             if (this.parts.body)
               for (i = this.parts.body.rows.length; i--; ) {
                 p = this.parts.body.rows[i]
@@ -932,76 +951,81 @@ void (function () {
               }
             }
           } else {
-            // base information
-            if (this.view) {
-              if (v.ids && (k = v.get.ids())) {
-                // when showing a selected region
-                this.selection = true
-                entity = entities[k]
-                if (this.parts.title) {
-                  if (this.parts.title.value_source) p.title.value_source = p.value.text
-                  this.parts.title.base.classList.remove('hidden')
-                  this.parts.title.default.classList.add('hidden')
+            clearTimeout(this.queue)
+            if (!pass) {
+              this.queue = setTimeout(this.update.bind(null, void 0, true), 10)
+            } else {
+              // base information
+              if (this.view) {
+                if (v.ids && (k = v.get.ids())) {
+                  // when showing a selected region
+                  this.selection = true
+                  entity = entities[k]
+                  if (this.parts.title) {
+                    if (this.parts.title.value_source) p.title.value_source = p.value.text
+                    this.parts.title.base.classList.remove('hidden')
+                    this.parts.title.default.classList.add('hidden')
+                  }
+                } else {
+                  // when no ID is selected
+                  this.selection = false
+                  if (this.parts.title && this.has_default) {
+                    this.parts.title.base.classList.add('hidden')
+                    this.parts.title.default.classList.remove('hidden')
+                  }
+                  if (this.parts.body) {
+                    this.parts.body.base.classList.add('hidden')
+                    if (this.has_default) this.parts.body.default.classList.remove('hidden')
+                  }
                 }
-              } else {
-                // when no ID is selected
-                this.selection = false
-                if (this.parts.title && this.has_default) {
-                  this.parts.title.base.classList.add('hidden')
-                  this.parts.title.default.classList.remove('hidden')
+                if (this.parts.title) {
+                  this.parts.title.base.innerText = this.parts.title.get(entity)
                 }
                 if (this.parts.body) {
-                  this.parts.body.base.classList.add('hidden')
-                  if (this.has_default) this.parts.body.default.classList.remove('hidden')
-                }
-              }
-              if (this.parts.title) {
-                this.parts.title.base.innerText = this.parts.title.get(entity)
-              }
-              if (this.parts.body) {
-                if (!this.options.subto.length) this.parts.body.base.classList.remove('hidden')
-                for (i = this.parts.body.rows.length; i--; ) {
-                  p = this.parts.body.rows[i]
-                  if (
-                    Object.hasOwn(p.value.parsed, 'variables') &&
-                    !Object.hasOwn(this.depends, p.value.parsed.variables)
-                  ) {
-                    this.depends[v.y] = true
-                    add_dependency(v.y, {type: 'update', id: this.id})
-                  }
-                  if (p.name.ref) {
-                    if (p.name.value_source) p.name.value_source = p.value.text
-                    e = p.name.get(entity)
-                    if ('object' !== typeof e) {
-                      p.base.firstElementChild.innerText = e
+                  if (!this.options.subto.length) this.parts.body.base.classList.remove('hidden')
+                  for (i = this.parts.body.rows.length; i--; ) {
+                    p = this.parts.body.rows[i]
+                    if (
+                      Object.hasOwn(p.value.parsed, 'variables') &&
+                      !Object.hasOwn(this.depends, p.value.parsed.variables)
+                    ) {
+                      this.depends[v.y] = true
+                      add_dependency(v.y, {type: 'update', id: this.id})
                     }
-                  }
-                  if (p.value.ref) {
-                    e = p.value.get(entity)
-                    if ('object' === typeof e) {
-                      if ('source' === p.value.parsed.variables) {
-                        p.base.innerHTML = ''
-                        p.base.appendChild(document.createElement('table'))
-                        p.base.lastElementChild.className = 'source-table'
-                        p.base.firstElementChild.appendChild(document.createElement('thead'))
-                        p.base.firstElementChild.firstElementChild.appendChild(document.createElement('tr'))
-                        p.base.firstElementChild.firstElementChild.firstElementChild.appendChild(
-                          document.createElement('th')
-                        )
-                        p.base.firstElementChild.firstElementChild.firstElementChild.appendChild(
-                          document.createElement('th')
-                        )
-                        p.base.firstElementChild.firstElementChild.firstElementChild.firstElementChild.innerText =
-                          'Source'
-                        p.base.firstElementChild.firstElementChild.firstElementChild.lastElementChild.innerText =
-                          'Accessed'
-                        p.base.firstElementChild.appendChild(document.createElement('tbody'))
-                        for (n = e.length, ci = 0; ci < n; ci++) {
-                          p.base.firstElementChild.lastElementChild.appendChild(make_variable_source(e[ci]))
-                        }
+                    if (p.name.ref) {
+                      if (p.name.value_source) p.name.value_source = p.value.text
+                      e = p.name.get(entity)
+                      if ('object' !== typeof e) {
+                        p.base.firstElementChild.innerText = e
                       }
-                    } else {
-                      p.base.lastElementChild.innerText = parse_variables(e, p.value.parsed.variables, this, entity)
+                    }
+                    if (p.value.ref) {
+                      e = p.value.get(entity)
+                      if ('object' === typeof e) {
+                        if ('source' === p.value.parsed.variables) {
+                          p.base.innerHTML = ''
+                          p.base.appendChild(document.createElement('table'))
+                          p.base.lastElementChild.className = 'source-table'
+                          p.base.firstElementChild.appendChild(document.createElement('thead'))
+                          p.base.firstElementChild.firstElementChild.appendChild(document.createElement('tr'))
+                          p.base.firstElementChild.firstElementChild.firstElementChild.appendChild(
+                            document.createElement('th')
+                          )
+                          p.base.firstElementChild.firstElementChild.firstElementChild.appendChild(
+                            document.createElement('th')
+                          )
+                          p.base.firstElementChild.firstElementChild.firstElementChild.firstElementChild.innerText =
+                            'Source'
+                          p.base.firstElementChild.firstElementChild.firstElementChild.lastElementChild.innerText =
+                            'Accessed'
+                          p.base.firstElementChild.appendChild(document.createElement('tbody'))
+                          for (n = e.length, ci = 0; ci < n; ci++) {
+                            p.base.firstElementChild.lastElementChild.appendChild(make_variable_source(e[ci]))
+                          }
+                        }
+                      } else {
+                        p.base.lastElementChild.innerText = parse_variables(e, p.value.parsed.variables, this, entity)
+                      }
                     }
                   }
                 }
@@ -1011,85 +1035,90 @@ void (function () {
         },
       },
       table: {
-        update: function () {
-          if (this.table) {
-            const v = _u[this.view],
-              d = v.get.dataset()
-            this.table.clear()
-            if (v.selection) {
-              var k, c, i, n, vn, pass
-              if (this.options.single_variable) {
-                vn = valueOf(this.options.variables)
-                if ('data.' + vn !== this.headers[d][1].data) {
-                  this.table.destroy()
-                  for (n = this.headers[d].length, i = 1; i < n; i++) {
-                    this.headers[d][i].data = 'data.' + vn
+        update: function (pass) {
+          clearTimeout(this.queue)
+          if (!pass) {
+            this.queue = setTimeout(this.update.bind(null, true), 10)
+          } else {
+            if (this.table) {
+              const v = _u[this.view],
+                d = v.get.dataset()
+              this.table.clear()
+              if (v.selection) {
+                var k, c, i, n, vn, pass
+                if (this.options.single_variable) {
+                  vn = valueOf(this.options.variables)
+                  if ('data.' + vn !== this.headers[d][1].data) {
+                    this.table.destroy()
+                    for (n = this.headers[d].length, i = 1; i < n; i++) {
+                      this.headers[d][i].data = 'data.' + vn
+                    }
+                    this.options.columns = this.headers[d]
+                    this.table = $(this.e).DataTable(this.options)
                   }
-                  this.options.columns = this.headers[d]
-                  this.table = $(this.e).DataTable(this.options)
+                  for (n = this.headers[d].length, i = 1; i < n; i++) {
+                    this.table.column(i).visible(v.times[i - 1])
+                  }
                 }
-                for (n = this.headers[d].length, i = 1; i < n; i++) {
-                  this.table.column(i).visible(v.times[i - 1])
-                }
-              }
-              if (this.options.wide) {
-                for (k in v.selection.all)
-                  if (Object.hasOwn(v.selection.all, k)) {
-                    if (vn) {
-                      if (
-                        Object.hasOwn(v.selection.all[k].summaries, d) &&
-                        Object.hasOwn(v.selection.all[k].summaries[d], vn) &&
-                        v.selection.all[k].summaries[d][vn].n
-                      )
-                        this.table.row.add(v.selection.all[k])
-                    } else {
-                      for (i = meta.time_n; i--; ) {
-                        this.i = i
-                        this.table.row.add(v.selection.all[k])
+                if (this.options.wide) {
+                  for (k in v.selection.all)
+                    if (Object.hasOwn(v.selection.all, k)) {
+                      if (vn) {
+                        if (
+                          Object.hasOwn(v.selection.all[k].summaries, d) &&
+                          Object.hasOwn(v.selection.all[k].summaries[d], vn) &&
+                          v.selection.all[k].summaries[d][vn].n
+                        )
+                          this.table.row.add(v.selection.all[k])
+                      } else {
+                        for (i = meta.time_n; i--; ) {
+                          this.i = i
+                          this.table.row.add(v.selection.all[k])
+                        }
                       }
                     }
-                  }
-              } else {
-                for (k in v.selection.all)
-                  if (Object.hasOwn(v.selection.all, k)) {
-                    if (this.options.single_variable) {
-                      if (
-                        Object.hasOwn(v.selection.all[k].summaries, d) &&
-                        Object.hasOwn(v.selection.all[k].summaries[d], vn) &&
-                        v.selection.all[k].summaries[d][vn].n
-                      )
-                        this.table.row.add(v.selection.all[k])
-                    } else {
-                      for (c in this.filters)
-                        if (Object.hasOwn(this.filters, c)) {
-                          this.current_filter[c] = valueOf(this.filters[c])
-                        }
-                      for (vn in variables) {
-                        pass = false
-                        if (Object.hasOwn(variables, vn) && Object.hasOwn(variables[vn], 'meta')) {
-                          for (c in this.current_filter)
-                            if (Object.hasOwn(variables[vn].meta, c)) {
-                              pass = variables[vn].meta[c] === this.current_filter[c]
-                              if (!pass) break
+                } else {
+                  for (k in v.selection.all)
+                    if (Object.hasOwn(v.selection.all, k)) {
+                      if (this.options.single_variable) {
+                        if (
+                          Object.hasOwn(v.selection.all[k].summaries, d) &&
+                          Object.hasOwn(v.selection.all[k].summaries[d], vn) &&
+                          v.selection.all[k].summaries[d][vn].n
+                        )
+                          this.table.row.add(v.selection.all[k])
+                      } else {
+                        for (c in this.filters)
+                          if (Object.hasOwn(this.filters, c)) {
+                            this.current_filter[c] = valueOf(this.filters[c])
+                          }
+                        for (vn in variables) {
+                          pass = false
+                          if (Object.hasOwn(variables, vn) && Object.hasOwn(variables[vn], 'meta')) {
+                            for (c in this.current_filter)
+                              if (Object.hasOwn(variables[vn].meta, c)) {
+                                pass = variables[vn].meta[c] === this.current_filter[c]
+                                if (!pass) break
+                              }
+                          }
+                          if (pass)
+                            for (
+                              n = v.selection.all[k].summaries[d][vn].time_range[1],
+                                i = v.selection.all[k].summaries[d][vn].time_range[0];
+                              i <= n;
+                              i++
+                            ) {
+                              this.i = i
+                              this.v = vn
+                              this.table.row.add(v.selection.all[k])
                             }
                         }
-                        if (pass)
-                          for (
-                            n = v.selection.all[k].summaries[d][vn].time_range[1],
-                              i = v.selection.all[k].summaries[d][vn].time_range[0];
-                            i <= n;
-                            i++
-                          ) {
-                            this.i = i
-                            this.v = vn
-                            this.table.row.add(v.selection.all[k])
-                          }
                       }
                     }
-                  }
+                }
               }
+              this.table.draw()
             }
-            this.table.draw()
           }
         },
       },
@@ -1802,18 +1831,16 @@ void (function () {
           o.parsed = {min: undefined, max: undefined}
           o.depends = {}
           o.update = function () {
-            const view = _u[this.view],
-              variable = view && valueOf(view.y)
-            var d = view ? view.get.dataset() : valueOf(this.dataset),
+            const view = _u[this.view] || {},
+              variable = valueOf(view.y)
+            if (!view.time_range) view.time_range = {time: []}
+            var d = view.get ? view.get.dataset() : valueOf(this.dataset),
               min = valueOf(this.min) || view.time,
               max = valueOf(this.max) || view.time,
               v,
               reset = false
             if (patterns.minmax.test(min)) min = _u[this.min][min]
             if (patterns.minmax.test(max)) max = _u[this.max][max]
-            if (!d && this.view) {
-              d = view.get.dataset()
-            }
             this.parsed.min =
               'undefined' === typeof min
                 ? view.time_range.time[0]
@@ -1849,7 +1876,6 @@ void (function () {
                 this.depends[view.y] = true
                 add_dependency(view.y, {type: 'update', id: this.id})
               }
-              v = this.value()
               if (reset) this.reset()
             } else {
               this.e.min = this.parsed.min
@@ -1998,7 +2024,7 @@ void (function () {
           if (e.ids && 'string' === typeof e.ids && Object.hasOwn(_u, e.ids)) {
             add_dependency(e.ids, {type: 'dataview', id: k})
           }
-          e.time_range = {index: [], time: [], filtered: []}
+          e.time_range = {variable: '', index: [], time: [], filtered: []}
           add_dependency(k, {type: 'time_range', id: k})
           if (Object.hasOwn(_u, e.x)) {
             add_dependency(e.x, {type: 'time_range', id: k})

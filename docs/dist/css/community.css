@@ -17,7 +17,9 @@ input[type=text],
 
 .row{width: 100%; padding: 0 0 1em 0; margin-top: 0; margin-right: 0; margin-left: 0}
 .col{height: 100%}
-.content > .col > .row .row{padding: 0}
+div[class^=col-]{min-width: 100px}
+.content > .col > .row, .content > .row{min-height: 300px}
+.compact > .row{padding: 0}
 
 .menu-wrapper{position: fixed; overflow: visible; z-index: 90; transition: top 400ms, right 400ms, bottom 400ms, left 400ms}
 .menu{background-color: var(--background-highlight); padding: 3.9em 3em .5em .5em; flex-wrap: nowrap}
@@ -44,14 +46,12 @@ input[type=text],
   text-align: center; white-space: nowrap; margin: .5em 0;
   background-color: var(--highlight-secondary); border-radius: 10px; font-size: 1.08em
 }
-.info-body-row-stack .info-body-row-name{font-weight: bold}
+.info-body-row-stack .info-body-row-name{font-weight: bold; padding: .05em 0}
 
 .info-title{font-size: 1.7em; margin: 0}
 
-.text-display button{
-  width: 100%; background: inherit; border: none; color: var(--link)
-}
-.text-display button::after{color: var(--highlight-secondary-text); margin: 0 0 0 .3em; font-size: .8em; content: '\1F6C8'}
+.text-display button{width: 100%; background: inherit; border: none; color: var(--link); border-radius: 10px}
+.text-display button::after{position: absolute; color: var(--highlight-secondary-text); margin: 0 0 0 .2em; font-size: 1.3em; content: '*'}
 .modal-dialog{max-width: 1000px}
 .modal-body table{width: 100%; margin: 0 0 1em 0}
 .source-table td, .source-table th{text-align: right}
@@ -79,6 +79,7 @@ input[type=text],
 .legend-scale span{height: 100%; display: table-cell}
 .plot-container{margin: 0 0 0 -1em !important}
 .leaflet-container{background: var(--background)}
+.dataTables_wrapper .row:first-of-type{padding: 0 0 .5em 0}
 table.dataTable tbody tr.dtrg-group.dtrg-group{background-color: var(--background-highlight); font-weight: bold}
 table.dataTable.compact thead th, table.dataTable.compact thead td{padding: 4px 17px 4px 0}
 table.dataTable.compact tbody th, table.dataTable.compact tbody td{padding: 0 17px 0 0}
