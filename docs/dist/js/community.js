@@ -138,7 +138,7 @@ void (function () {
       map_shapes: function (u, c, pass) {
         clearTimeout(u.queue)
         if (!pass) {
-          u.queue = setTimeout(conditionals.map_shapes.bind(null, u, void 0, true), 10)
+          u.queue = setTimeout(conditionals.map_shapes.bind(null, u, void 0, true), 20)
         } else {
           if (u.view && u.displaying) {
             u.displaying.clearLayers()
@@ -652,7 +652,7 @@ void (function () {
         update: function (pass) {
           clearTimeout(this.queue)
           if (!pass) {
-            this.queue = setTimeout(this.update.bind(null, true), 10)
+            this.queue = setTimeout(this.update.bind(null, true), 20)
           } else {
             if (this.e.layout) {
               const v = _u[this.view],
@@ -956,7 +956,7 @@ void (function () {
           } else {
             clearTimeout(this.queue)
             if (!pass) {
-              this.queue = setTimeout(this.update.bind(null, void 0, true), 10)
+              this.queue = setTimeout(this.update.bind(null, void 0, true), 20)
             } else {
               // base information
               if (this.view) {
@@ -988,12 +988,9 @@ void (function () {
                   if (!this.options.subto.length) this.parts.body.base.classList.remove('hidden')
                   for (i = this.parts.body.rows.length; i--; ) {
                     p = this.parts.body.rows[i]
-                    if (
-                      Object.hasOwn(p.value.parsed, 'variables') &&
-                      !Object.hasOwn(this.depends, p.value.parsed.variables)
-                    ) {
-                      this.depends[p.value.parsed.variables] = true
-                      add_dependency(p.value.parsed.variables, {type: 'update', id: this.id})
+                    if (Object.hasOwn(p.value.parsed, 'variables') && !Object.hasOwn(this.depends, v.y)) {
+                      this.depends[v.y] = true
+                      add_dependency(v.y, {type: 'update', id: this.id})
                     }
                     if (p.name.ref) {
                       if (p.name.value_source) p.name.value_source = p.value.text
@@ -1041,7 +1038,7 @@ void (function () {
         update: function (pass) {
           clearTimeout(this.queue)
           if (!pass) {
-            this.queue = setTimeout(this.update.bind(null, true), 10)
+            this.queue = setTimeout(this.update.bind(null, true), 20)
           } else {
             if (this.table) {
               const v = _u[this.view],
@@ -1152,7 +1149,7 @@ void (function () {
                 e.appendChild((e = document.createElement('a')))
                 e.href = site.credits[k].url
                 e.target = '_blank'
-                e.rel = 'nofollow'
+                e.rel = 'noreferrer'
               }
               e.innerText = site.credits[k].name
               if (Object.hasOwn(site.credits[k], 'version')) {
@@ -1375,7 +1372,7 @@ void (function () {
       if (s.url) {
         e.firstElementChild.appendChild(document.createElement('a'))
         e.firstElementChild.firstElementChild.target = '_blank'
-        e.firstElementChild.firstElementChild.rel = 'nofollow'
+        e.firstElementChild.firstElementChild.rel = 'noreferrer'
         e.firstElementChild.firstElementChild.href = s.url
       } else {
         e.firstElementChild.appendChild(document.createElement('span'))
@@ -1391,7 +1388,11 @@ void (function () {
   }
 
   function make_variable_reference(c) {
-    for(var e = document.createElement('li'), s = '', i = c.author.length, j = 1 === i ? '' : 2 === i ? ' & ' : ', & '; i--;){
+    for (
+      var e = document.createElement('li'), s = '', i = c.author.length, j = 1 === i ? '' : 2 === i ? ' & ' : ', & ';
+      i--;
+
+    ) {
       s = (i ? j : '') + c.author[i].family + ', ' + c.author[i].given.substr(0, 1) + '.' + s
       j = ', '
     }
@@ -1410,7 +1411,7 @@ void (function () {
       (c.doi || c.url
         ? (c.doi ? ' doi: ' : ' url: ') +
           (c.doi || c.url
-            ? '<a rel="nofollow" target="_blank" href="' +
+            ? '<a rel="noreferrer" target="_blank" href="' +
               (c.doi ? 'https://doi.org/' + c.doi : c.url) +
               '">' +
               (c.doi || c.url.replace(patterns.http, '')) +
@@ -1426,28 +1427,28 @@ void (function () {
     var n, i
     page.modal.info.header.firstElementChild.innerText = info.short_name
     page.modal.info.title.innerText = info.long_name
-    page.modal.info.description.innerText =
-      info.long_description
-        ? info.long_description
-        : info.short_description
-        ? info.short_description
-        : ''
+    page.modal.info.description.innerText = info.long_description
+      ? info.long_description
+      : info.short_description
+      ? info.short_description
+      : ''
     page.modal.info.name.lastElementChild.innerText = info.measure
     page.modal.info.table.lastElementChild.innerText = info.measure_table
     page.modal.info.type.lastElementChild.innerText = info.type
-    if (info.source) {
+    if (info.source && info.source.length) {
       page.modal.info.source.lastElementChild.lastElementChild.innerHTML = ''
       page.modal.info.source.classList.remove('hidden')
       for (n = info.source.length, i = 0; i < n; i++) {
         page.modal.info.source.lastElementChild.lastElementChild.appendChild(make_variable_source(info.source[i]))
       }
     } else page.modal.info.source.classList.add('hidden')
-    if (info.citations) {
+    if (info.citations && info.citations.length) {
       page.modal.info.references.lastElementChild.innerHTML = ''
       page.modal.info.references.classList.remove('hidden')
-      for (n = info.citations.length, i = 0; i < n; i++) if(variable_info._references && Object.hasOwn(variable_info._references, info.citations[i])){
-        page.modal.info.references.lastElementChild.appendChild(variable_info._references[info.citations[i]].element)
-      }
+      for (n = info.citations.length, i = 0; i < n; i++)
+        if (variable_info._references && Object.hasOwn(variable_info._references, info.citations[i])) {
+          page.modal.info.references.lastElementChild.appendChild(variable_info._references[info.citations[i]].element)
+        }
     } else page.modal.info.references.classList.add('hidden')
   }
 
@@ -2600,9 +2601,14 @@ void (function () {
             }
           }
         }
-        if(Object.hasOwn(m, '_references')){
-          if(!Object.hasOwn(variable_info, '_references')) variable_info._references = {}
-          for(t in m._references) if(Object.hasOwn(m._references, t)) variable_info._references[t] = {reference: m._references[t], element: make_variable_reference(m._references[t])}
+        if (Object.hasOwn(m, '_references')) {
+          if (!Object.hasOwn(variable_info, '_references')) variable_info._references = {}
+          for (t in m._references)
+            if (Object.hasOwn(m._references, t))
+              variable_info._references[t] = {
+                reference: m._references[t],
+                element: make_variable_reference(m._references[t]),
+              }
         }
       }
   }
@@ -2791,7 +2797,7 @@ void (function () {
         .on('plotly_unhover', elements.plot.mouseout.bind(this))
         .on('plotly_click', elements.plot.click.bind(this))
     } else {
-      setTimeout(queue_init_plot.bind(this), 10)
+      setTimeout(queue_init_plot.bind(this), 20)
     }
   }
 
@@ -2808,7 +2814,7 @@ void (function () {
           }
       }
     } else {
-      setTimeout(queue_init_map.bind(this), 10)
+      setTimeout(queue_init_map.bind(this), 20)
     }
   }
 
@@ -2818,7 +2824,7 @@ void (function () {
       this.table = $(this.e).DataTable(this.options)
       this.update()
     } else {
-      setTimeout(queue_init_table.bind(this), 10)
+      setTimeout(queue_init_table.bind(this), 20)
     }
   }
 

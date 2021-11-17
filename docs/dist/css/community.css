@@ -19,11 +19,15 @@ input[type=text],
 .col{height: 100%}
 div[class^=col-]{min-width: 100px}
 .content > .col > .row, .content > .row{min-height: 300px}
-.compact > .row{padding: 0}
+.compact .row{padding: 0}
 
 .menu-wrapper{position: fixed; overflow: visible; z-index: 90; transition: top 400ms, right 400ms, bottom 400ms, left 400ms}
 .menu{background-color: var(--background-highlight); padding: 3.9em 3em .5em .5em; flex-wrap: nowrap}
-.menu-toggle{position: fixed; background-color: var(--background-highlight); border: none; font-size: 1.7em; width: 1.5em; height: 40px}
+.menu-toggle{position: fixed; background-color: var(--background-highlight); border: none; font-size: 1.7em; width: 1.5em; height: 40px; padding: 0}
+.menu-toggle::after {
+  display: inline-block; content: ""; margin: .2em 0 0 0; background-repeat: no-repeat; height: 1em; width: 1em;
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill-rule='evenodd' d='M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z'/></svg>");
+}
 .menu-top .menu-toggle{border-radius: 0 0 0 15px; top: 55px; right: 0}
 .menu-right{height: 100vh; flex-shrink: 0; transition: right .7s}
 .menu-right .menu-toggle{border-radius: 0 0 0 15px; right: 0px; top: 55px}
@@ -43,15 +47,18 @@ div[class^=col-]{min-width: 100px}
 .info-body-row-table .info-body-row-value{text-align: right}
 .info-body-row-table .info-body-row-value.statement{text-align: left}
 .info-body-row-stack{
-  text-align: center; white-space: nowrap; margin: .5em 0;
+  text-align: center; margin: .5em 0;
   background-color: var(--highlight-secondary); border-radius: 10px; font-size: 1.08em
 }
-.info-body-row-stack .info-body-row-name{font-weight: bold; padding: .05em 0}
+.info-body-row-stack .info-body-row-name{font-weight: bold; padding: .05em 0; font-size: min(1vw, 1.2rem)}
 
-.info-title{font-size: 1.7em; margin: 0}
+.info-title{font-size: 1.7em; margin: 0; font-weight: bold}
 
 .text-display button{width: 100%; background: inherit; border: none; color: var(--link); border-radius: 10px}
-.text-display button::after{position: absolute; color: var(--highlight-secondary-text); margin: 0 0 0 .2em; font-size: 1.3em; content: '*'}
+.text-display button::after {
+  display: inline-block; content: ""; margin: 0 0 -.1em .3em; background-repeat: no-repeat; height: .8em; width: .8em;
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z'/><path d='m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z'/></svg>");
+}
 .modal-dialog{max-width: 1000px}
 .modal-body table{width: 100%; margin: 0 0 1em 0}
 .source-table td, .source-table th{text-align: right}

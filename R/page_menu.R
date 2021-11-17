@@ -78,12 +78,7 @@ page_menu <- function(..., position = "right", width = NULL, height = NULL, coll
       )
     }), use.names = FALSE),
     "</div>",
-    if (collapsible) {
-      paste0(
-        '<button type="button" class="menu-toggle" title="', position, ' menu">',
-        if (is.character(collapsible)) collapsible else "&equiv;", "</button>"
-      )
-    },
+    if (collapsible) paste0('<button type="button" class="menu-toggle" title="', position, ' menu"></button>'),
     "</div>"
   )
   if (building) {
