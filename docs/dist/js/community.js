@@ -2618,6 +2618,7 @@ void (function () {
     for (var id in site.data[g])
       if (Object.hasOwn(site.data[g], id)) {
         f = data_maps[g][id] || {id: id}
+        f.id = id
         entities[id] = {group: g, data: site.data[g][id], variables: variable_info, features: f, summaries: {}}
         if (f) {
           entitiesByName[f.name] = entities[id]
