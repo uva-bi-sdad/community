@@ -53,9 +53,16 @@ void (function () {
           site.theme_dark
             ? document.body.classList.replace('light-theme', 'dark-theme')
             : document.body.classList.replace('dark-theme', 'light-theme')
+          var k, l, theme = site.theme_dark ? 'dark' : 'light'
+          if(site.plots) for(k in site.plots) if(Object.hasOwn(site.plots, k)) update_plot_theme(site.plots[k].u)
+          if(site.maps) for(k in site.maps) if(Object.hasOwn(site.maps, k) && site.maps[k].u && Object.hasOwn(site.maps[k].u.tiles, theme)){
+            for(l in site.maps[k].u.tiles) if(theme !== l && Object.hasOwn(site.maps[k].u.tiles, l)) site.maps[k].u.tiles[l].removeFrom(site.maps[k].u.map)
+            site.maps[k].u.tiles[theme].addTo(site.maps[k].u.map)
+          }
         } else {
           global_update()
         }
+        storage.setItem(u.setting, site[u.setting])
       },
       options: function (u, c) {
         var v,
@@ -1363,6 +1370,27 @@ void (function () {
     }
   }
 
+  function update_plot_theme(u){
+    const s = getComputedStyle(document.body)
+    if(!Object.hasOwn(u, 'style')){
+      u.style = u.config.layout
+      if(!Object.hasOwn(u.style, 'font')) u.style.font = {}
+      if(!Object.hasOwn(u.style, 'modebar')) u.style.modebar = {}
+      if(!Object.hasOwn(u.style.xaxis, 'font')) u.style.xaxis.font = {}
+      if(!Object.hasOwn(u.style.yaxis, 'font')) u.style.yaxis.font = {}
+    }
+    u.style.paper_bgcolor = s.backgroundColor
+    u.style.plot_bgcolor = s.backgroundColor
+    u.style.font.color = s.color
+    u.style.modebar.bgcolor = s.backgroundColor
+    u.style.modebar.color = s.color
+    if(u.e._fullLayout.xaxis.showgrid) u.style.xaxis.gridcolor = s.borderColor
+    if(u.e._fullLayout.yaxis.showgrid) u.style.yaxis.gridcolor = s.borderColor
+    u.style.xaxis.font.color = s.color
+    u.style.yaxis.font.color = s.color
+    Plotly.relayout(u.e, u.config.layout)
+  }
+
   function make_data_entry(u, e, rank, name, color) {
     if (Object.hasOwn(e.data, u.parsed.x)) {
       for (var i = e.data[u.parsed.x].length, t = JSON.parse(u.traces.scatter); i--; ) {
@@ -1839,10 +1867,15 @@ void (function () {
       for (i = e.length; i--; ) {
         c = e[i].split('=')
         if (Object.hasOwn(_u, c[0])) {
-          site.url_options[c[0]] = _u[c[0]].default = patterns.bool.test(c[1]) ? 'true' === c[1] : c[1]
+          storage.setItem(c[0], c[1])
+          site.url_options[c[0]] = c[1]
         }
       }
       window.history.replaceState('', '', window.location.origin + window.location.pathname)
+    }
+    for(k in storage) if(Object.hasOwn(_u, 'settings.' + k)){
+      v = storage.getItem(k)
+      _u['settings.' + k].default = patterns.bool.test(v) ? 'true' === v : v
     }
 
     // initialize inputs
@@ -2032,7 +2065,7 @@ void (function () {
             }.bind(o)
           }
         } else if ('switch' === o.type) {
-          o.default = o.e.checked
+          if('boolean' !== typeof o.default) o.default = o.e.checked
           o.e.addEventListener('change', o.listen)
         } else {
           for (ci = o.options.length; ci--; ) o.options[ci].addEventListener('click', o.listen)
@@ -2265,7 +2298,10 @@ void (function () {
             if ('hover_line' === this.e.data[this.e.data.length - 1].name)
               Plotly.deleteTraces(this.e, this.e.data.length - 1)
           }.bind(o)
-          if (o.config && o.config.subto) for (ci = o.config.subto.length; ci--; ) add_subs(o.config.subto[ci], o)
+          if(o.config){
+            site.plots[o.id].u = o
+            if (o.config.subto) for (ci = o.config.subto.length; ci--; ) add_subs(o.config.subto[ci], o)
+          }
           for (ci = site.plots[o.id].data.length; ci--; ) {
             p = site.plots[o.id].data[ci]
             if (!Object.hasOwn(p, 'textfont')) p.textfont = {}
@@ -2857,10 +2893,23 @@ void (function () {
     if (window.L) {
       this.map = L.map(this.e, this.options)
       this.displaying = L.featureGroup().addTo(this.map)
+      this.tiles = {}
+      const theme = site.theme_dark ? 'dark' : 'light'
+      var k
       if (Object.hasOwn(site.maps, this.id)) {
-        if (site.maps[this.id].tiles && site.maps[this.id].tiles.url)
-          L.tileLayer(site.maps[this.id].tiles.url, site.maps[this.id].tiles.options).addTo(this.map)
-        for (var k in site.maps[this.id].shapes)
+        site.maps[this.id].u = this
+        if (site.maps[this.id].tiles){
+          if(site.maps[this.id].tiles.url){
+            this.tiles[theme] = L.tileLayer(site.maps[this.id].tiles.url, site.maps[this.id].tiles.options)
+            this.tiles[theme].addTo(this.map)
+          }else{
+            for(k in site.maps[this.id].tiles) if(Object.hasOwn(site.maps[this.id].tiles, k)){
+              this.tiles[k] = L.tileLayer(site.maps[this.id].tiles[k].url, site.maps[this.id].tiles[k].options)
+              if(theme === k) this.tiles[k].addTo(this.map)
+            }
+          }
+        }
+        for (k in site.maps[this.id].shapes)
           if (Object.hasOwn(site.maps[this.id].shapes, k)) {
             retrieve_layer(this, k, site.maps[this.id].shapes[k])
           }
