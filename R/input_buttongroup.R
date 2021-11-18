@@ -8,6 +8,7 @@
 #' @param default Which of the options to default to; either its index or value.
 #' @param display A display version of the options.
 #' @param id Unique id of the element to be created.
+#' @param ... Additional attributes to set on the element.
 #' @param button_class Class name to add to each label (which appears as the button).
 #' @param variable The name of a variable from which to get levels (overwritten by \code{depends}).
 #' @param dataset The name of an included dataset, where \code{variable} should be looked for; only applies when
@@ -21,12 +22,13 @@
 #' @return A character vector of the contents to be added.
 #' @export
 
-input_buttongroup <- function(label, options, default = 0, display = options, id = label, button_class = NULL,
+input_buttongroup <- function(label, options, default = 0, display = options, id = label, ..., button_class = NULL,
                               variable = NULL, dataset = NULL, depends = NULL) {
   if (!is.character(options) && is.character(default)) {
     default <- which((if (default %in% display) display else options) == default)
   }
   id <- gsub("\\s", "", id)
+  a <- list(...)
   r <- c(
     '<div class="wrapper buttongroup-wrapper">',
     paste0('<label for="', id, '">', label, "</label>"),
@@ -38,6 +40,7 @@ input_buttongroup <- function(label, options, default = 0, display = options, id
       if (!is.null(depends)) paste0(' depends="', depends, '"'),
       if (!is.null(dataset)) paste0(' dataset="', dataset, '"'),
       if (!is.null(variable)) paste0(' variable="', variable, '"'),
+      if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
       ">"
     ),
     if (length(options) > 1) {

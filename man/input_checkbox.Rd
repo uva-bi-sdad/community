@@ -5,7 +5,7 @@
 \title{Add checkboxes, radio buttons, or switches to a website}
 \usage{
 input_checkbox(label, options, default = "all", display = options,
-  id = label, variable = NULL, dataset = NULL, depends = NULL,
+  id = label, ..., variable = NULL, dataset = NULL, depends = NULL,
   multi = TRUE, as.switch = FALSE)
 }
 \arguments{
@@ -20,6 +20,8 @@ the option to select by default.}
 \item{display}{A display version of the options.}
 
 \item{id}{Unique id of the element to be created.}
+
+\item{...}{Additional attributes to set on the element.}
 
 \item{variable}{The name of a variable from which to get levels (overwritten by \code{depends}).}
 

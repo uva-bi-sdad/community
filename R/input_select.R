@@ -8,6 +8,7 @@
 #' @param default Which of the options to default to; either its index or value.
 #' @param display A display version of the options.
 #' @param id Unique ID of the element to be created.
+#' @param ... Additional attributes to set on the select element.
 #' @param variable The name of a variable from which to get levels (overwritten by \code{depends}).
 #' @param dataset The name of an included dataset, where \code{variable} should be looked for; only applies when
 #' there are multiple datasets with the same variable name.
@@ -30,23 +31,26 @@
 #' @return A character vector of the contents to be added.
 #' @export
 
-input_select <- function(label, options, default = -1, display = options, id = label,
+input_select <- function(label, options, default = -1, display = options, id = label, ...,
                          variable = NULL, dataset = NULL, depends = NULL, dataview = NULL, filters = NULL,
                          reset_button = FALSE, button_class = NULL, as.row = FALSE, floating_label = TRUE) {
   id <- gsub("\\s", "", id)
+  a <- list(...)
   if (as.row) floating_label <- FALSE
   r <- c(
     '<div class="wrapper select-wrapper">',
     if (!floating_label) paste0('<label for="', id, '">', label, "</label>"),
     paste0('<div class="input-group', if (floating_label) " form-floating", '">'),
     paste0(
-      '<select class="auto-input form-select" auto-type="select" id="', id, '" default="', default, '" ',
+      '<select class="auto-input form-select" auto-type="select" id="', id, '" ',
       if (is.character(options) && length(options) == 1) paste0('auto-options="', options, '"'),
       if (!is.null(default)) paste0(' default="', default, '"'),
       if (!is.null(dataview)) paste0(' data-view="', dataview, '"'),
       if (!is.null(depends)) paste0(' depends="', depends, '"'),
       if (!is.null(dataset)) paste0(' dataset="', dataset, '"'),
       if (!is.null(variable)) paste0(' variable="', variable, '"'),
+      if (!is.null(variable)) paste0(' variable="', variable, '"'),
+      if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
       ">"
     ),
     if (length(options) > 1) {

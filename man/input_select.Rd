@@ -5,9 +5,9 @@
 \title{Add a select input to a website}
 \usage{
 input_select(label, options, default = -1, display = options, id = label,
-  variable = NULL, dataset = NULL, depends = NULL, dataview = NULL,
-  filters = NULL, reset_button = FALSE, button_class = NULL,
-  as.row = FALSE, floating_label = TRUE)
+  ..., variable = NULL, dataset = NULL, depends = NULL,
+  dataview = NULL, filters = NULL, reset_button = FALSE,
+  button_class = NULL, as.row = FALSE, floating_label = TRUE)
 }
 \arguments{
 \item{label}{Label of the input for the user.}
@@ -20,6 +20,8 @@ or \code{"variables"} to select names of datasets or variables.}
 \item{display}{A display version of the options.}
 
 \item{id}{Unique ID of the element to be created.}
+
+\item{...}{Additional attributes to set on the select element.}
 
 \item{variable}{The name of a variable from which to get levels (overwritten by \code{depends}).}
 

@@ -4,6 +4,7 @@
 #'
 #' @param label Label of the input for the user.
 #' @param id Unique id of the element to be created.
+#' @param ... Additional attributes to set on the element.
 #' @param min The smallest value in the range.
 #' @param max The largest value in the range.
 #' @param step How much moving the handle adjusts the selected value.
@@ -19,9 +20,10 @@
 #' @return A character vector of the contents to be added.
 #' @export
 
-input_slider <- function(label, id = label, min = 0, max = 1, step = 1, default = max,
+input_slider <- function(label, id = label, ..., min = 0, max = 1, step = 1, default = max,
                          dataset = NULL, depends = NULL) {
   id <- gsub("\\s", "", id)
+  a <- list(...)
   r <- c(
     '<div class="wrapper slider-wrapper">',
     paste0('<label class="form-label" for="', id, '">', label, "</label>"),
@@ -31,7 +33,8 @@ input_slider <- function(label, id = label, min = 0, max = 1, step = 1, default 
       if (!is.null(depends)) {
         paste0(' depends="', depends, '"')
       } else
-      if (!is.null(dataset)) paste0('dataset="', dataset, '" '),
+      if (!is.null(dataset)) paste0('dataset="', dataset, '"'),
+      if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
       ">"
     ),
     paste0('<div class="slider-display"><span>', default, "</span></div>"),

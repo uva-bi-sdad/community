@@ -126,7 +126,7 @@
     </div>
 
     <pre class="usage"><span class='fu'>input_checkbox</span><span class='op'>(</span><span class='va'>label</span>, <span class='va'>options</span>, default <span class='op'>=</span> <span class='st'>"all"</span>, display <span class='op'>=</span> <span class='va'>options</span>,
-  id <span class='op'>=</span> <span class='va'>label</span>, variable <span class='op'>=</span> <span class='cn'>NULL</span>, dataset <span class='op'>=</span> <span class='cn'>NULL</span>, depends <span class='op'>=</span> <span class='cn'>NULL</span>,
+  id <span class='op'>=</span> <span class='va'>label</span>, <span class='va'>...</span>, variable <span class='op'>=</span> <span class='cn'>NULL</span>, dataset <span class='op'>=</span> <span class='cn'>NULL</span>, depends <span class='op'>=</span> <span class='cn'>NULL</span>,
   multi <span class='op'>=</span> <span class='cn'>TRUE</span>, as.switch <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -153,6 +153,10 @@ the option to select by default.</p></td>
     <tr>
       <th>id</th>
       <td><p>Unique id of the element to be created.</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>Additional attributes to set on the element.</p></td>
     </tr>
     <tr>
       <th>variable</th>

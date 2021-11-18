@@ -97,7 +97,7 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
   } else {
     list()
   }
-  defaults <- list(digits = 3, summary_selection = "all", color_by_order = FALSE)
+  defaults <- list(digits = 3, summary_selection = "all", color_by_order = FALSE, boxplots = TRUE, theme_dark = FALSE)
   for (s in names(defaults)) if (is.null(settings[[s]])) settings[[s]] <- defaults[[s]]
   if (!is.null(settings$metadata) && !is.null(settings$metadata$variables) &&
     !identical(settings$metadata$variables, variables[variables != "_references"])) {

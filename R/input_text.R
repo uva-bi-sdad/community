@@ -19,6 +19,7 @@
 
 input_text <- function(id, label = id, ..., default = NULL, multiline = FALSE, class = NULL, floating_label = TRUE) {
   id <- gsub("\\s", "", id)
+  a <- list(...)
   r <- c(
     paste0('<div class="wrapper text-wrapper', if (floating_label) " form-floating", '">'),
     if (!floating_label) paste0('<label for="', id, '">', label, "</label>"),
@@ -31,7 +32,7 @@ input_text <- function(id, label = id, ..., default = NULL, multiline = FALSE, c
           ' value="', default, '"'
         )
       },
-      unlist(list(...)),
+      if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
       ' class="form-control auto-input', if (!is.null(class)) paste("", class), '" auto-type="text">',
       if (multiline) "</textarea>",
       if (floating_label) paste0('<label for="', id, '">', label, "</label>")

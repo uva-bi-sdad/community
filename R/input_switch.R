@@ -4,6 +4,7 @@
 #'
 #' @param label Label of the input for the user.
 #' @param id Unique id of the element to be created.
+#' @param ... Additional attributes to set on the element.
 #' @param default_on Logical; if \code{FALSE}, the switch will start off.
 #' @param as.checkbox Logical; if \code{TRUE}, display the switch as a checkbox.
 #' @examples
@@ -14,16 +15,18 @@
 #' @seealso For a group of switches, checkboxes, or radio buttons, use \code{\link{input_checkbox}}.
 #' @export
 
-input_switch <- function(label, id = label, default_on = TRUE, as.checkbox = FALSE) {
+input_switch <- function(label, id = label, ..., default_on = TRUE, as.checkbox = FALSE) {
   id <- gsub("\\s", "", id)
+  a <- list(...)
   r <- c(
     '<div class="wrapper switch-wrapper">',
     paste0('<div class="form-check', if (!as.checkbox) " form-switch", '">'),
     paste0('<label class="form-check-label" for="', id, '">', label, "</label>"),
     paste0(
       '<input auto-type="switch" type="checkbox" autocomplete="off"',
-      ' class="auto-input form-check-input" role="switch" id="',
-      id, '"', if (default_on) " checked", ">"
+      ' class="auto-input form-check-input" role="switch" id="', id, '"',
+      if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
+      if (default_on) " checked", ">"
     ),
     "</div>",
     "</div>"

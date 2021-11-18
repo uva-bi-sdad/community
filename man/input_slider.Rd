@@ -4,13 +4,15 @@
 \alias{input_slider}
 \title{Add a range slider to a website}
 \usage{
-input_slider(label, id = label, min = 0, max = 1, step = 1,
+input_slider(label, id = label, ..., min = 0, max = 1, step = 1,
   default = max, dataset = NULL, depends = NULL)
 }
 \arguments{
 \item{label}{Label of the input for the user.}
 
 \item{id}{Unique id of the element to be created.}
+
+\item{...}{Additional attributes to set on the element.}
 
 \item{min}{The smallest value in the range.}
 

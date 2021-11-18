@@ -44,8 +44,19 @@ void (function () {
       mustache: /\{(.*?)\}/g,
       measure_name: /(?:^measure|_name)$/,
       http: /^https?:\/\//,
+      bool: /^(?:true|false)$/,
+      number: /^[\d-][\d.,]*$/,
     },
     conditionals = {
+      setting: function (u) {
+        if ('theme_dark' === u.setting) {
+          site.theme_dark
+            ? document.body.classList.replace('light-theme', 'dark-theme')
+            : document.body.classList.replace('dark-theme', 'light-theme')
+        } else {
+          global_update()
+        }
+      },
       options: function (u, c) {
         var v,
           i,
@@ -408,10 +419,12 @@ void (function () {
           if ('object' === typeof v) {
             this.source = []
             this.current_index = []
-            for (var i = v.length; i--; ) {
-              this.source.push(this.values[i])
-              this.current_index.push(i)
-            }
+            for (var i = this.values.length; i--; )
+              if (-1 !== v.indexOf(this.values[i])) {
+                this.source.push(this.values[i])
+                this.current_index.push(i)
+                this.options[i].checked = true
+              } else this.options[i].checked = false
           } else {
             if ('string' === typeof v) {
               const i = this.values.indexOf(v)
@@ -682,7 +695,7 @@ void (function () {
                     traces.push(make_data_entry(this, s[k], i))
                   }
                 }
-                if (Object.hasOwn(this.traces, 'box') && s[k]) {
+                if (site.boxplots && Object.hasOwn(this.traces, 'box') && s[k]) {
                   traces.push((b = JSON.parse(this.traces.box)))
                   b.x = s[k].data[this.parsed.x]
                   b.upperfence = summary.max
@@ -1032,6 +1045,7 @@ void (function () {
               }
             }
           }
+          this.revert()
         },
       },
       table: {
@@ -1204,6 +1218,11 @@ void (function () {
           ? -Infinity
           : tree[a.id]._n.children - tree[b.id]._n.children
       },
+    },
+    storage = window.localStorage || {
+      setItem: function () {},
+      getItem: function () {},
+      removeItem: function () {},
     }
 
   var page = {},
@@ -1475,6 +1494,7 @@ void (function () {
   document.onreadystatechange = function () {
     var k, i, e, c, p, ci, n, o
 
+    document.body.className = site.theme_dark ? 'dark-theme' : 'light-theme'
     page.navbar = document.getElementsByClassName('navbar')[0]
     page.navbar = page.navbar ? page.navbar.getBoundingClientRect() : {height: 0}
     page.content = document.getElementsByClassName('content')[0]
@@ -1672,6 +1692,7 @@ void (function () {
         values: [],
         display: [],
         data: [],
+        input: true,
       }
       if (Object.hasOwn(elements, o.type)) {
         p = elements[o.type]
@@ -1795,8 +1816,34 @@ void (function () {
     }
   }
 
+  function get_options_url() {
+    var s = '',
+      k,
+      v
+    for (k in _u)
+      if (Object.hasOwn(_u, k) && _u[k].input) {
+        v = _u[k].value()
+        if ('' !== v) s += (s ? '&' : '?') + k + '=' + v
+      }
+    return window.location.origin + window.location.pathname + s
+  }
+
   function init() {
     var k, i, e, c, p, ci, n, o, cond, v
+
+    // get options from url
+    k = window.location.search.replace('?', '')
+    site.url_options = {}
+    if (k) {
+      e = k.split('&')
+      for (i = e.length; i--; ) {
+        c = e[i].split('=')
+        if (Object.hasOwn(_u, c[0])) {
+          site.url_options[c[0]] = _u[c[0]].default = patterns.bool.test(c[1]) ? 'true' === c[1] : c[1]
+        }
+      }
+      window.history.replaceState('', '', window.location.origin + window.location.pathname)
+    }
 
     // initialize inputs
     for (k in _u)
@@ -1995,8 +2042,7 @@ void (function () {
         if (patterns.settings.test(o.id)) {
           o.setting = o.id.replace(patterns.settings, '')
           if (!o.default && Object.hasOwn(site, o.setting)) o.default = site[o.setting]
-          for (v in site.dataviews)
-            if (Object.hasOwn(site.dataviews, v)) add_dependency(o.id, {type: 'dataview', id: v})
+          add_dependency(o.id, {type: 'setting', id: o.id})
         }
         o.reset()
       }
@@ -2018,7 +2064,8 @@ void (function () {
                   valueOf(this.palette) +
                   site.summary_selection +
                   site.digits +
-                  site.color_by_order
+                  site.color_by_order +
+                  site.boxplots
               for (k in this.get.features) if (Object.hasOwn(this.get.features, k)) s += this.get.features[k]()
               return s
             }
@@ -2231,7 +2278,7 @@ void (function () {
             if (!Object.hasOwn(p.marker.line, 'color')) p.marker.lin.color = '#808080'
             if (!Object.hasOwn(p, 'text')) p.text = []
             if (!Object.hasOwn(p, 'x')) p.x = []
-            if (p.type !== 'box' && !Object.hasOwn(p, 'y')) p.y = []
+            if ('box' !== p.type && !Object.hasOwn(p, 'y')) p.y = []
             o.traces[site.plots[o.id].data[ci].type] = JSON.stringify(site.plots[o.id].data[ci])
           }
           if (o.x && !Object.hasOwn(variables, o.x)) {
@@ -2719,6 +2766,10 @@ void (function () {
         dataset: !this.dataset || this.checks.dataset(e),
       }
     }.bind(v)
+  }
+
+  function global_update() {
+    for (var k in _u) if (Object.hasOwn(_u, k)) request_queue(k, true)
   }
 
   function request_queue(id, force) {
