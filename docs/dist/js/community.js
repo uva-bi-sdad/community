@@ -1281,7 +1281,7 @@ void (function () {
       if (site.digits > 0) {
         const d = Math.pow(10, site.digits),
           r = Math.round((v % 1) * d) / d + ''
-        return (v >> 0) + '.' + ((patterns.period.test(r) ? r.split('.')[1] : '') + '0000000000').substr(0, site.digits)
+        return (v < 0 ? '-' : '') + (v >> 0) + '.' + ((patterns.period.test(r) ? r.split('.')[1] : '') + '0000000000').substr(0, site.digits)
       } else return Math.round(v)
     } else {
       return v
