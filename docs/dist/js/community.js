@@ -325,12 +325,12 @@ void (function () {
               if ('min' === s[i].type) {
                 if (isFinite(u.time_range.time[0]) && parseFloat(_u[s[i].id].e.min) !== u.time_range.time[0]) {
                   _u[s[i].id].e.min = u.time_range.time[0]
-                  _u[s[i].id].set(u.time_range.time[0])
+                  if(u.time_range.time[0] > _u[s[i].id].value()) _u[s[i].id].set(u.time_range.time[0])
                 }
               } else if ('max' === s[i].type) {
-                if (isFinite(u.time_range.time[1]) && parseFloat(_u[s[i].id].e.min) !== u.time_range.time[0]) {
+                if (isFinite(u.time_range.time[1]) && parseFloat(_u[s[i].id].e.max) !== u.time_range.time[1]) {
                   _u[s[i].id].e.max = u.time_range.time[1]
-                  _u[s[i].id].set(u.time_range.time[1])
+                  if(u.time_range.time[1] < _u[s[i].id].value()) _u[s[i].id].set(u.time_range.time[1])
                 }
               }
             }
@@ -440,8 +440,7 @@ void (function () {
               } else this.options[i].checked = false
           } else {
             if ('string' === typeof v) {
-              const i = this.values.indexOf(v)
-              if (-1 !== i) this.options[i].checked = true
+              return this.set(v.split(','))
             } else {
               if (-1 !== v) this.options[v].checked = true
             }
@@ -1718,7 +1717,7 @@ void (function () {
         c = e[i].split('=')
         if (patterns.bool.test(c[1])) c[1] = 'true' === c[1]
         site.url_options[c[0]] = c[1]
-        if (patterns.settings.test(c[0])) storage.setItem(c[0], c[1])
+        if (patterns.settings.test(c[0])) storage.setItem(c[0].replace(patterns.settings, ''), c[1])
       }
     }
 
@@ -1945,8 +1944,7 @@ void (function () {
             var d = view.get ? view.get.dataset() : valueOf(this.dataset),
               min = valueOf(this.min) || view.time,
               max = valueOf(this.max) || view.time,
-              v,
-              reset = false
+              v
             if (patterns.minmax.test(min)) min = _u[this.min][min]
             if (patterns.minmax.test(max)) max = _u[this.max][max]
             this.parsed.min =
@@ -1966,25 +1964,14 @@ void (function () {
                 ? variables[max].info[d || variables[max].datasets[0]].max
                 : parseFloat(max)
             if (variable && Object.hasOwn(variables, variable)) {
-              this.e.min = v = Math.max(view.time_range.time[0], this.parsed.min)
-              if (this.range[0] !== v) reset = true
-              this.range[0] = v
-              if (v > this.source) {
-                reset = false
-                this.set(v)
-              }
-              this.e.max = v = Math.min(view.time_range.time[1], this.parsed.max)
-              if (this.range[1] !== v) reset = true
-              this.range[1] = v
-              if (v < this.source) {
-                reset = false
-                this.set(v)
-              }
+              this.range[0] = this.e.min = v = Math.max(view.time_range.time[0], this.parsed.min)
+              this.range[1] = this.e.max = v = Math.min(view.time_range.time[1], this.parsed.max)
               if (!this.depends[view.y]) {
                 this.depends[view.y] = true
                 add_dependency(view.y, {type: 'update', id: this.id})
               }
-              if (reset) this.reset()
+              if(this.variable && variable !== this.variable) this.reset()
+              this.variable = variable
             } else {
               this.e.min = this.parsed.min
               if (this.parsed.min > this.source || (!this.source && 'min' === this.default)) this.set(this.parsed.min)
@@ -2019,9 +2006,9 @@ void (function () {
               o.reset = function () {
                 const d = Object.hasOwn(_u, this.view) && _u[this.view].get.dataset()
                 if ('max' === this.default) {
-                  if (this.range) this.set(this.range[1])
+                  if (this.range) this.set(valueOf(this.range[1]))
                 } else if ('min' === this.default) {
-                  if (this.range) this.set(this.range[0])
+                  if (this.range) this.set(valueOf(this.range[0]))
                 } else if (Object.hasOwn(_u, this.default)) {
                   this.set(valueOf(this.default))
                 }
@@ -2840,7 +2827,10 @@ void (function () {
   }
 
   function global_reset() {
-    for (var k in _u) if (Object.hasOwn(_u, k) && !_u[k].setting && _u[k].reset) _u[k].reset()
+    for (var k in _u) if (Object.hasOwn(_u, k) && !_u[k].setting && _u[k].reset){
+      _u[k].reset()
+      request_queue(k, true)
+    }
   }
 
   function request_queue(id, force) {
