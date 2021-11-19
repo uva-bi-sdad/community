@@ -11,9 +11,10 @@ page_navbar(title = "", logo = "", ..., breakpoint = "md")
 
 \item{logo}{URL of an image to appear in the header.}
 
-\item{...}{Lists specifying submenus and their items. Each list should have entries for
-\code{"name"} (the navbar button text), \code{"title"} (the menu title), \code{"placement"}
-(start, top, end, or bottom), \code{"backdrop"} (logical), and \code{items} (a list of menu items).}
+\item{...}{Lists specifying submenus and their items, or control element to add (such as a link or button).
+Each list should have entries for \code{"name"} (the navbar button text), \code{"title"} (the menu title),
+\code{"placement"} (start, top, end, or bottom), \code{"backdrop"} (logical), and \code{items}
+(a list of menu items).}
 
 \item{breakpoint}{Bootstrap breakpoint code specifying the width at which the menu collapses;
 default is \code{"md"}.}
@@ -27,7 +28,7 @@ Adds a bar at the top of the page, potentially with a title and logo image.
 \examples{
 page_navbar(
   "Site Name",
-  submenus = list(
+  list(
     name = "menu",
     title = "Menu",
     items = list(input_select("menu select", c("a", "b")))

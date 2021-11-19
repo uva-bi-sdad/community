@@ -53,12 +53,18 @@ void (function () {
           site.theme_dark
             ? document.body.classList.replace('light-theme', 'dark-theme')
             : document.body.classList.replace('dark-theme', 'light-theme')
-          var k, l, theme = site.theme_dark ? 'dark' : 'light'
-          if(site.plots) for(k in site.plots) if(Object.hasOwn(site.plots, k)) update_plot_theme(site.plots[k].u)
-          if(site.maps) for(k in site.maps) if(Object.hasOwn(site.maps, k) && site.maps[k].u && Object.hasOwn(site.maps[k].u.tiles, theme)){
-            for(l in site.maps[k].u.tiles) if(theme !== l && Object.hasOwn(site.maps[k].u.tiles, l)) site.maps[k].u.tiles[l].removeFrom(site.maps[k].u.map)
-            site.maps[k].u.tiles[theme].addTo(site.maps[k].u.map)
-          }
+          var k,
+            l,
+            theme = site.theme_dark ? 'dark' : 'light'
+          if (site.plots) for (k in site.plots) if (Object.hasOwn(site.plots, k)) update_plot_theme(site.plots[k].u)
+          if (site.maps)
+            for (k in site.maps)
+              if (Object.hasOwn(site.maps, k) && site.maps[k].u && Object.hasOwn(site.maps[k].u.tiles, theme)) {
+                for (l in site.maps[k].u.tiles)
+                  if (theme !== l && Object.hasOwn(site.maps[k].u.tiles, l))
+                    site.maps[k].u.tiles[l].removeFrom(site.maps[k].u.map)
+                site.maps[k].u.tiles[theme].addTo(site.maps[k].u.map)
+              }
         } else {
           global_update()
         }
@@ -989,6 +995,7 @@ void (function () {
                     this.parts.title.base.classList.remove('hidden')
                     this.parts.title.default.classList.add('hidden')
                   }
+                  if (this.parts.body && this.has_default) this.parts.body.default.classList.add('hidden')
                 } else {
                   // when no ID is selected
                   this.selection = false
@@ -1281,7 +1288,12 @@ void (function () {
       if (site.digits > 0) {
         const d = Math.pow(10, site.digits),
           r = Math.round((v % 1) * d) / d + ''
-        return (v < 0 ? '-' : '') + (v >> 0) + '.' + ((patterns.period.test(r) ? r.split('.')[1] : '') + '0000000000').substr(0, site.digits)
+        return (
+          (v < 0 ? '-' : '') +
+          (v >> 0) +
+          '.' +
+          ((patterns.period.test(r) ? r.split('.')[1] : '') + '0000000000').substr(0, site.digits)
+        )
       } else return Math.round(v)
     } else {
       return v
@@ -1370,22 +1382,22 @@ void (function () {
     }
   }
 
-  function update_plot_theme(u){
+  function update_plot_theme(u) {
     const s = getComputedStyle(document.body)
-    if(!Object.hasOwn(u, 'style')){
+    if (!Object.hasOwn(u, 'style')) {
       u.style = u.config.layout
-      if(!Object.hasOwn(u.style, 'font')) u.style.font = {}
-      if(!Object.hasOwn(u.style, 'modebar')) u.style.modebar = {}
-      if(!Object.hasOwn(u.style.xaxis, 'font')) u.style.xaxis.font = {}
-      if(!Object.hasOwn(u.style.yaxis, 'font')) u.style.yaxis.font = {}
+      if (!Object.hasOwn(u.style, 'font')) u.style.font = {}
+      if (!Object.hasOwn(u.style, 'modebar')) u.style.modebar = {}
+      if (!Object.hasOwn(u.style.xaxis, 'font')) u.style.xaxis.font = {}
+      if (!Object.hasOwn(u.style.yaxis, 'font')) u.style.yaxis.font = {}
     }
     u.style.paper_bgcolor = s.backgroundColor
     u.style.plot_bgcolor = s.backgroundColor
     u.style.font.color = s.color
     u.style.modebar.bgcolor = s.backgroundColor
     u.style.modebar.color = s.color
-    if(u.e._fullLayout.xaxis.showgrid) u.style.xaxis.gridcolor = s.borderColor
-    if(u.e._fullLayout.yaxis.showgrid) u.style.yaxis.gridcolor = s.borderColor
+    if (u.e._fullLayout.xaxis.showgrid) u.style.xaxis.gridcolor = s.borderColor
+    if (u.e._fullLayout.yaxis.showgrid) u.style.yaxis.gridcolor = s.borderColor
     u.style.xaxis.font.color = s.color
     u.style.yaxis.font.color = s.color
     Plotly.relayout(u.e, u.config.layout)
@@ -1522,7 +1534,7 @@ void (function () {
   document.onreadystatechange = function () {
     var k, i, e, c, p, ci, n, o
 
-    document.body.className = site.theme_dark ? 'dark-theme' : 'light-theme'
+    document.body.className = 'true' === storage.getItem('theme_dark') || site.theme_dark ? 'dark-theme' : 'light-theme'
     page.navbar = document.getElementsByClassName('navbar')[0]
     page.navbar = page.navbar ? page.navbar.getBoundingClientRect() : {height: 0}
     page.content = document.getElementsByClassName('content')[0]
@@ -1697,6 +1709,19 @@ void (function () {
       }
     }
 
+    // get options from url
+    k = window.location.search.replace('?', '')
+    site.url_options = {}
+    if (k) {
+      e = k.split('&')
+      for (i = e.length; i--; ) {
+        c = e[i].split('=')
+        if (patterns.bool.test(c[1])) c[1] = 'true' === c[1]
+        site.url_options[c[0]] = c[1]
+        if (patterns.settings.test(c[0])) storage.setItem(c[0], c[1])
+      }
+    }
+
     // initialize inputs
     for (c = document.getElementsByClassName('auto-input'), i = c.length, n = 0; i--; ) {
       e = c[i]
@@ -1733,6 +1758,20 @@ void (function () {
         }.bind(o)
         o.listen = p.listener.bind(o)
         _u[o.id] = o
+      } else if ('button' === o.type) {
+        o.target = o.e.getAttribute('target')
+        o.e.addEventListener(
+          'click',
+          'refresh' === o.target
+            ? global_update
+            : 'reset_selection' === o.target
+            ? global_reset
+            : 'reset_storage' === o.target
+            ? clear_storage
+            : function () {
+                if (Object.hasOwn(_u, this.target)) _u[this.target].reset()
+              }.bind(o)
+        )
       }
     }
 
@@ -1849,7 +1888,7 @@ void (function () {
       k,
       v
     for (k in _u)
-      if (Object.hasOwn(_u, k) && _u[k].input) {
+      if (Object.hasOwn(_u, k) && _u[k].input && !patterns.settings.test(k)) {
         v = _u[k].value()
         if ('' !== v) s += (s ? '&' : '?') + k + '=' + v
       }
@@ -1858,25 +1897,6 @@ void (function () {
 
   function init() {
     var k, i, e, c, p, ci, n, o, cond, v
-
-    // get options from url
-    k = window.location.search.replace('?', '')
-    site.url_options = {}
-    if (k) {
-      e = k.split('&')
-      for (i = e.length; i--; ) {
-        c = e[i].split('=')
-        if (Object.hasOwn(_u, c[0])) {
-          storage.setItem(c[0], c[1])
-          site.url_options[c[0]] = c[1]
-        }
-      }
-      window.history.replaceState('', '', window.location.origin + window.location.pathname)
-    }
-    for(k in storage) if(Object.hasOwn(_u, 'settings.' + k)){
-      v = storage.getItem(k)
-      _u['settings.' + k].default = patterns.bool.test(v) ? 'true' === v : v
-    }
 
     // initialize inputs
     for (k in _u)
@@ -2014,6 +2034,8 @@ void (function () {
               o.display[ci] = format_label(o.options[ci].innerText.trim() || o.values[ci])
             }
           if ('checkbox' === o.type) {
+            o.source = []
+            o.current_index = []
             o.default = o.default.split(',')
             if (o.options.length)
               for (ci = o.options.length; ci--; ) {
@@ -2065,7 +2087,7 @@ void (function () {
             }.bind(o)
           }
         } else if ('switch' === o.type) {
-          if('boolean' !== typeof o.default) o.default = o.e.checked
+          if ('boolean' !== typeof o.default) o.default = o.e.checked
           o.e.addEventListener('change', o.listen)
         } else {
           for (ci = o.options.length; ci--; ) o.options[ci].addEventListener('click', o.listen)
@@ -2077,7 +2099,11 @@ void (function () {
           if (!o.default && Object.hasOwn(site, o.setting)) o.default = site[o.setting]
           add_dependency(o.id, {type: 'setting', id: o.id})
         }
-        o.reset()
+        v = site.url_options[o.id] || storage.getItem(o.id.replace(patterns.settings, ''))
+        if (v) {
+          if (patterns.bool.test(v)) v = 'true' === v
+          o.set(v)
+        } else o.reset()
       }
 
     // initialize dataviews
@@ -2290,7 +2316,7 @@ void (function () {
           o.config = site.plots[o.id]
           o.traces = {}
           o.show = function (e) {
-            var trace = make_data_entry(this, e, 0, 'hover_line', '#000')
+            var trace = make_data_entry(this, e, 0, 'hover_line', site.theme_dark ? '#fff' : '#000')
             trace.line.width = 4
             Plotly.addTraces(this.e, trace, this.e.data.length)
           }.bind(o)
@@ -2298,7 +2324,7 @@ void (function () {
             if ('hover_line' === this.e.data[this.e.data.length - 1].name)
               Plotly.deleteTraces(this.e, this.e.data.length - 1)
           }.bind(o)
-          if(o.config){
+          if (o.config) {
             site.plots[o.id].u = o
             if (o.config.subto) for (ci = o.config.subto.length; ci--; ) add_subs(o.config.subto[ci], o)
           }
@@ -2804,8 +2830,17 @@ void (function () {
     }.bind(v)
   }
 
+  function clear_storage() {
+    if (window.localStorage) window.localStorage.clear()
+    window.location.reload()
+  }
+
   function global_update() {
     for (var k in _u) if (Object.hasOwn(_u, k)) request_queue(k, true)
+  }
+
+  function global_reset() {
+    for (var k in _u) if (Object.hasOwn(_u, k) && !_u[k].setting && _u[k].reset) _u[k].reset()
   }
 
   function request_queue(id, force) {
@@ -2823,6 +2858,11 @@ void (function () {
         queue[k] = false
         refresh_conditions(k, force)
       }
+    k = get_options_url()
+    if (k !== site.state) {
+      site.state = k
+      window.history.replaceState(Date.now(), '', k)
+    }
   }
 
   function refresh_conditions(id, force) {
@@ -2898,15 +2938,16 @@ void (function () {
       var k
       if (Object.hasOwn(site.maps, this.id)) {
         site.maps[this.id].u = this
-        if (site.maps[this.id].tiles){
-          if(site.maps[this.id].tiles.url){
+        if (site.maps[this.id].tiles) {
+          if (site.maps[this.id].tiles.url) {
             this.tiles[theme] = L.tileLayer(site.maps[this.id].tiles.url, site.maps[this.id].tiles.options)
             this.tiles[theme].addTo(this.map)
-          }else{
-            for(k in site.maps[this.id].tiles) if(Object.hasOwn(site.maps[this.id].tiles, k)){
-              this.tiles[k] = L.tileLayer(site.maps[this.id].tiles[k].url, site.maps[this.id].tiles[k].options)
-              if(theme === k) this.tiles[k].addTo(this.map)
-            }
+          } else {
+            for (k in site.maps[this.id].tiles)
+              if (Object.hasOwn(site.maps[this.id].tiles, k)) {
+                this.tiles[k] = L.tileLayer(site.maps[this.id].tiles[k].url, site.maps[this.id].tiles[k].options)
+                if (theme === k) this.tiles[k].addTo(this.map)
+              }
           }
         }
         for (k in site.maps[this.id].shapes)
@@ -2960,4 +3001,6 @@ void (function () {
     f.open('GET', url, true)
     f.send()
   }
+
+  if ('true' === storage.getItem('theme_dark')) document.body.className = 'dark-theme'
 })()

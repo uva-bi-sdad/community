@@ -15,6 +15,7 @@
 #' there are multiple datasets with the same variable name.
 #' @param depends The id of another input on which the options depend; this will take president over \code{dataset}
 #' and \code{variable}, depending on this type of input \code{depends} points to.
+#' @seealso For a button to set an input or trigger a function, see \code{\link{input_button}}.
 #' @examples
 #' \dontrun{
 #' input_buttongroup()

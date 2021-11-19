@@ -43,3 +43,6 @@ Adds a group of radio-like buttons, where only one can be selected at a time.
 input_buttongroup()
 }
 }
+\seealso{
+For a button to set an input or trigger a function, see \code{\link{input_button}}.
+}

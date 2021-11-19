@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Add a button toggle group to a website — input_buttongroup • community</title>
+<title>Add a button to a website — input_button • community</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,8 @@
 
 
 
-<meta property="og:title" content="Add a button toggle group to a website — input_buttongroup" />
-<meta property="og:description" content="Adds a group of radio-like buttons, where only one can be selected at a time." />
+<meta property="og:title" content="Add a button to a website — input_button" />
+<meta property="og:description" content="Adds a button to reset an input or trigger a predefined function to a website." />
 <meta property="og:image" content="/logo.svg" />
 
 
@@ -116,64 +116,41 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Add a button toggle group to a website</h1>
-    <small class="dont-index">Source: <a href='https://github.com/miserman/community/blob/master/R/input_buttongroup.R'><code>R/input_buttongroup.R</code></a></small>
-    <div class="hidden name"><code>input_buttongroup.Rd</code></div>
+    <h1>Add a button to a website</h1>
+    <small class="dont-index">Source: <a href='https://github.com/miserman/community/blob/master/R/input_button.R'><code>R/input_button.R</code></a></small>
+    <div class="hidden name"><code>input_button.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Adds a group of radio-like buttons, where only one can be selected at a time.</p>
+    <p>Adds a button to reset an input or trigger a predefined function to a website.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>input_buttongroup</span><span class='op'>(</span><span class='va'>label</span>, <span class='va'>options</span>, default <span class='op'>=</span> <span class='fl'>0</span>, display <span class='op'>=</span> <span class='va'>options</span>,
-  id <span class='op'>=</span> <span class='va'>label</span>, <span class='va'>...</span>, button_class <span class='op'>=</span> <span class='cn'>NULL</span>, variable <span class='op'>=</span> <span class='cn'>NULL</span>,
-  dataset <span class='op'>=</span> <span class='cn'>NULL</span>, depends <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>input_button</span><span class='op'>(</span><span class='va'>label</span>, target <span class='op'>=</span> <span class='st'>"reset_selection"</span>, id <span class='op'>=</span> <span class='va'>label</span>, class <span class='op'>=</span> <span class='st'>""</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>label</th>
-      <td><p>Label of the input for the user.</p></td>
+      <td><p>Text in the button for the user.</p></td>
     </tr>
     <tr>
-      <th>options</th>
-      <td><p>A vector of options, the name of a variable from which to pull levels, or either <code>"datasets"</code>
-or <code>"variables"</code> to select names of datasets or variables.</p></td>
-    </tr>
-    <tr>
-      <th>default</th>
-      <td><p>Which of the options to default to; either its index or value.</p></td>
-    </tr>
-    <tr>
-      <th>display</th>
-      <td><p>A display version of the options.</p></td>
+      <th>target</th>
+      <td><p>The ID of an input element to reset, or the name of a function to trigger. Available function are
+<code>refresh</code> (to force a reprocessing of the current input state), <code>reset_selection</code> (to reset all input
+elements that are not settings), and <code>reset_storage</code> (to clear local storage, reset all settings, and reload).</p></td>
     </tr>
     <tr>
       <th>id</th>
-      <td><p>Unique id of the element to be created.</p></td>
+      <td><p>Unique ID of the element to be created.</p></td>
+    </tr>
+    <tr>
+      <th>class</th>
+      <td><p>Additional class names to add to the element.</p></td>
     </tr>
     <tr>
       <th>...</th>
       <td><p>Additional attributes to set on the element.</p></td>
-    </tr>
-    <tr>
-      <th>button_class</th>
-      <td><p>Class name to add to each label (which appears as the button).</p></td>
-    </tr>
-    <tr>
-      <th>variable</th>
-      <td><p>The name of a variable from which to get levels (overwritten by <code>depends</code>).</p></td>
-    </tr>
-    <tr>
-      <th>dataset</th>
-      <td><p>The name of an included dataset, where <code>variable</code> should be looked for; only applies when
-there are multiple datasets with the same variable name.</p></td>
-    </tr>
-    <tr>
-      <th>depends</th>
-      <td><p>The id of another input on which the options depend; this will take president over <code>dataset</code>
-and <code>variable</code>, depending on this type of input <code>depends</code> points to.</p></td>
     </tr>
     </table>
 
@@ -182,11 +159,11 @@ and <code>variable</code>, depending on this type of input <code>depends</code> 
     <p>A character vector of the contents to be added.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p>For a button to set an input or trigger a function, see <code><a href='input_button.html'>input_button</a></code>.</p></div>
+    <div class='dont-index'><p>For buttons to select between a set of options, use <code><a href='input_buttongroup.html'>input_buttongroup</a></code>.</p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><span class='r-in'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span>
-<span class='r-in'><span class='fu'>input_buttongroup</span><span class='op'>(</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'>input_button</span><span class='op'>(</span><span class='st'>"Reset"</span><span class='op'>)</span></span>
 <span class='r-in'><span class='op'>}</span></span>
 </pre>
   </div>
