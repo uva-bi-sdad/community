@@ -41,7 +41,7 @@ page_navbar <- function(title = "", logo = "", ..., breakpoint = "md") {
   if (n) {
     r <- c(
       r,
-      paste0(
+      paste(
         '<button type="button" class="navbar-toggler" data-bs-toggle="collapse"',
         'data-bs-target="#navbar_menu"',
         'aria-controls="narbar_menu" aria-expanded="false" aria-lable="toggle navbar menu">'

@@ -325,12 +325,12 @@ void (function () {
               if ('min' === s[i].type) {
                 if (isFinite(u.time_range.time[0]) && parseFloat(_u[s[i].id].e.min) !== u.time_range.time[0]) {
                   _u[s[i].id].e.min = u.time_range.time[0]
-                  if(u.time_range.time[0] > _u[s[i].id].value()) _u[s[i].id].set(u.time_range.time[0])
+                  if (u.time_range.time[0] > _u[s[i].id].value()) _u[s[i].id].set(u.time_range.time[0])
                 }
               } else if ('max' === s[i].type) {
                 if (isFinite(u.time_range.time[1]) && parseFloat(_u[s[i].id].e.max) !== u.time_range.time[1]) {
                   _u[s[i].id].e.max = u.time_range.time[1]
-                  if(u.time_range.time[1] < _u[s[i].id].value()) _u[s[i].id].set(u.time_range.time[1])
+                  if (u.time_range.time[1] < _u[s[i].id].value()) _u[s[i].id].set(u.time_range.time[1])
                 }
               }
             }
@@ -1891,7 +1891,7 @@ void (function () {
         v = _u[k].value()
         if ('' !== v) s += (s ? '&' : '?') + k + '=' + v
       }
-    return window.location.origin + window.location.pathname + s
+    return ('null' === window.location.origin ? '' : window.location.origin) + window.location.pathname + s
   }
 
   function init() {
@@ -1970,7 +1970,7 @@ void (function () {
                 this.depends[view.y] = true
                 add_dependency(view.y, {type: 'update', id: this.id})
               }
-              if(this.variable && variable !== this.variable) this.reset()
+              if (this.variable && variable !== this.variable) this.reset()
               this.variable = variable
             } else {
               this.e.min = this.parsed.min
@@ -2827,10 +2827,11 @@ void (function () {
   }
 
   function global_reset() {
-    for (var k in _u) if (Object.hasOwn(_u, k) && !_u[k].setting && _u[k].reset){
-      _u[k].reset()
-      request_queue(k, true)
-    }
+    for (var k in _u)
+      if (Object.hasOwn(_u, k) && !_u[k].setting && _u[k].reset) {
+        _u[k].reset()
+        request_queue(k, true)
+      }
   }
 
   function request_queue(id, force) {

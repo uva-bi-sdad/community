@@ -6,6 +6,7 @@
 #' @importFrom data.table fread set
 #' @importFrom stringi stri_enc_detect
 #' @importFrom stats sd
+#' @import Matrix
 #' @keywords internal
 "_PACKAGE"
 

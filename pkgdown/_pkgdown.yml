@@ -16,6 +16,11 @@ reference:
   contents:
   - starts_with("init_")
   - data_add
+  
+- title: Calculators
+  desc: calculate_ functions calculate measures.
+  contents:
+  - starts_with("calculate_")
 
 - title: Checks
   desc: check_ functions use some criteria to assess a resource (e.g., to validate its structure).

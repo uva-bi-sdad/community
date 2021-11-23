@@ -43,7 +43,8 @@ input_checkbox <- function(label, options, default = "all", display = options, i
   type <- if (multi) "checkbox" else "radio"
   r <- c(
     '<div class="wrapper checkbox-wrapper">',
-    paste0('<label for="', id, '">', label, "</label>"),
+    "<fieldset>",
+    paste0("<legend>", label, "</legend>"),
     paste0(
       '<div class="auto-input" role="group" auto-type="', type, '"',
       ' id="', id, '" default="', paste(default, collapse = ","), '" ',
@@ -69,6 +70,7 @@ input_checkbox <- function(label, options, default = "all", display = options, i
       }), use.names = FALSE)
     },
     "</div>",
+    "</fieldset>",
     "</div>"
   )
   caller <- parent.frame()

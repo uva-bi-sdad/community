@@ -88,6 +88,7 @@ label{
   white-space: nowrap; z-index: 3; width: 100%;
   -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none
 }
+legend{font-size: 1em}
 input[type=number],
 input[type=text],
 .input-group > .form-control, .input-group > .form-select{

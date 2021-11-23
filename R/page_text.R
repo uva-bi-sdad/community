@@ -25,14 +25,14 @@ page_text <- function(text, ..., tag = "p") {
       parts <- strsplit(substr(l, 2, nchar(l) - 1), "](", fixed = TRUE)[[1]]
       txt <- sub(
         l,
-        paste0('<a target="_blank" rel="nofollow" href="', parts[2], '">', parts[1], "</a>"),
+        paste0('<a target="_blank" rel="noreferrer" href="', parts[2], '">', parts[1], "</a>"),
         txt,
         fixed = TRUE
       )
     }
     paste0(
       "<", tag[i],
-      if (length(atr)) paste("", paste(paste0(names(atr), "=", vapply(atr, "[[", "", i)), collapse = " ")) else "",
+      if (length(atr)) paste("", paste(paste0(names(atr), '="', vapply(atr, "[[", "", i), '"'), collapse = " ")) else "",
       ">", txt, "</", tag[i], ">"
     )
   }), use.names = FALSE)

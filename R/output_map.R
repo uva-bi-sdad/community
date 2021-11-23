@@ -59,7 +59,7 @@ output_map <- function(shapes = NULL, color = NULL, color_time = NULL, dataview 
     if (!is.null(color_time)) paste0('color-time="', color_time, '"'),
     paste0('id="map', id, '"'),
     'auto-type="map"></div>'
-  ), collapse = "")
+  ), collapse = " ")
   if (building) {
     caller$content <- c(caller$content, r)
     caller$credits$leaflet <- list(
