@@ -11,7 +11,7 @@
 #' # regular text
 #' page_text("text to be added")
 #' }
-#' @return <template: Description of what is returned.>
+#' @return A character vector of the content to be added.
 #' @export
 
 page_text <- function(text, ..., tag = "p") {

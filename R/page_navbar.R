@@ -58,7 +58,7 @@ page_navbar <- function(title = "", logo = "", ..., breakpoint = "md") {
         r <- c(r, paste0(
           '<li class="nav-item">',
           '<button class="btn btn-link" type="button" data-bs-toggle="offcanvas" data-bs-target="#',
-          id, '" aria-control="', id, '">', submenus[[i]]$name, "</button>",
+          id, '" aria-controls="', id, '">', submenus[[i]]$name, "</button>",
           "</li>"
         ))
         menus <- c(

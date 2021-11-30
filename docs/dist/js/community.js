@@ -225,6 +225,7 @@ void (function () {
       },
       dataview: function (f) {
         if (!f.check) compile_dataview(f)
+        const d = f.get.dataset()
         var c,
           k,
           id,
@@ -240,42 +241,44 @@ void (function () {
         f.selection.dataset = {}
         f.selection.filtered = {}
         f.selection.all = {}
-        for (id in entities)
-          if (Object.hasOwn(entities, id)) {
-            c = f.check(entities[id])
-            c.all = 0
-            if (c.ids) {
-              f.selection.ids[id] = entities[id]
-              f.n_selected.ids++
-              c.all++
+        if (init_log[d]) {
+          for (id in entities)
+            if (Object.hasOwn(entities, id)) {
+              c = f.check(entities[id])
+              c.all = 0
+              if (c.ids) {
+                f.selection.ids[id] = entities[id]
+                f.n_selected.ids++
+                c.all++
+              }
+              if (c.features) {
+                f.selection.features[id] = entities[id]
+                f.n_selected.features++
+                c.all++
+              }
+              if (c.dataset) {
+                f.selection.dataset[id] = entities[id]
+                f.n_selected.dataset++
+                c.all++
+              }
+              if (c.features && c.dataset) {
+                f.selection.filtered[id] = entities[id]
+                f.n_selected.filtered++
+              }
+              if (3 === c.all) {
+                if (!first_all) first_all = id
+                f.selection.all[id] = entities[id]
+                f.n_selected.all++
+                summary_state += id
+              }
             }
-            if (c.features) {
-              f.selection.features[id] = entities[id]
-              f.n_selected.features++
-              c.all++
-            }
-            if (c.dataset) {
-              f.selection.dataset[id] = entities[id]
-              f.n_selected.dataset++
-              c.all++
-            }
-            if (c.features && c.dataset) {
-              f.selection.filtered[id] = entities[id]
-              f.n_selected.filtered++
-            }
-            if (3 === c.all) {
-              if (!first_all) first_all = id
-              f.selection.all[id] = entities[id]
-              f.n_selected.all++
-              summary_state += id
-            }
+          if (first_all && summary_state !== f.summary_state) {
+            f.summary_state = summary_state
+            for (k in variables) if (Object.hasOwn(f.selection.all[first_all].data, k)) calculate_summary(k, f.id, true)
+            update_subs(f.id, 'update')
           }
-        if (first_all && summary_state !== f.summary_state) {
-          f.summary_state = summary_state
-          for (k in variables) if (Object.hasOwn(f.selection.all[first_all].data, k)) calculate_summary(k, f.id, true)
-          update_subs(f.id, 'update')
-        }
-        request_queue(f.id)
+          request_queue(f.id)
+        } else data_queue[d][f.id] = conditionals.dataview.bind(null, f)
       },
       time_filters: function (u) {
         u.time_range.filtered[0] = Infinity
@@ -314,6 +317,7 @@ void (function () {
           variable = Object.hasOwn(variables, v) ? v : valueOf(u.y)
         var r = variables[variable]
         if (r) {
+          if (!Object.hasOwn(r, u.id)) init_summaries(u.id)
           r = r[u.id].summaries[d].time_range
           u.time_range.variable = variable
           u.time_range.index[0] = r[0]
@@ -519,7 +523,7 @@ void (function () {
             o.text = site.text[o.id].text
             o.condition = site.text[o.id].condition || []
             o.depends = {}
-            function init_text(text, parts) {
+            function init_text(text) {
               if (!Object.hasOwn(text, 'button')) text.button = {}
               if ('string' === typeof text.text) text.text = [text.text]
               text.parts = document.createElement('span')
@@ -635,12 +639,12 @@ void (function () {
           this.set(this.e.selectedIndex)
         },
         setter: function (v) {
-          if ('string' === typeof v) {
-            v = this.values.indexOf(v)
+          if ('string' === typeof v) v = this.values.indexOf(v)
+          if (v !== this.source) {
+            this.e.selectedIndex = v
+            this.source = this.values[v]
+            request_queue(this.id)
           }
-          this.e.selectedIndex = v
-          this.source = this.values[v]
-          request_queue(this.id)
         },
         listener: function (e) {
           this.set(e.target.selectedIndex)
@@ -657,6 +661,67 @@ void (function () {
         },
       },
       plot: {
+        init: function (o) {
+          if (Object.hasOwn(site.plots, o.id)) {
+            var i, p
+            o.update = elements.plot.update.bind(o)
+            o.x = o.e.getAttribute('x')
+            o.y = o.e.getAttribute('y')
+            o.colors = o.e.getAttribute('color')
+            o.time = o.e.getAttribute('color-time')
+            o.click = o.e.getAttribute('click')
+            if (o.click && Object.hasOwn(_u, o.click)) o.clickto = _u[o.click]
+            o.parsed = {}
+            o.config = site.plots[o.id]
+            o.traces = {}
+            o.show = function (e) {
+              var trace = make_data_entry(this, e, 0, 'hover_line', site.theme_dark ? '#fff' : '#000')
+              if (trace) {
+                trace.line.width = 4
+                Plotly.addTraces(this.e, trace, this.e.data.length)
+              }
+            }.bind(o)
+            o.revert = function () {
+              if ('hover_line' === this.e.data[this.e.data.length - 1].name)
+                Plotly.deleteTraces(this.e, this.e.data.length - 1)
+            }.bind(o)
+            if (o.config) {
+              site.plots[o.id].u = o
+              if (o.config.subto) for (i = o.config.subto.length; i--; ) add_subs(o.config.subto[i], o)
+            }
+            for (i = site.plots[o.id].data.length; i--; ) {
+              p = site.plots[o.id].data[i]
+              if (!Object.hasOwn(p, 'textfont')) p.textfont = {}
+              if (!Object.hasOwn(p.textfont, 'color')) p.textfont.color = '#808080'
+              if (!Object.hasOwn(p, 'line')) p.line = {}
+              if (!Object.hasOwn(p.line, 'color')) p.line.color = '#808080'
+              if (!Object.hasOwn(p, 'marker')) p.marker = {}
+              if (!Object.hasOwn(p.marker, 'color')) p.marker.color = '#808080'
+              if (!Object.hasOwn(p.marker, 'line')) p.marker.line = {}
+              if (!Object.hasOwn(p.marker.line, 'color')) p.marker.lin.color = '#808080'
+              if (!Object.hasOwn(p, 'text')) p.text = []
+              if (!Object.hasOwn(p, 'x')) p.x = []
+              if ('box' !== p.type && !Object.hasOwn(p, 'y')) p.y = []
+              o.traces[site.plots[o.id].data[i].type] = JSON.stringify(site.plots[o.id].data[i])
+            }
+            if (o.x && !Object.hasOwn(variables, o.x)) {
+              add_dependency(o.x, {type: 'update', id: o.id})
+            }
+            if (o.y && !Object.hasOwn(variables, o.y)) {
+              add_dependency(o.y, {type: 'update', id: o.id})
+            }
+            if (o.time && Object.hasOwn(_u, o.time)) {
+              add_dependency(o.time, {type: 'update', id: o.id})
+            }
+            if (o.view) {
+              _c[o.view].push({type: 'update', id: o.id})
+              _c[o.view + '_filter'].push({type: 'update', id: o.id})
+              if (_u[o.view].time_agg && Object.hasOwn(_u, _u[o.view].time_agg))
+                add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
+            }
+            queue_init_plot.bind(o)()
+          }
+        },
         mouseover: function (d) {
           if (d.points && d.points.length === 1 && this.e.data[d.points[0].fullData.index]) {
             this.e.data[d.points[0].fullData.index].line.width = 4
@@ -738,6 +803,39 @@ void (function () {
         },
       },
       map: {
+        init: function (o) {
+          o.options = site.maps[o.id].options
+          o.colors = o.e.getAttribute('color')
+          o.time = o.e.getAttribute('color-time')
+          o.click = o.e.getAttribute('click')
+          if (o.click && Object.hasOwn(_u, o.click)) o.clickto = _u[o.click]
+          o.show = function (e) {
+            if (e && e.layer) {
+              e.layer.setStyle({
+                color: '#ffffff',
+              })
+            }
+          }
+          o.revert = function (e) {
+            if (e && e.layer) {
+              e.layer.setStyle({
+                color: '#000000',
+              })
+            }
+          }
+          if (o.options && o.options.subto) for (var i = o.options.subto.length; i--; ) add_subs(o.options.subto[i], o)
+          if (o.view) {
+            add_dependency(o.view, {type: 'map_colors', id: o.id})
+            if (_u[o.view].time_agg && Object.hasOwn(_u, _u[o.view].time_agg))
+              add_dependency(_u[o.view].time_agg, {type: 'map_colors', id: o.id})
+            _c[o.view].push({type: 'map_shapes', id: o.id})
+            if (_u[o.view].y) add_dependency(_u[o.view].y, {type: 'map_colors', id: o.id})
+          }
+          if (o.colors) add_dependency(o.colors, {type: 'map_colors', id: o.id})
+          if (o.time) add_dependency(o.time, {type: 'map_colors', id: o.id})
+          if (!o.e.style.height) o.e.style.height = o.options.height ? o.options.height : '400px'
+          queue_init_map.bind(o)()
+        },
         mouseover: function (e) {
           e.target.setStyle({
             color: '#ffffff',
@@ -866,7 +964,6 @@ void (function () {
             o.e.appendChild(o.parts.title.temp)
             o.parts.title.temp.classList.add('hidden')
           }
-
           if (o.options.body) {
             o.parts.body = {
               base: document.createElement('div'),
@@ -985,7 +1082,7 @@ void (function () {
             } else {
               // base information
               if (this.view) {
-                if (v.ids && (k = v.get.ids())) {
+                if (v.ids && (k = v.get.ids()) && '-1' !== k) {
                   // when showing a selected region
                   this.selection = true
                   entity = entities[k]
@@ -1062,6 +1159,112 @@ void (function () {
         },
       },
       table: {
+        init: function (o) {
+          var k, p, n, i
+          o.e.appendChild(document.createElement('tHead'))
+          o.e.appendChild(document.createElement('tBody'))
+          o.options = (site.tables && site.tables[o.id]) || {}
+          o.update = elements.table.update.bind(o)
+          o.headers = {}
+          if ('tabpanel' === o.e.parentElement.getAttribute('role')) {
+            document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
+              'click',
+              function () {
+                setTimeout(this.update, 155)
+              }.bind(o)
+            )
+          }
+          if (o.options.single_variable) {
+            if ('object' === typeof o.options.variables) {
+              o.options.variables = o.options.variables[0]
+            }
+            if (Object.hasOwn(_u, o.options.variables)) add_dependency(o.options.variables, {type: 'update', id: o.id})
+            k = valueOf(o.options.variables)
+            if (Object.hasOwn(variables, k)) {
+              if (!Object.hasOwn(o.options, 'order')) o.options.order = [[meta.time_n, 'asc']]
+              for (i = variables[k].datasets.length; i--; ) {
+                p = variables[k].datasets[i]
+                if (!Object.hasOwn(o.headers, p)) o.headers[p] = []
+                o.headers[p].push({title: 'Region', data: 'features.name'})
+                for (n = meta.time_n; n--; ) {
+                  o.headers[p][n + 1] = {
+                    title: meta.time[n] + '',
+                    data: 'data.' + k,
+                    render: function (d) {
+                      var k = valueOf(this.v.variables),
+                        p = variables[k].datasets[0]
+                      return 'number' === typeof d[this.n]
+                        ? format_value(d[this.n], 'integer' === variables[k].info[p].type)
+                        : d[this.n]
+                    }.bind({n, v: o.options}),
+                  }
+                }
+              }
+            }
+          } else if (o.options.wide) {
+            for (k in variables)
+              if (Object.hasOwn(variables, k)) {
+                for (i = variables[k].datasets.length; i--; ) {
+                  p = variables[k].datasets[i]
+                  if (!Object.hasOwn(o.headers, p)) o.headers[p] = []
+                  o.headers[p].push(
+                    'ID' === k
+                      ? {title: k, data: 'features.' + k.toLowerCase()}
+                      : {
+                          title: format_label(k),
+                          data: 'data.' + k,
+                          render: function (d, int) {
+                            return 'number' === typeof d[this.i] ? format_value(d[this.i], int) : d[this.i]
+                          }.bind(o, 'integer' === variables[k].info[p].type),
+                        }
+                  )
+                }
+              }
+          } else {
+            o.filters = o.options.filters
+            o.current_filter = {}
+            for (k in site.metadata.info)
+              if (Object.hasOwn(site.metadata.info, k)) {
+                o.headers[k] = [
+                  {title: 'ID', data: 'features.id'},
+                  {title: 'Name', data: 'features.name'},
+                  {title: 'Type', data: 'features.type'},
+                  {
+                    title: 'Year',
+                    data: 'data.time',
+                    render: function (d) {
+                      return 'number' === typeof d[this.i] ? format_value(d[this.i], true) : d[this.i]
+                    }.bind(o),
+                  },
+                  {
+                    title: 'Measure',
+                    data: function (d) {
+                      return Object.hasOwn(d.variables, this.v) ? d.variables[this.v].short_name : this.v
+                    }.bind(o),
+                  },
+                  {
+                    title: 'Value',
+                    data: function (d) {
+                      return Object.hasOwn(d.data, this.v) ? d.data[this.v] : []
+                    }.bind(o),
+                    render: function (d) {
+                      return 'number' === typeof d[this.i]
+                        ? format_value(
+                            d[this.i],
+                            'integer' === variables[this.v].info[variables[this.v].datasets[0]].type
+                          )
+                        : d[this.i]
+                    }.bind(o),
+                  },
+                ]
+              }
+          }
+          if (o.view) {
+            _c[o.view].push({type: 'update', id: o.id})
+            _c[o.view + '_filter'].push({type: 'update', id: o.id})
+          }
+          queue_init_table.bind(o)()
+        },
         update: function (pass) {
           clearTimeout(this.queue)
           if (!pass) {
@@ -1218,10 +1421,10 @@ void (function () {
         return a <= b
       },
       equals: function (s, e) {
-        return !s || s === e
+        return !s || -1 == s || s === e
       },
       includes: function (s, e) {
-        return !s.length || s.indexOf(e) !== -1
+        return !s.length || -1 !== s.indexOf(e)
       },
       sort_a1: function (a, b) {
         return a[1] - b[1]
@@ -1242,6 +1445,9 @@ void (function () {
     variables = {},
     variable_info = {},
     queue = {_timeout: 0},
+    data_queue = {},
+    data_loaded = {},
+    init_log = {},
     colors = {},
     meta = {
       time_n: 0,
@@ -1319,11 +1525,13 @@ void (function () {
       u.values.push(m[i].name)
       u.display.push(l)
     }
+    site.url_options[u.id] ? u.set(site.url_options[u.id]) : u.reset()
   }
 
   function fill_levels_options(u, d, v, out) {
-    var m = variables[v].info[d],
-      l = m['string' === m.type ? 'levels' : 'ids'],
+    const m = variables[v].info[d],
+      t = 'string' === m.type ? 'levels' : 'ids'
+    var l = m[t],
       k,
       i,
       n,
@@ -1352,7 +1560,10 @@ void (function () {
             u.display.push(l[k].name)
           }
       }
+    } else if ('ids' === t) {
+      data_queue[d][u.id] = fill_levels_options.bind(null, u, d, v, out)
     }
+    site.url_options[u.id] ? u.set(site.url_options[u.id]) : u.reset()
   }
 
   function add_dependency(id, o) {
@@ -1382,24 +1593,27 @@ void (function () {
   }
 
   function update_plot_theme(u) {
-    const s = getComputedStyle(document.body)
-    if (!Object.hasOwn(u, 'style')) {
-      u.style = u.config.layout
-      if (!Object.hasOwn(u.style, 'font')) u.style.font = {}
-      if (!Object.hasOwn(u.style, 'modebar')) u.style.modebar = {}
-      if (!Object.hasOwn(u.style.xaxis, 'font')) u.style.xaxis.font = {}
-      if (!Object.hasOwn(u.style.yaxis, 'font')) u.style.yaxis.font = {}
+    if (u.dark_theme !== site.theme_dark) {
+      u.dark_theme = site.theme_dark
+      const s = getComputedStyle(document.body)
+      if (!Object.hasOwn(u, 'style')) {
+        u.style = u.config.layout
+        if (!Object.hasOwn(u.style, 'font')) u.style.font = {}
+        if (!Object.hasOwn(u.style, 'modebar')) u.style.modebar = {}
+        if (!Object.hasOwn(u.style.xaxis, 'font')) u.style.xaxis.font = {}
+        if (!Object.hasOwn(u.style.yaxis, 'font')) u.style.yaxis.font = {}
+      }
+      u.style.paper_bgcolor = s.backgroundColor
+      u.style.plot_bgcolor = s.backgroundColor
+      u.style.font.color = s.color
+      u.style.modebar.bgcolor = s.backgroundColor
+      u.style.modebar.color = s.color
+      if (u.e._fullLayout.xaxis.showgrid) u.style.xaxis.gridcolor = s.borderColor
+      if (u.e._fullLayout.yaxis.showgrid) u.style.yaxis.gridcolor = s.borderColor
+      u.style.xaxis.font.color = s.color
+      u.style.yaxis.font.color = s.color
+      Plotly.relayout(u.e, u.config.layout)
     }
-    u.style.paper_bgcolor = s.backgroundColor
-    u.style.plot_bgcolor = s.backgroundColor
-    u.style.font.color = s.color
-    u.style.modebar.bgcolor = s.backgroundColor
-    u.style.modebar.color = s.color
-    if (u.e._fullLayout.xaxis.showgrid) u.style.xaxis.gridcolor = s.borderColor
-    if (u.e._fullLayout.yaxis.showgrid) u.style.yaxis.gridcolor = s.borderColor
-    u.style.xaxis.font.color = s.color
-    u.style.yaxis.font.color = s.color
-    Plotly.relayout(u.e, u.config.layout)
   }
 
   function make_data_entry(u, e, rank, name, color) {
@@ -1532,7 +1746,7 @@ void (function () {
 
   document.onreadystatechange = function () {
     var k, i, e, c, p, ci, n, o
-
+    if (site && site.metadata) map_variables()
     document.body.className = 'true' === storage.getItem('theme_dark') || site.theme_dark ? 'dark-theme' : 'light-theme'
     page.navbar = document.getElementsByClassName('navbar')[0]
     page.navbar = page.navbar ? page.navbar.getBoundingClientRect() : {height: 0}
@@ -1874,9 +2088,15 @@ void (function () {
     window.addEventListener('resize', content_resize)
 
     if (site && site.data) {
+      site.temp = site.data
+      site.data = {}
       queue_init()
-    } else if (site && site.metadata.file) {
-      load_data(site.metadata.file)
+    } else if (site && site.metadata.files) {
+      site.data = {}
+      for (i = 0, n = site.metadata.files.length; i < n; i++) {
+        data_loaded[site.metadata.files[i]] = false
+        load_data(site.metadata.files[i], site.metadata.info[site.metadata.files[i]].site_file)
+      }
     } else {
       throw new Error('No data or metadata information present')
     }
@@ -1889,19 +2109,17 @@ void (function () {
     for (k in _u)
       if (Object.hasOwn(_u, k) && _u[k].input && !patterns.settings.test(k)) {
         v = _u[k].value()
-        if ('' !== v) s += (s ? '&' : '?') + k + '=' + v
+        if ('' !== v && '-1' !== v) s += (s ? '&' : '?') + k + '=' + v
       }
     return ('null' === window.location.origin ? '' : window.location.origin) + window.location.pathname + s
   }
 
   function init() {
-    var k, i, e, c, p, ci, n, o, cond, v
-
+    var k, i, e, c, n, o, cond, v
     // initialize inputs
     for (k in _u)
       if (Object.hasOwn(_u, k) && Object.hasOwn(elements, _u[k].type)) {
         o = _u[k]
-
         // resolve options
         if (o.options_source) {
           if (patterns.palette.test(o.options_source)) {
@@ -1909,8 +2127,8 @@ void (function () {
             o.options = o.e.getElementsByTagName(o.type === 'select' ? 'option' : 'input')
             o.reset()
           } else if (patterns.datasets.test(o.options_source)) {
-            for (ci = site.metadata.datasets.length; ci--; ) {
-              o.add(ci, site.metadata.datasets[ci], format_label(site.metadata.datasets[ci]))
+            for (i = site.metadata.datasets.length; i--; ) {
+              o.add(i, site.metadata.datasets[i], format_label(site.metadata.datasets[i]))
             }
             o.options = o.e.getElementsByTagName(o.type === 'select' ? 'option' : 'input')
           } else {
@@ -1922,13 +2140,11 @@ void (function () {
               } else if (patterns.levels.test(o.options_source) && Object.hasOwn(variables, o.variable)) {
                 fill_levels_options(o, v, o.variable, o.option_sets)
               }
-              o.reset()
             }
             if (o.depends) add_dependency(o.depends, {type: 'options', id: o.id})
             if (o.view) add_dependency(o.view, {type: 'options', id: o.id})
           }
         }
-
         // retrieve option values
         if ('number' === o.type) {
           o.min = o.e.getAttribute('min')
@@ -1943,8 +2159,7 @@ void (function () {
             if (!view.time_range) view.time_range = {time: []}
             var d = view.get ? view.get.dataset() : valueOf(this.dataset),
               min = valueOf(this.min) || view.time,
-              max = valueOf(this.max) || view.time,
-              v
+              max = valueOf(this.max) || view.time
             if (patterns.minmax.test(min)) min = _u[this.min][min]
             if (patterns.minmax.test(max)) max = _u[this.max][max]
             this.parsed.min =
@@ -1971,7 +2186,7 @@ void (function () {
                 add_dependency(view.y, {type: 'update', id: this.id})
               }
               if (this.variable && variable !== this.variable) this.reset()
-              this.variable = variable
+              if (variables[variable][this.view].summaries[d].filled) this.variable = variable
             } else {
               this.e.min = this.parsed.min
               if (this.parsed.min > this.source || (!this.source && 'min' === this.default)) this.set(this.parsed.min)
@@ -2004,7 +2219,6 @@ void (function () {
               o.default = parseFloat(o.default)
             } else
               o.reset = function () {
-                const d = Object.hasOwn(_u, this.view) && _u[this.view].get.dataset()
                 if ('max' === this.default) {
                   if (this.range) this.set(valueOf(this.range[1]))
                 } else if ('min' === this.default) {
@@ -2016,24 +2230,23 @@ void (function () {
           }
         } else {
           if (!o.values.length)
-            for (ci = o.options.length; ci--; ) {
-              o.values[ci] = o.options[ci].value
-              o.display[ci] = format_label(o.options[ci].innerText.trim() || o.values[ci])
+            for (i = o.options.length; i--; ) {
+              o.values[i] = o.options[i].value
+              o.display[i] = format_label(o.options[i].innerText.trim() || o.values[i])
             }
           if ('checkbox' === o.type) {
             o.source = []
             o.current_index = []
             o.default = o.default.split(',')
             if (o.options.length)
-              for (ci = o.options.length; ci--; ) {
-                o.values[ci] = o.options[ci].value
+              for (i = o.options.length; i--; ) {
+                o.values[i] = o.options[i].value
               }
           } else if (o.values.length && !Object.hasOwn(_u, o.default) && -1 === o.values.indexOf(o.default)) {
             o.default = parseInt(o.default)
             o.default = o.values[o.default] ? o.values[o.default] : ''
           }
         }
-
         // add listeners
         if ('select' === o.type || 'number' === o.type) {
           o.e.addEventListener('input', o.listen)
@@ -2077,9 +2290,8 @@ void (function () {
           if ('boolean' !== typeof o.default) o.default = o.e.checked
           o.e.addEventListener('change', o.listen)
         } else {
-          for (ci = o.options.length; ci--; ) o.options[ci].addEventListener('click', o.listen)
+          for (i = o.options.length; i--; ) o.options[i].addEventListener('click', o.listen)
         }
-
         // initialize settings inputs
         if (patterns.settings.test(o.id)) {
           o.setting = o.id.replace(patterns.settings, '')
@@ -2092,7 +2304,6 @@ void (function () {
           o.set(v)
         } else o.reset()
       }
-
     // initialize dataviews
     if (site.dataviews)
       for (k in site.dataviews)
@@ -2140,7 +2351,6 @@ void (function () {
               }
             }
         }
-
     // initialize outputs
     for (c = document.getElementsByClassName('auto-output'), i = c.length, n = 0; i--; ) {
       e = c[i]
@@ -2156,230 +2366,7 @@ void (function () {
         if (!Object.hasOwn(_c, o.view)) _c[o.view] = []
         if (!Object.hasOwn(_c, o.view + '_filter')) _c[o.view + '_filter'] = []
       }
-      if ('table' === o.type) {
-        e.appendChild(document.createElement('tHead'))
-        e.appendChild(document.createElement('tBody'))
-        o.options = (site.tables && site.tables[o.id]) || {}
-        o.update = elements.table.update.bind(o)
-        o.headers = {}
-        if ('tabpanel' === o.e.parentElement.getAttribute('role')) {
-          document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
-            'click',
-            function () {
-              setTimeout(this.update, 155)
-            }.bind(o)
-          )
-        }
-        if (o.options.single_variable) {
-          if ('object' === typeof o.options.variables) {
-            o.options.variables = o.options.variables[0]
-          }
-          if (Object.hasOwn(_u, o.options.variables)) add_dependency(o.options.variables, {type: 'update', id: o.id})
-          k = valueOf(o.options.variables)
-          if (Object.hasOwn(variables, k)) {
-            if (!Object.hasOwn(o.options, 'order')) o.options.order = [[meta.time_n, 'asc']]
-            for (ci = variables[k].datasets.length; ci--; ) {
-              p = variables[k].datasets[ci]
-              if (!Object.hasOwn(o.headers, p)) o.headers[p] = []
-              o.headers[p].push({title: 'Region', data: 'features.name'})
-              for (n = meta.time_n; n--; ) {
-                o.headers[p][n + 1] = {
-                  title: meta.time[n] + '',
-                  data: 'data.' + k,
-                  render: function (d) {
-                    var k = valueOf(this.v.variables),
-                      p = variables[k].datasets[0]
-                    return 'number' === typeof d[this.n]
-                      ? format_value(d[this.n], 'integer' === variables[k].info[p].type)
-                      : d[this.n]
-                  }.bind({n, v: o.options}),
-                }
-              }
-            }
-          }
-        } else if (o.options.wide) {
-          for (k in variables)
-            if (Object.hasOwn(variables, k)) {
-              for (ci = variables[k].datasets.length; ci--; ) {
-                p = variables[k].datasets[ci]
-                if (!Object.hasOwn(o.headers, p)) o.headers[p] = []
-                o.headers[p].push(
-                  'ID' === k
-                    ? {title: k, data: 'features.' + k.toLowerCase()}
-                    : {
-                        title: format_label(k),
-                        data: 'data.' + k,
-                        render: function (d, int) {
-                          return 'number' === typeof d[this.i] ? format_value(d[this.i], int) : d[this.i]
-                        }.bind(o, 'integer' === variables[k].info[p].type),
-                      }
-                )
-              }
-            }
-        } else {
-          o.filters = o.options.filters
-          o.current_filter = {}
-          if (Object.hasOwn(o.options, 'xfilters')) {
-            for (p in o.filters)
-              if (Object.hasOwn(o.filters, p) && Object.hasOwn(_u, o.filters[p])) {
-                add_dependency(o.filters[p], {type: 'filter', id: o.id})
-              }
-            o.filter = function () {
-              var k,
-                c,
-                y,
-                i = 0,
-                pass
-              for (k in this.filters)
-                if (Object.hasOwn(this.filters, k)) {
-                  this.current_filter[k] = valueOf(this.filters[k])
-                }
-              for (k in variables) {
-                pass = false
-                if (Object.hasOwn(variables, k) && Object.hasOwn(variables[k], 'meta')) {
-                  for (c in this.current_filter)
-                    if (Object.hasOwn(variables[k].meta, c)) {
-                      pass = variables[k].meta[c] === this.current_filter[c]
-                      if (!pass) break
-                    }
-                }
-                for (y = meta.time_n; y--; ) {
-                  this.table.row(i++).visible(pass)
-                }
-              }
-            }.bind(o)
-          }
-          for (k in site.data)
-            if (Object.hasOwn(site.data, k)) {
-              o.headers[k] = [
-                {title: 'ID', data: 'features.id'},
-                {title: 'Name', data: 'features.name'},
-                {title: 'Type', data: 'features.type'},
-                {
-                  title: 'Year',
-                  data: 'data.time',
-                  render: function (d) {
-                    return 'number' === typeof d[this.i] ? format_value(d[this.i], true) : d[this.i]
-                  }.bind(o),
-                },
-                {
-                  title: 'Measure',
-                  data: function (d) {
-                    return Object.hasOwn(d.variables, this.v) ? d.variables[this.v].short_name : this.v
-                  }.bind(o),
-                },
-                {
-                  title: 'Value',
-                  data: function (d) {
-                    return Object.hasOwn(d.data, this.v) ? d.data[this.v] : []
-                  }.bind(o),
-                  render: function (d) {
-                    return 'number' === typeof d[this.i]
-                      ? format_value(
-                          d[this.i],
-                          'integer' === variables[this.v].info[variables[this.v].datasets[0]].type
-                        )
-                      : d[this.i]
-                  }.bind(o),
-                },
-              ]
-            }
-        }
-        if (o.view) {
-          _c[o.view].push({type: 'update', id: o.id})
-          _c[o.view + '_filter'].push({type: 'update', id: o.id})
-        }
-        queue_init_table.bind(o)()
-      } else if ('plot' === o.type) {
-        if (Object.hasOwn(site.plots, o.id)) {
-          o.update = elements.plot.update.bind(o)
-          o.x = e.getAttribute('x')
-          o.y = e.getAttribute('y')
-          o.colors = e.getAttribute('color')
-          o.time = e.getAttribute('color-time')
-          o.click = e.getAttribute('click')
-          if (o.click && Object.hasOwn(_u, o.click)) o.clickto = _u[o.click]
-          o.parsed = {}
-          o.config = site.plots[o.id]
-          o.traces = {}
-          o.show = function (e) {
-            var trace = make_data_entry(this, e, 0, 'hover_line', site.theme_dark ? '#fff' : '#000')
-            trace.line.width = 4
-            Plotly.addTraces(this.e, trace, this.e.data.length)
-          }.bind(o)
-          o.revert = function () {
-            if ('hover_line' === this.e.data[this.e.data.length - 1].name)
-              Plotly.deleteTraces(this.e, this.e.data.length - 1)
-          }.bind(o)
-          if (o.config) {
-            site.plots[o.id].u = o
-            if (o.config.subto) for (ci = o.config.subto.length; ci--; ) add_subs(o.config.subto[ci], o)
-          }
-          for (ci = site.plots[o.id].data.length; ci--; ) {
-            p = site.plots[o.id].data[ci]
-            if (!Object.hasOwn(p, 'textfont')) p.textfont = {}
-            if (!Object.hasOwn(p.textfont, 'color')) p.textfont.color = '#808080'
-            if (!Object.hasOwn(p, 'line')) p.line = {}
-            if (!Object.hasOwn(p.line, 'color')) p.line.color = '#808080'
-            if (!Object.hasOwn(p, 'marker')) p.marker = {}
-            if (!Object.hasOwn(p.marker, 'color')) p.marker.color = '#808080'
-            if (!Object.hasOwn(p.marker, 'line')) p.marker.line = {}
-            if (!Object.hasOwn(p.marker.line, 'color')) p.marker.lin.color = '#808080'
-            if (!Object.hasOwn(p, 'text')) p.text = []
-            if (!Object.hasOwn(p, 'x')) p.x = []
-            if ('box' !== p.type && !Object.hasOwn(p, 'y')) p.y = []
-            o.traces[site.plots[o.id].data[ci].type] = JSON.stringify(site.plots[o.id].data[ci])
-          }
-          if (o.x && !Object.hasOwn(variables, o.x)) {
-            add_dependency(o.x, {type: 'update', id: o.id})
-          }
-          if (o.y && !Object.hasOwn(variables, o.y)) {
-            add_dependency(o.y, {type: 'update', id: o.id})
-          }
-          if (o.time && Object.hasOwn(_u, o.time)) {
-            add_dependency(o.time, {type: 'update', id: o.id})
-          }
-          if (o.view) {
-            _c[o.view].push({type: 'update', id: o.id})
-            _c[o.view + '_filter'].push({type: 'update', id: o.id})
-            if (_u[o.view].time_agg && Object.hasOwn(_u, _u[o.view].time_agg))
-              add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
-          }
-          queue_init_plot.bind(o)()
-        }
-      } else if ('map' === o.type) {
-        o.options = site.maps[o.id].options
-        o.colors = e.getAttribute('color')
-        o.time = e.getAttribute('color-time')
-        o.click = e.getAttribute('click')
-        if (o.click && Object.hasOwn(_u, o.click)) o.clickto = _u[o.click]
-        o.show = function (e) {
-          if (e && e.layer) {
-            e.layer.setStyle({
-              color: '#ffffff',
-            })
-          }
-        }
-        o.revert = function (e) {
-          if (e && e.layer) {
-            e.layer.setStyle({
-              color: '#000000',
-            })
-          }
-        }
-        if (o.options && o.options.subto) for (ci = o.options.subto.length; ci--; ) add_subs(o.options.subto[ci], o)
-        if (o.view) {
-          add_dependency(o.view, {type: 'map_colors', id: o.id})
-          if (_u[o.view].time_agg && Object.hasOwn(_u, _u[o.view].time_agg))
-            add_dependency(_u[o.view].time_agg, {type: 'map_colors', id: o.id})
-          _c[o.view].push({type: 'map_shapes', id: o.id})
-          if (_u[o.view].y) add_dependency(_u[o.view].y, {type: 'map_colors', id: o.id})
-        }
-        if (o.colors) add_dependency(o.colors, {type: 'map_colors', id: o.id})
-        if (o.time) add_dependency(o.time, {type: 'map_colors', id: o.id})
-        if (!e.style.height) e.style.height = o.options.height ? o.options.height : '400px'
-        queue_init_map.bind(o)()
-      } else if (Object.hasOwn(elements, o.type) && Object.hasOwn(elements[o.type], 'init')) {
+      if (Object.hasOwn(elements, o.type) && Object.hasOwn(elements[o.type], 'init')) {
         elements[o.type].init(o)
       }
     }
@@ -2414,7 +2401,9 @@ void (function () {
             for (k in site.maps[group]._layers)
               if (Object.hasOwn(site.maps[group]._layers, k)) {
                 id = site.maps[group]._layers[k].feature.properties.id
-                entities[id].layer = site.maps[group]._layers[k]
+                if (Object.hasOwn(entities, id)) {
+                  entities[id].layer = site.maps[group]._layers[k]
+                } else entities[id] = {layer: site.maps[group]._layers[k]}
               } else {
                 throw new Error('retrieve_layer failed: ' + f.responseText)
               }
@@ -2442,14 +2431,16 @@ void (function () {
 
   function init_summaries(view) {
     view = view || 'default'
-    var m, v, s, y
+    var m, v, d, y
     for (v in variables)
       if (Object.hasOwn(variables, v)) {
-        variables[v][view] = m = {order: {}, summaries: {}}
-        for (s in site.data) {
-          if (Object.hasOwn(site.data, s)) {
-            m.order[s] = []
-            m.summaries[s] = {
+        if (!Object.hasOwn(variables[v], view)) variables[v][view] = {order: {}, summaries: {}}
+        m = variables[v][view]
+        for (d in variables[v].info) {
+          if (Object.hasOwn(variables[v].info, d)) {
+            m.order[d] = []
+            m.summaries[d] = {
+              filled: false,
               time_range: [0, 0],
               missing: [],
               n: [],
@@ -2463,17 +2454,18 @@ void (function () {
               min: [],
             }
             for (y = meta.time_n; y--; ) {
-              m.order[s].push([])
-              m.summaries[s].missing.push(0)
-              m.summaries[s].n.push(0)
-              m.summaries[s].sum.push(0)
-              m.summaries[s].max.push(-Infinity)
-              m.summaries[s].q3.push(0)
-              m.summaries[s].mean.push(0)
-              m.summaries[s].norm_median.push(0)
-              m.summaries[s].median.push(0)
-              m.summaries[s].q1.push(0)
-              m.summaries[s].min.push(Infinity)
+              m.order[d].push([])
+              m.order[d].push([])
+              m.summaries[d].missing.push(0)
+              m.summaries[d].n.push(0)
+              m.summaries[d].sum.push(0)
+              m.summaries[d].max.push(-Infinity)
+              m.summaries[d].q3.push(0)
+              m.summaries[d].mean.push(0)
+              m.summaries[d].norm_median.push(0)
+              m.summaries[d].median.push(0)
+              m.summaries[d].q1.push(0)
+              m.summaries[d].min.push(Infinity)
             }
           }
         }
@@ -2573,51 +2565,19 @@ void (function () {
         }
       }
     }
+    ms.filled = true
   }
 
-  // function make_aggregates(map) {
-  //   var id,
-  //     m,
-  //     s,
-  //     v,
-  //     y,
-  //     sets = {}
-  //   for (id in map)
-  //     if (Object.hasOwn(site.data, id)) {
-  //       d = site.data[id]
-  //       m = map[id]
-  //       for (s in m)
-  //         if (Object.hasOwn(d, s)) {
-  //           if (!Object.hasOwn(sets, s)) {
-  //             sets[s] = {}
-  //           }
-  //           if (!Object.hasOwn(sets[s], m[s])) {
-  //             sets[s][m[s]] = JSON.parse(JSON.stringify(d[s]))
-  //           } else {
-  //             for (v in d[s])
-  //               if (Object.hasOwn(d[s], v)) {
-  //                 for (y = d[s][v].length; y--; ) {
-  //                   sets[s][m[s]][v][y] += d[s][v][y]
-  //                 }
-  //               }
-  //           }
-  //         }
-  //     }
-  // }
-
   function load_id_maps() {
-    var ids,
-      i,
-      f,
-      k,
-      queued = false
+    var ids, i, f, k
+    init_log.id_maps = true
     for (k in site.metadata.info)
       if (Object.hasOwn(site.metadata.info, k)) {
         for (ids = site.metadata.info[k].ids, i = ids.length; i--; )
           if (Object.hasOwn(ids[i], 'map')) {
             if (Object.hasOwn(data_maps, ids[i].map)) {
               if (data_maps[ids[i].map].retrieved) {
-                site.metadata.info[k].schema.fields[fi].ids = data_maps[k] = Object.hasOwn(
+                site.metadata.info[k].schema.fields[i].ids = data_maps[k] = Object.hasOwn(
                   data_maps[ids[i].map].resource,
                   k
                 )
@@ -2625,7 +2585,7 @@ void (function () {
                   : data_maps[ids[i].map].resource
                 map_entities(k)
               } else {
-                data_maps[ids[i].map].queue.push(k)
+                if (-1 === data_maps[ids[i].map].queue.indexOf(k)) data_maps[ids[i].map].queue.push(k)
               }
             } else {
               f = new XMLHttpRequest()
@@ -2635,17 +2595,21 @@ void (function () {
                   if (200 === f.status) {
                     data_maps[url].resource = JSON.parse(f.responseText)
                     data_maps[url].retrieved = true
-                    for (var k, i = data_maps[url].queue.length; i--; ) {
-                      site.metadata.info[data_maps[url].queue[i]].schema.fields[fi].ids = data_maps[
-                        data_maps[url].queue[i]
-                      ] = Object.hasOwn(data_maps[url].resource, data_maps[url].queue[i])
-                        ? data_maps[url].resource[data_maps[url].queue[i]]
+                    for (var k, i = data_maps[url].queue.length, u; i--; ) {
+                      k = data_maps[url].queue[i]
+                      site.metadata.info[k].schema.fields[fi].ids = data_maps[k] = Object.hasOwn(
+                        data_maps[url].resource,
+                        k
+                      )
+                        ? data_maps[url].resource[k]
                         : data_maps[url].resource
-                      map_entities(data_maps[url].queue[i])
+                      map_entities(k)
+                      for (u in data_queue[k])
+                        if (Object.hasOwn(data_queue[k], u)) {
+                          data_queue[k][u]()
+                          delete data_queue[k][u]
+                        }
                     }
-                    map_variables()
-                    init_summaries()
-                    init()
                     for (k in _c)
                       if (Object.hasOwn(_c, k)) {
                         request_queue(k)
@@ -2657,17 +2621,16 @@ void (function () {
               }.bind(null, ids[i].map, i)
               f.open('GET', ids[i].map, true)
               f.send()
-              queued = true
             }
           }
       }
-    return queued
   }
 
   function map_variables() {
     var k, v, i, t, ti, m
     for (k in site.metadata.info)
       if (Object.hasOwn(site.metadata.info, k)) {
+        data_queue[k] = {}
         for (m = site.metadata.info[k], t = m.time, v = m.schema.fields, i = v.length; i--; ) {
           if (Object.hasOwn(variables, v[i].name)) {
             variables[v[i].name].datasets.push(k)
@@ -2711,25 +2674,35 @@ void (function () {
 
   function map_entities(g) {
     var id, f
-    for (var id in site.data[g])
-      if (Object.hasOwn(site.data[g], id)) {
-        f = data_maps[g][id] || {id: id}
-        f.id = id
-        entities[id] = {group: g, data: site.data[g][id], variables: variable_info, features: f, summaries: {}}
-        if (f) {
-          entitiesByName[f.name] = entities[id]
-          if (Object.hasOwn(f, 'district') && id.length > 4) {
-            f.county = id.substr(0, 5)
+    if (Object.hasOwn(site.data, g) && !init_log[g]) {
+      for (id in site.data[g]) {
+        if (Object.hasOwn(site.data[g], id)) {
+          f = data_maps[g][id] || {id: id}
+          f.id = id
+          if (Object.hasOwn(entities, id)) {
+            entities[id].group = g
+            entities[id].data = site.data[g][id]
+            entities[id].variables = variable_info
+            entities[id].features = f
+            entities[id].summaries = {}
+          } else {
+            entities[id] = {group: g, data: site.data[g][id], variables: variable_info, features: f, summaries: {}}
+          }
+          if (f) {
+            entitiesByName[f.name] = entities[id]
+            if (Object.hasOwn(f, 'district') && id.length > 4) {
+              f.county = id.substr(0, 5)
+            }
           }
         }
-
-        // fill out location hierarchies
-        // for (var k in f)
-        //   if (Object.hasOwn(site.data, k)) {
-        //     if (!Object.hasOwn(f, 'parents')) f.parents = []
-        //     f.parents.push(f[k])
-        //   }
       }
+      init_log[g] = true
+      if (!init_log.first) {
+        init_summaries()
+        init()
+        init_log.first = true
+      }
+    }
   }
 
   function get_checkfun(e) {
@@ -2850,7 +2823,7 @@ void (function () {
         refresh_conditions(k, force)
       }
     k = get_options_url()
-    if (k !== site.state) {
+    if (init_log.first && k !== site.state) {
       site.state = k
       window.history.replaceState(Date.now(), '', k)
     }
@@ -2953,7 +2926,8 @@ void (function () {
 
   function queue_init_table() {
     if (window.jQuery && window.DataTable && Object.hasOwn(site.dataviews[this.view], 'get')) {
-      this.options.columns = this.headers[site.dataviews[this.view].get.dataset()]
+      const d = site.dataviews[this.view].get.dataset()
+      this.options.columns = this.headers[d]
       this.table = $(this.e).DataTable(this.options)
       this.update()
     } else {
@@ -2963,27 +2937,25 @@ void (function () {
 
   function queue_init() {
     if ('loading' !== document.readyState) {
-      if (!load_id_maps()) {
-        init()
-        init_summaries()
-        map_variables()
-        for (var k in _c)
-          if (Object.hasOwn(_c, k)) {
-            request_queue(k)
-          }
-      }
+      if (!init_log.id_maps) load_id_maps()
     } else {
       setTimeout(queue_init, 5)
     }
   }
 
-  function load_data(url) {
+  function load_data(name, url) {
     var f = new XMLHttpRequest()
     f.onreadystatechange = function () {
       if (4 === f.readyState) {
         if (200 === f.status) {
-          site.data = JSON.parse(f.responseText)
-          queue_init()
+          site.data[name] = JSON.parse(f.responseText)
+          data_loaded[name] = true
+          if (site.partial_init) {
+            queue_init()
+          } else {
+            for (var k in data_loaded) if (Object.hasOwn(data_loaded, k) && !data_loaded[k]) return void 0
+            queue_init()
+          }
         } else {
           throw new Error('load_data failed: ' + f.responseText)
         }

@@ -11,8 +11,8 @@ Offers a framework and toolset for the analysis of communities. Helps (1a) asses
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/miserman/community}
-  \item Report bugs at \url{https://github.com/miserman/community/issues}
+  \item \url{https://github.com/uva-bi-sdad/community}
+  \item Report bugs at \url{https://github.com/uva-bi-sdad/community/issues}
 }
 
 }

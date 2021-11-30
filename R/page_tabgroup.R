@@ -41,11 +41,11 @@ page_tabgroup <- function(..., id = NULL, class = NULL, condition = NULL) {
     if (!"id" %in% ns) e$id <- ids[i]
     if (!"class" %in% ns) e$class <- ""
     if (!"condition" %in% ns) e$condition <- ""
-    head[i] <- paste0(
-      head[i], e$id, '" class="nav-link', if (i == 1) " active" else "",
-      '" aria-selected="', if (i == 1) "true" else "false", '" data-bs-target="#',
+    head[i] <- paste(c(
+      head[i], e$id, '" class="nav-link', if (i == 1) " active",
+      if(i == 1) '" aria-current="page', '" data-bs-target="#',
       e$id, '" id="', e$id, '-tab">', e$name, "</button>"
-    )
+    ), collapse = "")
     body[i] <- paste0(c(
       body[i], e$id, '-tab" class="tab-pane fade', if (i == 1) " show active", if (e$class != "") c(" ", e$class),
       '" id="', e$id, '"', if (e$condition != "") c(' condition="', e$condition, '"'),

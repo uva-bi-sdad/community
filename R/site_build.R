@@ -32,10 +32,7 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
   data_preprocess <- function() {
     ddir <- paste0(dir, "/docs/data/")
     f <- paste0(ddir, "datapackage.json")
-    path <- paste0(dir, "/docs/data.json")
-    last_updated <- if (file.exists(path)) file.mtime(path) else -Inf
-    updated <- FALSE
-    json_data <- list()
+    path <- paste0(dir, "/docs/")
     info <- list()
     if (file.exists(f)) {
       meta <- read_json(f)
@@ -48,9 +45,10 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
           d$schema$fields <- unname(temp[variables])
         }
         file <- paste0(ddir, d$filename)
+        d$site_file <- paste0(d$name, '.json')
+        path <- paste0(dir, '/docs/', d$site_file)
         if (file.exists(file)) {
-          if (force || file.mtime(file) > last_updated) {
-            updated <- TRUE
+          if (force || (!file.exists(path) || file.mtime(file) > file.mtime(path))) {
             data <- fread(file)
             if (!is.null(variables)) data <- data[, variables, with = FALSE]
             if (length(d$time) && d$time[[1]] %in% colnames(data)) {
@@ -63,15 +61,12 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
               ids <- rownames(data)
             }
             rownames(data) <- NULL
-            json_data[[d$name]] <- split(data, ids)
+            write_json(split(data, ids), path, dataframe = "columns")
           }
           info[[d$name]] <- d
         }
       }
-      if (length(json_data) == 1) {
-        json_data <- json_data[[1]]
-        info <- info[[1]]
-      }
+      if (length(info) == 1) info <- info[[1]]
     } else {
       data_files <- list.files(ddir, "\\.(csv|tsv|txt)")
       if (length(data_files)) {
@@ -80,15 +75,14 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
           return(data_preprocess(dir, outdir))
         }
       }
-      json_data <- list()
     }
-    if (updated && length(json_data)) write_json(json_data, path, dataframe = "columns")
     list(
       package = if (file.exists(f)) sub(paste0(dir, "/docs/"), "", f, fixed = TRUE),
       datasets = if (length(meta$resources) == 1) info$name else names(info),
       variables = variables,
       info = info,
-      file = if (file.exists(path)) sub(paste0(dir, "/docs/"), "", path, fixed = TRUE)
+      files = if(length(meta$resources) > 1) names(sort(vapply(info, '[[', 0, 'bytes'))) else
+        list(info$name)
     )
   }
   path <- paste0(dir, "/docs/settings.js")
@@ -97,7 +91,10 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
   } else {
     list()
   }
-  defaults <- list(digits = 3, summary_selection = "all", color_by_order = FALSE, boxplots = TRUE, theme_dark = FALSE)
+  defaults <- list(
+    digits = 3, summary_selection = "all", color_by_order = FALSE, boxplots = TRUE,
+    theme_dark = FALSE, partial_init = FALSE
+  )
   for (s in names(defaults)) if (is.null(settings[[s]])) settings[[s]] <- defaults[[s]]
   if (!is.null(settings$metadata) && !is.null(settings$metadata$variables) &&
     !identical(settings$metadata$variables, variables[variables != "_references"])) {
@@ -152,9 +149,12 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
     '<script type="application/javascript" src="settings.js"></script>',
     if (bundle_data) {
       paste0(
-        '<script type="application/javascript">\nsite.data = ',
-        readLines(paste0(dir, "/docs/data.json")),
-        "\n</script>"
+        '<script type="application/javascript">\nsite.data = {',
+        paste(
+          vapply(settings$metadata$files, function(f)
+            paste0('"', f, '": ', paste(readLines(paste0(dir, "/docs/", f, ".json")), collapse = ""), ",\n"), ""),
+        collapse = ""),
+        "}\n</script>"
       )
     },
     unlist(lapply(parts$dependencies[c(seq_len(length(parts$dependencies) - 4) + 4, 1:4)], function(d) {
@@ -174,13 +174,11 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
     "<body>",
     if (!is.null(parts$header)) parts$header,
     if (!is.null(parts$body)) parts$body,
-    if (!is.null(parts$content)) {
-      c(
-        '<div class="content container-fluid">',
-        parts$content,
-        "</div>"
-      )
-    },
+    if (!is.null(parts$content)) c(
+      '<div class="content container-fluid">',
+      parts$content,
+      "</div>"
+    ),
     parts$script,
     "</body>",
     "</html>"
