@@ -16,16 +16,118 @@
     <loc>/LICENSE.html</loc>
   </url>
   <url>
+    <loc>/reference/add_data.html</loc>
+  </url>
+  <url>
+    <loc>/reference/calculate_access.html</loc>
+  </url>
+  <url>
     <loc>/reference/check_template.html</loc>
   </url>
   <url>
     <loc>/reference/community-package.html</loc>
   </url>
   <url>
+    <loc>/reference/data_add.html</loc>
+  </url>
+  <url>
+    <loc>/reference/data_reformat_sdad.html</loc>
+  </url>
+  <url>
     <loc>/reference/index.html</loc>
   </url>
   <url>
+    <loc>/reference/init_data.html</loc>
+  </url>
+  <url>
+    <loc>/reference/init_function.html</loc>
+  </url>
+  <url>
+    <loc>/reference/init_shiny.html</loc>
+  </url>
+  <url>
+    <loc>/reference/init_site.html</loc>
+  </url>
+  <url>
+    <loc>/reference/init_template.html</loc>
+  </url>
+  <url>
+    <loc>/reference/input_button.html</loc>
+  </url>
+  <url>
+    <loc>/reference/input_buttongroup.html</loc>
+  </url>
+  <url>
+    <loc>/reference/input_checkbox.html</loc>
+  </url>
+  <url>
+    <loc>/reference/input_dataview.html</loc>
+  </url>
+  <url>
+    <loc>/reference/input_number.html</loc>
+  </url>
+  <url>
+    <loc>/reference/input_rule.html</loc>
+  </url>
+  <url>
+    <loc>/reference/input_select.html</loc>
+  </url>
+  <url>
+    <loc>/reference/input_slider.html</loc>
+  </url>
+  <url>
+    <loc>/reference/input_switch.html</loc>
+  </url>
+  <url>
+    <loc>/reference/input_text.html</loc>
+  </url>
+  <url>
+    <loc>/reference/input_variable.html</loc>
+  </url>
+  <url>
     <loc>/reference/measure_catchment.html</loc>
+  </url>
+  <url>
+    <loc>/reference/output_credits.html</loc>
+  </url>
+  <url>
+    <loc>/reference/output_info.html</loc>
+  </url>
+  <url>
+    <loc>/reference/output_legend.html</loc>
+  </url>
+  <url>
+    <loc>/reference/output_map.html</loc>
+  </url>
+  <url>
+    <loc>/reference/output_plot.html</loc>
+  </url>
+  <url>
+    <loc>/reference/output_table.html</loc>
+  </url>
+  <url>
+    <loc>/reference/output_text.html</loc>
+  </url>
+  <url>
+    <loc>/reference/page_head.html</loc>
+  </url>
+  <url>
+    <loc>/reference/page_menu.html</loc>
+  </url>
+  <url>
+    <loc>/reference/page_navbar.html</loc>
+  </url>
+  <url>
+    <loc>/reference/page_section.html</loc>
+  </url>
+  <url>
+    <loc>/reference/page_tabgroup.html</loc>
+  </url>
+  <url>
+    <loc>/reference/page_text.html</loc>
+  </url>
+  <url>
+    <loc>/reference/site_build.html</loc>
   </url>
   <url>
     <loc>/reference/template_data.html</loc>

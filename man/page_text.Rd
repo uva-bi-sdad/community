@@ -15,7 +15,7 @@ links to be embedded, in the form \code{"[text](url)"}.}
 \item{tag}{The tag name of each element.}
 }
 \value{
-<template: Description of what is returned.>
+A character vector of the content to be added.
 }
 \description{
 Adds regular text elements to a website.

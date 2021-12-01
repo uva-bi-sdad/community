@@ -5,7 +5,7 @@
 #' @param label Label of the input for the user.
 #' @param id Unique id of the element to be created.
 #' @param ... Additional attributes to set on the element.
-#' @param default_on Logical; if \code{FALSE}, the switch will start off.
+#' @param default_on Logical; if \code{TRUE}, the switch will start on.
 #' @param as.checkbox Logical; if \code{TRUE}, display the switch as a checkbox.
 #' @examples
 #' \dontrun{
@@ -15,7 +15,7 @@
 #' @seealso For a group of switches, checkboxes, or radio buttons, use \code{\link{input_checkbox}}.
 #' @export
 
-input_switch <- function(label, id = label, ..., default_on = TRUE, as.checkbox = FALSE) {
+input_switch <- function(label, id = label, ..., default_on = FALSE, as.checkbox = FALSE) {
   id <- gsub("\\s", "", id)
   a <- list(...)
   r <- c(

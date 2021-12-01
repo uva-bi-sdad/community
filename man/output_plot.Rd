@@ -5,7 +5,7 @@
 \title{Add a plot to a webpage}
 \usage{
 output_plot(x = NULL, y = NULL, color = NULL, color_time = NULL,
-  dataview = NULL, click = NULL, subto = NULL, options = NULL)
+  dataview = NULL, click = NULL, subto = NULL, options = list())
 }
 \arguments{
 \item{x}{Default title at the top of the element.}

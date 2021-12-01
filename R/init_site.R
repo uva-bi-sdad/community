@@ -4,8 +4,6 @@
 #'
 #' @param title Title of the site.
 #' @param dir Directory in which to create the site's directory.
-#' @param settings A list with options to be passed to the site. These will be written to \code{settings.json},
-#' which can be edited by hand.
 #' @param with_data logical; if \code{FALSE}, a data sub-directory and package will not be created.
 #' @param overwrite logical; if \code{TRUE}, will overwrite existing site files in \code{dir}.
 #' @examples
@@ -15,14 +13,14 @@
 #' @return Path to the created site directory.
 #' @export
 
-init_site <- function(title = "app", dir = ".", with_data = TRUE, settings = list(), overwrite = FALSE) {
+init_site <- function(title = "app", dir = ".", with_data = TRUE, overwrite = FALSE) {
   check <- check_template("site", dir = dir)
   if (check$exists && !overwrite) {
     cli_bullets(c(`!` = "site files already exist", i = "add {.code overwrite = TRUE} to overwrite them"))
   }
   dir <- normalizePath(paste0(dir, "/", check$spec$dir), "/", FALSE)
   dir.create(dir, FALSE, TRUE)
-  paths <- paste0(dir, "/", c("README.md", "site.R", "package.json", "server.js", ".gitignore"))
+  paths <- paste0(dir, "/", c("README.md", "site.R", "package.json", "server.js", ".gitignore", "build.R"))
   if (!file.exists(paths[1])) {
     writeLines(paste(c(
       paste("#", title),
@@ -40,18 +38,19 @@ init_site <- function(title = "app", dir = ".", with_data = TRUE, settings = lis
   if (!file.exists(paths[2])) {
     writeLines(paste(c(
       "library(community)",
+      "# prepare and connect data in build.R",
       "",
       "# use `page_` functions to add parts of a page:",
       'page_navbar("Motor Trend Car Road Tests")',
       "",
       "# use `input_` functions to add input elements that affect outputs:",
-      'input_select("variable", options = "variables", label = "Select a Variable", default = "wt")',
+      'input_select("Select a Variable", options = "variables", label = "variable", default = "wt")',
       "",
       "# use `output_` functions to data display components:",
-      'output_plot("mpg", "variable")',
+      'output_plot("variable", "mpg")',
       "",
       "# render the site:",
-      paste0('site_build("', dir, '", open_after = TRUE)'),
+      paste0('site_build("', dir, '", bundle_data = TRUE, open_after = TRUE)'),
       ""
     ), collapse = "\n"), paths[2])
   }
@@ -90,8 +89,23 @@ init_site <- function(title = "app", dir = ".", with_data = TRUE, settings = lis
       "*.Rproj",
       "node-module",
       "package-lock.json",
+      "build.R",
       ""
     ), collapse = "\n"), paths[5])
+  }
+  if (!file.exists(paths[6])) {
+    writeLines(paste(c(
+      "# if there are datasets to add, include any preprocessing steps here",
+      paste0('write.csv(cbind(name = rownames(mtcars), mtcars), "', dir, '/docs/data/mtcars.csv", row.names = FALSE)'),
+      "",
+      "# then add them to the site:",
+      paste0(
+        'data_add(\n  c(mtcars = "mtcars.csv"),\n  meta = list(\n    ids = list(variable = "name")\n  ),\n  dir = "',
+        dir, '/docs/data",\n  refresh = TRUE\n)'
+      ),
+      "",
+      "# now edit the site and build it from site.R"
+    ), collapse = "\n"), paths[6])
   }
   dir.create(paste0(dir, "/docs"), FALSE)
   docs <- paste0(dir, "/docs/", c("index.html", "settings.js", "script.js", "style.css"))

@@ -187,7 +187,6 @@ button.btn-danger{background-color: var(--warning)}
 .legend-text span:last-of-type{text-align: right}
 .legend-scale{width: 100%; height: 30px; display: table}
 .legend-scale span{height: 100%; display: table-cell}
-.plot-container{margin: 0 0 0 -1em !important}
 .leaflet-container{background: var(--background)}
 .dataTables_wrapper .row:first-of-type{padding: 0 0 .5em 0}
 table.dataTable tbody tr.dtrg-group.dtrg-group{background-color: var(--background-highlight); font-weight: bold}

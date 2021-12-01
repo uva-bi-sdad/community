@@ -53,3 +53,19 @@ init_data("example_data", path = "data.csv")
 init_data("example_data", overwrite = TRUE)
 add_data("data.csv")
 ```
+
+### Making a Data Site
+Data sites build off of data documentation to present datasets interactively.
+
+This example creates a site to explore the `mtcars` dataset:
+```R
+# initialize the site in a new directory
+init_site("example_site", dir = "../example_site")
+
+# use the created build.R file to prepare and add data
+# the result should be a plain-text, tabular file with variables in columns
+source("../example_site/build.R")
+
+# finally, specify the site in the site.R file, then build it
+site_build("../example_site", bundle_data = TRUE, open_after = TRUE)
+```

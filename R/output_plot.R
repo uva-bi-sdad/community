@@ -21,7 +21,7 @@
 #' @export
 
 output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dataview = NULL,
-                        click = NULL, subto = NULL, options = NULL) {
+                        click = NULL, subto = NULL, options = list()) {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   id <- 0
@@ -29,6 +29,23 @@ output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dat
   if (is.character(options)) options <- fromJSON(options)
   if ("x" %in% names(options)) options <- options$x
   options <- options[entries[entries %in% names(options)]]
+  defaults <- list(
+    layout = list(hovermode = "closest", margin = list(t = 25, r = 10, b = 40, l = 60)),
+    config = list(
+      showSendToCloud = FALSE, responsive = TRUE, showTips = FALSE, displaylogo = FALSE,
+      modeBarButtonsToAdd = c("hoverclosest", "hovercompare")
+    ),
+    data = data.frame(hoverinfo = "text", mode = "lines+markers", type = "scatter")
+  )
+  so <- names(options)
+  for (e in names(defaults)) {
+    if (!e %in% so) {
+      options[[e]] <- defaults[[e]]
+    } else {
+      soo <- names(options[[e]])
+      for (eo in names(defaults[[e]])) if (!eo %in% soo) options[[e]][[eo]] <- defaults[[e]][[eo]]
+    }
+  }
   options$subto <- if (!is.null(subto) && length(subto) == 1) list(subto) else subto
   r <- paste(c(
     '<div class="auto-output plotly"',

@@ -43,7 +43,7 @@ page_tabgroup <- function(..., id = NULL, class = NULL, condition = NULL) {
     if (!"condition" %in% ns) e$condition <- ""
     head[i] <- paste(c(
       head[i], e$id, '" class="nav-link', if (i == 1) " active",
-      if(i == 1) '" aria-current="page', '" data-bs-target="#',
+      if (i == 1) '" aria-current="page', '" data-bs-target="#',
       e$id, '" id="', e$id, '-tab">', e$name, "</button>"
     ), collapse = "")
     body[i] <- paste0(c(

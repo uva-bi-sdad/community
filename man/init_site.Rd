@@ -4,8 +4,7 @@
 \alias{init_site}
 \title{Create a website}
 \usage{
-init_site(title = "app", dir = ".", with_data = TRUE,
-  settings = list(), overwrite = FALSE)
+init_site(title = "app", dir = ".", with_data = TRUE, overwrite = FALSE)
 }
 \arguments{
 \item{title}{Title of the site.}
@@ -13,9 +12,6 @@ init_site(title = "app", dir = ".", with_data = TRUE,
 \item{dir}{Directory in which to create the site's directory.}
 
 \item{with_data}{logical; if \code{FALSE}, a data sub-directory and package will not be created.}
-
-\item{settings}{A list with options to be passed to the site. These will be written to \code{settings.json},
-which can be edited by hand.}
 
 \item{overwrite}{logical; if \code{TRUE}, will overwrite existing site files in \code{dir}.}
 }

@@ -8,6 +8,8 @@
 #' @param name Path to the site project directory.
 #' @param variables A character vector of variable names to include from the data. If no specified,
 #' all variables are included.
+#' @param options A list with options to be passed to the site. These will be written to \code{settings.js},
+#' which can be edited by hand.
 #' @param bundle_data Logical; if \code{TRUE}, will write the data to the site file; useful when
 #' running the site locally without server. Otherwise, the data will be loaded separately through an http request.
 #' @param open_after Logical; if \code{TRUE}, will open the site in a browser after it is built.
@@ -23,7 +25,7 @@
 #' @export
 
 site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "index.html", variables = NULL,
-                       bundle_data = FALSE, open_after = FALSE, force = FALSE) {
+                       options = list(), bundle_data = FALSE, open_after = FALSE, force = FALSE) {
   page <- paste0(dir, "/", file)
   if (!file.exists(page)) cli_abort("{.file {page}} does not exist")
   out <- paste(c(dir, outdir, name), collapse = "/")
@@ -45,8 +47,8 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
           d$schema$fields <- unname(temp[variables])
         }
         file <- paste0(ddir, d$filename)
-        d$site_file <- paste0(d$name, '.json')
-        path <- paste0(dir, '/docs/', d$site_file)
+        d$site_file <- paste0(d$name, ".json")
+        path <- paste0(dir, "/docs/", d$site_file)
         if (file.exists(file)) {
           if (force || (!file.exists(path) || file.mtime(file) > file.mtime(path))) {
             data <- fread(file)
@@ -66,7 +68,6 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
           info[[d$name]] <- d
         }
       }
-      if (length(info) == 1) info <- info[[1]]
     } else {
       data_files <- list.files(ddir, "\\.(csv|tsv|txt)")
       if (length(data_files)) {
@@ -78,24 +79,28 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
     }
     list(
       package = if (file.exists(f)) sub(paste0(dir, "/docs/"), "", f, fixed = TRUE),
-      datasets = if (length(meta$resources) == 1) info$name else names(info),
+      datasets = if (length(meta$resources) == 1) list(names(info)) else names(info),
       variables = variables,
       info = info,
-      files = if(length(meta$resources) > 1) names(sort(vapply(info, '[[', 0, 'bytes'))) else
-        list(info$name)
+      files = names(sort(vapply(info, "[[", 0, "bytes")))
     )
   }
   path <- paste0(dir, "/docs/settings.js")
   settings <- if (file.exists(path) && file.size(path)) {
     fromJSON(sub("^[^{]*", "", paste(readLines(path), collapse = "")))
   } else {
-    list()
+    list(settings = options)
   }
   defaults <- list(
     digits = 3, summary_selection = "all", color_by_order = FALSE, boxplots = TRUE,
-    theme_dark = FALSE, partial_init = FALSE
+    theme_dark = FALSE, partial_init = TRUE, palette = "rdylbu7", hide_url_parameters = FALSE
   )
-  for (s in names(defaults)) if (is.null(settings[[s]])) settings[[s]] <- defaults[[s]]
+  for (s in names(defaults)) {
+    if (!is.null(options[[s]])) {
+      settings$settings[[s]] <- options[[s]]
+    } else
+    if (is.null(settings$settings[[s]])) settings$settings[[s]] <- defaults[[s]]
+  }
   if (!is.null(settings$metadata) && !is.null(settings$metadata$variables) &&
     !identical(settings$metadata$variables, variables[variables != "_references"])) {
     force <- TRUE
@@ -147,16 +152,16 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
     '<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />',
     '<meta name="viewport" content="width=device-width,initial-scale=1" />',
     '<script type="application/javascript" src="settings.js"></script>',
-    if (bundle_data) {
-      paste0(
-        '<script type="application/javascript">\nsite.data = {',
-        paste(
-          vapply(settings$metadata$files, function(f)
-            paste0('"', f, '": ', paste(readLines(paste0(dir, "/docs/", f, ".json")), collapse = ""), ",\n"), ""),
-        collapse = ""),
-        "}\n</script>"
-      )
-    },
+    if (bundle_data) paste0(
+      '<script type="application/javascript">\nsite.data = {',
+      paste(
+        vapply(settings$metadata$files, function(f) {
+          paste0('"', f, '": ', paste(readLines(paste0(dir, "/docs/", f, ".json")), collapse = ""), ",\n")
+        }, ""),
+        collapse = ""
+      ),
+      "}\n</script>"
+    ),
     unlist(lapply(parts$dependencies[c(seq_len(length(parts$dependencies) - 4) + 4, 1:4)], function(d) {
       if (!d$src %in% c("script.js", "style.css") || (file.exists(paste0(dir, "/docs/", d$src)) &&
         file.size(paste0(dir, "/docs/", d$src)))) {

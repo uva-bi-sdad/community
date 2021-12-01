@@ -33,6 +33,9 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, opti
   options$dataset <- dataset
   options$wide <- wide
   options$single_variable <- !is.null(variables) && single_variable && is.null(filters)
+  defaults <- list(paging = FALSE, scrollY = 500, scrollX = 500, scrollCollapse = TRUE)
+  so <- names(options)
+  for (n in names(defaults)) if (!n %in% so) options[[n]] <- defaults[[n]]
   r <- paste(c(
     paste0('<table class="auto-output datatables', if (is.null(class)) "" else paste("", class), '"'),
     if (!is.null(dataview)) paste0('data-view="', dataview, '"'),
