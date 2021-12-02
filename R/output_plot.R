@@ -11,7 +11,7 @@
 #' @param subto A vector of output IDs to receive hover events from.
 #' @param options A list of configuration options, with named entries for any of \code{data}, \code{layout},
 #' or \code{options}, potentially extracted from a saved plotly object (see
-#' \href{https://plotly.com/javascript/confguration-options}{Plotly documentation}).
+#' \href{https://plotly.com/javascript/configuration-options}{Plotly documentation}).
 #' @examples
 #' \dontrun{
 #' # for mpg ~ wt * am in a site based on mtcars data
