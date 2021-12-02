@@ -2,8 +2,8 @@
 #'
 #' Adds a Plotly plot to a webpage, based on specified or selected variables.
 #'
-#' @param x Default title at the top of the element.
-#' @param y Default message below the title, to be replaced by the information table.
+#' @param x The name of a variable to plot along the x-axis.
+#' @param y The name of a variable to plot along the y-axis.
 #' @param color The name of a variable, or ID of a variable selector to use to color lines.
 #' @param color_time The ID of a selector to specify which timepoint of \code{color} to use.
 #' @param dataview The ID of an \code{\link{input_dataview}} component.
