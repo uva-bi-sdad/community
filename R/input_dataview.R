@@ -17,9 +17,6 @@
 #' with entries for \code{"variable"} (which variable is being filtered, which can be \code{"index"}),
 #' \code{"type"} (specifying the operator, such as \code{">"}), and \code{"value"}. The value of each entry
 #' can be static (e.g., referring to a variable) or the ID of an input.
-#' @param palette The name of the color palette used in maps and plots (from
-#' \href{https://colorbrewer2.org}{colorbrewer}); one of \code{"rdylbu7"} (default), \code{"orrd7"}, \code{"gnbu7"},
-#' \code{"brbg7"}, \code{"puor7"}, \code{"prgn6"}, \code{"reds5"}, \code{"greens5"}, \code{"greys4"}, \code{"paired4"}.
 #' @param dataset Select which dataset to pull from; the name of an included dataset, or ID of a
 #' selector of dataset names.
 #' @param ids Select which IDs to include; a vector of IDs that appear in the specified dataset, or the ID of a
@@ -27,6 +24,13 @@
 #' @param features Select IDs based on their features; a named list or vector, with names corresponding to
 #' the names of features included in an \code{ids} field of the site's datapackage, and values corresponding to
 #' a value or vector of values, or a selector of values.
+#' @param variables Select IDs based on the values of their variables; a list of lists with entries for
+#' \code{"variable"} (name of the variable), \code{"type"} (comparison operator), and \code{"value"} (value to
+#' check against). For example, \code{list(list(variable = "a", type = ">", value = 0))}. Each entry
+#' may also refer to another input.
+#' @param palette The name of the color palette used in maps and plots (from
+#' \href{https://colorbrewer2.org}{colorbrewer}); one of \code{"rdylbu7"} (default), \code{"orrd7"}, \code{"gnbu7"},
+#' \code{"brbg7"}, \code{"puor7"}, \code{"prgn6"}, \code{"reds5"}, \code{"greens5"}, \code{"greys4"}, \code{"paired4"}.
 #' @examples
 #' \dontrun{
 #' input_dataview()
@@ -35,7 +39,7 @@
 #' @export
 
 input_dataview <- function(id = NULL, y = NULL, x = NULL, time = NULL, time_agg = "last", time_filters = list(),
-                           dataset = NULL, ids = NULL, features = NULL, palette = "rdylbu7") {
+                           dataset = NULL, ids = NULL, features = NULL, variables = NULL, palette = "rdylbu7") {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   r <- list(palette = tolower(palette))
@@ -47,6 +51,7 @@ input_dataview <- function(id = NULL, y = NULL, x = NULL, time = NULL, time_agg 
   if (!is.null(dataset)) r$dataset <- dataset
   if (!is.null(ids)) r$ids <- ids
   if (!is.null(features)) r$features <- as.list(features)
+  if (!is.null(variables)) r$variables <- if (!is.list(variables[[1]])) list(variables) else variables
   if (length(r) && building) {
     caller$dataviews[[if (is.null(id)) paste0("view", length(caller$dataviews)) else id]] <- r
   }

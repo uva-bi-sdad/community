@@ -270,6 +270,11 @@ void (function () {
                   f.n_selected.features++
                   c.all++
                 }
+                if (c.variables) {
+                  f.selection.variables[id] = entities[id]
+                  f.n_selected.variables++
+                  c.all++
+                }
                 if (c.dataset) {
                   f.selection.dataset[id] = entities[id]
                   f.n_selected.dataset++
@@ -279,7 +284,7 @@ void (function () {
                   f.selection.filtered[id] = entities[id]
                   f.n_selected.filtered++
                 }
-                if (3 === c.all) {
+                if (4 === c.all) {
                   if (!first_all) first_all = id
                   f.selection.all[id] = entities[id]
                   f.n_selected.all++
@@ -518,7 +523,7 @@ void (function () {
           this.set(this.e.value)
         },
         setter: function (v) {
-          if ('string' === typeof v) v = parseFloat(v)
+          if (v && 'string' === typeof v) v = parseFloat(v)
           if (isFinite(v) && v !== this.source) {
             this.previous = parseFloat(this.e.value)
             this.e.value = this.source = v
@@ -1315,11 +1320,7 @@ void (function () {
                   for (k in v.selection.all)
                     if (Object.hasOwn(v.selection.all, k)) {
                       if (vn) {
-                        if (
-                          Object.hasOwn(v.selection.all[k].summaries, d) &&
-                          Object.hasOwn(v.selection.all[k].summaries[d], vn) &&
-                          v.selection.all[k].summaries[d][vn].n
-                        )
+                        if (Object.hasOwn(v.selection.all[k].summary, vn) && v.selection.all[k].summary[vn].n)
                           this.table.row.add(v.selection.all[k])
                       } else {
                         for (i = meta.time_n; i--; ) {
@@ -1332,11 +1333,7 @@ void (function () {
                   for (k in v.selection.all)
                     if (Object.hasOwn(v.selection.all, k)) {
                       if (this.options.single_variable) {
-                        if (
-                          Object.hasOwn(v.selection.all[k].summaries, d) &&
-                          Object.hasOwn(v.selection.all[k].summaries[d], vn) &&
-                          v.selection.all[k].summaries[d][vn].n
-                        )
+                        if (Object.hasOwn(v.selection.all[k].summary, vn) && v.selection.all[k].summary[vn].n)
                           this.table.row.add(v.selection.all[k])
                       } else {
                         for (c in this.filters)
@@ -1354,8 +1351,8 @@ void (function () {
                           }
                           if (pass)
                             for (
-                              n = v.selection.all[k].summaries[d][vn].time_range[1],
-                                i = v.selection.all[k].summaries[d][vn].time_range[0];
+                              n = v.selection.all[k].summary[vn].time_range[1],
+                                i = v.selection.all[k].summary[vn].time_range[0];
                               i <= n;
                               i++
                             ) {
@@ -2158,7 +2155,7 @@ void (function () {
     for (k in _u)
       if (Object.hasOwn(_u, k) && _u[k].input && !patterns.settings.test(k)) {
         v = _u[k].value()
-        if ('' !== v && '-1' !== v) s += (s ? '&' : '?') + k + '=' + v
+        if (null !== v && '' !== v && '-1' !== v) s += (s ? '&' : '?') + k + '=' + v
       }
     return window.location.protocol + '//' + window.location.host + window.location.pathname + s
   }
@@ -2197,7 +2194,10 @@ void (function () {
         // retrieve option values
         if ('number' === o.type) {
           o.min = o.e.getAttribute('min')
+          o.min_ref = parseFloat(o.min)
           o.max = o.e.getAttribute('max')
+          o.max_ref = parseFloat(o.max)
+          o.ref = isNaN(o.min_ref) || isNaN(o.max_ref)
           o.range = [o.min, o.max]
           o.step = parseFloat(o.e.step) || 1
           o.parsed = {min: undefined, max: undefined}
@@ -2211,25 +2211,33 @@ void (function () {
               max = valueOf(this.max) || view.time
             if (patterns.minmax.test(min)) min = _u[this.min][min]
             if (patterns.minmax.test(max)) max = _u[this.max][max]
-            this.parsed.min =
-              'undefined' === typeof min
+            this.parsed.min = isNaN(this.min_ref)
+              ? 'undefined' === typeof min
                 ? view.time_range.time[0]
                 : 'number' === typeof min
                 ? min
                 : Object.hasOwn(variables, min)
                 ? variables[min].info[d || variables[min].datasets[0]].min
                 : parseFloat(min)
-            this.parsed.max =
-              'undefined' === typeof max
+              : this.min_ref
+            this.parsed.max = isNaN(this.max_ref)
+              ? 'undefined' === typeof max
                 ? view.time_range.time[1]
                 : 'number' === typeof max
                 ? max
                 : Object.hasOwn(variables, max)
                 ? variables[max].info[d || variables[max].datasets[0]].max
                 : parseFloat(max)
-            if (variable && Object.hasOwn(variables, variable)) {
-              this.range[0] = this.e.min = v = Math.max(view.time_range.time[0], this.parsed.min)
-              this.range[1] = this.e.max = v = Math.min(view.time_range.time[1], this.parsed.max)
+              : this.min_ref
+            if (this.ref && variable && Object.hasOwn(variables, variable)) {
+              this.range[0] =
+                this.e.min =
+                v =
+                  isNaN(this.min_ref) ? Math.max(view.time_range.time[0], this.parsed.min) : this.min_ref
+              this.range[1] =
+                this.e.max =
+                v =
+                  isNaN(this.max_ref) ? Math.min(view.time_range.time[1], this.parsed.max) : this.max_ref
               if (!this.depends[view.y]) {
                 this.depends[view.y] = true
                 add_dependency(view.y, {type: 'update', id: this.id})
@@ -2243,7 +2251,7 @@ void (function () {
               if (this.parsed.max < this.source || (!this.source && 'max' === this.default)) this.set(this.parsed.max)
             }
           }.bind(o)
-          setTimeout(o.update, 0)
+          // setTimeout(o.update, 0)
           if (o.view) {
             add_dependency(o.view, {type: 'update', id: o.id})
           } else if (o.dataset) {
@@ -2363,8 +2371,13 @@ void (function () {
         e.value = function () {
           if (this.get) {
             var k,
-              s = '' + this.get.dataset() + this.get.ids()
-            for (k in this.get.features) if (Object.hasOwn(this.get.features, k)) s += this.get.features[k]()
+              s =
+                '' +
+                this.get.dataset() +
+                this.get.ids() +
+                this.get.features() +
+                this.get.variables() +
+                site.settings.summary_selection
             return s
           }
         }.bind(e)
@@ -2390,6 +2403,24 @@ void (function () {
             if ('string' === typeof e.features[cond] && Object.hasOwn(_u, e.features[cond])) {
               add_dependency(e.features[cond], {type: 'dataview', id: k})
             }
+          }
+        if (e.variables)
+          for (i = e.variables.length; i--; ) {
+            if (Object.hasOwn(e.variables[i], 'variable')) {
+              if (Object.hasOwn(_u, e.variables[i].variable)) {
+                add_dependency(e.variables[i].variable, {type: 'dataview', id: k})
+              }
+            } else e.variables.splice(i, 1)
+            if (Object.hasOwn(e.variables[i], 'type')) {
+              if (Object.hasOwn(_u, e.variables[i].type)) {
+                add_dependency(e.variables[i].type, {type: 'dataview', id: k})
+              }
+            } else e.variables[i].type = '='
+            if (Object.hasOwn(e.variables[i], 'value')) {
+              if (Object.hasOwn(_u, e.variables[i].value)) {
+                add_dependency(e.variables[i].value, {type: 'dataview', id: k})
+              }
+            } else e.variables[i].value = 0
           }
       }
     if ('default_view' === defaults.dataview) conditionals.dataview(_u['default_view'])
@@ -2536,12 +2567,11 @@ void (function () {
     for (k in s)
       if (Object.hasOwn(s, k)) {
         en = s[k]
-        if (!Object.hasOwn(en.summaries, dataset)) en.summaries[dataset] = {}
-        if (!Object.hasOwn(en.summaries[dataset], measure))
-          en.summaries[dataset][measure] = {n: 0, time_range: [Infinity, -Infinity]}
-        en.summaries[dataset][measure].n = 0
-        en.summaries[dataset][measure].time_range[0] = Infinity
-        en.summaries[dataset][measure].time_range[1] = -Infinity
+        if (!Object.hasOwn(en.summary, measure))
+          en.summary[measure] = {n: 0, time_range: [Infinity, -Infinity], overall: ms, order: mo}
+        en.summary[measure].n = 0
+        en.summary[measure].time_range[0] = Infinity
+        en.summary[measure].time_range[1] = -Infinity
         id = en.features.id
         for (y = 0; y < ny; y++) {
           dim = en.data[measure][y]
@@ -2549,9 +2579,9 @@ void (function () {
             mo[y].push([id, dim])
           }
           if ('number' === typeof dim) {
-            en.summaries[dataset][measure].n++
-            if (y < en.summaries[dataset][measure].time_range[0]) en.summaries[dataset][measure].time_range[0] = y
-            if (y > en.summaries[dataset][measure].time_range[1]) en.summaries[dataset][measure].time_range[1] = y
+            en.summary[measure].n++
+            if (y < en.summary[measure].time_range[0]) en.summary[measure].time_range[0] = y
+            if (y > en.summary[measure].time_range[1]) en.summary[measure].time_range[1] = y
             ms.sum[y] += dim
             ms.n[y]++
             if (dim > ms.max[y]) ms.max[y] = dim
@@ -2596,7 +2626,9 @@ void (function () {
           ms.min[y] = 0
         }
         ms.norm_median[y] =
-          'number' === typeof ms.max[y] ? (ms.median[y] - ms.min[y]) / (ms.max[y] - ms.min[y]) : ms.median[y]
+          'number' === typeof ms.max[y] && ms.max[y] - ms.min[y]
+            ? (ms.median[y] - ms.min[y]) / (ms.max[y] - ms.min[y])
+            : ms.median[y]
       }
     } else {
       for (y = 0; y < ny; y++) {
@@ -2745,9 +2777,9 @@ void (function () {
             entities[id].data = site.data[g][id]
             entities[id].variables = variable_info
             entities[id].features = f
-            entities[id].summaries = {}
+            entities[id].summary = {}
           } else {
-            entities[id] = {group: g, data: site.data[g][id], variables: variable_info, features: f, summaries: {}}
+            entities[id] = {group: g, data: site.data[g][id], variables: variable_info, features: f, summary: {}}
           }
           if (f) {
             entitiesByName[f.name] = entities[id]
@@ -2771,16 +2803,16 @@ void (function () {
   }
 
   function compile_dataview(v) {
-    var i, k
-    v.times = {}
+    var i
+    v.times = []
     if (v.time_filters) {
       for (i = v.time_filters.length; i--; )
         if (Object.hasOwn(_u, v.time_filters[i].value)) {
           add_dependency(v.time_filters[i].value, {type: 'time_filters', id: v.id})
         }
     }
-    v.selection = {ids: {}, features: {}, dataset: {}, filtered: {}, all: {}}
-    v.n_selected = {ids: 0, features: 0, dataset: 0, filtered: 0, all: 0}
+    v.selection = {ids: {}, features: {}, variables: [], dataset: {}, filtered: {}, all: {}}
+    v.n_selected = {ids: 0, features: 0, variables: 0, dataset: 0, filtered: 0, all: 0}
     v.get = {
       dataset: function () {
         return valueOf(
@@ -2790,18 +2822,25 @@ void (function () {
       ids: function () {
         return valueOf('string' === typeof v.ids && Object.hasOwn(_u, v.ids) ? _u[v.ids].value() : v.ids)
       },
-      features: {},
+      features: function () {
+        var s = '',
+          k
+        if (v.features)
+          for (k in v.features)
+            if (Object.hasOwn(v.features, k)) {
+              s += k + valueOf(v.features[k])
+            }
+        s
+      },
+      variables: function () {
+        if (v.variables) {
+          for (var s = '', i = v.variables.length; i--; )
+            s += valueOf(v.variables[i].variable) + valueOf(v.variables[i].type) + valueOf(v.variables[i].value)
+          return s
+        } else return ''
+      },
     }
     v.ids_check = get_checkfun(v.get.ids())
-    v.feature_checks = {}
-    if (v.features)
-      for (k in v.features)
-        if (Object.hasOwn(v.features, k)) {
-          v.get.features[k] = function () {
-            return valueOf(v.features[k])
-          }
-          v.feature_checks[k] = get_checkfun(valueOf(v.features[k]))
-        }
     v.k = ''
     v.checks = {
       dataset: function (e) {
@@ -2834,18 +2873,44 @@ void (function () {
           }
       ).bind(v),
       features: function (e) {
-        for (this.k in this.features)
-          if (Object.hasOwn(this.features, this.k)) {
-            return (
-              e.features && this.feature_checks[this.k](valueOf(this.features[this.k]), valueOf(e.features[this.k]))
-            )
+        if (e.features) {
+          var v,
+            pass = true
+          for (this.k in this.features) {
+            if (Object.hasOwn(this.features, this.k)) {
+              v = valueOf(this.features[this.k])
+              pass = check_funs['string' === typeof v ? 'equals' : 'includes'](v, valueOf(e.features[this.k]))
+              if (!pass) break
+            }
           }
+          return pass
+        } else return true
+      }.bind(v),
+      variables: function (e) {
+        if (e.data) {
+          const t = valueOf(this.time_agg) - meta.time_range[0]
+          var i,
+            n,
+            v,
+            pass = true
+          for (i = this.variables.length; i--; ) {
+            n = valueOf(this.variables[i].variable)
+            v = valueOf(this.variables[i].value)
+            pass =
+              !Object.hasOwn(e.data, n) ||
+              typeof v !== typeof e.data[n][t] ||
+              check_funs[valueOf(this.variables[i].type)](v, e.data[n][t])
+            if (!pass) break
+          }
+          return pass
+        } else return true
       }.bind(v),
     }
     v.check = function (e) {
       return {
         ids: !this.ids || this.checks.ids(e),
         features: !this.features || this.checks.features(e),
+        variables: !this.variables || this.checks.variables(e),
         dataset: !this.dataset || this.checks.dataset(e),
       }
     }.bind(v)

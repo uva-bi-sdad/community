@@ -6,7 +6,7 @@
 \usage{
 input_dataview(id = NULL, y = NULL, x = NULL, time = NULL,
   time_agg = "last", time_filters = list(), dataset = NULL, ids = NULL,
-  features = NULL, palette = "rdylbu7")
+  features = NULL, variables = NULL, palette = "rdylbu7")
 }
 \arguments{
 \item{id}{An ID of the data view, for association with output elements. Defaults to \code{'view'} appended
@@ -39,6 +39,11 @@ selector of IDs. If an IDs map is included in the site's datapackage, mapped com
 \item{features}{Select IDs based on their features; a named list or vector, with names corresponding to
 the names of features included in an \code{ids} field of the site's datapackage, and values corresponding to
 a value or vector of values, or a selector of values.}
+
+\item{variables}{Select IDs based on the values of their variables; a list of lists with entries for
+\code{"variable"} (name of the variable), \code{"type"} (comparison operator), and \code{"value"} (value to
+check against). For example, \code{list(list(variable = "a", type = ">", value = 0))}. Each entry
+may also refer to another input.}
 
 \item{palette}{The name of the color palette used in maps and plots (from
 \href{https://colorbrewer2.org}{colorbrewer}); one of \code{"rdylbu7"} (default), \code{"orrd7"}, \code{"gnbu7"},

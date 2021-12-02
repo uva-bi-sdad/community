@@ -8,9 +8,9 @@ output_plot(x = NULL, y = NULL, color = NULL, color_time = NULL,
   dataview = NULL, click = NULL, subto = NULL, options = list())
 }
 \arguments{
-\item{x}{Default title at the top of the element.}
+\item{x}{The name of a variable to plot along the x-axis.}
 
-\item{y}{Default message below the title, to be replaced by the information table.}
+\item{y}{The name of a variable to plot along the y-axis.}
 
 \item{color}{The name of a variable, or ID of a variable selector to use to color lines.}
 
@@ -24,7 +24,7 @@ output_plot(x = NULL, y = NULL, color = NULL, color_time = NULL,
 
 \item{options}{A list of configuration options, with named entries for any of \code{data}, \code{layout},
 or \code{options}, potentially extracted from a saved plotly object (see
-\href{https://plotly.com/javascript/confguration-options}{Plotly documentation}).}
+\href{https://plotly.com/javascript/configuration-options}{Plotly documentation}).}
 }
 \value{
 A character vector of the content to be added.

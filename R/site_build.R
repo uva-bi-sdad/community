@@ -24,7 +24,7 @@
 #' @seealso To initialize a site project, use \code{\link{init_site}}.
 #' @export
 
-site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "index.html", variables = NULL,
+site_build <- function(dir = ".", file = "site.R", outdir = "docs", name = "index.html", variables = NULL,
                        options = list(), bundle_data = FALSE, open_after = FALSE, force = FALSE) {
   page <- paste0(dir, "/", file)
   if (!file.exists(page)) cli_abort("{.file {page}} does not exist")
@@ -152,16 +152,18 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
     '<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />',
     '<meta name="viewport" content="width=device-width,initial-scale=1" />',
     '<script type="application/javascript" src="settings.js"></script>',
-    if (bundle_data) paste0(
-      '<script type="application/javascript">\nsite.data = {',
-      paste(
-        vapply(settings$metadata$files, function(f) {
-          paste0('"', f, '": ', paste(readLines(paste0(dir, "/docs/", f, ".json")), collapse = ""), ",\n")
-        }, ""),
-        collapse = ""
-      ),
-      "}\n</script>"
-    ),
+    if (bundle_data) {
+      paste0(
+        '<script type="application/javascript">\nsite.data = {',
+        paste(
+          vapply(settings$metadata$files, function(f) {
+            paste0('"', f, '": ', paste(readLines(paste0(dir, "/docs/", f, ".json")), collapse = ""), ",\n")
+          }, ""),
+          collapse = ""
+        ),
+        "}\n</script>"
+      )
+    },
     unlist(lapply(parts$dependencies[c(seq_len(length(parts$dependencies) - 4) + 4, 1:4)], function(d) {
       if (!d$src %in% c("script.js", "style.css") || (file.exists(paste0(dir, "/docs/", d$src)) &&
         file.size(paste0(dir, "/docs/", d$src)))) {
@@ -179,11 +181,13 @@ site_build <- function(dir = ".", file = "site.r", outdir = "docs", name = "inde
     "<body>",
     if (!is.null(parts$header)) parts$header,
     if (!is.null(parts$body)) parts$body,
-    if (!is.null(parts$content)) c(
-      '<div class="content container-fluid">',
-      parts$content,
-      "</div>"
-    ),
+    if (!is.null(parts$content)) {
+      c(
+        '<div class="content container-fluid">',
+        parts$content,
+        "</div>"
+      )
+    },
     parts$script,
     "</body>",
     "</html>"

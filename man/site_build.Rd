@@ -4,7 +4,7 @@
 \alias{site_build}
 \title{Render a Website}
 \usage{
-site_build(dir = ".", file = "site.r", outdir = "docs",
+site_build(dir = ".", file = "site.R", outdir = "docs",
   name = "index.html", variables = NULL, options = list(),
   bundle_data = FALSE, open_after = FALSE, force = FALSE)
 }

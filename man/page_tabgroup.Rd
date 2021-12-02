@@ -28,9 +28,9 @@ See the \href{https://getbootstrap.com/docs/5.1/layout/grid}{Bootstrap grid docu
 }
 \examples{
 \dontrun{
-page_section(list(
+page_tabgroup(
   "Map" = list(id = "map_tab", output_map()),
   "Data" = list(output_table()),
-))
+)
 }
 }
