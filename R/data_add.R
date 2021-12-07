@@ -121,7 +121,10 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
           invalid <- !is.finite(v)
           r <- list(name = cn, duplicates = sum(duplicated(v)))
           if (cn %in% names(varinf)) r$info <- varinf[[cn]]
-          if (is.numeric(v)) {
+          if (all(invalid)) {
+            r$type <- "unknown"
+            r$missing <- length(v)
+          } else if (is.numeric(v)) {
             r$type <- if (all(invalid | v %% 1 == 0)) "integer" else "float"
             r$missing <- sum(invalid)
             r$mean <- round(mean(v, na.rm = TRUE), 6)

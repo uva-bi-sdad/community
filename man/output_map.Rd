@@ -5,22 +5,25 @@
 \title{Add a map to a webpage}
 \usage{
 output_map(shapes = NULL, color = NULL, color_time = NULL,
-  dataview = NULL, legend = TRUE, click = NULL, subto = NULL,
-  options = list(), tiles = list(url =
-  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", options = list(maxZoom
-  = 19)), attribution = list(name = "OpenStreetMap", url =
-  "https://www.openstreetmap.org/copyright"))
+  dataview = NULL, click = NULL, subto = NULL, options = list(),
+  tiles = list(url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  options = list(maxZoom = 19)), attribution = list(name = "OpenStreetMap",
+  url = "https://www.openstreetmap.org/copyright"))
 }
 \arguments{
-\item{shapes}{A named list or vector with URLs of GeoJSON files.}
+\item{shapes}{A list or list of lists specifying GeoJSON files. Each list should have at least
+a \code{url} entry (the URL of the file), and will need a \code{name} entry (associating it
+with one of the site's datasets) if the site has multiple datasets. The file's features
+must each have a \code{properties} field containing an ID found in the data -- by default
+this is assumed to be called \code{"GEOID"}, but this can be specified with an \code{id_property}
+entry in the list. For example \code{shapes = list(name = "data", }\code{
+url = "https://example.com/shapes.geojson", id_property = "id")}.}
 
 \item{color}{The name of a variable, or id of a variable selector, to be used to color polygons.}
 
 \item{color_time}{The ID of a selector to specify which timepoint of \code{color} to use.}
 
 \item{dataview}{The ID of an \code{\link{input_dataview}} component.}
-
-\item{legend}{Logical; if \code{FALSE}, the legend will not be shown.}
 
 \item{click}{The ID of an input to set to a clicked polygon's ID.}
 

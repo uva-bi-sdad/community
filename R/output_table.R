@@ -12,9 +12,6 @@
 #' @param filters A list with names of \code{meta} entries (from \code{variable} entry in \code{\link{data_add}}'s
 #' \code{meta} list), and values of target values for those entries, or the IDs of value selectors.
 #' @param wide Logical; if \code{TRUE}, multiple variables are shown in separate columns.
-#' @param single_variable Logical; if \code{TRUE} (default), \code{variables} is treated as a single variable,
-#' or source of a single variable, and time is displayed as columns. Otherwise, if a selector is specified, its
-#' options are treated as the set of variables.
 #' @param class Class names to add to the table.
 #' @examples
 #' \dontrun{
@@ -24,7 +21,7 @@
 #' @export
 
 output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, options = NULL, filters = NULL,
-                         wide = FALSE, single_variable = TRUE, class = "compact") {
+                         wide = TRUE, class = "compact") {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   id <- caller$uid
@@ -32,7 +29,7 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, opti
   options$filters <- filters
   options$dataset <- dataset
   options$wide <- wide
-  options$single_variable <- !is.null(variables) && single_variable && is.null(filters)
+  options$single_variable <- length(variables) == 1
   defaults <- list(paging = FALSE, scrollY = 500, scrollX = 500, scrollCollapse = TRUE)
   so <- names(options)
   for (n in names(defaults)) if (!n %in% so) options[[n]] <- defaults[[n]]

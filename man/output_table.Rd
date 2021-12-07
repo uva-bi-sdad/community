@@ -5,8 +5,7 @@
 \title{Add a table to a webpage}
 \usage{
 output_table(variables = NULL, dataset = NULL, dataview = NULL,
-  options = NULL, filters = NULL, wide = FALSE, single_variable = TRUE,
-  class = "compact")
+  options = NULL, filters = NULL, wide = TRUE, class = "compact")
 }
 \arguments{
 \item{variables}{Variable names in the included data, or the ID of a
@@ -24,10 +23,6 @@ used if \code{dataview} is not specified.}
 \code{meta} list), and values of target values for those entries, or the IDs of value selectors.}
 
 \item{wide}{Logical; if \code{TRUE}, multiple variables are shown in separate columns.}
-
-\item{single_variable}{Logical; if \code{TRUE} (default), \code{variables} is treated as a single variable,
-or source of a single variable, and time is displayed as columns. Otherwise, if a selector is specified, its
-options are treated as the set of variables.}
 
 \item{class}{Class names to add to the table.}
 }

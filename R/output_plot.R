@@ -24,7 +24,7 @@ output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dat
                         click = NULL, subto = NULL, options = list()) {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
-  id <- 0
+  id <- caller$uid
   entries <- c("layout", "config", "data")
   if (is.character(options)) options <- fromJSON(options)
   if ("x" %in% names(options)) options <- options$x
@@ -69,9 +69,9 @@ output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dat
       url = "https://plotly.com",
       version = "2.6.3"
     )
-    id <- length(caller$plots)
     caller$plots[[paste0("plot", id)]] <- options
     caller$content <- c(caller$content, r)
+    caller$uid <- caller$uid + 1
   }
   r
 }

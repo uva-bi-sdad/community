@@ -49,25 +49,30 @@
     <p>Adds a Leaflet map to a webpage, based on specified or selected inputs.</p>
     </div>
 
-    <div id="ref-usage">Usage,<div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">output_map</span><span class="op">(</span>shapes <span class="op">=</span> <span class="cn">NULL</span>, color <span class="op">=</span> <span class="cn">NULL</span>, color_time <span class="op">=</span> <span class="cn">NULL</span>,
-  dataview <span class="op">=</span> <span class="cn">NULL</span>, legend <span class="op">=</span> <span class="cn">TRUE</span>, click <span class="op">=</span> <span class="cn">NULL</span>, subto <span class="op">=</span> <span class="cn">NULL</span>,
-  options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, tiles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>url <span class="op">=</span>
-  <span class="st">"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"</span>, options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>maxZoom
-  <span class="op">=</span> <span class="fl">19</span><span class="op">)</span><span class="op">)</span>, attribution <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"OpenStreetMap"</span>, url <span class="op">=</span>
-  <span class="st">"https://www.openstreetmap.org/copyright"</span><span class="op">)</span><span class="op">)</span></code></pre></div></div>
+    <div id="ref-usage">
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">output_map</span><span class="op">(</span>shapes <span class="op">=</span> <span class="cn">NULL</span>, color <span class="op">=</span> <span class="cn">NULL</span>, color_time <span class="op">=</span> <span class="cn">NULL</span>,
+  dataview <span class="op">=</span> <span class="cn">NULL</span>, click <span class="op">=</span> <span class="cn">NULL</span>, subto <span class="op">=</span> <span class="cn">NULL</span>, options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,
+  tiles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>url <span class="op">=</span> <span class="st">"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"</span>,
+  options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>maxZoom <span class="op">=</span> <span class="fl">19</span><span class="op">)</span><span class="op">)</span>, attribution <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"OpenStreetMap"</span>,
+  url <span class="op">=</span> <span class="st">"https://www.openstreetmap.org/copyright"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+    </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>shapes</dt>
-<dd><p>A named list or vector with URLs of GeoJSON files.</p></dd>
+<dd><p>A list or list of lists specifying GeoJSON files. Each list should have at least
+a <code>url</code> entry (the URL of the file), and will need a <code>name</code> entry (associating it
+with one of the site's datasets) if the site has multiple datasets. The file's features
+must each have a <code>properties</code> field containing an ID found in the data -- by default
+this is assumed to be called <code>"GEOID"</code>, but this can be specified with an <code>id_property</code>
+entry in the list. For example <code>shapes = list(name = "data", </code><code>
+url = "https://example.com/shapes.geojson", id_property = "id")</code>.</p></dd>
 <dt>color</dt>
 <dd><p>The name of a variable, or id of a variable selector, to be used to color polygons.</p></dd>
 <dt>color_time</dt>
 <dd><p>The ID of a selector to specify which timepoint of <code>color</code> to use.</p></dd>
 <dt>dataview</dt>
 <dd><p>The ID of an <code><a href="input_dataview.html">input_dataview</a></code> component.</p></dd>
-<dt>legend</dt>
-<dd><p>Logical; if <code>FALSE</code>, the legend will not be shown.</p></dd>
 <dt>click</dt>
 <dd><p>The ID of an input to set to a clicked polygon's ID.</p></dd>
 <dt>subto</dt>
@@ -107,7 +112,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.0.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer></div>

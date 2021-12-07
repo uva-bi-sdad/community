@@ -87,11 +87,11 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
   data[[id]] <- as.character(data[[id]])
   if (!dataset %in% vars) {
     dataset <- "dataset"
-    set(data, NULL, "dataset", "dataset")
+    data <- cbind(data, dataset = "dataset")
   }
   if (!time %in% vars) {
     time <- "time"
-    set(data, NULL, "time", 1)
+    data <- cbind(data, time = 1)
   }
   if (!any(value_name %in% vars)) {
     value_name <- "file"
@@ -100,23 +100,29 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
   datasets <- unique(data[[dataset]])
   variables <- unique(data[[value_name]])
   times <- sort(unique(data[[time]]))
+  entity_info <- entity_info[entity_info %in% colnames(data)]
   if (all(nchar(times) == 4)) times <- seq(min(times), max(times))
   sets <- lapply(datasets, function(dn) {
-    d <- data[data[[dataset]] == dn]
-    do.call(rbind, lapply(unique(d[[id]]), function(e) {
-      ed <- d[d[[id]] == e]
-      r <- data.frame(ID = rep(as.character(e), length(times)), time = times)
-      rownames(r) <- times
-      for (v in variables) {
-        r[[v]] <- NA
-        su <- ed[[value_name]] == v & !is.na(ed[[value]])
-        if (sum(su)) {
-          vals <- ed[su]
-          r[as.character(vals[[time]]), v] <- vals[[value]]
+    d <- if (dataset %in% vars) data[data[[dataset]] == dn] else data
+    if (anyDuplicated(d[[id]])) {
+      do.call(rbind, lapply(unique(d[[id]]), function(e) {
+        ed <- d[d[[id]] == e]
+        r <- data.frame(ID = rep(as.character(e), length(times)), time = times)
+        # for(v in entity_info) r[[v]] <- ed[[v]][1]
+        rownames(r) <- times
+        for (v in variables) {
+          r[[v]] <- NA
+          su <- ed[[value_name]] == v & !is.na(ed[[value]])
+          if (sum(su)) {
+            vals <- ed[su]
+            r[as.character(vals[[time]]), v] <- vals[[value]]
+          }
         }
-      }
-      r
-    }))
+        r
+      }))
+    } else {
+      d
+    }
   })
   datasets <- gsub("\\s+", "_", tolower(datasets))
   names(sets) <- datasets
