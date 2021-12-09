@@ -4,8 +4,9 @@
 #'
 #' @param dir Path to the site project directory.
 #' @param file Name of the R file to build the site from.
-#' @param outdir Path to place the .
-#' @param name Path to the site project directory.
+#' @param outdir Subdirectory of \code{dir} in which to place the built site files (where the site is to be
+#' served from).
+#' @param name Name of the HTML file to be created.
 #' @param variables A character vector of variable names to include from the data. If no specified,
 #' all variables are included.
 #' @param options A list with options to be passed to the site. These will be written to \code{settings.js},
@@ -18,14 +19,18 @@
 #' @examples
 #' \dontrun{
 #' # run from within a site project directory, initialized with `init_site()`
-#' site_build()
+#' site_build(".")
+#'
+#' # bundle data to most easily run locally
+#' site_build(".", bundle_data = TRUE)
 #' }
 #' @return Invisible path to the written file.
 #' @seealso To initialize a site project, use \code{\link{init_site}}.
 #' @export
 
-site_build <- function(dir = ".", file = "site.R", outdir = "docs", name = "index.html", variables = NULL,
+site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html", variables = NULL,
                        options = list(), bundle_data = FALSE, open_after = FALSE, force = FALSE) {
+  if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., dir = ".")')
   page <- paste0(dir, "/", file)
   if (!file.exists(page)) cli_abort("{.file {page}} does not exist")
   out <- paste(c(dir, outdir, name), collapse = "/")
@@ -87,7 +92,7 @@ site_build <- function(dir = ".", file = "site.R", outdir = "docs", name = "inde
   }
   path <- paste0(dir, "/docs/settings.js")
   settings <- if (file.exists(path) && file.size(path)) {
-    fromJSON(sub("^[^{]*", "", paste(readLines(path), collapse = "")))
+    fromJSON(sub("^[^{]*", "", paste(readLines(path, warn = FALSE), collapse = "")))
   } else {
     list(settings = options)
   }
@@ -98,8 +103,7 @@ site_build <- function(dir = ".", file = "site.R", outdir = "docs", name = "inde
   for (s in names(defaults)) {
     if (!is.null(options[[s]])) {
       settings$settings[[s]] <- options[[s]]
-    } else
-    if (is.null(settings$settings[[s]])) settings$settings[[s]] <- defaults[[s]]
+    } else if (is.null(settings$settings[[s]])) settings$settings[[s]] <- defaults[[s]]
   }
   if (!is.null(settings$metadata) && !is.null(settings$metadata$variables) &&
     !identical(settings$metadata$variables, variables[variables != "_references"])) {
@@ -129,7 +133,7 @@ site_build <- function(dir = ".", file = "site.R", outdir = "docs", name = "inde
   )
   parts$header <- NULL
   parts$body <- NULL
-  src <- parse(text = gsub("community::site_build", "site_build", readLines(page), fixed = TRUE))
+  src <- parse(text = gsub("community::site_build", "site_build", readLines(page, warn = FALSE), fixed = TRUE))
   parts$site_build <- function(...) {}
   parts$uid <- 0
   source(local = parts, exprs = src)
@@ -157,7 +161,10 @@ site_build <- function(dir = ".", file = "site.R", outdir = "docs", name = "inde
         '<script type="application/javascript">\nsite.data = {',
         paste(
           vapply(settings$metadata$files, function(f) {
-            paste0('"', f, '": ', paste(readLines(paste0(dir, "/docs/", f, ".json")), collapse = ""), ",\n")
+            paste0('"', f, '": ', paste(
+              readLines(paste0(dir, "/docs/", f, ".json"), warn = FALSE),
+              collapse = ""
+            ), ",\n")
           }, ""),
           collapse = ""
         ),

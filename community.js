@@ -1188,12 +1188,14 @@ void (function () {
       },
       table: {
         init: function (o) {
-          var k, p, n, i
+          var k, n, i, c
           o.e.appendChild(document.createElement('tHead'))
           o.e.appendChild(document.createElement('tBody'))
           o.options = (site.tables && site.tables[o.id]) || {}
+          o.features = o.options.features
           o.update = elements.table.update.bind(o)
-          o.headers = {}
+          o.header = []
+          if (!o.dataset) o.dataset = site.metadata.datasets[0]
           if ('tabpanel' === o.e.parentElement.getAttribute('role')) {
             document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
               'click',
@@ -1202,90 +1204,113 @@ void (function () {
               }.bind(o)
             )
           }
+          o.options.variable_source = o.options.variables
+          if (o.options.variables) {
+            if ('string' === typeof o.options.variables) {
+              if (Object.hasOwn(_u, o.options.variables)) {
+                o.options.variables = valueOf(o.options.variables)
+                o.options.single_variable = 'string' === typeof o.options.variables
+              } else if (!o.options.single_variable) {
+                o.options.single_variable = [{name: o.options.single_variable}]
+              }
+            }
+          } else o.options.variables = Object.keys(variables)
+          if (
+            'string' !== typeof o.options.variables &&
+            o.options.variables.length &&
+            'string' === o.options.variables[0]
+          ) {
+            for (i = o.options.variables.length; i--; ) o.options.variables[i] = {name: o.options.variables[i]}
+          }
           if (o.options.single_variable) {
-            if ('object' === typeof o.options.variables) o.options.variables = o.options.variables[0]
             if (Object.hasOwn(_u, o.options.variables)) add_dependency(o.options.variables, {type: 'update', id: o.id})
-            k = valueOf(o.options.variables)
-            if (Object.hasOwn(variables, k)) {
-              if (!Object.hasOwn(o.options, 'order')) o.options.order = [[meta.time_n, 'asc']]
-              for (i = variables[k].datasets.length; i--; ) {
-                p = variables[k].datasets[i]
-                if (!Object.hasOwn(o.headers, p)) o.headers[p] = []
-                o.headers[p].push({title: 'Region', data: 'features.name'})
-                for (n = meta.time_n; n--; ) {
-                  o.headers[p][n + 1] = {
-                    title: meta.time[n] + '',
-                    data: 'data.' + k.replace(patterns.all_periods, '\\.'),
-                    render: function (d) {
-                      var k = valueOf(this.v.variables),
-                        p = variables[k].datasets[0]
-                      return d
-                        ? 'number' === typeof d[this.n]
-                          ? format_value(d[this.n], 'integer' === variables[k].info[p].type)
-                          : d[this.n]
-                        : 'NA'
-                    }.bind({n, v: o.options}),
-                  }
-                }
+            c = o.options.variables
+            k = c.name || c
+            if (!Object.hasOwn(o.options, 'order')) o.options.order = [[meta.time_n, 'asc']]
+            o.header.push({title: 'Name', data: 'features.name'})
+            for (n = meta.time_n; n--; ) {
+              o.header[n + 1] = {
+                title: 1 === meta.time_n ? c.title || format_label(k) : meta.time[n] + '',
+                data: 'data.' + k.replace(patterns.all_periods, '\\.'),
+                render: function (d) {
+                  var k = valueOf(this.v.variables),
+                    p = variables[k].datasets[0]
+                  return d
+                    ? 'number' === typeof d[this.n]
+                      ? format_value(d[this.n], 'integer' === variables[k].info[p].type)
+                      : d[this.n]
+                    : 'NA'
+                }.bind({n, v: o.options}),
               }
             }
           } else if (o.options.wide) {
-            for (k in variables)
-              if (Object.hasOwn(variables, k)) {
-                for (i = variables[k].datasets.length; i--; ) {
-                  p = variables[k].datasets[i]
-                  if (!Object.hasOwn(o.headers, p)) o.headers[p] = []
-                  o.headers[p].push(
-                    'ID' === k
-                      ? {title: k, data: 'features.' + k.toLowerCase()}
-                      : {
-                          title: format_label(k),
-                          data: 'data.' + k.replace(patterns.all_periods, '\\.'),
-                          render: function (d) {
-                            return 'number' === typeof d[this.u.i] ? format_value(d[this.u.i], false) : d[this.u.i]
-                          }.bind({u: o, ind: 'integer' === variables[k].info[p].type}),
-                        }
-                  )
-                }
+            if (o.features) {
+              if ('string' === typeof o.features) o.features = [{name: o.features}]
+              for (n = o.features.length, i = 0; i < n; i++) {
+                o.header.push({
+                  title: o.features[i].title || o.features[i].name,
+                  data: 'features.' + o.features[i].name.replace(patterns.all_periods, '\\.'),
+                })
               }
+            }
+            for (i = o.options.variables.length; i--; ) {
+              if ('string' === typeof o.options.variables[i]) o.options.variables[i] = {name: o.options.variables[i]}
+              c = o.options.variables[i]
+              if (!c.source) c.source = Object.hasOwn(variables, c.name) ? 'data' : 'features'
+              o.header.push(
+                'features' === c.source
+                  ? {
+                      title: c.title || format_label(c.name),
+                      data: 'features.' + c.name.toLowerCase().replace(patterns.all_periods, '\\.'),
+                    }
+                  : {
+                      title: c.title || format_label(c.name),
+                      data: c.source + '.' + c.name.replace(patterns.all_periods, '\\.'),
+                      render: function (d) {
+                        const i = 'data' === this.c.source ? this.o.i : this.o.v
+                        return 'number' === typeof d[i] ? format_value(d[i], false) : d[i]
+                      }.bind({o, c}),
+                    }
+              )
+            }
           } else {
             o.filters = o.options.filters
             o.current_filter = {}
-            for (k in site.metadata.info)
-              if (Object.hasOwn(site.metadata.info, k)) {
-                o.headers[k] = [
-                  {title: 'ID', data: 'features.id'},
-                  {title: 'Name', data: 'features.name'},
-                  {title: 'Type', data: 'features.type'},
-                  {
-                    title: 'Year',
-                    data: 'data.time',
-                    render: function (d) {
-                      return 'number' === typeof d[this.i] ? format_value(d[this.i], true) : d[this.i]
-                    }.bind(o),
-                  },
-                  {
-                    title: 'Measure',
-                    data: function (d) {
-                      return Object.hasOwn(d.variables, this.v) ? d.variables[this.v].short_name : this.v
-                    }.bind(o),
-                  },
-                  {
-                    title: 'Value',
-                    data: function (d) {
-                      return Object.hasOwn(d.data, this.v) ? d.data[this.v] : []
-                    }.bind(o),
-                    render: function (d) {
-                      return 'number' === typeof d[this.i]
-                        ? format_value(
-                            d[this.i],
-                            'integer' === variables[this.v].info[variables[this.v].datasets[0]].type
-                          )
-                        : d[this.i]
-                    }.bind(o),
-                  },
-                ]
+            if (meta.time_n > 1) {
+              o.header.push({
+                title: 'Year',
+                data: 'data.time',
+                render: function (d) {
+                  return 'number' === typeof d[this.i] ? format_value(d[this.i], true) : d[this.i]
+                }.bind(o),
+              })
+            }
+            if (o.features) {
+              if ('string' === typeof o.features) o.features = [{name: o.features}]
+              for (i = o.features.length; i--; ) {
+                o.header.splice(0, 0, {
+                  title: o.features[i].title || o.features[i].name,
+                  data: 'features.' + o.features[i].name.replace(patterns.all_periods, '\\.'),
+                })
               }
+            }
+            o.header.push({
+              title: 'Variable',
+              data: function (d) {
+                return Object.hasOwn(d.variables, this.v) ? d.variables[this.v].short_name : this.v
+              }.bind(o),
+            })
+            o.header.push({
+              title: 'Value',
+              data: function (d) {
+                return Object.hasOwn(d.data, this.v) ? d.data[this.v] : []
+              }.bind(o),
+              render: function (d) {
+                return 'number' === typeof d[this.i]
+                  ? format_value(d[this.i], 'integer' === variables[this.v].info[variables[this.v].datasets[0]].type)
+                  : d[this.i]
+              }.bind(o),
+            })
           }
           if (o.view) {
             _c[o.view].push({type: 'update', id: o.id})
@@ -1299,22 +1324,21 @@ void (function () {
             this.queue = setTimeout(this.update.bind(null, true), 20)
           } else {
             if (this.table) {
-              const v = _u[this.view],
-                d = v.get.dataset()
+              const v = _u[this.view]
               this.table.clear()
               if (v.selection) {
-                var k, c, i, n, vn, pass
+                var k, c, i, ci, n, vn, pass
                 if (this.options.single_variable) {
-                  vn = valueOf(this.options.variables).replace(patterns.all_periods, '\\.')
-                  if ('data.' + vn !== this.headers[d][1].data) {
+                  vn = valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.')
+                  if ('data.' + vn !== this.header[1].data) {
                     this.table.destroy()
-                    for (n = this.headers[d].length, i = 1; i < n; i++) {
-                      this.headers[d][i].data = 'data.' + vn
+                    for (n = this.header.length, i = 1; i < n; i++) {
+                      this.header[i].data = 'data.' + vn
                     }
-                    this.options.columns = this.headers[d]
+                    this.options.columns = this.header
                     this.table = $(this.e).DataTable(this.options)
                   }
-                  for (n = this.headers[d].length, i = 1; i < n; i++) {
+                  for (n = this.header.length, i = 1; i < n; i++) {
                     this.table.column(i).visible(v.times[i - 1])
                   }
                 }
@@ -1342,26 +1366,39 @@ void (function () {
                           if (Object.hasOwn(this.filters, c)) {
                             this.current_filter[c] = valueOf(this.filters[c])
                           }
-                        for (vn in variables) {
+                        for (i = this.options.variables.length; i--; ) {
+                          vn = this.options.variables[i].name || this.options.variables[i]
                           pass = false
                           if (Object.hasOwn(variables, vn) && Object.hasOwn(variables[vn], 'meta')) {
-                            for (c in this.current_filter)
-                              if (Object.hasOwn(variables[vn].meta, c)) {
-                                pass = variables[vn].meta[c] === this.current_filter[c]
-                                if (!pass) break
-                              }
+                            if (this.options.filters) {
+                              for (c in this.current_filter)
+                                if (Object.hasOwn(variables[vn].meta, c)) {
+                                  pass = variables[vn].meta[c] === this.current_filter[c]
+                                  if (!pass) break
+                                }
+                            } else pass = true
                           }
-                          if (pass)
-                            for (
-                              n = v.selection.all[k].summary[vn].time_range[1],
-                                i = v.selection.all[k].summary[vn].time_range[0];
-                              i <= n;
-                              i++
+                          if (pass) {
+                            if (
+                              Object.hasOwn(v.selection.all[k].summary, vn) &&
+                              v.selection.all[k].summary[vn].time_range[1]
                             ) {
-                              this.i = i
+                              for (
+                                n = v.selection.all[k].summary[vn].time_range[1],
+                                  ci = v.selection.all[k].summary[vn].time_range[0];
+                                ci <= n;
+                                ci++
+                              ) {
+                                this.i = ci
+                                this.v = vn
+                                this.table.row.add(v.selection.all[k])
+                              }
+                            } else {
+                              this.i = 0
                               this.v = vn
                               this.table.row.add(v.selection.all[k])
                             }
+                          }
                         }
                       }
                     }
@@ -1522,7 +1559,7 @@ void (function () {
           r = Math.round((v % 1) * d) / d + ''
         return (
           (v < 0 ? '-' : '') +
-          (v >> 0) +
+          (Math.abs(v) >> 0) +
           '.' +
           ((patterns.period.test(r) ? r.split('.')[1] : '') + '0000000000').substr(0, site.settings.digits)
         )
@@ -1644,24 +1681,26 @@ void (function () {
   }
 
   function make_data_entry(u, e, rank, name, color) {
-    if (Object.hasOwn(e.data, u.parsed.x)) {
-      for (var i = e.data[u.parsed.x].length, t = JSON.parse(u.traces[u.base_trace]); i--; ) {
-        t.text[i] = e.features.name
-        t.x[i] = e.data[u.parsed.x][i]
-        t.y[i] = e.data[u.parsed.y][i]
-      }
-      t.type = valueOf(t.type)
-      t.color =
-        t.line.color =
-        t.marker.color =
-        t.marker.line.color =
-        t.textfont.color =
-          color ||
-          pal(e.data[u.parsed.color][u.parsed.time], u.parsed.palette, u.parsed.summary, u.parsed.time, rank) ||
-          '#808080'
-      t.name = name || e.features.name
-      t.id = e.features.id
+    for (
+      var i = Object.hasOwn(e.data, u.parsed.x) ? e.data[u.parsed.x].length : 0, t = JSON.parse(u.traces[u.base_trace]);
+      i--;
+
+    ) {
+      t.text[i] = e.features.name
+      t.x[i] = e.data[u.parsed.x][i]
+      t.y[i] = e.data[u.parsed.y][i]
     }
+    t.type = valueOf(t.type)
+    t.color =
+      t.line.color =
+      t.marker.color =
+      t.marker.line.color =
+      t.textfont.color =
+        color ||
+        pal(e.data[u.parsed.color][u.parsed.time], u.parsed.palette, u.parsed.summary, u.parsed.time, rank) ||
+        '#808080'
+    t.name = name || e.features.name
+    t.id = e.features.id
     return t
   }
 
@@ -1790,6 +1829,7 @@ void (function () {
     page.menu_toggler = {
       hide: function () {
         this.classList.add('hidden')
+        trigger_resize()
       },
       toggle: function (type) {
         clearTimeout(page.menu_toggler.timeout)
@@ -1798,15 +1838,19 @@ void (function () {
           this.parentElement.firstElementChild.classList.remove('hidden')
           this.parentElement.style[type] = '0px'
           page.content.style[type] =
-            this.parentElement.getBoundingClientRect()[type === 'left' || type === 'right' ? 'width' : 'height'] + 'px'
+            this.parentElement.getBoundingClientRect()['left' === type || 'right' === type ? 'width' : 'height'] + 'px'
+          setTimeout(trigger_resize, 300)
         } else {
           this.parentElement.state = 'closed'
-          this.parentElement.style[type] =
-            -this.parentElement.getBoundingClientRect()[type === 'left' || type === 'right' ? 'width' : 'height'] +
-            (type === 'top' ? page.content_bounds.top - 40 : 0) +
-            'px'
-          page.content.style[type] = page.content_bounds[type] + 'px'
-          page.menu_toggler.timeout = setTimeout(page.menu_toggler.hide.bind(this.parentElement.firstElementChild), 700)
+          if ('left' === type || 'right' === type) {
+            this.parentElement.style[type] = -this.parentElement.getBoundingClientRect().width + 'px'
+            page.content.style[type] = page.content_bounds[type] + 'px'
+          } else {
+            page.content.style[type] = page.content_bounds[type] + ('top' === type ? 40 : 0) + 'px'
+            this.parentElement.style[type] =
+              -this.parentElement.getBoundingClientRect().height + ('top' === type ? page.content_bounds.top : 0) + 'px'
+          }
+          page.menu_toggler.timeout = setTimeout(page.menu_toggler.hide.bind(this.parentElement.firstElementChild), 300)
         }
       },
       timeout: -1,
@@ -1884,9 +1928,10 @@ void (function () {
     e.className = 'reference-list'
 
     for (i = page.menus.length; i--; ) {
+      page.menus[i].state = page.menus[i].getAttribute('state')
       if (page.menus[i].classList.contains('menu-top')) {
         page.top_menu = page.menus[i]
-        page.content_bounds.top += 40
+        // page.content_bounds.top += 10
         if (page.menus[i].lastElementChild.tagName === 'BUTTON') {
           page.menus[i].lastElementChild.addEventListener(
             'click',
@@ -1895,7 +1940,6 @@ void (function () {
         }
       } else if (page.menus[i].classList.contains('menu-right')) {
         page.right_menu = page.menus[i]
-        page.content_bounds.right = 40
         if (page.menus[i].lastElementChild.tagName === 'BUTTON') {
           page.menus[i].lastElementChild.addEventListener(
             'click',
@@ -1913,7 +1957,6 @@ void (function () {
         }
       } else if (page.menus[i].classList.contains('menu-left')) {
         page.left_menu = page.menus[i]
-        page.content_bounds.left = 40
         if (page.menus[i].lastElementChild.tagName === 'BUTTON') {
           page.menus[i].lastElementChild.addEventListener(
             'click',
@@ -1924,33 +1967,33 @@ void (function () {
     }
     function content_resize() {
       page.content.style.top =
-        (page.top_menu && !page.top_menu.firstElementChild.classList.contains('hidden')
+        (page.top_menu && 'open' === page.top_menu.state
           ? page.top_menu.getBoundingClientRect().height
-          : page.content_bounds.top) + 'px'
+          : page.content_bounds.top +
+            ((page.right_menu && 'open' === page.right_menu.state) ||
+            (page.left_menu && 'open' === page.left_menu.state)
+              ? 0
+              : 40)) + 'px'
       if (page.right_menu) {
         page.content.style.right =
           page.content_bounds.right +
-          (page.right_menu.firstElementChild.classList.contains('hidden')
-            ? 0
-            : page.right_menu.getBoundingClientRect().width) +
+          ('closed' === page.right_menu.state ? 0 : page.right_menu.getBoundingClientRect().width) +
           'px'
       } else if (page.bottom_menu) {
         page.content.style.bottom =
           page.content_bounds.bottom +
-          (page.bottom_menu.firstElementChild.classList.contains('hidden')
-            ? 0
-            : page.bottom_menu.getBoundingClientRect().height) +
+          ('closed' === page.bottom_menu.state ? 0 : page.bottom_menu.getBoundingClientRect().height) +
           'px'
       } else if (page.left_menu) {
         page.content.style.left =
           page.content_bounds.left +
-          (page.left_menu.firstElementChild.classList.contains('hidden')
-            ? 0
-            : page.left_menu.getBoundingClientRect().width) +
+          ('closed' === page.left_menu.state ? 0 : page.left_menu.getBoundingClientRect().width) +
           'px'
       }
     }
-
+    function trigger_resize() {
+      window.dispatchEvent(new Event('resize'))
+    }
     // get options from url
     k = window.location.search.replace('?', '')
     site.url_options = {}
@@ -2142,6 +2185,7 @@ void (function () {
       queue_init()
     } else if (site && site.metadata.files) {
       site.data = {}
+      if ('string' === typeof site.metadata.files) site.metadata.files = [site.metadata.files]
       for (i = 0, n = site.metadata.files.length; i < n; i++) {
         data_loaded[site.metadata.files[i]] = false
         load_data(site.metadata.files[i], site.metadata.info[site.metadata.files[i]].site_file)
@@ -2805,6 +2849,7 @@ void (function () {
             variables[v[i].name] = {datasets: [k], info: {}, components: {}}
             variables[v[i].name].components[k] = []
             variables[v[i].name].info[k] = v[i]
+            variables[v[i].name].type = v[i].type
             if ('string' === v[i].type) {
               variables[v[i].name].levels = []
               variables[v[i].name].levels_ids = {}
@@ -3102,6 +3147,7 @@ void (function () {
         .on('plotly_unhover', elements.plot.mouseout.bind(this))
         .on('plotly_click', elements.plot.click.bind(this))
       update_plot_theme(this)
+      this.update()
     } else {
       setTimeout(queue_init_plot.bind(this), 20)
     }
@@ -3142,8 +3188,7 @@ void (function () {
 
   function queue_init_table() {
     if (window.jQuery && window.DataTable && Object.hasOwn(site.dataviews[this.view], 'get')) {
-      const d = site.dataviews[this.view].get.dataset()
-      this.options.columns = this.headers[d]
+      this.options.columns = this.header
       this.table = $(this.e).DataTable(this.options)
       this.update()
     } else {

@@ -5,10 +5,11 @@
 \title{Add a map to a webpage}
 \usage{
 output_map(shapes = NULL, color = NULL, color_time = NULL,
-  dataview = NULL, click = NULL, subto = NULL, options = list(),
-  tiles = list(url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-  options = list(maxZoom = 19)), attribution = list(name = "OpenStreetMap",
-  url = "https://www.openstreetmap.org/copyright"))
+  dataview = NULL, id = NULL, click = NULL, subto = NULL,
+  options = list(), tiles = list(url =
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", options = list(maxZoom
+  = 19)), attribution = list(name = "OpenStreetMap", url =
+  "https://www.openstreetmap.org/copyright"))
 }
 \arguments{
 \item{shapes}{A list or list of lists specifying GeoJSON files. Each list should have at least
@@ -24,6 +25,8 @@ url = "https://example.com/shapes.geojson", id_property = "id")}.}
 \item{color_time}{The ID of a selector to specify which timepoint of \code{color} to use.}
 
 \item{dataview}{The ID of an \code{\link{input_dataview}} component.}
+
+\item{id}{Unique ID for the map.}
 
 \item{click}{The ID of an input to set to a clicked polygon's ID.}
 

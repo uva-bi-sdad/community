@@ -55,6 +55,7 @@ table.dataTable thead th, table.dataTable thead td, .dataTables_wrapper.no-foote
 label{
   color: var(--body-text);
 }
+input{color: var(--body-text)}
 .form-select, .form-control, .form-control:focus, body::-webkit-scrollbar-track{
   background-color: var(--background-input);
   border-color: var(--background-border);
@@ -95,7 +96,7 @@ input[type=text],
   min-width: 80px
 }
 
-.navbar{position: fixed; width: 100%; z-index: 100}
+.navbar{position: fixed; width: 100%; z-index: 100; min-height: 55px; background-color: var(--background-highlight)}
 .navbar .btn-link{text-decoration: none; background: inherit; border: none}
 
 .navbar-expand-md .navbar-collapse{flex: 0}
@@ -114,7 +115,8 @@ button.btn-danger{background-color: var(--warning)}
   background: transparent url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'><path d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/></svg>") center/1em auto no-repeat;
 }
 
-.menu-wrapper{position: fixed; overflow: visible; z-index: 90; transition: top 400ms, right 400ms, bottom 400ms, left 400ms}
+.menu, .menu-wrapper{transition: top 400ms, right 400ms, bottom 400ms, left 400ms}
+.menu-wrapper{position: fixed; overflow: visible; z-index: 90}
 .menu{background-color: var(--background-highlight); padding: 3.9em 3em .5em .5em; flex-wrap: nowrap}
 .menu-toggle{position: fixed; background-color: var(--background-highlight); border: none; font-size: 1.7em; width: 1.5em; height: 40px; padding: 0}
 .menu-toggle::after {
@@ -127,12 +129,13 @@ button.btn-danger{background-color: var(--warning)}
   background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='%23000' viewBox='0 0 16 16'><path fill-rule='evenodd' d='M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z'/></svg>");
 }
 .menu-top .menu-toggle{border-radius: 0 0 0 15px; top: 55px; right: 0}
-.menu-right{height: 100vh; flex-shrink: 0; transition: right .7s}
+.menu-right{height: 100vh; flex-shrink: 0}
 .menu-right .menu-toggle{border-radius: 0 0 0 15px; right: 0px; top: 55px}
 .menu-bottom .menu-toggle{border-radius: 15px 0 0 0; bottom: 0px; right: 0}
-.menu.menu-bottom{padding: .5em}
+.menu.menu-bottom{padding: .5em 3em .5em .5em}
 .menu-left{height: 100vh; flex-shrink: 0}
 .menu-left .menu-toggle{border-radius: 0 0 15px 0; top: 55px; left: 0px}
+.menu-left .menu{padding: 3.9em .5em .5em 3em}
 .menu > div{min-width: 125px}
 .slider-display{text-align: center}
 .form-switch .form-check-input:checked{background-repeat: no-repeat}
@@ -195,6 +198,9 @@ table.dataTable.compact tbody th, table.dataTable.compact tbody td{padding: 0 17
 .dataTable td, .dataTable th{text-align: right; white-space: nowrap}
 .dataTable td:first-of-type, .dataTable th:first-of-type{text-align: left}
 .dataTable, .dataTables_scrollHead{width: 100% !important}
+.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate{
+  color: var(--body-text)
+}
 
 .credits ul{padding-left: 1rem; list-style: none}
 .credits .version-tag{

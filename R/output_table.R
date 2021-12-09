@@ -1,45 +1,78 @@
 #' Add a table to a webpage
 #'
-#' Adds a DataTables table to a webpage, based on specified or selected .
+#' Adds a DataTables table to a webpage, based on specified or selected variables.
 #'
-#' @param variables Variable names in the included data, or the ID of a
-#' variable selector to show in columns of the table.
+#' @param variables The ID of a variable selecting input, or a list specifying columns (if \code{wide} is
+#' \code{TRUE}) or included variables. Each entry should be a list with at least have a \code{name} entry with a
+#' variable name. A \code{title} entry can be used to set a different display name for the variable. \code{name}
+#' can also refer to feature names, which can be specified with a \code{source} entry set to \code{"features"}.
+#' For example, \code{list(title = "Variable A", name = "a", source = "features")}. A vector can also be used
+#' to specify variable names, with names setting titles (e.g., \code{c("Variable A" = "a")}). If not specified,
+#' sources are attempted to be resolved automatically.
 #' @param dataset The name of a dataset, or ID of a dataset selector, to find \code{variables} in;
 #' used if \code{dataview} is not specified.
+#' @param id Unique ID of the table.
 #' @param dataview The ID of an \code{\link{input_dataview}} component.
 #' @param options A list of configuration options, see
 #' \href{https://datatables.net/reference/option}{DataTables Documentation}.
+#' @param features A list of features columns to include if multiple variables are included and \code{wide} is
+#' \code{TRUE}.
 #' @param filters A list with names of \code{meta} entries (from \code{variable} entry in \code{\link{data_add}}'s
 #' \code{meta} list), and values of target values for those entries, or the IDs of value selectors.
-#' @param wide Logical; if \code{TRUE}, multiple variables are shown in separate columns.
+#' @param wide Logical; if \code{FALSE}, variables and years are spread across rows rather than columns.
+#' If \code{variables} specifies a single variable, \code{wide = FALSE} will show the variable in a column, and
+#' \code{wide = TRUE} will show the variable across time columns.
 #' @param class Class names to add to the table.
 #' @examples
-#' \dontrun{
 #' output_table()
-#' }
 #' @return A character vector of the content to be added.
 #' @export
 
-output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, options = NULL, filters = NULL,
-                         wide = TRUE, class = "compact") {
+output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, id = NULL, options = NULL,
+                         features = NULL, filters = NULL, wide = TRUE, class = "compact") {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
-  id <- caller$uid
-  options$variables <- variables
-  options$filters <- filters
-  options$dataset <- dataset
-  options$wide <- wide
-  options$single_variable <- length(variables) == 1
-  defaults <- list(paging = FALSE, scrollY = 500, scrollX = 500, scrollCollapse = TRUE)
-  so <- names(options)
-  for (n in names(defaults)) if (!n %in% so) options[[n]] <- defaults[[n]]
+  if (is.null(id)) id <- paste0("table", caller$uid)
   r <- paste(c(
     paste0('<table class="auto-output datatables', if (is.null(class)) "" else paste("", class), '"'),
     if (!is.null(dataview)) paste0('data-view="', dataview, '"'),
-    paste0('id="table', id, '"'),
+    paste0('id="', id, '"'),
     'auto-type="table"></table>'
   ), collapse = " ")
   if (building) {
+    if (!is.null(variables)) {
+      if (!is.character(variables) || length(variables) > 1) {
+        if (!is.list(variables)) {
+          variables <- as.list(variables)
+        } else if (!is.list(variables[[1]])) variables <- list(variables)
+        vnames <- names(variables)
+        for (i in seq_along(variables)) {
+          if (is.null(names(variables[[i]]))) variables[[i]] <- list(name = variables[[i]][[1]])
+          if (!is.null(vnames[i])) variables[[i]]$title <- vnames[i]
+        }
+      }
+      options$variables <- variables
+    }
+    if (!is.null(features)) {
+      if (!is.character(features) || length(features) > 1) {
+        if (!is.list(features)) {
+          features <- as.list(features)
+        } else if (!is.list(features[[1]]) && "name" %in% names(features)) features <- list(features)
+        vnames <- names(features)
+        for (i in seq_along(features)) {
+          if (is.null(names(features[[i]]))) features[[i]] <- list(name = features[[i]][[1]])
+          if (!is.null(vnames[i])) features[[i]]$title <- vnames[i]
+        }
+      }
+      options$features <- unname(features)
+    }
+    options$filters <- filters
+    options$dataset <- dataset
+    options$single_variable <- wide && length(variables) == 1
+    options$wide <- if (!wide && length(variables) == 1) TRUE else wide
+    defaults <- list(paging = FALSE, scrollY = 500, scrollX = 500, scrollCollapse = TRUE)
+    so <- names(options)
+    for (n in names(defaults)) if (!n %in% so) options[[n]] <- defaults[[n]]
     caller$dependencies$jquery <- list(
       type = "script",
       src = "https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js",
@@ -62,7 +95,7 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, opti
       url = "https://datatables.net",
       version = "1.11.3"
     )
-    caller$tables[[paste0("table", id)]] <- options
+    caller$tables[[id]] <- options
     caller$content <- c(caller$content, r)
     caller$uid <- caller$uid + 1
   }

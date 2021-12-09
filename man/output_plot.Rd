@@ -5,7 +5,8 @@
 \title{Add a plot to a webpage}
 \usage{
 output_plot(x = NULL, y = NULL, color = NULL, color_time = NULL,
-  dataview = NULL, click = NULL, subto = NULL, options = list())
+  dataview = NULL, id = NULL, click = NULL, subto = NULL,
+  options = list())
 }
 \arguments{
 \item{x}{The name of a variable to plot along the x-axis.}
@@ -17,6 +18,8 @@ output_plot(x = NULL, y = NULL, color = NULL, color_time = NULL,
 \item{color_time}{The ID of a selector to specify which timepoint of \code{color} to use.}
 
 \item{dataview}{The ID of an \code{\link{input_dataview}} component.}
+
+\item{id}{Unique ID for the plot.}
 
 \item{click}{The ID of an input to set to a clicked line's ID.}
 
@@ -33,8 +36,6 @@ A character vector of the content to be added.
 Adds a Plotly plot to a webpage, based on specified or selected variables.
 }
 \examples{
-\dontrun{
 # for mpg ~ wt * am in a site based on mtcars data
 output_plot("wt", "mpg", "am")
-}
 }

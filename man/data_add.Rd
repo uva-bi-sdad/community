@@ -10,13 +10,14 @@ data_add(path, meta = list(), package_path = "datapackage.json",
 \arguments{
 \item{path}{A character vector of paths to plain-text tabular data files.}
 
-\item{meta}{A list with a list entry for each entry in \code{path}; see details.}
+\item{meta}{Information about each data file. A list with a list entry for each entry in \code{path}; see details.}
 
 \item{package_path}{Package to add the metadata to; path to the .json file, or a list with the read-in version.}
 
 \item{dir}{Directory in which to look for \code{path}, and write \code{package_path}.}
 
-\item{write}{Logical; if \code{FALSE}, returns the \code{paths} metadata without reading or rewriting \code{package}.}
+\item{write}{Logical; if \code{FALSE}, returns the \code{paths} metadata without reading or rewriting
+\code{package_path}.}
 
 \item{refresh}{Logical; if \code{TRUE}, will remove any existing dataset information.}
 

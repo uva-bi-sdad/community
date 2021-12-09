@@ -3,10 +3,11 @@
 #' Add information about variables in a dataset to a \code{datapackage.json} metadata file.
 #'
 #' @param path A character vector of paths to plain-text tabular data files.
-#' @param meta A list with a list entry for each entry in \code{path}; see details.
+#' @param meta Information about each data file. A list with a list entry for each entry in \code{path}; see details.
 #' @param package_path Package to add the metadata to; path to the .json file, or a list with the read-in version.
 #' @param dir Directory in which to look for \code{path}, and write \code{package_path}.
-#' @param write Logical; if \code{FALSE}, returns the \code{paths} metadata without reading or rewriting \code{package}.
+#' @param write Logical; if \code{FALSE}, returns the \code{paths} metadata without reading or rewriting
+#' \code{package_path}.
 #' @param refresh Logical; if \code{TRUE}, will remove any existing dataset information.
 #' @param sha A number specifying the Secure Hash Algorithm function,
 #' if \code{openssl} is available (checked with \code{Sys.which('openssl')}).
@@ -58,6 +59,9 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
   }
   if (write) {
     if (is.character(package)) {
+      if (!file.exists(package)) {
+        package <- normalizePath(paste0(dirname(path), "/", package_path), "/", FALSE)
+      }
       if (file.exists(package)) {
         package_path <- package
         package <- read_json(package)
@@ -76,7 +80,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
     f <- path[[i]]
     m <- metas[[i]]
     name <- basename(f)
-    format <- tolower(strsplit(name, ".", fixed = TRUE)[[1]][2])
+    format <- tolower(strsplit(f, ".", fixed = TRUE)[[1]][2])
     if (is.na(format)) format <- "rds"
     info <- file.info(f)
     metas <- list()
@@ -106,7 +110,13 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       encoding = stri_enc_detect(f)[[1]][1, 1],
       md5 = md5sum(f)[[1]],
       format = format,
-      name = if (!is.null(names(opath))) names(opath)[i] else if (!is.null(m$name)) m$name else name,
+      name = if (!is.null(names(opath))) {
+        names(opath)[i]
+      } else if (!is.null(m$name)) {
+        m$name
+      } else {
+        sub("\\.[^.]*$", "", name)
+      },
       filename = name,
       source = unpack_meta("source"),
       ids = unpack_meta("ids"),

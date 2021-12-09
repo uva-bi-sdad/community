@@ -47,7 +47,7 @@ page_menu <- function(..., position = "right", width = NULL, height = NULL, coll
   parts$uid <- parts$uid + 1
   r <- c(
     paste0(c(
-      '<div class="menu-wrapper menu-', position, '"',
+      '<div state="', if (default_open) "open" else "closed", '" class="menu-wrapper menu-', position, '"',
       c(
         ' style="', position, ": 0; ",
         if (vertical) "height" else "width", ": 100%",
@@ -60,7 +60,7 @@ page_menu <- function(..., position = "right", width = NULL, height = NULL, coll
       ">"
     ), collapse = ""),
     paste0(
-      '<div state="', if (default_open) "open" else "closed", '" class="menu', if (vertical) " col" else " row",
+      '<div class="menu', if (vertical) " col" else " row",
       if (!default_open) " hidden", " menu-", position, '">'
     ),
     unlist(lapply(seq_len(n), function(i) {

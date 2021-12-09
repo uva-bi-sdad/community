@@ -12,6 +12,7 @@
 #' @param color The name of a variable, or id of a variable selector, to be used to color polygons.
 #' @param color_time The ID of a selector to specify which timepoint of \code{color} to use.
 #' @param dataview The ID of an \code{\link{input_dataview}} component.
+#' @param id Unique ID for the map.
 #' @param click The ID of an input to set to a clicked polygon's ID.
 #' @param subto A vector of output IDs to receive hover events from.
 #' @param options A list of configuration options, potentially extracted from a saved leaflet object (see
@@ -28,7 +29,7 @@
 #' @return A character vector of the content to be added.
 #' @export
 
-output_map <- function(shapes = NULL, color = NULL, color_time = NULL, dataview = NULL, click = NULL,
+output_map <- function(shapes = NULL, color = NULL, color_time = NULL, dataview = NULL, id = NULL, click = NULL,
                        subto = NULL,
                        options = list(), tiles = list(
                          url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -39,7 +40,7 @@ output_map <- function(shapes = NULL, color = NULL, color_time = NULL, dataview 
                        )) {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
-  id <- caller$uid
+  if (is.null(id)) id <- paste0("map", caller$uid)
   if (building) {
     caller$dependencies$leaflet_style <- list(
       type = "stylesheet",
@@ -61,7 +62,7 @@ output_map <- function(shapes = NULL, color = NULL, color_time = NULL, dataview 
       if (!is.null(snames[i])) shapes[[i]]$name <- snames[i]
       if (is.null(shapes[[i]]$id_property)) shapes[[i]]$id_property <- "GEOID"
     }
-    caller$maps[[paste0("map", id)]] <- list(shapes = unname(shapes), options = options, tiles = tiles)
+    caller$maps[[id]] <- list(shapes = unname(shapes), options = options, tiles = tiles)
   }
   r <- paste(c(
     '<div class="auto-output leaflet"',
@@ -69,7 +70,7 @@ output_map <- function(shapes = NULL, color = NULL, color_time = NULL, dataview 
     if (!is.null(click)) paste0('click="', click, '"'),
     if (!is.null(color)) paste0('color="', color, '"'),
     if (!is.null(color_time)) paste0('color-time="', color_time, '"'),
-    paste0('id="map', id, '"'),
+    paste0('id="', id, '"'),
     'auto-type="map"></div>'
   ), collapse = " ")
   if (building) {

@@ -7,24 +7,23 @@
 #' @param color The name of a variable, or ID of a variable selector to use to color lines.
 #' @param color_time The ID of a selector to specify which timepoint of \code{color} to use.
 #' @param dataview The ID of an \code{\link{input_dataview}} component.
+#' @param id Unique ID for the plot.
 #' @param click The ID of an input to set to a clicked line's ID.
 #' @param subto A vector of output IDs to receive hover events from.
 #' @param options A list of configuration options, with named entries for any of \code{data}, \code{layout},
 #' or \code{options}, potentially extracted from a saved plotly object (see
 #' \href{https://plotly.com/javascript/configuration-options}{Plotly documentation}).
 #' @examples
-#' \dontrun{
 #' # for mpg ~ wt * am in a site based on mtcars data
 #' output_plot("wt", "mpg", "am")
-#' }
 #' @return A character vector of the content to be added.
 #' @export
 
 output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dataview = NULL,
-                        click = NULL, subto = NULL, options = list()) {
+                        id = NULL, click = NULL, subto = NULL, options = list()) {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
-  id <- caller$uid
+  if (is.null(id)) id <- paste0("plot", caller$uid)
   entries <- c("layout", "config", "data")
   if (is.character(options)) options <- fromJSON(options)
   if ("x" %in% names(options)) options <- options$x
@@ -55,7 +54,7 @@ output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dat
     if (!is.null(y)) paste0('y="', y, '"'),
     if (!is.null(color)) paste0('color="', color, '"'),
     if (!is.null(color_time)) paste0('color-time="', color_time, '"'),
-    paste0('id="plot', id, '"'),
+    paste0('id="', id, '"'),
     'auto-type="plot"></div>'
   ), collapse = " ")
   if (building) {
@@ -69,7 +68,7 @@ output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dat
       url = "https://plotly.com",
       version = "2.6.3"
     )
-    caller$plots[[paste0("plot", id)]] <- options
+    caller$plots[[id]] <- options
     caller$content <- c(caller$content, r)
     caller$uid <- caller$uid + 1
   }

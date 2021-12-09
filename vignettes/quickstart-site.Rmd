@@ -1,0 +1,95 @@
+---
+title: "Build a Data Site"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Build a Data Site}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+*Built with R 
+`r getRversion()`
+on 
+`r format(Sys.time(),'%B %d %Y')`*
+
+***
+
+# Basic example
+Building a datasite consists of 3 steps:
+
+1. Initialize the site
+2. Add data to the site
+3. Specify the site's layout
+
+## 1. Initialize
+Start by loading the library and initializing a site. 
+```r
+library(community)
+
+# this can be in an existing or new directory
+# for this example, it is a temporary directory
+dir <- paste0(tempdir(), "/example_site")
+init_site(dir)
+```
+
+## 2. Add Data
+Now you should have a `data` folder in `dir` where you can put your data files, and a
+`build.R` file which you can use to reformat those files if needed, and add them to the site.
+
+```r
+# make a simple example set
+data <- matrix(rnorm(300), 100, dimnames = list(NULL, c("x", "y", "z")))
+  
+# write that set to a file
+write.csv(data, paste0(dir, "/docs/data/data.csv"), row.names = FALSE)
+
+# add it to the site
+data_add(paste0(dir, "/docs/data/data.csv"))
+```
+
+This sets up the data's metadata (written to `datapackage.json`), which the site will use when it's built.
+
+Including this code in `build.R` is not necessary, but can be a way to organize things, and make any data
+processing steps repeatable.
+
+Including the original data (`data.csv` in this case) is not also strictly necessary -- the data file made
+when you build the site (by default) is all that will actually be used by the site.
+
+## 3. Specify
+Everything to do with the look and functionality of the site happens between `site.R`
+and the `site_build` function.
+
+For an initial site, replace the template content of `site.R` with this:
+```r
+page_navbar("Site Title")
+output_plot("x", "y", "z")
+```
+
+Then save and build the site:
+```r
+site_build(dir, bundle_data = TRUE, open_after = TRUE)
+```
+
+`bundle_data` specifies that the data should be included in the site's index file,
+rather than a separate one. This is nice for running locally or for small datasets, but when the site is being
+served publicly, it might be better to keep the data separate.
+
+`open_after` just opens the build page in a browser, which might get annoying as you edit and rebuild the site.
+
+# Adding inputs
+Inputs can be named and then referred to in outputs. For example, you might want to allow plot variables to be changed.
+To do that, you can add a select input with variables as options.
+
+Change `site.R` to this:
+```r
+page_navbar("Site Title")
+input_select("X Variable:", "variables", default = "x", id = "selected_x")
+output_plot("selected_x", "y", "z")
+```
+
+Then rebuild:
+```r
+site_build(dir, bundle_data = TRUE)
+```

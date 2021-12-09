@@ -4,18 +4,19 @@
 \alias{site_build}
 \title{Render a Website}
 \usage{
-site_build(dir = ".", file = "site.R", outdir = "docs",
-  name = "index.html", variables = NULL, options = list(),
-  bundle_data = FALSE, open_after = FALSE, force = FALSE)
+site_build(dir, file = "site.R", outdir = "docs", name = "index.html",
+  variables = NULL, options = list(), bundle_data = FALSE,
+  open_after = FALSE, force = FALSE)
 }
 \arguments{
 \item{dir}{Path to the site project directory.}
 
 \item{file}{Name of the R file to build the site from.}
 
-\item{outdir}{Path to place the .}
+\item{outdir}{Subdirectory of \code{dir} in which to place the built site files (where the site is to be
+served from).}
 
-\item{name}{Path to the site project directory.}
+\item{name}{Name of the HTML file to be created.}
 
 \item{variables}{A character vector of variable names to include from the data. If no specified,
 all variables are included.}
@@ -40,7 +41,10 @@ Write HTML output from the \code{site.R} file in a site project.
 \examples{
 \dontrun{
 # run from within a site project directory, initialized with `init_site()`
-site_build()
+site_build(".")
+
+# bundle data to most easily run locally
+site_build(".", bundle_data = TRUE)
 }
 }
 \seealso{

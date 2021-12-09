@@ -2,18 +2,20 @@
 #'
 #' Create a repository for a static website for data documentation and exploration.
 #'
+#' @param dir Directory in which to create the site's structure. Will be created if it does not exist.
 #' @param title Title of the site.
-#' @param dir Directory in which to create the site's directory.
 #' @param with_data logical; if \code{FALSE}, a data sub-directory and package will not be created.
 #' @param overwrite logical; if \code{TRUE}, will overwrite existing site files in \code{dir}.
 #' @examples
 #' \dontrun{
-#' init_site("app")
+#' # initialize site in the current working directory
+#' init_site(".")
 #' }
 #' @return Path to the created site directory.
 #' @export
 
-init_site <- function(title = "app", dir = ".", with_data = TRUE, overwrite = FALSE) {
+init_site <- function(dir, title = "app", with_data = TRUE, overwrite = FALSE) {
+  if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = ".")')
   check <- check_template("site", dir = dir)
   if (check$exists && !overwrite) {
     cli_bullets(c(`!` = "site files already exist", i = "add {.code overwrite = TRUE} to overwrite them"))

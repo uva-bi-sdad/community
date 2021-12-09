@@ -4,12 +4,12 @@
 \alias{init_site}
 \title{Create a website}
 \usage{
-init_site(title = "app", dir = ".", with_data = TRUE, overwrite = FALSE)
+init_site(dir, title = "app", with_data = TRUE, overwrite = FALSE)
 }
 \arguments{
-\item{title}{Title of the site.}
+\item{dir}{Directory in which to create the site's structure. Will be created if it does not exist.}
 
-\item{dir}{Directory in which to create the site's directory.}
+\item{title}{Title of the site.}
 
 \item{with_data}{logical; if \code{FALSE}, a data sub-directory and package will not be created.}
 
@@ -23,6 +23,7 @@ Create a repository for a static website for data documentation and exploration.
 }
 \examples{
 \dontrun{
-init_site("app")
+# initialize site in the current working directory
+init_site(".")
 }
 }
