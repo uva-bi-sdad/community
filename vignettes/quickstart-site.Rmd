@@ -17,7 +17,7 @@ on
 ***
 
 # Basic example
-Building a datasite consists of 3 steps:
+Building a data site consists of 3 steps:
 
 1. Initialize the site
 2. Add data to the site
@@ -41,10 +41,10 @@ Now you should have a `data` folder in `dir` where you can put your data files, 
 ```r
 # make a simple example set
 data <- data.frame(
-  id = formatC(1:78, width = 2, flag = "0"),
+  ID = 1:78,
   matrix(rnorm(234), 78, dimnames = list(NULL, c("x", "y", "z")))
 )
-  
+
 # write that set to a file
 write.csv(data, paste0(dir, "/docs/data/data.csv"), row.names = FALSE)
 
@@ -132,9 +132,18 @@ page_section(
   # give the plot an ID
   output_plot("selected_x", "y", "z", id = "main_plot"),
   # then make an information output that subscribes to it
-  output_info("features.id", c("variables.short_name" = "value"), subto = "main_plot")
+  output_info("features.name", c(
+    "variables.short_name" = "value"
+  ), subto = "main_plot")
 )
 ```
+
+In `output_info`, `features.`, `variables.`, and `data.` refer to aspects of the hovered-over entity.
+`variables.` and `data.` also implicitly refer to a particular variable -- by default, this will be the variable
+used for color, but setting the `variable` argument can change that (e.g., `variable = "x"` or
+`variable = "selected_x"`).
+
+You can also add `floating = TRUE` to make the output pane more like a tooltip.
 
 # Add variable information
 The information output can also display additional information about the variables, which you can fill in when you
@@ -149,7 +158,7 @@ data_add(
       z = list(
         long_name = "Variable Z",
         description = "A random variable, drawn from a normal distribution.",
-        statement = "{features.id} has a Z value of {value}"
+        statement = "{features.name} has a Z value of {value}"
       )
     )
   )
@@ -168,13 +177,11 @@ page_section(
   output_plot("selected_x", "y", "z", id = "main_plot"),
   output_info("features.name", c(
     "variables.long_name" = "value",
-    "variables.description"
+    "variables.description",
+    "variables.statement"
   ), subto = "main_plot")
 )
 ```
-
-By default, entries in `output_info` refer to the coloring variable, but this can be change by setting
-`variable` to a variable name or ID of a variable selecting input.
 
 # Add a Map
 Maps will generally require shapes to be added from a separate, GeoJSON file. You can use the `download_census_shapes`
@@ -196,15 +203,60 @@ page_menu(
 page_section(
   wraps = "col", sizes = c(8, 4),
   output_plot("selected_x", "y", "z", id = "main_plot"),
-  output_info("features.id", c(
+  output_info("features.name", c(
     "variables.long_name" = "value",
-    "variables.description"
+    "variables.description",
+    "variables.statement"
   ), subto = c("main_plot", "main_map"))
 )
 output_map(
   list(name = "data", url = paste0(dir, "/docs/states.geojson")),
-  color = "selected_x", id = "main_map"
+  color = "z", id = "main_map"
 )
 ```
 
 Because the shapes also had some properties, these were added as entity features, giving some names.
+
+Here, shapes were loaded in from a local file as part of the build process, but this same file could also be
+served and referred to by URL, in which case it would be loaded in separately. Loading the map shapes separately
+means the shapes can be independently cached by the browser, which can improve load times between sites that
+use the same make.
+
+# Add Entity Metadata
+The map shapes file added some additional information about entities, such as their name, but this type of
+information can be added more directly through the `data_add` function's `meta` argument. We've already used this
+argument to add variable metadata with a list in the `variables` entry. Similarly, entity metadata can be added
+in an `ids` entry.
+
+For example, you might add names to some of the entries for which there is no state:
+```r
+# include the ids list in your call to `data_add`
+data_add(
+  paste0(dir, "/docs/data/data.csv"),
+  list(
+    variables = list(
+      z = list(
+        long_name = "Variable Z",
+        description = "A random variable, drawn from a normal distribution.",
+        statement = "{features.name} has a Z value of {value}"
+      )
+    ),
+    ids = list(
+      variable = "ID",
+      map = list(
+        "3" = list(name = "No State 3"),
+        "7" = list(name = "No State 7")
+      )
+    )
+  )
+)
+
+# then rebuild
+site_build(dir, bundle_data = TRUE)
+```
+
+Now you should see names for entities 3 and 7.
+
+The `ids` field might be particularly useful if you already have metadata like this in a separate file,
+or plan to use that information between sites. In that case, you can replace the list in `map`
+with the path to a local file, or a URL to be loaded in dynamically.

@@ -2827,9 +2827,22 @@ void (function () {
               } else {
                 if (-1 === data_maps[ids[i].map].queue.indexOf(k)) data_maps[ids[i].map].queue.push(k)
               }
+            } else if('string' !== typeof ids[i].map || ids[i].map_content){
+              if(ids[i].map_content){
+                data_maps[ids[i].map] = {queue: [], resource: JSON.parse(ids[i].map_content), retrieved: true}
+                site.metadata.info[k].schema.fields[i].ids = data_maps[k] = Object.hasOwn(
+                  data_maps[ids[i].map].resource,
+                  k
+                )
+                  ? data_maps[ids[i].map].resource[k]
+                  : data_maps[ids[i].map].resource
+              } else {
+                data_maps[k] = ids[i].map
+              }
+              map_entities(k)
             } else {
-              f = new XMLHttpRequest()
               data_maps[ids[i].map] = {queue: [k], resource: {}, retrieved: false}
+              f = new XMLHttpRequest()
               f.onreadystatechange = function (url, fi) {
                 if (4 === f.readyState) {
                   if (200 === f.status) {

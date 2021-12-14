@@ -97,7 +97,7 @@
 <div class="section level1">
 <h1 id="basic-example">Basic example<a class="anchor" aria-label="anchor" href="#basic-example"></a>
 </h1>
-<p>Building a datasite consists of 3 steps:</p>
+<p>Building a data site consists of 3 steps:</p>
 <ol style="list-style-type: decimal">
 <li>Initialize the site</li>
 <li>Add data to the site</li>
@@ -122,10 +122,10 @@
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># make a simple example set</span>
 <span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>
-  id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/formatc.html" class="external-link">formatC</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">78</span>, width <span class="op">=</span> <span class="fl">2</span>, flag <span class="op">=</span> <span class="st">"0"</span><span class="op">)</span>,
+  ID <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">78</span>,
   <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">234</span><span class="op">)</span>, <span class="fl">78</span>, dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="cn">NULL</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
 <span class="op">)</span>
-  
+
 <span class="co"># write that set to a file</span>
 <span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">data</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs/data/data.csv"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
 
@@ -196,8 +196,12 @@
   <span class="co"># give the plot an ID</span>
   <span class="fu"><a href="../reference/output_plot.html">output_plot</a></span><span class="op">(</span><span class="st">"selected_x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span>, id <span class="op">=</span> <span class="st">"main_plot"</span><span class="op">)</span>,
   <span class="co"># then make an information output that subscribes to it</span>
-  <span class="fu"><a href="../reference/output_info.html">output_info</a></span><span class="op">(</span><span class="st">"features.id"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"variables.short_name"</span> <span class="op">=</span> <span class="st">"value"</span><span class="op">)</span>, subto <span class="op">=</span> <span class="st">"main_plot"</span><span class="op">)</span>
+  <span class="fu"><a href="../reference/output_info.html">output_info</a></span><span class="op">(</span><span class="st">"features.name"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>
+    <span class="st">"variables.short_name"</span> <span class="op">=</span> <span class="st">"value"</span>
+  <span class="op">)</span>, subto <span class="op">=</span> <span class="st">"main_plot"</span><span class="op">)</span>
 <span class="op">)</span></code></pre></div>
+<p>In <code>output_info</code>, <code>features.</code>, <code>variables.</code>, and <code>data.</code> refer to aspects of the hovered-over entity. <code>variables.</code> and <code>data.</code> also implicitly refer to a particular variable – by default, this will be the variable used for color, but setting the <code>variable</code> argument can change that (e.g., <code>variable = "x"</code> or <code>variable = "selected_x"</code>).</p>
+<p>You can also add <code>floating = TRUE</code> to make the output pane more like a tooltip.</p>
 </div>
 <div class="section level1">
 <h1 id="add-variable-information">Add variable information<a class="anchor" aria-label="anchor" href="#add-variable-information"></a>
@@ -212,7 +216,7 @@
       z <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
         long_name <span class="op">=</span> <span class="st">"Variable Z"</span>,
         description <span class="op">=</span> <span class="st">"A random variable, drawn from a normal distribution."</span>,
-        statement <span class="op">=</span> <span class="st">"{features.id} has a Z value of {value}"</span>
+        statement <span class="op">=</span> <span class="st">"{features.name} has a Z value of {value}"</span>
       <span class="op">)</span>
     <span class="op">)</span>
   <span class="op">)</span>
@@ -229,10 +233,10 @@
   <span class="fu"><a href="../reference/output_plot.html">output_plot</a></span><span class="op">(</span><span class="st">"selected_x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span>, id <span class="op">=</span> <span class="st">"main_plot"</span><span class="op">)</span>,
   <span class="fu"><a href="../reference/output_info.html">output_info</a></span><span class="op">(</span><span class="st">"features.name"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>
     <span class="st">"variables.long_name"</span> <span class="op">=</span> <span class="st">"value"</span>,
-    <span class="st">"variables.description"</span>
+    <span class="st">"variables.description"</span>,
+    <span class="st">"variables.statement"</span>
   <span class="op">)</span>, subto <span class="op">=</span> <span class="st">"main_plot"</span><span class="op">)</span>
 <span class="op">)</span></code></pre></div>
-<p>By default, entries in <code>output_info</code> refer to the coloring variable, but this can be change by setting <code>variable</code> to a variable name or ID of a variable selecting input.</p>
 </div>
 <div class="section level1">
 <h1 id="add-a-map">Add a Map<a class="anchor" aria-label="anchor" href="#add-a-map"></a>
@@ -252,16 +256,50 @@
 <span class="fu"><a href="../reference/page_section.html">page_section</a></span><span class="op">(</span>
   wraps <span class="op">=</span> <span class="st">"col"</span>, sizes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">8</span>, <span class="fl">4</span><span class="op">)</span>,
   <span class="fu"><a href="../reference/output_plot.html">output_plot</a></span><span class="op">(</span><span class="st">"selected_x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span>, id <span class="op">=</span> <span class="st">"main_plot"</span><span class="op">)</span>,
-  <span class="fu"><a href="../reference/output_info.html">output_info</a></span><span class="op">(</span><span class="st">"features.id"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>
+  <span class="fu"><a href="../reference/output_info.html">output_info</a></span><span class="op">(</span><span class="st">"features.name"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>
     <span class="st">"variables.long_name"</span> <span class="op">=</span> <span class="st">"value"</span>,
-    <span class="st">"variables.description"</span>
+    <span class="st">"variables.description"</span>,
+    <span class="st">"variables.statement"</span>
   <span class="op">)</span>, subto <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"main_plot"</span>, <span class="st">"main_map"</span><span class="op">)</span><span class="op">)</span>
 <span class="op">)</span>
 <span class="fu"><a href="../reference/output_map.html">output_map</a></span><span class="op">(</span>
   <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"data"</span>, url <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs/states.geojson"</span><span class="op">)</span><span class="op">)</span>,
-  color <span class="op">=</span> <span class="st">"selected_x"</span>, id <span class="op">=</span> <span class="st">"main_map"</span>
+  color <span class="op">=</span> <span class="st">"z"</span>, id <span class="op">=</span> <span class="st">"main_map"</span>
 <span class="op">)</span></code></pre></div>
 <p>Because the shapes also had some properties, these were added as entity features, giving some names.</p>
+<p>Here, shapes were loaded in from a local file as part of the build process, but this same file could also be served and referred to by URL, in which case it would be loaded in separately. Loading the map shapes separately means the shapes can be independently cached by the browser, which can improve load times between sites that use the same make.</p>
+</div>
+<div class="section level1">
+<h1 id="add-entity-metadata">Add Entity Metadata<a class="anchor" aria-label="anchor" href="#add-entity-metadata"></a>
+</h1>
+<p>The map shapes file added some additional information about entities, such as their name, but this type of information can be added more directly through the <code>data_add</code> function’s <code>meta</code> argument. We’ve already used this argument to add variable metadata with a list in the <code>variables</code> entry. Similarly, entity metadata can be added in an <code>ids</code> entry.</p>
+<p>For example, you might add names to some of the entries for which there is no state:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># include the ids list in your call to `data_add`</span>
+<span class="fu"><a href="../reference/data_add.html">data_add</a></span><span class="op">(</span>
+  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs/data/data.csv"</span><span class="op">)</span>,
+  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
+    variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
+      z <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
+        long_name <span class="op">=</span> <span class="st">"Variable Z"</span>,
+        description <span class="op">=</span> <span class="st">"A random variable, drawn from a normal distribution."</span>,
+        statement <span class="op">=</span> <span class="st">"{features.name} has a Z value of {value}"</span>
+      <span class="op">)</span>
+    <span class="op">)</span>,
+    ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
+      variable <span class="op">=</span> <span class="st">"ID"</span>,
+      map <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
+        <span class="st">"3"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"No State 3"</span><span class="op">)</span>,
+        <span class="st">"7"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"No State 7"</span><span class="op">)</span>
+      <span class="op">)</span>
+    <span class="op">)</span>
+  <span class="op">)</span>
+<span class="op">)</span>
+
+<span class="co"># then rebuild</span>
+<span class="fu"><a href="../reference/site_build.html">site_build</a></span><span class="op">(</span><span class="va">dir</span>, bundle_data <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<p>Now you should see names for entities 3 and 7.</p>
+<p>The <code>ids</code> field might be particularly useful if you already have metadata like this in a separate file, or plan to use that information between sites. In that case, you can replace the list in <code>map</code> with the path to a local file, or a URL to be loaded in dynamically.</p>
 </div>
   </div>
 

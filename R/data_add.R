@@ -92,7 +92,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
     }
     if (!all(rownames(data) == seq_len(nrow(data)))) data <- cbind(`_row` = rownames(data), data)
     unpack_meta <- function(n) {
-      if (is.null(m[[n]])) list() else if (is.list(m[[n]][[1]])) m[[n]] else list(m[[n]])
+      if (!length(m[[n]])) list() else if (is.list(m[[n]][[1]])) m[[n]] else list(m[[n]])
     }
     varinf <- unpack_meta("variables")
     if (length(varinf) == 1 && is.character(varinf[[1]])) {
@@ -103,6 +103,12 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
         } else {
           varinf <- metas[[varinf[[1]]]] <- read_json(varinf[[1]])
         }
+      }
+    }
+    ids <- unpack_meta("ids")
+    for (i in seq_along(ids)) {
+      if (length(ids[[i]]$map) == 1 && is.character(ids[[i]]$map) && file.exists(ids[[i]]$map)) {
+        ids[[i]]$map_content <- paste(readLines(ids[[i]]$map, warn = FALSE), collapse = "")
       }
     }
     res <- list(
@@ -119,7 +125,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       },
       filename = name,
       source = unpack_meta("source"),
-      ids = unpack_meta("ids"),
+      ids = ids,
       time = unlist(unpack_meta("time")),
       profile = "data-resource",
       created = as.character(info$mtime),
