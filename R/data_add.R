@@ -95,7 +95,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       if (is.null(m[[n]])) list() else if (is.list(m[[n]][[1]])) m[[n]] else list(m[[n]])
     }
     varinf <- unpack_meta("variables")
-    if (length(varinf) == 1) {
+    if (length(varinf) == 1 && is.character(varinf[[1]])) {
       if (!file.exists(varinf[[1]])) varinf[[1]] <- paste0(dir, "/", varinf[[1]])
       if (file.exists(varinf[[1]])) {
         if (varinf[[1]] %in% names(metas)) {

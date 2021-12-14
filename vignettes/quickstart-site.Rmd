@@ -40,7 +40,10 @@ Now you should have a `data` folder in `dir` where you can put your data files, 
 
 ```r
 # make a simple example set
-data <- matrix(rnorm(300), 100, dimnames = list(NULL, c("x", "y", "z")))
+data <- data.frame(
+  id = formatC(1:78, width = 2, flag = "0"),
+  matrix(rnorm(234), 78, dimnames = list(NULL, c("x", "y", "z")))
+)
   
 # write that set to a file
 write.csv(data, paste0(dir, "/docs/data/data.csv"), row.names = FALSE)
@@ -78,7 +81,7 @@ served publicly, it might be better to keep the data separate.
 
 `open_after` just opens the build page in a browser, which might get annoying as you edit and rebuild the site.
 
-# Adding inputs
+# Add inputs
 Inputs can be named and then referred to in outputs. For example, you might want to allow plot variables to be changed.
 To do that, you can add a select input with variables as options.
 
@@ -93,3 +96,115 @@ Then rebuild:
 ```r
 site_build(dir, bundle_data = TRUE)
 ```
+
+# Add structure
+`page_section` is the main way to arrange components of the site, which can be wrapped around any set of input or
+output elements.
+
+`page_menu` can be a nice way to arrange inputs.
+
+These can be added to the previous example like this:
+```r
+page_navbar("Site Title")
+page_menu(
+  input_select("X Variable:", "variables", default = "x", id = "selected_x"),
+  default_open = TRUE
+)
+page_section(
+  wraps = "col",
+  output_plot("selected_x", "y", "z")
+)
+```
+
+# Add interactions
+Plots (as well as maps) can be the source of mouse events (such as hovers and clicks). Information panes can
+respond to these events by displaying additional information.
+
+For example, we can tie a tooltip-like output to the plot like this:
+```r
+page_navbar("Site Title")
+page_menu(
+  input_select("X Variable:", "variables", default = "x", id = "selected_x"),
+  default_open = TRUE
+)
+page_section(
+  wraps = "col", sizes = c(8, 4),
+  # give the plot an ID
+  output_plot("selected_x", "y", "z", id = "main_plot"),
+  # then make an information output that subscribes to it
+  output_info("features.id", c("variables.short_name" = "value"), subto = "main_plot")
+)
+```
+
+# Add variable information
+The information output can also display additional information about the variables, which you can fill in when you
+add the data.
+
+For example, run the same `data_add` command as before, but include some information about one of the variables:
+```r
+data_add(
+  paste0(dir, "/docs/data/data.csv"),
+  list(
+    variables = list(
+      z = list(
+        long_name = "Variable Z",
+        description = "A random variable, drawn from a normal distribution.",
+        statement = "{features.id} has a Z value of {value}"
+      )
+    )
+  )
+)
+```
+
+Then, you can draw from that in the information output in `site.R`:
+```r
+page_navbar("Site Title")
+page_menu(
+  input_select("X Variable:", "variables", default = "x", id = "selected_x"),
+  default_open = TRUE
+)
+page_section(
+  wraps = "col", sizes = c(8, 4),
+  output_plot("selected_x", "y", "z", id = "main_plot"),
+  output_info("features.name", c(
+    "variables.long_name" = "value",
+    "variables.description"
+  ), subto = "main_plot")
+)
+```
+
+By default, entries in `output_info` refer to the coloring variable, but this can be change by setting
+`variable` to a variable name or ID of a variable selecting input.
+
+# Add a Map
+Maps will generally require shapes to be added from a separate, GeoJSON file. You can use the `download_census_shapes`
+function to download shapes for Census regions within the United States.
+
+For example, we might download the shapes of states:
+```r
+# save the state shapes to the distribution directory
+download_census_shapes(paste0(dir, "/docs"), name = "states")
+```
+
+Then add a map to `site.R` (also subscribing the info pane to it):
+```r
+page_navbar("Site Title")
+page_menu(
+  input_select("X Variable:", "variables", default = "x", id = "selected_x"),
+  default_open = TRUE
+)
+page_section(
+  wraps = "col", sizes = c(8, 4),
+  output_plot("selected_x", "y", "z", id = "main_plot"),
+  output_info("features.id", c(
+    "variables.long_name" = "value",
+    "variables.description"
+  ), subto = c("main_plot", "main_map"))
+)
+output_map(
+  list(name = "data", url = paste0(dir, "/docs/states.geojson")),
+  color = "selected_x", id = "main_map"
+)
+```
+
+Because the shapes also had some properties, these were added as entity features, giving some names.

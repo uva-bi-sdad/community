@@ -39,7 +39,7 @@
 #' @export
 
 input_dataview <- function(id = NULL, y = NULL, x = NULL, time = NULL, time_agg = "last", time_filters = list(),
-                           dataset = NULL, ids = NULL, features = NULL, variables = NULL, palette = "rdylbu7") {
+                           dataset = NULL, ids = NULL, features = NULL, variables = NULL, palette = "") {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   r <- list(palette = tolower(palette))

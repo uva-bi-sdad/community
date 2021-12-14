@@ -154,7 +154,10 @@ button.btn-danger{background-color: var(--warning)}
 .info-body-row-stack .info-body-row-name{font-weight: bold; padding: .05em 0; font-size: min(1vw, 1.2rem)}
 
 .info-title{font-size: 1.7em; margin: 0; font-weight: bold}
-
+.floating{
+  position: fixed; background-color: var(--background); border-radius: 25px; z-index: 430;
+  border: 1px solid var(--background-border); padding: .5em
+}
 .text-display button{width: 100%; background: inherit; border: none; color: var(--link); border-radius: 10px}
 .text-display button::after {
   display: inline-block; content: ""; margin: 0 0 -.1em .3em; background-repeat: no-repeat; height: .8em; width: .8em

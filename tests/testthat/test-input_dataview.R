@@ -1,7 +1,7 @@
 test_that("reformats properly", {
   expect_equal(
     list(
-      palette = "rdylbu7",
+      palette = "",
       time_agg = "last",
       time_filters = list(),
       dataset = "dataset",

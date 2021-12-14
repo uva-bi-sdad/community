@@ -6,7 +6,7 @@
 \usage{
 input_dataview(id = NULL, y = NULL, x = NULL, time = NULL,
   time_agg = "last", time_filters = list(), dataset = NULL, ids = NULL,
-  features = NULL, variables = NULL, palette = "rdylbu7")
+  features = NULL, variables = NULL, palette = "")
 }
 \arguments{
 \item{id}{An ID of the data view, for association with output elements. Defaults to \code{'view'} appended

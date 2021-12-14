@@ -9,9 +9,9 @@ output_plot(x = NULL, y = NULL, color = NULL, color_time = NULL,
   options = list())
 }
 \arguments{
-\item{x}{The name of a variable to plot along the x-axis.}
+\item{x}{The name of a variable, or ID of a variable selector to plot along the x-axis.}
 
-\item{y}{The name of a variable to plot along the y-axis.}
+\item{y}{The name of a variable, or ID of a variable selector to plot along the y-axis.}
 
 \item{color}{The name of a variable, or ID of a variable selector to use to color lines.}
 

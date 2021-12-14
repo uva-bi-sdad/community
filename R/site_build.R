@@ -143,6 +143,18 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
   )) {
     settings[[e]] <- if (length(parts[[e]])) if (is.list(parts[[e]])) parts[[e]] else list(parts[[e]]) else NULL
   }
+  if (!is.null(settings$maps)) {
+    settings$maps[["_raw"]] <- list()
+    for (m in settings$map) {
+      if (!is.null(m$shapes)) {
+        for (s in m$shapes) {
+          if (file.exists(s$url)) {
+            settings$maps[["_raw"]][[s$url]] <- paste(readLines(s$url), collapse = "")
+          }
+        }
+      }
+    }
+  }
   writeLines(
     paste0("const site = ", toJSON(settings, pretty = TRUE, auto_unbox = TRUE)),
     paste0(dir, "/docs/settings.js")

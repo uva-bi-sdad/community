@@ -5,8 +5,8 @@
 \title{Add a tooltip-like display to a website}
 \usage{
 output_info(title = NULL, body = NULL, row_style = "table",
-  default = NULL, dataview = NULL, subto = NULL, id = NULL,
-  variable_info = FALSE)
+  default = NULL, dataview = NULL, variable = NULL, subto = NULL,
+  id = NULL, variable_info = FALSE, floating = FALSE)
 }
 \arguments{
 \item{title}{Title text, or the source of title text.}
@@ -22,11 +22,16 @@ Repeats over rows.}
 
 \item{dataview}{The ID of a dataview, used for the persistent display.}
 
+\item{variable}{Name of the variable from which to display variable information and values. If not specified,
+this will default to the coloring variable of maps and plots, or the y variable of a dataview.}
+
 \item{subto}{A vector of output IDs to receive hover events from.}
 
 \item{id}{Unique id of the element.}
 
 \item{variable_info}{Logical; if \code{TRUE} (default), variable names can be clicked for more information.}
+
+\item{floating}{Logical; if \code{TRUE}, the information pane will appear next to the cursor.}
 }
 \value{
 A character vector of the content to be added.

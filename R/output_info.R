@@ -10,9 +10,12 @@
 #' Repeats over rows.
 #' @param default A list with entries for \code{"title"} and \code{"body"}, which are treated as raw text.
 #' @param dataview The ID of a dataview, used for the persistent display.
+#' @param variable Name of the variable from which to display variable information and values. If not specified,
+#' this will default to the coloring variable of maps and plots, or the y variable of a dataview.
 #' @param subto A vector of output IDs to receive hover events from.
 #' @param id Unique id of the element.
 #' @param variable_info Logical; if \code{TRUE} (default), variable names can be clicked for more information.
+#' @param floating Logical; if \code{TRUE}, the information pane will appear next to the cursor.
 #' @examples
 #' \dontrun{
 #' output_info("Initial View", "Hover over plot elements for more information.")
@@ -21,11 +24,15 @@
 #' @export
 
 output_info <- function(title = NULL, body = NULL, row_style = "table", default = NULL, dataview = NULL,
-                        subto = NULL, id = NULL, variable_info = FALSE) {
+                        variable = NULL, subto = NULL, id = NULL, variable_info = FALSE, floating = FALSE) {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   if (is.null(id)) id <- paste0("info", caller$uid)
-  r <- paste0('<div class="auto-output text-display" auto-type="info" id="', id, '"></div>')
+  r <- paste0(
+    '<div class="auto-output text-display',
+    if (floating) ' floating"' else '"',
+    ' auto-type="info" id="', id, '"></div>'
+  )
   row_style <- rep_len(row_style, length(body))
   if (building) {
     caller$content <- c(caller$content, r)
@@ -35,10 +42,12 @@ output_info <- function(title = NULL, body = NULL, row_style = "table", default 
         list(name = if (is.null(names(body))) "" else names(body)[i], value = body[[i]], style = row_style[[i]])
       }),
       default = as.list(default),
-      dataview = dataview,
-      subto = subto,
-      variable_info = variable_info
+      floating = floating
     )
+    if (!is.null(dataview)) caller$info[[id]]$dataview <- dataview
+    if (!is.null(variable)) caller$info[[id]]$variable <- variable
+    if (!is.null(subto)) caller$info[[id]]$subto <- subto
+    if (!is.null(variable_info)) caller$info[[id]]$variable_info <- variable_info
     caller$uid <- caller$uid + 1
   }
   r
