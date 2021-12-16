@@ -110,7 +110,7 @@ page_menu(
 input_dataview("main_view", "selected_variable", time = "Year", time_agg = "selected_year")
 
 output_info(
-  "features.name", c("variables.long_name", "value"),
+  "features.name", c("variables.long_name" = "value"),
   floating = TRUE, subto = c("main_map", "main_plot")
 )
 output_map(

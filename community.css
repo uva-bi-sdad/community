@@ -152,6 +152,7 @@ button.btn-danger{background-color: var(--warning)}
   text-align: center; margin: .5em 0;
   background-color: var(--highlight-secondary); border-radius: 10px; font-size: 1.08em
 }
+.info-body-row-table .info-body-row-name{padding: 0 .5em 0 0}
 .info-body-row-stack .info-body-row-name{font-weight: bold; padding: .05em 0; font-size: min(1vw, 1.2rem)}
 
 .info-title{font-size: 1.7em; margin: 0; font-weight: bold}

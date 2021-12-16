@@ -118,7 +118,7 @@ void (function () {
               ns++
             }
           }
-          u.e[ns < 2 ? 'setAttribute' : 'removeAttribute']('disabled', true)
+          u.e[ns ? 'removeAttribute' : 'setAttribute']('disabled', true)
         } else if (Object.hasOwn(_u, u.depends)) {
           if (patterns.variable.test(u.options_source)) {
             d = c.value()
@@ -666,7 +666,7 @@ void (function () {
         },
         setter: function (v) {
           if ('string' === typeof v) v = this.values.indexOf(v)
-          if (this.values[v] !== this.source) {
+          if (v !== this.e.selectedIndex || this.values[v] !== this.source) {
             this.e.selectedIndex = v
             this.source = this.values[v]
             request_queue(this.id)
@@ -957,7 +957,7 @@ void (function () {
                       return entity.features[this.parsed.features]
                     } else if (Object.hasOwn(this.parsed, 'data')) {
                       if ('value' === this.text) {
-                        this.parsed.data = valueOf(o.options.variable || caller.color)
+                        this.parsed.data = valueOf(o.options.variable || caller.color || _u[o.view].y)
                       } else if (Object.hasOwn(_u, this.text)) this.parsed.data = valueOf(this.text)
                       if (Object.hasOwn(entity.data, this.parsed.data)) {
                         const info = variable_info[this.parsed.data]

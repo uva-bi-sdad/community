@@ -24,7 +24,7 @@
 #' @return A character vector of the content to be added.
 #' @export
 
-page_menu <- function(..., position = "right", width = NULL, height = NULL, collapsible = TRUE,
+page_menu <- function(..., position = "right", width = "300px", height = NULL, collapsible = TRUE,
                       default_open = FALSE, wraps = TRUE, sizes = NA, breakpoints = NA, conditions = "") {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
@@ -45,14 +45,16 @@ page_menu <- function(..., position = "right", width = NULL, height = NULL, coll
   conditions <- rep_len(conditions, n)
   ids <- paste0("menu", parts$uid, seq_len(n))
   parts$uid <- parts$uid + 1
+  if (!is.character(width)) width <- paste0(width, "px")
+  if (!is.character(height)) height <- paste0(height, "px")
   r <- c(
     paste0(c(
       '<div state="', if (default_open) "open" else "closed", '" class="menu-wrapper menu-', position, '"',
       c(
-        ' style="', position, ": 0; ",
+        ' style="', position, ": ", if (default_open) 0 else paste0("-", width), "; ",
         if (vertical) "height" else "width", ": 100%",
         if (vertical) {
-          c("; width: ", if (is.null(width)) "300px" else width)
+          c("; width: ", width)
         } else
         if (!is.null(height)) c("; height: ", height),
         '"'

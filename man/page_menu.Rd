@@ -4,7 +4,7 @@
 \alias{page_menu}
 \title{Adds a menu to a website}
 \usage{
-page_menu(..., position = "right", width = NULL, height = NULL,
+page_menu(..., position = "right", width = "300px", height = NULL,
   collapsible = TRUE, default_open = FALSE, wraps = TRUE, sizes = NA,
   breakpoints = NA, conditions = "")
 }
