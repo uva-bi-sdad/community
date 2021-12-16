@@ -238,7 +238,6 @@ void (function () {
         }
       },
       dataview: function (f) {
-        if (!f.check) compile_dataview(f)
         const d = f.get.dataset(),
           state = f.value()
         if (state !== f.state) {
@@ -250,11 +249,13 @@ void (function () {
           if (init_log[d]) {
             f.n_selected.ids = 0
             f.n_selected.features = 0
+            f.n_selected.variables = 0
             f.n_selected.dataset = 0
             f.n_selected.filtered = 0
             f.n_selected.all = 0
             f.selection.ids = {}
             f.selection.features = {}
+            f.selection.variables = {}
             f.selection.dataset = {}
             f.selection.filtered = {}
             f.selection.all = {}
@@ -344,9 +345,9 @@ void (function () {
           r = r[u.id].summaries[d].time_range
           u.time_range.variable = variable
           u.time_range.index[0] = r[0]
-          u.time_range.time[0] = t + r[0]
+          u.time_range.time[0] = u.time_range.filtered[0] = t + r[0]
           u.time_range.index[1] = r[1]
-          u.time_range.time[1] = t + r[1]
+          u.time_range.time[1] = u.time_range.filtered[1] = t + r[1]
           if (!passive && s) {
             for (var i = s.length; i--; ) {
               if ('min' === s[i].type) {
@@ -1292,7 +1293,7 @@ void (function () {
                       data: c.source + '.' + c.name.replace(patterns.all_periods, '\\.'),
                       render: function (d) {
                         const i = 'data' === this.c.source ? this.o.i : this.o.v
-                        return 'number' === typeof d[i] ? format_value(d[i], false) : d[i]
+                        return d ? ('number' === typeof d[i] ? format_value(d[i], false) : d[i]) : 'NA'
                       }.bind({o, c}),
                     }
               )
@@ -1998,35 +1999,6 @@ void (function () {
         }
       }
     }
-    function content_resize() {
-      page.content.style.top =
-        (page.top_menu && 'open' === page.top_menu.state
-          ? page.top_menu.getBoundingClientRect().height
-          : page.content_bounds.top +
-            ((page.right_menu && 'open' === page.right_menu.state) ||
-            (page.left_menu && 'open' === page.left_menu.state)
-              ? 0
-              : 40)) + 'px'
-      if (page.right_menu) {
-        page.content.style.right =
-          page.content_bounds.right +
-          ('closed' === page.right_menu.state ? 0 : page.right_menu.getBoundingClientRect().width) +
-          'px'
-      } else if (page.bottom_menu) {
-        page.content.style.bottom =
-          page.content_bounds.bottom +
-          ('closed' === page.bottom_menu.state ? 0 : page.bottom_menu.getBoundingClientRect().height) +
-          'px'
-      } else if (page.left_menu) {
-        page.content.style.left =
-          page.content_bounds.left +
-          ('closed' === page.left_menu.state ? 0 : page.left_menu.getBoundingClientRect().width) +
-          'px'
-      }
-    }
-    function trigger_resize() {
-      window.dispatchEvent(new Event('resize'))
-    }
     // get options from url
     k = window.location.search.replace('?', '')
     site.url_options = {}
@@ -2228,6 +2200,36 @@ void (function () {
     }
   }
 
+  function content_resize() {
+    page.content.style.top =
+      (page.top_menu && 'open' === page.top_menu.state
+        ? page.top_menu.getBoundingClientRect().height
+        : page.content_bounds.top +
+          ((page.right_menu && 'open' === page.right_menu.state) || (page.left_menu && 'open' === page.left_menu.state)
+            ? 0
+            : 40)) + 'px'
+    if (page.right_menu) {
+      page.content.style.right =
+        page.content_bounds.right +
+        ('closed' === page.right_menu.state ? 0 : page.right_menu.getBoundingClientRect().width) +
+        'px'
+    } else if (page.bottom_menu) {
+      page.content.style.bottom =
+        page.content_bounds.bottom +
+        ('closed' === page.bottom_menu.state ? 0 : page.bottom_menu.getBoundingClientRect().height) +
+        'px'
+    } else if (page.left_menu) {
+      page.content.style.left =
+        page.content_bounds.left +
+        ('closed' === page.left_menu.state ? 0 : page.left_menu.getBoundingClientRect().width) +
+        'px'
+    }
+  }
+
+  function trigger_resize() {
+    window.dispatchEvent(new Event('resize'))
+  }
+
   function get_options_url() {
     var s = '',
       k,
@@ -2242,6 +2244,8 @@ void (function () {
 
   function init() {
     var k, i, e, c, n, o, cond, v
+    defaults.dataset = site.metadata.datasets[0]
+
     // initialize inputs
     for (k in _u)
       if (Object.hasOwn(_u, k) && Object.hasOwn(elements, _u[k].type)) {
@@ -2278,13 +2282,13 @@ void (function () {
           o.max = o.e.getAttribute('max')
           o.max_ref = parseFloat(o.max)
           o.ref = isNaN(o.min_ref) || isNaN(o.max_ref)
-          o.range = [o.min, o.max]
+          o.range = [o.min_ref, o.max_ref]
           o.step = parseFloat(o.e.step) || 1
           o.parsed = {min: undefined, max: undefined}
           o.depends = {}
           o.update = function () {
             const view = _u[this.view],
-              variable = valueOf(view.y)
+              variable = valueOf(o.variable || view.y)
             if (!view.time_range) view.time_range = {time: []}
             var d = view.get ? view.get.dataset() : valueOf(this.dataset),
               min = valueOf(this.min) || view.time,
@@ -2331,12 +2335,7 @@ void (function () {
               if (this.parsed.max < this.source || (!this.source && 'max' === this.default)) this.set(this.parsed.max)
             }
           }.bind(o)
-          // setTimeout(o.update, 0)
-          if (o.view) {
-            add_dependency(o.view, {type: 'update', id: o.id})
-          } else if (o.dataset) {
-            add_dependency(o.dataset, {type: 'update', id: o.id})
-          }
+          if (o.view) add_dependency(o.view, {type: 'update', id: o.id})
           if (o.max && !Object.hasOwn(variables, o.max)) {
             if (Object.hasOwn(_u, o.max)) {
               add_dependency(o.max, {type: 'max', id: o.id})
@@ -2365,6 +2364,14 @@ void (function () {
                   this.set(valueOf(this.default))
                 }
               }.bind(o)
+          }
+          if (o.variable) {
+            if (Object.hasOwn(_u, o.variable)) {
+              add_dependency(o.variable, {type: 'update', id: o.id})
+            } else if (Object.hasOwn(variables, o.variable)) {
+              o.e.min = o.min = o.parsed.min = o.range[0] = variables[o.variable].info[defaults.dataset].min
+              o.e.max = o.max = o.parsed.max = o.range[1] = variables[o.variable].info[defaults.dataset].max
+            }
           }
         } else {
           if (!o.values.length)
@@ -2450,15 +2457,14 @@ void (function () {
         e.id = k
         e.value = function () {
           if (this.get) {
-            var k,
-              s =
-                '' +
-                this.get.dataset() +
-                this.get.ids() +
-                this.get.features() +
-                this.get.variables() +
-                site.settings.summary_selection
-            return s
+            return (
+              '' +
+              this.get.dataset() +
+              this.get.ids() +
+              this.get.features() +
+              this.get.variables() +
+              site.settings.summary_selection
+            )
           }
         }.bind(e)
         if (e.palette && 'string' === typeof e.palette && Object.hasOwn(_u, e.palette)) {
@@ -2502,8 +2508,10 @@ void (function () {
               }
             } else e.variables[i].value = 0
           }
+        compile_dataview(e)
+        conditionals.dataview(e)
       }
-    if ('default_view' === defaults.dataview) conditionals.dataview(_u['default_view'])
+    // if ('default_view' === defaults.dataview) conditionals.dataview(_u['default_view'])
     // initialize outputs
     for (c = document.getElementsByClassName('auto-output'), i = c.length, n = 0; i--; ) {
       e = c[i]
@@ -2827,8 +2835,8 @@ void (function () {
               } else {
                 if (-1 === data_maps[ids[i].map].queue.indexOf(k)) data_maps[ids[i].map].queue.push(k)
               }
-            } else if('string' !== typeof ids[i].map || ids[i].map_content){
-              if(ids[i].map_content){
+            } else if ('string' !== typeof ids[i].map || ids[i].map_content) {
+              if (ids[i].map_content) {
                 data_maps[ids[i].map] = {queue: [], resource: JSON.parse(ids[i].map_content), retrieved: true}
                 site.metadata.info[k].schema.fields[i].ids = data_maps[k] = Object.hasOwn(
                   data_maps[ids[i].map].resource,
@@ -3016,8 +3024,9 @@ void (function () {
     v.n_selected = {ids: 0, features: 0, variables: 0, dataset: 0, filtered: 0, all: 0}
     v.get = {
       dataset: function () {
-        return valueOf(
-          'string' === typeof v.dataset && Object.hasOwn(_u, v.dataset) ? _u[v.dataset].value() : v.dataset
+        return (
+          valueOf('string' === typeof v.dataset && Object.hasOwn(_u, v.dataset) ? _u[v.dataset].value() : v.dataset) ||
+          defaults.dataset
         )
       },
       ids: function () {
@@ -3217,6 +3226,7 @@ void (function () {
         .on('plotly_click', elements.plot.click.bind(this))
       update_plot_theme(this)
       this.update()
+      requestAnimationFrame(trigger_resize)
     } else {
       setTimeout(queue_init_plot.bind(this), 20)
     }

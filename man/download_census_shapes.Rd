@@ -6,7 +6,7 @@
 \usage{
 download_census_shapes(dir = NULL, fips = "us", entity = "state",
   name = NULL, year = 2019, resolution = "500k",
-  strip_features = FALSE, keep = 0.05, ..., force = FALSE)
+  strip_features = FALSE, simplify = NULL, ..., force = FALSE)
 }
 \arguments{
 \item{dir}{Path to a directory in which to save the reformatted files. If these are to be
@@ -18,7 +18,8 @@ code, or name; see \href{https://www2.census.gov/geo/docs/reference/state.txt}{s
 
 \item{entity}{Entity name (e.g., \code{"county"}, \code{"tract"}, or \code{"bg"}); see
 \href{https://www2.census.gov/geo/tiger/GENZ2019/2019_file_name_def.pdf}{2019_file_name_def.pdf}
-(or appropriate year's file).}
+(or appropriate year's file). States and counties are only available at the national level, so if these are
+requested for a particular state, the national files will be downloaded and subset.}
 
 \item{name}{Name for the GeoJSON file (without extension) to be written.}
 
@@ -28,10 +29,12 @@ code, or name; see \href{https://www2.census.gov/geo/docs/reference/state.txt}{s
 
 \item{strip_features}{Logical; if \code{TRUE}, will strip all features other than IDs.}
 
-\item{keep}{Proportion of polygon points to retain when simplifying; set to 1 to train all points.
-Will not apply by default when there are not more than 50 polygons; set manually to force.}
+\item{simplify}{A function to simplify shapes with, such as \code{rmapshaper::ms_simplify}. This
+function should take the \code{sf} \code{data.frame} as its first argument, and return that object
+with its \code{geometry} replaced.}
 
-\item{...}{passes additional arguments to \code{\link[rmapshaper]{ms_simplify}}.}
+\item{...}{Passes additional arguments to \code{simplify}; e.g., for \code{rmapshaper::ms_simplify},
+you might want to specify \code{keep} and set \code{keep_shapes} to \code{TRUE}.}
 
 \item{force}{Logical; if \code{TRUE}, will force a re-download, and overwrite any existing files.}
 }
@@ -45,6 +48,10 @@ and reformat them to simplified GeoJSON files.
 \examples{
 \dontrun{
 # download Virginia counties shapes
-shapes <- download_census_shapes("docs/shapes", "va", "county", name = "counties")
+shapes <- download_census_shapes(
+  "docs/shapes", "va", "county",
+  name = "counties",
+  simplify = rmapshaper::ms_simplify, keep_shapes = TRUE
+)
 }
 }

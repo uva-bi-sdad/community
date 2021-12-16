@@ -3,8 +3,8 @@ title: "Build a Data Site"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Build a Data Site}
-  %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 editor_options: 
   chunk_output_type: console
 ---

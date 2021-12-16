@@ -5,8 +5,8 @@
 #' @param ... Elements to appear in the menu.
 #' @param position A character indicating which side to place the menu on; one of
 #' \code{"top"}, \code{"right"}, \code{"bottom"}, or \code{"left"}.
-#' @param width Width of the menu, if \code{position} if \code{"left"} or \code{"right"}.
-#' @param height Height of the menu, if \code{position} if \code{"top"} or \code{"bottom"}.
+#' @param width Width of the menu, if \code{position} is \code{"left"} or \code{"right"}.
+#' @param height Height of the menu, if \code{position} is \code{"top"} or \code{"bottom"}.
 #' @param collapsible Logical; if \code{FALSE}, removes the button to open or close the menu.
 #' @param default_open Logical; if \code{TRUE}, the menu will start open.
 #' @param wraps Logical or character (\code{"row" or "col"}); if \code{FALSE},

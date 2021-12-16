@@ -4,8 +4,8 @@
 \alias{input_number}
 \title{Add a number input to a website}
 \usage{
-input_number(label, id = label, ..., default = NULL, min = NULL,
-  max = NULL, step = NULL, type = "number", class = NULL,
+input_number(label, id = label, ..., default = NULL, variable = NULL,
+  min = NULL, max = NULL, step = NULL, type = "number", class = NULL,
   dataview = NULL, floating_label = TRUE)
 }
 \arguments{
@@ -17,6 +17,8 @@ input_number(label, id = label, ..., default = NULL, min = NULL,
 
 \item{default}{Default value of the input, the ID of an input to use as the default, or \code{"min"} or \code{"max"}
 to default to the current minimum or maximum value.}
+
+\item{variable}{The name of a variable or ID of a variable selector to get a range from.}
 
 \item{min}{The smallest allowed value.}
 

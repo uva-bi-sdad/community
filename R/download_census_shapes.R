@@ -10,25 +10,32 @@
 #' code, or name; see [state.txt](https://www2.census.gov/geo/docs/reference/state.txt).
 #' @param entity Entity name (e.g., \code{"county"}, \code{"tract"}, or \code{"bg"}); see
 #' [2019_file_name_def.pdf](https://www2.census.gov/geo/tiger/GENZ2019/2019_file_name_def.pdf)
-#' (or appropriate year's file).
+#' (or appropriate year's file). States and counties are only available at the national level, so if these are
+#' requested for a particular state, the national files will be downloaded and subset.
 #' @param name Name for the GeoJSON file (without extension) to be written.
 #' @param year Year of the shapes, 2010 and after.
 #' @param resolution Resolution of the shapes; one of \code{"500k"} (default), \code{"5m"}, or \code{"20m"}.
 #' @param strip_features Logical; if \code{TRUE}, will strip all features other than IDs.
-#' @param keep Proportion of polygon points to retain when simplifying; set to 1 to train all points.
-#' Will not apply by default when there are not more than 50 polygons; set manually to force.
-#' @param ... passes additional arguments to \code{\link[rmapshaper]{ms_simplify}}.
+#' @param simplify A function to simplify shapes with, such as \code{rmapshaper::ms_simplify}. This
+#' function should take the \code{sf} \code{data.frame} as its first argument, and return that object
+#' with its \code{geometry} replaced.
+#' @param ... Passes additional arguments to \code{simplify}; e.g., for \code{rmapshaper::ms_simplify},
+#' you might want to specify \code{keep} and set \code{keep_shapes} to \code{TRUE}.
 #' @param force Logical; if \code{TRUE}, will force a re-download, and overwrite any existing files.
 #' @examples
 #' \dontrun{
 #' # download Virginia counties shapes
-#' shapes <- download_census_shapes("docs/shapes", "va", "county", name = "counties")
+#' shapes <- download_census_shapes(
+#'   "docs/shapes", "va", "county",
+#'   name = "counties",
+#'   simplify = rmapshaper::ms_simplify, keep_shapes = TRUE
+#' )
 #' }
 #' @return An \code{sf} \code{data.frame} with a geometry column containing shapes, and other features in columns.
 #' @export
 
 download_census_shapes <- function(dir = NULL, fips = "us", entity = "state", name = NULL, year = 2019,
-                                   resolution = "500k", strip_features = FALSE, keep = .05, ..., force = FALSE) {
+                                   resolution = "500k", strip_features = FALSE, simplify = NULL, ..., force = FALSE) {
   us_fips <- list(
     name = c(
       "united states", "alabama", "alaska", "arizona", "arkansas", "california", "colorado", "connecticut",
@@ -70,6 +77,11 @@ download_census_shapes <- function(dir = NULL, fips = "us", entity = "state", na
   if (year < 2010) cli_abort("only years 2010 and after are available from this function")
   entity <- tolower(entity)
   entity <- match.arg(entity, entities)
+  subset <- NULL
+  if (fips != "us" && (entity == "county" || entity == "state")) {
+    subset <- fips
+    fips <- "us"
+  }
   resolution <- tolower(resolution)
   resolution <- match.arg(resolution, c("500k", "5m", "20m"))
   file <- paste0("cb_", year, "_", fips, "_", entity, "_", resolution)
@@ -78,7 +90,7 @@ download_census_shapes <- function(dir = NULL, fips = "us", entity = "state", na
   temp_file <- paste0(temp, "/", file, ".zip")
   out_file <- paste0(dir, "/", if (!is.null(name)) name else file, ".geojson")
   if (force || !file.exists(out_file)) {
-    if (!force && file.exists(paste0(temp, "/", file))) temp_file <- file.exists(paste0(temp, "/", file))
+    if (!force && file.exists(paste0(temp, "/", file))) temp_file <- paste0(temp, "/", file)
     if (force || !file.exists(temp_file)) {
       download.file(url, temp_file)
       unzip(temp_file, exdir = paste0(temp, "/", file))
@@ -86,10 +98,9 @@ download_census_shapes <- function(dir = NULL, fips = "us", entity = "state", na
       temp_file <- paste0(temp, "/", file)
     }
     shapes <- st_read(temp_file, quiet = TRUE)
+    if (!is.null(subset)) shapes <- shapes[shapes$STATEFP == subset, ]
     if (strip_features) shapes <- shapes[, "GEOID", drop = FALSE]
-    if (keep > 0 && keep < 1 && (!missing(keep) || nrow(shapes) > 50)) {
-      shapes <- ms_simplify(shapes, keep, keep_shapes = TRUE, ...)
-    }
+    if (is.function(simplify)) shapes <- simplify(shapes, ...)
     if (!is.null(dir)) {
       if (!file.exists(dir)) dir.create(dir, recursive = TRUE)
       st_write(shapes, out_file)

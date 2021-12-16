@@ -5,7 +5,6 @@
 #' @importFrom rstudioapi navigateToFile viewer
 #' @importFrom data.table fread set
 #' @importFrom sf st_read st_write
-#' @importFrom rmapshaper ms_simplify
 #' @importFrom stringi stri_enc_detect
 #' @importFrom stats sd
 #' @import Matrix

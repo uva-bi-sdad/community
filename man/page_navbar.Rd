@@ -4,14 +4,14 @@
 \alias{page_navbar}
 \title{Add a navbar (header) section to a website}
 \usage{
-page_navbar(title = "", logo = "", ..., breakpoint = "md")
+page_navbar(..., title = "", logo = "", breakpoint = "md")
 }
 \arguments{
+\item{...}{Content to add to the navbar. Can be a lists specifying submenus and their items.}
+
 \item{title}{A title to appear in the header.}
 
-\item{logo}{URL of an image to appear in the header.}
-
-\item{...}{Lists specifying submenus and their items, or control element to add (such as a link or button).
+\item{logo}{URL of an image to appear in the header.
 Each list should have entries for \code{"name"} (the navbar button text), \code{"title"} (the menu title),
 \code{"placement"} (start, top, end, or bottom), \code{"backdrop"} (logical), and \code{items}
 (a list of menu items).}
@@ -27,7 +27,7 @@ Adds a bar at the top of the page, potentially with a title and logo image.
 }
 \examples{
 page_navbar(
-  "Site Name",
+  title = "Site Name",
   list(
     name = "menu",
     title = "Menu",

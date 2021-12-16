@@ -107,8 +107,12 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
     }
     ids <- unpack_meta("ids")
     for (i in seq_along(ids)) {
-      if (length(ids[[i]]$map) == 1 && is.character(ids[[i]]$map) && file.exists(ids[[i]]$map)) {
-        ids[[i]]$map_content <- paste(readLines(ids[[i]]$map, warn = FALSE), collapse = "")
+      if (is.list(ids[[i]])) {
+        if (length(ids[[i]]$map) == 1 && is.character(ids[[i]]$map) && file.exists(ids[[i]]$map)) {
+          ids[[i]]$map_content <- paste(readLines(ids[[i]]$map, warn = FALSE), collapse = "")
+        }
+      } else {
+        ids[[i]] <- list(variable = ids[[i]])
       }
     }
     res <- list(

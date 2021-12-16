@@ -32,6 +32,9 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu"><li>
+      <a href="../articles/casestudy-arrests.html">Example - Illinois Arrests</a>
+    </li>
+    <li>
       <a href="../articles/quickstart-site.html">Build a Data Site</a>
     </li>
   </ul></li>
@@ -60,8 +63,8 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">input_number</span><span class="op">(</span><span class="va">label</span>, id <span class="op">=</span> <span class="va">label</span>, <span class="va">...</span>, default <span class="op">=</span> <span class="cn">NULL</span>, min <span class="op">=</span> <span class="cn">NULL</span>,
-  max <span class="op">=</span> <span class="cn">NULL</span>, step <span class="op">=</span> <span class="cn">NULL</span>, type <span class="op">=</span> <span class="st">"number"</span>, class <span class="op">=</span> <span class="cn">NULL</span>,
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">input_number</span><span class="op">(</span><span class="va">label</span>, id <span class="op">=</span> <span class="va">label</span>, <span class="va">...</span>, default <span class="op">=</span> <span class="cn">NULL</span>, variable <span class="op">=</span> <span class="cn">NULL</span>,
+  min <span class="op">=</span> <span class="cn">NULL</span>, max <span class="op">=</span> <span class="cn">NULL</span>, step <span class="op">=</span> <span class="cn">NULL</span>, type <span class="op">=</span> <span class="st">"number"</span>, class <span class="op">=</span> <span class="cn">NULL</span>,
   dataview <span class="op">=</span> <span class="cn">NULL</span>, floating_label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
     </div>
 
@@ -76,6 +79,8 @@
 <dt>default</dt>
 <dd><p>Default value of the input, the ID of an input to use as the default, or <code>"min"</code> or <code>"max"</code>
 to default to the current minimum or maximum value.</p></dd>
+<dt>variable</dt>
+<dd><p>The name of a variable or ID of a variable selector to get a range from.</p></dd>
 <dt>min</dt>
 <dd><p>The smallest allowed value.</p></dd>
 <dt>max</dt>

@@ -7,3 +7,4 @@
 ^build\.R$
 ^logo\.svg$
 ^.*\.Rproj$
+^vignettes

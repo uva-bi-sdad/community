@@ -14,9 +14,9 @@ page_menu(..., position = "right", width = NULL, height = NULL,
 \item{position}{A character indicating which side to place the menu on; one of
 \code{"top"}, \code{"right"}, \code{"bottom"}, or \code{"left"}.}
 
-\item{width}{Width of the menu, if \code{position} if \code{"left"} or \code{"right"}.}
+\item{width}{Width of the menu, if \code{position} is \code{"left"} or \code{"right"}.}
 
-\item{height}{Height of the menu, if \code{position} if \code{"top"} or \code{"bottom"}.}
+\item{height}{Height of the menu, if \code{position} is \code{"top"} or \code{"bottom"}.}
 
 \item{collapsible}{Logical; if \code{FALSE}, removes the button to open or close the menu.}
 

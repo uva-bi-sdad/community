@@ -4,7 +4,7 @@
 \alias{output_legend}
 \title{Adds a legend to a website}
 \usage{
-output_legend(palette = "rdylbu7", lower = "Lower", center = "",
+output_legend(palette = "", lower = "Lower", center = "",
   higher = "Higher", class = "")
 }
 \arguments{
@@ -27,7 +27,5 @@ A character vector of the contents to be added.
 Adds a legend based on a specified color palette.
 }
 \examples{
-\dontrun{
-output_legend("reds")
-}
+output_legend()
 }

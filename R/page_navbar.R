@@ -2,9 +2,9 @@
 #'
 #' Adds a bar at the top of the page, potentially with a title and logo image.
 #'
+#' @param ... Content to add to the navbar. Can be a lists specifying submenus and their items.
 #' @param title A title to appear in the header.
 #' @param logo URL of an image to appear in the header.
-#' @param ... Lists specifying submenus and their items, or control element to add (such as a link or button).
 #' Each list should have entries for \code{"name"} (the navbar button text), \code{"title"} (the menu title),
 #' \code{"placement"} (start, top, end, or bottom), \code{"backdrop"} (logical), and \code{items}
 #' (a list of menu items).
@@ -12,7 +12,7 @@
 #' default is \code{"md"}.
 #' @examples
 #' page_navbar(
-#'   "Site Name",
+#'   title = "Site Name",
 #'   list(
 #'     name = "menu",
 #'     title = "Menu",
@@ -22,7 +22,7 @@
 #' @return A character vector of the content to be added.
 #' @export
 
-page_navbar <- function(title = "", logo = "", ..., breakpoint = "md") {
+page_navbar <- function(..., title = "", logo = "", breakpoint = "md") {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   parts <- new.env()

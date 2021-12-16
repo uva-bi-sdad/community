@@ -7,6 +7,7 @@
 #' @param ... Other attributes to add to the input.
 #' @param default Default value of the input, the ID of an input to use as the default, or \code{"min"} or \code{"max"}
 #' to default to the current minimum or maximum value.
+#' @param variable The name of a variable or ID of a variable selector to get a range from.
 #' @param min The smallest allowed value.
 #' @param max The largest allowed value.
 #' @param step Amount to increase or decrease the value by when changed with arrows.
@@ -21,7 +22,7 @@
 #' @return A character vector of the contents to be added.
 #' @export
 
-input_number <- function(label, id = label, ..., default = NULL, min = NULL, max = NULL, step = NULL,
+input_number <- function(label, id = label, ..., default = NULL, variable = NULL, min = NULL, max = NULL, step = NULL,
                          type = "number", class = NULL, dataview = NULL, floating_label = TRUE) {
   id <- gsub("\\s", "", id)
   r <- c(
@@ -31,6 +32,7 @@ input_number <- function(label, id = label, ..., default = NULL, min = NULL, max
       '<input type="', type, '"',
       ' id="', id, '"',
       if (!is.null(default)) paste0(' default="', default, '"'),
+      if (!is.null(variable)) paste0(' variable="', variable, '"'),
       if (!is.null(min)) paste0(' min="', min, '"'),
       if (!is.null(max)) paste0(' max="', max, '"'),
       if (!is.null(step)) paste0(' step="', step, '"'),

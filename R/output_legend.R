@@ -10,13 +10,11 @@
 #' @param higher Text to appear at the end of the legend, labeling larger values.
 #' @param class Class names to add to the legend table.
 #' @examples
-#' \dontrun{
-#' output_legend("reds")
-#' }
+#' output_legend()
 #' @return A character vector of the contents to be added.
 #' @export
 
-output_legend <- function(palette = "rdylbu7", lower = "Lower", center = "", higher = "Higher", class = "") {
+output_legend <- function(palette = "", lower = "Lower", center = "", higher = "Higher", class = "") {
   r <- c(
     paste(c('<div palette="', palette, '" class="legend', if (class != "") c(" ", class), '">'), collapse = ""),
     '<div class="legend-scale"></div>',
