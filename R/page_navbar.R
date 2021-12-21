@@ -34,7 +34,7 @@ page_navbar <- function(..., title = "", logo = "", breakpoint = "md") {
     paste0('<nav class="navbar navbar-dark navbar-expand-', breakpoint, '">'),
     '<div class="container-fluid">',
     if (!missing(logo)) paste0('<span class="navbar-brand"><img alt="site logo" src="', logo, '">'),
-    if (!missing(title)) title,
+    if (!missing(title)) paste0("<span>", title, "</span>"),
     if (!missing(logo)) "</span>"
   )
   menus <- NULL

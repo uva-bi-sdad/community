@@ -15,6 +15,8 @@
 #' @param id Unique ID for the map.
 #' @param click The ID of an input to set to a clicked polygon's ID.
 #' @param subto A vector of output IDs to receive hover events from.
+#' @param background_shapes The name of a dataset (shapes) to show within a selection, regardless of
+#' selected dataset. Useful to show lower-level regions within higher-level regions.
 #' @param options A list of configuration options, potentially extracted from a saved leaflet object (see
 #' \href{https://leafletjs.com/reference-1.7.1.html#map-example}{Leaflet documentation}).
 #' @param tiles A list or list of lists containing provider information (see
@@ -30,7 +32,7 @@
 #' @export
 
 output_map <- function(shapes = NULL, color = NULL, color_time = NULL, dataview = NULL, id = NULL, click = NULL,
-                       subto = NULL,
+                       subto = NULL, background_shapes = NULL,
                        options = list(), tiles = list(
                          url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                          options = list(maxZoom = 19)
@@ -55,6 +57,9 @@ output_map <- function(shapes = NULL, color = NULL, color_time = NULL, dataview 
     options$subto <- if (!is.null(subto) && length(subto) == 1) list(subto) else subto
     if (is.null(options[["center"]])) options$center <- c(40, -95)
     if (is.null(options[["zoom"]])) options$zoom <- 4
+    if (!is.null(background_shapes) && is.null(options[["background_shapes"]])) {
+      options$background_shapes <- background_shapes
+    }
     if (is.character(shapes)) shapes <- lapply(shapes, function(s) list(url = s))
     if (is.list(shapes) && !is.list(shapes[[1]])) shapes <- list(shapes)
     snames <- names(shapes)

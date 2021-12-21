@@ -6,7 +6,7 @@
 \usage{
 output_map(shapes = NULL, color = NULL, color_time = NULL,
   dataview = NULL, id = NULL, click = NULL, subto = NULL,
-  options = list(), tiles = list(url =
+  background_shapes = NULL, options = list(), tiles = list(url =
   "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", options = list(maxZoom
   = 19)), attribution = list(name = "OpenStreetMap", url =
   "https://www.openstreetmap.org/copyright"))
@@ -31,6 +31,9 @@ url = "https://example.com/shapes.geojson", id_property = "id")}.}
 \item{click}{The ID of an input to set to a clicked polygon's ID.}
 
 \item{subto}{A vector of output IDs to receive hover events from.}
+
+\item{background_shapes}{The name of a dataset (shapes) to show within a selection, regardless of
+selected dataset. Useful to show lower-level regions within higher-level regions.}
 
 \item{options}{A list of configuration options, potentially extracted from a saved leaflet object (see
 \href{https://leafletjs.com/reference-1.7.1.html#map-example}{Leaflet documentation}).}

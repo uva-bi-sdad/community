@@ -39,6 +39,12 @@ body, html, .modal-content, table.dataTable tbody tr, .offcanvas{
   border-color: var(--background-border) var(--background-border) var(--background);
   color: var(--body-text);
 }
+.navbar>.container, .navbar>.container-fluid, .navbar>.container-lg, .navbar>.container-md, .navbar>.container-sm, .navbar>.container-xl, .navbar>.container-xxl{
+  flex-wrap: nowrap
+}
+.navbar > .container-fluid > span{
+  font-size: min(1.2em, max(3vw, 12px)); white-space: nowrap; max-width: 50%
+}
 .nav-item{white-space: nowrap}
 .form-check-input{
   background-color: var(--background);
@@ -107,7 +113,7 @@ input[type=text],
 div[class^=col-]{min-width: 100px}
 .content > .col > .row, .content > .row{min-height: 300px}
 .compact .row{padding: 0}
-.footer{display: block; width: 92%; position: absolute; bottom: 16px}
+.footer{display: block; width: 92%; position: absolute; bottom: 16px; z-index: 400}
 button.btn-danger{background-color: var(--warning)}
 .light-theme .btn-close{
   background: transparent url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'><path d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/></svg>") center/1em auto no-repeat;
@@ -153,7 +159,7 @@ button.btn-danger{background-color: var(--warning)}
   background-color: var(--highlight-secondary); border-radius: 10px; font-size: 1.08em
 }
 .info-body-row-table .info-body-row-name{padding: 0 .5em 0 0}
-.info-body-row-stack .info-body-row-name{font-weight: bold; padding: .05em 0; font-size: min(1vw, 1.2rem)}
+.info-body-row-stack .info-body-row-name{font-weight: bold; padding: .05em 0; font-size: max(1vw, 12px)}
 
 .info-title{font-size: 1.7em; margin: 0; font-weight: bold}
 .floating{
@@ -170,6 +176,7 @@ button.btn-danger{background-color: var(--warning)}
 .light-theme .text-display button::after {
   background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='%23000' viewBox='0 0 16 16'><path d='M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z'/><path d='m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z'/></svg>");
 }
+.offcanvas-body{padding: 1rem 1rem 3.5rem 1rem}
 .modal-dialog{max-width: 1000px}
 .modal-body table{width: 100%; margin: 0 0 1em 0}
 .source-table td, .source-table th{text-align: right}
@@ -311,3 +318,8 @@ input[type=range]::-ms-thumb {
 }
 
 .hidden{display: none}
+
+@media screen and (max-width: 600px){
+  .content .row > div{width: 100%}
+  .menu{flex-wrap: wrap}
+}

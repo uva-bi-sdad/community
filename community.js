@@ -89,7 +89,7 @@ void (function () {
           i,
           s,
           n,
-          ns,
+          ns = 0,
           k,
           d = valueOf(u.dataset) || valueOf(c.dataset),
           va = valueOf(u.variable)
@@ -180,17 +180,27 @@ void (function () {
         } else {
           if (u.view && u.displaying) {
             u.displaying.clearLayers()
-            var s = site.dataviews[u.view].selection.all,
-              k,
-              n = 0
+            const a = site.dataviews[u.view].selection.all,
+              s = site.dataviews[u.view].selection[site.settings.background_shapes && u.options.background_shapes ? 'ids' : 'all'],
+              bgc = site.settings.theme_dark ? '#666' : '#000'
+            var k, n = 0, fg
             if (s)
-              for (k in s)
-                if (Object.hasOwn(s, k)) {
-                  if (s[k].layer) {
-                    n++
-                    s[k].layer.addTo(u.displaying)
+              for (k in s){
+                fg = Object.hasOwn(a, k)
+                if (Object.hasOwn(s, k) && s[k].layer && (fg || u.options.background_shapes === entities[k].group)) {
+                  s[k].layer.options.interactive = fg
+                  n++
+                  s[k].layer.addTo(u.displaying)
+                  if(!fg){
+                    s[k].layer.bringToBack()
+                    s[k].layer.setStyle({
+                      fillOpacity: 0,
+                      color: bgc,
+                      weight: 1,
+                    })
                   }
                 }
+              }
             if (n) u.map.flyToBounds(u.displaying.getBounds())
           }
         }
@@ -700,6 +710,14 @@ void (function () {
             o.parsed = {}
             o.config = site.plots[o.id]
             o.traces = {}
+            if ('tabpanel' === o.e.parentElement.getAttribute('role')) {
+              document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
+                'click',
+                function () {
+                  setTimeout(trigger_resize, 155)
+                }.bind(o)
+              )
+            }
             o.show = function (e) {
               var trace = make_data_entry(this, e, 0, 'hover_line', site.theme_dark ? '#fff' : '#000')
               if (trace) {
@@ -2427,8 +2445,9 @@ void (function () {
                 this.options[i].classList[pass ? 'remove' : 'add']('hidden')
               }
               this.current_index = this.values.indexOf(this.value())
-              if (last && (-1 === this.current_index || this.options[this.current_index].classList.contains('hidden')))
+              if (last && (-1 === this.current_index || this.options[this.current_index].classList.contains('hidden'))){
                 this.set(last)
+              }
             }.bind(o)
           }
         } else if ('switch' === o.type) {

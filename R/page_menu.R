@@ -45,8 +45,8 @@ page_menu <- function(..., position = "right", width = "300px", height = NULL, c
   conditions <- rep_len(conditions, n)
   ids <- paste0("menu", parts$uid, seq_len(n))
   parts$uid <- parts$uid + 1
-  if (!is.character(width)) width <- paste0(width, "px")
-  if (!is.character(height)) height <- paste0(height, "px")
+  if (is.numeric(width)) width <- paste0(width, "px")
+  if (is.numeric(height)) height <- paste0(height, "px")
   r <- c(
     paste0(c(
       '<div state="', if (default_open) "open" else "closed", '" class="menu-wrapper menu-', position, '"',
