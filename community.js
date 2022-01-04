@@ -39,6 +39,7 @@ void (function () {
       datasets: /^dat/,
       variable: /^var/,
       levels: /^lev/,
+      ids: /^ids/,
       minmax: /^m[inax]{2}$/,
       int_types: /^(?:count|year)$/,
       end_punct: /[.?!]$/,
@@ -181,17 +182,22 @@ void (function () {
           if (u.view && u.displaying) {
             u.displaying.clearLayers()
             const a = site.dataviews[u.view].selection.all,
-              s = site.dataviews[u.view].selection[site.settings.background_shapes && u.options.background_shapes ? 'ids' : 'all'],
+              s =
+                site.dataviews[u.view].selection[
+                  site.settings.background_shapes && u.options.background_shapes ? 'ids' : 'all'
+                ],
               bgc = site.settings.theme_dark ? '#666' : '#000'
-            var k, n = 0, fg
+            var k,
+              n = 0,
+              fg
             if (s)
-              for (k in s){
+              for (k in s) {
                 fg = Object.hasOwn(a, k)
                 if (Object.hasOwn(s, k) && s[k].layer && (fg || u.options.background_shapes === entities[k].group)) {
                   s[k].layer.options.interactive = fg
                   n++
                   s[k].layer.addTo(u.displaying)
-                  if(!fg){
+                  if (!fg) {
                     s[k].layer.bringToBack()
                     s[k].layer.setStyle({
                       fillOpacity: 0,
@@ -690,7 +696,7 @@ void (function () {
           e.value = value
           e.innerText = display
           if (meta && meta.info) {
-            e.title = meta.info.short_description
+            e.title = meta.info.description || meta.info.short_description
           }
           this.e.appendChild(e)
           return e
@@ -1089,6 +1095,7 @@ void (function () {
             o.e.appendChild(o.parts.body.default)
             o.e.appendChild(o.parts.body.temp)
           }
+          o.update()
         },
         update: function (entity, caller, pass) {
           const v = site.dataviews[this.view]
@@ -1167,9 +1174,11 @@ void (function () {
               } else {
                 // when no ID is selected
                 this.selection = false
-                if (this.parts.title && this.has_default) {
-                  this.parts.title.base.classList.add('hidden')
-                  this.parts.title.default.classList.remove('hidden')
+                if (this.parts.title) {
+                  if (this.has_default) {
+                    this.parts.title.base.classList.add('hidden')
+                    this.parts.title.default.classList.remove('hidden')
+                  } else this.parts.title.base.classList.remove('hidden')
                 }
                 if (this.parts.body) {
                   this.parts.body.base.classList.add('hidden')
@@ -1349,9 +1358,11 @@ void (function () {
                 return Object.hasOwn(d.data, this.v) ? d.data[this.v] : []
               }.bind(o),
               render: function (d) {
-                return 'number' === typeof d[this.i]
-                  ? format_value(d[this.i], 'integer' === variables[this.v].info[variables[this.v].datasets[0]].type)
-                  : d[this.i]
+                return d && d.length
+                  ? 'number' === typeof d[this.i]
+                    ? format_value(d[this.i], 'integer' === variables[this.v].info[variables[this.v].datasets[0]].type)
+                    : d[this.i]
+                  : ''
               }.bind(o),
             })
           }
@@ -1620,6 +1631,25 @@ void (function () {
         })
   }
 
+  function fill_ids_options(u, d, out) {
+    if (!Object.hasOwn(data_maps, d)) {
+      data_queue[d][u.id] = fill_ids_options.bind(null, u, d, out)
+      return
+    }
+    var s, k
+    out[d] = {options: [], values: [], display: []}
+    s = out[d].options
+    u.values = out[d].values
+    u.display = out[d].display
+    for (k in entities)
+      if (Object.hasOwn(entities, k) && d === entities[k].group) {
+        s.push(u.add(k, entities[k].features.name))
+        u.values.push(k)
+        u.display.push(entities[k].features.name)
+      }
+    site.url_options[u.id] ? u.set(site.url_options[u.id]) : u.reset()
+  }
+
   function fill_variables_options(u, d, out) {
     var s, i, m, n, l
     out[d] = {options: [], values: [], display: []}
@@ -1809,14 +1839,9 @@ void (function () {
     var n, i
     page.modal.info.header.firstElementChild.innerText = info.short_name
     page.modal.info.title.innerText = info.long_name
-    page.modal.info.description.innerText = info.long_description
-      ? info.long_description
-      : info.short_description
-      ? info.short_description
-      : ''
-    page.modal.info.name.lastElementChild.innerText = info.measure
-    page.modal.info.table.lastElementChild.innerText = info.measure_table
-    page.modal.info.type.lastElementChild.innerText = info.type
+    page.modal.info.description.innerText = info.long_description || info.description || info.short_description || ''
+    page.modal.info.name.lastElementChild.innerText = info.measure || ''
+    page.modal.info.type.lastElementChild.innerText = info.type || ''
     if (info.source && info.source.length) {
       page.modal.info.source.lastElementChild.lastElementChild.innerHTML = ''
       page.modal.info.source.classList.remove('hidden')
@@ -1827,6 +1852,7 @@ void (function () {
     if (info.citations && info.citations.length) {
       page.modal.info.references.lastElementChild.innerHTML = ''
       page.modal.info.references.classList.remove('hidden')
+      if ('string' === typeof info.citations) info.citations = [info.citations]
       for (n = info.citations.length, i = 0; i < n; i++)
         if (variable_info._references && Object.hasOwn(variable_info._references, info.citations[i])) {
           page.modal.info.references.lastElementChild.appendChild(variable_info._references[info.citations[i]].element)
@@ -1949,11 +1975,6 @@ void (function () {
     e.name.appendChild(document.createElement('td'))
     e.name.firstElementChild.innerText = 'Name'
     e.name.appendChild(document.createElement('td'))
-
-    e.body.lastElementChild.appendChild((e.table = document.createElement('tr')))
-    e.table.appendChild(document.createElement('td'))
-    e.table.firstElementChild.innerText = 'Table'
-    e.table.appendChild(document.createElement('td'))
 
     e.body.lastElementChild.appendChild((e.type = document.createElement('tr')))
     e.type.appendChild(document.createElement('td'))
@@ -2283,7 +2304,9 @@ void (function () {
             o.option_sets = {}
             v = valueOf(o.dataset) || site.metadata.datasets[0]
             if (Object.hasOwn(site.metadata.info, v)) {
-              if (patterns.variable.test(o.options_source)) {
+              if (patterns.ids.test(o.options_source)) {
+                fill_ids_options(o, v, o.option_sets)
+              } else if (patterns.variable.test(o.options_source)) {
                 fill_variables_options(o, v, o.option_sets)
               } else if (patterns.levels.test(o.options_source) && Object.hasOwn(variables, o.variable)) {
                 fill_levels_options(o, v, o.variable, o.option_sets)
@@ -2445,7 +2468,10 @@ void (function () {
                 this.options[i].classList[pass ? 'remove' : 'add']('hidden')
               }
               this.current_index = this.values.indexOf(this.value())
-              if (last && (-1 === this.current_index || this.options[this.current_index].classList.contains('hidden'))){
+              if (
+                last &&
+                (-1 === this.current_index || this.options[this.current_index].classList.contains('hidden'))
+              ) {
                 this.set(last)
               }
             }.bind(o)
@@ -2836,11 +2862,12 @@ void (function () {
   }
 
   function load_id_maps() {
-    var ids, i, f, k
+    var ids, i, f, k, u, has_map
     for (k in site.metadata.info)
       if (Object.hasOwn(site.metadata.info, k)) {
-        for (ids = site.metadata.info[k].ids, i = ids.length; i--; )
+        for (ids = site.metadata.info[k].ids, i = ids.length, has_map = false; i--; )
           if (Object.hasOwn(ids[i], 'map')) {
+            has_map = true
             init_log.id_maps = true
             if (Object.hasOwn(data_maps, ids[i].map)) {
               if (data_maps[ids[i].map].retrieved) {
@@ -2903,7 +2930,7 @@ void (function () {
               f.send()
             }
           }
-        if (!init_log.id_maps) {
+        if (!has_map) {
           init_log.id_maps = true
           data_maps[k] = {}
           map_entities(k)
@@ -2959,7 +2986,7 @@ void (function () {
               }
             if (!Object.hasOwn(variables[v[i].name].meta, 'full_name')) variables[v[i].name].meta.full_name = v[i].name
             if (!Object.hasOwn(variables[v[i].name].meta, 'measure'))
-              variables[v[i].name].meta.measure = v[i].name.split(':')[1]
+              variables[v[i].name].meta.measure = v[i].name.split(':')[1] || v[i].name
             if (!Object.hasOwn(variables[v[i].name].meta, 'short_name'))
               variables[v[i].name].meta.short_name = format_label(v[i].name)
             if (!Object.hasOwn(variables[v[i].name].meta, 'long_name'))
@@ -2994,7 +3021,7 @@ void (function () {
   }
 
   function map_entities(g) {
-    var id, f
+    var id, f, k
     if (Object.hasOwn(site.data, g) && !init_log[g]) {
       for (id in site.data[g]) {
         if (Object.hasOwn(site.data[g], id)) {
@@ -3004,7 +3031,10 @@ void (function () {
             entities[id].group = g
             entities[id].data = site.data[g][id]
             entities[id].variables = variable_info
-            entities[id].features = f
+            if (!Object.hasOwn(entities[id], 'features')) entities[id].features = {}
+            for (k in f)
+              if ('id' === k || (Object.hasOwn(f, k) && !Object.hasOwn(entities[id].features, k)))
+                entities[id].features[k] = f[k]
             entities[id].summary = {}
           } else {
             entities[id] = {group: g, data: site.data[g][id], variables: variable_info, features: f, summary: {}}
@@ -3069,7 +3099,12 @@ void (function () {
         } else return ''
       },
     }
-    v.ids_check = get_checkfun(v.get.ids())
+    v.ids_check =
+      'string' === typeof v.get.ids()
+        ? function (a, b) {
+            return !a || -1 == a || a === b || (b && a === b.substr(0, a.length))
+          }
+        : check_funs.includes
     v.k = ''
     v.checks = {
       dataset: function (e) {
@@ -3081,12 +3116,13 @@ void (function () {
         (Object.hasOwn(_u[v.ids], 'depends') && Object.hasOwn(_u, _u[v.ids].depends)))
         ? 'virtual' === _u[v.ids].type
           ? function (e) {
-              const c = _u[_u[this.ids].source]
+              const c = _u[_u[this.ids].source],
+                d = valueOf(c.dataset)
               return (
                 e.features &&
                 this.ids_check(
                   this.get.ids(),
-                  e.features[!c || e.group === valueOf(c.dataset) ? 'id' : valueOf(c.dataset)]
+                  e.features[!c || e.group === d || !Object.hasOwn(e.features, d) ? 'id' : d]
                 )
               )
             }

@@ -76,9 +76,9 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       ))
     }
   }
-  collect_metadata <- function(i) {
-    f <- path[[i]]
-    m <- metas[[i]]
+  collect_metadata <- function(file) {
+    f <- path[[file]]
+    m <- metas[[file]]
     name <- basename(f)
     format <- tolower(strsplit(f, ".", fixed = TRUE)[[1]][2])
     if (is.na(format)) format <- "rds"
@@ -106,6 +106,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       }
     }
     ids <- unpack_meta("ids")
+    idvars <- NULL
     for (i in seq_along(ids)) {
       if (is.list(ids[[i]])) {
         if (length(ids[[i]]$map) == 1 && is.character(ids[[i]]$map) && file.exists(ids[[i]]$map)) {
@@ -114,6 +115,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       } else {
         ids[[i]] <- list(variable = ids[[i]])
       }
+      if(!ids[[i]]$variable %in% idvars) idvars <- c(idvars, ids[[i]]$variable)
     }
     res <- list(
       bytes = as.integer(info$size),
@@ -121,7 +123,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       md5 = md5sum(f)[[1]],
       format = format,
       name = if (!is.null(names(opath))) {
-        names(opath)[i]
+        names(opath)[file]
       } else if (!is.null(m$name)) {
         m$name
       } else {
@@ -136,7 +138,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       last_modified = as.character(info$ctime),
       rowcount = nrow(data),
       schema = list(
-        fields = lapply(colnames(data), function(cn) {
+        fields = lapply(colnames(data)[!colnames(data) %in% idvars], function(cn) {
           v <- data[[cn]]
           invalid <- !is.finite(v)
           r <- list(name = cn, duplicates = sum(duplicated(v)))

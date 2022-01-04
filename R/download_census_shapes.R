@@ -39,20 +39,22 @@ download_census_shapes <- function(dir = NULL, fips = "us", entity = "state", na
   us_fips <- list(
     name = c(
       "united states", "alabama", "alaska", "arizona", "arkansas", "california", "colorado", "connecticut",
-      "delaware", "florida", "georgia", "hawaii", "idaho", "illinois", "indiana", "iowa", "kansas", "kentucky",
-      "louisiana", "maine", "maryland", "massachusetts", "michigan", "minnesota", "mississippi", "missouri",
-      "montana", "nebraska", "nevada", "new hampshire", "new jersey", "new mexico", "new york", "north carolina",
-      "north dakota", "ohio", "oklahoma", "oregon", "pennsylvania", "rhode island", "south carolina", "south dakota",
-      "tennessee", "texas", "utah", "vermont", "virginia", "washington", "west virginia", "wisconsin", "wyoming",
-      "american samoa", "guam", "northern mariana islands", "puerto rico", "virgin islands"
+      "delaware", "district of columbia", "florida", "georgia", "hawaii", "idaho", "illinois", "indiana", "iowa",
+      "kansas", "kentucky", "louisiana", "maine", "maryland", "massachusetts", "michigan", "minnesota", "mississippi",
+      "missouri", "montana", "nebraska", "nevada", "new hampshire", "new jersey", "new mexico", "new york",
+      "north carolina", "north dakota", "ohio", "oklahoma", "oregon", "pennsylvania", "rhode island", "south carolina",
+      "south dakota", "tennessee", "texas", "utah", "vermont", "virginia", "washington", "west virginia", "wisconsin",
+      "wyoming", "american samoa", "guam", "northern mariana islands", "puerto rico", "minor outlying islands",
+      "virgin islands"
     ),
     post = c(
-      "us", "al", "ak", "az", "ar", "ca", "co", "ct", "de", "fl", "ga", "hi", "id", "il", "in", "ia", "ks", "ky", "la",
-      "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj", "nm", "ny", "nc", "nd", "oh", "ok", "or",
-      "pa", "ri", "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa", "wv", "wi", "wy", "as", "gu", "mp", "pr", "um", "vi"
+      "us", "al", "ak", "az", "ar", "ca", "co", "ct", "de", "dc", "fl", "ga", "hi", "id", "il", "in", "ia", "ks", "ky",
+      "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj", "nm", "ny", "nc", "nd", "oh", "ok",
+      "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa", "wv", "wi", "wy", "as", "gu", "mp", "pr", "um",
+      "vi"
     ),
     fips = c(
-      "us", 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+      "us", 1, 2, 4, 5, 6, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
       33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49, 50, 51, 53, 54, 55, 56, 60, 66, 69, 72, 74, 78
     )
   )
@@ -85,11 +87,12 @@ download_census_shapes <- function(dir = NULL, fips = "us", entity = "state", na
   resolution <- tolower(resolution)
   resolution <- match.arg(resolution, c("500k", "5m", "20m"))
   file <- paste0("cb_", year, "_", fips, "_", entity, "_", resolution)
-  url <- paste0("https://www2.census.gov/geo/tiger/GENZ2019/shp/", file, ".zip")
+  url <- paste0("https://www2.census.gov/geo/tiger/GENZ", year, "/shp/", file, ".zip")
   temp <- tempdir()
   temp_file <- paste0(temp, "/", file, ".zip")
   out_file <- paste0(dir, "/", if (!is.null(name)) name else file, ".geojson")
-  if (force || !file.exists(out_file)) {
+  if(force && file.exists(out_file)) unlink(out_file)
+  if (!file.exists(out_file)) {
     if (!force && file.exists(paste0(temp, "/", file))) temp_file <- paste0(temp, "/", file)
     if (force || !file.exists(temp_file)) {
       download.file(url, temp_file)
@@ -102,7 +105,7 @@ download_census_shapes <- function(dir = NULL, fips = "us", entity = "state", na
     if (strip_features) shapes <- shapes[, "GEOID", drop = FALSE]
     if (is.function(simplify)) shapes <- simplify(shapes, ...)
     if (!is.null(dir)) {
-      if (!file.exists(dir)) dir.create(dir, recursive = TRUE)
+      if (!file.exists(dir)) dir.create(dir, FALSE, TRUE)
       st_write(shapes, out_file)
     }
   } else {
