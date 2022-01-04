@@ -91,7 +91,7 @@ download_census_shapes <- function(dir = NULL, fips = "us", entity = "state", na
   temp <- tempdir()
   temp_file <- paste0(temp, "/", file, ".zip")
   out_file <- paste0(dir, "/", if (!is.null(name)) name else file, ".geojson")
-  if(force && file.exists(out_file)) unlink(out_file)
+  if (force && file.exists(out_file)) unlink(out_file)
   if (!file.exists(out_file)) {
     if (!force && file.exists(paste0(temp, "/", file))) temp_file <- paste0(temp, "/", file)
     if (force || !file.exists(temp_file)) {

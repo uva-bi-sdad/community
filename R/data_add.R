@@ -115,7 +115,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       } else {
         ids[[i]] <- list(variable = ids[[i]])
       }
-      if(!ids[[i]]$variable %in% idvars) idvars <- c(idvars, ids[[i]]$variable)
+      if (!ids[[i]]$variable %in% idvars) idvars <- c(idvars, ids[[i]]$variable)
     }
     res <- list(
       bytes = as.integer(info$size),
