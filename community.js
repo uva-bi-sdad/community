@@ -1247,7 +1247,7 @@ void (function () {
           o.features = o.options.features
           o.update = elements.table.update.bind(o)
           o.header = []
-          if (!o.dataset) o.dataset = site.metadata.datasets[0]
+          if (!o.dataset) o.dataset = defaults.dataset
           if ('tabpanel' === o.e.parentElement.getAttribute('role')) {
             document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
               'click',
@@ -2072,7 +2072,7 @@ void (function () {
         }
     } else {
       site.dataviews = {}
-      site.dataviews[defaults.dataview] = {dataset: site.metadata.datasets[0]}
+      site.dataviews[defaults.dataview] = {dataset: defaults.dataset}
     }
     for (c = document.getElementsByClassName('auto-input'), i = c.length, n = 0; i--; ) {
       e = c[i]
@@ -2087,7 +2087,7 @@ void (function () {
         options_source: e.getAttribute('auto-options'),
         depends: e.getAttribute('depends'),
         variable: e.getAttribute('variable'),
-        dataset: e.getAttribute('dataset') || site.metadata.datasets[0],
+        dataset: e.getAttribute('dataset') || defaults.dataset,
         view: e.getAttribute('data-view'),
         id: e.id || e.options_source || 'ui' + n++,
         current_index: -1,
@@ -2227,12 +2227,12 @@ void (function () {
 
     if (site && site.data) {
       queue_init()
-    } else if (site && site.metadata.files) {
+    } else if (site && site.metadata.datasets) {
       site.data = {}
-      if ('string' === typeof site.metadata.files) site.metadata.files = [site.metadata.files]
-      for (i = 0, n = site.metadata.files.length; i < n; i++) {
-        data_loaded[site.metadata.files[i]] = false
-        load_data(site.metadata.files[i], site.metadata.info[site.metadata.files[i]].site_file)
+      if ('string' === typeof site.metadata.datasets) site.metadata.datasets = [site.metadata.datasets]
+      for (i = 0, n = site.metadata.datasets.length; i < n; i++) {
+        data_loaded[site.metadata.datasets[i]] = false
+        load_data(site.metadata.datasets[i], site.metadata.info[site.metadata.datasets[i]].site_file)
       }
     } else {
       throw new Error('No data or metadata information present')
@@ -2302,7 +2302,7 @@ void (function () {
             o.options = o.e.getElementsByTagName(o.type === 'select' ? 'option' : 'input')
           } else {
             o.option_sets = {}
-            v = valueOf(o.dataset) || site.metadata.datasets[0]
+            v = valueOf(o.dataset) || defaults.dataset
             if (Object.hasOwn(site.metadata.info, v)) {
               if (patterns.ids.test(o.options_source)) {
                 fill_ids_options(o, v, o.option_sets)

@@ -161,10 +161,10 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     }
     list(
       package = if (file.exists(f)) sub(paste0(dir, "/docs/"), "", f, fixed = TRUE),
-      datasets = if (length(meta$resources) == 1) list(names(info)) else names(info),
+      datasets = if (length(meta$resources) == 1) list(names(info)) else names(info)[dataset_order],
       variables = variables,
       info = info,
-      files = names(sort(vapply(info, "[[", 0, "bytes")))
+      files = vapply(info, "[[", "", "filename")[dataset_order]
     )
   }
   path <- paste0(dir, "/docs/settings.js")
