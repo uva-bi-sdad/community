@@ -86,7 +86,8 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
     metas <- list()
     data <- tryCatch(if (format == "rds") readRDS(f) else fread(f), error = function(e) NULL)
     if (is.null(data)) {
-      cli_abort(c(paste0("failed to read in the data file (", f, ")"),
+      cli_abort(c(
+        paste0("failed to read in the data file ({.file {f}})"),
         i = "check that it is in a compatible format"
       ))
     }

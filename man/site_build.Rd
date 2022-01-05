@@ -6,7 +6,7 @@
 \usage{
 site_build(dir, file = "site.R", outdir = "docs", name = "index.html",
   variables = NULL, options = list(), bundle_data = FALSE,
-  open_after = FALSE, force = FALSE)
+  open_after = FALSE, aggregate = TRUE, force = FALSE)
 }
 \arguments{
 \item{dir}{Path to the site project directory.}
@@ -28,6 +28,10 @@ which can be edited by hand.}
 running the site locally without server. Otherwise, the data will be loaded separately through an http request.}
 
 \item{open_after}{Logical; if \code{TRUE}, will open the site in a browser after it is built.}
+
+\item{aggregate}{Logical; if \code{TRUE}, and there is a larger datasets with IDs that partially match
+IDs in a smaller dataset or that has a map to those IDs, and there are NAs in the smaller dataset, will
+attempt to fill NAs with averages from the larger dataset.}
 
 \item{force}{Logical; if \code{TRUE}, will reprocess data even if the source data is older than the existing
 processed version.}

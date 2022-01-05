@@ -14,6 +14,9 @@
 #' @param bundle_data Logical; if \code{TRUE}, will write the data to the site file; useful when
 #' running the site locally without server. Otherwise, the data will be loaded separately through an http request.
 #' @param open_after Logical; if \code{TRUE}, will open the site in a browser after it is built.
+#' @param aggregate Logical; if \code{TRUE}, and there is a larger datasets with IDs that partially match
+#' IDs in a smaller dataset or that has a map to those IDs, and there are NAs in the smaller dataset, will
+#' attempt to fill NAs with averages from the larger dataset.
 #' @param force Logical; if \code{TRUE}, will reprocess data even if the source data is older than the existing
 #' processed version.
 #' @examples
@@ -29,7 +32,7 @@
 #' @export
 
 site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html", variables = NULL,
-                       options = list(), bundle_data = FALSE, open_after = FALSE, force = FALSE) {
+                       options = list(), bundle_data = FALSE, open_after = FALSE, aggregate = TRUE, force = FALSE) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., dir = ".")')
   page <- paste0(dir, "/", file)
   if (!file.exists(page)) cli_abort("{.file {page}} does not exist")
@@ -43,7 +46,11 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     info <- list()
     if (file.exists(f)) {
       meta <- read_json(f)
-      for (i in seq_along(meta$resources)) {
+      previous_data <- NULL
+      ids_maps <- list()
+      dataset_order <- order(-vapply(meta$resources, "[[", 0, "bytes"))
+      for (oi in seq_along(dataset_order)) {
+        i <- dataset_order[oi]
         d <- meta$resources[[i]]
         if (!is.null(variables)) {
           temp <- list()
@@ -55,20 +62,90 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
         d$site_file <- paste0(d$name, ".json")
         path <- paste0(dir, "/docs/", d$site_file)
         if (file.exists(file)) {
-          if (force || (!file.exists(path) || file.mtime(file) > file.mtime(path))) {
+          if (force || !missing(aggregate) || (!file.exists(path) || file.mtime(file) > file.mtime(path))) {
             data <- fread(file)
-            if (!is.null(variables)) data <- data[, variables, with = FALSE]
+            time <- NULL
             if (length(d$time) && d$time[[1]] %in% colnames(data)) {
+              time <- d$time[[1]]
               data <- data[order(data[[d$time[[1]]]]), ]
             }
             if (length(d$ids) && d$ids[[1]]$variable %in% colnames(data)) {
               ids <- data[[d$ids[[1]]$variable]]
+              if (is.null(time) && anyDuplicated(ids)) {
+                cli_abort(paste(
+                  "no time variable was specified, yet {?an id was/ids were} duplicated:",
+                  "{.var {unique(ids[duplicated(ids)])}}"
+                ))
+              }
               set(data, NULL, d$ids[[1]]$variable, NULL)
             } else {
               ids <- rownames(data)
             }
+            if (!is.null(variables)) data <- data[, variables, with = FALSE]
             rownames(data) <- NULL
-            write_json(split(data, ids), path, dataframe = "columns")
+            sdata <- split(data, ids)
+            # aggregating if needed
+            if (!is.null(previous_data)) {
+              pn <- nchar(names(sdata)[1])
+              cn <- colnames(sdata[[1]])
+              if (aggregate && anyNA(data) && any(cn %in% colnames(previous_data[[1]]))) {
+                if (length(d$ids)) {
+                  if (is.character(d$ids[[1]]$map)) {
+                    ids_map <- if (!is.null(ids_maps[[d$ids[[1]]$map]])) {
+                      ids_maps[[d$ids[[1]]$map]]
+                    } else {
+                      tryCatch(read_json(d$ids[[1]]$map), error = function(e) NULL)
+                    }
+                    ids_maps[[d$ids[[1]]$map]] <- ids_map
+                  } else {
+                    ids_map <- d$ids[[1]]$map
+                  }
+                } else {
+                  NULL
+                }
+                cids <- if (!is.null(ids_map[[meta$resources[[dataset_order[oi - 1]]]$name]][[1]][[d$name]])) {
+                  vapply(ids_map[[meta$resources[[dataset_order[oi - 1]]]$name]], function(e) {
+                    if (is.null(e[[d$name]])) "" else e[[d$name]]
+                  }, "")[names(previous_data)]
+                } else if (all(nchar(names(sdata)) == pn) && nchar(names(previous_data)[1]) > pn) {
+                  substr(names(previous_data), 1, pn)
+                } else {
+                  NULL
+                }
+                if (!is.null(cids)) {
+                  for (id in names(sdata)) {
+                    did <- sdata[[id]]
+                    if (anyNA(did)) {
+                      children <- which(cids == id)
+                      if (length(children)) {
+                        cd <- do.call(rbind, previous_data[children])
+                        if (is.null(time)) {
+                          aggs <- vapply(cd, function(v) if (is.numeric(v)) mean(v, na.rm = TRUE) else NA, 0)
+                          aggs <- aggs[!is.na(aggs) & names(aggs) %in% cn]
+                          sdata[[id]] <- as.data.frame(sdata[[id]])
+                          aggs <- aggs[is.na(sdata[[id]][, names(aggs)])]
+                          if (length(aggs)) sdata[[id]][, names(aggs)] <- aggs
+                        } else {
+                          cd <- split(cd, cd[[time]])
+                          for (ct in names(cd)) {
+                            aggs <- vapply(cd[[ct]], function(v) if (is.numeric(v)) mean(v, na.rm = TRUE) else NA, 0)
+                            aggs <- aggs[!is.na(aggs) & names(aggs) %in% cn]
+                            if (length(aggs)) {
+                              su <- sdata[[id]][[time]] == ct
+                              sdata[[id]] <- as.data.frame(sdata[[id]])
+                              aggs <- aggs[is.na(sdata[[id]][su, names(aggs)])]
+                              if (length(aggs)) sdata[[id]][su, names(aggs)] <- aggs
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            previous_data <- sdata
+            write_json(sdata, path, dataframe = "columns")
           }
           info[[d$name]] <- d
         }

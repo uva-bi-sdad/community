@@ -2864,11 +2864,10 @@ void (function () {
   function load_id_maps() {
     var ids, i, f, k, u, has_map
     for (k in site.metadata.info)
-      if (Object.hasOwn(site.metadata.info, k)) {
+      if (Object.hasOwn(site.data, k)) {
         for (ids = site.metadata.info[k].ids, i = ids.length, has_map = false; i--; )
           if (Object.hasOwn(ids[i], 'map')) {
             has_map = true
-            init_log.id_maps = true
             if (Object.hasOwn(data_maps, ids[i].map)) {
               if (data_maps[ids[i].map].retrieved) {
                 site.metadata.info[k].schema.fields[i].ids = data_maps[k] = Object.hasOwn(
@@ -2931,7 +2930,6 @@ void (function () {
             }
           }
         if (!has_map) {
-          init_log.id_maps = true
           data_maps[k] = {}
           map_entities(k)
           for (u in data_queue[k])
@@ -3054,10 +3052,6 @@ void (function () {
         init_log.first = true
       }
     }
-  }
-
-  function get_checkfun(e) {
-    return check_funs[!e || 'string' === typeof e ? 'equals' : 'includes']
   }
 
   function compile_dataview(v) {
@@ -3333,7 +3327,7 @@ void (function () {
 
   function queue_init() {
     if ('loading' !== document.readyState) {
-      if (!init_log.id_maps) load_id_maps()
+      load_id_maps()
     } else {
       setTimeout(queue_init, 5)
     }
