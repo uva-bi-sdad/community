@@ -92,7 +92,7 @@ void (function () {
           n,
           ns = 0,
           k,
-          d = valueOf(u.dataset) || valueOf(c.dataset),
+          d = u.dataset ? valueOf(u.dataset) : u.view ? _u[u.view].get.dataset() : valueOf(c.dataset) || defaults.dataset,
           va = valueOf(u.variable)
         if (!Object.hasOwn(u, 'option_sets')) u.option_sets = {}
         u.e.innerHTML = ''
