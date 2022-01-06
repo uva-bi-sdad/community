@@ -250,7 +250,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
       paste0(
         '<script type="application/javascript">\nsite.data = {',
         paste(
-          vapply(settings$metadata$files, function(f) {
+          vapply(settings$metadata$datasets, function(f) {
             paste0('"', f, '": ', paste(
               readLines(paste0(dir, "/docs/", f, ".json"), warn = FALSE),
               collapse = ""
