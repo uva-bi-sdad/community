@@ -58,7 +58,9 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
     }
     names <- c(names, list(colnames(d)))
     set(d, NULL, "file", f)
-    d[[value_name]] <- paste0(sub("^.*[\\\\/]", "", gsub("^.*\\d{4}_|\\.\\w{3,4}$", "", f)), ":", d[[value_name]])
+    d[[value_name]] <- paste0(
+      sub("^.*[\\\\/]", "", gsub("^.*\\d{4}(?:q\\d)?_|\\.\\w{3,4}$", "", f)), ":", d[[value_name]]
+    )
     data <- c(data, list(d))
   }
   common <- Reduce(intersect, names)

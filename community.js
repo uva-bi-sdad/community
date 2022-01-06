@@ -2897,6 +2897,11 @@ void (function () {
                 data_maps[k] = ids[i].map
               }
               map_entities(k)
+              for (u in data_queue[k])
+                if (Object.hasOwn(data_queue[k], u)) {
+                  data_queue[k][u]()
+                  delete data_queue[k][u]
+                }
             } else {
               data_maps[ids[i].map] = {queue: [k], resource: {}, retrieved: false}
               f = new XMLHttpRequest()

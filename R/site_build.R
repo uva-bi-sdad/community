@@ -39,7 +39,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
   out <- paste(c(dir, outdir, name), collapse = "/")
   parts <- new.env()
   attr(parts, "name") <- "community_site_parts"
-  data_preprocess <- function() {
+  data_preprocess <- function(aggregate) {
     ddir <- paste0(dir, "/docs/data/")
     f <- paste0(ddir, "datapackage.json")
     path <- paste0(dir, "/docs/")
@@ -81,7 +81,6 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
             } else {
               ids <- rownames(data)
             }
-            if (!is.null(variables)) data <- data[, variables, with = FALSE]
             rownames(data) <- NULL
             sdata <- split(data, ids)
             # aggregating if needed
@@ -145,6 +144,11 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
               }
             }
             previous_data <- sdata
+            if (!is.null(variables)) {
+              sdata <- lapply(sdata, function(d) {
+                if (class(d)[1] == "data.table") d[, variables, with = FALSE] else d[, variables]
+              })
+            }
             write_json(sdata, path, dataframe = "columns")
           }
           info[[d$name]] <- d
@@ -155,7 +159,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
       if (length(data_files)) {
         init_data(sub("^.*/", "", normalizePath(dir, "/", FALSE)), dir = dir, data_paths = data_files)
         if (file.exists(f)) {
-          return(data_preprocess(dir, outdir))
+          return(data_preprocess(aggregate))
         }
       }
     }
@@ -187,7 +191,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     !identical(settings$metadata$variables, variables[variables != "_references"])) {
     force <- TRUE
   }
-  settings$metadata <- data_preprocess()
+  settings$metadata <- data_preprocess(aggregate)
   parts$dependencies <- list(
     base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.min.css"),
     base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js"),

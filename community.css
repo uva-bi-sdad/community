@@ -45,6 +45,7 @@ body, html, .modal-content, table.dataTable tbody tr, .offcanvas{
 .navbar > .container-fluid > span{
   font-size: min(1.2em, max(3vw, 12px)); white-space: nowrap; max-width: 50%
 }
+.navbar-brand > img{max-height: 24px}
 .nav-item{white-space: nowrap}
 .form-check-input{
   background-color: var(--background);
