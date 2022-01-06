@@ -92,14 +92,18 @@ void (function () {
           n,
           ns = 0,
           k,
-          d = u.dataset ? valueOf(u.dataset) : u.view ? _u[u.view].get.dataset() : valueOf(c.dataset) || defaults.dataset,
+          d = u.dataset
+            ? valueOf(u.dataset)
+            : u.view
+            ? _u[u.view].get.dataset()
+            : valueOf(c.dataset) || defaults.dataset,
           va = valueOf(u.variable)
         if (!Object.hasOwn(u, 'option_sets')) u.option_sets = {}
         u.e.innerHTML = ''
         if (c && Object.hasOwn(u.option_sets, (k = d + (va ? va : '')))) {
           u.values = u.option_sets[k].values
           u.display = u.option_sets[k].display
-          if (u.view && 'ID' === u.variable) {
+          if (u.view && ('ID' === u.variable || 'ids' === u.options_source)) {
             for (
               v = site.dataviews[u.view].selection.all, s = u.option_sets[k].options, n = s.length, ns = 0, i = 0;
               i < n;
@@ -3096,7 +3100,7 @@ void (function () {
     v.ids_check =
       'string' === typeof v.get.ids()
         ? function (a, b) {
-            return !a || -1 == a || a === b || (b && a === b.substr(0, a.length))
+            return !a || -1 == a || a === b || (b && a.length > 2 && a === b.substr(0, a.length))
           }
         : check_funs.includes
     v.k = ''
