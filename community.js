@@ -184,17 +184,15 @@ void (function () {
           u.queue = setTimeout(conditionals.map_shapes.bind(null, u, void 0, true), 20)
         } else {
           if (u.view && u.displaying) {
-            const vstate = site.dataviews[u.view].value(),
-              a = site.dataviews[u.view].selection.all,
-              s =
-                site.dataviews[u.view].selection[
-                  site.settings.background_shapes && u.options.background_shapes ? 'ids' : 'all'
-                ],
+            const view = site.dataviews[u.view],
+              vstate = view.value(),
+              a = view.selection.all,
+              s = view.selection[site.settings.background_shapes && u.options.background_shapes ? 'ids' : 'all'],
               bgc = site.settings.theme_dark ? '#666' : '#000'
             var k,
               n = 0,
               fg
-            if (s && vstate !== u.vstate) {
+            if (s && view.valid && vstate !== u.vstate) {
               u.displaying.clearLayers()
               u.vstate = false
               for (k in s) {
@@ -271,6 +269,7 @@ void (function () {
             first_all = '',
             summary_state = site.settings.summary_selection
           if (init_log[d]) {
+            f.valid = true
             f.n_selected.ids = 0
             f.n_selected.features = 0
             f.n_selected.variables = 0
@@ -325,7 +324,10 @@ void (function () {
               update_subs(f.id, 'update')
             }
             request_queue(f.id)
-          } else data_queue[d][f.id] = conditionals.dataview.bind(null, f)
+          } else {
+            f.valid = false
+            data_queue[d][f.id] = conditionals.dataview.bind(null, f)
+          }
         }
       },
       time_filters: function (u) {
@@ -2920,6 +2922,7 @@ void (function () {
               map_entities(k)
               for (u in data_queue[k])
                 if (Object.hasOwn(data_queue[k], u)) {
+                  _u[u].state = false
                   data_queue[k][u]()
                   delete data_queue[k][u]
                 }
@@ -2942,6 +2945,7 @@ void (function () {
                       map_entities(k)
                       for (u in data_queue[k])
                         if (Object.hasOwn(data_queue[k], u)) {
+                          _u[u].state = false
                           data_queue[k][u]()
                           delete data_queue[k][u]
                         }
@@ -2964,6 +2968,7 @@ void (function () {
           map_entities(k)
           for (u in data_queue[k])
             if (Object.hasOwn(data_queue[k], u)) {
+              _u[u].state = false
               data_queue[k][u]()
               delete data_queue[k][u]
             }
