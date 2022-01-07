@@ -184,8 +184,8 @@ void (function () {
           u.queue = setTimeout(conditionals.map_shapes.bind(null, u, void 0, true), 20)
         } else {
           if (u.view && u.displaying) {
-            u.displaying.clearLayers()
-            const a = site.dataviews[u.view].selection.all,
+            const vstate = site.dataviews[u.view].value(),
+              a = site.dataviews[u.view].selection.all,
               s =
                 site.dataviews[u.view].selection[
                   site.settings.background_shapes && u.options.background_shapes ? 'ids' : 'all'
@@ -194,7 +194,9 @@ void (function () {
             var k,
               n = 0,
               fg
-            if (s)
+            if (s && vstate !== u.vstate) {
+              u.displaying.clearLayers()
+              u.vstate = vstate
               for (k in s) {
                 fg = Object.hasOwn(a, k)
                 if (Object.hasOwn(s, k) && s[k].layer && (fg || u.options.background_shapes === entities[k].group)) {
@@ -211,6 +213,7 @@ void (function () {
                   }
                 }
               }
+            }
             if (n) u.map.flyToBounds(u.displaying.getBounds())
           }
         }
@@ -1619,7 +1622,7 @@ void (function () {
           (v < 0 ? '-' : '') +
           (Math.abs(v) >> 0) +
           '.' +
-          ((patterns.period.test(r) ? r.split('.')[1] : '') + '0000000000').substr(0, site.settings.digits)
+          ((patterns.period.test(r) ? r.split('.')[1] : '') + '0000000000').substring(0, site.settings.digits)
         )
       } else return Math.round(v)
     } else {
@@ -1809,7 +1812,7 @@ void (function () {
       i--;
 
     ) {
-      s = (i ? j : '') + c.author[i].family + ', ' + c.author[i].given.substr(0, 1) + '.' + s
+      s = (i ? j : '') + c.author[i].family + ', ' + c.author[i].given.substring(0, 1) + '.' + s
       j = ', '
     }
     e.innerHTML =
@@ -2185,7 +2188,6 @@ void (function () {
             }
           }
         }
-        // setTimeout(_u[k].update, 0)
         for (k in p) if (Object.hasOwn(p, k)) add_dependency(k, p[k])
       }
     }
@@ -2560,7 +2562,6 @@ void (function () {
         compile_dataview(e)
         conditionals.dataview(e)
       }
-    // if ('default_view' === defaults.dataview) conditionals.dataview(_u['default_view'])
     // initialize outputs
     for (c = document.getElementsByClassName('auto-output'), i = c.length, n = 0; i--; ) {
       e = c[i]
@@ -2606,11 +2607,9 @@ void (function () {
     } else {
       var f = new XMLHttpRequest()
       f.onreadystatechange = function (u) {
-        if (4 === f.readyState) {
-          if (200 === f.status) {
-            site.maps._raw[source.url] = JSON.parse(f.responseText)
-            process_layer(this, u)
-          }
+        if (4 === f.readyState && 200 === f.status) {
+          site.maps._raw[source.url] = JSON.parse(f.responseText)
+          process_layer(this, u)
         }
       }.bind(source, u)
       f.open('GET', source.url, true)
@@ -2619,20 +2618,41 @@ void (function () {
   }
 
   function process_layer(source, u) {
-    var k, p, f, id
+    const bgc = site.settings.theme_dark ? '#666' : '#000'
+    var k, l, p, f, id, m, mu, s
     site.maps._layers[source.name] = L.geoJSON(site.maps._raw[source.url], {
       onEachFeature: add_layer_listeners.bind(u),
     })
     for (k in site.maps._layers[source.name]._layers)
       if (Object.hasOwn(site.maps._layers[source.name]._layers, k)) {
-        site.maps._layers[source.name]._layers[k].source = source
-        p = site.maps._layers[source.name]._layers[k].feature.properties
+        l = site.maps._layers[source.name]._layers[k]
+        l.source = source
+        p = l.feature.properties
         id = p[source.id_property]
         if (!Object.hasOwn(entities, id) && patterns.leading_zeros.test(id))
           id = p[source.id_property] = id.replace(patterns.leading_zeros, '')
         if (Object.hasOwn(entities, id)) {
-          entities[id].layer = site.maps._layers[source.name]._layers[k]
-        } else entities[id] = {layer: site.maps._layers[source.name]._layers[k], features: {}}
+          entities[id].layer = l
+          if (site.settings.background_shapes)
+            for (m in site.maps) {
+              if ('_' !== m.substring(0, 1) && Object.hasOwn(site.maps, m)) {
+                mu = site.maps[m].u
+                if (mu.view && mu.displaying) {
+                  s = site.dataviews[mu.view].selection.all
+                  if (u.options.background_shapes === entities[id].group) {
+                    l.options.interactive = false
+                    l.addTo(mu.displaying)
+                    l.bringToBack()
+                    l.setStyle({
+                      fillOpacity: 0,
+                      color: bgc,
+                      weight: 1,
+                    })
+                  }
+                }
+              }
+            }
+        } else entities[id] = {layer: l, features: {}}
         for (f in p)
           if (Object.hasOwn(p, f) && !Object.hasOwn(entities[id].features, f)) {
             if (Object.hasOwn(entities[id].features, f.toLowerCase())) {
@@ -3049,7 +3069,7 @@ void (function () {
           if (f) {
             entitiesByName[f.name] = entities[id]
             if (Object.hasOwn(f, 'district') && id.length > 4) {
-              f.county = id.substr(0, 5)
+              f.county = id.substring(0, 5)
             }
           }
         }
@@ -3105,7 +3125,7 @@ void (function () {
     v.ids_check =
       'string' === typeof v.get.ids()
         ? function (a, b) {
-            return !a || -1 == a || a === b || (b && a.length > 2 && a === b.substr(0, a.length))
+            return !a || -1 == a || a === b || (b && a.length > 2 && a === b.substring(0, a.length))
           }
         : check_funs.includes
     v.k = ''

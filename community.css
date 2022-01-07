@@ -39,7 +39,7 @@ body, html, .modal-content, table.dataTable tbody tr, .offcanvas{
   border-color: var(--background-border) var(--background-border) var(--background);
   color: var(--body-text);
 }
-.navbar>.container, .navbar>.container-fluid, .navbar>.container-lg, .navbar>.container-md, .navbar>.container-sm, .navbar>.container-xl, .navbar>.container-xxl{
+.navbar > .container, .navbar > .container-fluid, .navbar > .container-lg, .navbar > .container-md, .navbar > .container-sm, .navbar > .container-xl, .navbar > .container-xxl{
   flex-wrap: nowrap
 }
 .navbar > .container-fluid > span{
@@ -104,7 +104,7 @@ input[type=text],
   min-width: 80px
 }
 
-.navbar{position: fixed; width: 100%; z-index: 100; min-height: 55px; background-color: var(--background-highlight)}
+.navbar{position: fixed; width: 100%; z-index: 100; min-height: 55px; background-color: var(--highlight); color: var(--highlight-text)}
 .navbar .btn-link{text-decoration: none; background: inherit; border: none}
 
 .navbar-expand-md .navbar-collapse{flex: 0}

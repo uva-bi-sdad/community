@@ -91,7 +91,6 @@ init_site <- function(dir, title = "app", with_data = TRUE, overwrite = FALSE) {
       "*.Rproj",
       "node-module",
       "package-lock.json",
-      "build.R",
       ""
     ), collapse = "\n"), paths[5])
   }
