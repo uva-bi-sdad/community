@@ -193,10 +193,8 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
   }
   settings$metadata <- data_preprocess(aggregate)
   parts$dependencies <- list(
-    base_style = list(type = "stylesheet", src = "dist/community.css"),
-    base = list(type = "script", src = "dist/community.js"),
-    # base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.min.css"),
-    # base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js"),
+    base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.min.css"),
+    base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js"),
     custom_style = list(type = "stylesheet", src = "style.css"),
     custom = list(type = "script", src = "script.js"),
     bootstrap_style = list(
