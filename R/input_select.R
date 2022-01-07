@@ -4,7 +4,8 @@
 #'
 #' @param label Label of the input for the user.
 #' @param options A vector of options, the name of a variable from which to pull levels, or \code{"datasets"},
-#' \code{"variables"}, or \code{"ids"} to select names of datasets, variables, or entity ids.
+#' \code{"variables"}, \code{"ids"}, or \code{"palettes"} to select names of datasets, variables, entity ids, or
+#' color palettes.
 #' @param default Which of the options to default to; either its index or value.
 #' @param display A display version of the options.
 #' @param id Unique ID of the element to be created.
@@ -53,7 +54,7 @@ input_select <- function(label, options, default = -1, display = options, id = l
       if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
       ">"
     ),
-    if (length(options) > 1 || !options %in% c("datasets", "variables", "ids")) {
+    if (length(options) > 1 || !options %in% c("datasets", "variables", "ids", "palettes")) {
       unlist(lapply(seq_along(options), function(i) {
         paste0('<option value="', options[i], '"', if (i == default) "selected", ">", display[i], "</option>")
       }), use.names = FALSE)

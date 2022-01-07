@@ -196,7 +196,7 @@ void (function () {
               fg
             if (s && vstate !== u.vstate) {
               u.displaying.clearLayers()
-              u.vstate = vstate
+              u.vstate = false
               for (k in s) {
                 fg = Object.hasOwn(a, k)
                 if (Object.hasOwn(s, k) && s[k].layer && (fg || u.options.background_shapes === entities[k].group)) {
@@ -211,6 +211,7 @@ void (function () {
                       weight: 1,
                     })
                   }
+                  if (!u.vstate) u.vstate = vstate
                 }
               }
             }

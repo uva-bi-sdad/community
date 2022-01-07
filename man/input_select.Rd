@@ -13,7 +13,8 @@ input_select(label, options, default = -1, display = options, id = label,
 \item{label}{Label of the input for the user.}
 
 \item{options}{A vector of options, the name of a variable from which to pull levels, or \code{"datasets"},
-\code{"variables"}, or \code{"ids"} to select names of datasets, variables, or entity ids.}
+\code{"variables"}, \code{"ids"}, or \code{"palettes"} to select names of datasets, variables, entity ids, or
+color palettes.}
 
 \item{default}{Which of the options to default to; either its index or value.}
 
