@@ -99,8 +99,6 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
                   } else {
                     ids_map <- d$ids[[1]]$map
                   }
-                } else {
-                  NULL
                 }
                 cids <- if (!is.null(ids_map[[meta$resources[[dataset_order[oi - 1]]]$name]][[1]][[d$name]])) {
                   vapply(ids_map[[meta$resources[[dataset_order[oi - 1]]]$name]], function(e) {

@@ -962,18 +962,21 @@ void (function () {
           }
           o.revert = function () {
             this.showing = false
-            if (this.options.floating) this.e.classList.add('hidden')
-            if (this.parts.title) {
-              if (this.selection) {
-                this.parts.title.base.classList.remove('hidden')
-              } else if (this.has_default) this.parts.title.default.classList.remove('hidden')
-              this.parts.title.temp.classList.add('hidden')
-            }
-            if (this.parts.body) {
-              if (this.selection) {
-                this.parts.body.base.classList.remove('hidden')
-              } else if (this.has_default) this.parts.body.default.classList.remove('hidden')
-              this.parts.body.temp.classList.add('hidden')
+            if (this.options.floating) {
+              this.e.classList.add('hidden')
+            } else {
+              if (this.parts.title) {
+                if (this.selection) {
+                  this.parts.title.base.classList.remove('hidden')
+                } else if (this.has_default) this.parts.title.default.classList.remove('hidden')
+                this.parts.title.temp.classList.add('hidden')
+              }
+              if (this.parts.body) {
+                if (this.selection) {
+                  this.parts.body.base.classList.remove('hidden')
+                } else if (this.has_default) this.parts.body.default.classList.remove('hidden')
+                this.parts.body.temp.classList.add('hidden')
+              }
             }
           }
           o.parts = {}
@@ -1051,6 +1054,7 @@ void (function () {
             if (!o.parts.title.ref) o.parts.title.base.innerText = o.parts.title.get()
             o.e.appendChild(o.parts.title.base)
             o.e.appendChild(o.parts.title.temp)
+            o.parts.title.base.classList.add('hidden')
             o.parts.title.temp.classList.add('hidden')
           }
           if (o.options.body) {
@@ -1165,7 +1169,7 @@ void (function () {
                 }
               }
             }
-          } else {
+          } else if (!this.options.floating) {
             clearTimeout(this.queue)
             if (!pass) {
               this.queue = setTimeout(this.update.bind(null, void 0, void 0, true), 20)
@@ -1476,7 +1480,8 @@ void (function () {
       legend: {
         update: function (e) {
           e.innerHTML = ''
-          const p = palettes[valueOf(e.parentElement.getAttribute('palette')).toLowerCase() || site.settings.palette]
+          const ep = valueOf(e.parentElement.getAttribute('palette')).toLowerCase(),
+            p = palettes[Object.hasOwn(palettes, ep) ? ep : site.settings.palette]
           for (var i = 0, n = p.length; i < n; i++) {
             e.appendChild(document.createElement('span'))
             e.lastElementChild.style.background = p[i]
@@ -2014,7 +2019,6 @@ void (function () {
       page.menus[i].state = page.menus[i].getAttribute('state')
       if (page.menus[i].classList.contains('menu-top')) {
         page.top_menu = page.menus[i]
-        // page.content_bounds.top += 10
         if (page.menus[i].lastElementChild.tagName === 'BUTTON') {
           page.menus[i].lastElementChild.addEventListener(
             'click',
@@ -2226,7 +2230,7 @@ void (function () {
 
     // fill legends
     for (c = document.getElementsByClassName('legend-scale'), i = c.length; i--; ) {
-      k = c[i].parentElement.getAttribute('palette')
+      k = c[i].parentElement.getAttribute('palette') || site.settings.palette
       if (Object.hasOwn(_u, k)) _u[k].e.addEventListener('change', elements.legend.update.bind(null, c[i]))
       elements.legend.update(c[i])
     }
@@ -2250,7 +2254,9 @@ void (function () {
 
   function content_resize() {
     page.content.style.top =
-      (page.top_menu && 'open' === page.top_menu.state
+      (!page.top_menu
+        ? page.content_bounds.top
+        : 'open' === page.top_menu.state
         ? page.top_menu.getBoundingClientRect().height
         : page.content_bounds.top +
           ((page.right_menu && 'open' === page.right_menu.state) || (page.left_menu && 'open' === page.left_menu.state)
