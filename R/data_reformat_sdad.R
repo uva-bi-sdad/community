@@ -18,8 +18,12 @@
 #' @param dataset Column name used to separate entity scales.
 #' @param value_info A vector of column names which provide additional information about values
 #' (such as their name and type).
-#' @param entity_info A vector of column names which provide additional information about entities
-#' (such as their name and type).
+#' @param entity_info A list containing variable names to extract and create an ids map from (
+#' \code{entity_info.json}, created in the output directory). Entries can be named to rename the
+#' variables they refer to in entity features.
+#' @param formatters A list of functions to pass columns through, with names identifying those columns
+#' (e.g., \code{list(region_name = function(x) sub(",.*$", "", x))} to strip text after a comma in the
+#' "region_name" column).
 #' @param out Path to a directory to write files to; if not specified, files will not be written.
 #' @examples
 #' \dontrun{
@@ -30,7 +34,8 @@
 
 data_reformat_sdad <- function(files, value = "value", value_name = "measure", id = "geoid", time = "year",
                                dataset = "region_type", value_info = "measure_type",
-                               entity_info = c("region_type", "region_name"), out = NULL) {
+                               entity_info = c(type = "region_type", name = "region_name"),
+                               formatters = NULL, out = NULL) {
   if (length(files) == 1 && dir.exists(files)) {
     files <- list.files(files, full.names = TRUE)
   }
@@ -81,6 +86,14 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
   }
   vars <- c(vars, "file")
   data <- do.call(rbind, lapply(data, function(d) d[, vars, with = FALSE]))
+  cn <- colnames(data)
+  if (!is.null(formatters)) {
+    for (n in names(formatters)) {
+      if (n %in% cn) {
+        data[[n]] <- formatters[[n]](data[[n]])
+      }
+    }
+  }
   if (!id %in% vars) {
     id <- "id"
     vars <- c(id, vars)
@@ -102,7 +115,29 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
   datasets <- unique(data[[dataset]])
   variables <- unique(data[[value_name]])
   times <- sort(unique(data[[time]]))
-  entity_info <- entity_info[entity_info %in% colnames(data)]
+  if (!is.null(out)) {
+    entity_info <- as.list(entity_info)
+    entity_info <- entity_info[unlist(entity_info) %in% colnames(data)]
+    if (length(entity_info)) {
+      e <- as.data.frame(data[!duplicated(data[[id]])])
+      e <- e[, c(id, dataset, unlist(entity_info)), drop = FALSE]
+      if (!is.null(names(entity_info))) {
+        su <- which(names(entity_info) != "")
+        colnames(e)[su + 2] <- names(entity_info)[su]
+      }
+      write_json(
+        lapply(split(e, e[, 2]), function(g) lapply(split(g[, -(1:2)], g[, 1]), as.list)),
+        paste0(out, "/entity_info.json"),
+        auto_unbox = TRUE
+      )
+      if (interactive()) {
+        cli_bullets(c(
+          v = "Created entity metadata file:",
+          `*` = paste0("{.file ", out, "/entity_info.json}")
+        ))
+      }
+    }
+  }
   if (all(nchar(times) == 4)) times <- seq(min(times), max(times))
   sets <- lapply(datasets, function(dn) {
     d <- if (dataset %in% vars) data[data[[dataset]] == dn] else data
@@ -110,7 +145,6 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
       do.call(rbind, lapply(unique(d[[id]]), function(e) {
         ed <- d[d[[id]] == e]
         r <- data.frame(ID = rep(as.character(e), length(times)), time = times)
-        # for(v in entity_info) r[[v]] <- ed[[v]][1]
         rownames(r) <- times
         for (v in variables) {
           r[[v]] <- NA

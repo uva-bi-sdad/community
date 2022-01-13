@@ -1904,7 +1904,7 @@ void (function () {
     return s
   }
 
-  document.onreadystatechange = function () {
+  window.onload = function () {
     var k, i, e, c, p, ci, n, o
     if (site && site.metadata) map_variables()
     document.body.className =
@@ -2664,9 +2664,12 @@ void (function () {
         } else entities[id] = {layer: l, features: {}}
         for (f in p)
           if (Object.hasOwn(p, f) && !Object.hasOwn(entities[id].features, f)) {
-            if (Object.hasOwn(entities[id].features, f.toLowerCase())) {
+            if (
+              'name' === f.toLowerCase() &&
+              (!Object.hasOwn(entities[id].features, 'name') || entities[id].features.id === entities[id].features.name)
+            ) {
               entities[id].features[f.toLowerCase()] = p[f]
-              if ('name' === f.toLowerCase()) entitiesByName[p[f]] = entities[id]
+              entitiesByName[p[f]] = entities[id]
             } else {
               entities[id].features[f] = p[f]
             }

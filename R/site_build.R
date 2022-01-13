@@ -90,12 +90,21 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
               if (aggregate && anyNA(data) && any(cn %in% colnames(previous_data[[1]]))) {
                 if (length(d$ids)) {
                   if (is.character(d$ids[[1]]$map)) {
+                    mf <- paste0(c(dir, ""), rep(c("", "/docs/"), each = 2), "/", d$ids[[1]]$map)
+                    mf <- mf[file.exists(mf)]
                     ids_map <- if (!is.null(ids_maps[[d$ids[[1]]$map]])) {
                       ids_maps[[d$ids[[1]]$map]]
                     } else {
-                      tryCatch(read_json(d$ids[[1]]$map), error = function(e) NULL)
+                      tryCatch(
+                        read_json(if (length(mf)) mf[[1]] else d$ids[[1]]$map),
+                        error = function(e) NULL
+                      )
                     }
                     ids_maps[[d$ids[[1]]$map]] <- ids_map
+                    if (((length(mf) && !grepl("/docs/", mf[[1]], fixed = TRUE)) || bundle_data) &&
+                      !is.null(ids_map)) {
+                      d$ids[[1]]$map <- ids_map
+                    }
                   } else {
                     ids_map <- d$ids[[1]]$map
                   }

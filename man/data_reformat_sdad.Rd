@@ -6,8 +6,8 @@
 \usage{
 data_reformat_sdad(files, value = "value", value_name = "measure",
   id = "geoid", time = "year", dataset = "region_type",
-  value_info = "measure_type", entity_info = c("region_type",
-  "region_name"), out = NULL)
+  value_info = "measure_type", entity_info = c(type = "region_type", name =
+  "region_name"), formatters = NULL, out = NULL)
 }
 \arguments{
 \item{files}{A character vector of file paths, or the path to a directory containing data files.}
@@ -26,8 +26,13 @@ not present.}
 \item{value_info}{A vector of column names which provide additional information about values
 (such as their name and type).}
 
-\item{entity_info}{A vector of column names which provide additional information about entities
-(such as their name and type).}
+\item{entity_info}{A list containing variable names to extract and create an ids map from (
+\code{entity_info.json}, created in the output directory). Entries can be named to rename the
+variables they refer to in entity features.}
+
+\item{formatters}{A list of functions to pass columns through, with names identifying those columns
+(e.g., \code{list(region_name = function(x) sub(",.*$", "", x))} to strip text after a comma in the
+"region_name" column).}
 
 \item{out}{Path to a directory to write files to; if not specified, files will not be written.}
 }

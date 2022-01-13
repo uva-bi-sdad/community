@@ -20,9 +20,10 @@
 #'   }
 #'   \item{ids}{
 #'   A list or list of lists with entries for at least \code{variable} (the name of a variable in the dataset).
-#'   Might also include \code{name} (for a display name), and \code{value} with a parsing scheme. A parsing
-#'   scheme is either a regular expression (e.g., \code{'^.*\\\\.'} for the first part of an id, before a period)
-#'   or a string range (e.g., \code{c(0, 6)} for the first 6 characters of an id).
+#'   Might also include \code{map} with a list or path to a JSON file resulting in a list with an
+#'   entry for each ID, and additional information about that entity, to be read in a its features.
+#'   All files will be loaded to help with aggregation, but local files will be included in the datapackage,
+#'   whereas hosted files will be loaded client-side.
 #'   }
 #'   \item{time}{
 #'   A string giving the name of a variable in the dataset representing a repeated observation of the same entity.
