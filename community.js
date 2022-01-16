@@ -2650,24 +2650,16 @@ void (function () {
         if (Object.hasOwn(entities, id)) {
           if (!Object.hasOwn(entities[id], 'layer')) entities[id].layer = {}
           entities[id].layer[u.id] = l
-          if (site.settings.background_shapes)
-            for (m in site.maps) {
-              if ('_' !== m.substring(0, 1) && Object.hasOwn(site.maps, m) && Object.hasOwn(site.maps[m], 'u')) {
-                mu = site.maps[m].u
-                if (mu.view && mu.displaying) {
-                  if (u.options.background_shapes === entities[id].group) {
-                    l.options.interactive = false
-                    l.addTo(mu.displaying)
-                    l.bringToBack()
-                    l.setStyle({
-                      fillOpacity: 0,
-                      color: bgc,
-                      weight: 1,
-                    })
-                  }
-                }
-              }
-            }
+          if (site.settings.background_shapes && u.displaying && u.options.background_shapes === entities[id].group) {
+            l.options.interactive = false
+            l.addTo(u.displaying)
+            l.bringToBack()
+            l.setStyle({
+              fillOpacity: 0,
+              color: bgc,
+              weight: 1,
+            })
+          }
         } else {
           entities[id] = {layer: {}, features: {id: id}}
           entities[id].layer[u.id] = l
