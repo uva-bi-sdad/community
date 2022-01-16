@@ -95,20 +95,20 @@
 
     
     
-<p><em>Built with R 4.1.2 on January 04 2022</em></p>
+<p><em>Built with R 4.1.2 on January 16 2022</em></p>
 <hr>
-<div class="section level1">
-<h1 id="basic-example">Basic example<a class="anchor" aria-label="anchor" href="#basic-example"></a>
-</h1>
+<div class="section level2">
+<h2 id="basic-example">Basic example<a class="anchor" aria-label="anchor" href="#basic-example"></a>
+</h2>
 <p>Building a data site consists of 3 steps:</p>
 <ol style="list-style-type: decimal">
 <li>Initialize the site</li>
 <li>Add data to the site</li>
 <li>Specify the site’s layout</li>
 </ol>
-<div class="section level2">
-<h2 id="initialize">1. Initialize<a class="anchor" aria-label="anchor" href="#initialize"></a>
-</h2>
+<div class="section level3">
+<h3 id="initialize">1. Initialize<a class="anchor" aria-label="anchor" href="#initialize"></a>
+</h3>
 <p>Start by loading the library and initializing a site.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uva-bi-sdad/community" class="external-link">community</a></span><span class="op">)</span>
@@ -118,9 +118,9 @@
 <span class="va">dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"/example_site"</span><span class="op">)</span>
 <span class="fu"><a href="../reference/init_site.html">init_site</a></span><span class="op">(</span><span class="va">dir</span><span class="op">)</span></code></pre></div>
 </div>
-<div class="section level2">
-<h2 id="add-data">2. Add Data<a class="anchor" aria-label="anchor" href="#add-data"></a>
-</h2>
+<div class="section level3">
+<h3 id="add-data">2. Add Data<a class="anchor" aria-label="anchor" href="#add-data"></a>
+</h3>
 <p>Now you should have a <code>data</code> folder in <code>dir</code> where you can put your data files, and a <code>build.R</code> file which you can use to reformat those files if needed, and add them to the site.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># make a simple example set</span>
@@ -138,9 +138,9 @@
 <p>Including this code in <code>build.R</code> is not necessary, but can be a way to organize things, and make any data processing steps repeatable.</p>
 <p>Including the original data (<code>data.csv</code> in this case) is not also strictly necessary – the data file made when you build the site (by default) is all that will actually be used by the site.</p>
 </div>
-<div class="section level2">
-<h2 id="specify">3. Specify<a class="anchor" aria-label="anchor" href="#specify"></a>
-</h2>
+<div class="section level3">
+<h3 id="specify">3. Specify<a class="anchor" aria-label="anchor" href="#specify"></a>
+</h3>
 <p>Everything to do with the look and functionality of the site happens between <code>site.R</code> and the <code>site_build</code> function.</p>
 <p>For an initial site, replace the template content of <code>site.R</code> with this:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -153,9 +153,9 @@
 <p><code>open_after</code> just opens the build page in a browser, which might get annoying as you edit and rebuild the site.</p>
 </div>
 </div>
-<div class="section level1">
-<h1 id="add-inputs">Add inputs<a class="anchor" aria-label="anchor" href="#add-inputs"></a>
-</h1>
+<div class="section level2">
+<h2 id="add-inputs">Add inputs<a class="anchor" aria-label="anchor" href="#add-inputs"></a>
+</h2>
 <p>Inputs can be named and then referred to in outputs. For example, you might want to allow plot variables to be changed. To do that, you can add a select input with variables as options.</p>
 <p>Change <code>site.R</code> to this:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -166,9 +166,9 @@
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/site_build.html">site_build</a></span><span class="op">(</span><span class="va">dir</span>, bundle_data <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 </div>
-<div class="section level1">
-<h1 id="add-structure">Add structure<a class="anchor" aria-label="anchor" href="#add-structure"></a>
-</h1>
+<div class="section level2">
+<h2 id="add-structure">Add structure<a class="anchor" aria-label="anchor" href="#add-structure"></a>
+</h2>
 <p><code>page_section</code> is the main way to arrange components of the site, which can be wrapped around any set of input or output elements.</p>
 <p><code>page_menu</code> can be a nice way to arrange inputs.</p>
 <p>These can be added to the previous example like this:</p>
@@ -183,9 +183,9 @@
   <span class="fu"><a href="../reference/output_plot.html">output_plot</a></span><span class="op">(</span><span class="st">"selected_x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span><span class="op">)</span>
 <span class="op">)</span></code></pre></div>
 </div>
-<div class="section level1">
-<h1 id="add-interactions">Add interactions<a class="anchor" aria-label="anchor" href="#add-interactions"></a>
-</h1>
+<div class="section level2">
+<h2 id="add-interactions">Add interactions<a class="anchor" aria-label="anchor" href="#add-interactions"></a>
+</h2>
 <p>Plots (as well as maps) can be the source of mouse events (such as hovers and clicks). Information panes can respond to these events by displaying additional information.</p>
 <p>For example, we can tie a tooltip-like output to the plot like this:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
@@ -206,9 +206,9 @@
 <p>In <code>output_info</code>, <code>features.</code>, <code>variables.</code>, and <code>data.</code> refer to aspects of the hovered-over entity. <code>variables.</code> and <code>data.</code> also implicitly refer to a particular variable – by default, this will be the variable used for color, but setting the <code>variable</code> argument can change that (e.g., <code>variable = "x"</code> or <code>variable = "selected_x"</code>).</p>
 <p>You can also add <code>floating = TRUE</code> to make the output pane more like a tooltip.</p>
 </div>
-<div class="section level1">
-<h1 id="add-variable-information">Add variable information<a class="anchor" aria-label="anchor" href="#add-variable-information"></a>
-</h1>
+<div class="section level2">
+<h2 id="add-variable-information">Add variable information<a class="anchor" aria-label="anchor" href="#add-variable-information"></a>
+</h2>
 <p>The information output can also display additional information about the variables, which you can fill in when you add the data.</p>
 <p>For example, run the same <code>data_add</code> command as before, but include some information about one of the variables:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
@@ -241,9 +241,9 @@
   <span class="op">)</span>, subto <span class="op">=</span> <span class="st">"main_plot"</span><span class="op">)</span>
 <span class="op">)</span></code></pre></div>
 </div>
-<div class="section level1">
-<h1 id="add-a-map">Add a Map<a class="anchor" aria-label="anchor" href="#add-a-map"></a>
-</h1>
+<div class="section level2">
+<h2 id="add-a-map">Add a Map<a class="anchor" aria-label="anchor" href="#add-a-map"></a>
+</h2>
 <p>Maps will generally require shapes to be added from a separate, GeoJSON file. You can use the <code>download_census_shapes</code> function to download shapes for Census regions within the United States.</p>
 <p>For example, we might download the shapes of states:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
@@ -272,9 +272,9 @@
 <p>Because the shapes also had some properties, these were added as entity features, giving some names.</p>
 <p>Here, shapes were loaded in from a local file as part of the build process, but this same file could also be served and referred to by URL, in which case it would be loaded in separately. Loading the map shapes separately means the shapes can be independently cached by the browser, which can improve load times between sites that use the same make.</p>
 </div>
-<div class="section level1">
-<h1 id="add-entity-metadata">Add Entity Metadata<a class="anchor" aria-label="anchor" href="#add-entity-metadata"></a>
-</h1>
+<div class="section level2">
+<h2 id="add-entity-metadata">Add Entity Metadata<a class="anchor" aria-label="anchor" href="#add-entity-metadata"></a>
+</h2>
 <p>The map shapes file added some additional information about entities, such as their name, but this type of information can be added more directly through the <code>data_add</code> function’s <code>meta</code> argument. We’ve already used this argument to add variable metadata with a list in the <code>variables</code> entry. Similarly, entity metadata can be added in an <code>ids</code> entry.</p>
 <p>For example, you might add names to some of the entries for which there is no state:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
@@ -323,7 +323,7 @@
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
 </div>
 
       </footer>

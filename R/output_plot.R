@@ -65,7 +65,7 @@ output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dat
     )
     caller$credits$plotly <- list(
       name = "Plotly",
-      url = "https://plotly.com",
+      url = "https://plotly.com/javascript/getting-started",
       version = "2.8.3"
     )
     caller$plots[[id]] <- options

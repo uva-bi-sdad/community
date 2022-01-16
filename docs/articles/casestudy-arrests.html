@@ -95,21 +95,21 @@
 
     
     
-<p><em>Built with R 4.1.2 on January 04 2022</em></p>
+<p><em>Built with R 4.1.2 on January 16 2022</em></p>
 <hr>
 <p>This example will build a site to explore arrest data in Illinois, which is made publicly available by the <a href="https://icjia.illinois.gov/arrestexplorer/docs" class="external-link">Illinois Criminal Justice Information Authority</a>.</p>
-<div class="section level1">
-<h1 id="initialize">Initialize<a class="anchor" aria-label="anchor" href="#initialize"></a>
-</h1>
+<div class="section level2">
+<h2 id="initialize">Initialize<a class="anchor" aria-label="anchor" href="#initialize"></a>
+</h2>
 <p>Start by initializing the site’s structure in your desired directory:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uva-bi-sdad/community" class="external-link">community</a></span><span class="op">)</span>
 <span class="va">dir</span> <span class="op">&lt;-</span> <span class="st">"../arrests_site"</span>
 <span class="fu"><a href="../reference/init_site.html">init_site</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"Illinois Arrests"</span><span class="op">)</span></code></pre></div>
 </div>
-<div class="section level1">
-<h1 id="add-data">Add Data<a class="anchor" aria-label="anchor" href="#add-data"></a>
-</h1>
+<div class="section level2">
+<h2 id="add-data">Add Data<a class="anchor" aria-label="anchor" href="#add-data"></a>
+</h2>
 <p>We can use the <code>build.R</code> file to set up a repeatable data importing process. Replace its contents with this:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span>
@@ -168,9 +168,9 @@
   <span class="op">)</span>
 <span class="op">)</span></code></pre></div>
 </div>
-<div class="section level1">
-<h1 id="build-interface">Build Interface<a class="anchor" aria-label="anchor" href="#build-interface"></a>
-</h1>
+<div class="section level2">
+<h2 id="build-interface">Build Interface<a class="anchor" aria-label="anchor" href="#build-interface"></a>
+</h2>
 <p>Now we can specify the interface in <code>site.R</code> and build it:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/page_head.html">page_head</a></span><span class="op">(</span>
@@ -236,7 +236,7 @@
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
 </div>
 
       </footer>

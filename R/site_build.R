@@ -231,6 +231,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     "credit_output"
   )) {
     settings[[e]] <- if (length(parts[[e]])) if (is.list(parts[[e]])) parts[[e]] else list(parts[[e]]) else NULL
+    if (!is.null(names(settings[[e]]))) settings[[e]] <- settings[[e]][!duplicated(names(settings[[e]]))]
   }
   if (!is.null(settings$maps)) {
     settings$maps[["_raw"]] <- list()

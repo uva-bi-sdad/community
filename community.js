@@ -143,7 +143,7 @@ void (function () {
             : v.time_agg
             ? Object.hasOwn(_u, v.time_agg)
               ? _u[v.time_agg]
-              : 'last' === v.time_agg && c
+              : 'last' === v.time_agg && c && Object.hasOwn(variables[c], u.view)
               ? variables[c][u.view].summaries[d].time_range[1]
               : parseInt(v.time_agg)
             : 0
@@ -155,14 +155,18 @@ void (function () {
             y = ys.parsed ? ys.value() - meta.time_range[0] : 0,
             s = v.selection.all,
             k
-          if (site.maps._layers && Object.hasOwn(site.maps._layers, d) && Object.hasOwn(variables[c], u.view)) {
+          if (
+            site.maps[u.id]._layers &&
+            Object.hasOwn(site.maps[u.id]._layers, d) &&
+            Object.hasOwn(variables[c], u.view)
+          ) {
             l = variables[c][u.view].summaries[d]
             o = variables[c][u.view].order[d][y]
             if (o)
               for (i = o.length; i--; ) {
                 k = o[i][0]
-                if (Object.hasOwn(s, k) && Object.hasOwn(variables[c], u.view) && s[k].layer) {
-                  s[k].layer.setStyle({
+                if (Object.hasOwn(s, k) && Object.hasOwn(variables[c], u.view) && s[k].layer[u.id]) {
+                  s[k].layer[u.id].setStyle({
                     fillOpacity: 0.7,
                     color: '#000000',
                     fillColor: pal(s[k].data[c][y], p, l, y, i),
@@ -185,7 +189,7 @@ void (function () {
         } else {
           if (u.view && u.displaying) {
             const view = site.dataviews[u.view],
-              vstate = view.value(),
+              vstate = view.value() + site.settings.background_shapes,
               a = view.selection.all,
               s = view.selection[site.settings.background_shapes && u.options.background_shapes ? 'ids' : 'all'],
               bgc = site.settings.theme_dark ? '#666' : '#000'
@@ -197,13 +201,18 @@ void (function () {
               u.vstate = false
               for (k in s) {
                 fg = Object.hasOwn(a, k)
-                if (Object.hasOwn(s, k) && s[k].layer && (fg || u.options.background_shapes === entities[k].group)) {
-                  s[k].layer.options.interactive = fg
+                if (
+                  Object.hasOwn(s, k) &&
+                  s[k].layer &&
+                  s[k].layer[u.id] &&
+                  (fg || u.options.background_shapes === entities[k].group)
+                ) {
+                  s[k].layer[u.id].options.interactive = fg
                   n++
-                  s[k].layer.addTo(u.displaying)
+                  s[k].layer[u.id].addTo(u.displaying)
                   if (!fg) {
-                    s[k].layer.bringToBack()
-                    s[k].layer.setStyle({
+                    s[k].layer[u.id].bringToBack()
+                    s[k].layer[u.id].setStyle({
                       fillOpacity: 0,
                       color: bgc,
                       weight: 1,
@@ -874,19 +883,19 @@ void (function () {
           o.click = o.e.getAttribute('click')
           if (o.click && Object.hasOwn(_u, o.click)) o.clickto = _u[o.click]
           o.show = function (e) {
-            if (e && e.layer) {
-              e.layer.setStyle({
+            if (e && e.layer && e.layer[this.id]) {
+              e.layer[this.id].setStyle({
                 color: '#ffffff',
               })
             }
-          }
+          }.bind(o)
           o.revert = function (e) {
-            if (e && e.layer) {
-              e.layer.setStyle({
+            if (e && e.layer && e.layer[this.id]) {
+              e.layer[this.id].setStyle({
                 color: '#000000',
               })
             }
-          }
+          }.bind(o)
           if (o.options && o.options.subto) for (var i = o.options.subto.length; i--; ) add_subs(o.options.subto[i], o)
           if (o.view) {
             add_dependency(o.view, {type: 'map_colors', id: o.id})
@@ -2610,14 +2619,12 @@ void (function () {
 
   function retrieve_layer(u, source) {
     if (Object.hasOwn(site.maps._raw, source.url)) {
-      if ('string' === typeof site.maps._raw[source.url])
-        site.maps._raw[source.url] = JSON.parse(site.maps._raw[source.url])
       process_layer(source, u)
     } else {
       var f = new XMLHttpRequest()
       f.onreadystatechange = function (u) {
         if (4 === f.readyState && 200 === f.status) {
-          site.maps._raw[source.url] = JSON.parse(f.responseText)
+          site.maps._raw[source.url] = f.responseText
           process_layer(this, u)
         }
       }.bind(source, u)
@@ -2628,26 +2635,26 @@ void (function () {
 
   function process_layer(source, u) {
     const bgc = site.settings.theme_dark ? '#666' : '#000'
-    var k, l, p, f, id, m, mu, s
-    site.maps._layers[source.name] = L.geoJSON(site.maps._raw[source.url], {
+    var k, l, p, f, id, m, mu
+    site.maps[u.id]._layers[source.name] = L.geoJSON(JSON.parse(site.maps._raw[source.url]), {
       onEachFeature: add_layer_listeners.bind(u),
     })
-    for (k in site.maps._layers[source.name]._layers)
-      if (Object.hasOwn(site.maps._layers[source.name]._layers, k)) {
-        l = site.maps._layers[source.name]._layers[k]
+    for (k in site.maps[u.id]._layers[source.name]._layers)
+      if (Object.hasOwn(site.maps[u.id]._layers[source.name]._layers, k)) {
+        l = site.maps[u.id]._layers[source.name]._layers[k]
         l.source = source
         p = l.feature.properties
         id = p[source.id_property]
         if (!Object.hasOwn(entities, id) && patterns.leading_zeros.test(id))
           id = p[source.id_property] = id.replace(patterns.leading_zeros, '')
         if (Object.hasOwn(entities, id)) {
-          entities[id].layer = l
+          if (!Object.hasOwn(entities[id], 'layer')) entities[id].layer = {}
+          entities[id].layer[u.id] = l
           if (site.settings.background_shapes)
             for (m in site.maps) {
-              if ('_' !== m.substring(0, 1) && Object.hasOwn(site.maps, m)) {
+              if ('_' !== m.substring(0, 1) && Object.hasOwn(site.maps, m) && Object.hasOwn(site.maps[m], 'u')) {
                 mu = site.maps[m].u
                 if (mu.view && mu.displaying) {
-                  s = site.dataviews[mu.view].selection.all
                   if (u.options.background_shapes === entities[id].group) {
                     l.options.interactive = false
                     l.addTo(mu.displaying)
@@ -2661,7 +2668,10 @@ void (function () {
                 }
               }
             }
-        } else entities[id] = {layer: l, features: {}}
+        } else {
+          entities[id] = {layer: {}, features: {id: id}}
+          entities[id].layer[u.id] = l
+        }
         for (f in p)
           if (Object.hasOwn(p, f) && !Object.hasOwn(entities[id].features, f)) {
             if (
@@ -3026,15 +3036,14 @@ void (function () {
                 measure: v[i].name.split(':')[1],
                 short_name: format_label(v[i].name),
               }
-            if (!Object.hasOwn(variables[v[i].name].meta, 'full_name')) variables[v[i].name].meta.full_name = v[i].name
+            variables[v[i].name].meta.full_name = v[i].name
             if (!Object.hasOwn(variables[v[i].name].meta, 'measure'))
               variables[v[i].name].meta.measure = v[i].name.split(':')[1] || v[i].name
             if (!Object.hasOwn(variables[v[i].name].meta, 'short_name'))
               variables[v[i].name].meta.short_name = format_label(v[i].name)
             if (!Object.hasOwn(variables[v[i].name].meta, 'long_name'))
               variables[v[i].name].meta.long_name = variables[v[i].name].meta.short_name
-            if (!Object.hasOwn(variable_info, variables[v[i].name].meta.full_name))
-              variable_info[variables[v[i].name].meta.full_name] = variables[v[i].name].meta
+            if (!Object.hasOwn(variable_info, v[i].name)) variable_info[v[i].name] = variables[v[i].name].meta
             if (!meta.time.length && v[i].name === t) {
               meta.time_range[0] = v[i].min
               meta.time_range[1] = v[i].max
@@ -3063,11 +3072,15 @@ void (function () {
   }
 
   function map_entities(g) {
-    var id, f, k
+    var id,
+      f,
+      k,
+      overwrite = false
     if (Object.hasOwn(site.data, g) && !init_log[g]) {
       for (id in site.data[g]) {
         if (Object.hasOwn(site.data[g], id)) {
-          f = data_maps[g][id] || {id: id, name: id}
+          overwrite = data_maps[g][id]
+          f = overwrite || {id: id, name: id}
           f.id = id
           if (Object.hasOwn(entities, id)) {
             entities[id].group = g
@@ -3075,7 +3088,7 @@ void (function () {
             entities[id].variables = variable_info
             if (!Object.hasOwn(entities[id], 'features')) entities[id].features = {}
             for (k in f)
-              if ('id' === k || (Object.hasOwn(f, k) && !Object.hasOwn(entities[id].features, k)))
+              if ('id' === k || (Object.hasOwn(f, k) && (overwrite || !Object.hasOwn(entities[id].features, k))))
                 entities[id].features[k] = f[k]
             entities[id].summary = {}
           } else {
@@ -3347,7 +3360,7 @@ void (function () {
           }
         }
         if (!Object.hasOwn(site.maps, '_raw')) site.maps._raw = {}
-        if (!Object.hasOwn(site.maps, '_layers')) site.maps._layers = {}
+        if (!Object.hasOwn(site.maps[this.id], '_layers')) site.maps[this.id]._layers = {}
         for (i = site.maps[this.id].shapes.length; i--; ) {
           if (!site.maps[this.id].shapes[i].name)
             site.maps[this.id].shapes[i].name = site.metadata.datasets[i < site.metadata.datasets.length ? i : 0]
