@@ -109,7 +109,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
                     ids_map <- d$ids[[1]]$map
                   }
                 }
-                cids <- if (!is.null(ids_map[[meta$resources[[dataset_order[oi - 1]]]$name]][[1]][[d$name]])) {
+                cids <- if (length(d$ids) && !is.null(ids_map[[meta$resources[[dataset_order[oi - 1]]]$name]][[1]][[d$name]])) {
                   vapply(ids_map[[meta$resources[[dataset_order[oi - 1]]]$name]], function(e) {
                     if (is.null(e[[d$name]])) "" else e[[d$name]]
                   }, "")[names(previous_data)]
@@ -238,7 +238,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     for (m in settings$map) {
       if (!is.null(m$shapes)) {
         for (s in m$shapes) {
-          if (file.exists(s$url)) {
+          if (!is.null(s$url) && file.exists(s$url)) {
             settings$maps[["_raw"]][[s$url]] <- paste(readLines(s$url), collapse = "")
           }
         }

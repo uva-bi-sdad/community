@@ -85,7 +85,11 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
     }
   }
   vars <- c(vars, "file")
-  data <- do.call(rbind, lapply(data, function(d) d[, vars, with = FALSE]))
+  data <- do.call(rbind, lapply(data, function(d){
+    d <- d[, vars, with = FALSE]
+    if(id %in% vars) d[[id]] <- as.character(d[[id]])
+    d
+  }))
   cn <- colnames(data)
   if (!is.null(formatters)) {
     for (n in names(formatters)) {
@@ -141,7 +145,6 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
   if (all(nchar(times) == 4)) times <- seq(min(times), max(times))
   sets <- lapply(datasets, function(dn) {
     d <- if (dataset %in% vars) data[data[[dataset]] == dn] else data
-    if (anyDuplicated(d[[id]])) {
       do.call(rbind, lapply(unique(d[[id]]), function(e) {
         ed <- d[d[[id]] == e]
         r <- data.frame(ID = rep(as.character(e), length(times)), time = times)
@@ -156,9 +159,6 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
         }
         r
       }))
-    } else {
-      d
-    }
   })
   datasets <- gsub("\\s+", "_", tolower(datasets))
   names(sets) <- datasets

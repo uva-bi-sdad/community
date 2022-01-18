@@ -124,12 +124,14 @@ void (function () {
             }
           }
           u.e[ns ? 'removeAttribute' : 'setAttribute']('disabled', true)
-        } else if (Object.hasOwn(_u, u.depends)) {
+        } else {
           if (patterns.variable.test(u.options_source)) {
             d = c.value()
             if (d) fill_variables_options(u, d, u.option_sets)
           } else if (patterns.levels.test(u.options_source)) {
             fill_levels_options(u, d, va, u.option_sets)
+          } else if (patterns.ids.test(u.options_source)) {
+            fill_ids_options(u, d, u.option_sets)
           }
         }
         u.set(u.value())
@@ -2178,6 +2180,12 @@ void (function () {
             if (this.source !== this.previous) {
               this.previous = this.source
               request_queue(this.id)
+            } else if (Object.hasOwn(_u, this.source)) {
+              r = _u[this.source].value()
+              if (r !== this.previous) {
+                this.previous = r
+                request_queue(this.id)
+              }
             }
           },
           value: function () {
@@ -2337,6 +2345,7 @@ void (function () {
               }
             }
             if (o.depends) add_dependency(o.depends, {type: 'options', id: o.id})
+            if (Object.hasOwn(_u, o.dataset)) add_dependency(o.dataset, {type: 'options', id: o.id})
             if (o.view) add_dependency(o.view, {type: 'options', id: o.id})
           }
         }
