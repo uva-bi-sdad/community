@@ -85,9 +85,9 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
     }
   }
   vars <- c(vars, "file")
-  data <- do.call(rbind, lapply(data, function(d){
+  data <- do.call(rbind, lapply(data, function(d) {
     d <- d[, vars, with = FALSE]
-    if(id %in% vars) d[[id]] <- as.character(d[[id]])
+    if (id %in% vars) d[[id]] <- as.character(d[[id]])
     d
   }))
   cn <- colnames(data)
@@ -145,20 +145,20 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
   if (all(nchar(times) == 4)) times <- seq(min(times), max(times))
   sets <- lapply(datasets, function(dn) {
     d <- if (dataset %in% vars) data[data[[dataset]] == dn] else data
-      do.call(rbind, lapply(unique(d[[id]]), function(e) {
-        ed <- d[d[[id]] == e]
-        r <- data.frame(ID = rep(as.character(e), length(times)), time = times)
-        rownames(r) <- times
-        for (v in variables) {
-          r[[v]] <- NA
-          su <- ed[[value_name]] == v & !is.na(ed[[value]])
-          if (sum(su)) {
-            vals <- ed[su]
-            r[as.character(vals[[time]]), v] <- vals[[value]]
-          }
+    do.call(rbind, lapply(unique(d[[id]]), function(e) {
+      ed <- d[d[[id]] == e]
+      r <- data.frame(ID = rep(as.character(e), length(times)), time = times)
+      rownames(r) <- times
+      for (v in variables) {
+        r[[v]] <- NA
+        su <- ed[[value_name]] == v & !is.na(ed[[value]])
+        if (sum(su)) {
+          vals <- ed[su]
+          r[as.character(vals[[time]]), v] <- vals[[value]]
         }
-        r
-      }))
+      }
+      r
+    }))
   })
   datasets <- gsub("\\s+", "_", tolower(datasets))
   names(sets) <- datasets

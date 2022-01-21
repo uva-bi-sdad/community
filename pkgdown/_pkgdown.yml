@@ -26,4 +26,4 @@ reference:
   desc: Other functions automate more specific tasks.
   contents:
   - data_reformat_sdad
-  - download_census_shapes
+  - starts_with("download_")

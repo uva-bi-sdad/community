@@ -156,7 +156,9 @@ void (function () {
             i,
             y = ys.parsed ? ys.value() - meta.time_range[0] : 0,
             s = v.selection.all,
-            k
+            k,
+            n,
+            rank
           if (
             site.maps[u.id]._layers &&
             Object.hasOwn(site.maps[u.id]._layers, d) &&
@@ -165,13 +167,13 @@ void (function () {
             l = variables[c][u.view].summaries[d]
             o = variables[c][u.view].order[d][y]
             if (o)
-              for (i = o.length; i--; ) {
+              for (i = o.length, n = v.n_selected.all, rank = n; i--; ) {
                 k = o[i][0]
                 if (Object.hasOwn(s, k) && Object.hasOwn(variables[c], u.view) && s[k].layer[u.id]) {
                   s[k].layer[u.id].setStyle({
                     fillOpacity: 0.7,
                     color: '#000000',
-                    fillColor: pal(s[k].data[c][y], p, l, y, i),
+                    fillColor: pal(s[k].data[c][y], p, l, y, n ? rank-- / n - 0.5 : 0),
                     weight: 1,
                   })
                 }
@@ -838,13 +840,15 @@ void (function () {
                     i = order ? order.length : 0,
                     k,
                     b,
+                    n = v.n_selected.all,
+                    rank = n,
                     traces = [];
                   i--;
 
                 ) {
                   if (Object.hasOwn(s, order[i][0])) {
                     k = order[i][0]
-                    traces.push(make_data_entry(this, s[k], i))
+                    traces.push(make_data_entry(this, s[k], n ? rank-- / n - 0.5 : 0))
                   }
                 }
                 if (site.settings.boxplots && Object.hasOwn(this.traces, 'box') && s[k]) {
@@ -1605,7 +1609,6 @@ void (function () {
     which = which ? which.toLowerCase() : site.settings.palette
     const colors = palettes[Object.hasOwn(palettes, which) ? which : 'reds'],
       string = summary && Object.hasOwn(summary, 'levels'),
-      n = summary ? summary.n[index] : 1,
       min = summary && !string ? summary.min[index] : 0,
       max = summary ? (string ? summary.levels.length : summary.max[index]) : 1,
       nm = summary && !string ? (isNaN(summary.norm_median[index]) ? 0 : summary.norm_median[index]) : 0.5
@@ -1619,9 +1622,7 @@ void (function () {
                 colors.length / 2 +
                   colors.length *
                     (site.settings.color_by_order
-                      ? n
-                        ? rank / n - 0.5
-                        : 0
+                      ? rank
                       : max - min
                       ? ((string ? summary.level_ids[value] : value) - min) / (max - min) - nm
                       : 0)
