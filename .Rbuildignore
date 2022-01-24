@@ -1,6 +1,7 @@
 ^community
 ^\.Rproj\.user$
-^_pkgdown\.yml$
+^\.vscode$
+^\.nyc_output$
 ^docs$
 ^pkgdown$
 ^LICENSE\.md$
@@ -8,3 +9,7 @@
 ^logo\.svg$
 ^.*\.Rproj$
 ^vignettes
+^tests/js$
+^package
+^node_modules$
+^coverage$

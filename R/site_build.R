@@ -44,6 +44,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     f <- paste0(ddir, "datapackage.json")
     path <- paste0(dir, "/docs/")
     info <- list()
+    vars <- variables
     if (file.exists(f)) {
       meta <- read_json(f)
       previous_data <- NULL
@@ -54,15 +55,21 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
         d <- meta$resources[[i]]
         if (!is.null(variables)) {
           temp <- list()
-          for (v in d$schema$fields) if (v$name %in% variables) temp[[v$name]] <- v
-          variables <- variables[variables %in% names(temp)]
-          d$schema$fields <- unname(temp[variables])
+          for (v in d$schema$fields) if (v$name %in% vars) temp[[v$name]] <- v
+          vars <- vars[vars %in% names(temp)]
+          if (!identical(vars, variables)) {
+            cli_warn(paste0(
+              "{?a requested variable was/some requested variables were} not present in {.file ", d$filename, "}:",
+              " {.val {variables[!variables %in% vars]}}"
+            ))
+          }
+          d$schema$fields <- unname(temp[vars])
         }
         file <- paste0(ddir, d$filename)
         d$site_file <- paste0(d$name, ".json")
         path <- paste0(dir, "/docs/", d$site_file)
         if (file.exists(file)) {
-          if (force || !missing(aggregate) || (!file.exists(path) || file.mtime(file) > file.mtime(path))) {
+          if (force || (!file.exists(path) || file.mtime(file) > file.mtime(path))) {
             data <- fread(file)
             time <- NULL
             if (length(d$time) && d$time[[1]] %in% colnames(data)) {
@@ -74,7 +81,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
               if (is.null(time) && anyDuplicated(ids)) {
                 cli_abort(paste(
                   "no time variable was specified, yet {?an id was/ids were} duplicated:",
-                  "{.var {unique(ids[duplicated(ids)])}}"
+                  "{.val {unique(ids[duplicated(ids)])}}"
                 ))
               }
               set(data, NULL, d$ids[[1]]$variable, NULL)
@@ -151,9 +158,9 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
               }
             }
             previous_data <- sdata
-            if (!is.null(variables)) {
+            if (!is.null(vars)) {
               sdata <- lapply(sdata, function(d) {
-                if (class(d)[1] == "data.table") d[, variables, with = FALSE] else d[, variables]
+                if (class(d)[1] == "data.table") d[, vars, with = FALSE] else d[, vars]
               })
             }
             write_json(sdata, path, dataframe = "columns")
@@ -173,7 +180,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     list(
       package = if (file.exists(f)) sub(paste0(dir, "/docs/"), "", f, fixed = TRUE),
       datasets = if (length(meta$resources) == 1) list(names(info)) else names(info)[dataset_order],
-      variables = variables,
+      variables = vars,
       info = info,
       files = vapply(info, "[[", "", "filename")[dataset_order]
     )
@@ -194,8 +201,9 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
       settings$settings[[s]] <- options[[s]]
     } else if (is.null(settings$settings[[s]])) settings$settings[[s]] <- defaults[[s]]
   }
-  if (!is.null(settings$metadata) && !is.null(settings$metadata$variables) &&
-    !identical(settings$metadata$variables, variables[variables != "_references"])) {
+  if (!is.null(variables)) variables <- variables[variables != "_references"]
+  if (!missing(aggregate) || !is.null(settings$metadata) && !is.null(settings$metadata$variables) &&
+    !identical(settings$metadata$variables, variables)) {
     force <- TRUE
   }
   settings$metadata <- data_preprocess(aggregate)

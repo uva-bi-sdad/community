@@ -27,3 +27,13 @@ reference:
   contents:
   - data_reformat_sdad
   - starts_with("download_")
+
+home:
+  sidebar:
+    structure: [links, coverage, authors]
+    components:
+      coverage:
+        title: Test Coverage
+        text:
+        - '<a href="coverage/package.html" target="_blank" rel="noreferrer">R</a><br />'
+        - '<a href="coverage/community.js.html" target="_blank" rel="noreferrer">Javascript</a>'

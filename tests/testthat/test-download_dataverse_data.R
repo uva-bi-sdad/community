@@ -1,5 +1,8 @@
 test_that("downloads and processes files", {
-  dir <- tempdir()
+  dir <- "../../dataverse_test"
+  if (grepl("R_LIBS", getwd(), fixed = TRUE)) dir.create(dir, FALSE, TRUE)
+  if (!dir.exists(dir)) dir <- "../../../dataverse_test"
+  skip_if_not(dir.exists(dir), "not downloading data")
   d <- download_dataverse_data(
     "doi:10.18130/V3/NAZO4B", dir,
     files = 11, server = "dataverse.lib.virginia.edu"

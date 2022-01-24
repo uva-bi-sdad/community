@@ -69,3 +69,15 @@ source("../example_site/build.R")
 # finally, specify the site in the site.R file, then build it
 site_build("../example_site", bundle_data = TRUE, open_after = TRUE)
 ```
+
+## JavaScript Testing
+To run the JavaScript tests, first make sure [Node.js](https://nodejs.org) is installed.
+
+Then install dependencies if needed, from a terminal in the package directory:
+```bash
+npm install
+```
+And run the tests, which will also rebuild the html report in the created `coverage` directory:
+```bash
+npm test
+```

@@ -1,0 +1,29 @@
+{
+  "name": "community",
+  "version": "0.0.1",
+  "description": "Base script for community data sites.",
+  "main": "community.js",
+  "directories": {
+    "doc": "docs",
+    "man": "man",
+    "test": "tests/js"
+  },
+  "scripts": {
+    "test": "nyc --reporter=html mocha tests/js/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/miserman/community.git"
+  },
+  "author": "Biocomplexity Institute",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/miserman/community/issues"
+  },
+  "homepage": "https://uva-bi-sdad.github.io/community",
+  "devDependencies": {
+    "jsdom": "latest",
+    "mocha": "latest",
+    "nyc": "latest"
+  }
+}

@@ -28,11 +28,10 @@ page_menu <- function(..., position = "right", width = "300px", height = NULL, c
                       default_open = FALSE, wraps = TRUE, sizes = NA, breakpoints = NA, conditions = "") {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
-  id <- length(caller$body)
   parts <- new.env()
   attr(parts, "name") <- "community_site_parts"
   parts$uid <- caller$uid
-  elements <- substitute(...())
+  elements <- substitute(...(), environment())
   n <- length(elements)
   vertical <- position %in% c("left", "right")
   wraps <- rep_len(if (length(wraps) == 1 && !is.character(wraps) && wraps) {
