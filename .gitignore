@@ -6,7 +6,7 @@
 .DS_Store
 *.Rproj
 inst/doc
-coverage
+/coverage/
 package-lock.json
 node_modules
 .nyc_output
