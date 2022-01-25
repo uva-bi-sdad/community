@@ -193,8 +193,12 @@ void (function () {
             u.queue = setTimeout(conditionals.map_shapes.bind(null, u, void 0, true), 20)
           } else {
             if (u.view && u.displaying) {
-              const view = site.dataviews[u.view],
-                vstate = view.value() + site.settings.background_shapes,
+              const view = site.dataviews[u.view]
+              if (!view.valid && init_log[view.get.dataset()]) {
+                view.state = ''
+                conditionals.dataview(view, void 0, true)
+              }
+              const vstate = view.value() + site.settings.background_shapes,
                 a = view.selection.all,
                 s = view.selection[site.settings.background_shapes && u.options.background_shapes ? "ids" : "all"],
                 bgc = site.settings.theme_dark ? "#666" : "#000"
