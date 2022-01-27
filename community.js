@@ -3360,7 +3360,7 @@ void (function () {
           for (i = r.length; i--; ) {
             for (n = r[i].condition.length, ci = 0; ci < n; ci++) {
               pass = r[i].condition[ci].check()
-              if (!pass) break
+              if (r[i].condition[ci].any ? pass : !pass) break
             }
             for (k in r[i].effects)
               if (pass) {

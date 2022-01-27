@@ -5,6 +5,7 @@ init_package <- function(name = "package", dir = ".") {
 }
 
 parse_rule <- function(condition) {
+  comb_type <- grepl("|", condition, fixed = TRUE)
   conds <- strsplit(gsub("\\s*([&|><=]+|!=+)\\s*", " \\1 ", gsub("=+", "=", condition)), " [&|]+ ")[[1]]
   lapply(conds, function(co) {
     co <- strsplit(co, "\\s")[[1]]
@@ -23,7 +24,8 @@ parse_rule <- function(condition) {
           as.numeric(co[3])
         } else {
           gsub("[\"']", "", co[3])
-        }
+        },
+        any = comb_type
       )
     }
   })
