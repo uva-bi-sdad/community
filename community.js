@@ -50,6 +50,9 @@ void (function () {
         bool: /^(?:true|false)$/,
         number: /^[\d-][\d.,]*$/,
         leading_zeros: /^0+/,
+        url_spaces: /%20/g,
+        hashes: /#/g,
+        embed_setting: /^(?:hide_|navcolor|close_menus)/,
       },
       conditionals = {
         setting: function (u) {
@@ -1972,9 +1975,68 @@ void (function () {
       return s
     }
 
+    var k, i, e, c
+    // get options from url
+    k = window.location.search.replace('?', '')
+    site.url_options = {}
+    if (k) {
+      e = k.split('&')
+      for (i = e.length; i--; ) {
+        c = e[i].split('=')
+        if (c.length < 2) c.push('true')
+        c[1] = patterns.bool.test(c[1]) ? 'true' === c[1] : c[1].replace(patterns.url_spaces, ' ')
+        site.url_options[c[0]] = c[1]
+        if (patterns.settings.test(c[0])) storage.setItem(c[0].replace(patterns.settings, ''), c[1])
+      }
+    }
+
+    // prepare embedded view
+    if (Object.hasOwn(site.url_options, 'embedded') || Object.hasOwn(site.url_options, 'hide_navbar')) {
+      if (!Object.hasOwn(site.url_options, 'hide_logo')) site.url_options.hide_logo = true
+      if (!Object.hasOwn(site.url_options, 'hide_title')) site.url_options.hide_title = true
+      if (!Object.hasOwn(site.url_options, 'hide_navcontent')) site.url_options.hide_navcontent = true
+      if (Object.hasOwn(site.url_options, 'embedded') && !Object.hasOwn(site.url_options, 'close_menus'))
+        site.url_options.close_menus = true
+    }
+    e = document.getElementsByClassName('navbar')[0]
+    if (e) {
+      if (Object.hasOwn(site.url_options, 'navcolor')) {
+        if ('' === site.url_options.navcolor) site.url_options.navcolor = window.location.hash
+        e.style.backgroundColor = site.url_options.navcolor.replace('%23', '#')
+      }
+      if (site.url_options.hide_logo && site.url_options.hide_title && site.url_options.hide_navcontent) {
+        e.style.display = 'none'
+      } else {
+        e = document.getElementsByClassName('navbar-brand')[0]
+        if (e) {
+          if (site.url_options.hide_logo && 'IMG' === e.firstElementChild.tagName)
+            e.firstElementChild.style.display = 'none'
+          if (site.url_options.hide_title && 'IMG' !== e.lastElementChild.tagName)
+            e.lastElementChild.style.display = 'none'
+        }
+        if (site.url_options.hide_navcontent) {
+          document.getElementsByClassName('navbar-toggler')[0].style.display = 'none'
+          e = document.getElementsByClassName('navbar-nav')[0]
+          if (e) e.style.display = 'none'
+        }
+      }
+    }
+
+    // check for stored settings
+    for (k in site.settings)
+      if (Object.hasOwn(site.settings, k)) {
+        c = storage.getItem(k)
+        if (c) {
+          if (patterns.bool.test(c)) {
+            c = 'true' === c
+          } else if (patterns.number.test(c)) c = parseFloat(c)
+          site.settings[k] = c
+        }
+      }
+    if (site && site.metadata) map_variables()
+
     window.onload = function () {
       var k, i, e, c, p, ci, n, o
-      if (site && site.metadata) map_variables()
       page.navbar = document.getElementsByClassName('navbar')[0]
       page.navbar = page.navbar ? page.navbar.getBoundingClientRect() : {height: 0}
       page.content = document.getElementsByClassName('content')[0]
@@ -2006,7 +2068,8 @@ void (function () {
               this.parentElement.style[type] = -this.parentElement.getBoundingClientRect().width + 'px'
               page.content.style[type] = page.content_bounds[type] + 'px'
             } else {
-              page.content.style[type] = page.content_bounds[type] + ('top' === type ? 40 : 0) + 'px'
+              page.content.style[type] =
+                page.content_bounds[type] + ('top' === type ? page.content_bounds.top : 0) + 'px'
               this.parentElement.style[type] =
                 -this.parentElement.getBoundingClientRect().height +
                 ('top' === type ? page.content_bounds.top : 0) +
@@ -2096,6 +2159,7 @@ void (function () {
               'click',
               page.menu_toggler.toggle.bind(page.menus[i].lastElementChild, 'top')
             )
+            page.menus[i].lastElementChild.style.top = page.content_bounds.top + 'px'
           }
         } else if (page.menus[i].classList.contains('menu-right')) {
           page.right_menu = page.menus[i]
@@ -2104,6 +2168,7 @@ void (function () {
               'click',
               page.menu_toggler.toggle.bind(page.menus[i].lastElementChild, 'right')
             )
+            page.menus[i].lastElementChild.style.top = page.content_bounds.top + 'px'
           }
         } else if (page.menus[i].classList.contains('menu-bottom')) {
           page.bottom_menu = page.menus[i]
@@ -2121,33 +2186,11 @@ void (function () {
               'click',
               page.menu_toggler.toggle.bind(page.menus[i].lastElementChild, 'left')
             )
+            page.menus[i].lastElementChild.style.top = page.content_bounds.top + 'px'
           }
         }
+        if (site.url_options.close_menus && 'open' === page.menus[i].state) page.menus[i].lastElementChild.click()
       }
-      // get options from url
-      k = window.location.search.replace('?', '')
-      site.url_options = {}
-      if (k) {
-        e = k.split('&')
-        for (i = e.length; i--; ) {
-          c = e[i].split('=')
-          if (patterns.bool.test(c[1])) c[1] = 'true' === c[1]
-          site.url_options[c[0]] = c[1]
-          if (patterns.settings.test(c[0])) storage.setItem(c[0].replace(patterns.settings, ''), c[1])
-        }
-      }
-
-      // check for stored settings
-      for (k in site.settings)
-        if (Object.hasOwn(site.settings, k)) {
-          c = storage.getItem(k)
-          if (c) {
-            if (patterns.bool.test(c)) {
-              c = 'true' === c
-            } else if (patterns.number.test(c)) c = parseFloat(c)
-            site.settings[k] = c
-          }
-        }
 
       // initialize inputs
       if (site.dataviews) {
@@ -2340,7 +2383,7 @@ void (function () {
             (page.right_menu && 'open' === page.right_menu.state) ||
             (page.left_menu && 'open' === page.left_menu.state)
               ? 0
-              : 40)) + 'px'
+              : page.content_bounds.top)) + 'px'
       if (page.right_menu) {
         page.content.style.right =
           page.content_bounds.right +
@@ -3317,7 +3360,8 @@ void (function () {
     }
 
     function run_queue(force) {
-      for (var k in queue)
+      var k, s
+      for (k in queue)
         if ('_timeout' !== k && Object.hasOwn(queue, k) && queue[k]) {
           queue[k] = false
           refresh_conditions(k, force)
@@ -3325,6 +3369,13 @@ void (function () {
       k = get_options_url()
       if (init_log.first && k !== site.state) {
         site.state = k
+        for (s in site.url_options)
+          if (Object.hasOwn(site.url_options, s) && patterns.embed_setting.test(s))
+            k +=
+              '&' +
+              s +
+              '=' +
+              ('navcolor' === s ? site.url_options[s].replace(patterns.hashes, '%23') : site.url_options[s])
         if (!site.settings.hide_url_parameters) window.history.replaceState(Date.now(), '', k)
         window.requestAnimationFrame(content_resize)
       }
