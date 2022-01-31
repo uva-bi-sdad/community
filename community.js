@@ -977,7 +977,7 @@ void (function () {
             if (o.options.floating) {
               document.body.appendChild(o.e)
               o.e.classList.add('hidden')
-              document.addEventListener('mousemove', function (e, o = o) {
+              document.addEventListener('mousemove', function (e) {
                 if (o.showing) {
                   o.e.style.top = e.clientY + 10 + 'px'
                   o.e.style.left = e.clientX + 10 + 'px'
