@@ -178,7 +178,7 @@ void (function () {
                       fillOpacity: 0.7,
                       color: '#000000',
                       fillColor: pal(s[k].data[c][y], p, l, y, n ? rank-- / n - 0.5 : 0),
-                      weight: 2,
+                      weight: site.settings.polygon_outline,
                     })
                   }
                 }
