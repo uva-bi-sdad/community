@@ -372,6 +372,12 @@ button.btn-danger {
 .offcanvas-body {
   padding: 1rem 1rem 3.5rem 1rem;
 }
+.menu-compact .offcanvas-body {
+  font-size: 0.95em;
+}
+.menu-compact .offcanvas-body .wrapper {
+  margin: 0 0 0.2em 0;
+}
 .modal-dialog {
   max-width: 1000px;
 }
@@ -483,6 +489,9 @@ table.dataTable.compact tbody td {
 .dataTable,
 .dataTables_scrollHead {
   width: 100% !important;
+}
+.dataTable tr {
+  cursor: pointer;
 }
 .dataTables_wrapper .dataTables_length,
 .dataTables_wrapper .dataTables_filter,

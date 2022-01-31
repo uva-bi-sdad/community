@@ -5,7 +5,8 @@
 #' @param ... Content to add to the navbar. Can be a lists specifying submenus and their items.
 #' @param title A title to appear in the header.
 #' @param logo URL of an image to appear in the header.
-#' Each list should have entries for \code{"name"} (the navbar button text), \code{"title"} (the menu title),
+#' Each list can have entries for \code{"name"} (the navbar button text), \code{"title"} (the menu title),
+#' \code{"id"} (the ID of the menu element), \code{"class"} (class of the menu element),
 #' \code{"placement"} (start, top, end, or bottom), \code{"backdrop"} (logical), and \code{items}
 #' (a list of menu items).
 #' @param breakpoint Bootstrap breakpoint code specifying the width at which the menu collapses;
@@ -53,7 +54,7 @@ page_navbar <- function(..., title = "", logo = "", breakpoint = "md") {
     )
     for (i in seq_len(n)) {
       if (submenus[[i]][[1]] == "list") {
-        id <- paste0("submenu", parts$uid, i)
+        id <- if (is.null(submenus[[i]]$id)) paste0("submenu", parts$uid, i) else submenus[[i]]$id
         if (is.null(submenus[[i]]$name)) submenus[[i]]$name <- "Menu"
         r <- c(r, paste0(
           '<li class="nav-item">',
@@ -66,6 +67,7 @@ page_navbar <- function(..., title = "", logo = "", breakpoint = "md") {
           paste(c(
             '<div tabindex="-1" id="', id, '" aria-labelledby="', id, '_label" class="offcanvas offcanvas-',
             if (is.null(submenus[[i]]$placement)) "end" else submenus[[i]]$placement,
+            if (!is.null(submenus[[i]]$class)) paste("", submenus[[i]]$class),
             if (!is.null(submenus[[i]]$backdrop)) c('" data-bs-backdrop="', submenus[[i]]$backdrop),
             '">'
           ), collapse = ""),

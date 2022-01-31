@@ -12,7 +12,8 @@ page_navbar(..., title = "", logo = "", breakpoint = "md")
 \item{title}{A title to appear in the header.}
 
 \item{logo}{URL of an image to appear in the header.
-Each list should have entries for \code{"name"} (the navbar button text), \code{"title"} (the menu title),
+Each list can have entries for \code{"name"} (the navbar button text), \code{"title"} (the menu title),
+\code{"id"} (the ID of the menu element), \code{"class"} (class of the menu element),
 \code{"placement"} (start, top, end, or bottom), \code{"backdrop"} (logical), and \code{items}
 (a list of menu items).}
 

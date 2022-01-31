@@ -5,8 +5,8 @@
 \title{Add a table to a webpage}
 \usage{
 output_table(variables = NULL, dataset = NULL, dataview = NULL,
-  id = NULL, options = NULL, features = NULL, filters = NULL,
-  wide = TRUE, class = "compact")
+  id = NULL, click = NULL, subto = NULL, options = NULL,
+  features = NULL, filters = NULL, wide = TRUE, class = "compact")
 }
 \arguments{
 \item{variables}{The ID of a variable selecting input, or a list specifying columns (if \code{wide} is
@@ -23,6 +23,10 @@ used if \code{dataview} is not specified.}
 \item{dataview}{The ID of an \code{\link{input_dataview}} component.}
 
 \item{id}{Unique ID of the table.}
+
+\item{click}{The ID of an input to set to a clicked row's entity ID.}
+
+\item{subto}{A vector of output IDs to receive hover events from.}
 
 \item{options}{A list of configuration options, see
 \href{https://datatables.net/reference/option}{DataTables Documentation}.}

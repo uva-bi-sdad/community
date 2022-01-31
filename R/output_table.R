@@ -12,6 +12,8 @@
 #' @param dataset The name of a dataset, or ID of a dataset selector, to find \code{variables} in;
 #' used if \code{dataview} is not specified.
 #' @param id Unique ID of the table.
+#' @param click The ID of an input to set to a clicked row's entity ID.
+#' @param subto A vector of output IDs to receive hover events from.
 #' @param dataview The ID of an \code{\link{input_dataview}} component.
 #' @param options A list of configuration options, see
 #' \href{https://datatables.net/reference/option}{DataTables Documentation}.
@@ -28,14 +30,15 @@
 #' @return A character vector of the content to be added.
 #' @export
 
-output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, id = NULL, options = NULL,
-                         features = NULL, filters = NULL, wide = TRUE, class = "compact") {
+output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, id = NULL, click = NULL, subto = NULL,
+                         options = NULL, features = NULL, filters = NULL, wide = TRUE, class = "compact") {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   if (is.null(id)) id <- paste0("table", caller$uid)
   r <- paste(c(
     paste0('<table class="auto-output datatables', if (is.null(class)) "" else paste("", class), '"'),
     if (!is.null(dataview)) paste0('data-view="', dataview, '"'),
+    if (!is.null(click)) paste0('click="', click, '"'),
     paste0('id="', id, '"'),
     'auto-type="table"></table>'
   ), collapse = " ")
@@ -66,6 +69,7 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, id =
       }
       options$features <- unname(features)
     }
+    options$subto <- if (!is.null(subto) && length(subto) == 1) list(subto) else subto
     options$filters <- filters
     options$dataset <- dataset
     options$single_variable <- wide && length(variables) == 1

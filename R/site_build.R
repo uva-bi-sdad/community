@@ -179,10 +179,10 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     }
     list(
       package = if (file.exists(f)) sub(paste0(dir, "/docs/"), "", f, fixed = TRUE),
-      datasets = if (length(meta$resources) == 1) list(names(info)) else names(info)[dataset_order],
+      datasets = if (length(meta$resources) == 1) list(names(info)) else names(info),
       variables = vars,
       info = info,
-      files = vapply(info, "[[", "", "filename")[dataset_order]
+      files = vapply(info, "[[", "", "filename")
     )
   }
   path <- paste0(dir, "/docs/settings.js")
@@ -208,8 +208,10 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
   }
   settings$metadata <- data_preprocess(aggregate)
   parts$dependencies <- list(
-    base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.min.css"),
-    base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js"),
+    base_style = list(type = "stylesheet", src = "dist/community.css"),
+    base = list(type = "script", src = "dist/community.js"),
+    # base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.min.css"),
+    # base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js"),
     custom_style = list(type = "stylesheet", src = "style.css"),
     custom = list(type = "script", src = "script.js"),
     bootstrap_style = list(

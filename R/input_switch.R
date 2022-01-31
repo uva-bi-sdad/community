@@ -20,9 +20,9 @@ input_switch <- function(label, id = label, ..., default_on = FALSE, as.checkbox
   a <- list(...)
   r <- c(
     paste0(
-      '<div class="wrapper switch-wrapper"', 
-      if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),         
-      '>'
+      '<div class="wrapper switch-wrapper"',
+      if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
+      ">"
     ),
     paste0('<div class="form-check', if (!as.checkbox) " form-switch", '">'),
     paste0('<label class="form-check-label" for="', id, '">', label, "</label>"),

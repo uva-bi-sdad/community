@@ -170,7 +170,7 @@ void (function () {
             ) {
               l = variables[c][u.view].summaries[d]
               o = variables[c][u.view].order[d][y]
-              if (o)
+              if (o) {
                 for (i = o.length, n = v.n_selected.all, rank = n; i--; ) {
                   k = o[i][0]
                   if (Object.hasOwn(s, k) && Object.hasOwn(variables[c], u.view) && s[k].layer[u.id]) {
@@ -182,6 +182,7 @@ void (function () {
                     })
                   }
                 }
+              }
             } else {
               if (!Object.hasOwn(site.maps, '_waiting')) site.maps._waiting = {}
               if (!Object.hasOwn(site.maps._waiting, d)) site.maps._waiting[d] = []
@@ -193,10 +194,11 @@ void (function () {
         map_shapes: function (u, c, pass) {
           clearTimeout(u.queue)
           if (!pass) {
-            u.queue = setTimeout(conditionals.map_shapes.bind(null, u, void 0, true), 20)
+            u.queue = setTimeout(() => conditionals.map_shapes(u, void 0, true), 10)
           } else {
             if (u.view && u.displaying) {
-              const view = site.dataviews[u.view]
+              const view = site.dataviews[u.view],
+                d = view.get.dataset()
               if (!view.valid && init_log[view.get.dataset()]) {
                 view.state = ''
                 conditionals.dataview(view, void 0, true)
@@ -208,7 +210,7 @@ void (function () {
               var k,
                 n = 0,
                 fg
-              if (s && view.valid && vstate !== u.vstate) {
+              if (init_log[d + '_map'] && s && view.valid && vstate !== u.vstate) {
                 u.displaying.clearLayers()
                 u.vstate = false
                 for (k in s) {
@@ -347,15 +349,19 @@ void (function () {
               request_queue(f.id)
             } else {
               f.valid = false
-              data_queue[d][f.id] = conditionals.dataview.bind(null, f)
+              data_queue[d][f.id] = function () {
+                return conditionals.dataview(f)
+              }
             }
           }
         },
         time_filters: function (u) {
           u.time_range.filtered[0] = Infinity
           u.time_range.filtered[1] = -Infinity
-          const s = variables[u.time][u.id].summaries[u.get.dataset()],
+          const d = u.get.dataset(),
+            s = variables[u.time][u.id].summaries[d],
             c = _c[u.id + '_filter']
+          if (!init_log[d]) return void 0
           for (var f, v = {}, pass, i = s.mean.length; i--; ) {
             if (i >= u.time_range.index[0] && i <= u.time_range.index[1]) {
               for (f = u.time_filters.length, pass = false; f--; ) {
@@ -371,6 +377,10 @@ void (function () {
               if (u.time_range.filtered[1] < s.mean[i]) u.time_range.filtered[1] = s.mean[i]
             }
           }
+          u.time_range.filtered_index = [
+            u.time_range.index[0] + u.time_range.filtered[0] - u.time_range.time[0],
+            u.time_range.index[1] + u.time_range.filtered[1] - u.time_range.time[1],
+          ]
           if (c)
             for (i = c.length; i--; ) {
               if ('update' === c[i].type) {
@@ -386,6 +396,7 @@ void (function () {
             t = u.time ? variables[valueOf(u.time)].info[d].min : '',
             s = _c[u.id + '_time'],
             variable = Object.hasOwn(variables, v) ? v : valueOf(u.y)
+          if (!init_log[d]) return void 0
           var r = variables[variable]
           if (r) {
             if (!Object.hasOwn(r, u.id)) init_summaries(u.id)
@@ -409,6 +420,7 @@ void (function () {
                   }
                 }
               }
+              conditionals.time_filters(u)
             }
           }
         },
@@ -714,12 +726,11 @@ void (function () {
               o.config = site.plots[o.id]
               o.traces = {}
               if ('tabpanel' === o.e.parentElement.getAttribute('role')) {
-                document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
-                  'click',
-                  function () {
+                document
+                  .getElementById(o.e.parentElement.getAttribute('aria-labelledby'))
+                  .addEventListener('click', function () {
                     setTimeout(trigger_resize, 155)
-                  }.bind(o)
-                )
+                  })
               }
               o.show = function (e) {
                 var trace = make_data_entry(this, e, 0, 'hover_line', site.theme_dark ? '#fff' : '#000')
@@ -728,11 +739,11 @@ void (function () {
                   trace.marker.size = 12
                   Plotly.addTraces(this.e, trace, this.e.data.length)
                 }
-              }.bind(o)
+              }
               o.revert = function () {
-                if ('hover_line' === this.e.data[this.e.data.length - 1].name)
+                if (this.e.data.length && 'hover_line' === this.e.data[this.e.data.length - 1].name)
                   Plotly.deleteTraces(this.e, this.e.data.length - 1)
-              }.bind(o)
+              }
               if (o.config) {
                 site.plots[o.id].u = o
                 if (o.config.subto) for (i = o.config.subto.length; i--; ) add_subs(o.config.subto[i], o)
@@ -786,7 +797,7 @@ void (function () {
               this.e.data[d.points[0].fullData.index].line.width = 4
               // this.e.data[d.points[0].fullData.index].marker.size = 12
               Plotly.react(this.e, this.e.data, this.e.layout)
-              update_subs(this.id, 'show', entitiesByName[d.points[0].text])
+              update_subs(this.id, 'show', entities[d.points[0].data.id])
             }
           },
           mouseout: function (d) {
@@ -794,7 +805,7 @@ void (function () {
               this.e.data[d.points[0].fullData.index].line.width = 2
               // this.e.data[d.points[0].fullData.index].marker.size = 8
               Plotly.react(this.e, this.e.data, this.e.layout)
-              update_subs(this.id, 'revert', entitiesByName[d.points[0].text])
+              update_subs(this.id, 'revert', entities[d.points[0].data.id])
             }
           },
           click: function (d) {
@@ -803,14 +814,14 @@ void (function () {
           update: function (pass) {
             clearTimeout(this.queue)
             if (!pass) {
-              this.queue = setTimeout(this.update.bind(null, true), 20)
+              this.queue = setTimeout(() => this.update(true), 10)
             } else {
               if (this.e.layout) {
                 const v = _u[this.view],
                   s = v.selection && v.selection.all,
                   d = v.get.dataset(),
                   y = _u[this.time || v.time_agg]
-                if (s) {
+                if (init_log[d] && s) {
                   this.parsed.x = valueOf(this.x)
                   this.parsed.y = valueOf(this.y)
                   this.parsed.view = v
@@ -818,21 +829,26 @@ void (function () {
                   this.parsed.palette = valueOf(v.palette) || site.settings.palette
                   this.parsed.color = valueOf(this.color || v.y || this.parsed.y)
                   this.parsed.summary = variables[this.parsed.color][this.view].summaries[d]
-                  for (
-                    var order = variables[this.parsed.color][this.view].order[d][this.parsed.time],
-                      summary = variables[this.parsed.y][this.view].summaries[d],
-                      i = order ? order.length : 0,
-                      k,
-                      b,
-                      n = v.n_selected.all,
-                      rank = n,
-                      traces = [];
-                    i--;
-
-                  ) {
+                  var order = variables[this.parsed.color][this.view].order[d][this.parsed.time],
+                    summary = variables[this.parsed.y][this.view].summaries[d],
+                    i = this.parsed.summary.missing[this.parsed.time],
+                    k,
+                    b,
+                    n = v.n_selected.all,
+                    rank = 1,
+                    fn = order.length,
+                    traces = [],
+                    lim = site.settings.trace_limit || 0,
+                    jump
+                  lim = jump = lim && lim < n ? Math.ceil(Math.min(lim / 2, n / 2)) : 0
+                  for (; i < fn; i++) {
                     if (Object.hasOwn(s, order[i][0])) {
                       k = order[i][0]
-                      traces.push(make_data_entry(this, s[k], n ? rank-- / n - 0.5 : 0))
+                      traces.push(make_data_entry(this, s[k], n ? rank++ / n - 0.5 : 0))
+                      if (lim && !--jump) {
+                        rank = i = fn - 1 - lim
+                        lim = 0
+                      }
                     }
                   }
                   if (site.settings.boxplots && Object.hasOwn(this.traces, 'box') && s[k]) {
@@ -856,9 +872,25 @@ void (function () {
                     }
                   }
                   if ('boolean' !== typeof this.e.layout.yaxis.title)
-                    this.e.layout.yaxis.title = format_label(this.parsed.y)
+                    this.e.layout.yaxis.title =
+                      format_label(this.parsed.y) +
+                      (site.settings.trace_limit < v.n_selected.all
+                        ? ' (' + site.settings.trace_limit + ' extremes)'
+                        : '')
                   if ('boolean' !== typeof this.e.layout.xaxis.title)
                     this.e.layout.xaxis.title = format_label(this.parsed.x)
+                  this.e.layout.yaxis.autorange = false
+                  this.e.layout.yaxis.range = [Infinity, -Infinity]
+                  if (!b) b = {upperfence: summary.max, lowerfence: summary.min}
+                  for (i = summary.time_range[0], n = summary.time_range[1] + 1; i < n; i++) {
+                    lim = Math.min(b.lowerfence[i], summary.min[i])
+                    if (this.e.layout.yaxis.range[0] > lim) this.e.layout.yaxis.range[0] = lim
+                    lim = Math.max(b.upperfence[i], summary.max[i])
+                    if (this.e.layout.yaxis.range[1] < lim) this.e.layout.yaxis.range[1] = lim
+                  }
+                  lim = (this.e.layout.yaxis.range[1] - this.e.layout.yaxis.range[0]) / 10
+                  this.e.layout.yaxis.range[0] -= lim
+                  this.e.layout.yaxis.range[1] += lim
                   if (this.parsed.x === meta.time_variable) {
                     if (this.e.layout.xaxis.autorange) {
                       this.e.layout.xaxis.autorange = false
@@ -890,14 +922,14 @@ void (function () {
                 })
                 e.layer[this.id].bringToFront()
               }
-            }.bind(o)
+            }
             o.revert = function (e) {
               if (e && e.layer && e.layer[this.id]) {
                 e.layer[this.id].setStyle({
                   color: '#000000',
                 })
               }
-            }.bind(o)
+            }
             if (o.options && o.options.subto)
               for (var i = o.options.subto.length; i--; ) add_subs(o.options.subto[i], o)
             if (o.view) {
@@ -920,7 +952,7 @@ void (function () {
             update_subs(this.id, 'show', entities[e.target.feature.properties[e.target.source.id_property]])
           },
           mouseout: function (e) {
-            update_subs(this.id, 'revert')
+            update_subs(this.id, 'revert', entities[e.target.feature.properties[e.target.source.id_property]])
             e.target.setStyle({
               color: '#000000',
             })
@@ -945,15 +977,12 @@ void (function () {
             if (o.options.floating) {
               document.body.appendChild(o.e)
               o.e.classList.add('hidden')
-              document.addEventListener(
-                'mousemove',
-                function (e) {
-                  if (this.showing) {
-                    this.e.style.top = e.clientY + 10 + 'px'
-                    this.e.style.left = e.clientX + 10 + 'px'
-                  }
-                }.bind(o)
-              )
+              document.addEventListener('mousemove', function (e, o = o) {
+                if (o.showing) {
+                  o.e.style.top = e.clientY + 10 + 'px'
+                  o.e.style.left = e.clientX + 10 + 'px'
+                }
+              })
             }
             o.show = function (e, u) {
               this.update(e, u)
@@ -1183,7 +1212,7 @@ void (function () {
             } else if (!this.options.floating) {
               clearTimeout(this.queue)
               if (!pass) {
-                this.queue = setTimeout(this.update.bind(null, void 0, void 0, true), 20)
+                this.queue = setTimeout(() => this.update(void 0, void 0, true), 10)
               } else {
                 // base information
                 if (v.ids && (k = v.get.ids()) && '-1' !== k) {
@@ -1268,19 +1297,39 @@ void (function () {
             var k, n, i, c
             o.e.appendChild(document.createElement('tHead'))
             o.e.appendChild(document.createElement('tBody'))
+            o.click = o.e.getAttribute('click')
             o.options = (site.tables && site.tables[o.id]) || {}
             o.features = o.options.features
             o.update = elements.table.update.bind(o)
             o.header = []
-            if (!o.dataset) o.dataset = defaults.dataset
+            o.rows = {}
+            if (o.options.subs) if (!o.dataset) o.dataset = defaults.dataset
             if ('tabpanel' === o.e.parentElement.getAttribute('role')) {
-              document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
-                'click',
-                function () {
-                  setTimeout(this.update, 155)
-                }.bind(o)
-              )
+              document
+                .getElementById(o.e.parentElement.getAttribute('aria-labelledby'))
+                .addEventListener('click', function () {
+                  setTimeout(trigger_resize, 155)
+                })
             }
+            o.e.addEventListener('mouseover', elements.table.mouseover.bind(o))
+            o.e.addEventListener('mouseout', elements.table.mouseout.bind(o))
+            if (o.click) {
+              if (Object.hasOwn(_u, o.click)) o.clickto = _u[o.click]
+              o.e.addEventListener('click', elements.table.click.bind(o))
+            }
+            o.show = function (e) {
+              if (Object.hasOwn(this.rows, e.features.id)) {
+                this.rows[e.features.id].style.backgroundColor = '#adadad'
+                this.rows[e.features.id].scrollIntoView()
+              }
+            }
+            o.revert = function (e) {
+              if (Object.hasOwn(this.rows, e.features.id)) {
+                this.rows[e.features.id].style.backgroundColor = 'inherit'
+              }
+            }
+            if (o.options && o.options.subto)
+              for (var i = o.options.subto.length; i--; ) add_subs(o.options.subto[i], o)
             o.options.variable_source = o.options.variables
             if (o.options.variables) {
               if ('string' === typeof o.options.variables) {
@@ -1304,21 +1353,21 @@ void (function () {
               c = o.options.variables
               k = c.name || c
               if (!Object.hasOwn(o.options, 'order')) o.options.order = [[meta.time_n, 'asc']]
-              o.header.push({title: 'Name', data: 'features.name'})
+              o.header.push({title: 'Name', data: 'entity.features.name'})
               if (1 === meta.time_n) o.variable_header = true
               for (n = meta.time_n; n--; ) {
                 o.header[n + 1] = {
                   title: o.variable_header ? c.title || format_label(k) : meta.time[n] + '',
-                  data: 'data.' + k.replace(patterns.all_periods, '\\.'),
-                  render: function (d) {
-                    var k = valueOf(this.v.variables),
+                  data: 'entity.data.' + k.replace(patterns.all_periods, '\\.'),
+                  render: function (d, type, row) {
+                    const k = valueOf(row.variable),
                       p = variables[k].datasets[0]
                     return d
-                      ? 'number' === typeof d[this.n]
-                        ? format_value(d[this.n], 'integer' === variables[k].info[p].type)
-                        : d[this.n]
+                      ? 'number' === typeof d[this]
+                        ? format_value(d[this], 'integer' === variables[k].info[p].type)
+                        : d[this]
                       : 'NA'
-                  }.bind({n, v: o.options}),
+                  }.bind(n),
                 }
               }
             } else if (o.options.wide) {
@@ -1327,7 +1376,7 @@ void (function () {
                 for (n = o.features.length, i = 0; i < n; i++) {
                   o.header.push({
                     title: o.features[i].title || o.features[i].name,
-                    data: 'features.' + o.features[i].name.replace(patterns.all_periods, '\\.'),
+                    data: 'entity.features.' + o.features[i].name.replace(patterns.all_periods, '\\.'),
                   })
                 }
               }
@@ -1339,13 +1388,13 @@ void (function () {
                   'features' === c.source
                     ? {
                         title: c.title || format_label(c.name),
-                        data: 'features.' + c.name.toLowerCase().replace(patterns.all_periods, '\\.'),
+                        data: 'entity.features.' + c.name.toLowerCase().replace(patterns.all_periods, '\\.'),
                       }
                     : {
                         title: c.title || format_label(c.name),
-                        data: c.source + '.' + c.name.replace(patterns.all_periods, '\\.'),
-                        render: function (d) {
-                          const i = 'data' === this.c.source ? this.o.i : this.o.v
+                        data: 'entity.' + c.source + '.' + c.name.replace(patterns.all_periods, '\\.'),
+                        render: function (d, type, row) {
+                          const i = 'data' === this.c.source ? row.time : row.variable
                           return d ? ('number' === typeof d[i] ? format_value(d[i], false) : d[i]) : 'NA'
                         }.bind({o, c}),
                       }
@@ -1357,10 +1406,10 @@ void (function () {
               if (meta.time_n > 1) {
                 o.header.push({
                   title: 'Year',
-                  data: 'data.time',
-                  render: function (d) {
-                    return 'number' === typeof d[this.i] ? format_value(d[this.i], true) : d[this.i]
-                  }.bind(o),
+                  data: 'entity.data.time',
+                  render: function (d, type, row) {
+                    return d ? ('number' === typeof d[row.time] ? format_value(d[row.time], true) : d[row.time]) : 'NA'
+                  },
                 })
               }
               if (o.features) {
@@ -1368,31 +1417,33 @@ void (function () {
                 for (i = o.features.length; i--; ) {
                   o.header.splice(0, 0, {
                     title: o.features[i].title || o.features[i].name,
-                    data: 'features.' + o.features[i].name.replace(patterns.all_periods, '\\.'),
+                    data: 'entity.features.' + o.features[i].name.replace(patterns.all_periods, '\\.'),
                   })
                 }
               }
               o.header.push({
                 title: 'Variable',
-                data: function (d) {
-                  return Object.hasOwn(d.variables, this.v) ? d.variables[this.v].short_name : this.v
-                }.bind(o),
+                data: function (row) {
+                  return Object.hasOwn(row.entity.variables, row.variable)
+                    ? row.entity.variables[row.variable].short_name
+                    : row.variable
+                },
               })
               o.header.push({
                 title: 'Value',
-                data: function (d) {
-                  return Object.hasOwn(d.data, this.v) ? d.data[this.v] : []
-                }.bind(o),
-                render: function (d) {
-                  return d && d.length
-                    ? 'number' === typeof d[this.i]
+                data: function (row) {
+                  return Object.hasOwn(row.entity.data, row.variable) ? row.entity.data[row.variable] : []
+                },
+                render: function (d, type, row) {
+                  return d
+                    ? 'number' === typeof d[row.time]
                       ? format_value(
-                          d[this.i],
-                          'integer' === variables[this.v].info[variables[this.v].datasets[0]].type
+                          d[row.time],
+                          'integer' === variables[row.variable].info[variables[row.variable].datasets[0]].type
                         )
-                      : d[this.i]
+                      : d[row.time]
                     : ''
-                }.bind(o),
+                },
               })
             }
             if (o.view) {
@@ -1404,93 +1455,164 @@ void (function () {
           update: function (pass) {
             clearTimeout(this.queue)
             if (!pass) {
-              this.queue = setTimeout(this.update.bind(null, true), 20)
+              this.queue = setTimeout(() => this.update(true), 20)
             } else {
               if (this.table) {
-                const v = _u[this.view]
-                this.table.clear()
-                if (v.selection) {
-                  var k, c, i, ci, n, vn
-                  if (this.options.single_variable) {
-                    vn = valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.')
-                    if ('data.' + vn !== this.header[1].data) {
-                      this.table.destroy()
-                      for (n = this.header.length, i = 1; i < n; i++) {
-                        if (this.variable_header)
-                          this.header[i].title = variables[vn] ? variables[vn].meta.short_name : format_label(vn)
-                        this.header[i].data = 'data.' + vn
+                const v = _u[this.view],
+                  d = v.get.dataset(),
+                  state = v.value() + v.get.time_filters() + site.settings.digits
+                if (!init_log[d]) return void 0
+                if (state !== this.state) {
+                  this.rows = {}
+                  this.table.clear()
+                  if (v.selection) {
+                    this.state = state
+                    var k,
+                      c,
+                      i,
+                      n,
+                      vn,
+                      va,
+                      reset = true,
+                      varstate = '' + v.get.dataset() + v.get.ids() + v.get.features() + site.settings.digits
+                    if (this.options.single_variable) {
+                      vn = valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.')
+                      if ('entity.data.' + vn !== this.header[1].data) {
+                        this.table.destroy()
+                        for (n = this.header.length, i = 1; i < n; i++) {
+                          if (this.variable_header)
+                            this.header[i].title = variables[vn] ? variables[vn].meta.short_name : format_label(vn)
+                          this.header[i].data = 'entity.data.' + vn
+                        }
+                        this.options.columns = this.header
+                        this.table = $(this.e).DataTable(this.options)
                       }
-                      this.options.columns = this.header
-                      this.table = $(this.e).DataTable(this.options)
+                      for (n = this.header.length, i = 1; i < n; i++) {
+                        this.table.column(i).visible(v.times[i - 1])
+                        if (v.times[i - 1]) reset = false
+                      }
+                      if (reset) this.state = ''
                     }
-                    for (n = this.header.length, i = 1; i < n; i++) {
-                      this.table.column(i).visible(v.times[i - 1])
-                    }
-                  }
-                  if (this.options.wide) {
-                    for (k in v.selection.all)
-                      if (Object.hasOwn(v.selection.all, k)) {
-                        if (vn) {
-                          if (Object.hasOwn(v.selection.all[k].summary, vn) && v.selection.all[k].summary[vn].n)
-                            this.table.row.add(v.selection.all[k])
-                        } else {
-                          for (i = meta.time_n; i--; ) {
-                            this.i = i
-                            this.table.row.add(v.selection.all[k])
+                    if (this.options.wide) {
+                      for (k in v.selection.all)
+                        if (Object.hasOwn(v.selection.all, k)) {
+                          if (vn) {
+                            if (Object.hasOwn(v.selection.all[k].summary, vn) && v.selection.all[k].summary[vn].n) {
+                              this.rows[k] = this.table.row
+                                .add({
+                                  variable: vn,
+                                  entity: v.selection.all[k],
+                                })
+                                .node()
+                              this.rows[k].entityId = k
+                            }
+                          } else {
+                            for (i = v.time_range.filtered; i--; ) {
+                              this.rows[k] = this.table.row
+                                .add({
+                                  variable: vn,
+                                  time: i,
+                                  entity: v.selection.all[k],
+                                })
+                                .node()
+                              this.rows[k].entityId = k
+                            }
                           }
                         }
-                      }
-                  } else {
-                    for (k in v.selection.all)
-                      if (Object.hasOwn(v.selection.all, k)) {
-                        if (this.options.single_variable) {
-                          if (Object.hasOwn(v.selection.all[k].summary, vn) && v.selection.all[k].summary[vn].n)
-                            this.table.row.add(v.selection.all[k])
-                        } else {
-                          for (c in this.filters)
-                            if (Object.hasOwn(this.filters, c)) {
-                              this.current_filter[c] = valueOf(this.filters[c])
-                            }
-                          for (i = this.options.variables.length; i--; ) {
-                            vn = this.options.variables[i].name || this.options.variables[i]
-                            pass = false
-                            if (Object.hasOwn(variables, vn) && Object.hasOwn(variables[vn], 'meta')) {
-                              if (this.options.filters) {
-                                for (c in this.current_filter)
-                                  if (Object.hasOwn(variables[vn].meta, c)) {
-                                    pass = variables[vn].meta[c] === this.current_filter[c]
-                                    if (!pass) break
-                                  }
-                              } else pass = true
-                            }
-                            if (pass) {
-                              if (
-                                Object.hasOwn(v.selection.all[k].summary, vn) &&
-                                v.selection.all[k].summary[vn].time_range[1]
-                              ) {
-                                for (
-                                  n = v.selection.all[k].summary[vn].time_range[1],
-                                    ci = v.selection.all[k].summary[vn].time_range[0];
-                                  ci <= n;
-                                  ci++
-                                ) {
-                                  this.i = ci
-                                  this.v = vn
-                                  this.table.row.add(v.selection.all[k])
+                    } else {
+                      for (c in this.filters)
+                        if (Object.hasOwn(this.filters, c)) {
+                          this.current_filter[c] = valueOf(this.filters[c])
+                        }
+                      for (va = [], i = this.options.variables.length; i--; ) {
+                        vn = this.options.variables[i].name || this.options.variables[i]
+                        pass = false
+                        if (Object.hasOwn(variables, vn) && Object.hasOwn(variables[vn], 'meta')) {
+                          if (this.options.filters) {
+                            for (c in this.current_filter)
+                              if (Object.hasOwn(variables[vn].meta, c)) {
+                                pass = variables[vn].meta[c] === this.current_filter[c]
+                                if (!pass) break
+                              }
+                          } else pass = true
+                        }
+                        if (pass) {
+                          varstate += vn
+                          va.push({
+                            variable: vn,
+                            render: function (o, s) {
+                              if (Object.hasOwn(s.summary, this.variable) && s.summary[this.variable].time_range) {
+                                for (var r = s.summary[this.variable].time_range, n = r[1], ci = r[0]; ci <= n; ci++) {
+                                  o.rows[s.features.id] = o.table.row
+                                    .add({
+                                      time: ci,
+                                      variable: this.variable,
+                                      entity: s,
+                                    })
+                                    .node()
+                                  o.rows[s.features.id].entityId = s.features.id
                                 }
                               } else {
-                                this.i = 0
-                                this.v = vn
-                                this.table.row.add(v.selection.all[k])
+                                o.rows[s.features.id] = o.table.row
+                                  .add({
+                                    time: 0,
+                                    variable: this.variable,
+                                    entity: s,
+                                  })
+                                  .node()
+                                o.rows[s.features.id].entityId = s.features.id
                               }
-                            }
-                          }
+                            },
+                          })
                         }
                       }
+                      if (varstate === this.varstate) return void 0
+                      this.varstate = varstate
+                      for (k in v.selection.all)
+                        if (Object.hasOwn(v.selection.all, k)) {
+                          if (this.options.single_variable) {
+                            if (Object.hasOwn(v.selection.all[k].summary, vn) && v.selection.all[k].summary[vn].n) {
+                              this.rows[k] = this.table.row
+                                .add({
+                                  variable: vn,
+                                  entity: v.selection.all[k],
+                                })
+                                .node()
+                              this.rows[k].entityId = k
+                            }
+                          } else {
+                            for (i = va.length; i--; ) va[i].render(this, v.selection.all[k])
+                          }
+                        }
+                    }
                   }
+                  this.table.draw()
                 }
-                this.table.draw()
               }
+            }
+          },
+          mouseover: function (e) {
+            const r = e.target.parentElement
+            if (r.entityId) {
+              r.style.backgroundColor = '#adadad'
+              if (Object.hasOwn(entities, r.entityId)) {
+                update_subs(this.id, 'show', entities[r.entityId])
+              }
+            }
+          },
+          mouseout: function (e) {
+            const r = e.target.parentElement
+            if (r.entityId) {
+              r.style.backgroundColor = 'inherit'
+              if (Object.hasOwn(entities, r.entityId)) {
+                update_subs(this.id, 'revert', entities[r.entityId])
+              }
+            }
+          },
+          click: function (e) {
+            const r = e.target.parentElement
+            if (this.clickto && r.entityId) {
+              if (Object.hasOwn(entities, r.entityId)) this.clickto.set(r.entityId)
             }
           },
         },
@@ -1716,7 +1838,9 @@ void (function () {
 
     function fill_ids_options(u, d, out) {
       if (!Object.hasOwn(data_maps, d)) {
-        data_queue[d][u.id] = fill_ids_options.bind(null, u, d, out)
+        data_queue[d][u.id] = function () {
+          return fill_ids_options(u, d, out)
+        }
         return
       }
       var s, k
@@ -1781,7 +1905,9 @@ void (function () {
             }
         }
       } else if ('ids' === t) {
-        data_queue[d][u.id] = fill_levels_options.bind(null, u, d, v, out)
+        data_queue[d][u.id] = function () {
+          return fill_levels_options(u, d, v, out)
+        }
       }
       site.url_options[u.id] ? u.set(site.url_options[u.id]) : u.reset()
     }
@@ -2365,7 +2491,7 @@ void (function () {
       } else if (site && site.metadata.datasets) {
         site.data = {}
         if ('string' === typeof site.metadata.datasets) site.metadata.datasets = [site.metadata.datasets]
-        for (i = 0, n = site.metadata.datasets.length; i < n; i++) {
+        for (i = site.metadata.datasets.length; i--; ) {
           data_loaded[site.metadata.datasets[i]] = false
           load_data(site.metadata.datasets[i], site.metadata.info[site.metadata.datasets[i]].site_file)
         }
@@ -2753,6 +2879,7 @@ void (function () {
       site.maps[u.id]._layers[source.name] = L.geoJSON(JSON.parse(site.maps._raw[source.url]), {
         onEachFeature: add_layer_listeners.bind(u),
       })
+      init_log[source.name + '_map'] = true
       for (k in site.maps[u.id]._layers[source.name]._layers)
         if (Object.hasOwn(site.maps[u.id]._layers[source.name]._layers, k)) {
           l = site.maps[u.id]._layers[source.name]._layers[k]
@@ -3008,7 +3135,7 @@ void (function () {
     }
 
     function load_id_maps() {
-      var ids, i, f, k, u, has_map
+      var ids, i, f, k, has_map
       for (k in site.metadata.info)
         if (Object.hasOwn(site.data, k)) {
           for (ids = site.metadata.info[k].ids, i = ids.length, has_map = false; i--; )
@@ -3039,12 +3166,6 @@ void (function () {
                   data_maps[k] = ids[i].map
                 }
                 map_entities(k)
-                for (u in data_queue[k])
-                  if (Object.hasOwn(data_queue[k], u)) {
-                    _u[u].state = false
-                    data_queue[k][u]()
-                    delete data_queue[k][u]
-                  }
               } else {
                 data_maps[ids[i].map] = {queue: [k], resource: {}, retrieved: false}
                 f = new window.XMLHttpRequest()
@@ -3062,12 +3183,6 @@ void (function () {
                           ? data_maps[url].resource[k]
                           : data_maps[url].resource
                         map_entities(k)
-                        for (u in data_queue[k])
-                          if (Object.hasOwn(data_queue[k], u)) {
-                            _u[u].state = false
-                            data_queue[k][u]()
-                            delete data_queue[k][u]
-                          }
                       }
                       for (k in _c)
                         if (Object.hasOwn(_c, k)) {
@@ -3085,12 +3200,6 @@ void (function () {
           if (!has_map) {
             data_maps[k] = {}
             map_entities(k)
-            for (u in data_queue[k])
-              if (Object.hasOwn(data_queue[k], u)) {
-                _u[u].state = false
-                data_queue[k][u]()
-                delete data_queue[k][u]
-              }
           }
         }
     }
@@ -3208,6 +3317,12 @@ void (function () {
           init()
           init_log.first = true
         }
+        for (id in data_queue[g])
+          if (Object.hasOwn(data_queue[g], id)) {
+            _u[id].state = false
+            data_queue[g][id]()
+            delete data_queue[g][id]
+          }
       }
     }
 
@@ -3249,6 +3364,16 @@ void (function () {
               s += valueOf(v.variables[i].variable) + valueOf(v.variables[i].type) + valueOf(v.variables[i].value)
             return s
           } else return ''
+        },
+        time_filters: function () {
+          var s = ''
+          if (v.time_filters && v.time_filters.length) {
+            for (i = v.time_filters.length; i--; )
+              s += Object.hasOwn(_u, v.time_filters[i].value)
+                ? valueOf(v.time_filters[i].value)
+                : v.time_filters[i].value
+          }
+          return s
         },
       }
       v.ids_check =
@@ -3356,7 +3481,7 @@ void (function () {
       }
       queue[id] = true
       window.cancelAnimationFrame(queue._timeout)
-      queue._timeout = window.requestAnimationFrame(run_queue.bind(null, force))
+      queue._timeout = window.requestAnimationFrame(() => run_queue(force))
     }
 
     function run_queue(force) {
@@ -3447,7 +3572,7 @@ void (function () {
         this.update()
         window.requestAnimationFrame(trigger_resize)
       } else {
-        setTimeout(queue_init_plot.bind(this), 20)
+        setTimeout(queue_init_plot.bind(this), 10)
       }
     }
 
@@ -3481,7 +3606,7 @@ void (function () {
           }
         }
       } else {
-        setTimeout(queue_init_map.bind(this), 20)
+        setTimeout(queue_init_map.bind(this), 10)
       }
     }
 
@@ -3491,7 +3616,7 @@ void (function () {
         this.table = $(this.e).DataTable(this.options)
         this.update()
       } else {
-        setTimeout(queue_init_table.bind(this), 20)
+        setTimeout(queue_init_table.bind(this), 10)
       }
     }
 
@@ -3499,7 +3624,7 @@ void (function () {
       if ('loading' !== document.readyState) {
         load_id_maps()
       } else {
-        setTimeout(queue_init, 5)
+        setTimeout(queue_init, 10)
       }
     }
 
