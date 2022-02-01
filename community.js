@@ -54,6 +54,7 @@ void (function () {
         hashes: /#/g,
         embed_setting: /^(?:hide_|navcolor|close_menus)/,
         median: /^med/i,
+        location_string: /^[^?]*/
       },
       conditionals = {
         setting: function (u) {
@@ -1320,7 +1321,12 @@ void (function () {
             }
             o.show = function (e) {
               if (Object.hasOwn(this.rows, e.features.id)) {
-                this.rows[e.features.id].style.backgroundColor = '#adadad'
+                const row = this.rows[e.features.id]
+                row.style.backgroundColor = '#adadad'
+                if(site.settings.table_autoscroll) this.e.parentElement.scroll({
+                  top: row._DT_RowIndex * row.getBoundingClientRect().height,
+                  behavior: site.settings.table_scroll_behavior || 'smooth'
+                })
               }
             }
             o.revert = function (e) {
@@ -1617,14 +1623,32 @@ void (function () {
           },
         },
         legend: {
-          update: function (e) {
-            e.innerHTML = ''
-            const ep = valueOf(e.parentElement.getAttribute('palette')).toLowerCase(),
-              p = palettes[Object.hasOwn(palettes, ep) ? ep : site.settings.palette]
-            for (var i = 0, n = p.length; i < n; i++) {
-              e.appendChild(document.createElement('span'))
-              e.lastElementChild.style.background = p[i]
+          init: function(o){
+            if(!o.palette) o.palette = site.settings.palette
+            o.current_palette = o.palette
+            o.scale = o.e.getElementsByClassName('legend-scale')[0]
+            o.update = elements.legend.update.bind(o)
+            add_dependency(o.view, {type: "update", id: o.id})
+            if (Object.hasOwn(_u, o.palette)){
+              o.current_palette = valueOf(o.palette)
+              _u[o.palette].e.addEventListener('change', o.update)
             }
+            o.update()
+          },
+          update: function () {
+            const ep = valueOf(this.palette).toLowerCase(),
+              p = palettes[Object.hasOwn(palettes, ep) ? ep : site.settings.palette]
+            if(p !== this.current_palette){
+              this.current_palette = p
+              this.scale.innerHTML = ''
+              for (var i = 0, n = p.length; i < n; i++) {
+                this.scale.appendChild(document.createElement('span'))
+                this.scale.lastElementChild.style.background = p[i]
+              }
+            }
+            this.e.lastElementChild.children[1].innerText = site.settings.color_scale_center
+              ? summary_levels[site.settings.summary_selection] + ' ' + site.settings.color_scale_center
+              : ''
           },
         },
         credits: {
@@ -1715,6 +1739,7 @@ void (function () {
       variable_info = {},
       queue = {_timeout: 0},
       defaults = {dataview: 'default_view'},
+      summary_levels = {dataset: "Overall", filtered: "Filtered", all: "Selection"},
       data_queue = {},
       data_loaded = {},
       init_log = {},
@@ -2485,13 +2510,6 @@ void (function () {
         }
       }
 
-      // fill legends
-      for (c = document.getElementsByClassName('legend-scale'), i = c.length; i--; ) {
-        k = c[i].parentElement.getAttribute('palette') || site.settings.palette
-        if (Object.hasOwn(_u, k)) _u[k].e.addEventListener('change', elements.legend.update.bind(null, c[i]))
-        elements.legend.update(c[i])
-      }
-
       window.requestAnimationFrame(trigger_resize)
       window.addEventListener('resize', content_resize)
 
@@ -2835,7 +2853,7 @@ void (function () {
         n = meta.time_n
         o = {
           type: e.getAttribute('auto-type'),
-          view: e.getAttribute('data-view'),
+          view: e.getAttribute('data-view') || defaults.dataview,
           id: e.id || 'out' + n++,
           e: e,
         }
@@ -3516,7 +3534,10 @@ void (function () {
               s +
               '=' +
               ('navcolor' === s ? site.url_options[s].replace(patterns.hashes, '%23') : site.url_options[s])
-        if (!site.settings.hide_url_parameters) window.history.replaceState(Date.now(), '', k)
+        if (!site.settings.hide_url_parameters){
+          window.history.replaceState(Date.now(), '', k)
+          window.parent.postMessage(k.replace(patterns.location_string, ''), '*')
+        }
         window.requestAnimationFrame(content_resize)
       }
     }

@@ -11,10 +11,10 @@
 #' sources are attempted to be resolved automatically.
 #' @param dataset The name of a dataset, or ID of a dataset selector, to find \code{variables} in;
 #' used if \code{dataview} is not specified.
+#' @param dataview The ID of an \code{\link{input_dataview}} component.
 #' @param id Unique ID of the table.
 #' @param click The ID of an input to set to a clicked row's entity ID.
 #' @param subto A vector of output IDs to receive hover events from.
-#' @param dataview The ID of an \code{\link{input_dataview}} component.
 #' @param options A list of configuration options, see
 #' \href{https://datatables.net/reference/option}{DataTables Documentation}.
 #' @param features A list of features columns to include if multiple variables are included and \code{wide} is

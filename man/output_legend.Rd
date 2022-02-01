@@ -4,8 +4,8 @@
 \alias{output_legend}
 \title{Adds a legend to a website}
 \usage{
-output_legend(palette = "", lower = "Lower", center = "",
-  higher = "Higher", class = "")
+output_legend(palette = "", lower = "Lower", higher = "Higher",
+  dataview = NULL, id = NULL, subto = NULL, class = "")
 }
 \arguments{
 \item{palette}{Name of an included color palette (from
@@ -14,11 +14,17 @@ output_legend(palette = "", lower = "Lower", center = "",
 
 \item{lower}{Text to appear at the beginning of the legend, labeling smaller.}
 
-\item{center}{Text to appear at the midpoint of the legend, labeling central values.}
-
 \item{higher}{Text to appear at the end of the legend, labeling larger values.}
 
-\item{class}{Class names to add to the legend table.}
+\item{dataview}{The ID of an \code{\link{input_dataview}} component.}
+
+\item{id}{Unique ID of the legend element.}
+
+\item{subto}{A vector of output IDs to receive hover events from.}
+
+\item{class}{Class names to add to the legend element.}
+
+\item{center}{Text to appear at the midpoint of the legend, labeling central values.}
 }
 \value{
 A character vector of the contents to be added.
