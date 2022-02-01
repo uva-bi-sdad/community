@@ -53,6 +53,7 @@ void (function () {
         url_spaces: /%20/g,
         hashes: /#/g,
         embed_setting: /^(?:hide_|navcolor|close_menus)/,
+        median: /^med/i,
       },
       conditionals = {
         setting: function (u) {
@@ -1754,22 +1755,31 @@ void (function () {
         string = summary && Object.hasOwn(summary, 'levels'),
         min = summary && !string ? summary.min[index] : 0,
         max = summary ? (string ? summary.levels.length : summary.max[index]) : 1,
-        nm = summary && !string ? (isNaN(summary.norm_median[index]) ? 0 : summary.norm_median[index]) : 0.5
+        center =
+          !site.settings.color_scale_center || patterns.median.test(site.settings.color_scale_center)
+            ? 'norm_median'
+            : 'norm_mean',
+        nm = summary && !string ? (isNaN(summary[center][index]) ? 0 : summary[center][index]) : 0.5
       return (string ? Object.hasOwn(summary.level_ids, value) : 'number' === typeof value)
         ? colors[
             Math.max(
               0,
               Math.min(
                 colors.length - 1,
-                Math.floor(
-                  colors.length / 2 +
-                    colors.length *
-                      (site.settings.color_by_order
-                        ? rank
-                        : max - min
-                        ? ((string ? summary.level_ids[value] : value) - min) / (max - min) - nm
-                        : 0)
-                )
+                site.settings.color_scale_center || site.settings.color_by_order
+                  ? Math.floor(
+                      colors.length / 2 +
+                        colors.length *
+                          (site.settings.color_by_order
+                            ? rank
+                            : max - min
+                            ? ((string ? summary.level_ids[value] : value) - min) / (max - min) - nm
+                            : 0)
+                    )
+                  : Math.floor(
+                      colors.length *
+                        (max - min ? ((string ? summary.level_ids[value] : value) - min) / (max - min) : 0)
+                    )
               )
             )
           ]
@@ -2988,6 +2998,7 @@ void (function () {
                   q3: [],
                   mean: [],
                   norm_median: [],
+                  norm_mean: [],
                   median: [],
                   q1: [],
                   min: [],
@@ -3002,6 +3013,7 @@ void (function () {
                   m.summaries[d].q3.push(0)
                   m.summaries[d].mean.push(0)
                   m.summaries[d].norm_median.push(0)
+                  m.summaries[d].norm_mean.push(0)
                   m.summaries[d].median.push(0)
                   m.summaries[d].q1.push(0)
                   m.summaries[d].min.push(Infinity)
@@ -3111,6 +3123,10 @@ void (function () {
               'number' === typeof ms.max[y] && ms.max[y] - ms.min[y]
                 ? (ms.median[y] - ms.min[y]) / (ms.max[y] - ms.min[y])
                 : ms.median[y]
+            ms.norm_mean[y] =
+              'number' === typeof ms.max[y] && ms.max[y] - ms.min[y]
+                ? (ms.mean[y] - ms.min[y]) / (ms.max[y] - ms.min[y])
+                : ms.mean[y]
           }
         }
       } else {
