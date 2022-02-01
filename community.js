@@ -1321,7 +1321,6 @@ void (function () {
             o.show = function (e) {
               if (Object.hasOwn(this.rows, e.features.id)) {
                 this.rows[e.features.id].style.backgroundColor = '#adadad'
-                this.rows[e.features.id].scrollIntoView()
               }
             }
             o.revert = function (e) {

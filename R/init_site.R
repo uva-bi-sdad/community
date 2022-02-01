@@ -104,8 +104,9 @@ init_site <- function(dir, title = "app", with_data = TRUE, overwrite = FALSE) {
       ".httr-oauth",
       ".DS_Store",
       "*.Rproj",
-      "node-module",
+      "node_modules",
       "package-lock.json",
+      "docs/dist",
       ""
     ), collapse = "\n"), paths[5])
   }
