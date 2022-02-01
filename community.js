@@ -1324,7 +1324,7 @@ void (function () {
                 const row = this.rows[e.features.id]
                 row.style.backgroundColor = '#adadad'
                 if(site.settings.table_autoscroll) this.e.parentElement.scroll({
-                  top: row._DT_RowIndex * row.getBoundingClientRect().height,
+                  top: row.getBoundingClientRect().y - this.e.getBoundingClientRect().y,
                   behavior: site.settings.table_scroll_behavior || 'smooth'
                 })
               }
