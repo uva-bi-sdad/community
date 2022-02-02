@@ -13,6 +13,7 @@
 #' which can be edited by hand.
 #' @param bundle_data Logical; if \code{TRUE}, will write the data to the site file; useful when
 #' running the site locally without server. Otherwise, the data will be loaded separately through an http request.
+#' @param load_screen Logical; if \code{TRUE}, will hide the page before it loads with a grey screen.
 #' @param open_after Logical; if \code{TRUE}, will open the site in a browser after it is built.
 #' @param aggregate Logical; if \code{TRUE}, and there is a larger datasets with IDs that partially match
 #' IDs in a smaller dataset or that has a map to those IDs, and there are NAs in the smaller dataset, will
@@ -32,7 +33,7 @@
 #' @export
 
 site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html", variables = NULL,
-                       options = list(), bundle_data = FALSE, open_after = FALSE, aggregate = TRUE, force = FALSE) {
+                       options = list(), bundle_data = FALSE, load_screen = TRUE, open_after = FALSE, aggregate = TRUE, force = FALSE) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., dir = ".")')
   page <- paste0(dir, "/", file)
   if (!file.exists(page)) cli_abort("{.file {page}} does not exist")
@@ -133,7 +134,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
                       if (length(children)) {
                         cd <- do.call(rbind, previous_data[children])
                         if (is.null(time)) {
-                          aggs <- vapply(cd, function(v) if (is.numeric(v)) mean(v, na.rm = TRUE) else NA, 0)
+                          aggs <- vapply(cd, function(v) if (is.numeric(v) && !all(is.na(v))) mean(v, na.rm = TRUE) else NA, 0)
                           aggs <- aggs[!is.na(aggs) & names(aggs) %in% cn]
                           sdata[[id]] <- as.data.frame(sdata[[id]])
                           aggs <- aggs[is.na(sdata[[id]][, names(aggs)])]
@@ -141,7 +142,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
                         } else {
                           cd <- split(cd, cd[[time]])
                           for (ct in names(cd)) {
-                            aggs <- vapply(cd[[ct]], function(v) if (is.numeric(v)) mean(v, na.rm = TRUE) else NA, 0)
+                            aggs <- vapply(cd[[ct]], function(v) if (is.numeric(v) && !all(is.na(v))) mean(v, na.rm = TRUE) else NA, 0)
                             aggs <- aggs[!is.na(aggs) & names(aggs) %in% cn]
                             if (length(aggs)) {
                               su <- sdata[[id]][[time]] == ct
@@ -202,6 +203,8 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
       settings$settings[[s]] <- options[[s]]
     } else if (is.null(settings$settings[[s]])) settings$settings[[s]] <- defaults[[s]]
   }
+  times <- unname(vapply(settings$metadata$info, "[[", "", "time"))
+  variables <- unique(c(times, variables))
   if (!is.null(variables)) variables <- variables[variables != "_references"]
   if (!missing(aggregate) || !is.null(settings$metadata) && !is.null(settings$metadata$variables) &&
     !identical(settings$metadata$variables, variables)) {
@@ -282,7 +285,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
         "}\n</script>"
       )
     },
-    unlist(lapply(parts$dependencies[c(seq_len(length(parts$dependencies) - 4) + 4, 1:4)], function(d) {
+    unlist(lapply(parts$dependencies[c(2, 4, seq_len(length(parts$dependencies) - 4) + 4, 1, 3)], function(d) {
       if (!d$src %in% c("script.js", "style.css") || (file.exists(paste0(dir, "/docs/", d$src)) &&
         file.size(paste0(dir, "/docs/", d$src)))) {
         paste(c(
@@ -303,6 +306,15 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
       c(
         '<div class="content container-fluid">',
         parts$content,
+        "</div>"
+      )
+    },
+    if (load_screen) {
+      paste0(
+        '<div id="load_screen" style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; background-color: ',
+        'inherit; z-index: 999" class="show fade">',
+        '<p style="width: 100%; text-align: center; padding: 5em"></p>',
+        '<noscript style="width: 100%; text-align: center; padding: 5em">Please enable JavaScript to view this site.</noscript>',
         "</div>"
       )
     },

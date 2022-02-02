@@ -54,7 +54,7 @@ void (function () {
         hashes: /#/g,
         embed_setting: /^(?:hide_|navcolor|close_menus)/,
         median: /^med/i,
-        location_string: /^[^?]*/
+        location_string: /^[^?]*/,
       },
       conditionals = {
         setting: function (u) {
@@ -196,7 +196,7 @@ void (function () {
         map_shapes: function (u, c, pass) {
           clearTimeout(u.queue)
           if (!pass) {
-            u.queue = setTimeout(() => conditionals.map_shapes(u, void 0, true), 10)
+            u.queue = setTimeout(() => conditionals.map_shapes(u, void 0, true), 0)
           } else {
             if (u.view && u.displaying) {
               const view = site.dataviews[u.view],
@@ -816,7 +816,7 @@ void (function () {
           update: function (pass) {
             clearTimeout(this.queue)
             if (!pass) {
-              this.queue = setTimeout(() => this.update(true), 10)
+              this.queue = setTimeout(() => this.update(true), 0)
             } else {
               if (this.e.layout) {
                 const v = _u[this.view],
@@ -1214,7 +1214,7 @@ void (function () {
             } else if (!this.options.floating) {
               clearTimeout(this.queue)
               if (!pass) {
-                this.queue = setTimeout(() => this.update(void 0, void 0, true), 10)
+                this.queue = setTimeout(() => this.update(void 0, void 0, true), 0)
               } else {
                 // base information
                 if (v.ids && (k = v.get.ids()) && '-1' !== k) {
@@ -1262,7 +1262,7 @@ void (function () {
                     if (p.value.ref) {
                       e = p.value.get(entity, caller)
                       if ('object' === typeof e) {
-                        if ('source' === p.value.parsed.variables) {
+                        if ('sources' === p.value.parsed.variables) {
                           p.base.innerHTML = ''
                           p.base.appendChild(document.createElement('table'))
                           p.base.lastElementChild.className = 'source-table'
@@ -1323,10 +1323,11 @@ void (function () {
               if (Object.hasOwn(this.rows, e.features.id)) {
                 const row = this.rows[e.features.id]
                 row.style.backgroundColor = '#adadad'
-                if(site.settings.table_autoscroll) this.e.parentElement.scroll({
-                  top: row.getBoundingClientRect().y - this.e.getBoundingClientRect().y,
-                  behavior: site.settings.table_scroll_behavior || 'smooth'
-                })
+                if (site.settings.table_autoscroll)
+                  this.e.parentElement.scroll({
+                    top: row.getBoundingClientRect().y - this.e.getBoundingClientRect().y,
+                    behavior: site.settings.table_scroll_behavior || 'smooth',
+                  })
               }
             }
             o.revert = function (e) {
@@ -1461,7 +1462,7 @@ void (function () {
           update: function (pass) {
             clearTimeout(this.queue)
             if (!pass) {
-              this.queue = setTimeout(() => this.update(true), 20)
+              this.queue = setTimeout(() => this.update(true), 10)
             } else {
               if (this.table) {
                 const v = _u[this.view],
@@ -1623,23 +1624,32 @@ void (function () {
           },
         },
         legend: {
-          init: function(o){
-            if(!o.palette) o.palette = site.settings.palette
-            o.current_palette = o.palette
+          init: function (o) {
+            if (!o.palette)
+              o.palette = Object.hasOwn(_u, 'settings.palette') ? 'settings.palette' : site.settings.palette
             o.scale = o.e.getElementsByClassName('legend-scale')[0]
             o.update = elements.legend.update.bind(o)
-            add_dependency(o.view, {type: "update", id: o.id})
-            if (Object.hasOwn(_u, o.palette)){
-              o.current_palette = valueOf(o.palette)
+            o.ticks = {
+              center: document.createElement('span'),
+              min: document.createElement('span'),
+              max: document.createElement('span'),
+              entity: document.createElement('span'),
+            }
+            o.show = function (e) {
+              console.log(e)
+            }
+            add_dependency(o.view, {type: 'update', id: o.id})
+            if (Object.hasOwn(_u, o.palette)) {
               _u[o.palette].e.addEventListener('change', o.update)
             }
             o.update()
           },
           update: function () {
             const ep = valueOf(this.palette).toLowerCase(),
-              p = palettes[Object.hasOwn(palettes, ep) ? ep : site.settings.palette]
-            if(p !== this.current_palette){
-              this.current_palette = p
+              pn = Object.hasOwn(palettes, ep) ? ep : site.settings.palette,
+              p = palettes[pn]
+            if (pn !== this.current_palette) {
+              this.current_palette = pn
               this.scale.innerHTML = ''
               for (var i = 0, n = p.length; i < n; i++) {
                 this.scale.appendChild(document.createElement('span'))
@@ -1731,6 +1741,7 @@ void (function () {
       }
 
     const page = {
+        load_screen: document.getElementById('load_screen'),
         navbar: document.getElementsByClassName('navbar')[0],
         content: document.getElementsByClassName('content')[0],
         menus: document.getElementsByClassName('menu-wrapper'),
@@ -1739,7 +1750,7 @@ void (function () {
       variable_info = {},
       queue = {_timeout: 0},
       defaults = {dataview: 'default_view'},
-      summary_levels = {dataset: "Overall", filtered: "Filtered", all: "Selection"},
+      summary_levels = {dataset: 'Overall', filtered: 'Filtered', all: 'Selection'},
       data_queue = {},
       data_loaded = {},
       init_log = {},
@@ -1772,6 +1783,7 @@ void (function () {
         }
       page.content.style.top = h + 'px'
     }
+    if (page.load_screen) page.load_screen.firstElementChild.innerText = 'loading...'
 
     function pal(value, which, summary, index, rank) {
       which = which ? which.toLowerCase() : site.settings.palette
@@ -2086,13 +2098,13 @@ void (function () {
       page.modal.info.description.innerText = info.long_description || info.description || info.short_description || ''
       page.modal.info.name.lastElementChild.innerText = info.measure || ''
       page.modal.info.type.lastElementChild.innerText = info.type || ''
-      if (info.source && info.source.length) {
-        page.modal.info.source.lastElementChild.lastElementChild.innerHTML = ''
-        page.modal.info.source.classList.remove('hidden')
-        for (n = info.source.length, i = 0; i < n; i++) {
-          page.modal.info.source.lastElementChild.lastElementChild.appendChild(make_variable_source(info.source[i]))
+      if (info.sources && info.sources.length) {
+        page.modal.info.sources.lastElementChild.lastElementChild.innerHTML = ''
+        page.modal.info.sources.classList.remove('hidden')
+        for (n = info.sources.length, i = 0; i < n; i++) {
+          page.modal.info.sources.lastElementChild.lastElementChild.appendChild(make_variable_source(info.sources[i]))
         }
-      } else page.modal.info.source.classList.add('hidden')
+      } else page.modal.info.sources.classList.add('hidden')
       if (info.citations && info.citations.length) {
         page.modal.info.references.lastElementChild.innerHTML = ''
         page.modal.info.references.classList.remove('hidden')
@@ -2249,6 +2261,8 @@ void (function () {
           e: document.createElement('div'),
         },
       }
+      page.load_screen = document.getElementById('load_screen')
+      if (page.load_screen) page.load_screen.firstElementChild.innerText = 'loading...'
       e = page.modal.info.e
       document.body.appendChild(e)
       page.modal.info.init = true
@@ -2291,8 +2305,8 @@ void (function () {
       e.type.firstElementChild.innerText = 'Type'
       e.type.appendChild(document.createElement('td'))
 
-      e.body.appendChild((e.source = document.createElement('div')))
-      e.source.appendChild((e = document.createElement('table')))
+      e.body.appendChild((e.sources = document.createElement('div')))
+      e.sources.appendChild((e = document.createElement('table')))
       e.className = 'source-table'
       e.appendChild(document.createElement('thead'))
       e.firstElementChild.appendChild(document.createElement('tr'))
@@ -2525,6 +2539,11 @@ void (function () {
       } else {
         throw new Error('No data or metadata information present')
       }
+
+      if (page.load_screen)
+        setTimeout(function () {
+          page.load_screen.style.display = 'none'
+        }, 250)
     }
 
     function content_resize() {
@@ -2884,7 +2903,7 @@ void (function () {
       })
     }
 
-    function retrieve_layer(u, source) {
+    async function retrieve_layer(u, source) {
       if (Object.hasOwn(site.maps._raw, source.url)) {
         process_layer(source, u)
       } else {
@@ -3041,7 +3060,7 @@ void (function () {
         }
     }
 
-    function calculate_summary(measure, view, full) {
+    async function calculate_summary(measure, view, full) {
       if (!Object.hasOwn(variables[measure], view))
         variables[measure][view] = JSON.parse(JSON.stringify(variables[measure][defaults.dataview]))
       const v = site.dataviews[view],
@@ -3167,7 +3186,7 @@ void (function () {
       ms.filled = true
     }
 
-    function load_id_maps() {
+    async function load_id_maps() {
       var ids, i, f, k, has_map
       for (k in site.metadata.info)
         if (Object.hasOwn(site.data, k)) {
@@ -3534,7 +3553,7 @@ void (function () {
               s +
               '=' +
               ('navcolor' === s ? site.url_options[s].replace(patterns.hashes, '%23') : site.url_options[s])
-        if (!site.settings.hide_url_parameters){
+        if (!site.settings.hide_url_parameters) {
           window.history.replaceState(Date.now(), '', k)
           window.parent.postMessage(k.replace(patterns.location_string, ''), '*')
         }
@@ -3598,7 +3617,9 @@ void (function () {
     }
 
     function queue_init_plot() {
-      if (window.Plotly) {
+      const dims = this.e.getBoundingClientRect(),
+        showing = this.deferred || dims.x || dims.height
+      if (showing && window.Plotly) {
         Plotly.newPlot(this.e, this.config)
         this.e
           .on('plotly_hover', elements.plot.mouseover.bind(this))
@@ -3608,16 +3629,19 @@ void (function () {
         this.update()
         window.requestAnimationFrame(trigger_resize)
       } else {
-        setTimeout(queue_init_plot.bind(this), 10)
+        this.deferred = true
+        setTimeout(queue_init_plot.bind(this), showing ? 10 : 1000)
       }
     }
 
     function queue_init_map() {
-      if (window.L) {
+      const theme = site.settings.theme_dark ? 'dark' : 'light',
+        dims = this.e.getBoundingClientRect(),
+        showing = this.deferred || dims.x || dims.height
+      if (showing && window.L) {
         this.map = L.map(this.e, this.options)
         this.displaying = L.featureGroup().addTo(this.map)
         this.tiles = {}
-        const theme = site.settings.theme_dark ? 'dark' : 'light'
         var k, i
         if (Object.hasOwn(site.maps, this.id)) {
           site.maps[this.id].u = this
@@ -3642,17 +3666,21 @@ void (function () {
           }
         }
       } else {
-        setTimeout(queue_init_map.bind(this), 10)
+        this.deferred = true
+        setTimeout(queue_init_map.bind(this), showing ? 10 : 1000)
       }
     }
 
     function queue_init_table() {
-      if (window.jQuery && window.DataTable && Object.hasOwn(site.dataviews[this.view], 'get')) {
+      const dims = this.e.getBoundingClientRect(),
+        showing = this.deferred || dims.x || dims.height
+      if (showing && window.jQuery && window.DataTable && Object.hasOwn(site.dataviews[this.view], 'get')) {
         this.options.columns = this.header
         this.table = $(this.e).DataTable(this.options)
         this.update()
       } else {
-        setTimeout(queue_init_table.bind(this), 10)
+        this.deferred = true
+        setTimeout(queue_init_table.bind(this), showing ? 10 : 1000)
       }
     }
 
@@ -3664,7 +3692,7 @@ void (function () {
       }
     }
 
-    function load_data(name, url) {
+    async function load_data(name, url) {
       var f = new window.XMLHttpRequest()
       f.onreadystatechange = function () {
         if (4 === f.readyState) {
