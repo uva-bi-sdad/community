@@ -32,6 +32,7 @@ output_legend <- function(palette = "", lower = "Lower", higher = "Higher",
     ), collapse = ""),
     '<div class="legend-ticks"></div>',
     '<div class="legend-scale"></div>',
+    '<div class="legend-summary"></div>',
     paste0(
       '<div class="legend-text"><span>', lower, "</span><span></span><span>", higher, "</span></div>"
     ),

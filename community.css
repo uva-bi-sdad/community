@@ -459,6 +459,53 @@ button.btn-danger {
   height: 100%;
   display: table-cell;
 }
+.legend > div {
+  position: relative;
+}
+.legend-ticks,
+.legend-summary {
+  height: 20px;
+}
+.legend-ticks {
+  width: 100%;
+}
+.legend-tick,
+.legend-tick > div {
+  position: absolute;
+  white-space: nowrap;
+  font-size: 0.8em;
+  height: 40px;
+  width: 4px;
+  margin: 0 0 0 -2px;
+}
+.legend-tick span {
+  position: absolute;
+}
+.legend-summary span,
+.legend-ticks span {
+  left: calc(50% - 2px);
+}
+.legend-ticks span:first-child,
+.legend-summary span:last-child {
+  left: calc(50% - 1vw);
+}
+.legend-tick .summary,
+.legend-tick .entity {
+  z-index: 200;
+  position: absolute;
+  height: 12px;
+  width: 4px;
+  background-color: #000;
+  border: 1px solid #fff;
+  border-top-width: 0;
+  border-bottom-width: 0;
+}
+.legend-tick .summary {
+  top: -10px;
+}
+.legend-tick .entity {
+  bottom: 10px;
+}
 .leaflet-container {
   background: var(--background);
 }

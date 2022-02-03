@@ -143,7 +143,7 @@ void (function () {
           u.set(u.value())
         },
         map_colors: function (u) {
-          const v = site.dataviews[u.view],
+          const v = _u[u.view],
             c = valueOf(u.color || v.y),
             d = v.get.dataset(),
             ys = u.time
@@ -155,12 +155,15 @@ void (function () {
                 ? variables[c][u.view].summaries[d].time_range[1]
                 : parseInt(v.time_agg)
               : 0
+          u.parsed.view = v
+          u.parsed.palette = valueOf(v.palette) || site.settings.palette
+          u.parsed.time = ys.parsed ? ys.value() - meta.time_range[0] : 0
+          u.parsed.dataset = d
+          u.parsed.color = c
+          u.parsed.summary = variables[c][u.view].summaries[d]
           if (c && Object.hasOwn(v, 'get')) {
-            const p = valueOf(v.palette) || site.settings.palette
-            var l,
-              o,
+            var o,
               i,
-              y = ys.parsed ? ys.value() - meta.time_range[0] : 0,
               s = v.selection.all,
               k,
               n,
@@ -170,8 +173,7 @@ void (function () {
               Object.hasOwn(site.maps[u.id]._layers, d) &&
               Object.hasOwn(variables[c], u.view)
             ) {
-              l = variables[c][u.view].summaries[d]
-              o = variables[c][u.view].order[d][y]
+              o = variables[c][u.view].order[d][u.parsed.time]
               if (o) {
                 for (i = o.length, n = v.n_selected.all, rank = n; i--; ) {
                   k = o[i][0]
@@ -179,7 +181,13 @@ void (function () {
                     s[k].layer[u.id].setStyle({
                       fillOpacity: 0.7,
                       color: '#000000',
-                      fillColor: pal(s[k].data[c][y], p, l, y, n ? rank-- / n - 0.5 : 0),
+                      fillColor: pal(
+                        s[k].data[c][u.parsed.time],
+                        u.parsed.palette,
+                        u.parsed.summary,
+                        u.parsed.time,
+                        n ? rank-- / n - 0.5 : 0
+                      ),
                       weight: site.settings.polygon_outline,
                     })
                   }
@@ -725,7 +733,6 @@ void (function () {
               o.click = o.e.getAttribute('click')
               if (o.click && Object.hasOwn(_u, o.click)) o.clickto = _u[o.click]
               o.parsed = {}
-              o.config = site.plots[o.id]
               o.traces = {}
               if ('tabpanel' === o.e.parentElement.getAttribute('role')) {
                 document
@@ -746,10 +753,7 @@ void (function () {
                 if (this.e.data.length && 'hover_line' === this.e.data[this.e.data.length - 1].name)
                   Plotly.deleteTraces(this.e, this.e.data.length - 1)
               }
-              if (o.config) {
-                site.plots[o.id].u = o
-                if (o.config.subto) for (i = o.config.subto.length; i--; ) add_subs(o.config.subto[i], o)
-              }
+              if (o.options) site.plots[o.id].u = o
               for (i = site.plots[o.id].data.length; i--; ) {
                 p = site.plots[o.id].data[i]
                 for (k in p)
@@ -912,11 +916,11 @@ void (function () {
         },
         map: {
           init: function (o) {
-            o.options = site.maps[o.id].options
             o.color = o.e.getAttribute('color')
             o.time = o.e.getAttribute('color-time')
             o.click = o.e.getAttribute('click')
             if (o.click && Object.hasOwn(_u, o.click)) o.clickto = _u[o.click]
+            o.parsed = {}
             o.show = function (e) {
               if (e && e.layer && e.layer[this.id]) {
                 e.layer[this.id].setStyle({
@@ -932,8 +936,6 @@ void (function () {
                 })
               }
             }
-            if (o.options && o.options.subto)
-              for (var i = o.options.subto.length; i--; ) add_subs(o.options.subto[i], o)
             if (o.view) {
               add_dependency(o.view, {type: 'map_colors', id: o.id})
               if (_u[o.view].time_agg && Object.hasOwn(_u, _u[o.view].time_agg))
@@ -967,15 +969,10 @@ void (function () {
           init: function (o) {
             var i, n, h, p
             o.update = elements.info.update.bind(o)
-            o.options = site.info[o.id] || {}
             o.view = o.options.dataview || defaults.dataview
             o.depends = {}
             o.has_default = o.options.default && (o.options.default.title || o.options.default.body)
             add_subs(o.view, o)
-            if (o.options && o.options.subto) {
-              if ('string' === typeof o.options.subto) o.options.subto = [o.options.subto]
-              for (i = o.options.subto.length; i--; ) add_subs(o.options.subto[i], o)
-            }
             if (o.options.floating) {
               document.body.appendChild(o.e)
               o.e.classList.add('hidden')
@@ -1300,12 +1297,11 @@ void (function () {
             o.e.appendChild(document.createElement('tHead'))
             o.e.appendChild(document.createElement('tBody'))
             o.click = o.e.getAttribute('click')
-            o.options = (site.tables && site.tables[o.id]) || {}
             o.features = o.options.features
             o.update = elements.table.update.bind(o)
             o.header = []
             o.rows = {}
-            if (o.options.subs) if (!o.dataset) o.dataset = defaults.dataset
+            // if (o.options.subs) if (!o.dataset) o.dataset = defaults.dataset
             if ('tabpanel' === o.e.parentElement.getAttribute('role')) {
               document
                 .getElementById(o.e.parentElement.getAttribute('aria-labelledby'))
@@ -1335,8 +1331,6 @@ void (function () {
                 this.rows[e.features.id].style.backgroundColor = 'inherit'
               }
             }
-            if (o.options && o.options.subto)
-              for (var i = o.options.subto.length; i--; ) add_subs(o.options.subto[i], o)
             o.options.variable_source = o.options.variables
             if (o.options.variables) {
               if ('string' === typeof o.options.variables) {
@@ -1625,18 +1619,91 @@ void (function () {
         },
         legend: {
           init: function (o) {
+            add_dependency(o.view, {type: 'update', id: o.id})
+            if (Object.hasOwn(_u, _u[o.view].time_agg)) add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
             if (!o.palette)
               o.palette = Object.hasOwn(_u, 'settings.palette') ? 'settings.palette' : site.settings.palette
-            o.scale = o.e.getElementsByClassName('legend-scale')[0]
+            o.parts = {
+              ticks: o.e.getElementsByClassName('legend-ticks')[0],
+              scale: o.e.getElementsByClassName('legend-scale')[0],
+              summary: o.e.getElementsByClassName('legend-summary')[0],
+              text: o.e.lastElementChild,
+            }
             o.update = elements.legend.update.bind(o)
             o.ticks = {
-              center: document.createElement('span'),
-              min: document.createElement('span'),
-              max: document.createElement('span'),
-              entity: document.createElement('span'),
+              center: o.parts.summary.appendChild(document.createElement('div')),
+              min: o.parts.summary.appendChild(document.createElement('div')),
+              max: o.parts.summary.appendChild(document.createElement('div')),
+              entity: o.parts.ticks.appendChild(document.createElement('div')),
             }
-            o.show = function (e) {
-              console.log(e)
+            for (var t in o.ticks)
+              if (Object.hasOwn(o.ticks, t)) {
+                o.ticks[t].className = 'legend-tick'
+                o.ticks[t].appendChild(document.createElement('span'))
+                o.ticks[t].appendChild(document.createElement('span'))
+                if ('entity' === t) {
+                  o.ticks[t].lastElementChild.classList.add('entity')
+                } else {
+                  o.ticks[t].firstElementChild.classList.add('summary')
+                }
+              }
+            o.ticks.entity.style.display = 'none'
+            o.ticks.center.style.left = '50%'
+            o.ticks.max.style.left = '100%'
+            // o.ticks.max.lastElementChild.style.position = 'right'
+            o.show = function (e, c) {
+              if (Object.hasOwn(c, 'parsed')) {
+                const summary = c.parsed.summary,
+                  string = summary && Object.hasOwn(summary, 'levels'),
+                  min = summary && !string ? summary.min[c.parsed.time] : 0,
+                  max = summary ? (string ? summary.levels.length : summary.max[c.parsed.time]) : 1,
+                  center =
+                    !site.settings.color_scale_center || patterns.median.test(site.settings.color_scale_center)
+                      ? 'norm_median'
+                      : 'norm_mean',
+                  nm =
+                    summary && !string
+                      ? isNaN(summary[center][c.parsed.time])
+                        ? 0
+                        : summary[center][c.parsed.time]
+                      : 0.5,
+                  value = e.data[c.parsed.color][c.parsed.time],
+                  p =
+                    ((string ? Object.hasOwn(summary.level_ids, value) : 'number' === typeof value)
+                      ? site.settings.color_by_order
+                        ? NaN
+                        : Math.max(
+                            0,
+                            Math.min(
+                              1,
+                              site.settings.color_scale_center
+                                ? 0.5 +
+                                    (max - min
+                                      ? ((string ? summary.level_ids[value] : value) - min) / (max - min) - nm
+                                      : 0)
+                                : max - min
+                                ? ((string ? summary.level_ids[value] : value) - min) / (max - min)
+                                : 0
+                            )
+                          )
+                      : NaN) * 100
+                if (isFinite(p)) {
+                  this.ticks.entity.firstElementChild.innerText = format_value(value)
+                  this.ticks.entity.style.left = p + '%'
+                  this.ticks.entity.style.display = ''
+                } else if (site.settings.color_by_order) {
+                  const order = variables[c.parsed.color][this.view].order[c.parsed.view.get.dataset()][c.parsed.time]
+                  for (var i = order.length; i--; ) if (e.features.id === order[i][0]) break
+                  if (-1 !== i) {
+                    this.ticks.entity.firstElementChild.innerText = i
+                    this.ticks.entity.style.left = (i / (summary.n[c.parsed.time] - 1)) * 100 + '%'
+                    this.ticks.entity.style.display = ''
+                  }
+                }
+              }
+            }
+            o.revert = function () {
+              this.ticks.entity.style.display = 'none'
             }
             add_dependency(o.view, {type: 'update', id: o.id})
             if (Object.hasOwn(_u, o.palette)) {
@@ -1645,20 +1712,81 @@ void (function () {
             o.update()
           },
           update: function () {
-            const ep = valueOf(this.palette).toLowerCase(),
+            const view = _u[this.view],
+              variable = valueOf(view.y),
+              time = valueOf(view.time_agg),
+              y = time ? time - meta.time_range[0] : 0,
+              summary = variables[variable][this.view].summaries[view.get.dataset()],
+              string = summary && Object.hasOwn(summary, 'levels'),
+              min = summary && !string ? summary.min[y] : 0,
+              max = summary ? (string ? summary.levels.length : summary.max[y]) : 1,
+              center =
+                !site.settings.color_scale_center || patterns.median.test(site.settings.color_scale_center)
+                  ? 'norm_median'
+                  : 'norm_mean',
+              nm = summary && !string ? (isNaN(summary[center][y]) ? 0 : summary[center][y]) : 0.5,
+              ep = valueOf(this.palette).toLowerCase(),
               pn = Object.hasOwn(palettes, ep) ? ep : site.settings.palette,
               p = palettes[pn]
-            if (pn !== this.current_palette) {
-              this.current_palette = pn
-              this.scale.innerHTML = ''
-              for (var i = 0, n = p.length; i < n; i++) {
-                this.scale.appendChild(document.createElement('span'))
-                this.scale.lastElementChild.style.background = p[i]
+            if (view.valid && summary) {
+              if (pn !== this.current_palette) {
+                this.current_palette = pn
+                this.parts.scale.innerHTML = ''
+                for (var i = 0, n = p.length; i < n; i++) {
+                  this.parts.scale.appendChild(document.createElement('span'))
+                  this.parts.scale.lastElementChild.style.background = p[i]
+                }
+              }
+              this.ticks.min.lastElementChild.innerText = format_value(summary.min[y])
+              this.ticks.max.lastElementChild.innerText = format_value(summary.max[y])
+              if (site.settings.color_scale_center && !site.settings.color_by_order) {
+                this.ticks.center.style.display = ''
+                this.ticks.center.lastElementChild.innerText = format_value(
+                  summary[site.settings.color_scale_center][y]
+                )
+                this.parts.text.children[1].innerText =
+                  summary_levels[site.settings.summary_selection] + ' ' + site.settings.color_scale_center
+                this.ticks.min.style.left =
+                  ((string ? Object.hasOwn(summary.level_ids, min) : 'number' === typeof min)
+                    ? Math.max(
+                        0,
+                        Math.min(
+                          1,
+                          site.settings.color_scale_center
+                            ? 0.5 + (max - min ? -nm : 0)
+                            : max - min
+                            ? ((string ? summary.level_ids[min] : min) - min) / (max - min)
+                            : 0
+                        )
+                      )
+                    : NaN) *
+                    100 +
+                  '%'
+                this.ticks.max.style.left =
+                  ((string ? Object.hasOwn(summary.level_ids, max) : 'number' === typeof max)
+                    ? Math.max(
+                        0,
+                        Math.min(
+                          1,
+                          site.settings.color_scale_center
+                            ? 0.5 + (max - min ? ((string ? summary.level_ids[max] : max) - min) / (max - min) - nm : 0)
+                            : max - min
+                            ? ((string ? summary.level_ids[max] : max) - min) / (max - min)
+                            : 0
+                        )
+                      )
+                    : NaN) *
+                    100 +
+                  '%'
+              } else {
+                this.ticks.center.style.display = 'none'
+                this.parts.text.children[1].innerText = ''
+                this.ticks.min.lastElementChild.innerText = 0
+                this.ticks.max.lastElementChild.innerText = summary.n[y] - 1
+                this.ticks.min.style.left = '0px'
+                this.ticks.max.style.left = '100%'
               }
             }
-            this.e.lastElementChild.children[1].innerText = site.settings.color_scale_center
-              ? summary_levels[site.settings.summary_selection] + ' ' + site.settings.color_scale_center
-              : ''
           },
         },
         credits: {
@@ -1763,7 +1891,6 @@ void (function () {
       subs = {},
       data_maps = {},
       entities = {},
-      entitiesByName = {},
       rule_conditions = {},
       _u = {},
       _c = {},
@@ -1989,7 +2116,7 @@ void (function () {
         u.dark_theme = site.settings.theme_dark
         const s = getComputedStyle(document.body)
         if (!Object.hasOwn(u, 'style')) {
-          u.style = u.config.layout
+          u.style = u.options.layout
           if (!Object.hasOwn(u.style, 'font')) u.style.font = {}
           if (!Object.hasOwn(u.style, 'modebar')) u.style.modebar = {}
           if (!Object.hasOwn(u.style.xaxis, 'font')) u.style.xaxis.font = {}
@@ -2004,7 +2131,7 @@ void (function () {
         if (u.e._fullLayout.yaxis.showgrid) u.style.yaxis.gridcolor = s.borderColor
         u.style.xaxis.font.color = s.color
         u.style.yaxis.font.color = s.color
-        Plotly.relayout(u.e, u.config.layout)
+        Plotly.relayout(u.e, u.options.layout)
       }
     }
 
@@ -2869,12 +2996,23 @@ void (function () {
       // initialize outputs
       for (c = document.getElementsByClassName('auto-output'), i = c.length, n = 0; i--; ) {
         e = c[i]
-        n = meta.time_n
         o = {
           type: e.getAttribute('auto-type'),
           view: e.getAttribute('data-view') || defaults.dataview,
           id: e.id || 'out' + n++,
           e: e,
+        }
+        o.options = Object.hasOwn(site, o.type)
+          ? site[o.type][o.id]
+          : Object.hasOwn(site, o.type + 's')
+          ? site[o.type + 's'][o.id]
+          : void 0
+        if (o.options) {
+          if (Object.hasOwn(o.options, 'options')) o.options = o.options.options
+          if (Object.hasOwn(o.options, 'subto')) {
+            if ('string' === typeof o.options.subto) o.options.subto = [o.options.subto]
+            for (v = o.options.subto.length; v--; ) add_subs(o.options.subto[v], o)
+          }
         }
         _u[o.id] = o
         if (o.view) {
@@ -2960,7 +3098,6 @@ void (function () {
                   entities[id].features.id === entities[id].features.name)
               ) {
                 entities[id].features[f.toLowerCase()] = p[f]
-                entitiesByName[p[f]] = entities[id]
               } else {
                 entities[id].features[f] = p[f]
               }
@@ -3332,10 +3469,13 @@ void (function () {
         }
     }
 
-    function map_entities(g) {
+    async function map_entities(g) {
+      const bgc = site.settings.theme_dark ? '#666' : '#000'
       var id,
         f,
         k,
+        ls,
+        l,
         overwrite = false
       if (Object.hasOwn(site.data, g) && !init_log[g]) {
         for (id in site.data[g]) {
@@ -3352,14 +3492,25 @@ void (function () {
                 if ('id' === k || (Object.hasOwn(f, k) && (overwrite || !Object.hasOwn(entities[id].features, k))))
                   entities[id].features[k] = f[k]
               entities[id].summary = {}
+              if (Object.hasOwn(entities[id], 'layer') && site.settings.background_shapes) {
+                ls = entities[id].layer
+                for (l in ls)
+                  if (Object.hasOwn(_u, l) && _u[l].displaying && g === _u[l].options.background_shapes) {
+                    ls[l].addTo(_u[l].displaying)
+                    ls[l].options.interactive = false
+                    ls[l].bringToBack()
+                    ls[l].setStyle({
+                      fillOpacity: 0,
+                      color: bgc,
+                      weight: 1,
+                    })
+                  }
+              }
             } else {
               entities[id] = {group: g, data: site.data[g][id], variables: variable_info, features: f, summary: {}}
             }
-            if (f) {
-              entitiesByName[f.name] = entities[id]
-              if (Object.hasOwn(f, 'district') && id.length > 4) {
-                f.county = id.substring(0, 5)
-              }
+            if (f && Object.hasOwn(f, 'district') && id.length > 4) {
+              f.county = id.substring(0, 5)
             }
           }
         }
@@ -3620,7 +3771,7 @@ void (function () {
       const dims = this.e.getBoundingClientRect(),
         showing = this.deferred || dims.x || dims.height
       if (showing && window.Plotly) {
-        Plotly.newPlot(this.e, this.config)
+        Plotly.newPlot(this.e, this.options)
         this.e
           .on('plotly_hover', elements.plot.mouseover.bind(this))
           .on('plotly_unhover', elements.plot.mouseout.bind(this))
@@ -3630,7 +3781,7 @@ void (function () {
         window.requestAnimationFrame(trigger_resize)
       } else {
         this.deferred = true
-        setTimeout(queue_init_plot.bind(this), showing ? 10 : 1000)
+        setTimeout(queue_init_plot.bind(this), showing ? 10 : 3000)
       }
     }
 
@@ -3667,7 +3818,7 @@ void (function () {
         }
       } else {
         this.deferred = true
-        setTimeout(queue_init_map.bind(this), showing ? 10 : 1000)
+        setTimeout(queue_init_map.bind(this), showing ? 10 : 3000)
       }
     }
 
@@ -3680,7 +3831,7 @@ void (function () {
         this.update()
       } else {
         this.deferred = true
-        setTimeout(queue_init_table.bind(this), showing ? 10 : 1000)
+        setTimeout(queue_init_table.bind(this), showing ? 10 : 3000)
       }
     }
 

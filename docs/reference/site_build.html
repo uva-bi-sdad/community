@@ -65,7 +65,8 @@
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">site_build</span><span class="op">(</span><span class="va">dir</span>, file <span class="op">=</span> <span class="st">"site.R"</span>, outdir <span class="op">=</span> <span class="st">"docs"</span>, name <span class="op">=</span> <span class="st">"index.html"</span>,
   variables <span class="op">=</span> <span class="cn">NULL</span>, options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, bundle_data <span class="op">=</span> <span class="cn">FALSE</span>,
-  open_after <span class="op">=</span> <span class="cn">FALSE</span>, aggregate <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+  load_screen <span class="op">=</span> <span class="cn">TRUE</span>, open_after <span class="op">=</span> <span class="cn">FALSE</span>, aggregate <span class="op">=</span> <span class="cn">TRUE</span>,
+  force <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -88,6 +89,8 @@ which can be edited by hand.</p></dd>
 <dt>bundle_data</dt>
 <dd><p>Logical; if <code>TRUE</code>, will write the data to the site file; useful when
 running the site locally without server. Otherwise, the data will be loaded separately through an http request.</p></dd>
+<dt>load_screen</dt>
+<dd><p>Logical; if <code>TRUE</code>, will hide the page before it loads with a grey screen.</p></dd>
 <dt>open_after</dt>
 <dd><p>Logical; if <code>TRUE</code>, will open the site in a browser after it is built.</p></dd>
 <dt>aggregate</dt>
