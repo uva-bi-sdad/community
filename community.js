@@ -1647,10 +1647,10 @@ void (function () {
                   o.ticks[t].firstElementChild.classList.add('summary')
                 }
               }
-            o.ticks.entity.style.display = 'none'
+            o.ticks.entity.firstElementChild.classList.add('hidden')
+            o.ticks.entity.lastElementChild.classList.add('hidden')
             o.ticks.center.style.left = '50%'
             o.ticks.max.style.left = '100%'
-            // o.ticks.max.lastElementChild.style.position = 'right'
             o.show = function (e, c) {
               if (Object.hasOwn(c, 'parsed')) {
                 const summary = c.parsed.summary,
@@ -1688,22 +1688,25 @@ void (function () {
                           )
                       : NaN) * 100
                 if (isFinite(p)) {
+                  this.ticks.entity.firstElementChild.classList.remove('hidden')
+                  this.ticks.entity.lastElementChild.classList.remove('hidden')
                   this.ticks.entity.firstElementChild.innerText = format_value(value)
                   this.ticks.entity.style.left = p + '%'
-                  this.ticks.entity.style.display = ''
                 } else if (site.settings.color_by_order) {
                   const order = variables[c.parsed.color][this.view].order[c.parsed.view.get.dataset()][c.parsed.time]
                   for (var i = order.length; i--; ) if (e.features.id === order[i][0]) break
                   if (-1 !== i) {
+                    this.ticks.entity.firstElementChild.classList.remove('hidden')
+                    this.ticks.entity.lastElementChild.classList.remove('hidden')
                     this.ticks.entity.firstElementChild.innerText = i
                     this.ticks.entity.style.left = (i / (summary.n[c.parsed.time] - 1)) * 100 + '%'
-                    this.ticks.entity.style.display = ''
                   }
                 }
               }
             }
             o.revert = function () {
-              this.ticks.entity.style.display = 'none'
+              this.ticks.entity.firstElementChild.classList.add('hidden')
+              this.ticks.entity.lastElementChild.classList.add('hidden')
             }
             add_dependency(o.view, {type: 'update', id: o.id})
             if (Object.hasOwn(_u, o.palette)) {
@@ -1739,13 +1742,18 @@ void (function () {
               }
               this.ticks.min.lastElementChild.innerText = format_value(summary.min[y])
               this.ticks.max.lastElementChild.innerText = format_value(summary.max[y])
-              if (site.settings.color_scale_center && !site.settings.color_by_order) {
-                this.ticks.center.style.display = ''
-                this.ticks.center.lastElementChild.innerText = format_value(
-                  summary[site.settings.color_scale_center][y]
-                )
-                this.parts.text.children[1].innerText =
-                  summary_levels[site.settings.summary_selection] + ' ' + site.settings.color_scale_center
+              if (!site.settings.color_by_order) {
+                if (site.settings.color_scale_center) {
+                  this.ticks.center.style.display = ''
+                  this.ticks.center.lastElementChild.innerText = format_value(
+                    summary[site.settings.color_scale_center][y]
+                  )
+                  this.parts.text.children[1].innerText =
+                    summary_levels[site.settings.summary_selection] + ' ' + site.settings.color_scale_center
+                } else {
+                  this.ticks.center.style.display = 'none'
+                  this.parts.text.children[1].innerText = ''
+                }
                 this.ticks.min.style.left =
                   ((string ? Object.hasOwn(summary.level_ids, min) : 'number' === typeof min)
                     ? Math.max(
@@ -1782,7 +1790,7 @@ void (function () {
                 this.ticks.center.style.display = 'none'
                 this.parts.text.children[1].innerText = ''
                 this.ticks.min.lastElementChild.innerText = 0
-                this.ticks.max.lastElementChild.innerText = summary.n[y] - 1
+                this.ticks.max.lastElementChild.innerText = summary.n[y] ? summary.n[y] - 1 : 0
                 this.ticks.min.style.left = '0px'
                 this.ticks.max.style.left = '100%'
               }

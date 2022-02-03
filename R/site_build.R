@@ -79,7 +79,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
               data <- data[order(data[[d$time[[1]]]]), ]
             }
             if (length(d$ids) && d$ids[[1]]$variable %in% colnames(data)) {
-              ids <- data[[d$ids[[1]]$variable]]
+              ids <- format(data[[d$ids[[1]]$variable]], trim = TRUE, scientific = FALSE)
               if (is.null(time) && anyDuplicated(ids)) {
                 cli_abort(paste(
                   "no time variable was specified, yet {?an id was/ids were} duplicated:",

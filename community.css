@@ -469,14 +469,14 @@ button.btn-danger {
 .legend-ticks {
   width: 100%;
 }
-.legend-tick,
-.legend-tick > div {
+.legend-tick {
   position: absolute;
   white-space: nowrap;
   font-size: 0.8em;
   height: 40px;
   width: 4px;
   margin: 0 0 0 -2px;
+  transition: left cubic-bezier(0.54, 1.28, 0.27, 1) 500ms;
 }
 .legend-tick span {
   position: absolute;
