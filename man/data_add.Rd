@@ -5,7 +5,8 @@
 \title{Adds documentation of a dataset to a datapackage}
 \usage{
 data_add(path, meta = list(), package_path = "datapackage.json",
-  dir = ".", write = TRUE, refresh = FALSE, sha = "512")
+  dir = ".", write = TRUE, refresh = FALSE, sha = "512",
+  clean = FALSE, open_after = FALSE)
 }
 \arguments{
 \item{path}{A character vector of paths to plain-text tabular data files.}
@@ -23,6 +24,10 @@ data_add(path, meta = list(), package_path = "datapackage.json",
 
 \item{sha}{A number specifying the Secure Hash Algorithm function,
 if \code{openssl} is available (checked with \code{Sys.which('openssl')}).}
+
+\item{clean}{Logical; if \code{TRUE}, strips special characters before saving.}
+
+\item{open_after}{Logical; if \code{TRUE}, opens the written datapackage after saving.}
 }
 \value{
 An invisible version of the metadata, which is also added to \code{datapackage.json} if \code{write = TRUE}.

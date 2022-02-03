@@ -11,6 +11,8 @@
 #' @param refresh Logical; if \code{TRUE}, will remove any existing dataset information.
 #' @param sha A number specifying the Secure Hash Algorithm function,
 #' if \code{openssl} is available (checked with \code{Sys.which('openssl')}).
+#' @param clean Logical; if \code{TRUE}, strips special characters before saving.
+#' @param open_after Logical; if \code{TRUE}, opens the written datapackage after saving.
 #' @details
 #' \code{meta} should be a list with unnamed entries for entry in \code{path}, and each entry can include a named entry
 #' for any of these:
@@ -45,7 +47,7 @@
 #' @export
 
 data_add <- function(path, meta = list(), package_path = "datapackage.json", dir = ".", write = TRUE,
-                     refresh = FALSE, sha = "512") {
+                     refresh = FALSE, sha = "512", clean = FALSE, open_after = FALSE) {
   if (missing(path)) cli_abort("{.arg path} must be specified")
   if (check_template("site", dir = dir)$status[["strict"]]) dir <- paste0(dir, "/docs/data")
   opath <- path
@@ -192,10 +194,14 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       package$resources <- package$resources[!duplicated(names)]
     }
     package_path <- if (is.character(package_path)) package_path else "datapackage.json"
+    if (clean) {
+      cf <- lma_dict("special", perl = TRUE, as.function = gsub)
+      package <- fromJSON(cf(toJSON(package, auto_unbox = TRUE)))
+    }
     write_json(package, package_path, pretty = TRUE, auto_unbox = TRUE, digits = 6)
     if (interactive()) {
       cli_bullets(c(v = "added resource to {.file datapackage.json}:", "*" = paste0("{.path ", package_path, "}")))
-      navigateToFile(package_path)
+      if (open_after) navigateToFile(package_path)
     }
   }
   invisible(metadata)

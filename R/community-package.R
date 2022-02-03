@@ -7,6 +7,7 @@
 #' @importFrom sf st_read st_write
 #' @importFrom stringi stri_enc_detect
 #' @importFrom stats sd
+#' @importFrom lingmatch lma_dict
 #' @import Matrix
 #' @keywords internal
 "_PACKAGE"

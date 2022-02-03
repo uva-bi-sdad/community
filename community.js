@@ -42,7 +42,7 @@ void (function () {
         levels: /^lev/,
         ids: /^ids/,
         minmax: /^m[inax]{2}$/,
-        int_types: /^(?:count|year)$/,
+        int_types: /^(?:count|year|integer)$/,
         end_punct: /[.?!]$/,
         mustache: /\{(.*?)\}/g,
         measure_name: /(?:^measure|_name)$/,
@@ -1696,6 +1696,7 @@ void (function () {
                   const order = variables[c.parsed.color][this.view].order[c.parsed.view.get.dataset()][c.parsed.time]
                   for (var i = order.length; i--; ) if (e.features.id === order[i][0]) break
                   if (-1 !== i) {
+                    i = i - summary.missing[c.parsed.time]
                     this.ticks.entity.firstElementChild.classList.remove('hidden')
                     this.ticks.entity.lastElementChild.classList.remove('hidden')
                     this.ticks.entity.firstElementChild.innerText = i

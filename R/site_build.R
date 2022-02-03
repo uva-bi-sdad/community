@@ -199,9 +199,9 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     list(settings = options)
   }
   defaults <- list(
-    digits = 3, summary_selection = "all", color_by_order = FALSE, boxplots = TRUE,
+    digits = 2, summary_selection = "all", color_by_order = FALSE, boxplots = TRUE,
     theme_dark = FALSE, partial_init = TRUE, palette = "rdylbu7", hide_url_parameters = FALSE,
-    background_shapes = TRUE, iqr_box = FALSE, polygon_outline = 2, color_scale_center = "median",
+    background_shapes = TRUE, iqr_box = TRUE, polygon_outline = 1.5, color_scale_center = "median",
     table_autoscroll = TRUE, table_scroll_behavior = "smooth"
   )
   for (s in names(defaults)) {
