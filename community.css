@@ -480,6 +480,7 @@ button.btn-danger {
 }
 .legend-tick span {
   position: absolute;
+  background-color: var(--background);
 }
 .legend-summary span,
 .legend-ticks span {
@@ -487,7 +488,8 @@ button.btn-danger {
 }
 .legend-ticks span:first-child,
 .legend-summary span:last-child {
-  left: calc(50% - 1vw);
+  left: calc(50% - 1.5vw);
+  padding: 0 4px;
 }
 .legend-tick .summary,
 .legend-tick .entity {

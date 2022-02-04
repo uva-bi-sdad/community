@@ -79,7 +79,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
               data <- data[order(data[[d$time[[1]]]]), ]
             }
             if (length(d$ids) && d$ids[[1]]$variable %in% colnames(data)) {
-              ids <- format(data[[d$ids[[1]]$variable]], trim = TRUE, scientific = FALSE)
+              ids <- trimws(format(data[[d$ids[[1]]$variable]], scientific = FALSE))
               if (is.null(time) && anyDuplicated(ids)) {
                 cli_abort(paste(
                   "no time variable was specified, yet {?an id was/ids were} duplicated:",
@@ -119,7 +119,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
                 }
               }
               cids <- NULL
-              for (pname in names(previous_data)) {
+              for (pname in rev(names(previous_data))) {
                 if (!is.null(ids_map[[pname]][[1]][[d$name]])) {
                   child <- pname
                   cids <- vapply(ids_map[[pname]], function(e) {
@@ -141,18 +141,18 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
                       cd <- do.call(rbind, previous_data[[child]][children])
                       if (is.null(time)) {
                         aggs <- vapply(cd, function(v) if (is.numeric(v) && !all(is.na(v))) mean(v, na.rm = TRUE) else NA, 0)
-                        aggs <- aggs[!is.na(aggs) & names(aggs) %in% cn]
+                        aggs <- aggs[!is.na(aggs) & names(aggs) %in% cn & names(aggs) != "time"]
                         sdata[[id]] <- as.data.frame(sdata[[id]])
                         aggs <- aggs[is.na(sdata[[id]][, names(aggs)])]
                         if (length(aggs)) sdata[[id]][, names(aggs)] <- aggs
                       } else {
                         cd <- split(cd, cd[[time]])
+                        sdata[[id]] <- as.data.frame(sdata[[id]])
                         for (ct in names(cd)) {
                           aggs <- vapply(cd[[ct]], function(v) if (is.numeric(v) && !all(is.na(v))) mean(v, na.rm = TRUE) else NA, 0)
                           aggs <- aggs[!is.na(aggs) & names(aggs) %in% cn]
                           if (length(aggs)) {
                             su <- sdata[[id]][[time]] == ct
-                            sdata[[id]] <- as.data.frame(sdata[[id]])
                             aggs <- aggs[is.na(sdata[[id]][su, names(aggs)])]
                             if (length(aggs)) sdata[[id]][su, names(aggs)] <- aggs
                           }

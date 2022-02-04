@@ -87,7 +87,7 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
   vars <- c(vars, "file")
   data <- do.call(rbind, lapply(data, function(d) {
     d <- d[, vars, with = FALSE]
-    if (id %in% vars) d[[id]] <- as.character(d[[id]])
+    if (id %in% vars) d[[id]] <- trimws(format(d[[id]], scientific = FALSE))
     d
   }))
   cn <- colnames(data)
@@ -147,11 +147,14 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
     d <- if (dataset %in% vars) data[data[[dataset]] == dn] else data
     do.call(rbind, lapply(unique(d[[id]]), function(e) {
       ed <- d[d[[id]] == e]
-      r <- data.frame(ID = rep(as.character(e), length(times)), time = times)
-      rownames(r) <- times
+      n <- length(times)
+      r <- data.frame(
+        ID = rep(as.character(e), n), time = times, check.names = FALSE,
+        matrix(NA, n, length(variables), dimnames = list(times, variables))
+      )
       for (v in variables) {
-        r[[v]] <- NA
-        su <- ed[[value_name]] == v & !is.na(ed[[value]])
+        su <- ed[[value_name]] == v
+        su[su] <- !is.na(ed[[value]][su])
         if (sum(su)) {
           vals <- ed[su]
           r[as.character(vals[[time]]), v] <- vals[[value]]
