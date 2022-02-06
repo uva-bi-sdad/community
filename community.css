@@ -434,7 +434,7 @@ button.btn-danger {
   transition: top 400ms, right 400ms, bottom 400ms, left 400ms;
 }
 .legend {
-  padding: 0.5em;
+  padding: 0.5em 1.5em;
   text-align: center;
 }
 .legend-text {
@@ -488,7 +488,6 @@ button.btn-danger {
 }
 .legend-ticks span:first-child,
 .legend-summary span:last-child {
-  left: calc(50% - 1.5vw);
   padding: 0 4px;
 }
 .legend-tick .summary,

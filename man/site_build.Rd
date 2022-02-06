@@ -6,8 +6,7 @@
 \usage{
 site_build(dir, file = "site.R", outdir = "docs", name = "index.html",
   variables = NULL, options = list(), bundle_data = FALSE,
-  load_screen = TRUE, open_after = FALSE, aggregate = TRUE,
-  force = FALSE)
+  open_after = FALSE, aggregate = TRUE, force = FALSE)
 }
 \arguments{
 \item{dir}{Path to the site project directory.}
@@ -22,13 +21,11 @@ served from).}
 \item{variables}{A character vector of variable names to include from the data. If no specified,
 all variables are included.}
 
-\item{options}{A list with options to be passed to the site. These will be written to \code{settings.js},
+\item{options}{A list with options to be passed to the site. These will be written to \code{docs/settings.json},
 which can be edited by hand.}
 
 \item{bundle_data}{Logical; if \code{TRUE}, will write the data to the site file; useful when
 running the site locally without server. Otherwise, the data will be loaded separately through an http request.}
-
-\item{load_screen}{Logical; if \code{TRUE}, will hide the page before it loads with a grey screen.}
 
 \item{open_after}{Logical; if \code{TRUE}, will open the site in a browser after it is built.}
 

@@ -5,19 +5,14 @@ test_that("parse cases properly", {
       states = list(
         list(
           condition = list(
-            list(id = "a", type = "!", value = "")
+            list(id = "a", type = "!", value = "", any = TRUE),
+            list(id = "b", type = "", value = "", any = TRUE)
           ),
           value = 0
         ),
         list(
           condition = list(
-            list(id = "b", type = "", value = "")
-          ),
-          value = 0
-        ),
-        list(
-          condition = list(
-            list(id = "c", type = "=", value = 1)
+            list(id = "c", type = "=", value = 1, any = FALSE)
           ),
           value = 1
         )
@@ -25,8 +20,7 @@ test_that("parse cases properly", {
       default = ""
     ),
     input_variable("variable", list(
-      "!a" = 0,
-      "b" = 0,
+      "!a || b" = 0,
       "c == 1" = 1
     ))
   )

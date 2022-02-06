@@ -9,11 +9,10 @@
 #' @param name Name of the HTML file to be created.
 #' @param variables A character vector of variable names to include from the data. If no specified,
 #' all variables are included.
-#' @param options A list with options to be passed to the site. These will be written to \code{settings.js},
+#' @param options A list with options to be passed to the site. These will be written to \code{docs/settings.json},
 #' which can be edited by hand.
 #' @param bundle_data Logical; if \code{TRUE}, will write the data to the site file; useful when
 #' running the site locally without server. Otherwise, the data will be loaded separately through an http request.
-#' @param load_screen Logical; if \code{TRUE}, will hide the page before it loads with a grey screen.
 #' @param open_after Logical; if \code{TRUE}, will open the site in a browser after it is built.
 #' @param aggregate Logical; if \code{TRUE}, and there is a larger datasets with IDs that partially match
 #' IDs in a smaller dataset or that has a map to those IDs, and there are NAs in the smaller dataset, will
@@ -33,7 +32,7 @@
 #' @export
 
 site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html", variables = NULL,
-                       options = list(), bundle_data = FALSE, load_screen = TRUE, open_after = FALSE, aggregate = TRUE, force = FALSE) {
+                       options = list(), bundle_data = FALSE, open_after = FALSE, aggregate = TRUE, force = FALSE) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., dir = ".")')
   page <- paste0(dir, "/", file)
   if (!file.exists(page)) cli_abort("{.file {page}} does not exist")
@@ -55,7 +54,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
       for (oi in seq_along(dataset_order)) {
         i <- dataset_order[oi]
         d <- meta$resources[[i]]
-        if (!is.null(variables)) {
+        if (length(variables)) {
           temp <- list()
           for (v in d$schema$fields) if (v$name %in% vars) temp[[v$name]] <- v
           vars <- vars[vars %in% names(temp)]
@@ -165,7 +164,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
             }
             if (fixed_ids) id_lengths[d$name] <- pn
             previous_data[[d$name]] <- sdata
-            if (!is.null(vars)) {
+            if (length(vars)) {
               sdata <- lapply(sdata, function(d) {
                 if (class(d)[1] == "data.table") d[, vars, with = FALSE] else d[, vars]
               })
@@ -192,9 +191,9 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
       files = vapply(info, "[[", "", "filename")
     )
   }
-  path <- paste0(dir, "/docs/settings.js")
+  path <- paste0(dir, "/docs/settings.json")
   settings <- if (file.exists(path) && file.size(path)) {
-    fromJSON(sub("^[^{]*", "", paste(readLines(path, warn = FALSE), collapse = "")))
+    read_json(path, auto_unbox = TRUE)
   } else {
     list(settings = options)
   }
@@ -213,11 +212,16 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
   times <- times[times != ""]
   variables <- unique(c(times, variables))
   if (!is.null(variables)) variables <- variables[variables != "_references"]
-  if (!missing(aggregate) || !is.null(settings$metadata) && !is.null(settings$metadata$variables) &&
-    !identical(settings$metadata$variables, variables)) {
+  if (!missing(aggregate) || !is.null(settings$metadata) && length(settings$metadata$variables) &&
+    !identical(as.character(settings$metadata$variables), variables)) {
     force <- TRUE
   }
   settings$metadata <- data_preprocess(aggregate)
+  if (!length(times)) {
+    times <- unname(vapply(settings$metadata$info, function(d) if (length(d$time)) d$time else "", ""))
+    times <- times[times != ""]
+    settings$metadata$variables <- unique(c(times, variables))
+  }
   parts$dependencies <- list(
     base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.min.css"),
     base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js"),
@@ -264,10 +268,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
       }
     }
   }
-  writeLines(
-    paste0("const site = ", toJSON(settings, pretty = TRUE, auto_unbox = TRUE)),
-    paste0(dir, "/docs/settings.js")
-  )
+  write_json(settings, paste0(dir, "/docs/settings.json"), pretty = TRUE, auto_unbox = TRUE)
   r <- c(
     "<!doctype html>",
     paste("<!-- page generated from", sub("^.*/", "", file), "by community::site_build() -->"),
@@ -276,10 +277,14 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />',
     '<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />',
     '<meta name="viewport" content="width=device-width,initial-scale=1" />',
-    '<script type="application/javascript" src="settings.js"></script>',
+    paste0(
+      '<script type="application/javascript">\nconst site = ',
+      toJSON(settings, auto_unbox = TRUE),
+      "\n</script>"
+    ),
     if (bundle_data) {
       paste0(
-        '<script type="application/javascript">\nsite.data = {',
+        '<script type="application/javascript">\nsite.data = {\n',
         paste(
           vapply(settings$metadata$datasets, function(f) {
             paste0('"', f, '": ', paste(
@@ -298,8 +303,13 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
         paste(c(
           "<", if (d$type == "script") 'script type="application/javascript" src="' else 'link href="', d$src, '"',
           if (!is.null(d$hash)) c(' integrity="', d$hash, '"', ' crossorigin="anonymous"'),
-          if (d$type == "stylesheet") ' rel="stylesheet" media="all"',
-          " ", if (!is.null(d$loading)) d$loading else "async", ">", if (d$type == "script") "</script>"
+          if (d$type == "stylesheet") {
+            c(
+              ' rel="', if (!is.null(d$loading)) d$loading else "preload", '" as="style" media="all"',
+              ' onload="this.onload=null;this.rel=\'stylesheet\'"'
+            )
+          },
+          if (d$type == "script") c(" ", if (!is.null(d$loading)) d$loading else "async"), ">", if (d$type == "script") "</script>"
         ), collapse = "")
       }
     })),
@@ -307,6 +317,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     unlist(parts$head[!duplicated(names(parts$head))], use.names = FALSE),
     "</head>",
     "<body>",
+    '<div id="site_wrap" style="visibility: hidden">',
     if (!is.null(parts$header)) parts$header,
     if (!is.null(parts$body)) parts$body,
     if (!is.null(parts$content)) {
@@ -316,15 +327,13 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
         "</div>"
       )
     },
-    if (load_screen) {
-      paste0(
-        '<div id="load_screen" style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; background-color: ',
-        'inherit; z-index: 999" class="show fade">',
-        '<p style="width: 100%; text-align: center; padding: 5em"></p>',
-        '<noscript style="width: 100%; text-align: center; padding: 5em">Please enable JavaScript to view this site.</noscript>',
-        "</div>"
-      )
-    },
+    "</div>",
+    paste0(
+      '<div id="load_screen" style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; background-color: inherit">',
+      '<p style="width: 100%; text-align: center; padding: 5em"></p>',
+      '<noscript style="width: 100%; text-align: center; padding: 5em">Please enable JavaScript to view this site.</noscript>',
+      "</div>"
+    ),
     parts$script,
     "</body>",
     "</html>"

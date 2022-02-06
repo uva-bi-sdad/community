@@ -21,7 +21,7 @@ test_that("produces expected datasets", {
   expect_true(all(file.exists(paths)))
   b <- rep(NA, nrow(r$a))
   b[c(4, 6, 8)] <- f1[c(4, 3, 5), "value"]
-  expect_equal(r, lapply(list(
+  expect_equal(r, list(
     a = data.frame(
       ID = rep(as.character(1:3), each = 3),
       time = rep(1:3, 3),
@@ -36,8 +36,5 @@ test_that("produces expected datasets", {
       b = c(NA, NA, f2[3:4, "value"], NA, NA),
       c = c(rep(NA, 4), f2[5, "value"], NA)
     )
-  ), function(d) {
-    colnames(d)[3:5] <- paste0(":", colnames(d)[3:5])
-    d
-  }))
+  ))
 })

@@ -23,8 +23,6 @@ output_legend(palette = "", lower = "Lower", higher = "Higher",
 \item{subto}{A vector of output IDs to receive hover events from.}
 
 \item{class}{Class names to add to the legend element.}
-
-\item{center}{Text to appear at the midpoint of the legend, labeling central values.}
 }
 \value{
 A character vector of the contents to be added.

@@ -50,7 +50,6 @@ input_select <- function(label, options, default = -1, display = options, id = l
       if (!is.null(depends)) paste0(' depends="', depends, '"'),
       if (!is.null(dataset)) paste0(' dataset="', dataset, '"'),
       if (!is.null(variable)) paste0(' variable="', variable, '"'),
-      if (!is.null(variable)) paste0(' variable="', variable, '"'),
       if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
       ">"
     ),
