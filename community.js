@@ -178,7 +178,7 @@ void (function () {
                 if (o) {
                   for (i = o.length, n = v.n_selected.all, rank = n; i--; ) {
                     k = o[i][0]
-                    if (Object.hasOwn(s, k) && Object.hasOwn(variables[c], u.view) && s[k].layer[u.id]) {
+                    if (Object.hasOwn(s, k) && Object.hasOwn(variables[c], u.view) && Object.hasOwn(s[k], 'layer') && s[k].layer[u.id]) {
                       s[k].layer[u.id].setStyle({
                         fillOpacity: 0.7,
                         color: '#000000',
@@ -1078,7 +1078,7 @@ void (function () {
                           return (
                             format_value(
                               entity.data[this.parsed.data][this.parent.time],
-                              info ? patterns.int_types.test(info.type) : true
+                              info && info.type ? patterns.int_types.test(info.type) : true
                             ) + (info && 'percent' === info.type ? '%' : '')
                           )
                         }
@@ -1405,7 +1405,7 @@ void (function () {
                       p = variables[k].datasets[0]
                     return d
                       ? 'number' === typeof d[this]
-                        ? format_value(d[this], patterns.int_types.test(variables[k].info[p].type))
+                        ? format_value(d[this], row.int)
                         : d[this]
                       : 'NA'
                   }.bind(n),
@@ -1436,7 +1436,7 @@ void (function () {
                         data: 'entity.' + c.source + '.' + c.name.replace(patterns.all_periods, '\\.'),
                         render: function (d, type, row) {
                           const i = 'data' === this.c.source ? row.time : row.variable
-                          return d ? ('number' === typeof d[i] ? format_value(d[i]) : d[i]) : 'NA'
+                          return d ? ('number' === typeof d[i] ? format_value(d[i], row.int) : d[i]) : 'NA'
                         }.bind({o, c}),
                       }
                 )
@@ -1449,7 +1449,7 @@ void (function () {
                   title: 'Year',
                   data: 'entity.data.time',
                   render: function (d, type, row) {
-                    return d ? ('number' === typeof d[row.time] ? format_value(d[row.time], true) : d[row.time]) : 'NA'
+                    return d ? ('number' === typeof d[row.time] ? format_value(d[row.time], row.int) : d[row.time]) : 'NA'
                   },
                 })
               }
@@ -1478,12 +1478,7 @@ void (function () {
                 render: function (d, type, row) {
                   return d
                     ? 'number' === typeof d[row.time]
-                      ? format_value(
-                          d[row.time],
-                          patterns.int_types.test(
-                            variables[row.variable].info[variables[row.variable].datasets[0]].type
-                          )
-                        )
+                      ? format_value(d[row.time], row.int)
                       : d[row.time]
                     : ''
                 },
@@ -1548,6 +1543,7 @@ void (function () {
                                 .add({
                                   variable: vn,
                                   entity: v.selection.all[k],
+                                  int: patterns.int_types.test(variable_info[vn].type),
                                 })
                                 .node()
                               this.rows[k].entityId = k
@@ -1559,6 +1555,7 @@ void (function () {
                                   variable: vn,
                                   time: i,
                                   entity: v.selection.all[k],
+                                  int: patterns.int_types.test(variable_info[vn].type),
                                 })
                                 .node()
                               this.rows[k].entityId = k
@@ -1594,6 +1591,7 @@ void (function () {
                                       time: ci,
                                       variable: this.variable,
                                       entity: s,
+                                      int: patterns.int_types.test(variable_info[this.variable].type),
                                     })
                                     .node()
                                   o.rows[s.features.id].entityId = s.features.id
@@ -1604,6 +1602,7 @@ void (function () {
                                     time: 0,
                                     variable: this.variable,
                                     entity: s,
+                                    int: patterns.int_types.test(variable_info[this.variable].type),
                                   })
                                   .node()
                                 o.rows[s.features.id].entityId = s.features.id
@@ -1622,6 +1621,7 @@ void (function () {
                                 .add({
                                   variable: vn,
                                   entity: v.selection.all[k],
+                                  int: patterns.int_types.test(variable_info[vn].type),
                                 })
                                 .node()
                               this.rows[k].entityId = k
@@ -1736,7 +1736,7 @@ void (function () {
                 if (isFinite(p)) {
                   this.ticks.entity.firstElementChild.classList.remove('hidden')
                   this.ticks.entity.lastElementChild.classList.remove('hidden')
-                  this.ticks.entity.firstElementChild.innerText = format_value(value)
+                  this.ticks.entity.firstElementChild.innerText = format_value(value, this.integer)
                   this.ticks.entity.firstElementChild.style.left =
                     -this.ticks.entity.firstElementChild.getBoundingClientRect().width / 2 + 'px'
                   this.ticks.entity.style.left = p + '%'
@@ -1785,6 +1785,7 @@ void (function () {
               pn = Object.hasOwn(palettes, ep) ? ep : site.settings.palette,
               p = palettes[pn]
             if (view.valid && summary) {
+              this.integer = variable_info[variable] && variable_info[variable].type ? patterns.int_types.test(variable_info[variable].type) : true
               if (pn !== this.current_palette) {
                 this.current_palette = pn
                 this.parts.scale.innerHTML = ''
@@ -1796,13 +1797,13 @@ void (function () {
               if (site.settings.color_by_order) {
                 this.ticks.center.classList.add('hidden')
                 this.parts.text.children[1].innerText = ''
-                this.ticks.min.lastElementChild.innerText = 1
+                this.ticks.min.lastElementChild.innerText = summary.n[y] ? 1 : 0
                 this.ticks.max.lastElementChild.innerText = summary.n[y] ? summary.n[y] : 0
                 this.ticks.min.style.left = '0px'
                 this.ticks.max.style.left = '100%'
               } else {
-                this.ticks.min.lastElementChild.innerText = format_value(summary.min[y])
-                this.ticks.max.lastElementChild.innerText = format_value(summary.max[y])
+                this.ticks.min.lastElementChild.innerText = summary.n[y] ? isFinite(summary.min[y]) ? format_value(summary.min[y], this.integer) : 'unknown' : 'unknown'
+                this.ticks.max.lastElementChild.innerText = summary.n[y] ? isFinite(summary.max[y]) ? format_value(summary.max[y], this.integer) : 'unknown' : 'unknown'
                 if (site.settings.color_scale_center) {
                   this.ticks.center.classList.remove('hidden')
                   this.ticks.center.lastElementChild.innerText = format_value(
@@ -1834,7 +1835,7 @@ void (function () {
                   '%'
                 this.ticks.max.style.left =
                   ((string ? Object.hasOwn(summary.level_ids, max) : 'number' === typeof max)
-                    ? Math.max(
+                    ? isFinite(max - min) ? Math.max(
                         0,
                         Math.min(
                           1,
@@ -1844,7 +1845,7 @@ void (function () {
                             ? ((string ? summary.level_ids[max] : max) - min) / (max - min)
                             : 0
                         )
-                      )
+                      ) : .5
                     : NaN) *
                     100 +
                   '%'
@@ -2062,7 +2063,7 @@ void (function () {
           return r[0] + ('.' + (1 === r.length ? '' : r[1]) + '0000000000').substring(0, site.settings.digits + 1)
         } else return Math.round(v)
       } else {
-        return 'NA' === v ? 'missing' : v
+        return 'NA' === v ? 'unknown' : v
       }
     }
 
