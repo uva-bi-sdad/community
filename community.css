@@ -94,7 +94,8 @@ input {
 .form-select,
 .form-control,
 .form-control:focus,
-body::-webkit-scrollbar-track {
+body::-webkit-scrollbar-track,
+.dataTables_wrapper .dataTables_length select {
   background-color: var(--background-input);
   border-color: var(--background-border);
   color: var(--body-text);
@@ -191,6 +192,9 @@ div[class^='col-'] {
 }
 .compact .row {
   padding: 0;
+}
+p.compact {
+  margin: 0;
 }
 .footer {
   display: block;
@@ -592,6 +596,29 @@ table.dataTable.compact tbody td {
   padding: 0 0.2em;
 }
 
+.number-input-row {
+  display: flex;
+  text-align: center;
+}
+.number-input-row label {
+  margin: 0 0 0 7%;
+}
+.number-input-row button {
+  background-color: inherit;
+  width: 90px;
+}
+.number-input-row input,
+.number-input-row button {
+  background-color: inherit;
+  border: 0;
+  font-size: 1.2em;
+  text-align: center;
+}
+.container-xsm {
+  max-width: 250px;
+  margin: auto;
+}
+
 .btn,
 .dt-button,
 .form-check-input:checked,
@@ -599,10 +626,17 @@ table.dataTable.compact tbody td {
 .btn:hover,
 .dt-button:hover,
 .form-check-input:checked,
-.input[type='range'] {
+.input[type='range'],
+.dataTables_wrapper .dataTables_paginate .paginate_button {
   color: var(--highlight-text);
   background: var(--highlight);
   border-color: var(--highlight);
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  color: var(--highlight-text) !important;
+}
+.dts_label {
+  display: none;
 }
 .nav-link,
 a:link,

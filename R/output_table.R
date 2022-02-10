@@ -74,7 +74,10 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, id =
     options$dataset <- dataset
     options$single_variable <- wide && length(variables) == 1
     options$wide <- if (!wide && length(variables) == 1) TRUE else wide
-    defaults <- list(paging = FALSE, scrollY = 500, scrollX = 500, scrollCollapse = TRUE)
+    defaults <- list(
+      paging = TRUE, scrollY = 500, scrollX = 500, scrollCollapse = TRUE,
+      scroller = TRUE, deferRender = TRUE
+    )
     so <- names(options)
     for (n in names(defaults)) if (!n %in% so) options[[n]] <- defaults[[n]]
     caller$dependencies$jquery <- list(
@@ -90,8 +93,8 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, id =
     )
     caller$dependencies$datatables <- list(
       type = "script",
-      src = "https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.4/b-2.2.2/b-html5-2.2.2/b-print-2.2.2/rg-1.1.4/datatables.min.js",
-      hash = "sha384-UMLsuurMNYA/fOVcx5bIMgfiwxgWXpdPTW/PyeOrvzlYyOWakzf/Q959TCpBeTBc",
+      src = "https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.4/b-2.2.2/b-html5-2.2.2/b-print-2.2.2/rg-1.1.4/sc-2.0.5/datatables.min.js",
+      hash = "sha384-l0hLA2PVlDEFWu4jf3mJlb+OaKa8A1pcaCV7yJ5s6T3LS94pAD4kxHrmLtA7KYxX",
       loading = "defer"
     )
     caller$credits$datatables <- list(

@@ -14,7 +14,8 @@
 #' @param type Name of the input's type -- other number-based types like \code{date} might make sense.
 #' @param class Class names to add to the input's list.
 #' @param dataview ID of a \code{\link{input_dataview}}, to use as a source of variables.
-#' @param floating_label Logical; if \code{FALSE}, labels are separate from their input elements.
+#' @param floating_label Logical; if \code{FALSE}, labels are separate from their input elements.,
+#' @param buttons Logical; if \code{TRUE}, adds increment and decrement buttons to the sides of the input.
 #' @examples
 #' \dontrun{
 #' input_text("entered_text", "Enter Text:")
@@ -23,12 +24,13 @@
 #' @export
 
 input_number <- function(label, id = label, ..., default = NULL, variable = NULL, min = NULL, max = NULL, step = NULL,
-                         type = "number", class = NULL, dataview = NULL, floating_label = TRUE) {
+                         type = "number", class = NULL, dataview = NULL, floating_label = TRUE, buttons = FALSE) {
   id <- gsub("\\s", "", id)
   r <- c(
-    paste0('<div class="wrapper text-wrapper', if (floating_label) " form-floating", '">'),
+    paste0('<div class="wrapper text-wrapper', if (floating_label) " form-floating", if (buttons) " number-input-row", '">'),
     if (!floating_label) paste0('<label for="', id, '">', label, "</label>"),
     paste0(c(
+      if (buttons) '<button role="button" label="decrease value" class="btn number-down">&lt;</button>',
       '<input type="', type, '"',
       ' id="', id, '"',
       if (!is.null(default)) paste0(' default="', default, '"'),
@@ -39,7 +41,8 @@ input_number <- function(label, id = label, ..., default = NULL, variable = NULL
       if (!is.null(dataview)) paste0(' data-view="', dataview, '"'),
       unlist(list(...)),
       ' class="form-control auto-input', if (!is.null(class)) paste("", class), '" auto-type="number">',
-      if (floating_label) paste0('<label for="', id, '">', label, "</label>")
+      if (floating_label) paste0('<label for="', id, '">', label, "</label>"),
+      if (buttons) '<button role="button" label="increase value" class="btn number-down">&gt;</button>'
     ), collapse = ""),
     "</div>"
   )
