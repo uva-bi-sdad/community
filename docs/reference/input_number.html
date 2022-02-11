@@ -65,7 +65,7 @@
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">input_number</span><span class="op">(</span><span class="va">label</span>, id <span class="op">=</span> <span class="va">label</span>, <span class="va">...</span>, default <span class="op">=</span> <span class="cn">NULL</span>, variable <span class="op">=</span> <span class="cn">NULL</span>,
   min <span class="op">=</span> <span class="cn">NULL</span>, max <span class="op">=</span> <span class="cn">NULL</span>, step <span class="op">=</span> <span class="cn">NULL</span>, type <span class="op">=</span> <span class="st">"number"</span>, class <span class="op">=</span> <span class="cn">NULL</span>,
-  dataview <span class="op">=</span> <span class="cn">NULL</span>, floating_label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+  dataview <span class="op">=</span> <span class="cn">NULL</span>, floating_label <span class="op">=</span> <span class="cn">TRUE</span>, buttons <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -94,7 +94,9 @@ to default to the current minimum or maximum value.</p></dd>
 <dt>dataview</dt>
 <dd><p>ID of a <code><a href="input_dataview.html">input_dataview</a></code>, to use as a source of variables.</p></dd>
 <dt>floating_label</dt>
-<dd><p>Logical; if <code>FALSE</code>, labels are separate from their input elements.</p></dd>
+<dd><p>Logical; if <code>FALSE</code>, labels are separate from their input elements.,</p></dd>
+<dt>buttons</dt>
+<dd><p>Logical; if <code>TRUE</code>, adds increment and decrement buttons to the sides of the input.</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>

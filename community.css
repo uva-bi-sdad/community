@@ -601,7 +601,7 @@ table.dataTable.compact tbody td {
   text-align: center;
 }
 .number-input-row label {
-  margin: 0 0 0 7%;
+  margin: 0 0 0 5%;
 }
 .number-input-row button {
   background-color: inherit;
@@ -613,6 +613,9 @@ table.dataTable.compact tbody td {
   border: 0;
   font-size: 1.2em;
   text-align: center;
+}
+.light-theme .number-input-row button {
+  color: var(--body-text);
 }
 .container-xsm {
   max-width: 250px;

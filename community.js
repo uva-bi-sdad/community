@@ -146,7 +146,7 @@ void (function () {
           const v = _u[u.view],
             c = valueOf(u.color || v.y),
             d = v.get.dataset(),
-            subset = 'subset_rank',
+            subset = 'all' === site.settings.summary_selection ? 'subset_rank' : 'rank',
             ys = u.time
               ? _u[u.time]
               : v.time_agg
@@ -173,11 +173,10 @@ void (function () {
                   i,
                   s = v.selection.all,
                   k,
-                  n,
-                  rank
+                  n
                 o = variables[c][u.view].order[d][u.parsed.time]
                 if (o) {
-                  for (i = o.length, n = u.parsed.summary.n[u.parsed.time], rank = n; i--; ) {
+                  for (i = o.length, n = u.parsed.summary.n[u.parsed.time] - 1; i--; ) {
                     k = o[i][0]
                     if (
                       Object.hasOwn(s, k) &&
@@ -194,7 +193,7 @@ void (function () {
                           u.parsed.summary,
                           u.parsed.time,
                           site.settings.color_by_order
-                            ? n
+                            ? n > 0
                               ? (s[k][subset][c][u.parsed.time] - u.parsed.summary.missing[u.parsed.time]) / n - 0.5
                               : 0
                             : 0
@@ -864,7 +863,7 @@ void (function () {
                   s = v.selection && v.selection.all,
                   d = v.get.dataset(),
                   y = _u[this.time || v.time_agg],
-                  subset = 'subset_rank'
+                  rank = 'all' === site.settings.summary_selection ? 'subset_rank' : 'rank'
                 if (init_log[d] && s) {
                   this.parsed.x = valueOf(this.x)
                   this.parsed.y = valueOf(this.y)
@@ -873,13 +872,15 @@ void (function () {
                   this.parsed.palette = valueOf(v.palette) || site.settings.palette
                   this.parsed.color = valueOf(this.color || v.y || this.parsed.y)
                   this.parsed.summary = variables[this.parsed.color][this.view].summaries[d]
-                  var order = variables[this.parsed.color][this.view].order[d][this.parsed.time],
-                    summary = variables[this.parsed.y][this.view].summaries[d],
-                    i = this.parsed.summary.missing[this.parsed.time],
+                  const summary = variables[this.parsed.y][this.view].summaries[d],
+                    subset = this.parsed.summary.n[this.parsed.time] !== v.n_selected.all,
+                    order = subset
+                      ? variables[this.parsed.color][this.view].order[d][this.parsed.time]
+                      : variables[this.parsed.color].info[d].order[this.parsed.time]
+                  var i = this.parsed.summary.missing[this.parsed.time],
                     k,
                     b,
-                    n = this.parsed.summary.n[this.parsed.time],
-                    rank = 1,
+                    n = this.parsed.summary.n[this.parsed.time] - 1,
                     fn = order ? order.length : 0,
                     traces = [],
                     lim = site.settings.trace_limit || 0,
@@ -900,8 +901,8 @@ void (function () {
                           this,
                           s[k],
                           site.settings.color_by_order
-                            ? n
-                              ? (s[k][subset][this.parsed.color][this.parsed.time] -
+                            ? n > 0
+                              ? (s[k][rank][this.parsed.color][this.parsed.time] -
                                   this.parsed.summary.missing[this.parsed.time]) /
                                   n -
                                 0.5
@@ -909,9 +910,29 @@ void (function () {
                             : 0
                         )
                       )
-                      if (lim && !--jump) {
-                        i = fn - 1 - lim
-                        lim = 0
+                      if (lim && !--jump) break
+                    }
+                  }
+                  if (lim && i < fn) {
+                    for (jump = i, i = fn - 1; i > jump; i--) {
+                      if (Object.hasOwn(s, order[i][0])) {
+                        k = order[i][0]
+                        state += k
+                        traces.push(
+                          make_data_entry(
+                            this,
+                            s[k],
+                            site.settings.color_by_order
+                              ? n
+                                ? (s[k][rank][this.parsed.color][this.parsed.time] -
+                                    this.parsed.summary.missing[this.parsed.time]) /
+                                    n -
+                                  0.5
+                                : 0
+                              : 0
+                          )
+                        )
+                        if (!--lim) break
                       }
                     }
                   }
@@ -940,7 +961,7 @@ void (function () {
                   if ('boolean' !== typeof this.e.layout.yaxis.title)
                     this.e.layout.yaxis.title =
                       format_label(this.parsed.y) +
-                      (site.settings.trace_limit < v.n_selected.all
+                      (site.settings.trace_limit && site.settings.trace_limit < v.n_selected.all
                         ? ' (' + site.settings.trace_limit + ' extremes)'
                         : '')
                   if ('boolean' !== typeof this.e.layout.xaxis.title)
@@ -1734,7 +1755,7 @@ void (function () {
                   string = summary && Object.hasOwn(summary, 'levels'),
                   min = summary && !string ? summary.min[c.parsed.time] : 0,
                   max = summary ? (string ? summary.levels.length : summary.max[c.parsed.time]) : 1,
-                  subset = 'subset_rank',
+                  subset = 'all' === site.settings.summary_selection ? 'subset_rank' : 'rank',
                   center =
                     !site.settings.color_scale_center || patterns.median.test(site.settings.color_scale_center)
                       ? 'norm_median'
@@ -2667,7 +2688,11 @@ void (function () {
                 }.bind(o)
           )
         }
-        if ('number' === o.type && o.e.previousElementSibling) {
+        if (
+          'number' === o.type &&
+          o.e.previousElementSibling &&
+          o.e.previousElementSibling.classList.contains('number-down')
+        ) {
           o.e.previousElementSibling.addEventListener(
             'click',
             function () {
