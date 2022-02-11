@@ -887,6 +887,8 @@ void (function () {
                     jump,
                     state =
                       v.value() +
+                      this.parsed.x +
+                      this.parsed.y +
                       this.parsed.palette +
                       this.parsed.color +
                       site.settings.summary_selection +
@@ -1717,6 +1719,7 @@ void (function () {
         legend: {
           init: function (o) {
             add_dependency(o.view, {type: 'update', id: o.id})
+            if (_u[o.view].y) add_dependency(_u[o.view].y, {type: 'update', id: o.id})
             if (Object.hasOwn(_u, _u[o.view].time_agg)) add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
             if (!o.palette)
               o.palette = Object.hasOwn(_u, 'settings.palette') ? 'settings.palette' : site.settings.palette
@@ -1794,8 +1797,6 @@ void (function () {
                     -this.ticks.entity.firstElementChild.getBoundingClientRect().width / 2 + 'px'
                   this.ticks.entity.style.left = p + '%'
                 } else if (site.settings.color_by_order) {
-                  // const order = variables[c.parsed.color][this.view].order[c.parsed.view.get.dataset()][c.parsed.time]
-                  // for (var i = order.length; i--; ) if (e.features.id === order[i][0]) break
                   var i =
                     entities[e.features.id][subset][c.parsed.color][c.parsed.time] - summary.missing[c.parsed.time]
                   if (i > -1) {
