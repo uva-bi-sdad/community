@@ -1561,7 +1561,8 @@ void (function () {
               if (this.table) {
                 const v = _u[this.view],
                   d = v.get.dataset(),
-                  state = v.value() + v.get.time_filters() + site.settings.digits
+                  vn = valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.'),
+                  state = v.value() + v.get.time_filters() + site.settings.digits + vn
                 if (!init_log[d]) return void 0
                 if (state !== this.state) {
                   this.rows = {}
@@ -1573,13 +1574,11 @@ void (function () {
                       c,
                       i,
                       n,
-                      vn,
                       va,
                       reset = true,
                       redraw = true,
                       varstate = '' + v.get.dataset() + v.get.ids() + v.get.features() + site.settings.digits
                     if (this.options.single_variable) {
-                      vn = valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.')
                       if ('entity.data.' + vn !== this.header[1].data) {
                         this.table.destroy()
                         for (n = this.header.length, i = 1; i < n; i++) {
