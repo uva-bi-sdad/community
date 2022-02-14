@@ -6,7 +6,8 @@
 \usage{
 output_table(variables = NULL, dataset = NULL, dataview = NULL,
   id = NULL, click = NULL, subto = NULL, options = NULL,
-  features = NULL, filters = NULL, wide = TRUE, class = "compact")
+  features = NULL, filters = NULL, wide = TRUE, class = "compact",
+  datatables = TRUE)
 }
 \arguments{
 \item{variables}{The ID of a variable selecting input, or a list specifying columns (if \code{wide} is
@@ -28,7 +29,7 @@ used if \code{dataview} is not specified.}
 
 \item{subto}{A vector of output IDs to receive hover events from.}
 
-\item{options}{A list of configuration options, see
+\item{options}{A list of configuration options if \code{datatables} is \code{TRUE}, see
 \href{https://datatables.net/reference/option}{DataTables Documentation}.}
 
 \item{features}{A list of features columns to include if multiple variables are included and \code{wide} is
@@ -42,6 +43,8 @@ If \code{variables} specifies a single variable, \code{wide = FALSE} will show t
 \code{wide = TRUE} will show the variable across time columns.}
 
 \item{class}{Class names to add to the table.}
+
+\item{datatables}{Logical; if \code{TRUE}, uses \href{https://datatables.net}{DataTables}.}
 }
 \value{
 A character vector of the content to be added.

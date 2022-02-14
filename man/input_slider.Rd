@@ -5,7 +5,7 @@
 \title{Add a range slider to a website}
 \usage{
 input_slider(label, id = label, ..., min = 0, max = 1, step = 1,
-  default = max, dataset = NULL, depends = NULL)
+  default = max, note = NULL, dataset = NULL, depends = NULL)
 }
 \arguments{
 \item{label}{Label of the input for the user.}
@@ -21,6 +21,8 @@ input_slider(label, id = label, ..., min = 0, max = 1, step = 1,
 \item{step}{How much moving the handle adjusts the selected value.}
 
 \item{default}{Starting value of the slider handle.}
+
+\item{note}{Text to display as a tooltip for the input.}
 
 \item{dataset}{The name of an included dataset, where \code{variable} should be looked for; only applies when
 there are multiple datasets with the same variable name.}

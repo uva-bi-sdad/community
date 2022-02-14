@@ -10,6 +10,7 @@
 #' @param display A display version of the options.
 #' @param id Unique ID of the element to be created.
 #' @param ... Additional attributes to set on the select element.
+#' @param note Text to display as a tooltip for the input.
 #' @param variable The name of a variable from which to get levels (overwritten by \code{depends}).
 #' @param dataset The name of an included dataset, where \code{variable} should be looked for; only applies when
 #' there are multiple datasets with the same variable name.
@@ -33,7 +34,7 @@
 #' @export
 
 input_select <- function(label, options, default = -1, display = options, id = label, ...,
-                         variable = NULL, dataset = NULL, depends = NULL, dataview = NULL, filters = NULL,
+                         note = NULL, variable = NULL, dataset = NULL, depends = NULL, dataview = NULL, filters = NULL,
                          reset_button = FALSE, button_class = NULL, as.row = FALSE, floating_label = TRUE) {
   id <- gsub("\\s", "", id)
   a <- list(...)
@@ -46,6 +47,7 @@ input_select <- function(label, options, default = -1, display = options, id = l
       '<select class="auto-input form-select" auto-type="select" id="', id, '" ',
       if (is.character(options) && length(options) == 1) paste0('auto-options="', options, '"'),
       if (!is.null(default)) paste0(' default="', default, '"'),
+      if (!is.null(note)) paste0(' aria-description="', note, '"'),
       if (!is.null(dataview)) paste0(' data-view="', dataview, '"'),
       if (!is.null(depends)) paste0(' depends="', depends, '"'),
       if (!is.null(dataset)) paste0(' dataset="', dataset, '"'),

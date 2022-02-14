@@ -10,6 +10,7 @@
 #' @param id Unique ID of the element to be created.
 #' @param class Additional class names to add to the element.
 #' @param ... Additional attributes to set on the element.
+#' @param note Text to display as a tooltip for the button.
 #' @seealso For buttons to select between a set of options, use \code{\link{input_buttongroup}}.
 #' @examples
 #' \dontrun{
@@ -18,7 +19,7 @@
 #' @return A character vector of the contents to be added.
 #' @export
 
-input_button <- function(label, target = "reset_selection", id = label, class = "", ...) {
+input_button <- function(label, target = "reset_selection", id = label, class = "", ..., note = NULL) {
   id <- gsub("\\s", "", id)
   a <- list(...)
   r <- c(
@@ -28,6 +29,7 @@ input_button <- function(label, target = "reset_selection", id = label, class = 
         '<a role="button" class="btn', if (class != "") paste("", class),
         '" id="', id, '" target="_blank" rel="noreferrer" href="', target, '"',
         if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
+        if (!is.null(note)) paste0(' aria-description="', note, '"'),
         ">", label, "</a>"
       )
     } else {
@@ -35,6 +37,7 @@ input_button <- function(label, target = "reset_selection", id = label, class = 
         '<button type="button" auto-type="button" class="auto-input btn', if (class != "") paste("", class),
         '" id="', id, '"', if (!is.null(target)) paste0(' target="', target, '"'),
         if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
+        if (!is.null(note)) paste0(' aria-description="', note, '"'),
         ">", label, "</button>"
       )
     },

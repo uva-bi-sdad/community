@@ -67,7 +67,7 @@ output_map <- function(shapes = NULL, color = NULL, color_time = NULL, dataview 
       if (!is.null(snames[i])) shapes[[i]]$name <- snames[i]
       if (is.null(shapes[[i]]$id_property)) shapes[[i]]$id_property <- "GEOID"
     }
-    caller$maps[[id]] <- list(shapes = unname(shapes), options = options, tiles = tiles)
+    caller$map[[id]] <- list(shapes = unname(shapes), options = options, tiles = tiles)
   }
   r <- paste(c(
     '<div class="auto-output leaflet"',

@@ -10,6 +10,7 @@
 #' @param display A display version of the options.
 #' @param id Unique id of the element to be created.
 #' @param ... Additional attributes to set on the element.
+#' @param note Text to display as a tooltip for the input.
 #' @param variable The name of a variable from which to get levels (overwritten by \code{depends}).
 #' @param dataset The name of an included dataset, where \code{variable} should be looked for; only applies when
 #' there are multiple datasets with the same variable name.
@@ -26,7 +27,7 @@
 #' @seealso For a single switch or checkbox, use \code{\link{input_switch}}.
 #' @export
 
-input_checkbox <- function(label, options, default = "all", display = options, id = label, ..., variable = NULL,
+input_checkbox <- function(label, options, default = "all", display = options, id = label, ..., note = NULL, variable = NULL,
                            dataset = NULL, depends = NULL, multi = TRUE, as.switch = FALSE) {
   if (multi && length(default) == 1) {
     if ((is.logical(default) && default) || default == "all") {
@@ -50,6 +51,7 @@ input_checkbox <- function(label, options, default = "all", display = options, i
       ' id="', id, '" default="', paste(default, collapse = ","), '" ',
       if (is.character(options) && length(options) == 1) paste0('auto-options="', options, '"'),
       if (!is.null(depends)) paste0(' depends="', depends, '"'),
+      if (!is.null(note)) paste0(' aria-description="', note, '"'),
       if (!is.null(dataset)) paste0(' dataset="', dataset, '"'),
       if (!is.null(variable)) paste0(' variable="', variable, '"'),
       if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),

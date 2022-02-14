@@ -4,8 +4,8 @@
 \alias{input_text}
 \title{Add a text input to a website}
 \usage{
-input_text(id, label = id, ..., default = NULL, multiline = FALSE,
-  class = NULL, floating_label = TRUE)
+input_text(id, label = id, ..., default = NULL, note = NULL,
+  multiline = FALSE, class = NULL, floating_label = TRUE)
 }
 \arguments{
 \item{id}{Unique ID of the element to be created.}
@@ -15,6 +15,8 @@ input_text(id, label = id, ..., default = NULL, multiline = FALSE,
 \item{...}{Other attributes to add to the input.}
 
 \item{default}{Default value of the input, which will appear as a placeholder.}
+
+\item{note}{Text to display as a tooltip for the input or textarea.}
 
 \item{multiline}{Logical; if \code{TRUE}, create a \code{textarea} element, instead of an \code{input} element
 to accept multiple lines of text.}

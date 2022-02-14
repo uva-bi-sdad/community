@@ -64,7 +64,7 @@
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">input_select</span><span class="op">(</span><span class="va">label</span>, <span class="va">options</span>, default <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, display <span class="op">=</span> <span class="va">options</span>, id <span class="op">=</span> <span class="va">label</span>,
-  <span class="va">...</span>, variable <span class="op">=</span> <span class="cn">NULL</span>, dataset <span class="op">=</span> <span class="cn">NULL</span>, depends <span class="op">=</span> <span class="cn">NULL</span>,
+  <span class="va">...</span>, note <span class="op">=</span> <span class="cn">NULL</span>, variable <span class="op">=</span> <span class="cn">NULL</span>, dataset <span class="op">=</span> <span class="cn">NULL</span>, depends <span class="op">=</span> <span class="cn">NULL</span>,
   dataview <span class="op">=</span> <span class="cn">NULL</span>, filters <span class="op">=</span> <span class="cn">NULL</span>, reset_button <span class="op">=</span> <span class="cn">FALSE</span>,
   button_class <span class="op">=</span> <span class="cn">NULL</span>, as.row <span class="op">=</span> <span class="cn">FALSE</span>, floating_label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
     </div>
@@ -85,6 +85,8 @@ color palettes.</p></dd>
 <dd><p>Unique ID of the element to be created.</p></dd>
 <dt>...</dt>
 <dd><p>Additional attributes to set on the select element.</p></dd>
+<dt>note</dt>
+<dd><p>Text to display as a tooltip for the input.</p></dd>
 <dt>variable</dt>
 <dd><p>The name of a variable from which to get levels (overwritten by <code>depends</code>).</p></dd>
 <dt>dataset</dt>

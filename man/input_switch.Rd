@@ -4,7 +4,8 @@
 \alias{input_switch}
 \title{Add a single switch or checkbox to a website}
 \usage{
-input_switch(label, id = label, ..., default_on = FALSE, as.checkbox = FALSE)
+input_switch(label, id = label, ..., note = NULL, default_on = FALSE,
+  as.checkbox = FALSE)
 }
 \arguments{
 \item{label}{Label of the input for the user.}
@@ -12,6 +13,8 @@ input_switch(label, id = label, ..., default_on = FALSE, as.checkbox = FALSE)
 \item{id}{Unique id of the element to be created.}
 
 \item{...}{Additional attributes to set on the element.}
+
+\item{note}{Text to display as a tooltip for the input.}
 
 \item{default_on}{Logical; if \code{TRUE}, the switch will start on.}
 

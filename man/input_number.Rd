@@ -6,7 +6,7 @@
 \usage{
 input_number(label, id = label, ..., default = NULL, variable = NULL,
   min = NULL, max = NULL, step = NULL, type = "number", class = NULL,
-  dataview = NULL, floating_label = TRUE, buttons = FALSE)
+  note = NULL, dataview = NULL, floating_label = TRUE, buttons = FALSE)
 }
 \arguments{
 \item{label}{Label of the input for the user.}
@@ -29,6 +29,8 @@ to default to the current minimum or maximum value.}
 \item{type}{Name of the input's type -- other number-based types like \code{date} might make sense.}
 
 \item{class}{Class names to add to the input's list.}
+
+\item{note}{Text to display as a tooltip for the input.}
 
 \item{dataview}{ID of a \code{\link{input_dataview}}, to use as a source of variables.}
 

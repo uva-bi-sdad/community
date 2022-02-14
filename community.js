@@ -56,6 +56,8 @@ void (function () {
         median: /^med/i,
         location_string: /^[^?]*/,
       },
+      tooltip_icon_rule =
+        'button.has-note::after,.button-wrapper.has-note button::before,.has-note legend::before,.has-note label::before,.wrapper.has-note > div > label::before{display:none}',
       conditionals = {
         setting: function (u) {
           var k,
@@ -68,14 +70,15 @@ void (function () {
               v
                 ? document.body.classList.replace('light-theme', 'dark-theme')
                 : document.body.classList.replace('dark-theme', 'light-theme')
-              if (site.plots) for (k in site.plots) if (Object.hasOwn(site.plots, k)) update_plot_theme(site.plots[k].u)
-              if (site.maps)
-                for (k in site.maps)
-                  if (Object.hasOwn(site.maps, k) && site.maps[k].u && Object.hasOwn(site.maps[k].u.tiles, theme)) {
-                    for (l in site.maps[k].u.tiles)
-                      if (theme !== l && Object.hasOwn(site.maps[k].u.tiles, l))
-                        site.maps[k].u.tiles[l].removeFrom(site.maps[k].u.map)
-                    site.maps[k].u.tiles[theme].addTo(site.maps[k].u.map)
+              if (site.plotly)
+                for (k in site.plotly) if (Object.hasOwn(site.plotly, k)) update_plot_theme(site.plotly[k].u)
+              if (site.map)
+                for (k in site.map)
+                  if (Object.hasOwn(site.map, k) && site.map[k].u && Object.hasOwn(site.map[k].u.tiles, theme)) {
+                    for (l in site.map[k].u.tiles)
+                      if (theme !== l && Object.hasOwn(site.map[k].u.tiles, l))
+                        site.map[k].u.tiles[l].removeFrom(site.map[k].u.map)
+                    site.map[k].u.tiles[theme].addTo(site.map[k].u.map)
                   }
             } else if ('hide_url_parameters' === u.setting) {
               window.history.replaceState(
@@ -85,6 +88,8 @@ void (function () {
                   ? window.location.protocol + '//' + window.location.host + window.location.pathname
                   : get_options_url()
               )
+            } else if ('hide_tooltips' === u.setting) {
+              v ? page.script_style.sheet.insertRule(tooltip_icon_rule, 0) : page.script_style.sheet.removeRule(0)
             } else {
               global_update()
             }
@@ -165,8 +170,8 @@ void (function () {
             u.parsed.summary = Object.hasOwn(variables[c], u.view) ? variables[c][u.view].summaries[d] : false
             if (c && Object.hasOwn(v, 'get')) {
               if (
-                site.maps[u.id]._layers &&
-                Object.hasOwn(site.maps[u.id]._layers, d) &&
+                site.map[u.id]._layers &&
+                Object.hasOwn(site.map[u.id]._layers, d) &&
                 Object.hasOwn(variables[c], u.view)
               ) {
                 var o,
@@ -204,10 +209,10 @@ void (function () {
                   }
                 }
               } else {
-                if (!Object.hasOwn(site.maps, '_waiting')) site.maps._waiting = {}
-                if (!Object.hasOwn(site.maps._waiting, d)) site.maps._waiting[d] = []
-                if (-1 === site.maps._waiting[d].indexOf(u.id)) site.maps._waiting[d].push(u.id)
-                if (-1 === site.maps._waiting[d].indexOf(u.view)) site.maps._waiting[d].push(u.view)
+                if (!Object.hasOwn(site.map, '_waiting')) site.map._waiting = {}
+                if (!Object.hasOwn(site.map._waiting, d)) site.map._waiting[d] = []
+                if (-1 === site.map._waiting[d].indexOf(u.id)) site.map._waiting[d].push(u.id)
+                if (-1 === site.map._waiting[d].indexOf(u.view)) site.map._waiting[d].push(u.view)
               }
             }
           }
@@ -215,10 +220,8 @@ void (function () {
         map_shapes: function (u, c, pass) {
           clearTimeout(u.queue)
           if (!pass) {
-            u.queue = setTimeout(
-              () => conditionals.map_shapes(u, void 0, true),
-              !this.tab || this.tab.classList.contains('show') ? 0 : 1000
-            )
+            if (!this.tab || this.tab.classList.contains('show'))
+              u.queue = setTimeout(() => conditionals.map_shapes(u, void 0, true), 50)
           } else {
             if (u.view && u.displaying) {
               const view = site.dataviews[u.view],
@@ -753,11 +756,11 @@ void (function () {
             return e
           },
         },
-        plot: {
+        plotly: {
           init: function (o) {
-            if (Object.hasOwn(site.plots, o.id)) {
+            if (Object.hasOwn(site.plotly, o.id)) {
               var i, p, k, pl, es, en, ei
-              o.update = elements.plot.update.bind(o)
+              o.update = elements.plotly.update.bind(o)
               o.x = o.e.getAttribute('x')
               o.y = o.e.getAttribute('y')
               o.color = o.e.getAttribute('color')
@@ -768,11 +771,13 @@ void (function () {
               o.traces = {}
               o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0
               if (o.tab) {
-                document
-                  .getElementById(o.e.parentElement.getAttribute('aria-labelledby'))
-                  .addEventListener('click', function () {
+                document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
+                  'click',
+                  function () {
+                    setTimeout(this.update, 155)
                     setTimeout(trigger_resize, 155)
-                  })
+                  }.bind(o)
+                )
               }
               o.show = function (e) {
                 var trace = make_data_entry(this, e, 0, 'hover_line', site.settings.theme_dark ? '#fff' : '#000')
@@ -786,9 +791,9 @@ void (function () {
                 if (this.e.data.length && 'hover_line' === this.e.data[this.e.data.length - 1].name)
                   Plotly.deleteTraces(this.e, this.e.data.length - 1)
               }
-              if (o.options) site.plots[o.id].u = o
-              for (i = site.plots[o.id].data.length; i--; ) {
-                p = site.plots[o.id].data[i]
+              if (o.options) site.plotly[o.id].u = o
+              for (i = site.plotly[o.id].data.length; i--; ) {
+                p = site.plotly[o.id].data[i]
                 for (k in p)
                   if (Object.hasOwn(p, k) && patterns.period.test(k)) {
                     for (es = k.split('.'), en = es.length, ei = 0, pl = false; ei < en; ei++) {
@@ -807,9 +812,9 @@ void (function () {
                 if (!Object.hasOwn(p, 'text')) p.text = []
                 if (!Object.hasOwn(p, 'x')) p.x = []
                 if ('box' !== p.type && !Object.hasOwn(p, 'y')) p.y = []
-                o.traces[site.plots[o.id].data[i].type] = JSON.stringify(site.plots[o.id].data[i])
+                o.traces[site.plotly[o.id].data[i].type] = JSON.stringify(site.plotly[o.id].data[i])
                 if (!i) {
-                  o.base_trace = site.plots[o.id].data[i].type
+                  o.base_trace = site.plotly[o.id].data[i].type
                   if (Object.hasOwn(_u, o.base_trace)) add_dependency(o.base_trace, {type: 'update', id: o.id})
                 }
               }
@@ -828,7 +833,7 @@ void (function () {
                 if (_u[o.view].time_agg && Object.hasOwn(_u, _u[o.view].time_agg))
                   add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
               } else o.view = defaults.dataview
-              queue_init_plot.bind(o)()
+              queue_init_plotly.bind(o)()
             }
           },
           mouseover: function (d) {
@@ -853,10 +858,7 @@ void (function () {
           update: function (pass) {
             clearTimeout(this.queue)
             if (!pass) {
-              this.queue = setTimeout(
-                () => this.update(true),
-                !this.tab || this.tab.classList.contains('show') ? 0 : 1000
-              )
+              if (!this.tab || this.tab.classList.contains('show')) this.queue = setTimeout(() => this.update(true), 50)
             } else {
               if (this.e.layout) {
                 const v = _u[this.view],
@@ -887,6 +889,7 @@ void (function () {
                     jump,
                     state =
                       v.value() +
+                      v.get.time_filters() +
                       this.parsed.x +
                       this.parsed.y +
                       this.parsed.palette +
@@ -938,7 +941,7 @@ void (function () {
                       }
                     }
                   }
-                  state += traces && [0].type
+                  state += traces.length && traces[0].type
                   if (site.settings.boxplots && Object.hasOwn(this.traces, 'box') && s[k]) {
                     state += 'box' + site.settings.iqr_box
                     traces.push((b = JSON.parse(this.traces.box)))
@@ -991,7 +994,10 @@ void (function () {
                       this.e.layout.xaxis.range[1] = v.time_range.filtered[1] + 0.5
                     }
                   }
-                  if (state !== this.state) Plotly.react(this.e, traces, this.e.layout)
+                  if (state !== this.state) {
+                    Plotly.react(this.e, traces, this.e.layout)
+                    setTimeout(trigger_resize, 300)
+                  }
                   this.state = state
                 }
               }
@@ -1309,10 +1315,8 @@ void (function () {
             } else if (!this.options.floating) {
               clearTimeout(this.queue)
               if (!pass) {
-                this.queue = setTimeout(
-                  () => this.update(void 0, void 0, true),
-                  !this.tab || this.tab.classList.contains('show') ? 0 : 1000
-                )
+                if (!this.tab || this.tab.classList.contains('show'))
+                  this.queue = setTimeout(() => this.update(void 0, void 0, true), 50)
               } else {
                 // base information
                 if (v.ids && (k = v.get.ids()) && '-1' !== k) {
@@ -1392,30 +1396,32 @@ void (function () {
             this.revert()
           },
         },
-        table: {
+        datatable: {
           init: function (o) {
             var k, n, i, c
             o.e.appendChild(document.createElement('tHead'))
             o.e.appendChild(document.createElement('tBody'))
             o.click = o.e.getAttribute('click')
             o.features = o.options.features
-            o.update = elements.table.update.bind(o)
+            o.update = elements.datatable.update.bind(o)
             o.header = []
             o.rows = {}
             o.rowIds = {}
             o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0
             if (o.tab) {
-              document
-                .getElementById(o.e.parentElement.getAttribute('aria-labelledby'))
-                .addEventListener('click', function () {
+              document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
+                'click',
+                function () {
+                  setTimeout(this.update, 155)
                   setTimeout(trigger_resize, 155)
-                })
+                }.bind(o)
+              )
             }
-            o.e.addEventListener('mouseover', elements.table.mouseover.bind(o))
-            o.e.addEventListener('mouseout', elements.table.mouseout.bind(o))
+            o.e.addEventListener('mouseover', elements.datatable.mouseover.bind(o))
+            o.e.addEventListener('mouseout', elements.datatable.mouseout.bind(o))
             if (o.click) {
               if (Object.hasOwn(_u, o.click)) o.clickto = _u[o.click]
-              o.e.addEventListener('click', elements.table.click.bind(o))
+              o.e.addEventListener('click', elements.datatable.click.bind(o))
             }
             o.show = function (e) {
               if (Object.hasOwn(this.rows, e.features.id)) {
@@ -1510,11 +1516,7 @@ void (function () {
                   title: 'Year',
                   data: 'entity.data.time',
                   render: function (d, type, row) {
-                    return d
-                      ? 'number' === typeof d[row.time]
-                        ? format_value(d[row.time], row.int)
-                        : d[row.time]
-                      : 'NA'
+                    return d ? ('number' === typeof d[row.time] ? format_value(d[row.time], true) : d[row.time]) : 'NA'
                   },
                 })
               }
@@ -1549,15 +1551,12 @@ void (function () {
               _c[o.view].push({type: 'update', id: o.id})
               _c[o.view + '_filter'].push({type: 'update', id: o.id})
             } else o.view = defaults.dataview
-            queue_init_table.bind(o)()
+            queue_init_datatable.bind(o)()
           },
           update: function (pass) {
             clearTimeout(this.queue)
             if (!pass) {
-              this.queue = setTimeout(
-                () => this.update(true),
-                !this.tab || this.tab.classList.contains('show') ? 0 : 1000
-              )
+              if (!this.tab || this.tab.classList.contains('show')) this.queue = setTimeout(() => this.update(true), 50)
             } else {
               if (this.table) {
                 const v = _u[this.view],
@@ -1577,6 +1576,7 @@ void (function () {
                       vn,
                       va,
                       reset = true,
+                      redraw = true,
                       varstate = '' + v.get.dataset() + v.get.ids() + v.get.features() + site.settings.digits
                     if (this.options.single_variable) {
                       vn = valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.')
@@ -1591,7 +1591,7 @@ void (function () {
                         this.table = $(this.e).DataTable(this.options)
                       }
                       for (n = this.header.length, i = 1; i < n; i++) {
-                        this.table.column(i).visible(v.times[i - 1])
+                        this.table.column(i).visible(v.times[i - 1], false)
                         if (v.times[i - 1]) reset = false
                       }
                       if (reset) this.state = ''
@@ -1641,7 +1641,7 @@ void (function () {
                           varstate += vn
                           va.push({
                             variable: vn,
-                            render: function (o, s) {
+                            renderer: function (o, s) {
                               if (Object.hasOwn(s.summary, this.variable) && s.summary[this.variable].time_range) {
                                 for (var r = s.summary[this.variable].time_range, n = r[1], ci = r[0]; ci <= n; ci++) {
                                   o.rows[s.features.id] = o.table.row.add({
@@ -1679,12 +1679,12 @@ void (function () {
                               this.rowIds[this.rows[k].selector.rows] = k
                             }
                           } else {
-                            for (i = va.length; i--; ) va[i].render(this, v.selection.all[k])
+                            for (i = va.length; i--; ) va[i].renderer(this, v.selection.all[k])
                           }
                         }
                     }
                   }
-                  this.table.draw()
+                  redraw ? this.table.draw() : this.table.columns.adjust().draw(false)
                 }
               }
             }
@@ -1753,7 +1753,7 @@ void (function () {
             o.ticks.center.style.left = '50%'
             o.ticks.max.style.left = '100%'
             o.show = function (e, c) {
-              if (Object.hasOwn(c, 'parsed')) {
+              if (Object.hasOwn(c, 'parsed') && Object.hasOwn(e.data, c.parsed.color)) {
                 const summary = c.parsed.summary,
                   string = summary && Object.hasOwn(summary, 'levels'),
                   min = summary && !string ? summary.min[c.parsed.time] : 0,
@@ -2096,10 +2096,20 @@ void (function () {
           p = text.button[text.text[i]]
           text.parts.appendChild(document.createElement('button'))
           text.parts.lastElementChild.type = 'button'
-          text.parts.lastElementChild.className = 'btn btn-link'
-          if (Object.hasOwn(_u, p.target) && 'function' === typeof _u[p.target][p.type]) {
-            text.parts.lastElementChild.setAttribute('aria-label', p.text.join(''))
-            text.parts.lastElementChild.addEventListener('click', _u[p.target][p.type])
+          p.trigger = tooltip_trigger.bind({id: o.id + p.text, note: p.target, wrapper: text.parts.lastElementChild})
+          if ('note' === p.type) {
+            text.parts.lastElementChild.setAttribute('aria-description', p.target)
+            text.parts.lastElementChild.setAttribute('of', o.id + p.text)
+            text.parts.lastElementChild.className = 'has-note'
+            text.parts.lastElementChild.addEventListener('mouseover', p.trigger)
+            text.parts.lastElementChild.addEventListener('focus', p.trigger)
+            text.parts.lastElementChild.addEventListener('blur', tooltip_clear)
+          } else {
+            text.parts.lastElementChild.className = 'btn btn-link'
+            if (Object.hasOwn(_u, p.target) && 'function' === typeof _u[p.target][p.type]) {
+              text.parts.lastElementChild.setAttribute('aria-label', p.text.join(''))
+              text.parts.lastElementChild.addEventListener('click', _u[p.target][p.type])
+            }
           }
         } else {
           text.parts.appendChild(document.createElement('span'))
@@ -2480,6 +2490,8 @@ void (function () {
         bottom: 0,
         left: 0,
       }
+      page.script_style = document.head.appendChild(document.createElement('style'))
+      if (site.settings.hide_tooltips) page.script_style.sheet.insertRule(tooltip_icon_rule, 0)
       page.menu_toggler = {
         hide: function () {
           this.classList.add('hidden')
@@ -2627,6 +2639,16 @@ void (function () {
         if (site.url_options.close_menus && 'open' === page.menus[i].state) page.menus[i].lastElementChild.click()
       }
 
+      // initialize global tooltip
+      page.tooltip = {
+        e: document.createElement('div'),
+        showing: '',
+      }
+      page.tooltip.e.className = 'tooltip hidden'
+      page.tooltip.e.appendChild(document.createElement('p'))
+      page.wrap.appendChild(page.tooltip.e)
+      page.wrap.addEventListener('mouseover', tooltip_clear)
+
       // initialize inputs
       if (site.dataviews) {
         for (k in site.dataviews)
@@ -2654,6 +2676,7 @@ void (function () {
           dataset: e.getAttribute('dataset') || defaults.dataset,
           view: e.getAttribute('data-view'),
           id: e.id || e.options_source || 'ui' + n++,
+          note: e.getAttribute('aria-description') || '',
           current_index: -1,
           previous: '',
           e: e,
@@ -2661,6 +2684,27 @@ void (function () {
           display: [],
           data: [],
           input: true,
+        }
+        o.wrapper = o.e.parentElement.classList.contains('wrapper')
+          ? o.e.parentElement
+          : o.e.parentElement.parentElement
+        if (o.wrapper) {
+          if (o.note) o.wrapper.classList.add('has-note')
+          o.wrapper.setAttribute('of', o.id)
+          for (p = o.wrapper.getElementsByTagName('div'), n = p.length; n--; ) p[n].setAttribute('of', o.id)
+          for (p = o.wrapper.getElementsByTagName('label'), n = p.length; n--; ) p[n].setAttribute('of', o.id)
+          for (p = o.wrapper.getElementsByTagName('fieldset'), n = p.length; n--; ) p[n].setAttribute('of', o.id)
+          for (p = o.wrapper.getElementsByTagName('legend'), n = p.length; n--; ) p[n].setAttribute('of', o.id)
+          for (p = o.wrapper.getElementsByTagName('input'), n = p.length; n--; ) p[n].setAttribute('of', o.id)
+          for (p = o.wrapper.getElementsByTagName('button'), n = p.length; n--; ) p[n].setAttribute('of', o.id)
+        }
+        if (o.note) {
+          o.wrapper.addEventListener('mouseover', tooltip_trigger.bind(o))
+          p = 'DIV' !== o.e.tagName ? o.e : o.e.getElementsByTagName('input')[0]
+          if (p) {
+            p.addEventListener('focus', tooltip_trigger.bind(o))
+            p.addEventListener('blur', tooltip_clear)
+          }
         }
         if ('-1' !== o.default && patterns.number.test(o.default)) o.default = Number(o.default)
         if (Object.hasOwn(elements, o.type)) {
@@ -2727,7 +2771,12 @@ void (function () {
               for (var p, r, c, i = this.states.length; i--; ) {
                 for (c = this.states[i].condition.length, p = true; c--; ) {
                   r = this.states[i].condition[c]
-                  if (!check_funs[r.type](valueOf(r.id), valueOf(r.value))) p = false
+                  if (check_funs[r.type](valueOf(r.id), valueOf(r.value))) {
+                    if (r.any) {
+                      p = true
+                      break
+                    }
+                  } else p = false
                 }
                 if (p) {
                   this.source = this.states[i].value
@@ -2820,10 +2869,7 @@ void (function () {
       }
 
       if (page.load_screen) {
-        setTimeout(function () {
-          trigger_resize()
-          init_log.load_screen = setTimeout(drop_load_screen, 3000)
-        }, 0)
+        init_log.load_screen = setTimeout(drop_load_screen, 3000)
       } else {
         page.wrap.style.visibility = 'visible'
       }
@@ -2875,7 +2921,7 @@ void (function () {
       for (k in _u)
         if (Object.hasOwn(_u, k) && _u[k].input && !patterns.settings.test(k)) {
           v = _u[k].value()
-          if (null !== v && '' !== v && '-1' !== v) s += (s ? '&' : '?') + k + '=' + v
+          if ('' !== v && null != v && '-1' != v) s += (s ? '&' : '?') + k + '=' + v
         }
       return window.location.protocol + '//' + window.location.host + window.location.pathname + s
     }
@@ -3163,13 +3209,11 @@ void (function () {
           type: e.getAttribute('auto-type'),
           view: e.getAttribute('data-view') || defaults.dataview,
           id: e.id || 'out' + n++,
+          note: e.getAttribute('aria-description') || '',
           e: e,
         }
-        o.options = Object.hasOwn(site, o.type)
-          ? site[o.type][o.id]
-          : Object.hasOwn(site, o.type + 's')
-          ? site[o.type + 's'][o.id]
-          : void 0
+        if (o.note) o.e.addEventListener('mouseover', tooltip_trigger.bind(o))
+        o.options = Object.hasOwn(site, o.type) ? site[o.type][o.id] : void 0
         if (o.options) {
           if (Object.hasOwn(o.options, 'options')) o.options = o.options.options
           if (Object.hasOwn(o.options, 'subto')) {
@@ -3196,6 +3240,28 @@ void (function () {
       return v
     }
 
+    function tooltip_trigger() {
+      if (site.settings.hide_tooltips || this.id === page.tooltip.showing) return void 0
+      page.tooltip.showing = this.id
+      page.tooltip.e.firstElementChild.innerText = this.note
+      page.tooltip.e.classList.remove('hidden')
+      const s = page.wrap.getBoundingClientRect(),
+        p = this.wrapper.getBoundingClientRect(),
+        t = page.tooltip.e.getBoundingClientRect()
+      page.tooltip.e.style.left = Math.max(0, Math.min(p.x, p.x + p.width / 2 - t.width / 2)) + 'px'
+      page.tooltip.e.style.top = p.y + (p.y < s.height / 2 ? p.height + 5 : -t.height - 5) + 'px'
+    }
+
+    function tooltip_clear(e) {
+      if (
+        page.tooltip.showing &&
+        ('blur' === e.type || page.tooltip.showing !== (e.target.getAttribute('of') || e.target.id))
+      ) {
+        page.tooltip.showing = ''
+        page.tooltip.e.classList.add('hidden')
+      }
+    }
+
     function add_layer_listeners(feature, layer) {
       layer.on({
         mouseover: elements.map.mouseover.bind(this),
@@ -3205,13 +3271,13 @@ void (function () {
     }
 
     async function retrieve_layer(u, source) {
-      if (Object.hasOwn(site.maps._raw, source.url)) {
+      if (Object.hasOwn(site.map._raw, source.url)) {
         process_layer(source, u)
       } else {
         var f = new window.XMLHttpRequest()
         f.onreadystatechange = function (u) {
           if (4 === f.readyState && 200 === f.status) {
-            site.maps._raw[source.url] = f.responseText
+            site.map._raw[source.url] = f.responseText
             process_layer(this, u)
           }
         }.bind(source, u)
@@ -3222,13 +3288,13 @@ void (function () {
 
     function process_layer(source, u) {
       var k, l, p, f, id
-      site.maps[u.id]._layers[source.name] = L.geoJSON(JSON.parse(site.maps._raw[source.url]), {
+      site.map[u.id]._layers[source.name] = L.geoJSON(JSON.parse(site.map._raw[source.url]), {
         onEachFeature: add_layer_listeners.bind(u),
       })
       init_log[source.name + '_map'] = true
-      for (k in site.maps[u.id]._layers[source.name]._layers)
-        if (Object.hasOwn(site.maps[u.id]._layers[source.name]._layers, k)) {
-          l = site.maps[u.id]._layers[source.name]._layers[k]
+      for (k in site.map[u.id]._layers[source.name]._layers)
+        if (Object.hasOwn(site.map[u.id]._layers[source.name]._layers, k)) {
+          l = site.map[u.id]._layers[source.name]._layers[k]
           l.setStyle({weight: 0, fillOpacity: 0})
           l.source = source
           p = l.feature.properties
@@ -3257,12 +3323,12 @@ void (function () {
         } else {
           throw new Error('retrieve_layer failed: ' + f.responseText)
         }
-      if (site.maps._waiting && site.maps._waiting[source.name]) {
-        for (var i = site.maps._waiting[source.name].length; i--; )
-          if (u.id !== site.maps._waiting[source.name][i]) {
-            request_queue(site.maps._waiting[source.name][i])
-            // if (Object.hasOwn(_u, site.maps._waiting[source.name][i]) && _u[site.maps._waiting[source.name][i]].color) {
-            //   conditionals.map_colors(_u[site.maps._waiting[source.name][i]], void 0, true)
+      if (site.map._waiting && site.map._waiting[source.name]) {
+        for (var i = site.map._waiting[source.name].length; i--; )
+          if (u.id !== site.map._waiting[source.name][i]) {
+            request_queue(site.map._waiting[source.name][i])
+            // if (Object.hasOwn(_u, site.map._waiting[source.name][i]) && _u[site.map._waiting[source.name][i]].color) {
+            //   conditionals.map_colors(_u[site.map._waiting[source.name][i]], void 0, true)
             // }
           }
       }
@@ -3710,7 +3776,8 @@ void (function () {
               delete data_queue[g][id]
             }
           clearTimeout(init_log.load_screen)
-          setTimeout(drop_load_screen, 100)
+          setTimeout(drop_load_screen, 250)
+          content_resize()
         })
       }
     }
@@ -3927,10 +3994,11 @@ void (function () {
     function request_queue(id) {
       queue[id] = true
       clearTimeout(queue._timeout)
-      queue._timeout = setTimeout(run_queue, 0)
+      queue._timeout = setTimeout(run_queue, 50)
     }
 
     function run_queue() {
+      clearTimeout(queue._timeout)
       var k, s
       for (k in queue)
         if ('_timeout' !== k && Object.hasOwn(queue, k) && queue[k]) {
@@ -4012,20 +4080,19 @@ void (function () {
       if (id === meta.lock_after) meta.retain_state = true
     }
 
-    function queue_init_plot() {
+    function queue_init_plotly() {
       const showing = this.deferred || !this.tab || this.tab.classList.contains('show')
       if (showing && window.Plotly) {
         Plotly.newPlot(this.e, this.options)
         this.e
-          .on('plotly_hover', elements.plot.mouseover.bind(this))
-          .on('plotly_unhover', elements.plot.mouseout.bind(this))
-          .on('plotly_click', elements.plot.click.bind(this))
+          .on('plotly_hover', elements.plotly.mouseover.bind(this))
+          .on('plotly_unhover', elements.plotly.mouseout.bind(this))
+          .on('plotly_click', elements.plotly.click.bind(this))
         update_plot_theme(this)
         this.update()
-        setTimeout(trigger_resize, 50)
       } else {
         this.deferred = true
-        setTimeout(queue_init_plot.bind(this), showing ? 0 : 2000)
+        setTimeout(queue_init_plotly.bind(this), showing ? 0 : 2000)
       }
     }
 
@@ -4037,26 +4104,26 @@ void (function () {
         this.displaying = L.featureGroup().addTo(this.map)
         this.tiles = {}
         var k, i
-        if (Object.hasOwn(site.maps, this.id)) {
-          site.maps[this.id].u = this
-          if (site.maps[this.id].tiles) {
-            if (site.maps[this.id].tiles.url) {
-              this.tiles[theme] = L.tileLayer(site.maps[this.id].tiles.url, site.maps[this.id].tiles.options)
+        if (Object.hasOwn(site.map, this.id)) {
+          site.map[this.id].u = this
+          if (site.map[this.id].tiles) {
+            if (site.map[this.id].tiles.url) {
+              this.tiles[theme] = L.tileLayer(site.map[this.id].tiles.url, site.map[this.id].tiles.options)
               this.tiles[theme].addTo(this.map)
             } else {
-              for (k in site.maps[this.id].tiles)
-                if (Object.hasOwn(site.maps[this.id].tiles, k)) {
-                  this.tiles[k] = L.tileLayer(site.maps[this.id].tiles[k].url, site.maps[this.id].tiles[k].options)
+              for (k in site.map[this.id].tiles)
+                if (Object.hasOwn(site.map[this.id].tiles, k)) {
+                  this.tiles[k] = L.tileLayer(site.map[this.id].tiles[k].url, site.map[this.id].tiles[k].options)
                   if (theme === k) this.tiles[k].addTo(this.map)
                 }
             }
           }
-          if (!Object.hasOwn(site.maps, '_raw')) site.maps._raw = {}
-          if (!Object.hasOwn(site.maps[this.id], '_layers')) site.maps[this.id]._layers = {}
-          for (i = site.maps[this.id].shapes.length; i--; ) {
-            if (!site.maps[this.id].shapes[i].name)
-              site.maps[this.id].shapes[i].name = site.metadata.datasets[i < site.metadata.datasets.length ? i : 0]
-            retrieve_layer(this, site.maps[this.id].shapes[i])
+          if (!Object.hasOwn(site.map, '_raw')) site.map._raw = {}
+          if (!Object.hasOwn(site.map[this.id], '_layers')) site.map[this.id]._layers = {}
+          for (i = site.map[this.id].shapes.length; i--; ) {
+            if (!site.map[this.id].shapes[i].name)
+              site.map[this.id].shapes[i].name = site.metadata.datasets[i < site.metadata.datasets.length ? i : 0]
+            retrieve_layer(this, site.map[this.id].shapes[i])
           }
         }
       } else {
@@ -4065,7 +4132,7 @@ void (function () {
       }
     }
 
-    function queue_init_table() {
+    function queue_init_datatable() {
       const showing = this.deferred || !this.tab || this.tab.classList.contains('show')
       if (showing && window.jQuery && window.DataTable && Object.hasOwn(site.dataviews[this.view], 'get')) {
         this.options.columns = this.header
@@ -4073,7 +4140,7 @@ void (function () {
         this.update()
       } else {
         this.deferred = true
-        setTimeout(queue_init_table.bind(this), showing ? 0 : 2000)
+        setTimeout(queue_init_datatable.bind(this), showing ? 0 : 2000)
       }
     }
 

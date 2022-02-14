@@ -15,7 +15,7 @@
 #' @param id Unique ID of the table.
 #' @param click The ID of an input to set to a clicked row's entity ID.
 #' @param subto A vector of output IDs to receive hover events from.
-#' @param options A list of configuration options, see
+#' @param options A list of configuration options if \code{datatables} is \code{TRUE}, see
 #' \href{https://datatables.net/reference/option}{DataTables Documentation}.
 #' @param features A list of features columns to include if multiple variables are included and \code{wide} is
 #' \code{TRUE}.
@@ -25,22 +25,23 @@
 #' If \code{variables} specifies a single variable, \code{wide = FALSE} will show the variable in a column, and
 #' \code{wide = TRUE} will show the variable across time columns.
 #' @param class Class names to add to the table.
+#' @param datatables Logical; if \code{TRUE}, uses \href{https://datatables.net}{DataTables}.
 #' @examples
 #' output_table()
 #' @return A character vector of the content to be added.
 #' @export
 
 output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, id = NULL, click = NULL, subto = NULL,
-                         options = NULL, features = NULL, filters = NULL, wide = TRUE, class = "compact") {
+                         options = NULL, features = NULL, filters = NULL, wide = TRUE, class = "compact", datatables = TRUE) {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   if (is.null(id)) id <- paste0("table", caller$uid)
+  type <- if (datatables) "datatable" else "table"
   r <- paste(c(
     paste0('<table class="auto-output datatables', if (is.null(class)) "" else paste("", class), '"'),
     if (!is.null(dataview)) paste0('data-view="', dataview, '"'),
     if (!is.null(click)) paste0('click="', click, '"'),
-    paste0('id="', id, '"'),
-    'auto-type="table"></table>'
+    paste0('id="', id, '" auto-type="', type, '"></table>')
   ), collapse = " ")
   if (building) {
     if (!is.null(variables)) {
@@ -80,29 +81,31 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, id =
     )
     so <- names(options)
     for (n in names(defaults)) if (!n %in% so) options[[n]] <- defaults[[n]]
-    caller$dependencies$jquery <- list(
-      type = "script",
-      src = "https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js",
-      hash = "sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK",
-      loading = "defer"
-    )
-    caller$dependencies$datatables_style <- list(
-      type = "stylesheet",
-      src = "https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css",
-      hash = "sha384-yT2pwyD9a3Oee/HtjWTccnRmchDWH2EDHjzH7gwf8yAK0RilKFL164FCHX9fzlxh"
-    )
-    caller$dependencies$datatables <- list(
-      type = "script",
-      src = "https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.4/b-2.2.2/b-html5-2.2.2/b-print-2.2.2/rg-1.1.4/sc-2.0.5/datatables.min.js",
-      hash = "sha384-l0hLA2PVlDEFWu4jf3mJlb+OaKa8A1pcaCV7yJ5s6T3LS94pAD4kxHrmLtA7KYxX",
-      loading = "defer"
-    )
-    caller$credits$datatables <- list(
-      name = "DataTables",
-      url = "https://datatables.net",
-      version = "1.11.4"
-    )
-    caller$tables[[id]] <- options
+    if (datatables) {
+      caller$dependencies$jquery <- list(
+        type = "script",
+        src = "https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js",
+        hash = "sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK",
+        loading = "defer"
+      )
+      caller$dependencies$datatables_style <- list(
+        type = "stylesheet",
+        src = "https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css",
+        hash = "sha384-yT2pwyD9a3Oee/HtjWTccnRmchDWH2EDHjzH7gwf8yAK0RilKFL164FCHX9fzlxh"
+      )
+      caller$dependencies$datatables <- list(
+        type = "script",
+        src = "https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.4/b-2.2.2/b-html5-2.2.2/b-print-2.2.2/rg-1.1.4/sc-2.0.5/datatables.min.js",
+        hash = "sha384-l0hLA2PVlDEFWu4jf3mJlb+OaKa8A1pcaCV7yJ5s6T3LS94pAD4kxHrmLtA7KYxX",
+        loading = "defer"
+      )
+      caller$credits$datatables <- list(
+        name = "DataTables",
+        url = "https://datatables.net",
+        version = "1.11.4"
+      )
+    }
+    if (datatables) caller$datatable[[id]] <- options else caller$table[[id]] <- options
     caller$content <- c(caller$content, r)
     caller$uid <- caller$uid + 1
   }

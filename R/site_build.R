@@ -201,7 +201,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     digits = 2, summary_selection = "all", color_by_order = FALSE, boxplots = TRUE,
     theme_dark = FALSE, partial_init = TRUE, palette = "rdylbu7", hide_url_parameters = FALSE,
     background_shapes = TRUE, iqr_box = TRUE, polygon_outline = 1.5, color_scale_center = "median",
-    table_autoscroll = TRUE, table_scroll_behavior = "smooth"
+    table_autoscroll = TRUE, table_scroll_behavior = "smooth", hide_tooltips = FALSE
   )
   for (s in names(defaults)) {
     if (!is.null(options[[s]])) {
@@ -223,8 +223,10 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     settings$metadata$variables <- unique(c(times, variables))
   }
   parts$dependencies <- list(
-    base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.min.css"),
-    base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js"),
+    base_style = list(type = "stylesheet", src = "dist/community.css"),
+    base = list(type = "script", src = "dist/community.js"),
+    # base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.min.css"),
+    # base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js"),
     custom_style = list(type = "stylesheet", src = "style.css"),
     custom = list(type = "script", src = "script.js"),
     bootstrap_style = list(
@@ -250,19 +252,19 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
   parts$uid <- 0
   source(local = parts, exprs = src)
   for (e in c(
-    "rules", "variables", "dataviews", "info", "text", "select", "tables", "plots", "maps", "legends",
-    "credits", "credit_output"
+    "rules", "variables", "dataviews", "info", "text", "select", "datatable", "table", "plotly", "echarts",
+    "map", "legends", "credits", "credit_output"
   )) {
     settings[[e]] <- if (length(parts[[e]])) if (is.list(parts[[e]])) parts[[e]] else list(parts[[e]]) else NULL
     if (!is.null(names(settings[[e]]))) settings[[e]] <- settings[[e]][!duplicated(names(settings[[e]]))]
   }
-  if (!is.null(settings$maps)) {
-    settings$maps[["_raw"]] <- list()
+  if (!is.null(settings$map)) {
+    settings$map[["_raw"]] <- list()
     for (m in settings$map) {
       if (!is.null(m$shapes)) {
         for (s in m$shapes) {
           if (!is.null(s$url) && file.exists(s$url)) {
-            settings$maps[["_raw"]][[s$url]] <- paste(readLines(s$url), collapse = "")
+            settings$map[["_raw"]][[s$url]] <- paste(readLines(s$url), collapse = "")
           }
         }
       }
@@ -317,7 +319,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     unlist(parts$head[!duplicated(names(parts$head))], use.names = FALSE),
     "</head>",
     "<body>",
-    '<div id="site_wrap" style="visibility: hidden">',
+    '<div id="site_wrap" style="visibility: hidden; position: fixed; height: 100%; width: 100%">',
     if (!is.null(parts$header)) parts$header,
     if (!is.null(parts$body)) parts$body,
     if (!is.null(parts$content)) {

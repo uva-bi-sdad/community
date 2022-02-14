@@ -63,8 +63,8 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">input_text</span><span class="op">(</span><span class="va">id</span>, label <span class="op">=</span> <span class="va">id</span>, <span class="va">...</span>, default <span class="op">=</span> <span class="cn">NULL</span>, multiline <span class="op">=</span> <span class="cn">FALSE</span>,
-  class <span class="op">=</span> <span class="cn">NULL</span>, floating_label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">input_text</span><span class="op">(</span><span class="va">id</span>, label <span class="op">=</span> <span class="va">id</span>, <span class="va">...</span>, default <span class="op">=</span> <span class="cn">NULL</span>, note <span class="op">=</span> <span class="cn">NULL</span>,
+  multiline <span class="op">=</span> <span class="cn">FALSE</span>, class <span class="op">=</span> <span class="cn">NULL</span>, floating_label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -77,6 +77,8 @@
 <dd><p>Other attributes to add to the input.</p></dd>
 <dt>default</dt>
 <dd><p>Default value of the input, which will appear as a placeholder.</p></dd>
+<dt>note</dt>
+<dd><p>Text to display as a tooltip for the input or textarea.</p></dd>
 <dt>multiline</dt>
 <dd><p>Logical; if <code>TRUE</code>, create a <code>textarea</code> element, instead of an <code>input</code> element
 to accept multiple lines of text.</p></dd>

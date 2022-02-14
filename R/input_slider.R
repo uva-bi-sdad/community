@@ -9,6 +9,7 @@
 #' @param max The largest value in the range.
 #' @param step How much moving the handle adjusts the selected value.
 #' @param default Starting value of the slider handle.
+#' @param note Text to display as a tooltip for the input.
 #' @param dataset The name of an included dataset, where \code{variable} should be looked for; only applies when
 #' there are multiple datasets with the same variable name.
 #' @param depends The id of another input on which the options depend; this will take president over \code{dataset}
@@ -21,7 +22,7 @@
 #' @export
 
 input_slider <- function(label, id = label, ..., min = 0, max = 1, step = 1, default = max,
-                         dataset = NULL, depends = NULL) {
+                         note = NULL, dataset = NULL, depends = NULL) {
   id <- gsub("\\s", "", id)
   a <- list(...)
   r <- c(
@@ -35,6 +36,7 @@ input_slider <- function(label, id = label, ..., min = 0, max = 1, step = 1, def
       } else
       if (!is.null(dataset)) paste0('dataset="', dataset, '"'),
       if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
+      if (!is.null(note)) paste0(' aria-description="', note, '"'),
       ">"
     ),
     paste0('<div class="slider-display"><span>', default, "</span></div>"),

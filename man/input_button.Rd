@@ -4,7 +4,8 @@
 \alias{input_button}
 \title{Add a button to a website}
 \usage{
-input_button(label, target = "reset_selection", id = label, class = "", ...)
+input_button(label, target = "reset_selection", id = label, class = "",
+  ..., note = NULL)
 }
 \arguments{
 \item{label}{Text in the button for the user.}
@@ -19,6 +20,8 @@ This can also be a URL (including protocol) for a button-like link.}
 \item{class}{Additional class names to add to the element.}
 
 \item{...}{Additional attributes to set on the element.}
+
+\item{note}{Text to display as a tooltip for the button.}
 }
 \value{
 A character vector of the contents to be added.

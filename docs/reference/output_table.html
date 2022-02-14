@@ -65,7 +65,8 @@
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">output_table</span><span class="op">(</span>variables <span class="op">=</span> <span class="cn">NULL</span>, dataset <span class="op">=</span> <span class="cn">NULL</span>, dataview <span class="op">=</span> <span class="cn">NULL</span>,
   id <span class="op">=</span> <span class="cn">NULL</span>, click <span class="op">=</span> <span class="cn">NULL</span>, subto <span class="op">=</span> <span class="cn">NULL</span>, options <span class="op">=</span> <span class="cn">NULL</span>,
-  features <span class="op">=</span> <span class="cn">NULL</span>, filters <span class="op">=</span> <span class="cn">NULL</span>, wide <span class="op">=</span> <span class="cn">TRUE</span>, class <span class="op">=</span> <span class="st">"compact"</span><span class="op">)</span></code></pre></div>
+  features <span class="op">=</span> <span class="cn">NULL</span>, filters <span class="op">=</span> <span class="cn">NULL</span>, wide <span class="op">=</span> <span class="cn">TRUE</span>, class <span class="op">=</span> <span class="st">"compact"</span>,
+  datatables <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -90,7 +91,7 @@ used if <code>dataview</code> is not specified.</p></dd>
 <dt>subto</dt>
 <dd><p>A vector of output IDs to receive hover events from.</p></dd>
 <dt>options</dt>
-<dd><p>A list of configuration options, see
+<dd><p>A list of configuration options if <code>datatables</code> is <code>TRUE</code>, see
 <a href="https://datatables.net/reference/option" class="external-link">DataTables Documentation</a>.</p></dd>
 <dt>features</dt>
 <dd><p>A list of features columns to include if multiple variables are included and <code>wide</code> is
@@ -104,6 +105,8 @@ If <code>variables</code> specifies a single variable, <code>wide = FALSE</code>
 <code>wide = TRUE</code> will show the variable across time columns.</p></dd>
 <dt>class</dt>
 <dd><p>Class names to add to the table.</p></dd>
+<dt>datatables</dt>
+<dd><p>Logical; if <code>TRUE</code>, uses <a href="https://datatables.net" class="external-link">DataTables</a>.</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>
@@ -113,7 +116,7 @@ If <code>variables</code> specifies a single variable, <code>wide = FALSE</code>
     <div id="ref-examples">
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu">output_table</span><span class="op">(</span><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "&lt;table class=\"auto-output datatables compact\" id=\"table\" auto-type=\"table\"&gt;&lt;/table&gt;"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "&lt;table class=\"auto-output datatables compact\" id=\"table\" auto-type=\"datatable\"&gt;&lt;/table&gt;"</span>
 </code></pre></div>
     </div>
   </div>

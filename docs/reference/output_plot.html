@@ -65,7 +65,7 @@
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">output_plot</span><span class="op">(</span>x <span class="op">=</span> <span class="cn">NULL</span>, y <span class="op">=</span> <span class="cn">NULL</span>, color <span class="op">=</span> <span class="cn">NULL</span>, color_time <span class="op">=</span> <span class="cn">NULL</span>,
   dataview <span class="op">=</span> <span class="cn">NULL</span>, id <span class="op">=</span> <span class="cn">NULL</span>, click <span class="op">=</span> <span class="cn">NULL</span>, subto <span class="op">=</span> <span class="cn">NULL</span>,
-  options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+  options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, plotly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -89,7 +89,9 @@
 <dt>options</dt>
 <dd><p>A list of configuration options, with named entries for any of <code>data</code>, <code>layout</code>,
 or <code>options</code>, potentially extracted from a saved plotly object (see
-<a href="https://plotly.com/javascript/configuration-options" class="external-link">Plotly documentation</a>).</p></dd>
+<a href="https://plotly.com/javascript/configuration-options" class="external-link">Plotly documentation</a>), if <code>plotly</code> is <code>TRUE</code>.</p></dd>
+<dt>plotly</dt>
+<dd><p>Logical; if <code>TRUE</code>, uses <a href="https://plotly.com/javascript" class="external-link">Plotly</a>.</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>
@@ -100,7 +102,7 @@ or <code>options</code>, potentially extracted from a saved plotly object (see
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="co"># for mpg ~ wt * am in a site based on mtcars data</span></span>
 <span class="r-in"><span class="fu">output_plot</span><span class="op">(</span><span class="st">"wt"</span>, <span class="st">"mpg"</span>, <span class="st">"am"</span><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "&lt;div class=\"auto-output plotly\" x=\"wt\" y=\"mpg\" color=\"am\" id=\"plot\" auto-type=\"plot\"&gt;&lt;/div&gt;"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "&lt;div class=\"auto-output plotly\" x=\"wt\" y=\"mpg\" color=\"am\" id=\"plot\" auto-type=\"plotly\"&gt;&lt;/table&gt;&lt;/div&gt;"</span>
 </code></pre></div>
     </div>
   </div>

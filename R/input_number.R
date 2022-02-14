@@ -13,6 +13,7 @@
 #' @param step Amount to increase or decrease the value by when changed with arrows.
 #' @param type Name of the input's type -- other number-based types like \code{date} might make sense.
 #' @param class Class names to add to the input's list.
+#' @param note Text to display as a tooltip for the input.
 #' @param dataview ID of a \code{\link{input_dataview}}, to use as a source of variables.
 #' @param floating_label Logical; if \code{FALSE}, labels are separate from their input elements.,
 #' @param buttons Logical; if \code{TRUE}, adds increment and decrement buttons to the sides of the input.
@@ -24,7 +25,7 @@
 #' @export
 
 input_number <- function(label, id = label, ..., default = NULL, variable = NULL, min = NULL, max = NULL, step = NULL,
-                         type = "number", class = NULL, dataview = NULL, floating_label = TRUE, buttons = FALSE) {
+                         type = "number", class = NULL, note = NULL, dataview = NULL, floating_label = TRUE, buttons = FALSE) {
   id <- gsub("\\s", "", id)
   r <- c(
     paste0('<div class="wrapper text-wrapper', if (floating_label) " form-floating", if (buttons) " number-input-row", '">'),
@@ -34,6 +35,7 @@ input_number <- function(label, id = label, ..., default = NULL, variable = NULL
       '<input type="', type, '"',
       ' id="', id, '"',
       if (!is.null(default)) paste0(' default="', default, '"'),
+      if (!is.null(note)) paste0(' aria-description="', note, '"'),
       if (!is.null(variable)) paste0(' variable="', variable, '"'),
       if (!is.null(min)) paste0(' min="', min, '"'),
       if (!is.null(max)) paste0(' max="', max, '"'),

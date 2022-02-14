@@ -147,6 +147,10 @@ label {
 }
 legend {
   font-size: 1em;
+  white-space: nowrap;
+}
+.menu > div {
+  box-sizing: content-box;
 }
 input[type='number'],
 input[type='text'],
@@ -189,6 +193,7 @@ div[class^='col-'] {
 .content > .col > .row,
 .content > .row {
   min-height: 300px;
+  overflow-y: hidden;
 }
 .compact .row {
   padding: 0;
@@ -344,13 +349,20 @@ button.btn-danger {
   margin: 0;
   font-weight: bold;
 }
-.floating {
+.floating,
+.tooltip {
   position: fixed;
   background-color: var(--background);
-  border-radius: 25px;
-  z-index: 430;
-  border: 1px solid var(--background-border);
+  border-radius: 10px;
+  z-index: 1080;
+  border: 2px solid var(--background-border);
   padding: 0.5em;
+  opacity: 1;
+  max-width: 500px;
+  min-width: 80px;
+}
+.tooltip p {
+  margin: 0;
 }
 .text-display button {
   width: 100%;
@@ -367,14 +379,54 @@ button.btn-danger {
   height: 0.8em;
   width: 0.8em;
 }
-.dark-theme .text-display button::after {
+button.has-note::after,
+.button-wrapper.has-note button::before,
+.has-note label::before,
+.wrapper.has-note > div > label::before,
+.has-note legend::before {
+  opacity: 0.6;
+  content: '';
+  display: inline-block;
+  background-repeat: no-repeat;
+  height: 15px;
+  width: 15px;
+  margin: 0 5px 0 0;
+}
+.output-text button.has-note {
+  color: var(--body-text);
+  cursor: text;
+  padding: 0;
+}
+button.has-note:hover {
+  opacity: 1;
+}
+button.has-note::after {
+  margin: 0 0 0 5px;
+  vertical-align: text-top;
+}
+.wrapper.has-note label.form-check-label {
+  margin: 0 0 0 0;
+}
+.has-note label.form-check-label::before {
+  display: none;
+}
+.dark-theme .text-display button::after,
+.dark-theme button.has-note::after,
+.dark-theme .has-note button::before,
+.dark-theme .has-note label::before,
+.dark-theme .has-note legend::before {
   background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='%23fff' viewBox='0 0 16 16'><path d='M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z'/><path d='m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z'/></svg>");
 }
-.light-theme .text-display button::after {
+.light-theme .text-display button::after,
+.light-theme button.has-note::after,
+.light-theme .has-note button::before,
+.light-theme .has-note label::before,
+.light-theme .has-note legend::before {
   background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='%23000' viewBox='0 0 16 16'><path d='M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z'/><path d='m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z'/></svg>");
 }
 .offcanvas-body {
   padding: 1rem 1rem 4.5rem 1rem;
+  overflow-x: hidden;
 }
 .menu-compact .offcanvas-body {
   font-size: 0.95em;
@@ -599,6 +651,7 @@ table.dataTable.compact tbody td {
 .number-input-row {
   display: flex;
   text-align: center;
+  padding: 4px 0;
 }
 .number-input-row label {
   margin: 0 0 0 5%;
@@ -714,6 +767,7 @@ input[type='range']::-ms-thumb {
 }
 
 .hidden {
+  opacity: 0;
   display: none;
 }
 

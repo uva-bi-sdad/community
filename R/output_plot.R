@@ -12,7 +12,8 @@
 #' @param subto A vector of output IDs to receive hover events from.
 #' @param options A list of configuration options, with named entries for any of \code{data}, \code{layout},
 #' or \code{options}, potentially extracted from a saved plotly object (see
-#' \href{https://plotly.com/javascript/configuration-options}{Plotly documentation}).
+#' \href{https://plotly.com/javascript/configuration-options}{Plotly documentation}), if \code{plotly} is \code{TRUE}.
+#' @param plotly Logical; if \code{TRUE}, uses \href{https://plotly.com/javascript}{Plotly}.
 #' @examples
 #' # for mpg ~ wt * am in a site based on mtcars data
 #' output_plot("wt", "mpg", "am")
@@ -20,7 +21,7 @@
 #' @export
 
 output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dataview = NULL,
-                        id = NULL, click = NULL, subto = NULL, options = list()) {
+                        id = NULL, click = NULL, subto = NULL, options = list(), plotly = TRUE) {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   if (is.null(id)) id <- paste0("plot", caller$uid)
@@ -46,6 +47,7 @@ output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dat
     }
   }
   options$subto <- if (!is.null(subto) && length(subto) == 1) list(subto) else subto
+  type <- if (plotly) "plotly" else "echarts"
   r <- paste(c(
     '<div class="auto-output plotly"',
     if (!is.null(dataview)) paste0('data-view="', dataview, '"'),
@@ -54,8 +56,7 @@ output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dat
     if (!is.null(y)) paste0('y="', y, '"'),
     if (!is.null(color)) paste0('color="', color, '"'),
     if (!is.null(color_time)) paste0('color-time="', color_time, '"'),
-    paste0('id="', id, '"'),
-    'auto-type="plot"></div>'
+    paste0('id="', id, '" auto-type="', type, '"></table></div>')
   ), collapse = " ")
   if (building) {
     caller$dependencies$plotly <- list(
@@ -68,7 +69,7 @@ output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dat
       url = "https://plotly.com/javascript/getting-started",
       version = "2.8.3"
     )
-    caller$plots[[id]] <- options
+    if (plotly) caller$plotly[[id]] <- options else caller$echarts[[id]] <- options
     caller$content <- c(caller$content, r)
     caller$uid <- caller$uid + 1
   }

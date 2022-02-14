@@ -65,8 +65,8 @@ output_text <- function(text, tag = "p", id = NULL, class = NULL, condition = NU
               "}", "", strsplit(gsub("^\\(|\\)?\\[.*$", "", rbb), "{", fixed = TRUE)[[1]],
               fixed = TRUE
             )),
-            type = if (grepl("[r", rbb, fixed = TRUE)) "reset" else "update",
-            target = gsub("^[^[]*\\[\\w\\s?|\\]$", "", rbb)
+            type = if (grepl("[r", rbb, fixed = TRUE)) "reset" else if (grepl("[n", rbb, fixed = TRUE)) "note" else "update",
+            target = gsub("^[^[]*\\[[^\\s]+\\s?|\\]$", "", rbb, perl = TRUE)
           )
           if (res$button[[bid]]$target == "") {
             res$button[[bid]]$target <- if (grepl("{", rbb, fixed = TRUE)) {

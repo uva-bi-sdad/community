@@ -63,7 +63,8 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">input_switch</span><span class="op">(</span><span class="va">label</span>, id <span class="op">=</span> <span class="va">label</span>, <span class="va">...</span>, default_on <span class="op">=</span> <span class="cn">FALSE</span>, as.checkbox <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">input_switch</span><span class="op">(</span><span class="va">label</span>, id <span class="op">=</span> <span class="va">label</span>, <span class="va">...</span>, note <span class="op">=</span> <span class="cn">NULL</span>, default_on <span class="op">=</span> <span class="cn">FALSE</span>,
+  as.checkbox <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -74,6 +75,8 @@
 <dd><p>Unique id of the element to be created.</p></dd>
 <dt>...</dt>
 <dd><p>Additional attributes to set on the element.</p></dd>
+<dt>note</dt>
+<dd><p>Text to display as a tooltip for the input.</p></dd>
 <dt>default_on</dt>
 <dd><p>Logical; if <code>TRUE</code>, the switch will start on.</p></dd>
 <dt>as.checkbox</dt>

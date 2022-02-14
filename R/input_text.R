@@ -9,6 +9,7 @@
 #' @param multiline Logical; if \code{TRUE}, create a \code{textarea} element, instead of an \code{input} element
 #' to accept multiple lines of text.
 #' @param class Class names to add to the input's list.
+#' @param note Text to display as a tooltip for the input or textarea.
 #' @param floating_label Logical; if \code{FALSE}, labels are separate from their input elements.
 #' @examples
 #' \dontrun{
@@ -17,7 +18,8 @@
 #' @return A character vector of the contents to be added.
 #' @export
 
-input_text <- function(id, label = id, ..., default = NULL, multiline = FALSE, class = NULL, floating_label = TRUE) {
+input_text <- function(id, label = id, ..., default = NULL, note = NULL, multiline = FALSE, class = NULL,
+                       floating_label = TRUE) {
   id <- gsub("\\s", "", id)
   a <- list(...)
   r <- c(
@@ -34,6 +36,7 @@ input_text <- function(id, label = id, ..., default = NULL, multiline = FALSE, c
       },
       if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
       ' class="form-control auto-input', if (!is.null(class)) paste("", class), '" auto-type="text">',
+      if (is.null(note)) c(' aria-description="', note, '"'),
       if (multiline) "</textarea>",
       if (floating_label) paste0('<label for="', id, '">', label, "</label>")
     ), collapse = ""),

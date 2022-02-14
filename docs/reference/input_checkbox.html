@@ -64,8 +64,8 @@
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">input_checkbox</span><span class="op">(</span><span class="va">label</span>, <span class="va">options</span>, default <span class="op">=</span> <span class="st">"all"</span>, display <span class="op">=</span> <span class="va">options</span>,
-  id <span class="op">=</span> <span class="va">label</span>, <span class="va">...</span>, variable <span class="op">=</span> <span class="cn">NULL</span>, dataset <span class="op">=</span> <span class="cn">NULL</span>, depends <span class="op">=</span> <span class="cn">NULL</span>,
-  multi <span class="op">=</span> <span class="cn">TRUE</span>, as.switch <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+  id <span class="op">=</span> <span class="va">label</span>, <span class="va">...</span>, note <span class="op">=</span> <span class="cn">NULL</span>, variable <span class="op">=</span> <span class="cn">NULL</span>, dataset <span class="op">=</span> <span class="cn">NULL</span>,
+  depends <span class="op">=</span> <span class="cn">NULL</span>, multi <span class="op">=</span> <span class="cn">TRUE</span>, as.switch <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -84,6 +84,8 @@ the option to select by default.</p></dd>
 <dd><p>Unique id of the element to be created.</p></dd>
 <dt>...</dt>
 <dd><p>Additional attributes to set on the element.</p></dd>
+<dt>note</dt>
+<dd><p>Text to display as a tooltip for the input.</p></dd>
 <dt>variable</dt>
 <dd><p>The name of a variable from which to get levels (overwritten by <code>depends</code>).</p></dd>
 <dt>dataset</dt>

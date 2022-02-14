@@ -5,7 +5,7 @@
 \title{Add a select input to a website}
 \usage{
 input_select(label, options, default = -1, display = options, id = label,
-  ..., variable = NULL, dataset = NULL, depends = NULL,
+  ..., note = NULL, variable = NULL, dataset = NULL, depends = NULL,
   dataview = NULL, filters = NULL, reset_button = FALSE,
   button_class = NULL, as.row = FALSE, floating_label = TRUE)
 }
@@ -23,6 +23,8 @@ color palettes.}
 \item{id}{Unique ID of the element to be created.}
 
 \item{...}{Additional attributes to set on the select element.}
+
+\item{note}{Text to display as a tooltip for the input.}
 
 \item{variable}{The name of a variable from which to get levels (overwritten by \code{depends}).}
 
