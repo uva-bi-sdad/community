@@ -38,7 +38,7 @@ output_legend <- function(palette = "", lower = "Lower", higher = "Higher",
     "</div>"
   )
   if (building) {
-    caller$legends[[id]] <- options
+    caller$legend[[id]] <- options
     caller$content <- c(caller$content, r)
     caller$uid <- caller$uid + 1
   }

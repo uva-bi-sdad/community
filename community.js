@@ -3213,7 +3213,11 @@ void (function () {
           e: e,
         }
         if (o.note) o.e.addEventListener('mouseover', tooltip_trigger.bind(o))
-        o.options = Object.hasOwn(site, o.type) ? site[o.type][o.id] : void 0
+        o.options = Object.hasOwn(site, o.type)
+          ? site[o.type][o.id]
+          : Object.hasOwn(site, o.type + 's')
+          ? site[o.type + 's'][o.id]
+          : void 0
         if (o.options) {
           if (Object.hasOwn(o.options, 'options')) o.options = o.options.options
           if (Object.hasOwn(o.options, 'subto')) {

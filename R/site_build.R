@@ -251,7 +251,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
   source(local = parts, exprs = src)
   for (e in c(
     "rules", "variables", "dataviews", "info", "text", "select", "datatable", "table", "plotly", "echarts",
-    "map", "legends", "credits", "credit_output"
+    "map", "legend", "credits", "credit_output"
   )) {
     settings[[e]] <- if (length(parts[[e]])) if (is.list(parts[[e]])) parts[[e]] else list(parts[[e]]) else NULL
     if (!is.null(names(settings[[e]]))) settings[[e]] <- settings[[e]][!duplicated(names(settings[[e]]))]
