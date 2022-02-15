@@ -1141,13 +1141,11 @@ void (function () {
                           this.parsed.data = valueOf(o.options.variable || caller.color || caller.y || _u[o.view].y)
                         } else if (Object.hasOwn(_u, this.text)) this.parsed.data = valueOf(this.text)
                         if (Object.hasOwn(entity.data, this.parsed.data)) {
-                          const info = variable_info[this.parsed.data]
-                          return (
-                            format_value(
-                              entity.data[this.parsed.data][this.parent.time],
-                              info && info.type ? patterns.int_types.test(info.type) : true
-                            ) + (info && 'percent' === info.type ? '%' : '')
+                          const info = variable_info[this.parsed.data], v = format_value(
+                            entity.data[this.parsed.data][this.parent.time],
+                            info && info.type ? patterns.int_types.test(info.type) : true
                           )
+                          return 'unknown' !== v && Object.hasOwn(value_types, info.type) ? value_types[info.type](v) : v
                         }
                       }
                     if (Object.hasOwn(this.parsed, 'data')) {
@@ -1559,9 +1557,9 @@ void (function () {
               if (!this.tab || this.tab.classList.contains('show')) this.queue = setTimeout(() => this.update(true), 50)
             } else {
               if (this.table) {
+                var vn =  this.options.variable_source && valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.')
                 const v = _u[this.view],
                   d = v.get.dataset(),
-                  vn = valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.'),
                   state = v.value() + v.get.time_filters() + site.settings.digits + vn
                 if (!init_log[d]) return void 0
                 if (state !== this.state) {
@@ -1997,13 +1995,25 @@ void (function () {
             : tree[a.id]._n.children - tree[b.id]._n.children
         },
       },
+      value_types = {
+        percent: function(v){
+          return v + '%'
+        },
+        'drive time': function(v){
+          return v + ' minutes'
+        },
+        dollar: function(v){
+          return '$' + v
+        },
+        'internet speed': function(v){
+          return v + ' MB/s'
+        }
+      },
       storage = window.localStorage || {
         setItem: function () {},
         getItem: function () {},
         removeItem: function () {},
-      }
-
-    const page = {
+      }, page = {
         load_screen: document.getElementById('load_screen'),
         wrap: document.getElementById('site_wrap'),
         navbar: document.getElementsByClassName('navbar')[0],
@@ -2390,14 +2400,14 @@ void (function () {
 
     function parse_variables(s, type, e, entity) {
       if ('statement' === type) {
-        for (var m; (m = patterns.mustache.exec(s)); ) {
+        for (var m, v; (m = patterns.mustache.exec(s)); ) {
           if ('value' === m[1]) {
+            v = entity
+              ? format_value(entity.data[e.v][e.time], patterns.int_types.test(variable_info[e.v].type))
+              : 'unknown'
             s = s.replace(
               m[0],
-              entity
-                ? format_value(entity.data[e.v][e.time], patterns.int_types.test(variable_info[e.v].type)) +
-                    ('percent' === variable_info[e.v].type ? '%' : '')
-                : 'unknown'
+              'unknown' !== v && Object.hasOwn(value_types, variable_info[e.v].type) ? value_types[variable_info[e.v].type](v) : v
             )
             patterns.mustache.lastIndex = 0
           } else if (entity) {

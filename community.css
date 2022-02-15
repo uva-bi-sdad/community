@@ -38,6 +38,11 @@ table.dataTable tbody tr,
   border-color: var(--background-border);
   color: var(--body-text);
 }
+#site_wrap{
+  position: fixed;
+  height: 100%;
+  width: 100%;
+}
 .form-check-input,
 .form-check-input > label,
 .form-check > label,
