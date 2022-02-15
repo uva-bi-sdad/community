@@ -102,6 +102,8 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
     id <- "id"
     vars <- c(id, vars)
     data <- cbind(id = unlist(lapply(table(data$file), seq_len), use.names = FALSE), data)
+  } else {
+    data <- data[!is.na(data[[id]]) & data[[id]] != "NA"]
   }
   data[[id]] <- as.character(data[[id]])
   if (!dataset %in% vars) {

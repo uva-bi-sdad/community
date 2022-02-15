@@ -96,6 +96,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
             fixed_ids <- pn > 1 && all(nchar(names(sdata)) == pn)
             if (aggregate && length(previous_data) && anyNA(data)) {
               cn <- colnames(sdata[[1]])
+              ids_map <- NULL
               if (length(d$ids)) {
                 if (is.character(d$ids[[1]]$map)) {
                   mf <- paste0(c(dir, ""), rep(c("", "/docs/"), each = 2), "/", d$ids[[1]]$map)
