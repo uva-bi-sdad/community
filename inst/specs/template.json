@@ -3,8 +3,8 @@
   "context": "package",
   "dir": ".",
   "files": [
-    "R/template_{name}.R",
-    "test/testthat/test-template_{name}.R",
+    "R/init_{name}.R",
+    "tests/testthat/test-init_{name}.R",
     "inst/specs/{name}.JSON"
   ]
 }

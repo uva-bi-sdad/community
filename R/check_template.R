@@ -78,7 +78,7 @@ check_template <- function(template, name = "", dir = ".", spec = NULL) {
     files <- gsub("{name}", name, paste0(dir, unlist(spec$files[strict])), fixed = TRUE)
     report$files <- files
     present <- file.exists(files)
-    report$status["strict"] <- any(present)
+    report$status["strict"] <- all(present)
     if (!report$status["strict"]) {
       report$message <- c(report$message, x = paste0(
         "required file",

@@ -5,8 +5,12 @@
   "files": [
     "README.md",
     "site.R",
+    "package.json",
+    "server.js",
+    ".gitignore",
+    "build.R",
     "docs/index.html",
-    "docs/settings.js",
+    "docs/settings.json",
     "docs/script.js",
     "docs/style.css"
   ]

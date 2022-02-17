@@ -4,17 +4,13 @@
 \alias{output_legend}
 \title{Adds a legend to a website}
 \usage{
-output_legend(palette = "", lower = "Lower", higher = "Higher",
-  dataview = NULL, id = NULL, subto = NULL, class = "")
+output_legend(palette = "", dataview = NULL, id = NULL, subto = NULL,
+  class = "")
 }
 \arguments{
 \item{palette}{Name of an included color palette (from
 \href{https://colorbrewer2.org}{colorbrewer}); one of \code{"rdylbu7"} (default), \code{"orrd7"}, \code{"gnbu7"},
 \code{"brbg7"}, \code{"puor7"}, \code{"prgn6"}, \code{"reds5"}, \code{"greens5"}, \code{"greys4"}, \code{"paired4"}.}
-
-\item{lower}{Text to appear at the beginning of the legend, labeling smaller.}
-
-\item{higher}{Text to appear at the end of the legend, labeling larger values.}
 
 \item{dataview}{The ID of an \code{\link{input_dataview}} component.}
 
@@ -23,6 +19,10 @@ output_legend(palette = "", lower = "Lower", higher = "Higher",
 \item{subto}{A vector of output IDs to receive hover events from.}
 
 \item{class}{Class names to add to the legend element.}
+
+\item{lower}{Text to appear at the beginning of the legend, labeling smaller.}
+
+\item{higher}{Text to appear at the end of the legend, labeling larger values.}
 }
 \value{
 A character vector of the contents to be added.

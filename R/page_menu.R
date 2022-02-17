@@ -51,10 +51,6 @@ page_menu <- function(..., position = "right", width = "300px", height = NULL, c
       '<div state="', if (default_open) "open" else "closed", '" class="menu-wrapper menu-', position, '"',
       c(
         ' style="', position, ": ", if (default_open) 0 else paste0("-", width), "; ",
-        if (vertical) "height" else "width", ": 100%",
-        if (vertical) {
-          c("; width: ", width)
-        } else
         if (!is.null(height)) c("; height: ", height),
         '"'
       ),

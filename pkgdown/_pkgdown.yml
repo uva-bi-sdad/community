@@ -10,6 +10,7 @@ reference:
   - starts_with("input_")
   - starts_with("output_")
   - site_build
+  - site_make_child
 
 - title: Initializers
   desc: init_ functions create project directories and/or files based on a standard.

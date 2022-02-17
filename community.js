@@ -26,6 +26,21 @@ void (function () {
         greens5: ['#ffffcc', '#c2e699', '#78c679', '#31a354', '#006837'],
         greys4: ['#f7f7f7', '#cccccc', '#969696', '#525252'],
         paired4: ['#1f78b4', '#a6cee3', '#b2df8a', '#33a02c'],
+        grey: [
+          [70, 70, 70],
+          [230, 230, 230],
+          [300, 300, 300],
+        ],
+        brown: [
+          [131, 30, 0],
+          [255, 200, 190],
+          [386, 230, 190],
+        ],
+        purple: [
+          [90, 14, 213],
+          [195, 192, 245],
+          [285, 206, 458],
+        ],
       },
       patterns = {
         seps: /[\s._-]/g,
@@ -470,6 +485,32 @@ void (function () {
         },
       },
       elements = {
+        button: {
+          init: function (o) {
+            o.target = o.e.getAttribute('target')
+            o.e.addEventListener(
+              'click',
+              o.settings.effects
+                ? function () {
+                    for (var k in this.settings.effects)
+                      if (Object.hasOwn(_u, k)) {
+                        this.settings.effects[k] === '' || -1 == this.settings.effects[k]
+                          ? _u[k].reset()
+                          : _u[k].set(this.settings.effects[k])
+                      }
+                  }.bind(o)
+                : 'refresh' === o.target
+                ? global_update
+                : 'reset_selection' === o.target
+                ? global_reset
+                : 'reset_storage' === o.target
+                ? clear_storage
+                : function () {
+                    if (Object.hasOwn(_u, this.target)) _u[this.target].reset()
+                  }.bind(o)
+            )
+          },
+        },
         buttongroup: {
           retrieve: function () {
             for (var i = this.options.length; i--; )
@@ -625,6 +666,22 @@ void (function () {
           },
         },
         number: {
+          init: function (o) {
+            if (o.e.previousElementSibling && o.e.previousElementSibling.classList.contains('number-down')) {
+              o.e.previousElementSibling.addEventListener(
+                'click',
+                function () {
+                  this.set(Math.max(this.parsed.min, this.value() - 1))
+                }.bind(o)
+              )
+              o.e.parentElement.lastElementChild.addEventListener(
+                'click',
+                function () {
+                  this.set(Math.min(this.parsed.max, this.value() + 1))
+                }.bind(o)
+              )
+            }
+          },
           retrieve: function () {
             this.set(this.e.value)
           },
@@ -1141,11 +1198,14 @@ void (function () {
                           this.parsed.data = valueOf(o.options.variable || caller.color || caller.y || _u[o.view].y)
                         } else if (Object.hasOwn(_u, this.text)) this.parsed.data = valueOf(this.text)
                         if (Object.hasOwn(entity.data, this.parsed.data)) {
-                          const info = variable_info[this.parsed.data], v = format_value(
-                            entity.data[this.parsed.data][this.parent.time],
-                            info && info.type ? patterns.int_types.test(info.type) : true
-                          )
-                          return 'unknown' !== v && Object.hasOwn(value_types, info.type) ? value_types[info.type](v) : v
+                          const info = variable_info[this.parsed.data],
+                            v = format_value(
+                              entity.data[this.parsed.data][this.parent.time],
+                              info && info.type ? patterns.int_types.test(info.type) : true
+                            )
+                          return 'unknown' !== v && Object.hasOwn(value_types, info.type)
+                            ? value_types[info.type](v)
+                            : v
                         }
                       }
                     if (Object.hasOwn(this.parsed, 'data')) {
@@ -1557,7 +1617,9 @@ void (function () {
               if (!this.tab || this.tab.classList.contains('show')) this.queue = setTimeout(() => this.update(true), 50)
             } else {
               if (this.table) {
-                var vn =  this.options.variable_source && valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.')
+                var vn =
+                  this.options.variable_source &&
+                  valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.')
                 const v = _u[this.view],
                   d = v.get.dataset(),
                   state = v.value() + v.get.time_filters() + site.settings.digits + vn
@@ -1724,7 +1786,6 @@ void (function () {
               ticks: o.e.getElementsByClassName('legend-ticks')[0],
               scale: o.e.getElementsByClassName('legend-scale')[0],
               summary: o.e.getElementsByClassName('legend-summary')[0],
-              text: o.e.lastElementChild,
             }
             o.update = elements.legend.update.bind(o)
             o.ticks = {
@@ -1733,20 +1794,23 @@ void (function () {
               max: o.parts.summary.appendChild(document.createElement('div')),
               entity: o.parts.ticks.appendChild(document.createElement('div')),
             }
-            for (var t in o.ticks)
+            var t, e
+            for (t in o.ticks)
               if (Object.hasOwn(o.ticks, t)) {
                 o.ticks[t].className = 'legend-tick'
-                o.ticks[t].appendChild(document.createElement('span'))
-                o.ticks[t].appendChild(document.createElement('span'))
+                o.ticks[t].appendChild((e = document.createElement('div')))
+                e.appendChild(document.createElement('p'))
+                e.appendChild(document.createElement('p'))
+                e.appendChild(document.createElement('p'))
                 if ('entity' === t) {
-                  o.ticks[t].lastElementChild.classList.add('entity')
+                  o.ticks[t].firstElementChild.lastElementChild.classList.add('entity')
                 } else {
-                  o.ticks[t].firstElementChild.classList.add('summary')
+                  o.ticks[t].firstElementChild.firstElementChild.classList.add('summary')
                 }
               }
             o.ticks.entity.firstElementChild.classList.add('hidden')
-            o.ticks.entity.lastElementChild.classList.add('hidden')
-            o.ticks.center.classList.add('hidden')
+            o.ticks.min.firstElementChild.lastElementChild.innerText = 'Min'
+            o.ticks.max.firstElementChild.lastElementChild.innerText = 'Max'
             o.ticks.center.style.left = '50%'
             o.ticks.max.style.left = '100%'
             o.show = function (e, c) {
@@ -1757,7 +1821,8 @@ void (function () {
                   max = summary ? (string ? summary.levels.length : summary.max[c.parsed.time]) : 1,
                   subset = 'all' === site.settings.summary_selection ? 'subset_rank' : 'rank',
                   center =
-                    !site.settings.color_scale_center || patterns.median.test(site.settings.color_scale_center)
+                    'none' === site.settings.color_scale_center ||
+                    patterns.median.test(site.settings.color_scale_center)
                       ? 'norm_median'
                       : 'norm_mean',
                   nm =
@@ -1775,7 +1840,7 @@ void (function () {
                             0,
                             Math.min(
                               1,
-                              site.settings.color_scale_center
+                              'none' !== site.settings.color_scale_center
                                 ? 0.5 +
                                     (max - min
                                       ? ((string ? summary.level_ids[value] : value) - min) / (max - min) - nm
@@ -1785,31 +1850,35 @@ void (function () {
                                 : 0
                             )
                           )
-                      : NaN) * 100
+                      : NaN) * 100,
+                  t = this.ticks.entity.firstElementChild.children[1]
                 if (isFinite(p)) {
-                  this.ticks.entity.firstElementChild.classList.remove('hidden')
-                  this.ticks.entity.lastElementChild.classList.remove('hidden')
-                  this.ticks.entity.firstElementChild.innerText = format_value(value, this.integer)
-                  this.ticks.entity.firstElementChild.style.left =
-                    -this.ticks.entity.firstElementChild.getBoundingClientRect().width / 2 + 'px'
+                  t.parentElement.classList.remove('hidden')
+                  t.innerText = format_value(value, this.integer)
                   this.ticks.entity.style.left = p + '%'
+                  this.ticks.entity.firstElementChild.firstElementChild.innerText =
+                    (p > 96 || p < 4) && e.features.name.length > 13
+                      ? e.features.name.substring(0, 13) + '…'
+                      : e.features.name
                 } else if (site.settings.color_by_order) {
                   var i =
-                    entities[e.features.id][subset][c.parsed.color][c.parsed.time] - summary.missing[c.parsed.time]
+                      entities[e.features.id][subset][c.parsed.color][c.parsed.time] - summary.missing[c.parsed.time],
+                    po = (i / (summary.n[c.parsed.time] - 1)) * 100
+                  this.ticks.entity.firstElementChild.firstElementChild.innerText =
+                    i > -1 && (po > 96 || po < 4) && e.features.name.length > 13
+                      ? e.features.name.substring(0, 13) + '…'
+                      : e.features.name
                   if (i > -1) {
-                    this.ticks.entity.firstElementChild.classList.remove('hidden')
-                    this.ticks.entity.lastElementChild.classList.remove('hidden')
-                    this.ticks.entity.firstElementChild.innerText = i + 1
-                    this.ticks.entity.firstElementChild.style.left =
-                      -this.ticks.entity.firstElementChild.getBoundingClientRect().width / 2 + 'px'
-                    this.ticks.entity.style.left = (i / (summary.n[c.parsed.time] - 1)) * 100 + '%'
+                    t.parentElement.classList.remove('hidden')
+                    t.innerText = i + 1
+                    this.ticks.entity.style.left = po + '%'
                   }
                 }
+                this.ticks.entity.style.marginLeft = -this.ticks.entity.getBoundingClientRect().width / 2 + 'px'
               }
             }
             o.revert = function () {
               this.ticks.entity.firstElementChild.classList.add('hidden')
-              this.ticks.entity.lastElementChild.classList.add('hidden')
             }
             add_dependency(o.view, {type: 'update', id: o.id})
             if (Object.hasOwn(_u, o.palette)) {
@@ -1829,12 +1898,16 @@ void (function () {
               min = summary && !string ? summary.min[y] : 0,
               max = summary ? (string ? summary.levels.length : summary.max[y]) : 1,
               center =
-                !site.settings.color_scale_center || patterns.median.test(site.settings.color_scale_center)
+                'none' === site.settings.color_scale_center || patterns.median.test(site.settings.color_scale_center)
                   ? 'norm_median'
                   : 'norm_mean',
               nm = summary && !string ? (isNaN(summary[center][y]) ? 0 : summary[center][y]) : 0.5,
               ep = valueOf(this.palette).toLowerCase(),
-              pn = Object.hasOwn(palettes, ep) ? ep : site.settings.palette,
+              pn = Object.hasOwn(palettes, ep)
+                ? ep
+                : Object.hasOwn(palettes, site.settings.palette)
+                ? site.settings.palette
+                : 'brown',
               p = palettes[pn]
             if (view.valid && summary) {
               this.integer =
@@ -1844,49 +1917,68 @@ void (function () {
               if (pn !== this.current_palette) {
                 this.current_palette = pn
                 this.parts.scale.innerHTML = ''
-                for (var i = 0, n = p.length; i < n; i++) {
+                if ('string' === typeof p[0]) {
+                  for (var i = 0, n = p.length; i < n; i++) {
+                    this.parts.scale.appendChild(document.createElement('span'))
+                    this.parts.scale.lastElementChild.style.background = p[i]
+                  }
+                } else {
                   this.parts.scale.appendChild(document.createElement('span'))
-                  this.parts.scale.lastElementChild.style.background = p[i]
+                  this.parts.scale.lastElementChild.style.background =
+                    'linear-gradient(0.75turn, rgb(' +
+                    p[0][0] +
+                    ', ' +
+                    p[0][1] +
+                    ', ' +
+                    p[0][2] +
+                    '), rgb(' +
+                    p[1][0] +
+                    ', ' +
+                    p[1][1] +
+                    ', ' +
+                    p[1][2] +
+                    '))'
                 }
               }
               if (site.settings.color_by_order) {
                 this.ticks.center.classList.add('hidden')
-                this.parts.text.children[1].innerText = ''
-                this.ticks.min.lastElementChild.innerText = summary.n[y] ? 1 : 0
-                this.ticks.max.lastElementChild.innerText = summary.n[y] ? summary.n[y] : 0
+                this.ticks.min.firstElementChild.children[1].innerText = summary.n[y] ? 1 : 0
+                this.ticks.max.firstElementChild.children[1].innerText = summary.n[y] ? summary.n[y] : 0
                 this.ticks.min.style.left = '0px'
                 this.ticks.max.style.left = '100%'
               } else {
-                this.ticks.min.lastElementChild.innerText = summary.n[y]
+                this.ticks.center.classList.remove('hidden')
+                this.ticks.min.firstElementChild.children[1].innerText = summary.n[y]
                   ? isFinite(summary.min[y])
                     ? format_value(summary.min[y], this.integer)
                     : 'unknown'
                   : 'unknown'
-                this.ticks.max.lastElementChild.innerText = summary.n[y]
+                this.ticks.max.firstElementChild.children[1].innerText = summary.n[y]
                   ? isFinite(summary.max[y])
                     ? format_value(summary.max[y], this.integer)
                     : 'unknown'
                   : 'unknown'
-                if (site.settings.color_scale_center) {
-                  this.ticks.center.classList.remove('hidden')
-                  this.ticks.center.lastElementChild.innerText = format_value(
+                if ('none' !== site.settings.color_scale_center) {
+                  this.ticks.center.firstElementChild.lastElementChild.innerText =
+                    summary_levels[site.settings.summary_selection] + ' ' + site.settings.color_scale_center
+                  this.ticks.center.firstElementChild.children[1].innerText = format_value(
                     summary[site.settings.color_scale_center][y]
                   )
-                  this.ticks.center.lastElementChild.style.left =
-                    -this.ticks.center.lastElementChild.getBoundingClientRect().width / 2 + 'px'
-                  this.parts.text.children[1].innerText =
-                    summary_levels[site.settings.summary_selection] + ' ' + site.settings.color_scale_center
+                  this.ticks.center.style.left = '50%'
                 } else {
-                  this.ticks.center.classList.add('hidden')
-                  this.parts.text.children[1].innerText = ''
+                  this.ticks.center.firstElementChild.lastElementChild.innerText =
+                    summary_levels[site.settings.summary_selection] + ' median'
+                  this.ticks.center.firstElementChild.children[1].innerText = format_value(summary.median[y])
+                  this.ticks.center.style.left = summary.norm_median[y] * 100 + '%'
                 }
+                this.ticks.center.style.marginLeft = -this.ticks.center.getBoundingClientRect().width / 2 + 'px'
                 this.ticks.min.style.left =
                   ((string ? Object.hasOwn(summary.level_ids, min) : 'number' === typeof min)
                     ? Math.max(
                         0,
                         Math.min(
                           1,
-                          site.settings.color_scale_center
+                          'none' !== site.settings.color_scale_center
                             ? 0.5 + (max - min ? -nm : 0)
                             : max - min
                             ? ((string ? summary.level_ids[min] : min) - min) / (max - min)
@@ -1903,7 +1995,7 @@ void (function () {
                           0,
                           Math.min(
                             1,
-                            site.settings.color_scale_center
+                            'none' !== site.settings.color_scale_center
                               ? 0.5 + (max - min ? 1 - nm : 0)
                               : max - min
                               ? ((string ? summary.level_ids[max] : max) - min) / (max - min)
@@ -1915,10 +2007,8 @@ void (function () {
                     100 +
                   '%'
               }
-              this.ticks.min.lastElementChild.style.left =
-                -this.ticks.min.lastElementChild.getBoundingClientRect().width / 2 + 'px'
-              this.ticks.max.lastElementChild.style.left =
-                -this.ticks.max.lastElementChild.getBoundingClientRect().width / 2 + 'px'
+              this.ticks.max.style.marginLeft = -this.ticks.max.getBoundingClientRect().width / 2 + 'px'
+              this.ticks.min.style.marginLeft = -this.ticks.min.getBoundingClientRect().width / 2 + 'px'
             }
           },
         },
@@ -1996,29 +2086,31 @@ void (function () {
         },
       },
       value_types = {
-        percent: function(v){
+        percent: function (v) {
           return v + '%'
         },
-        'drive time': function(v){
+        'drive time': function (v) {
           return v + ' minutes'
         },
-        dollar: function(v){
+        dollar: function (v) {
           return '$' + v
         },
-        'internet speed': function(v){
+        'internet speed': function (v) {
           return v + ' MB/s'
-        }
+        },
       },
       storage = window.localStorage || {
         setItem: function () {},
         getItem: function () {},
         removeItem: function () {},
-      }, page = {
+      },
+      page = {
         load_screen: document.getElementById('load_screen'),
         wrap: document.getElementById('site_wrap'),
         navbar: document.getElementsByClassName('navbar')[0],
         content: document.getElementsByClassName('content')[0],
         menus: document.getElementsByClassName('menu-wrapper'),
+        panels: document.getElementsByClassName('panel'),
       },
       variables = {},
       variable_info = {},
@@ -2057,7 +2149,6 @@ void (function () {
         }
       page.content.style.top = h + 'px'
     }
-    if (page.load_screen) page.load_screen.firstElementChild.innerText = 'loading...'
 
     function pal(value, which, summary, index, rank) {
       which = which ? which.toLowerCase() : site.settings.palette
@@ -2066,33 +2157,35 @@ void (function () {
         min = summary && !string ? summary.min[index] : 0,
         max = summary ? (string ? summary.levels.length : summary.max[index]) : 1,
         center =
-          !site.settings.color_scale_center || patterns.median.test(site.settings.color_scale_center)
+          'none' === site.settings.color_scale_center || patterns.median.test(site.settings.color_scale_center)
             ? 'norm_median'
             : 'norm_mean',
-        nm = summary && !string ? (isNaN(summary[center][index]) ? 0 : summary[center][index]) : 0.5
+        nm = summary && !string ? (isNaN(summary[center][index]) ? 0 : summary[center][index]) : 0.5,
+        fixed = 'string' === typeof colors[0],
+        r = fixed ? colors.length : 1
+      var v =
+        'none' !== site.settings.color_scale_center || site.settings.color_by_order
+          ? r / 2 +
+            r *
+              (site.settings.color_by_order
+                ? rank
+                : max - min
+                ? ((string ? summary.level_ids[value] : value) - min) / (max - min) - nm
+                : 0)
+          : r * (max - min ? ((string ? summary.level_ids[value] : value) - min) / (max - min) : 0)
+      if (!fixed) v = 1 - Math.max(0, Math.min(1, v))
       return (string ? Object.hasOwn(summary.level_ids, value) : 'number' === typeof value)
-        ? colors[
-            Math.max(
-              0,
-              Math.min(
-                colors.length - 1,
-                site.settings.color_scale_center || site.settings.color_by_order
-                  ? Math.floor(
-                      colors.length / 2 +
-                        colors.length *
-                          (site.settings.color_by_order
-                            ? rank
-                            : max - min
-                            ? ((string ? summary.level_ids[value] : value) - min) / (max - min) - nm
-                            : 0)
-                    )
-                  : Math.floor(
-                      colors.length *
-                        (max - min ? ((string ? summary.level_ids[value] : value) - min) / (max - min) : 0)
-                    )
-              )
-            )
-          ]
+        ? fixed
+          ? colors[Math.max(0, Math.min(r - 1, Math.floor(v)))]
+          : 3 === colors.length
+          ? 'rgb(' +
+            ((colors[0][0] + v * colors[1][0]) / colors[2][0]) * colors[1][0] +
+            ', ' +
+            ((colors[0][1] + v * colors[1][1]) / colors[2][1]) * colors[1][1] +
+            ', ' +
+            ((colors[0][2] + v * colors[1][2]) / colors[2][2]) * colors[1][2] +
+            ')'
+          : 'rgb(' + 0 + ', ' + 0 + ', ' + 0 + ')'
         : '#f0f0f040'
     }
 
@@ -2180,7 +2273,7 @@ void (function () {
           u.values.push(k)
           u.display.push(entities[k].features.name)
         }
-      site.url_options[u.id] ? u.set(site.url_options[u.id]) : u.reset()
+      Object.hasOwn(site.url_options, u.id) ? u.set(site.url_options[u.id]) : u.reset()
     }
 
     function fill_variables_options(u, d, out) {
@@ -2195,7 +2288,7 @@ void (function () {
         u.values.push(m[i].name)
         u.display.push(l)
       }
-      site.url_options[u.id] ? u.set(site.url_options[u.id]) : u.reset()
+      Object.hasOwn(site.url_options, u.id) ? u.set(site.url_options[u.id]) : u.reset()
     }
 
     function fill_levels_options(u, d, v, out) {
@@ -2235,7 +2328,7 @@ void (function () {
           return fill_levels_options(u, d, v, out)
         }
       }
-      site.url_options[u.id] ? u.set(site.url_options[u.id]) : u.reset()
+      Object.hasOwn(site.url_options, u.id) ? u.set(site.url_options[u.id]) : u.reset()
     }
 
     function add_dependency(id, o) {
@@ -2407,7 +2500,9 @@ void (function () {
               : 'unknown'
             s = s.replace(
               m[0],
-              'unknown' !== v && Object.hasOwn(value_types, variable_info[e.v].type) ? value_types[variable_info[e.v].type](v) : v
+              'unknown' !== v && Object.hasOwn(value_types, variable_info[e.v].type)
+                ? value_types[variable_info[e.v].type](v)
+                : v
             )
             patterns.mustache.lastIndex = 0
           } else if (entity) {
@@ -2447,6 +2542,7 @@ void (function () {
       if (!Object.hasOwn(site.url_options, 'hide_logo')) site.url_options.hide_logo = true
       if (!Object.hasOwn(site.url_options, 'hide_title')) site.url_options.hide_title = true
       if (!Object.hasOwn(site.url_options, 'hide_navcontent')) site.url_options.hide_navcontent = true
+      if (!Object.hasOwn(site.url_options, 'hide_panels')) site.url_options.hide_panels = true
       if (Object.hasOwn(site.url_options, 'embedded') && !Object.hasOwn(site.url_options, 'close_menus'))
         site.url_options.close_menus = true
     }
@@ -2457,33 +2553,36 @@ void (function () {
         e.style.backgroundColor = site.url_options.navcolor.replace('%23', '#')
       }
       if (site.url_options.hide_logo && site.url_options.hide_title && site.url_options.hide_navcontent) {
-        e.style.display = 'none'
+        e.classList.add('hidden')
       } else {
         e = document.getElementsByClassName('navbar-brand')[0]
         if (e) {
           if (site.url_options.hide_logo && 'IMG' === e.firstElementChild.tagName)
-            e.firstElementChild.style.display = 'none'
+            e.firstElementChild.classList.add('hidden')
           if (site.url_options.hide_title && 'IMG' !== e.lastElementChild.tagName)
-            e.lastElementChild.style.display = 'none'
+            e.lastElementChild.classList.add('hidden')
         }
         if (site.url_options.hide_navcontent) {
-          document.getElementsByClassName('navbar-toggler')[0].style.display = 'none'
+          document.getElementsByClassName('navbar-toggler')[0].classList.add('hidden')
           e = document.getElementsByClassName('navbar-nav')[0]
-          if (e) e.style.display = 'none'
+          if (e) e.classList.add('hidden')
+        }
+      }
+      if (site.url_options.hide_panels && page.panels.length) {
+        for (i = page.panels.length; i--; ) {
+          page.panels[i].classList.add('hidden')
         }
       }
     }
 
     // check for stored settings
     for (k in site.settings)
-      if (Object.hasOwn(site.settings, k)) {
+      if (Object.hasOwn(storage, k)) {
         c = storage.getItem(k)
-        if (c) {
-          if (patterns.bool.test(c)) {
-            c = 'true' === c
-          } else if (patterns.number.test(c)) c = parseFloat(c)
-          site.settings[k] = c
-        }
+        if (patterns.bool.test(c)) {
+          c = 'true' === c
+        } else if (patterns.number.test(c)) c = parseFloat(c)
+        site.settings[k] = c
       }
     if (site && site.metadata) map_variables()
 
@@ -2493,6 +2592,7 @@ void (function () {
       page.navbar = page.navbar ? page.navbar.getBoundingClientRect() : {height: 0}
       page.content = document.getElementsByClassName('content')[0]
       page.menus = document.getElementsByClassName('menu-wrapper')
+      page.panels = document.getElementsByClassName('panel')
       page.content_bounds = {
         top: page.navbar.height,
         right: 0,
@@ -2544,7 +2644,6 @@ void (function () {
         },
       }
       page.load_screen = document.getElementById('load_screen')
-      if (page.load_screen) page.load_screen.firstElementChild.innerText = 'loading...'
       e = page.modal.info.e
       document.body.appendChild(e)
       page.modal.info.init = true
@@ -2606,10 +2705,17 @@ void (function () {
       e.references.appendChild((e = document.createElement('ul')))
       e.className = 'reference-list'
 
+      for (i = page.panels.length; i--; ) {
+        page.content_bounds[page.panels[i].classList.contains('panel-left') ? 'left' : 'right'] =
+          page.panels[i].getBoundingClientRect().width
+        page.panels[i].style.marginTop = page.content_bounds.top + 'px'
+      }
       for (i = page.menus.length; i--; ) {
         page.menus[i].state = page.menus[i].getAttribute('state')
         if (page.menus[i].classList.contains('menu-top')) {
           page.top_menu = page.menus[i]
+          page.top_menu.style.left = page.content_bounds.left + 'px'
+          page.top_menu.style.right = page.content_bounds.right + 'px'
           if (page.menus[i].lastElementChild.tagName === 'BUTTON') {
             page.menus[i].lastElementChild.addEventListener(
               'click',
@@ -2619,6 +2725,7 @@ void (function () {
           }
         } else if (page.menus[i].classList.contains('menu-right')) {
           page.right_menu = page.menus[i]
+          page.right_menu.style.right = page.content_bounds.right + 'px'
           if (page.menus[i].lastElementChild.tagName === 'BUTTON') {
             page.menus[i].lastElementChild.addEventListener(
               'click',
@@ -2629,6 +2736,8 @@ void (function () {
         } else if (page.menus[i].classList.contains('menu-bottom')) {
           page.bottom_menu = page.menus[i]
           page.content_bounds.bottom = 40
+          page.bottom_menu.style.left = page.content_bounds.left + 'px'
+          page.bottom_menu.style.right = page.content_bounds.right + 'px'
           if (page.menus[i].lastElementChild.tagName === 'BUTTON') {
             page.menus[i].lastElementChild.addEventListener(
               'click',
@@ -2637,6 +2746,7 @@ void (function () {
           }
         } else if (page.menus[i].classList.contains('menu-left')) {
           page.left_menu = page.menus[i]
+          page.left_menu.style.left = page.content_bounds.left + 'px'
           if (page.menus[i].lastElementChild.tagName === 'BUTTON') {
             page.menus[i].lastElementChild.addEventListener(
               'click',
@@ -2694,6 +2804,7 @@ void (function () {
           data: [],
           input: true,
         }
+        o.settings = Object.hasOwn(site, o.type) && Object.hasOwn(site[o.type], o.id) ? site[o.type][o.id] : {}
         o.wrapper = o.e.parentElement.classList.contains('wrapper')
           ? o.e.parentElement
           : o.e.parentElement.parentElement
@@ -2718,47 +2829,18 @@ void (function () {
         if ('-1' !== o.default && patterns.number.test(o.default)) o.default = Number(o.default)
         if (Object.hasOwn(elements, o.type)) {
           p = elements[o.type]
+          if (p.init) p.init(o)
           o.options = o.type === 'select' ? o.e.children : o.e.getElementsByTagName('input')
-          o.set = p.setter.bind(o)
-          o.get = p.retrieve.bind(o)
+          if (p.setter) {
+            o.set = p.setter.bind(o)
+            o.reset = function () {
+              this.set(valueOf(this.default))
+            }.bind(o)
+          }
+          if (p.retrieve) o.get = p.retrieve.bind(o)
           if (p.adder) o.add = p.adder.bind(o)
-          o.reset = function () {
-            this.set(valueOf(this.default))
-          }.bind(o)
-          o.listen = p.listener.bind(o)
+          if (p.listener) o.listen = p.listener.bind(o)
           _u[o.id] = o
-        } else if ('button' === o.type) {
-          o.target = o.e.getAttribute('target')
-          o.e.addEventListener(
-            'click',
-            'refresh' === o.target
-              ? global_update
-              : 'reset_selection' === o.target
-              ? global_reset
-              : 'reset_storage' === o.target
-              ? clear_storage
-              : function () {
-                  if (Object.hasOwn(_u, this.target)) _u[this.target].reset()
-                }.bind(o)
-          )
-        }
-        if (
-          'number' === o.type &&
-          o.e.previousElementSibling &&
-          o.e.previousElementSibling.classList.contains('number-down')
-        ) {
-          o.e.previousElementSibling.addEventListener(
-            'click',
-            function () {
-              this.set(Math.max(this.parsed.min, this.value() - 1))
-            }.bind(o)
-          )
-          o.e.parentElement.lastElementChild.addEventListener(
-            'click',
-            function () {
-              this.set(Math.min(this.parsed.max, this.value() + 1))
-            }.bind(o)
-          )
         }
       }
 
@@ -2901,22 +2983,20 @@ void (function () {
             (page.left_menu && 'open' === page.left_menu.state)
               ? 0
               : 40)) + 'px'
-      if (page.right_menu) {
-        page.content.style.right =
-          page.content_bounds.right +
-          ('closed' === page.right_menu.state ? 0 : page.right_menu.getBoundingClientRect().width) +
-          'px'
-      } else if (page.bottom_menu) {
-        page.content.style.bottom =
-          page.content_bounds.bottom +
-          ('closed' === page.bottom_menu.state ? 0 : page.bottom_menu.getBoundingClientRect().height) +
-          'px'
-      } else if (page.left_menu) {
-        page.content.style.left =
-          page.content_bounds.left +
-          ('closed' === page.left_menu.state ? 0 : page.left_menu.getBoundingClientRect().width) +
-          'px'
-      }
+      page.content.style.right =
+        page.content_bounds.right +
+        (!page.right_menu || 'closed' === page.right_menu.state ? 0 : page.right_menu.getBoundingClientRect().width) +
+        'px'
+      page.content.style.bottom =
+        page.content_bounds.bottom +
+        (!page.bottom_menu || 'closed' === page.bottom_menu.state
+          ? 0
+          : page.bottom_menu.getBoundingClientRect().height) +
+        'px'
+      page.content.style.left =
+        page.content_bounds.left +
+        (!page.left_menu || 'closed' === page.left_menu.state ? 0 : page.left_menu.getBoundingClientRect().width) +
+        'px'
     }
 
     function trigger_resize() {
@@ -3147,7 +3227,7 @@ void (function () {
           if (v) {
             if (patterns.bool.test(v)) v = 'true' === v
             o.set(v)
-          } else o.reset()
+          } else o.reset && o.reset()
         }
       // initialize dataviews
       for (k in site.dataviews)
@@ -3340,9 +3420,6 @@ void (function () {
         for (var i = site.map._waiting[source.name].length; i--; )
           if (u.id !== site.map._waiting[source.name][i]) {
             request_queue(site.map._waiting[source.name][i])
-            // if (Object.hasOwn(_u, site.map._waiting[source.name][i]) && _u[site.map._waiting[source.name][i]].color) {
-            //   conditionals.map_colors(_u[site.map._waiting[source.name][i]], void 0, true)
-            // }
           }
       }
     }
@@ -4007,7 +4084,7 @@ void (function () {
     function request_queue(id) {
       queue[id] = true
       clearTimeout(queue._timeout)
-      queue._timeout = setTimeout(run_queue, 50)
+      queue._timeout = setTimeout(run_queue, 20)
     }
 
     function run_queue() {

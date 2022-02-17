@@ -14,15 +14,7 @@ download_dataverse_info <- function(id, server = NULL, refresh = FALSE, verbose 
         ))),
         error = function(e) NULL
       )
-      if (!exists("dataset_doi")) {
-        dataset_doi <- tryCatch(
-          readLines(paste0(
-            "https://raw.githubusercontent.com/", id, "/", repo$default_branch, "/data/dataset_doi"
-          ), warn = FALSE),
-          error = function(e) NULL
-        )
-      }
-      if (length(dataset_doi)) {
+      if (exists("dataset_doi") && length(dataset_doi)) {
         id <- dataset_doi[[1]]
       } else {
         cli_abort(paste0(

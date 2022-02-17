@@ -10,10 +10,11 @@ input_button(label, target = "reset_selection", id = label, class = "",
 \arguments{
 \item{label}{Text in the button for the user.}
 
-\item{target}{The ID of an input element to reset, or the name of a function to trigger. Available function are
-\code{refresh} (to force a reprocessing of the current input state), \code{reset_selection} (to reset all input
-elements that are not settings), and \code{reset_storage} (to clear local storage, reset all settings, and reload).
-This can also be a URL (including protocol) for a button-like link.}
+\item{target}{The ID of an input element to reset, a vector with IDs of input elements as names and values to set
+those inputs to as values, or the name of a function to trigger. Available function are \code{refresh} (to force
+a reprocessing of the current input state), \code{reset_selection} (to reset all input elements that are not
+settings), and \code{reset_storage} (to clear local storage, reset all settings, and reload). This can also be a
+URL (including protocol) for a button-like link.}
 
 \item{id}{Unique ID of the element to be created.}
 

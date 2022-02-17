@@ -1,0 +1,79 @@
+#' Make a Copy of a Data Site
+#'
+#' Copies baseline files from an existing data site. Useful for making different sites
+#' based on the same data.
+#'
+#' @param parent Directory or GitHub repository name of the existing site to be copied.
+#' @param dir Directory of the child site to put copies in.
+#' @param update Logical; if \code{TRUE}, replaces existing site files if they are older than existing
+#' files (from a local directory). Defaults to \code{FALSE} if \code{parent} is not a local directory.
+#' @param overwrite Logical; if \code{TRUE}, overwrites any existing site files.
+#' @param quiet Logical; if \code{TRUE}, does not send messages.
+#' @examples
+#' \dontrun{
+#' site_make_child("uva-bi-sdad/community_example", "../community_example")
+#' }
+#' @return Invisible path to the child directory.
+#' @export
+
+site_make_child <- function(parent, dir, update = TRUE, overwrite = FALSE, quiet = FALSE) {
+  if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = "child_site")')
+  check <- check_template("site", dir = dir)
+  if (any(file.exists(check$files)) && !overwrite) {
+    cli_bullets(c(`!` = "site files already exist", i = "add {.code overwrite = TRUE} to overwrite them"))
+  }
+  dir <- normalizePath(paste0(dir, "/", check$spec$dir), "/", FALSE)
+  dir.create(dir, FALSE, TRUE)
+  dir.create(paste0(dir, "/docs/data"), FALSE, TRUE)
+  files <- c(unlist(check$spec$files, use.names = FALSE), "docs/data/datapackage.json")
+  filled <- copied <- structure(!file.exists(paste0(dir, "/", files)), names = files)
+  copied[] <- FALSE
+  init_site(dir, with_data = FALSE, quiet = TRUE)
+  if (!dir.exists(parent)) {
+    parent <- sub("^.*github.com/", "", parent)
+    repo <- tryCatch(read_json(paste0("https://api.github.com/repos/", parent, "/contents")), error = function(e) e$message)
+    if (is.character(repo)) cli_abort("treated {.arg parent} as a GitHub repository, but failed to retrieve it: {repo}")
+    if (missing(update)) update <- FALSE
+    repo <- c(
+      repo,
+      tryCatch(read_json(paste0("https://api.github.com/repos/", parent, "/contents/docs")), error = function(e) NULL),
+      tryCatch(read_json(paste0("https://api.github.com/repos/", parent, "/contents/docs/data")), error = function(e) NULL)
+    )
+    for (f in repo) {
+      if (f$path %in% files) {
+        dest <- paste0(dir, "/", f$path)
+        if (overwrite || update || filled[[f$path]]) {
+          unlink(dest)
+          tryCatch(download.file(f$download_url, dest, quiet = TRUE), error = function(e) NULL)
+          copied[[f$path]] <- file.exists(dest)
+        }
+      }
+    }
+  } else {
+    for (f in files) {
+      pf <- paste0(parent, "/", f)
+      dest <- paste0(dir, "/", f)
+      if (file.exists(pf) && (overwrite || filled[[f]] || (update && file.mtime(pf) > file.mtime(dest)))) {
+        unlink(dest)
+        file.copy(pf, dest)
+        copied[[f]] <- file.exists(dest)
+      }
+    }
+  }
+  if (any(copied)) {
+    if (interactive()) {
+      cli_bullets(c(
+        v = "copied site files from {.path {parent}}:",
+        "*" = paste0("{.path ", names(which(copied)), "}")
+      ))
+    }
+  } else {
+    if (any(filled)) {
+      unlink(names(which(filled)))
+      cli_warn("no site files were successfully copied from {.path {parent}}")
+    } else {
+      cli_alert_success("no site files were replaced")
+    }
+  }
+  invisible(dir)
+}

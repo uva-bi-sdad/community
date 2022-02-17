@@ -6,6 +6,7 @@
 #' @param title Title of the site.
 #' @param with_data logical; if \code{FALSE}, a data sub-directory and package will not be created.
 #' @param overwrite logical; if \code{TRUE}, will overwrite existing site files in \code{dir}.
+#' @param quiet Logical; if \code{TRUE}, suppresses messages and does not navigate to the file when finished.
 #' @examples
 #' \dontrun{
 #' # initialize site in the current working directory
@@ -14,10 +15,10 @@
 #' @return Path to the created site directory.
 #' @export
 
-init_site <- function(dir, title = "app", with_data = TRUE, overwrite = FALSE) {
+init_site <- function(dir, title = "app", with_data = TRUE, overwrite = FALSE, quiet = !interactive()) {
   if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = ".")')
   check <- check_template("site", dir = dir)
-  if (check$exists && !overwrite) {
+  if (!quiet && check$exists && !overwrite) {
     cli_bullets(c(`!` = "site files already exist", i = "add {.code overwrite = TRUE} to overwrite them"))
   }
   dir <- normalizePath(paste0(dir, "/", check$spec$dir), "/", FALSE)
@@ -80,7 +81,6 @@ init_site <- function(dir, title = "app", with_data = TRUE, overwrite = FALSE) {
       directories = list(doc = "docs"),
       scripts = list(start = "node server.js"),
       dependencies = list(express = "latest"),
-      prettier = list(printWidth = 120, semi = FALSE, trailingComma = "es5"),
       author = "",
       license = "ISC"
     ), paths[3], pretty = TRUE, auto_unbox = TRUE)
@@ -125,13 +125,13 @@ init_site <- function(dir, title = "app", with_data = TRUE, overwrite = FALSE) {
     ), collapse = "\n"), paths[6])
   }
   dir.create(paste0(dir, "/docs"), FALSE)
-  docs <- paste0(dir, "/docs/", c("index.html", "settings.js", "script.js", "style.css"))
+  docs <- grep("/docs/", check$files, fixed = TRUE, value = TRUE)
   if (any(!file.exists(docs))) file.create(docs[!file.exists(docs)])
   if (with_data && !file.exists(paste0(dir, "/docs/data/datapackage.json"))) {
     dir.create(paste0(dir, "/docs/data"), FALSE)
     init_data(title, dir = dir, quiet = TRUE)
   }
-  if (interactive()) {
+  if (!quiet) {
     cli_bullets(c(
       v = "created a site skeleton for {title}:",
       "*" = paste0("{.path ", normalizePath(dir, "/", FALSE), "}")

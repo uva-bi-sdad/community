@@ -6,7 +6,8 @@
 \usage{
 site_build(dir, file = "site.R", outdir = "docs", name = "index.html",
   variables = NULL, options = list(), bundle_data = FALSE,
-  open_after = FALSE, aggregate = TRUE, force = FALSE)
+  open_after = FALSE, aggregate = TRUE, force = FALSE, version = "dev",
+  parent = NULL)
 }
 \arguments{
 \item{dir}{Path to the site project directory.}
@@ -35,6 +36,10 @@ attempt to fill NAs with averages from the larger dataset.}
 
 \item{force}{Logical; if \code{TRUE}, will reprocess data even if the source data is older than the existing
 processed version.}
+
+\item{version}{Version of the base script and stylesheet: \code{"v1"} (default) for the version 1 stable release,
+\code{"dev"} for the current unstable release, or \code{"local"} for a copy of the development files
+(\code{community.js} and \code{community.css}) served from a local \code{dist} directory.}
 }
 \value{
 Invisible path to the written file.

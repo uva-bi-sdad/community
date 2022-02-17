@@ -16,8 +16,7 @@
 #' @return A character vector of the contents to be added.
 #' @export
 
-output_legend <- function(palette = "", lower = "Lower", higher = "Higher",
-                          dataview = NULL, id = NULL, subto = NULL, class = "") {
+output_legend <- function(palette = "", dataview = NULL, id = NULL, subto = NULL, class = "") {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   if (is.null(id)) id <- paste0("legend", caller$uid)
@@ -32,9 +31,6 @@ output_legend <- function(palette = "", lower = "Lower", higher = "Higher",
     '<div class="legend-ticks"></div>',
     '<div class="legend-scale"></div>',
     '<div class="legend-summary"></div>',
-    paste0(
-      '<div class="legend-text"><span>', lower, "</span><span></span><span>", higher, "</span></div>"
-    ),
     "</div>"
   )
   if (building) {

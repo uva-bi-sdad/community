@@ -19,6 +19,9 @@
 #' attempt to fill NAs with averages from the larger dataset.
 #' @param force Logical; if \code{TRUE}, will reprocess data even if the source data is older than the existing
 #' processed version.
+#' @param version Version of the base script and stylesheet: \code{"v1"} (default) for the version 1 stable release,
+#' \code{"dev"} for the current unstable release, or \code{"local"} for a copy of the development files
+#' (\code{community.js} and \code{community.css}) served from a local \code{dist} directory.
 #' @examples
 #' \dontrun{
 #' # run from within a site project directory, initialized with `init_site()`
@@ -32,7 +35,8 @@
 #' @export
 
 site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html", variables = NULL,
-                       options = list(), bundle_data = FALSE, open_after = FALSE, aggregate = TRUE, force = FALSE) {
+                       options = list(), bundle_data = FALSE, open_after = FALSE, aggregate = TRUE, force = FALSE,
+                       version = "dev", parent = NULL) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., dir = ".")')
   page <- paste0(dir, "/", file)
   if (!file.exists(page)) cli_abort("{.file {page}} does not exist")
@@ -45,6 +49,13 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     path <- paste0(dir, "/docs/")
     info <- list()
     vars <- variables
+    if (!is.null(parent) && (force || !file.exists(f) || file.size(f) < 250)) {
+      if (file.exists(paste0(parent, "/docs/data/datapackage.json"))) {
+        f <- paste0(parent, "/docs/data/datapackage.json")
+      } else {
+        tryCatch(download.file(paste0(parent, "/data/datapackage.json"), f, quiet = TRUE), error = function(e) NULL)
+      }
+    }
     if (file.exists(f)) {
       meta <- read_json(f)
       previous_data <- list()
@@ -66,95 +77,99 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
           }
           d$schema$fields <- unname(temp[vars])
         }
-        file <- paste0(ddir, d$filename)
-        d$site_file <- paste0(d$name, ".json")
-        path <- paste0(dir, "/docs/", d$site_file)
-        if (file.exists(file)) {
-          if (force || (!file.exists(path) || file.mtime(file) > file.mtime(path))) {
-            data <- fread(file)
-            time <- NULL
-            if (length(d$time) && d$time[[1]] %in% colnames(data)) {
-              time <- d$time[[1]]
-              data <- data[order(data[[d$time[[1]]]]), ]
-            }
-            if (length(d$ids) && d$ids[[1]]$variable %in% colnames(data)) {
-              ids <- trimws(format(data[[d$ids[[1]]$variable]], scientific = FALSE))
-              if (is.null(time) && anyDuplicated(ids)) {
-                cli_abort(paste(
-                  "no time variable was specified, yet {?an id was/ids were} duplicated:",
-                  "{.val {unique(ids[duplicated(ids)])}}"
-                ))
+        if (!is.null(parent)) {
+          d$site_file <- paste0(parent, "/", d$name, ".json")
+        } else {
+          file <- paste0(ddir, d$filename)
+          d$site_file <- paste0(d$name, ".json")
+          path <- paste0(dir, "/docs/", d$site_file)
+          if (file.exists(file)) {
+            if (force || (!file.exists(path) || file.mtime(file) > file.mtime(path))) {
+              data <- fread(file)
+              time <- NULL
+              if (length(d$time) && d$time[[1]] %in% colnames(data)) {
+                time <- d$time[[1]]
+                data <- data[order(data[[d$time[[1]]]]), ]
               }
-              set(data, NULL, d$ids[[1]]$variable, NULL)
-            } else {
-              ids <- rownames(data)
-            }
-            rownames(data) <- NULL
-            sdata <- split(data, ids)
-            # aggregating if needed
-            pn <- nchar(names(sdata)[1])
-            fixed_ids <- pn > 1 && all(nchar(names(sdata)) == pn)
-            if (aggregate && length(previous_data) && anyNA(data)) {
-              cn <- colnames(sdata[[1]])
-              ids_map <- NULL
-              if (length(d$ids)) {
-                if (is.character(d$ids[[1]]$map)) {
-                  mf <- paste0(c(dir, ""), rep(c("", "/docs/"), each = 2), "/", d$ids[[1]]$map)
-                  mf <- mf[file.exists(mf)]
-                  ids_map <- if (!is.null(ids_maps[[d$ids[[1]]$map]])) {
-                    ids_maps[[d$ids[[1]]$map]]
+              if (length(d$ids) && d$ids[[1]]$variable %in% colnames(data)) {
+                ids <- trimws(format(data[[d$ids[[1]]$variable]], scientific = FALSE))
+                if (is.null(time) && anyDuplicated(ids)) {
+                  cli_abort(paste(
+                    "no time variable was specified, yet {?an id was/ids were} duplicated:",
+                    "{.val {unique(ids[duplicated(ids)])}}"
+                  ))
+                }
+                set(data, NULL, d$ids[[1]]$variable, NULL)
+              } else {
+                ids <- rownames(data)
+              }
+              rownames(data) <- NULL
+              sdata <- split(data, ids)
+              # aggregating if needed
+              pn <- nchar(names(sdata)[1])
+              fixed_ids <- pn > 1 && all(nchar(names(sdata)) == pn)
+              if (aggregate && length(previous_data) && anyNA(data)) {
+                cn <- colnames(sdata[[1]])
+                ids_map <- NULL
+                if (length(d$ids)) {
+                  if (is.character(d$ids[[1]]$map)) {
+                    mf <- paste0(c(dir, ""), rep(c("", "/docs/"), each = 2), "/", d$ids[[1]]$map)
+                    mf <- mf[file.exists(mf)]
+                    ids_map <- if (!is.null(ids_maps[[d$ids[[1]]$map]])) {
+                      ids_maps[[d$ids[[1]]$map]]
+                    } else {
+                      tryCatch(
+                        read_json(if (length(mf)) mf[[1]] else d$ids[[1]]$map),
+                        error = function(e) NULL
+                      )
+                    }
+                    ids_maps[[d$ids[[1]]$map]] <- ids_map
+                    if (((length(mf) && !grepl("/docs/", mf[[1]], fixed = TRUE)) || bundle_data) &&
+                      !is.null(ids_map)) {
+                      d$ids[[1]]$map <- ids_map
+                    }
                   } else {
-                    tryCatch(
-                      read_json(if (length(mf)) mf[[1]] else d$ids[[1]]$map),
-                      error = function(e) NULL
-                    )
+                    ids_map <- d$ids[[1]]$map
                   }
-                  ids_maps[[d$ids[[1]]$map]] <- ids_map
-                  if (((length(mf) && !grepl("/docs/", mf[[1]], fixed = TRUE)) || bundle_data) &&
-                    !is.null(ids_map)) {
-                    d$ids[[1]]$map <- ids_map
+                }
+                cids <- NULL
+                for (pname in rev(names(previous_data))) {
+                  if (!is.null(ids_map[[pname]][[1]][[d$name]])) {
+                    child <- pname
+                    cids <- vapply(ids_map[[pname]], function(e) {
+                      if (is.null(e[[d$name]])) "" else e[[d$name]]
+                    }, "")[names(previous_data[[pname]])]
+                    break
+                  } else if (fixed_ids && pname %in% names(id_lengths) && id_lengths[[pname]] > pn) {
+                    child <- pname
+                    cids <- substr(names(previous_data[[pname]]), 1, pn)
+                    break
                   }
-                } else {
-                  ids_map <- d$ids[[1]]$map
                 }
-              }
-              cids <- NULL
-              for (pname in rev(names(previous_data))) {
-                if (!is.null(ids_map[[pname]][[1]][[d$name]])) {
-                  child <- pname
-                  cids <- vapply(ids_map[[pname]], function(e) {
-                    if (is.null(e[[d$name]])) "" else e[[d$name]]
-                  }, "")[names(previous_data[[pname]])]
-                  break
-                } else if (fixed_ids && pname %in% names(id_lengths) && id_lengths[[pname]] > pn) {
-                  child <- pname
-                  cids <- substr(names(previous_data[[pname]]), 1, pn)
-                  break
-                }
-              }
-              if (!is.null(child) && any(cn %in% names(previous_data[[child]][[1]])) && !is.null(cids)) {
-                for (id in names(sdata)) {
-                  did <- sdata[[id]]
-                  if (anyNA(did)) {
-                    children <- which(cids == id)
-                    if (length(children)) {
-                      cd <- do.call(rbind, previous_data[[child]][children])
-                      if (is.null(time)) {
-                        aggs <- vapply(cd, function(v) if (is.numeric(v) && !all(is.na(v))) mean(v, na.rm = TRUE) else NA, 0)
-                        aggs <- aggs[!is.na(aggs) & names(aggs) %in% cn & names(aggs) != "time"]
-                        sdata[[id]] <- as.data.frame(sdata[[id]])
-                        aggs <- aggs[is.na(sdata[[id]][, names(aggs)])]
-                        if (length(aggs)) sdata[[id]][, names(aggs)] <- aggs
-                      } else {
-                        cd <- split(cd, cd[[time]])
-                        sdata[[id]] <- as.data.frame(sdata[[id]])
-                        for (ct in names(cd)) {
-                          aggs <- vapply(cd[[ct]], function(v) if (is.numeric(v) && !all(is.na(v))) mean(v, na.rm = TRUE) else NA, 0)
-                          aggs <- aggs[!is.na(aggs) & names(aggs) %in% cn]
-                          if (length(aggs)) {
-                            su <- sdata[[id]][[time]] == ct
-                            aggs <- aggs[is.na(sdata[[id]][su, names(aggs)])]
-                            if (length(aggs)) sdata[[id]][su, names(aggs)] <- aggs
+                if (!is.null(child) && any(cn %in% names(previous_data[[child]][[1]])) && !is.null(cids)) {
+                  for (id in names(sdata)) {
+                    did <- sdata[[id]]
+                    if (anyNA(did)) {
+                      children <- which(cids == id)
+                      if (length(children)) {
+                        cd <- do.call(rbind, previous_data[[child]][children])
+                        if (is.null(time)) {
+                          aggs <- vapply(cd, function(v) if (is.numeric(v) && !all(is.na(v))) mean(v, na.rm = TRUE) else NA, 0)
+                          aggs <- aggs[!is.na(aggs) & names(aggs) %in% cn & names(aggs) != "time"]
+                          sdata[[id]] <- as.data.frame(sdata[[id]])
+                          aggs <- aggs[is.na(sdata[[id]][, names(aggs)])]
+                          if (length(aggs)) sdata[[id]][, names(aggs)] <- aggs
+                        } else {
+                          cd <- split(cd, cd[[time]])
+                          sdata[[id]] <- as.data.frame(sdata[[id]])
+                          for (ct in names(cd)) {
+                            aggs <- vapply(cd[[ct]], function(v) if (is.numeric(v) && !all(is.na(v))) mean(v, na.rm = TRUE) else NA, 0)
+                            aggs <- aggs[!is.na(aggs) & names(aggs) %in% cn]
+                            if (length(aggs)) {
+                              su <- sdata[[id]][[time]] == ct
+                              aggs <- aggs[is.na(sdata[[id]][su, names(aggs)])]
+                              if (length(aggs)) sdata[[id]][su, names(aggs)] <- aggs
+                            }
                           }
                         }
                       }
@@ -162,18 +177,18 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
                   }
                 }
               }
+              if (fixed_ids) id_lengths[d$name] <- pn
+              previous_data[[d$name]] <- sdata
+              if (length(vars)) {
+                sdata <- lapply(sdata, function(d) {
+                  if (class(d)[1] == "data.table") d[, vars, with = FALSE] else d[, vars]
+                })
+              }
+              write_json(sdata, path, dataframe = "columns")
             }
-            if (fixed_ids) id_lengths[d$name] <- pn
-            previous_data[[d$name]] <- sdata
-            if (length(vars)) {
-              sdata <- lapply(sdata, function(d) {
-                if (class(d)[1] == "data.table") d[, vars, with = FALSE] else d[, vars]
-              })
-            }
-            write_json(sdata, path, dataframe = "columns")
           }
-          info[[d$name]] <- d
         }
+        info[[d$name]] <- d
       }
     } else {
       data_files <- list.files(ddir, "\\.(csv|tsv|txt)")
@@ -212,7 +227,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
   times <- unname(vapply(settings$metadata$info, function(d) if (length(d$time)) d$time else "", ""))
   times <- times[times != ""]
   variables <- unique(c(times, variables))
-  if (!is.null(variables)) variables <- variables[variables != "_references"]
+  if (!is.null(variables)) variables <- variables[!grepl("^_", variables)]
   if (!missing(aggregate) || !is.null(settings$metadata) && length(settings$metadata$variables) &&
     !identical(as.character(settings$metadata$variables), variables)) {
     force <- TRUE
@@ -223,20 +238,36 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     times <- times[times != ""]
     settings$metadata$variables <- unique(c(times, variables))
   }
-  parts$dependencies <- list(
-    base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.min.css"),
-    base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js"),
-    custom_style = list(type = "stylesheet", src = "style.css"),
-    custom = list(type = "script", src = "script.js"),
-    bootstrap_style = list(
-      type = "stylesheet",
-      src = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css",
-      hash = "sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
-    ),
-    bootstrap = list(
-      type = "script",
-      src = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js",
-      hash = "sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+  parts$dependencies <- c(
+    if (version == "v1" || version == "stable") {
+      list(
+        base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.v1.min.css"),
+        base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.v1.min.js")
+      )
+    } else if (version == "local") {
+      list(
+        base_style = list(type = "stylesheet", src = "dist/community.css"),
+        base = list(type = "script", src = "dist/community.js")
+      )
+    } else {
+      list(
+        base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.min.css"),
+        base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js")
+      )
+    },
+    list(
+      custom_style = list(type = "stylesheet", src = "style.css"),
+      custom = list(type = "script", src = "script.js"),
+      bootstrap_style = list(
+        type = "stylesheet",
+        src = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css",
+        hash = "sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+      ),
+      bootstrap = list(
+        type = "script",
+        src = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js",
+        hash = "sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+      )
     )
   )
   parts$credits$bootstrap <- list(
@@ -251,7 +282,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
   parts$uid <- 0
   source(local = parts, exprs = src)
   for (e in c(
-    "rules", "variables", "dataviews", "info", "text", "select", "datatable", "table", "plotly", "echarts",
+    "rules", "variables", "dataviews", "info", "text", "select", "button", "datatable", "table", "plotly", "echarts",
     "map", "legend", "credits", "credit_output"
   )) {
     settings[[e]] <- if (length(parts[[e]])) if (is.list(parts[[e]])) parts[[e]] else list(parts[[e]]) else NULL
@@ -331,7 +362,9 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     "</div>",
     paste0(
       '<div id="load_screen" style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; background-color: inherit">',
-      '<p style="width: 100%; text-align: center; padding: 5em"></p>',
+      '<div class="d-flex justify-content-center align-items-center" style="height: 50%">',
+      '<div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>',
+      "</div>",
       '<noscript style="width: 100%; text-align: center; padding: 5em">Please enable JavaScript to view this site.</noscript>',
       "</div>"
     ),

@@ -4,7 +4,8 @@
 \alias{init_site}
 \title{Create a website}
 \usage{
-init_site(dir, title = "app", with_data = TRUE, overwrite = FALSE)
+init_site(dir, title = "app", with_data = TRUE, overwrite = FALSE,
+  quiet = !interactive())
 }
 \arguments{
 \item{dir}{Directory in which to create the site's structure. Will be created if it does not exist.}
@@ -14,6 +15,8 @@ init_site(dir, title = "app", with_data = TRUE, overwrite = FALSE)
 \item{with_data}{logical; if \code{FALSE}, a data sub-directory and package will not be created.}
 
 \item{overwrite}{logical; if \code{TRUE}, will overwrite existing site files in \code{dir}.}
+
+\item{quiet}{Logical; if \code{TRUE}, suppresses messages and does not navigate to the file when finished.}
 }
 \value{
 Path to the created site directory.

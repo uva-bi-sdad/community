@@ -13,7 +13,7 @@ const assert = require("assert"),
     pretendToBeVisual: true,
   }),
   document = window.document,
-  site = JSON.parse(fs.readFileSync("../test_site/docs/settings.js").toString().substring(13))
+  site = JSON.parse(fs.readFileSync("../test_site/docs/settings.json").toString())
 site.data = JSON.parse(fs.readFileSync("../test_site/docs/mtcars.json").toString())
 
 // execute site script
