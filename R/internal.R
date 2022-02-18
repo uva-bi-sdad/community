@@ -37,3 +37,11 @@ to_input_row <- function(e) {
     '<div class="col">', e[-c(1:2, length(e))], "</div>"
   )
 }
+
+make_build_environment <- function() {
+  e <- new.env()
+  attr(e, "name") <- "community_site_parts"
+  e$site_build <- function(...) {}
+  e$uid <- 0
+  e
+}

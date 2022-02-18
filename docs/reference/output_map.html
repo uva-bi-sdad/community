@@ -104,8 +104,8 @@ selected dataset. Useful to show lower-level regions within higher-level regions
 <a href="https://leaflet-extras.github.io/leaflet-providers/preview/" class="external-link">leaflet providers</a>; e.g.,
 <code>list(</code><code>url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"</code>, <code>options = list(maxZoom = 19))</code>).</p></dd>
 <dt>attribution</dt>
-<dd><p>A list with tile attribution information to be included in a credits section. Include in
-<code>tile</code>'s <code>options</code> list to add to the map.</p></dd>
+<dd><p>A list with tile attribution information to be included in a credits section. To add
+attributions to the map, include them in <code>tile</code>'s <code>options</code> list.</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>
@@ -114,9 +114,8 @@ selected dataset. Useful to show lower-level regions within higher-level regions
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
-<span class="r-in"><span class="fu">output_map</span><span class="op">(</span><span class="op">)</span></span>
-<span class="r-in"><span class="op">}</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu">output_map</span><span class="op">(</span><span class="op">)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "&lt;div class=\"auto-output leaflet\" id=\"map\" auto-type=\"map\"&gt;&lt;/div&gt;"</span>
 </code></pre></div>
     </div>
   </div>

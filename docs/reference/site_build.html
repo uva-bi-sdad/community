@@ -65,7 +65,7 @@
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">site_build</span><span class="op">(</span><span class="va">dir</span>, file <span class="op">=</span> <span class="st">"site.R"</span>, outdir <span class="op">=</span> <span class="st">"docs"</span>, name <span class="op">=</span> <span class="st">"index.html"</span>,
   variables <span class="op">=</span> <span class="cn">NULL</span>, options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, bundle_data <span class="op">=</span> <span class="cn">FALSE</span>,
-  open_after <span class="op">=</span> <span class="cn">FALSE</span>, aggregate <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">FALSE</span>, version <span class="op">=</span> <span class="st">"dev"</span>,
+  open_after <span class="op">=</span> <span class="cn">FALSE</span>, aggregate <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">FALSE</span>, version <span class="op">=</span> <span class="st">"v1"</span>,
   parent <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></code></pre></div>
     </div>
 
@@ -102,6 +102,8 @@ processed version.</p></dd>
 <dd><p>Version of the base script and stylesheet: <code>"v1"</code> (default) for the version 1 stable release,
 <code>"dev"</code> for the current unstable release, or <code>"local"</code> for a copy of the development files
 (<code>community.js</code> and <code>community.css</code>) served from a local <code>dist</code> directory.</p></dd>
+<dt>parent</dt>
+<dd><p>Directory path or repository URL of a data site from which to use data, rather than using local data.</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>

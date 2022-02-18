@@ -11,3 +11,12 @@ test_that("structure is intact", {
   children <- xml_child(children)
   expect_true(xml_length(children) == 3)
 })
+
+test_that("build environment is added to", {
+  content <- page_section(input_select("menu item", c("a", "b", "c")))
+  parts <- make_build_environment()
+  eval(expression(
+    page_section(input_select("menu item", c("a", "b", "c")))
+  ), parts)
+  expect_identical(parts$content, content)
+})

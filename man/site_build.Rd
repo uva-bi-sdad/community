@@ -6,7 +6,7 @@
 \usage{
 site_build(dir, file = "site.R", outdir = "docs", name = "index.html",
   variables = NULL, options = list(), bundle_data = FALSE,
-  open_after = FALSE, aggregate = TRUE, force = FALSE, version = "dev",
+  open_after = FALSE, aggregate = TRUE, force = FALSE, version = "v1",
   parent = NULL)
 }
 \arguments{
@@ -40,6 +40,8 @@ processed version.}
 \item{version}{Version of the base script and stylesheet: \code{"v1"} (default) for the version 1 stable release,
 \code{"dev"} for the current unstable release, or \code{"local"} for a copy of the development files
 (\code{community.js} and \code{community.css}) served from a local \code{dist} directory.}
+
+\item{parent}{Directory path or repository URL of a data site from which to use data, rather than using local data.}
 }
 \value{
 Invisible path to the written file.

@@ -5,8 +5,6 @@
 #' @param palette Name of an included color palette (from
 #' \href{https://colorbrewer2.org}{colorbrewer}); one of \code{"rdylbu7"} (default), \code{"orrd7"}, \code{"gnbu7"},
 #' \code{"brbg7"}, \code{"puor7"}, \code{"prgn6"}, \code{"reds5"}, \code{"greens5"}, \code{"greys4"}, \code{"paired4"}.
-#' @param lower Text to appear at the beginning of the legend, labeling smaller.
-#' @param higher Text to appear at the end of the legend, labeling larger values.
 #' @param dataview The ID of an \code{\link{input_dataview}} component.
 #' @param id Unique ID of the legend element.
 #' @param subto A vector of output IDs to receive hover events from.

@@ -22,6 +22,7 @@
 #' @param version Version of the base script and stylesheet: \code{"v1"} (default) for the version 1 stable release,
 #' \code{"dev"} for the current unstable release, or \code{"local"} for a copy of the development files
 #' (\code{community.js} and \code{community.css}) served from a local \code{dist} directory.
+#' @param parent Directory path or repository URL of a data site from which to use data, rather than using local data.
 #' @examples
 #' \dontrun{
 #' # run from within a site project directory, initialized with `init_site()`
@@ -36,13 +37,11 @@
 
 site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html", variables = NULL,
                        options = list(), bundle_data = FALSE, open_after = FALSE, aggregate = TRUE, force = FALSE,
-                       version = "dev", parent = NULL) {
+                       version = "v1", parent = NULL) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., dir = ".")')
   page <- paste0(dir, "/", file)
   if (!file.exists(page)) cli_abort("{.file {page}} does not exist")
   out <- paste(c(dir, outdir, name), collapse = "/")
-  parts <- new.env()
-  attr(parts, "name") <- "community_site_parts"
   data_preprocess <- function(aggregate) {
     ddir <- paste0(dir, "/docs/data/")
     f <- paste0(ddir, "datapackage.json")
@@ -238,6 +237,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     times <- times[times != ""]
     settings$metadata$variables <- unique(c(times, variables))
   }
+  parts <- make_build_environment()
   parts$dependencies <- c(
     if (version == "v1" || version == "stable") {
       list(
@@ -275,11 +275,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     url = "https://getbootstrap.com",
     version = "5.1.3"
   )
-  parts$header <- NULL
-  parts$body <- NULL
   src <- parse(text = gsub("community::site_build", "site_build", readLines(page, warn = FALSE), fixed = TRUE))
-  parts$site_build <- function(...) {}
-  parts$uid <- 0
   source(local = parts, exprs = src)
   for (e in c(
     "rules", "variables", "dataviews", "info", "text", "select", "button", "datatable", "table", "plotly", "echarts",

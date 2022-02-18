@@ -3,7 +3,7 @@
 #' Download one or all files in a Dataverse dataset.
 #'
 #' @param id The dataset's persistent ID (e.g., \code{"doi:10.18130/V3/SWK71R"}), or a GitHub repository
-#' (\code{"username/repo"}) with a \code{data/dataset_doi} file containing a DOI in its first line.
+#' (\code{"username/repo"}) with a \code{R/sysdata.rda} file containing a \code{dataset_doi}.
 #' @param outdir Directory in which to save files; defaults to a temporary directory.
 #' @param files Names (full or partial) of files to download, or a number or vector of numbers
 #' identifying file by index as listed on Dataverse; downloads all files in a dataset if not specified.

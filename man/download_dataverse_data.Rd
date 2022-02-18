@@ -14,7 +14,7 @@ download_dataverse_info(id, server = NULL, refresh = FALSE, verbose = FALSE)
 }
 \arguments{
 \item{id}{The dataset's persistent ID (e.g., \code{"doi:10.18130/V3/SWK71R"}), or a GitHub repository
-(\code{"username/repo"}) with a \code{data/dataset_doi} file containing a DOI in its first line.}
+(\code{"username/repo"}) with a \code{R/sysdata.rda} file containing a \code{dataset_doi}.}
 
 \item{outdir}{Directory in which to save files; defaults to a temporary directory.}
 

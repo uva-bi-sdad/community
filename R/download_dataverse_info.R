@@ -8,18 +8,19 @@ download_dataverse_info <- function(id, server = NULL, refresh = FALSE, verbose 
     repo <- tryCatch(read_json(paste0("https://api.github.com/repos/", id)), error = function(e) NULL)
     if (!is.null(repo$default_branch)) {
       if (verbose) cli_alert_info("getting ID from Github repository {id}")
+      dataset_doi <- NULL
       tryCatch(
         load(file(paste0(
           "https://raw.githubusercontent.com/", id, "/", repo$default_branch, "/R/sysdata.rda"
         ))),
         error = function(e) NULL
       )
-      if (exists("dataset_doi") && length(dataset_doi)) {
+      if (length(dataset_doi)) {
         id <- dataset_doi[[1]]
       } else {
         cli_abort(paste0(
           "{.arg id} points to a Github repository that does not have an appropriate",
-          "{.file /data/dataset_doi} file"
+          "{.file /R/sysdata.rda} file"
         ))
       }
     }

@@ -11,3 +11,12 @@ test_that("structure is intact", {
   children <- xml_child(children, 2)
   expect_true(xml_length(children) == 0)
 })
+
+test_that("build environment is added to", {
+  content <- input_slider("label")
+  parts <- make_build_environment()
+  eval(expression(
+    input_slider("label")
+  ), parts)
+  expect_identical(parts$content, content)
+})

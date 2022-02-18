@@ -25,3 +25,18 @@ test_that("parse cases properly", {
     ))
   )
 })
+
+test_that("build environment is added to", {
+  content <- input_variable("variable", list(
+    "!a && b" = 0,
+    "c != 1" = 1
+  ))
+  parts <- make_build_environment()
+  eval(expression(
+    input_variable("variable", list(
+      "!a && b" = 0,
+      "c != 1" = 1
+    ))
+  ), parts)
+  expect_identical(parts$variables[[1]], content)
+})

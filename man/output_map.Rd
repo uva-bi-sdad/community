@@ -42,8 +42,8 @@ selected dataset. Useful to show lower-level regions within higher-level regions
 \href{https://leaflet-extras.github.io/leaflet-providers/preview/}{leaflet providers}; e.g.,
 \code{list(}\code{url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}, \code{options = list(maxZoom = 19))}).}
 
-\item{attribution}{A list with tile attribution information to be included in a credits section. Include in
-\code{tile}'s \code{options} list to add to the map.}
+\item{attribution}{A list with tile attribution information to be included in a credits section. To add
+attributions to the map, include them in \code{tile}'s \code{options} list.}
 }
 \value{
 A character vector of the content to be added.
@@ -52,7 +52,5 @@ A character vector of the content to be added.
 Adds a Leaflet map to a webpage, based on specified or selected inputs.
 }
 \examples{
-\dontrun{
 output_map()
-}
 }

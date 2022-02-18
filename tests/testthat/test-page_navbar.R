@@ -12,3 +12,12 @@ test_that("structure is intact", {
   expect_true(xml_length(children) == 1)
   expect_true(xml_length(xml_child(children)) == 2)
 })
+
+test_that("build environment is added to", {
+  content <- page_navbar(title = "title", logo = "https://example.com")
+  parts <- make_build_environment()
+  eval(expression(
+    page_navbar(title = "title", logo = "https://example.com")
+  ), parts)
+  expect_identical(parts$header, content)
+})

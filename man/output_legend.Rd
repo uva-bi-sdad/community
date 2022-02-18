@@ -19,10 +19,6 @@ output_legend(palette = "", dataview = NULL, id = NULL, subto = NULL,
 \item{subto}{A vector of output IDs to receive hover events from.}
 
 \item{class}{Class names to add to the legend element.}
-
-\item{lower}{Text to appear at the beginning of the legend, labeling smaller.}
-
-\item{higher}{Text to appear at the end of the legend, labeling larger values.}
 }
 \value{
 A character vector of the contents to be added.

@@ -22,12 +22,10 @@
 #' @param tiles A list or list of lists containing provider information (see
 #' \href{https://leaflet-extras.github.io/leaflet-providers/preview/}{leaflet providers}; e.g.,
 #' \code{list(}\code{url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}, \code{options = list(maxZoom = 19))}).
-#' @param attribution A list with tile attribution information to be included in a credits section. Include in
-#' \code{tile}'s \code{options} list to add to the map.
+#' @param attribution A list with tile attribution information to be included in a credits section. To add
+#' attributions to the map, include them in \code{tile}'s \code{options} list.
 #' @examples
-#' \dontrun{
 #' output_map()
-#' }
 #' @return A character vector of the content to be added.
 #' @export
 
