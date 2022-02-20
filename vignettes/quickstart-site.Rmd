@@ -3,8 +3,8 @@ title: "Build a Data Site"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Build a Data Site}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
   chunk_output_type: console
 ---
@@ -184,11 +184,15 @@ page_section(
 ```
 
 # Add a Map
-Maps will generally require shapes to be added from a separate, GeoJSON file. You can use the `download_census_shapes`
-function to download shapes for Census regions within the United States.
+Maps will generally require shapes to be added from a separate, GeoJSON file. You can use the
+`download_census_shapes` function from the [catchment package](https://github.com/uva-bi-sdad/catchment)
+to download shapes for Census regions within the United States.
 
 For example, we might download the shapes of states:
 ```r
+# remotes::install_github("uva-bi-sdad/catchment")
+library(catchment)
+
 # save the state shapes to the distribution directory
 download_census_shapes(paste0(dir, "/docs"), name = "states")
 ```

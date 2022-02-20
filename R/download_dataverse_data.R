@@ -12,8 +12,12 @@
 #' @param server Dataverse server; tries to get this from the DOI redirect, but falls back on
 #' \code{Sys.getenv("DATAVERSE_SERVER")}, then \code{getOption("dataverse.server")}, then
 #' \code{"dataverse.lib.virginia.edu"}.
+#' @param key Dataverse API key; only needed if the requested dataset is not published. If not specified,
+#' looks for the key in \code{Sys.getenv("DATAVERSE_KEY")} and \code{getOption("dataverse.key")}.
 #' @param load Logical; if \code{FALSE}, files will be downloaded but not loaded.
 #' @param refresh Logical; if \code{TRUE}, downloads and replaces any existing files.
+#' @param branch Name of the repository branch, if \code{id} is the name of a repository; uses the default branch
+#' if not specified.
 #' @param verbose Logical; if \code{TRUE}, prints status updates and warnings.
 #' @examples
 #' \dontrun{
@@ -27,9 +31,10 @@
 #' @export
 
 download_dataverse_data <- function(id, outdir = tempdir(), files = NULL, version = ":latest",
-                                    server = NULL, load = TRUE, refresh = FALSE, verbose = FALSE) {
-  if (missing(id)) cli_abort("an id must be specified")
-  meta <- download_dataverse_info(id, server, refresh)
+                                    server = NULL, key = NULL, load = TRUE, refresh = FALSE, branch = NULL, verbose = FALSE) {
+  if (missing(id)) cli_abort("{.arg id} must be specified")
+  if (!is.character(outdir)) cli_abort("{.arg outdir} must be a character")
+  meta <- download_dataverse_info(id, server = server, key = key, refresh = refresh, branch = branch)
   fs <- vapply(meta$latestVersion$files, function(m) m$dataFile$filename, "")
   which_files <- if (!is.null(files)) {
     if (is.numeric(files)) {
@@ -53,18 +58,40 @@ download_dataverse_data <- function(id, outdir = tempdir(), files = NULL, versio
   data <- list()
   ffsx <- paste0(outdir, fs)
   ffs <- sub("\\.(?:xz|bz|gz)$", "", ffsx)
-  success <- logical(length(fs))
   if (refresh) unlink(c(ffsx, ffs))
+  if (is.null(key)) {
+    if (verbose) cli_alert_info("looking for API key in fall-backs")
+    key <- Sys.getenv("DATAVERSE_KEY")
+    if (key == "") {
+      key <- getOption("dataverse.key")
+    }
+  }
   if (length(which_files) == length(fs) || !missing(version)) {
     zf <- paste0(outdir, gsub("\\W", "", meta$latestVersion$datasetPersistentId), ".zip")
     if (verbose) cli_alert_info("downloading dataset: {meta$latestVersion$datasetPersistentId}")
-    tryCatch(
-      download.file(paste0(
-        meta$server, "api/access/dataset/:persistentId/versions/", version, "?persistentId=",
-        meta$latestVersion$datasetPersistentId
-      ), zf, quiet = TRUE, mode = "wb"),
-      error = function(e) NULL
-    )
+    if (is.character(key)) {
+      if (verbose) cli_alert_info("trying with key")
+      tryCatch(
+        system2("curl", c(
+          paste0("-H X-Dataverse-key:", key),
+          "-o", zf,
+          paste0(
+            meta$server, "api/access/dataset/:persistentId/versions/", version, "?persistentId=",
+            meta$latestVersion$datasetPersistentId
+          )
+        ), stdout = TRUE),
+        error = function(e) NULL
+      )
+    } else {
+      if (verbose) cli_alert_info("trying without key")
+      tryCatch(
+        download.file(paste0(
+          meta$server, "api/access/dataset/:persistentId/versions/", version, "?persistentId=",
+          meta$latestVersion$datasetPersistentId
+        ), zf, quiet = TRUE, mode = "wb"),
+        error = function(e) NULL
+      )
+    }
     if (file.exists(zf)) {
       unzip(zf, exdir = sub("/$", "", outdir))
       unlink(zf)
@@ -75,13 +102,26 @@ download_dataverse_data <- function(id, outdir = tempdir(), files = NULL, versio
     meta$latestVersion$files[[i]]$local <- ffs[i]
     if (!file.exists(ffs[i]) && !file.exists(ffsx[i])) {
       if (verbose) cli_alert_info("downloading file: {.file {m$label}}")
-      tryCatch(
-        download.file(
-          paste0(meta$server, "api/access/datafile/", m$dataFile$id), ffsx[i],
-          quiet = TRUE, mode = "wb"
-        ),
-        error = function(e) NULL
-      )
+      if (is.null(key)) {
+        if (verbose) cli_alert_info("trying without key")
+        tryCatch(
+          download.file(
+            paste0(meta$server, "api/access/datafile/", m$dataFile$id), ffsx[i],
+            quiet = TRUE, mode = "wb"
+          ),
+          error = function(e) NULL
+        )
+      } else {
+        if (verbose) cli_alert_info("trying with key")
+        tryCatch(
+          system2("curl", c(
+            paste0("-H X-Dataverse-key:", key),
+            "-o", ffsx[i],
+            paste0(meta$server, "api/access/datafile/", m$dataFile$id)
+          ), stdout = TRUE),
+          error = function(e) NULL
+        )
+      }
       if (verbose && !file.exists(ffsx[i])) cli_alert_info("failed to download file: {.file {m$label}}")
     }
     if (file.exists(ffsx[i])) {

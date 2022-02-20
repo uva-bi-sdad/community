@@ -7,7 +7,7 @@ test_that("copies a local site", {
 })
 
 test_that("copies a remote site", {
-  skip_if(TRUE, "not downloading site files")
+  skip_if_not(grepl("R_LIBS", getwd(), fixed = TRUE), "not downloading site files")
   cdir <- paste0(tempdir(), "/site_child_remote")
   site_make_child("uva-bi-sdad/community_example", cdir)
   expect_true(check_template("site", dir = cdir)$exists)

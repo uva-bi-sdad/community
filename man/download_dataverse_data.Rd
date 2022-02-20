@@ -7,10 +7,11 @@
 \title{Download Dataverse Dataset Files}
 \usage{
 download_dataverse_data(id, outdir = tempdir(), files = NULL,
-  version = ":latest", server = NULL, load = TRUE, refresh = FALSE,
-  verbose = FALSE)
+  version = ":latest", server = NULL, key = NULL, load = TRUE,
+  refresh = FALSE, branch = NULL, verbose = FALSE)
 
-download_dataverse_info(id, server = NULL, refresh = FALSE, verbose = FALSE)
+download_dataverse_info(id, server = NULL, key = NULL, refresh = FALSE,
+  branch = NULL, verbose = FALSE)
 }
 \arguments{
 \item{id}{The dataset's persistent ID (e.g., \code{"doi:10.18130/V3/SWK71R"}), or a GitHub repository
@@ -28,9 +29,15 @@ even if only a selection is requested.}
 \code{Sys.getenv("DATAVERSE_SERVER")}, then \code{getOption("dataverse.server")}, then
 \code{"dataverse.lib.virginia.edu"}.}
 
+\item{key}{Dataverse API key; only needed if the requested dataset is not published. If not specified,
+looks for the key in \code{Sys.getenv("DATAVERSE_KEY")} and \code{getOption("dataverse.key")}.}
+
 \item{load}{Logical; if \code{FALSE}, files will be downloaded but not loaded.}
 
 \item{refresh}{Logical; if \code{TRUE}, downloads and replaces any existing files.}
+
+\item{branch}{Name of the repository branch, if \code{id} is the name of a repository; uses the default branch
+if not specified.}
 
 \item{verbose}{Logical; if \code{TRUE}, prints status updates and warnings.}
 }

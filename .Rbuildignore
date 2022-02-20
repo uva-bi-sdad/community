@@ -13,3 +13,4 @@
 ^package
 ^node_modules$
 ^coverage$
+_snaps

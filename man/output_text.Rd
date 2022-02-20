@@ -38,7 +38,9 @@ reference (e.g., \code{"{input_a}[r]"} is the same as \code{"{input_a}[r input_a
 }
 }
 \examples{
-\dontrun{
+# text that shows the current value of `input_a`, and resets it on click
 output_text("Selection: {input_a}[r]")
-}
+
+# adds a parenthetical if the value of the input is 0
+output_text(c("Selection: {input_a}[r]", "?{input_a == 0}(input is zero)"))
 }

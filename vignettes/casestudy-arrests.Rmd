@@ -30,6 +30,8 @@ init_site(dir, "Illinois Arrests")
 # Add Data
 We can use the `build.R` file to set up a repeatable data importing process. Replace its contents with this:
 ```r
+# remotes::install_github("uva-bi-sdad/catchment")
+library(catchment)
 library(sf)
 
 # download county shapes -- only needs to be run once

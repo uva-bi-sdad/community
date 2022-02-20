@@ -64,10 +64,11 @@
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">download_dataverse_data</span><span class="op">(</span><span class="va">id</span>, outdir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, files <span class="op">=</span> <span class="cn">NULL</span>,
-  version <span class="op">=</span> <span class="st">":latest"</span>, server <span class="op">=</span> <span class="cn">NULL</span>, load <span class="op">=</span> <span class="cn">TRUE</span>, refresh <span class="op">=</span> <span class="cn">FALSE</span>,
-  verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
+  version <span class="op">=</span> <span class="st">":latest"</span>, server <span class="op">=</span> <span class="cn">NULL</span>, key <span class="op">=</span> <span class="cn">NULL</span>, load <span class="op">=</span> <span class="cn">TRUE</span>,
+  refresh <span class="op">=</span> <span class="cn">FALSE</span>, branch <span class="op">=</span> <span class="cn">NULL</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
 
-<span class="fu">download_dataverse_info</span><span class="op">(</span><span class="va">id</span>, server <span class="op">=</span> <span class="cn">NULL</span>, refresh <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+<span class="fu">download_dataverse_info</span><span class="op">(</span><span class="va">id</span>, server <span class="op">=</span> <span class="cn">NULL</span>, key <span class="op">=</span> <span class="cn">NULL</span>, refresh <span class="op">=</span> <span class="cn">FALSE</span>,
+  branch <span class="op">=</span> <span class="cn">NULL</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -87,10 +88,16 @@ even if only a selection is requested.</p></dd>
 <dd><p>Dataverse server; tries to get this from the DOI redirect, but falls back on
 <code>Sys.getenv("DATAVERSE_SERVER")</code>, then <code>getOption("dataverse.server")</code>, then
 <code>"dataverse.lib.virginia.edu"</code>.</p></dd>
+<dt>key</dt>
+<dd><p>Dataverse API key; only needed if the requested dataset is not published. If not specified,
+looks for the key in <code>Sys.getenv("DATAVERSE_KEY")</code> and <code>getOption("dataverse.key")</code>.</p></dd>
 <dt>load</dt>
 <dd><p>Logical; if <code>FALSE</code>, files will be downloaded but not loaded.</p></dd>
 <dt>refresh</dt>
 <dd><p>Logical; if <code>TRUE</code>, downloads and replaces any existing files.</p></dd>
+<dt>branch</dt>
+<dd><p>Name of the repository branch, if <code>id</code> is the name of a repository; uses the default branch
+if not specified.</p></dd>
 <dt>verbose</dt>
 <dd><p>Logical; if <code>TRUE</code>, prints status updates and warnings.</p></dd>
 </dl></div>

@@ -2,7 +2,7 @@
 #'
 #' Adds a bar at the top of the page, potentially with a title and logo image.
 #'
-#' @param ... Content to add to the navbar. Can be a lists specifying submenus and their items.
+#' @param ... Content to add to the navbar. Can be lists specifying submenus and their items.
 #' @param title A title to appear in the header.
 #' @param logo URL of an image to appear in the header.
 #' Each list can have entries for \code{"name"} (the navbar button text), \code{"title"} (the menu title),

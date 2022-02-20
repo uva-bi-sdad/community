@@ -7,7 +7,7 @@
 page_navbar(..., title = "", logo = "", breakpoint = "md")
 }
 \arguments{
-\item{...}{Content to add to the navbar. Can be a lists specifying submenus and their items.}
+\item{...}{Content to add to the navbar. Can be lists specifying submenus and their items.}
 
 \item{title}{A title to appear in the header.}
 

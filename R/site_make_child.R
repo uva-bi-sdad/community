@@ -28,9 +28,28 @@ site_make_child <- function(parent, dir, update = TRUE, overwrite = FALSE, quiet
   files <- c(unlist(check$spec$files, use.names = FALSE), "docs/data/datapackage.json")
   filled <- copied <- structure(!file.exists(paste0(dir, "/", files)), names = files)
   copied[] <- FALSE
+  if (!file.exists(paste0(dir, "/build.R"))) {
+    copied["build.R"] <- TRUE
+    args <- lapply(match.call()[-1], eval, parent.frame())
+    writeLines(paste(c(
+      paste0("# this is a child site spawned from ", parent, ":"),
+      paste0(
+        "site_make_child(\n  ",
+        paste(vapply(names(args), function(a) {
+          if (a %in% c("parent", "dir")) {
+            paste0(a, ' = "', normalizePath(args[[a]], "/", FALSE), '"')
+          } else {
+            paste(a, "=", args[[a]])
+          }
+        }, ""), collapse = ",\n  "),
+        "\n)"
+      ),
+      ""
+    ), collapse = "\n"), paste0(dir, "/build.R"))
+  }
   init_site(dir, with_data = FALSE, quiet = TRUE)
   if (!dir.exists(parent)) {
-    parent <- sub("^.*github.com/", "", parent)
+    parent <- regmatches(parent, regexec("^(?:.*github\\.com/)?([^/]+/[^/@]+)", parent))[[1]][2]
     repo <- tryCatch(read_json(paste0("https://api.github.com/repos/", parent, "/contents")), error = function(e) e$message)
     if (is.character(repo)) cli_abort("treated {.arg parent} as a GitHub repository, but failed to retrieve it: {repo}")
     if (missing(update)) update <- FALSE
@@ -40,7 +59,7 @@ site_make_child <- function(parent, dir, update = TRUE, overwrite = FALSE, quiet
       tryCatch(read_json(paste0("https://api.github.com/repos/", parent, "/contents/docs/data")), error = function(e) NULL)
     )
     for (f in repo) {
-      if (f$path %in% files) {
+      if (f$path %in% files[files != "build.R"]) {
         dest <- paste0(dir, "/", f$path)
         if (overwrite || update || filled[[f$path]]) {
           unlink(dest)
@@ -50,7 +69,7 @@ site_make_child <- function(parent, dir, update = TRUE, overwrite = FALSE, quiet
       }
     }
   } else {
-    for (f in files) {
+    for (f in files[files != "build.R"]) {
       pf <- paste0(parent, "/", f)
       dest <- paste0(dir, "/", f)
       if (file.exists(pf) && (overwrite || filled[[f]] || (update && file.mtime(pf) > file.mtime(dest)))) {
