@@ -8,13 +8,14 @@
 #' @param dataview The ID of an \code{\link{input_dataview}} component.
 #' @param id Unique ID of the legend element.
 #' @param subto A vector of output IDs to receive hover events from.
+#' @param click The ID of an input to set to an entity's ID near the current cursor location on the current scale.
 #' @param class Class names to add to the legend element.
 #' @examples
 #' output_legend()
 #' @return A character vector of the contents to be added.
 #' @export
 
-output_legend <- function(palette = "", dataview = NULL, id = NULL, subto = NULL, class = "") {
+output_legend <- function(palette = "", dataview = NULL, id = NULL, click = NULL, subto = NULL, class = "") {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   if (is.null(id)) id <- paste0("legend", caller$uid)
@@ -24,6 +25,7 @@ output_legend <- function(palette = "", dataview = NULL, id = NULL, subto = NULL
       '<div id="', id, '" auto-type="legend" class="auto-output legend',
       if (class != "") c(" ", class), '"',
       if (!is.null(dataview)) paste0(' data-view="', dataview, '"'),
+      if (!is.null(click)) paste0(' click="', click, '"'),
       ">"
     ), collapse = ""),
     '<div class="legend-ticks"></div>',

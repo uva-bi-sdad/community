@@ -4,7 +4,8 @@
 \alias{site_make_child}
 \title{Make a Copy of a Data Site}
 \usage{
-site_make_child(parent, dir, update = TRUE, overwrite = FALSE, quiet = FALSE)
+site_make_child(parent, dir, update = TRUE, overwrite = FALSE,
+  quiet = !interactive())
 }
 \arguments{
 \item{parent}{Directory or GitHub repository name of the existing site to be copied.}

@@ -29,17 +29,17 @@ void (function () {
         grey: [
           [70, 70, 70],
           [230, 230, 230],
-          [300, 300, 300],
+          [160, 160, 160],
         ],
         brown: [
           [131, 30, 0],
           [255, 200, 190],
-          [386, 230, 190],
+          [124, 170, 190],
         ],
         purple: [
           [90, 14, 213],
           [195, 192, 245],
-          [285, 206, 458],
+          [105, 178, 32],
         ],
       },
       patterns = {
@@ -1462,6 +1462,7 @@ void (function () {
             o.click = o.e.getAttribute('click')
             o.features = o.options.features
             o.update = elements.datatable.update.bind(o)
+            o.parsed = {summary: {}, order: [], time: 0, color: ''}
             o.header = []
             o.rows = {}
             o.rowIds = {}
@@ -1639,6 +1640,15 @@ void (function () {
                       redraw = true,
                       varstate = '' + v.get.dataset() + v.get.ids() + v.get.features() + site.settings.digits
                     if (this.options.single_variable) {
+                      const time = valueOf(v.time_agg)
+                      this.parsed.color = vn
+                      this.parsed.time = 'number' === typeof time ? time - meta.time_range[0] : 0
+                      this.parsed.summary = Object.hasOwn(variables[vn], this.view)
+                        ? variables[vn][this.view].summaries[d]
+                        : false
+                      this.parsed.order = Object.hasOwn(variables[vn], this.view)
+                        ? variables[vn][this.view].order[d][this.parsed.time]
+                        : false
                       if ('entity.data.' + vn !== this.header[1].data) {
                         this.table.destroy()
                         for (n = this.header.length, i = 1; i < n; i++) {
@@ -1782,11 +1792,20 @@ void (function () {
             if (Object.hasOwn(_u, _u[o.view].time_agg)) add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
             if (!o.palette)
               o.palette = Object.hasOwn(_u, 'settings.palette') ? 'settings.palette' : site.settings.palette
+            o.parsed = {summary: {}, order: [], selection: {}, time: 0, color: ''}
             o.parts = {
               ticks: o.e.getElementsByClassName('legend-ticks')[0],
               scale: o.e.getElementsByClassName('legend-scale')[0],
               summary: o.e.getElementsByClassName('legend-summary')[0],
             }
+            o.parts.ticks.setAttribute('of', o.id)
+            o.parts.scale.setAttribute('of', o.id)
+            o.parts.summary.setAttribute('of', o.id)
+            o.e.addEventListener('mousemove', elements.legend.mouseover.bind(o))
+            o.e.addEventListener('mouseout', elements.legend.mouseout.bind(o))
+            o.e.addEventListener('click', elements.legend.click.bind(o))
+            o.click = o.e.getAttribute('click')
+            if (Object.hasOwn(_u, o.click)) o.clickto = _u[o.click]
             o.update = elements.legend.update.bind(o)
             o.ticks = {
               center: o.parts.summary.appendChild(document.createElement('div')),
@@ -1797,22 +1816,28 @@ void (function () {
             var t, e
             for (t in o.ticks)
               if (Object.hasOwn(o.ticks, t)) {
+                o.ticks[t].setAttribute('of', o.id)
                 o.ticks[t].className = 'legend-tick'
                 o.ticks[t].appendChild((e = document.createElement('div')))
+                e.setAttribute('of', o.id)
                 e.appendChild(document.createElement('p'))
-                e.appendChild(document.createElement('p'))
-                e.appendChild(document.createElement('p'))
-                if ('entity' === t) {
-                  o.ticks[t].firstElementChild.lastElementChild.classList.add('entity')
-                } else {
-                  o.ticks[t].firstElementChild.firstElementChild.classList.add('summary')
+                e.lastElementChild.setAttribute('of', o.id)
+                if ('m' !== t.substring(0, 1)) {
+                  e.appendChild(document.createElement('p'))
+                  e.lastElementChild.setAttribute('of', o.id)
+                  e.appendChild(document.createElement('p'))
+                  e.lastElementChild.setAttribute('of', o.id)
+                  if ('entity' === t) {
+                    o.ticks[t].firstElementChild.lastElementChild.classList.add('entity')
+                  } else {
+                    o.ticks[t].firstElementChild.firstElementChild.classList.add('summary')
+                  }
                 }
               }
             o.ticks.entity.firstElementChild.classList.add('hidden')
-            o.ticks.min.firstElementChild.lastElementChild.innerText = 'Min'
-            o.ticks.max.firstElementChild.lastElementChild.innerText = 'Max'
+            o.ticks.max.className = 'legend-tick-end max'
+            o.ticks.min.className = 'legend-tick-end min'
             o.ticks.center.style.left = '50%'
-            o.ticks.max.style.left = '100%'
             o.show = function (e, c) {
               if (Object.hasOwn(c, 'parsed') && Object.hasOwn(e.data, c.parsed.color)) {
                 const summary = c.parsed.summary,
@@ -1820,17 +1845,6 @@ void (function () {
                   min = summary && !string ? summary.min[c.parsed.time] : 0,
                   max = summary ? (string ? summary.levels.length : summary.max[c.parsed.time]) : 1,
                   subset = 'all' === site.settings.summary_selection ? 'subset_rank' : 'rank',
-                  center =
-                    'none' === site.settings.color_scale_center ||
-                    patterns.median.test(site.settings.color_scale_center)
-                      ? 'norm_median'
-                      : 'norm_mean',
-                  nm =
-                    summary && !string
-                      ? isNaN(summary[center][c.parsed.time])
-                        ? 0
-                        : summary[center][c.parsed.time]
-                      : 0.5,
                   value = e.data[c.parsed.color][c.parsed.time],
                   p =
                     ((string ? Object.hasOwn(summary.level_ids, value) : 'number' === typeof value)
@@ -1840,14 +1854,7 @@ void (function () {
                             0,
                             Math.min(
                               1,
-                              'none' !== site.settings.color_scale_center
-                                ? 0.5 +
-                                    (max - min
-                                      ? ((string ? summary.level_ids[value] : value) - min) / (max - min) - nm
-                                      : 0)
-                                : max - min
-                                ? ((string ? summary.level_ids[value] : value) - min) / (max - min)
-                                : 0
+                              max - min ? ((string ? summary.level_ids[value] : value) - min) / (max - min) : 0
                             )
                           )
                       : NaN) * 100,
@@ -1858,7 +1865,7 @@ void (function () {
                   this.ticks.entity.style.left = p + '%'
                   this.ticks.entity.firstElementChild.firstElementChild.innerText =
                     (p > 96 || p < 4) && e.features.name.length > 13
-                      ? e.features.name.substring(0, 13) + '…'
+                      ? e.features.name.substring(0, 12) + '…'
                       : e.features.name
                 } else if (site.settings.color_by_order) {
                   var i =
@@ -1866,11 +1873,11 @@ void (function () {
                     po = (i / (summary.n[c.parsed.time] - 1)) * 100
                   this.ticks.entity.firstElementChild.firstElementChild.innerText =
                     i > -1 && (po > 96 || po < 4) && e.features.name.length > 13
-                      ? e.features.name.substring(0, 13) + '…'
+                      ? e.features.name.substring(0, 12) + '…'
                       : e.features.name
                   if (i > -1) {
                     t.parentElement.classList.remove('hidden')
-                    t.innerText = i + 1
+                    t.innerText = '# ' + (i + 1)
                     this.ticks.entity.style.left = po + '%'
                   }
                 }
@@ -1891,17 +1898,10 @@ void (function () {
               variable = valueOf(view.y),
               time = valueOf(view.time_agg),
               y = 'number' === typeof time ? time - meta.time_range[0] : 0,
+              d = view.get.dataset(),
               summary = Object.hasOwn(variables[variable], this.view)
-                ? variables[variable][this.view].summaries[view.get.dataset()]
+                ? variables[variable][this.view].summaries[d]
                 : false,
-              string = summary && Object.hasOwn(summary, 'levels'),
-              min = summary && !string ? summary.min[y] : 0,
-              max = summary ? (string ? summary.levels.length : summary.max[y]) : 1,
-              center =
-                'none' === site.settings.color_scale_center || patterns.median.test(site.settings.color_scale_center)
-                  ? 'norm_median'
-                  : 'norm_mean',
-              nm = summary && !string ? (isNaN(summary[center][y]) ? 0 : summary[center][y]) : 0.5,
               ep = valueOf(this.palette).toLowerCase(),
               pn = Object.hasOwn(palettes, ep)
                 ? ep
@@ -1909,51 +1909,76 @@ void (function () {
                 ? site.settings.palette
                 : 'brown',
               p = palettes[pn]
+            this.parsed.summary = summary
+            this.parsed.order = Object.hasOwn(variables[variable], this.view)
+              ? variables[variable][this.view].selected_order[d][y]
+              : false
+            this.parsed.time = y
+            this.parsed.color = variable
             if (view.valid && summary) {
               this.integer =
                 variable_info[variable] && variable_info[variable].type
                   ? patterns.int_types.test(variable_info[variable].type)
                   : true
-              if (pn !== this.current_palette) {
-                this.current_palette = pn
-                this.parts.scale.innerHTML = ''
-                if ('string' === typeof p[0]) {
+              this.current_palette = pn
+              this.parts.scale.innerHTML = ''
+              if ('string' === typeof p[0]) {
+                if (site.settings.color_by_order || 'none' === site.settings.color_scale_center) {
                   for (var i = 0, n = p.length; i < n; i++) {
                     this.parts.scale.appendChild(document.createElement('span'))
+                    this.parts.scale.lastElementChild.setAttribute('of', this.id)
                     this.parts.scale.lastElementChild.style.background = p[i]
                   }
                 } else {
-                  this.parts.scale.appendChild(document.createElement('span'))
-                  this.parts.scale.lastElementChild.style.background =
-                    'linear-gradient(0.75turn, rgb(' +
-                    p[0][0] +
-                    ', ' +
-                    p[0][1] +
-                    ', ' +
-                    p[0][2] +
-                    '), rgb(' +
-                    p[1][0] +
-                    ', ' +
-                    p[1][1] +
-                    ', ' +
-                    p[1][2] +
-                    '))'
+                  var i = 0,
+                    n = Math.ceil(p.length / 2),
+                    e
+                  this.parts.scale.appendChild((e = document.createElement('div')))
+                  e.setAttribute('of', this.id)
+                  e.style.left = 0
+                  for (; i < n; i++) {
+                    e.appendChild(document.createElement('span'))
+                    e.lastElementChild.setAttribute('of', this.id)
+                    e.lastElementChild.style.background = p[i]
+                  }
+                  this.parts.scale.appendChild((e = document.createElement('div')))
+                  e.setAttribute('of', this.id)
+                  e.style.right = 0
+                  for (i = Math.floor(p.length / 2), n = p.length; i < n; i++) {
+                    e.appendChild(document.createElement('span'))
+                    e.lastElementChild.setAttribute('of', this.id)
+                    e.lastElementChild.style.background = p[i]
+                  }
                 }
+              } else {
+                this.parts.scale.appendChild(document.createElement('span'))
+                this.parts.scale.lastElementChild.style.background =
+                  'linear-gradient(0.75turn, rgb(' +
+                  p[0][0] +
+                  ', ' +
+                  p[0][1] +
+                  ', ' +
+                  p[0][2] +
+                  '), rgb(' +
+                  p[1][0] +
+                  ', ' +
+                  p[1][1] +
+                  ', ' +
+                  p[1][2] +
+                  '))'
               }
               if (site.settings.color_by_order) {
                 this.ticks.center.classList.add('hidden')
-                this.ticks.min.firstElementChild.children[1].innerText = summary.n[y] ? 1 : 0
-                this.ticks.max.firstElementChild.children[1].innerText = summary.n[y] ? summary.n[y] : 0
-                this.ticks.min.style.left = '0px'
-                this.ticks.max.style.left = '100%'
+                this.ticks.min.firstElementChild.firstElementChild.innerText = '# ' + (summary.n[y] ? 1 : 0)
+                this.ticks.max.firstElementChild.firstElementChild.innerText = '# ' + (summary.n[y] ? summary.n[y] : 0)
               } else {
                 this.ticks.center.classList.remove('hidden')
-                this.ticks.min.firstElementChild.children[1].innerText = summary.n[y]
+                this.ticks.min.firstElementChild.firstElementChild.innerText = summary.n[y]
                   ? isFinite(summary.min[y])
                     ? format_value(summary.min[y], this.integer)
                     : 'unknown'
                   : 'unknown'
-                this.ticks.max.firstElementChild.children[1].innerText = summary.n[y]
+                this.ticks.max.firstElementChild.firstElementChild.innerText = summary.n[y]
                   ? isFinite(summary.max[y])
                     ? format_value(summary.max[y], this.integer)
                     : 'unknown'
@@ -1964,51 +1989,108 @@ void (function () {
                   this.ticks.center.firstElementChild.children[1].innerText = format_value(
                     summary[site.settings.color_scale_center][y]
                   )
-                  this.ticks.center.style.left = '50%'
+                  // this.ticks.center.style.left = '50%'
                 } else {
                   this.ticks.center.firstElementChild.lastElementChild.innerText =
                     summary_levels[site.settings.summary_selection] + ' median'
                   this.ticks.center.firstElementChild.children[1].innerText = format_value(summary.median[y])
-                  this.ticks.center.style.left = summary.norm_median[y] * 100 + '%'
+                }
+                this.ticks.center.style.left = summary.norm_median[y] * 100 + '%'
+                if ('none' !== site.settings.color_scale_center) {
+                  this.parts.scale.firstElementChild.style.width = summary.norm_median[y] * 100 + '%'
+                  this.parts.scale.lastElementChild.style.width = 100 - summary.norm_median[y] * 100 + '%'
                 }
                 this.ticks.center.style.marginLeft = -this.ticks.center.getBoundingClientRect().width / 2 + 'px'
-                this.ticks.min.style.left =
-                  ((string ? Object.hasOwn(summary.level_ids, min) : 'number' === typeof min)
-                    ? Math.max(
-                        0,
-                        Math.min(
-                          1,
-                          'none' !== site.settings.color_scale_center
-                            ? 0.5 + (max - min ? -nm : 0)
-                            : max - min
-                            ? ((string ? summary.level_ids[min] : min) - min) / (max - min)
-                            : 0
-                        )
-                      )
-                    : NaN) *
-                    100 +
-                  '%'
-                this.ticks.max.style.left =
-                  ((string ? Object.hasOwn(summary.level_ids, max) : 'number' === typeof max)
-                    ? isFinite(max - min)
-                      ? Math.max(
-                          0,
-                          Math.min(
-                            1,
-                            'none' !== site.settings.color_scale_center
-                              ? 0.5 + (max - min ? 1 - nm : 0)
-                              : max - min
-                              ? ((string ? summary.level_ids[max] : max) - min) / (max - min)
-                              : 0
-                          )
-                        )
-                      : 0.5
-                    : NaN) *
-                    100 +
-                  '%'
+                // this.ticks.min.style.left =
+                //   ((string ? Object.hasOwn(summary.level_ids, min) : 'number' === typeof min)
+                //     ? Math.max(
+                //         0,
+                //         Math.min(
+                //           1,
+                //           'none' !== site.settings.color_scale_center
+                //             ? 0 // 0.5 + (max - min ? -nm : 0)
+                //             : max - min
+                //             ? 0 // ((string ? summary.level_ids[min] : min) - min) / (max - min)
+                //             : 0
+                //         )
+                //       )
+                //     : NaN) *
+                //     100 +
+                //   '%'
+                // this.ticks.max.style.left =
+                //   ((string ? Object.hasOwn(summary.level_ids, max) : 'number' === typeof max)
+                //     ? isFinite(max - min)
+                //       ? Math.max(
+                //           0,
+                //           Math.min(
+                //             1,
+                //             'none' !== site.settings.color_scale_center
+                //               ? 1 // 0.5 + (max - min ? 1 - nm : 0)
+                //               : max - min
+                //               ? 1 // ((string ? summary.level_ids[max] : max) - min) / (max - min)
+                //               : 0
+                //           )
+                //         )
+                //       : 0.5
+                //     : NaN) *
+                //     100 +
+                //   '%'
               }
-              this.ticks.max.style.marginLeft = -this.ticks.max.getBoundingClientRect().width / 2 + 'px'
-              this.ticks.min.style.marginLeft = -this.ticks.min.getBoundingClientRect().width / 2 + 'px'
+              // this.ticks.max.style.marginLeft = -this.ticks.max.getBoundingClientRect().width / 2 + 'px'
+              // this.ticks.min.style.marginLeft = -this.ticks.min.getBoundingClientRect().width / 2 + 'px'
+            }
+          },
+          mouseover: function (e) {
+            const s = this.parts.scale.getBoundingClientRect(),
+              p = (Math.max(s.x, Math.min(s.x + s.width, e.clientX)) - s.x) / s.width
+            var entity = false
+            if (site.settings.color_by_order) {
+              entity =
+                entities[
+                  this.parsed.order[
+                    Math.max(0, Math.min(this.parsed.order.length - 1, Math.floor((this.parsed.order.length - 1) * p)))
+                  ][0]
+                ]
+            } else {
+              const min = this.parsed.summary.min[this.parsed.time],
+                max = this.parsed.summary.max[this.parsed.time],
+                tv = min + p * (max - min)
+              if (this.parsed.order.length) {
+                if (1 === this.parsed.order.length || !p) {
+                  entity = entities[this.parsed.order[0][0]]
+                } else {
+                  for (var i = this.parsed.order.length - 1; --i; ) {
+                    if ((this.parsed.order[i][1] + this.parsed.order[i + 1][1]) / 2 <= tv) break
+                  }
+                  i++
+                  entity = entities[this.parsed.order[i][0]]
+                }
+              }
+            }
+            if (entity) {
+              this.show(entity, this)
+              if (!this.entity || entity.features.id !== this.entity.features.id) {
+                if (!this.entity) {
+                  this.entity = entity
+                } else update_subs(this.id, 'revert', this.entity)
+                update_subs(this.id, 'show', entity)
+                this.entity = entity
+              }
+            }
+          },
+          mouseout: function (e) {
+            if (e.relatedTarget && this.id !== e.relatedTarget.getAttribute('of')) {
+              this.revert()
+              if (this.entity) {
+                update_subs(this.id, 'revert', this.entity)
+                this.entity = false
+              }
+            }
+          },
+          click: function () {
+            if (this.clickto && this.entity) {
+              this.revert()
+              this.clickto.set(this.entity.features.id)
             }
           },
         },
@@ -2156,22 +2238,22 @@ void (function () {
         string = summary && Object.hasOwn(summary, 'levels'),
         min = summary && !string ? summary.min[index] : 0,
         max = summary ? (string ? summary.levels.length : summary.max[index]) : 1,
-        center =
+        center_source =
           'none' === site.settings.color_scale_center || patterns.median.test(site.settings.color_scale_center)
-            ? 'norm_median'
-            : 'norm_mean',
-        nm = summary && !string ? (isNaN(summary[center][index]) ? 0 : summary[center][index]) : 0.5,
+            ? 'median'
+            : 'mean',
+        center = summary && !string ? (isNaN(summary[center_source][index]) ? 0 : summary[center_source][index]) : 0.5,
         fixed = 'string' === typeof colors[0],
         r = fixed ? colors.length : 1
       var v =
         'none' !== site.settings.color_scale_center || site.settings.color_by_order
-          ? r / 2 +
-            r *
-              (site.settings.color_by_order
-                ? rank
-                : max - min
-                ? ((string ? summary.level_ids[value] : value) - min) / (max - min) - nm
-                : 0)
+          ? site.settings.color_by_order
+            ? r / 2 + r * rank
+            : max - min
+            ? value >= center
+              ? r / 2 + Math.ceil(r / 2) * ((value - center) / (max - center))
+              : Math.ceil(r / 2) * ((value - min) / (center - min))
+            : 0
           : r * (max - min ? ((string ? summary.level_ids[value] : value) - min) / (max - min) : 0)
       if (!fixed) v = 1 - Math.max(0, Math.min(1, v))
       return (string ? Object.hasOwn(summary.level_ids, value) : 'number' === typeof value)
@@ -2179,11 +2261,11 @@ void (function () {
           ? colors[Math.max(0, Math.min(r - 1, Math.floor(v)))]
           : 3 === colors.length
           ? 'rgb(' +
-            ((colors[0][0] + v * colors[1][0]) / colors[2][0]) * colors[1][0] +
+            (colors[0][0] + v * colors[2][0]) +
             ', ' +
-            ((colors[0][1] + v * colors[1][1]) / colors[2][1]) * colors[1][1] +
+            (colors[0][1] + v * colors[2][1]) +
             ', ' +
-            ((colors[0][2] + v * colors[1][2]) / colors[2][2]) * colors[1][2] +
+            (colors[0][2] + v * colors[2][2]) +
             ')'
           : 'rgb(' + 0 + ', ' + 0 + ', ' + 0 + ')'
         : '#f0f0f040'
@@ -3438,7 +3520,7 @@ void (function () {
       var m, o, v, d, y, i, l, k, da, ev
       for (v in variables)
         if (Object.hasOwn(variables, v)) {
-          if (!Object.hasOwn(variables[v], view)) variables[v][view] = {order: {}, summaries: {}}
+          if (!Object.hasOwn(variables[v], view)) variables[v][view] = {order: {}, selected_order: {}, summaries: {}}
           m = variables[v][view]
           for (d in variables[v].info) {
             if (Object.hasOwn(variables[v].info, d)) {
@@ -3472,6 +3554,7 @@ void (function () {
               }
               if (!Object.hasOwn(m.summaries, d)) {
                 m.order[d] = []
+                m.selected_order[d] = []
                 if ('string' === variables[v].info[d].type) {
                   m.table = {}
                   for (l in variables[v].levels_ids)
@@ -3490,6 +3573,7 @@ void (function () {
                   }
                   for (y = meta.time_n; y--; ) {
                     m.order[d].push([])
+                    m.selected_order[d].push([])
                     m.summaries[d].missing.push(0)
                     m.summaries[d].n.push(0)
                     m.summaries[d].mode.push('')
@@ -3512,6 +3596,7 @@ void (function () {
                   }
                   for (y = meta.time_n; y--; ) {
                     m.order[d].push([])
+                    m.selected_order[d].push([])
                     m.summaries[d].missing.push(0)
                     m.summaries[d].n.push(0)
                     m.summaries[d].sum.push(0)
@@ -3526,6 +3611,7 @@ void (function () {
                   }
                 }
                 Object.seal(m.order[d])
+                Object.seal(m.selected_order[d])
                 Object.seal(m.summaries[d])
               }
             }
@@ -3538,9 +3624,11 @@ void (function () {
         variables[measure][view] = JSON.parse(JSON.stringify(variables[measure][defaults.dataview]))
       const v = site.dataviews[view],
         s = v.selection[site.settings.summary_selection],
+        a = v.selection.all,
         dataset = v.get.dataset(),
         m = variables[measure][view],
         mo = m.order[dataset],
+        mso = m.selected_order[dataset],
         ms = m.summaries[dataset],
         ny = meta.time_n,
         order = variables[measure].info[dataset].order,
@@ -3548,6 +3636,7 @@ void (function () {
         subset = v.n_selected.all !== v.n_selected.dataset
       for (var i, k, value, en, l, o, y = meta.time_n, rank; y--; ) {
         mo[y] = subset ? [] : order[y]
+        mso[y] = subset ? [] : order[y]
         ms.missing[y] = 0
         ms.n[y] = 0
         if (levels) {
@@ -3577,6 +3666,7 @@ void (function () {
             en.subset_rank[measure][y] = --rank
             if (full && subset) {
               mo[y].splice(0, 0, o[i])
+              if (Object.hasOwn(a, k)) mso[y].splice(0, 0, o[i])
             }
             if (levels ? Object.hasOwn(levels, value) : 'number' === typeof value) {
               en.summary[measure].n++
@@ -3620,8 +3710,7 @@ void (function () {
               if (1 === ms.n[y]) {
                 ms.q3[y] = ms.median[y] = ms.q1[y] = null == o[0][1] ? ms.mean[y] : o[0][1]
               } else {
-                ms.median[y] =
-                  1 === ms.n[y] % 2 ? o[ms.missing[y] + (ms.n[y] + 1) / 2][1] : quantile(0.5, ms.n[y], ms.missing[y], o)
+                ms.median[y] = quantile(0.5, ms.n[y], ms.missing[y], o)
                 ms.q3[y] = quantile(0.75, ms.n[y], ms.missing[y], o)
                 ms.q1[y] = quantile(0.25, ms.n[y], ms.missing[y], o)
               }
@@ -4108,7 +4197,6 @@ void (function () {
               ('navcolor' === s ? site.url_options[s].replace(patterns.hashes, '%23') : site.url_options[s])
         if (!site.settings.hide_url_parameters) {
           window.history.replaceState(Date.now(), '', k)
-          window.parent.postMessage(k.replace(patterns.location_string, ''), '*')
         }
         setTimeout(content_resize, 50)
       }

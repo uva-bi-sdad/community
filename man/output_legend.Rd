@@ -4,8 +4,8 @@
 \alias{output_legend}
 \title{Adds a legend to a website}
 \usage{
-output_legend(palette = "", dataview = NULL, id = NULL, subto = NULL,
-  class = "")
+output_legend(palette = "", dataview = NULL, id = NULL, click = NULL,
+  subto = NULL, class = "")
 }
 \arguments{
 \item{palette}{Name of an included color palette (from
@@ -15,6 +15,8 @@ output_legend(palette = "", dataview = NULL, id = NULL, subto = NULL,
 \item{dataview}{The ID of an \code{\link{input_dataview}} component.}
 
 \item{id}{Unique ID of the legend element.}
+
+\item{click}{The ID of an input to set to an entity's ID near the current cursor location on the current scale.}
 
 \item{subto}{A vector of output IDs to receive hover events from.}
 

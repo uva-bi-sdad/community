@@ -16,10 +16,10 @@
 #' @return Invisible path to the child directory.
 #' @export
 
-site_make_child <- function(parent, dir, update = TRUE, overwrite = FALSE, quiet = FALSE) {
+site_make_child <- function(parent, dir, update = TRUE, overwrite = FALSE, quiet = !interactive()) {
   if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = "child_site")')
   check <- check_template("site", dir = dir)
-  if (any(file.exists(check$files)) && !overwrite) {
+  if (!quiet && any(file.exists(check$files)) && !overwrite) {
     cli_bullets(c(`!` = "site files already exist", i = "add {.code overwrite = TRUE} to overwrite them"))
   }
   dir <- normalizePath(paste0(dir, "/", check$spec$dir), "/", FALSE)
@@ -79,18 +79,20 @@ site_make_child <- function(parent, dir, update = TRUE, overwrite = FALSE, quiet
       }
     }
   }
-  if (any(copied)) {
-    if (interactive()) {
+  if (!quiet) {
+    if (any(copied)) {
       cli_bullets(c(
-        v = "copied site files from {.path {parent}}:",
+        v = "copied from {.path {parent}}:",
         "*" = paste0("{.path ", names(which(copied)), "}")
       ))
     }
-  } else {
-    if (any(filled)) {
-      unlink(names(which(filled)))
-      cli_warn("no site files were successfully copied from {.path {parent}}")
-    } else {
+    if (any(filled & !copied)) {
+      cli_bullets(c(
+        v = "created from template:",
+        "*" = paste0("{.path ", names(which(filled & !copied)), "}")
+      ))
+    }
+    if (!any(filled | copied)) {
       cli_alert_success("no site files were replaced")
     }
   }
