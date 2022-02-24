@@ -1989,7 +1989,6 @@ void (function () {
                   this.ticks.center.firstElementChild.children[1].innerText = format_value(
                     summary[site.settings.color_scale_center][y]
                   )
-                  // this.ticks.center.style.left = '50%'
                 } else {
                   this.ticks.center.firstElementChild.lastElementChild.innerText =
                     summary_levels[site.settings.summary_selection] + ' median'
@@ -2001,43 +2000,7 @@ void (function () {
                   this.parts.scale.lastElementChild.style.width = 100 - summary.norm_median[y] * 100 + '%'
                 }
                 this.ticks.center.style.marginLeft = -this.ticks.center.getBoundingClientRect().width / 2 + 'px'
-                // this.ticks.min.style.left =
-                //   ((string ? Object.hasOwn(summary.level_ids, min) : 'number' === typeof min)
-                //     ? Math.max(
-                //         0,
-                //         Math.min(
-                //           1,
-                //           'none' !== site.settings.color_scale_center
-                //             ? 0 // 0.5 + (max - min ? -nm : 0)
-                //             : max - min
-                //             ? 0 // ((string ? summary.level_ids[min] : min) - min) / (max - min)
-                //             : 0
-                //         )
-                //       )
-                //     : NaN) *
-                //     100 +
-                //   '%'
-                // this.ticks.max.style.left =
-                //   ((string ? Object.hasOwn(summary.level_ids, max) : 'number' === typeof max)
-                //     ? isFinite(max - min)
-                //       ? Math.max(
-                //           0,
-                //           Math.min(
-                //             1,
-                //             'none' !== site.settings.color_scale_center
-                //               ? 1 // 0.5 + (max - min ? 1 - nm : 0)
-                //               : max - min
-                //               ? 1 // ((string ? summary.level_ids[max] : max) - min) / (max - min)
-                //               : 0
-                //           )
-                //         )
-                //       : 0.5
-                //     : NaN) *
-                //     100 +
-                //   '%'
               }
-              // this.ticks.max.style.marginLeft = -this.ticks.max.getBoundingClientRect().width / 2 + 'px'
-              // this.ticks.min.style.marginLeft = -this.ticks.min.getBoundingClientRect().width / 2 + 'px'
             }
           },
           mouseover: function (e) {
@@ -3319,12 +3282,13 @@ void (function () {
           e.id = k
           e.value = function () {
             if (this.get) {
+              this.reparse()
               return (
                 '' +
-                this.get.dataset() +
-                this.get.ids() +
-                this.get.features() +
-                this.get.variables() +
+                this.parsed.dataset +
+                this.parsed.ids +
+                this.parsed.features +
+                this.parsed.variables +
                 site.settings.summary_selection
               )
             }
@@ -4132,7 +4096,7 @@ void (function () {
               v = this.parsed.variable_values[i]
               pass =
                 !Object.hasOwn(e.data, v.name) ||
-                v.type !== typeof e.data[v.name][this.parsed.time_agg] ||
+                v.value_type !== typeof e.data[v.name][this.parsed.time_agg] ||
                 check_funs[v.operator](v.value, e.data[v.name][this.parsed.time_agg])
               if (!pass) break
             }

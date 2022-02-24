@@ -7,7 +7,9 @@
 #' @param dir Directory of the child site to put copies in.
 #' @param update Logical; if \code{TRUE}, replaces existing site files if they are older than existing
 #' files (from a local directory). Defaults to \code{FALSE} if \code{parent} is not a local directory.
-#' @param overwrite Logical; if \code{TRUE}, overwrites any existing site files.
+#' @param overwrite Logical; if \code{TRUE}, overwrites any existing site files. \code{datapackage.json}
+#' is always overwritten.
+#' @param protect A vector of file paths to prevent from being overwritten, relative to the site directory.
 #' @param quiet Logical; if \code{TRUE}, does not send messages.
 #' @examples
 #' \dontrun{
@@ -16,7 +18,7 @@
 #' @return Invisible path to the child directory.
 #' @export
 
-site_make_child <- function(parent, dir, update = TRUE, overwrite = FALSE, quiet = !interactive()) {
+site_make_child <- function(parent, dir, update = TRUE, overwrite = FALSE, protect = "site.R", quiet = !interactive()) {
   if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = "child_site")')
   check <- check_template("site", dir = dir)
   if (!quiet && any(file.exists(check$files)) && !overwrite) {
@@ -48,6 +50,8 @@ site_make_child <- function(parent, dir, update = TRUE, overwrite = FALSE, quiet
     ), collapse = "\n"), paste0(dir, "/build.R"))
   }
   init_site(dir, with_data = FALSE, quiet = TRUE)
+  never_update <- c("build.R", "README.rm", protect)
+  always_update <- "datapackage.json"
   if (!dir.exists(parent)) {
     parent <- regmatches(parent, regexec("^(?:.*github\\.com/)?([^/]+/[^/@]+)", parent))[[1]][2]
     repo <- tryCatch(read_json(paste0("https://api.github.com/repos/", parent, "/contents")), error = function(e) e$message)
@@ -59,9 +63,9 @@ site_make_child <- function(parent, dir, update = TRUE, overwrite = FALSE, quiet
       tryCatch(read_json(paste0("https://api.github.com/repos/", parent, "/contents/docs/data")), error = function(e) NULL)
     )
     for (f in repo) {
-      if (f$path %in% files[files != "build.R"]) {
+      if (f$path %in% files[!files %in% never_update]) {
         dest <- paste0(dir, "/", f$path)
-        if (overwrite || update || filled[[f$path]]) {
+        if (f$path == always_update || overwrite || update || filled[[f$path]]) {
           unlink(dest)
           tryCatch(download.file(f$download_url, dest, quiet = TRUE), error = function(e) NULL)
           copied[[f$path]] <- file.exists(dest)
@@ -69,10 +73,10 @@ site_make_child <- function(parent, dir, update = TRUE, overwrite = FALSE, quiet
       }
     }
   } else {
-    for (f in files[files != "build.R"]) {
+    for (f in files[!files %in% never_update]) {
       pf <- paste0(parent, "/", f)
       dest <- paste0(dir, "/", f)
-      if (file.exists(pf) && (overwrite || filled[[f]] || (update && file.mtime(pf) > file.mtime(dest)))) {
+      if (file.exists(pf) && (f == always_update || overwrite || filled[[f]] || (update && file.mtime(pf) > file.mtime(dest)))) {
         unlink(dest)
         file.copy(pf, dest)
         copied[[f]] <- file.exists(dest)

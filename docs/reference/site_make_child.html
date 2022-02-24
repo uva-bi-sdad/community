@@ -66,7 +66,7 @@ based on the same data.</p>
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">site_make_child</span><span class="op">(</span><span class="va">parent</span>, <span class="va">dir</span>, update <span class="op">=</span> <span class="cn">TRUE</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>,
-  quiet <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+  protect <span class="op">=</span> <span class="st">"site.R"</span>, quiet <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -79,7 +79,10 @@ based on the same data.</p>
 <dd><p>Logical; if <code>TRUE</code>, replaces existing site files if they are older than existing
 files (from a local directory). Defaults to <code>FALSE</code> if <code>parent</code> is not a local directory.</p></dd>
 <dt>overwrite</dt>
-<dd><p>Logical; if <code>TRUE</code>, overwrites any existing site files.</p></dd>
+<dd><p>Logical; if <code>TRUE</code>, overwrites any existing site files. <code>datapackage.json</code>
+is always overwritten.</p></dd>
+<dt>protect</dt>
+<dd><p>A vector of file paths to prevent from being overwritten, relative to the site directory.</p></dd>
 <dt>quiet</dt>
 <dd><p>Logical; if <code>TRUE</code>, does not send messages.</p></dd>
 </dl></div>

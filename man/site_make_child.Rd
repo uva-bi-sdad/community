@@ -5,7 +5,7 @@
 \title{Make a Copy of a Data Site}
 \usage{
 site_make_child(parent, dir, update = TRUE, overwrite = FALSE,
-  quiet = !interactive())
+  protect = "site.R", quiet = !interactive())
 }
 \arguments{
 \item{parent}{Directory or GitHub repository name of the existing site to be copied.}
@@ -15,7 +15,10 @@ site_make_child(parent, dir, update = TRUE, overwrite = FALSE,
 \item{update}{Logical; if \code{TRUE}, replaces existing site files if they are older than existing
 files (from a local directory). Defaults to \code{FALSE} if \code{parent} is not a local directory.}
 
-\item{overwrite}{Logical; if \code{TRUE}, overwrites any existing site files.}
+\item{overwrite}{Logical; if \code{TRUE}, overwrites any existing site files. \code{datapackage.json}
+is always overwritten.}
+
+\item{protect}{A vector of file paths to prevent from being overwritten, relative to the site directory.}
 
 \item{quiet}{Logical; if \code{TRUE}, does not send messages.}
 }
