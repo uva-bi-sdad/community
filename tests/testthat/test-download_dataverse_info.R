@@ -7,7 +7,7 @@ test_that("downloads and saves the file appropriately", {
 })
 
 test_that("works with github id", {
-  meta <- download_dataverse_info("uva-bi-sdad/dc.arlingtoncounty.parks", branch = "eric")
+  meta <- download_dataverse_info("uva-bi-sdad/dc.arlingtoncounty.parks")
   expect_true(meta$id == 55884)
   expect_identical(read_json(paste0(tempdir(), "/1018130V3GMIVZZ.json")), meta)
 })

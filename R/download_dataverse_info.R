@@ -5,7 +5,7 @@
 download_dataverse_info <- function(id, server = NULL, key = NULL, refresh = FALSE, branch = NULL, verbose = FALSE) {
   if (missing(id)) cli_abort("an id must be specified")
   if (!grepl("doi", tolower(id), fixed = TRUE) && (grepl("github", id, fixed = TRUE) || grepl("^[^/]+/[^/]+$", id))) {
-    if (is.null(branch) && grepl("@|/tree/")) {
+    if (is.null(branch) && grepl("@|/tree/", id)) {
       branch <- regmatches(id, regexec("(?:@|tree/)([^/]+)", id))[[1]][2]
       if (is.na(branch)) branch <- NULL
     }

@@ -121,6 +121,8 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       }
       if (!ids[[i]]$variable %in% idvars) idvars <- c(idvars, ids[[i]]$variable)
     }
+    timevar <- unlist(unpack_meta("time"))
+    times <- if (is.null(timevar)) seq_len(nrow(data)) else data[[timevar]]
     res <- list(
       bytes = as.integer(info$size),
       encoding = stri_enc_detect(f)[[1]][1, 1],
@@ -136,17 +138,20 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       filename = name,
       source = unpack_meta("source"),
       ids = ids,
-      time = unlist(unpack_meta("time")),
+      time = timevar,
       profile = "data-resource",
       created = as.character(info$mtime),
       last_modified = as.character(info$ctime),
-      rowcount = nrow(data),
+      row_count = nrow(data),
+      entity_count = if (length(idvars)) length(unique(data[[idvars[1]]])) else nrow(data),
       schema = list(
         fields = lapply(colnames(data)[!colnames(data) %in% idvars], function(cn) {
           v <- data[[cn]]
           invalid <- !is.finite(v)
           r <- list(name = cn, duplicates = sum(duplicated(v)))
           if (cn %in% names(varinf)) r$info <- varinf[[cn]]
+          r$time_range <- which(unname(tapply(v, times, function(v) any(!is.na(v))))) - 1
+          r$time_range <- if (length(r$time_range)) r$time_range[c(1, length(r$time_range))] else c(-1, -1)
           if (all(invalid)) {
             r$type <- "unknown"
             r$missing <- length(v)

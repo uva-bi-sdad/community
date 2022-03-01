@@ -107,6 +107,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
               # aggregating if needed
               pn <- nchar(names(sdata)[1])
               fixed_ids <- pn > 1 && all(nchar(names(sdata)) == pn)
+              aggregated <- FALSE
               if (aggregate && length(previous_data) && anyNA(data)) {
                 cn <- colnames(sdata[[1]])
                 ids_map <- NULL
@@ -157,7 +158,10 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
                           aggs <- aggs[!is.na(aggs) & names(aggs) %in% cn & names(aggs) != "time"]
                           sdata[[id]] <- as.data.frame(sdata[[id]])
                           aggs <- aggs[is.na(sdata[[id]][, names(aggs)])]
-                          if (length(aggs)) sdata[[id]][, names(aggs)] <- aggs
+                          if (length(aggs)) {
+                            aggregated <- TRUE
+                            sdata[[id]][, names(aggs)] <- aggs
+                          }
                         } else {
                           cd <- split(cd, cd[[time]])
                           sdata[[id]] <- as.data.frame(sdata[[id]])
@@ -167,7 +171,10 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
                             if (length(aggs)) {
                               su <- sdata[[id]][[time]] == ct
                               aggs <- aggs[is.na(sdata[[id]][su, names(aggs)])]
-                              if (length(aggs)) sdata[[id]][su, names(aggs)] <- aggs
+                              if (length(aggs)) {
+                                aggregated <- TRUE
+                                sdata[[id]][su, names(aggs)] <- aggs
+                              }
                             }
                           }
                         }
@@ -176,13 +183,31 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
                   }
                 }
               }
+              if (aggregated) {
+                data <- do.call(rbind, sdata)
+                times <- data[[time]]
+                for (i in seq_along(d$schema$fields)) {
+                  v <- data[[d$schema$fields[[i]]$name]]
+                  d$schema$fields[[i]]$time_range <- which(unname(tapply(v, times, function(v) any(!is.na(v))))) - 1
+                  d$schema$fields[[i]]$time_range <- if (length(d$schema$fields[[i]]$time_range)) {
+                    d$schema$fields[[i]]$time_range[c(1, length(d$schema$fields[[i]]$time_range))]
+                  } else {
+                    c(-1, -1)
+                  }
+                }
+              }
               if (fixed_ids) id_lengths[d$name] <- pn
               previous_data[[d$name]] <- sdata
-              if (length(vars)) {
-                sdata <- lapply(sdata, function(d) {
-                  if (class(d)[1] == "data.table") d[, vars, with = FALSE] else d[, vars]
-                })
-              }
+              sdata <- lapply(sdata, function(e) {
+                if (length(vars)) e <- if (class(e)[1] == "data.table") e[, vars, with = FALSE] else e[, vars]
+                e <- as.list(e)
+                for (f in d$schema$fields) {
+                  if (f$name %in% names(e)) {
+                    e[[f$name]] <- if (f$time_range[[1]] == -1) NULL else e[[f$name]][seq(f$time_range[[1]], f$time_range[[2]]) + 1]
+                  }
+                }
+                e
+              })
               write_json(sdata, path, dataframe = "columns")
             }
           }
@@ -216,7 +241,8 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     digits = 2, summary_selection = "all", color_by_order = FALSE, boxplots = TRUE,
     theme_dark = FALSE, partial_init = TRUE, palette = "rdylbu7", hide_url_parameters = FALSE,
     background_shapes = TRUE, iqr_box = TRUE, polygon_outline = 1.5, color_scale_center = "median",
-    table_autoscroll = TRUE, table_scroll_behavior = "smooth", hide_tooltips = FALSE
+    table_autoscroll = TRUE, table_scroll_behavior = "smooth", hide_tooltips = FALSE,
+    map_zoom_animation = TRUE
   )
   for (s in names(defaults)) {
     if (!is.null(options[[s]])) {

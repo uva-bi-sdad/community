@@ -5,7 +5,7 @@
 \title{Create a datapackage.json template}
 \usage{
 init_data(name, title = name, dir = ".", ..., write = TRUE,
-  overwrite = FALSE, quiet = FALSE)
+  overwrite = FALSE, quiet = !interactive())
 }
 \arguments{
 \item{name}{A unique name for the dataset; allowed characters are \code{[a-z._/-]}.}

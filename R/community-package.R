@@ -7,6 +7,7 @@
 #' @importFrom stringi stri_enc_detect
 #' @importFrom stats sd
 #' @importFrom lingmatch lma_dict
+#' @importFrom grDevices rgb col2rgb
 #' @keywords internal
 "_PACKAGE"
 

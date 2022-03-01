@@ -20,7 +20,7 @@
 #' @seealso Add basic information about a dataset with \code{\link{data_add}}.
 #' @export
 
-init_data <- function(name, title = name, dir = ".", ..., write = TRUE, overwrite = FALSE, quiet = FALSE) {
+init_data <- function(name, title = name, dir = ".", ..., write = TRUE, overwrite = FALSE, quiet = !interactive()) {
   if (missing(name)) cli_abort("{.arg name} must be specified")
   package <- list(
     name = name,
@@ -42,7 +42,7 @@ init_data <- function(name, title = name, dir = ".", ..., write = TRUE, overwrit
   if (write) {
     if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
     write_json(package, path, auto_unbox = TRUE, pretty = TRUE, digits = 6)
-    if (interactive() && !quiet) {
+    if (!quiet) {
       cli_bullets(c(v = "created metadata template for {name}:", "*" = paste0("{.path ", path, "}")))
       navigateToFile(path)
     }

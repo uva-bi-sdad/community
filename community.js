@@ -15,32 +15,147 @@ void (function () {
       })
     }
     const palettes = {
-        // from https://colorbrewer2.org
-        rdylbu7: ['#d73027', '#fc8d59', '#fee090', '#adadad', '#e0f3f8', '#91bfdb', '#4575b4'],
-        orrd7: ['#fef0d9', '#fdd49e', '#fdbb84', '#fc8d59', '#ef6548', '#d7301f', '#990000'],
-        gnbu7: ['#a8ddb5', '#ccebc5', '#f0f9e8', '#adadad', '#4eb3d3', '#2b8cbe', '#08589e'],
-        brbg7: ['#8c510a', '#d8b365', '#f6e8c3', '#adadad', '#c7eae5', '#5ab4ac', '#01665e'],
-        puor7: ['#b35806', '#f1a340', '#fee0b6', '#adadad', '#d8daeb', '#998ec3', '#542788'],
-        prgn6: ['#762a83', '#af8dc3', '#e7d4e8', '#d9f0d3', '#7fbf7b', '#1b7837'],
-        reds5: ['#f1eef6', '#d7b5d8', '#df65b0', '#dd1c77', '#980043'],
-        greens5: ['#ffffcc', '#c2e699', '#78c679', '#31a354', '#006837'],
-        greys4: ['#f7f7f7', '#cccccc', '#969696', '#525252'],
-        paired4: ['#1f78b4', '#a6cee3', '#b2df8a', '#33a02c'],
-        grey: [
-          [70, 70, 70],
-          [230, 230, 230],
-          [160, 160, 160],
-        ],
-        brown: [
-          [131, 30, 0],
-          [255, 200, 190],
-          [124, 170, 190],
-        ],
-        purple: [
-          [90, 14, 213],
-          [195, 192, 245],
-          [105, 178, 32],
-        ],
+        // discrete palettes from https://colorbrewer2.org
+        rdylbu7: {
+          name: 'Red-Yellow-Blue (7)',
+          type: 'discrete',
+          colors: ['#d73027', '#fc8d59', '#fee090', '#adadad', '#e0f3f8', '#91bfdb', '#4575b4'],
+        },
+        orrd7: {
+          name: 'Orange-Red (7)',
+          type: 'discrete',
+          colors: ['#fef0d9', '#fdd49e', '#fdbb84', '#fc8d59', '#ef6548', '#d7301f', '#990000'],
+        },
+        gnbu7: {
+          name: 'Green-Blue (7)',
+          type: 'discrete',
+          colors: ['#a8ddb5', '#ccebc5', '#f0f9e8', '#adadad', '#4eb3d3', '#2b8cbe', '#08589e'],
+        },
+        brbg7: {
+          name: 'Brown-Teal (7)',
+          type: 'discrete',
+          colors: ['#8c510a', '#d8b365', '#f6e8c3', '#adadad', '#c7eae5', '#5ab4ac', '#01665e'],
+        },
+        puor7: {
+          name: 'Purple-Orange (7)',
+          type: 'discrete',
+          colors: ['#b35806', '#f1a340', '#fee0b6', '#adadad', '#d8daeb', '#998ec3', '#542788'],
+        },
+        prgn6: {
+          name: 'Purple-Green (6)',
+          type: 'discrete',
+          colors: ['#762a83', '#af8dc3', '#e7d4e8', '#d9f0d3', '#7fbf7b', '#1b7837'],
+        },
+        reds5: {
+          name: 'Red (5)',
+          type: 'discrete',
+          colors: ['#f1eef6', '#d7b5d8', '#df65b0', '#dd1c77', '#980043'],
+        },
+        greens5: {
+          name: 'Green (5)',
+          type: 'discrete',
+          colors: ['#ffffcc', '#c2e699', '#78c679', '#31a354', '#006837'],
+        },
+        paired4: {
+          name: 'Blue-Green (4)',
+          type: 'discrete',
+          colors: ['#1f78b4', '#a6cee3', '#b2df8a', '#33a02c'],
+        },
+        greys4: {
+          name: 'Grey (4)',
+          type: 'discrete',
+          colors: ['#f7f7f7', '#cccccc', '#969696', '#525252'],
+        },
+        grey: {
+          name: 'Grey',
+          type: 'continuous',
+          colors: [
+            [
+              [70, 70, 70],
+              [80, 80, 80],
+            ],
+            [150, 150, 150],
+            [
+              [230, 230, 230],
+              [-80, -80, -80],
+            ],
+          ],
+        },
+        brown: {
+          name: 'Brown',
+          type: 'continuous',
+          colors: [
+            [
+              [131, 30, 0],
+              [62, 85, 95],
+            ],
+            [193, 115, 95],
+            [
+              [255, 200, 190],
+              [-62, -85, -95],
+            ],
+          ],
+        },
+        purple: {
+          name: 'Purple',
+          type: 'continuous',
+          colors: [
+            [
+              [90, 14, 213],
+              [52.5, 89, 16],
+            ],
+            [142.5, 103, 229],
+            [
+              [195, 192, 245],
+              [-52.5, -89, -16],
+            ],
+          ],
+        },
+        prgn: {
+          name: 'Purple-Green',
+          type: 'continuous-divergent',
+          colors: [
+            [
+              [27, 120, 55],
+              [207, 107, 168.5],
+            ],
+            [234, 227, 223.5],
+            [
+              [118, 42, 131],
+              [116, 185, 92.5],
+            ],
+          ],
+        },
+        puor: {
+          name: 'Purple-Orange',
+          type: 'continuous-divergent',
+          colors: [
+            [
+              [179, 88, 6],
+              [56, 133, 202.5],
+            ],
+            [235, 221, 208.5],
+            [
+              [84, 39, 136],
+              [151, 182, 72.5],
+            ],
+          ],
+        },
+        rdbu: {
+          name: 'Red-Blue',
+          type: 'continuous-divergent',
+          colors: [
+            [
+              [69, 117, 180],
+              [170, 116.5, 16],
+            ],
+            [239, 233.5, 196],
+            [
+              [215, 48, 39],
+              [24, 185.5, 157],
+            ],
+          ],
+        },
       },
       patterns = {
         seps: /[\s._-]/g,
@@ -172,14 +287,13 @@ void (function () {
               : v.time_agg
               ? Object.hasOwn(_u, v.time_agg)
                 ? _u[v.time_agg]
-                : 'last' === v.time_agg && c && Object.hasOwn(variables[c], u.view)
-                ? variables[c][u.view].summaries[d].time_range[1]
                 : parseInt(v.time_agg)
               : 0
           if (v.valid) {
             u.parsed.view = v
             u.parsed.palette = valueOf(v.palette) || site.settings.palette
-            u.parsed.time = ys.parsed ? ys.value() - meta.time_range[0] : 0
+            if (!Object.hasOwn(palettes, u.parsed.palette)) u.parsed.palette = defaults.palette
+            u.parsed.time = (ys.parsed ? ys.value() - meta.time_range[0] : 0) - variables[c].info[d].time_range[0]
             u.parsed.dataset = d
             u.parsed.color = c
             u.parsed.summary = Object.hasOwn(variables[c], u.view) ? variables[c][u.view].summaries[d] : false
@@ -212,11 +326,8 @@ void (function () {
                           u.parsed.palette,
                           u.parsed.summary,
                           u.parsed.time,
-                          site.settings.color_by_order
-                            ? n > 0
-                              ? (s[k][subset][c][u.parsed.time] - u.parsed.summary.missing[u.parsed.time]) / n - 0.5
-                              : 0
-                            : 0
+                          s[k][subset][c][u.parsed.time] - u.parsed.summary.missing[u.parsed.time],
+                          n
                         ),
                         weight: site.settings.polygon_outline,
                       })
@@ -264,6 +375,11 @@ void (function () {
                   }
                   return void 0
                 }
+                for (k in u.reference_options)
+                  if (Object.hasOwn(u.reference_options, k)) {
+                    u.options[k] = valueOf(u.reference_options[k])
+                    if ('zoomAnimation' === k) u.map._zoomAnimated = u.options[k]
+                  }
                 u.displaying.clearLayers()
                 u.vstate = false
                 for (k in s) {
@@ -289,7 +405,7 @@ void (function () {
                   }
                 }
               }
-              if (n) u.map.flyToBounds(u.displaying.getBounds())
+              if (n) u.map[site.settings.map_zoom_animation ? 'flyToBounds' : 'fitBounds'](u.displaying.getBounds())
             }
           }
         },
@@ -416,8 +532,8 @@ void (function () {
             s = Object.hasOwn(variables, tv) ? variables[tv][u.id].summaries[d] : false,
             c = _c[u.id + '_filter']
           if (!init_log[d] || !s || !s.mean) return void 0
-          for (var f, v = {}, pass, i = s.mean.length; i--; ) {
-            if (i >= u.time_range.index[0] && i <= u.time_range.index[1]) {
+          for (var f, v = {}, pass, os = variables[tv].info[d].time_range[0], i = meta.time_n; i--; ) {
+            if (i >= u.time_range.index[0] - os && i <= u.time_range.index[1] - os) {
               for (f = u.time_filters.length, pass = false; f--; ) {
                 if (!Object.hasOwn(v, u.time_filters[f].value))
                   v[u.time_filters[f].value] = valueOf(u.time_filters[f].value)
@@ -459,7 +575,7 @@ void (function () {
                 elements.dataview.time_range(u, c, passive)
               })
             }
-            r = r[u.id].summaries[d].time_range
+            r = r.info[d].time_range
             u.time_range.variable = variable
             u.time_range.index[0] = r[0]
             u.time_range.time[0] = u.time_range.filtered[0] = t + r[0]
@@ -728,6 +844,8 @@ void (function () {
           },
           update: function () {
             var k, i, o, t, c, s, pass, bt
+            for (k in this.reference_options)
+              if (Object.hasOwn(this.reference_options, k)) this.options[k] = valueOf(this.reference_options[k])
             for (k in this.depends)
               if (Object.hasOwn(this.depends, k)) {
                 this.depends[k] = valueOf(k)
@@ -837,7 +955,7 @@ void (function () {
                 )
               }
               o.show = function (e) {
-                var trace = make_data_entry(this, e, 0, 'hover_line', site.settings.theme_dark ? '#fff' : '#000')
+                var trace = make_data_entry(this, e, 0, 0, 'hover_line', site.settings.theme_dark ? '#fff' : '#000')
                 if (trace) {
                   trace.line.width = 4
                   trace.marker.size = 12
@@ -924,12 +1042,17 @@ void (function () {
                   y = _u[this.time || v.time_agg],
                   rank = 'all' === site.settings.summary_selection ? 'subset_rank' : 'rank'
                 if (init_log[d] && s) {
+                  this.parsed.base_trace = valueOf(this.base_trace)
                   this.parsed.x = valueOf(this.x)
+                  this.parsed.x_offset = variables[this.parsed.x].info[d].time_range[0]
                   this.parsed.y = valueOf(this.y)
+                  this.parsed.y_offset = variables[this.parsed.y].info[d].time_range[0]
                   this.parsed.view = v
-                  this.parsed.time = y ? y.value() - meta.time_range[0] : 0
                   this.parsed.palette = valueOf(v.palette) || site.settings.palette
+                  if (!Object.hasOwn(palettes, this.parsed.palette)) this.parsed.palette = defaults.palette
                   this.parsed.color = valueOf(this.color || v.y || this.parsed.y)
+                  this.parsed.time =
+                    (y ? y.value() - meta.time_range[0] : 0) - variables[this.parsed.color].info[d].time_range[0]
                   this.parsed.summary = variables[this.parsed.color][this.view].summaries[d]
                   const summary = variables[this.parsed.y][this.view].summaries[d],
                     subset = this.parsed.summary.n[this.parsed.time] !== v.n_selected.all,
@@ -942,6 +1065,7 @@ void (function () {
                     n = this.parsed.summary.n[this.parsed.time] - 1,
                     fn = order ? order.length : 0,
                     traces = [],
+                    yd,
                     lim = site.settings.trace_limit || 0,
                     jump,
                     state =
@@ -952,8 +1076,11 @@ void (function () {
                       this.parsed.palette +
                       this.parsed.color +
                       site.settings.summary_selection +
-                      site.settings.color_scale_center
+                      site.settings.color_scale_center +
+                      site.settings.color_by_order
                   lim = jump = lim && lim < n ? Math.ceil(Math.min(lim / 2, n / 2)) : 0
+                  for (k in this.reference_options)
+                    if (Object.hasOwn(this.reference_options, k)) this.options[k] = valueOf(this.reference_options[k])
                   for (; i < fn; i++) {
                     if (Object.hasOwn(s, order[i][0])) {
                       k = order[i][0]
@@ -962,14 +1089,9 @@ void (function () {
                         make_data_entry(
                           this,
                           s[k],
-                          site.settings.color_by_order
-                            ? n > 0
-                              ? (s[k][rank][this.parsed.color][this.parsed.time] -
-                                  this.parsed.summary.missing[this.parsed.time]) /
-                                  n -
-                                0.5
-                              : 0
-                            : 0
+                          s[k][rank][this.parsed.color][this.parsed.time] -
+                            this.parsed.summary.missing[this.parsed.time],
+                          n
                         )
                       )
                       if (lim && !--jump) break
@@ -984,14 +1106,9 @@ void (function () {
                           make_data_entry(
                             this,
                             s[k],
-                            site.settings.color_by_order
-                              ? n
-                                ? (s[k][rank][this.parsed.color][this.parsed.time] -
-                                    this.parsed.summary.missing[this.parsed.time]) /
-                                    n -
-                                  0.5
-                                : 0
-                              : 0
+                            s[k][rank][this.parsed.color][this.parsed.time] -
+                              this.parsed.summary.missing[this.parsed.time],
+                            n
                           )
                         )
                         if (!--lim) break
@@ -1003,7 +1120,6 @@ void (function () {
                     state += 'box' + site.settings.iqr_box
                     traces.push((b = JSON.parse(this.traces.box)))
                     b.line.color = site.settings.dark_theme ? '#757575' : '#787878'
-                    b.x = s[k].data[this.parsed.x]
                     b.median = summary.median
                     b.q3 = summary.q3
                     b.q1 = summary.q1
@@ -1019,6 +1135,10 @@ void (function () {
                       b.upperfence = summary.max
                       b.lowerfence = summary.min
                     }
+                    b.x = []
+                    for (yd = s[k].data[this.parsed.x], i = b.q1.length; i--; ) {
+                      b.x[i] = yd[i + this.parsed.y_offset]
+                    }
                   }
                   if ('boolean' !== typeof this.e.layout.yaxis.title)
                     this.e.layout.yaxis.title =
@@ -1031,7 +1151,7 @@ void (function () {
                   this.e.layout.yaxis.autorange = false
                   this.e.layout.yaxis.range = [Infinity, -Infinity]
                   if (!b) b = {upperfence: summary.max, lowerfence: summary.min}
-                  for (i = summary.time_range[0], n = summary.time_range[1] + 1; i < n; i++) {
+                  for (i = 0, n = summary.min.length; i < n; i++) {
                     lim = Math.min(b.lowerfence[i], summary.min[i])
                     if (this.e.layout.yaxis.range[0] > lim) this.e.layout.yaxis.range[0] = lim
                     lim = Math.max(b.upperfence[i], summary.max[i])
@@ -1325,7 +1445,7 @@ void (function () {
               y = _u[v.time_agg]
             this.v = valueOf(this.options.variable || (caller && (caller.color || caller.y)) || v.y)
             this.dataset = v.get.dataset()
-            this.time = y ? y.value() - meta.time_range[0] : 0
+            this.time = (y ? y.value() - meta.time_range[0] : 0) - variables[this.v].info[this.dataset].time_range[0]
             if (!this.processed) {
               this.processed = true
               if (this.view) {
@@ -1456,13 +1576,13 @@ void (function () {
         },
         datatable: {
           init: function (o) {
-            var k, n, i, c
+            var k, n, i, c, t
             o.e.appendChild(document.createElement('tHead'))
             o.e.appendChild(document.createElement('tBody'))
             o.click = o.e.getAttribute('click')
             o.features = o.options.features
             o.update = elements.datatable.update.bind(o)
-            o.parsed = {summary: {}, order: [], time: 0, color: ''}
+            o.parsed = {summary: {}, order: [], time: 0, color: '', dataset: _u[o.view].get.dataset()}
             o.header = []
             o.rows = {}
             o.rowIds = {}
@@ -1523,20 +1643,19 @@ void (function () {
             if (o.options.single_variable) {
               c = o.options.variables
               k = c.name || c
-              if (!Object.hasOwn(o.options, 'order')) o.options.order = [[meta.time_n, 'asc']]
               o.header.push({title: 'Name', data: 'entity.features.name'})
               if (1 === meta.time_n) o.variable_header = true
-              for (n = meta.time_n; n--; ) {
+              t = variables[k].info[o.parsed.dataset].time_range
+              for (n = t[1] - t[0] + 1; n--; ) {
                 o.header[n + 1] = {
-                  title: o.variable_header ? c.title || format_label(k) : meta.time[n] + '',
+                  title: o.variable_header ? c.title || format_label(k) : meta.time[n + t[0]] + '',
                   data: 'entity.data.' + k.replace(patterns.all_periods, '\\.'),
                   render: function (d, type, row) {
-                    const k = valueOf(row.variable),
-                      p = variables[k].datasets[0]
                     return d ? ('number' === typeof d[this] ? format_value(d[this], row.int) : d[this]) : 'NA'
                   }.bind(n),
                 }
               }
+              o.options.order = [[o.header.length - 1, 'dsc']]
             } else if (o.options.wide) {
               if (o.features) {
                 if ('string' === typeof o.features) o.features = [{name: o.features}]
@@ -1575,7 +1694,8 @@ void (function () {
                   title: 'Year',
                   data: 'entity.data.time',
                   render: function (d, type, row) {
-                    return d ? ('number' === typeof d[row.time] ? format_value(d[row.time], true) : d[row.time]) : 'NA'
+                    const t = row.time + row.offset
+                    return d ? ('number' === typeof d[t] ? format_value(d[t], true) : d[t]) : 'NA'
                   },
                 })
               }
@@ -1638,30 +1758,45 @@ void (function () {
                       va,
                       reset = true,
                       redraw = true,
-                      varstate = '' + v.get.dataset() + v.get.ids() + v.get.features() + site.settings.digits
+                      varstate = '' + this.parsed.dataset + v.get.ids() + v.get.features() + site.settings.digits
+                    for (k in this.reference_options)
+                      if (Object.hasOwn(this.reference_options, k)) this.options[k] = valueOf(this.reference_options[k])
                     if (this.options.single_variable) {
                       const time = valueOf(v.time_agg)
+                      this.parsed.dataset = d
                       this.parsed.color = vn
-                      this.parsed.time = 'number' === typeof time ? time - meta.time_range[0] : 0
+                      this.parsed.time_range = variables[vn].info[d].time_range
+                      this.parsed.time =
+                        ('number' === typeof time ? time - meta.time_range[0] : 0) - this.parsed.time_range[0]
                       this.parsed.summary = Object.hasOwn(variables[vn], this.view)
                         ? variables[vn][this.view].summaries[d]
                         : false
                       this.parsed.order = Object.hasOwn(variables[vn], this.view)
                         ? variables[vn][this.view].order[d][this.parsed.time]
                         : false
-                      if ('entity.data.' + vn !== this.header[1].data) {
+                      k = 'entity.data.' + vn.replace(patterns.all_periods, '\\.')
+                      if (k !== this.header[1].data) {
                         this.table.destroy()
-                        for (n = this.header.length, i = 1; i < n; i++) {
-                          if (this.variable_header)
-                            this.header[i].title = variables[vn] ? variables[vn].meta.short_name : format_label(vn)
-                          this.header[i].data = 'entity.data.' + vn
+                        $(this.e).empty()
+                        this.header = [{title: 'Name', data: 'entity.features.name'}]
+                        for (n = this.parsed.time_range[1] - this.parsed.time_range[0] + 1; n--; ) {
+                          this.header[n + 1] = {
+                            title: this.variable_header
+                              ? this.options.variables.title || format_label(k)
+                              : meta.time[n + this.parsed.time_range[0]] + '',
+                            data: k,
+                            render: function (d, type, row) {
+                              return d ? ('number' === typeof d[this] ? format_value(d[this], row.int) : d[this]) : 'NA'
+                            }.bind(n),
+                          }
                         }
+                        this.options.order[0][0] = this.header.length - 1
                         this.options.columns = this.header
                         this.table = $(this.e).DataTable(this.options)
                       }
                       for (n = this.header.length, i = 1; i < n; i++) {
-                        this.table.column(i).visible(v.times[i - 1], false)
-                        if (v.times[i - 1]) reset = false
+                        this.table.column(i).visible(v.times[i - 1 + this.parsed.time_range[0]], false)
+                        if (v.times[i - 1 + this.parsed.time_range[0]]) reset = false
                       }
                       if (reset) this.state = ''
                     }
@@ -1681,7 +1816,8 @@ void (function () {
                             for (i = v.time_range.filtered; i--; ) {
                               this.rows[k] = this.table.row.add({
                                 variable: vn,
-                                time: i,
+                                offset: this.parsed.time_range[0],
+                                time: i - this.parsed.time_range[0],
                                 entity: v.selection.all[k],
                                 int: patterns.int_types.test(variable_info[vn].type),
                               })
@@ -1710,23 +1846,16 @@ void (function () {
                           varstate += vn
                           va.push({
                             variable: vn,
+                            int: patterns.int_types.test(variable_info[vn].type),
+                            time_range: variables[vn].info[d].time_range,
                             renderer: function (o, s) {
-                              if (Object.hasOwn(s.summary, this.variable) && s.summary[this.variable].time_range) {
-                                for (var r = s.summary[this.variable].time_range, n = r[1], ci = r[0]; ci <= n; ci++) {
-                                  o.rows[s.features.id] = o.table.row.add({
-                                    time: ci,
-                                    variable: this.variable,
-                                    entity: s,
-                                    int: patterns.int_types.test(variable_info[this.variable].type),
-                                  })
-                                  o.rowIds[o.rows[k].selector.rows] = s.features.id
-                                }
-                              } else {
+                              for (var r = this.time_range, n = r[1], ci = r[0]; ci <= n; ci++) {
                                 o.rows[s.features.id] = o.table.row.add({
-                                  time: 0,
+                                  offset: this.time_range[0],
+                                  time: ci - this.time_range[0],
                                   variable: this.variable,
                                   entity: s,
-                                  int: patterns.int_types.test(variable_info[this.variable].type),
+                                  int: this.int,
                                 })
                                 o.rowIds[o.rows[k].selector.rows] = s.features.id
                               }
@@ -1792,7 +1921,7 @@ void (function () {
             if (Object.hasOwn(_u, _u[o.view].time_agg)) add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
             if (!o.palette)
               o.palette = Object.hasOwn(_u, 'settings.palette') ? 'settings.palette' : site.settings.palette
-            o.parsed = {summary: {}, order: [], selection: {}, time: 0, color: ''}
+            o.parsed = {summary: {}, order: [], selection: {}, selected_summary: {}, time: 0, color: ''}
             o.parts = {
               ticks: o.e.getElementsByClassName('legend-ticks')[0],
               scale: o.e.getElementsByClassName('legend-scale')[0],
@@ -1843,7 +1972,7 @@ void (function () {
                 const summary = c.parsed.summary,
                   string = summary && Object.hasOwn(summary, 'levels'),
                   min = summary && !string ? summary.min[c.parsed.time] : 0,
-                  max = summary ? (string ? summary.levels.length : summary.max[c.parsed.time]) : 1,
+                  range = summary ? (string ? summary.levels.length - min : summary.range[c.parsed.time]) : 1,
                   subset = 'all' === site.settings.summary_selection ? 'subset_rank' : 'rank',
                   value = e.data[c.parsed.color][c.parsed.time],
                   p =
@@ -1852,10 +1981,7 @@ void (function () {
                         ? NaN
                         : Math.max(
                             0,
-                            Math.min(
-                              1,
-                              max - min ? ((string ? summary.level_ids[value] : value) - min) / (max - min) : 0
-                            )
+                            Math.min(1, range ? ((string ? summary.level_ids[value] : value) - min) / range : 0)
                           )
                       : NaN) * 100,
                   t = this.ticks.entity.firstElementChild.children[1]
@@ -1897,8 +2023,9 @@ void (function () {
             const view = _u[this.view],
               variable = valueOf(view.y),
               time = valueOf(view.time_agg),
-              y = 'number' === typeof time ? time - meta.time_range[0] : 0,
               d = view.get.dataset(),
+              y =
+                ('number' === typeof time ? time - meta.time_range[0] : 0) - variables[variable].info[d].time_range[0],
               summary = Object.hasOwn(variables[variable], this.view)
                 ? variables[variable][this.view].summaries[d]
                 : false,
@@ -1907,9 +2034,12 @@ void (function () {
                 ? ep
                 : Object.hasOwn(palettes, site.settings.palette)
                 ? site.settings.palette
-                : 'brown',
-              p = palettes[pn]
+                : defaults.palette,
+              p = palettes[pn].colors
             this.parsed.summary = summary
+            this.parsed.selected_summary = Object.hasOwn(variables[variable], this.view)
+              ? variables[variable][this.view].selected_summaries[d]
+              : false
             this.parsed.order = Object.hasOwn(variables[variable], this.view)
               ? variables[variable][this.view].selected_order[d][y]
               : false
@@ -1922,7 +2052,7 @@ void (function () {
                   : true
               this.current_palette = pn
               this.parts.scale.innerHTML = ''
-              if ('string' === typeof p[0]) {
+              if ('discrete' === palettes[pn].type) {
                 if (site.settings.color_by_order || 'none' === site.settings.color_scale_center) {
                   for (var i = 0, n = p.length; i < n; i++) {
                     this.parts.scale.appendChild(document.createElement('span'))
@@ -1952,19 +2082,34 @@ void (function () {
                 }
               } else {
                 this.parts.scale.appendChild(document.createElement('span'))
-                this.parts.scale.lastElementChild.style.background =
-                  'linear-gradient(0.75turn, rgb(' +
-                  p[0][0] +
+                this.parts.scale.appendChild(document.createElement('span'))
+                this.parts.scale.firstElementChild.style.background =
+                  'linear-gradient(0.25turn, rgb(' +
+                  p[2][0][0] +
                   ', ' +
-                  p[0][1] +
+                  p[2][0][1] +
                   ', ' +
-                  p[0][2] +
+                  p[2][0][2] +
                   '), rgb(' +
                   p[1][0] +
                   ', ' +
                   p[1][1] +
                   ', ' +
                   p[1][2] +
+                  '))'
+                this.parts.scale.lastElementChild.style.background =
+                  'linear-gradient(0.25turn, rgb(' +
+                  p[1][0] +
+                  ', ' +
+                  p[1][1] +
+                  ', ' +
+                  p[1][2] +
+                  '), rgb(' +
+                  p[0][0][0] +
+                  ', ' +
+                  p[0][0][1] +
+                  ', ' +
+                  p[0][0][2] +
                   '))'
               }
               if (site.settings.color_by_order) {
@@ -1989,15 +2134,18 @@ void (function () {
                   this.ticks.center.firstElementChild.children[1].innerText = format_value(
                     summary[site.settings.color_scale_center][y]
                   )
+                  this.ticks.center.style.left = summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
                 } else {
                   this.ticks.center.firstElementChild.lastElementChild.innerText =
                     summary_levels[site.settings.summary_selection] + ' median'
                   this.ticks.center.firstElementChild.children[1].innerText = format_value(summary.median[y])
+                  this.ticks.center.style.left = summary.norm_median[y] * 100 + '%'
                 }
-                this.ticks.center.style.left = summary.norm_median[y] * 100 + '%'
                 if ('none' !== site.settings.color_scale_center) {
-                  this.parts.scale.firstElementChild.style.width = summary.norm_median[y] * 100 + '%'
-                  this.parts.scale.lastElementChild.style.width = 100 - summary.norm_median[y] * 100 + '%'
+                  this.parts.scale.firstElementChild.style.width =
+                    summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
+                  this.parts.scale.lastElementChild.style.width =
+                    100 - summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
                 }
                 this.ticks.center.style.marginLeft = -this.ticks.center.getBoundingClientRect().width / 2 + 'px'
               }
@@ -2011,22 +2159,29 @@ void (function () {
               entity =
                 entities[
                   this.parsed.order[
-                    Math.max(0, Math.min(this.parsed.order.length - 1, Math.floor((this.parsed.order.length - 1) * p)))
+                    Math.max(
+                      this.parsed.selected_summary.missing[this.parsed.time],
+                      Math.min(this.parsed.order.length - 1, Math.floor((this.parsed.order.length - 1) * p))
+                    )
                   ][0]
                 ]
             } else {
               const min = this.parsed.summary.min[this.parsed.time],
                 max = this.parsed.summary.max[this.parsed.time],
                 tv = min + p * (max - min)
+              var i, n
               if (this.parsed.order.length) {
-                if (1 === this.parsed.order.length || !p) {
-                  entity = entities[this.parsed.order[0][0]]
-                } else {
-                  for (var i = this.parsed.order.length - 1; --i; ) {
-                    if ((this.parsed.order[i][1] + this.parsed.order[i + 1][1]) / 2 <= tv) break
+                n = this.parsed.selected_summary.missing[this.parsed.time]
+                if (n < this.parsed.order.length) {
+                  if (1 === this.parsed.order.length || !p) {
+                    entity = entities[this.parsed.order[n][0]]
+                  } else {
+                    for (i = this.parsed.order.length - 2; i >= n; --i) {
+                      if ((this.parsed.order[i][1] + this.parsed.order[i + 1][1]) / 2 <= tv) break
+                    }
+                    i++
+                    entity = entities[this.parsed.order[i][0]]
                   }
-                  i++
-                  entity = entities[this.parsed.order[i][0]]
                 }
               }
             }
@@ -2160,7 +2315,7 @@ void (function () {
       variables = {},
       variable_info = {},
       queue = {_timeout: 0},
-      defaults = {time: 'time', dataview: 'default_view'},
+      defaults = {time: 'time', dataview: 'default_view', palette: 'grey'},
       summary_levels = {dataset: 'Overall', filtered: 'Filtered', all: 'Selection'},
       data_queue = {},
       data_loaded = {},
@@ -2195,42 +2350,71 @@ void (function () {
       page.content.style.top = h + 'px'
     }
 
-    function pal(value, which, summary, index, rank) {
-      which = which ? which.toLowerCase() : site.settings.palette
-      const colors = palettes[Object.hasOwn(palettes, which) ? which : 'reds'],
-        string = summary && Object.hasOwn(summary, 'levels'),
-        min = summary && !string ? summary.min[index] : 0,
-        max = summary ? (string ? summary.levels.length : summary.max[index]) : 1,
+    function pal(value, which, summary, index, rank, total) {
+      const centered = 'none' !== site.settings.color_scale_center && !site.settings.color_by_order,
+        fixed = 'discrete' === palettes[which].type,
+        colors = palettes[which].colors,
+        string = Object.hasOwn(summary, 'levels'),
+        min = !string ? summary.min[index] : 0,
+        range = string ? summary.levels.length - min : summary.range[index],
         center_source =
           'none' === site.settings.color_scale_center || patterns.median.test(site.settings.color_scale_center)
             ? 'median'
             : 'mean',
-        center = summary && !string ? (isNaN(summary[center_source][index]) ? 0 : summary[center_source][index]) : 0.5,
-        fixed = 'string' === typeof colors[0],
-        r = fixed ? colors.length : 1
-      var v =
-        'none' !== site.settings.color_scale_center || site.settings.color_by_order
-          ? site.settings.color_by_order
-            ? r / 2 + r * rank
-            : max - min
-            ? value >= center
-              ? r / 2 + Math.ceil(r / 2) * ((value - center) / (max - center))
-              : Math.ceil(r / 2) * ((value - min) / (center - min))
-            : 0
-          : r * (max - min ? ((string ? summary.level_ids[value] : value) - min) / (max - min) : 0)
-      if (!fixed) v = 1 - Math.max(0, Math.min(1, v))
+        center = site.settings.color_by_order
+          ? centered
+            ? summary['break_' + center_source][index] / total
+            : 0.5
+          : isNaN(summary['norm_' + center_source][index])
+          ? 0
+          : summary['norm_' + center_source][index],
+        r = fixed ? (centered && !site.settings.color_by_order ? Math.ceil(colors.length / 2) : colors.length) : 1,
+        p = site.settings.color_by_order
+          ? rank / total
+          : range
+          ? ((string ? summary.level_ids[value] : value) - min) / range
+          : 0,
+        upper = p > (centered ? center : 0.5)
+      var v = centered
+        ? range
+          ? upper
+            ? (p - center - summary['upper_' + center_source + '_min'][index]) /
+              summary['upper_' + center_source + '_range'][index]
+            : (p + center - summary['lower_' + center_source + '_min'][index]) /
+              summary['lower_' + center_source + '_range'][index]
+          : 0
+        : p
+      if (!fixed) {
+        v = Math.max(0, Math.min(1, v))
+        if (upper) v = 1 - v
+        if (!centered) v *= 2
+      }
       return (string ? Object.hasOwn(summary.level_ids, value) : 'number' === typeof value)
         ? fixed
-          ? colors[Math.max(0, Math.min(r - 1, Math.floor(v)))]
-          : 3 === colors.length
-          ? 'rgb(' +
-            (colors[0][0] + v * colors[2][0]) +
-            ', ' +
-            (colors[0][1] + v * colors[2][1]) +
-            ', ' +
-            (colors[0][2] + v * colors[2][2]) +
+          ? colors[
+              Math.max(
+                0,
+                Math.min(
+                  colors.length - 1,
+                  Math.floor(centered ? (upper ? r - (colors.length % 2) + r * v : r * v) : r * v)
+                )
+              )
+            ]
+          : 'rgb(' +
+            (upper
+              ? colors[0][0][0] +
+                v * colors[0][1][0] +
+                ', ' +
+                (colors[0][0][1] + v * colors[0][1][1]) +
+                ', ' +
+                (colors[0][0][2] + v * colors[0][1][2])
+              : colors[2][0][0] +
+                v * colors[2][1][0] +
+                ', ' +
+                (colors[2][0][1] + v * colors[2][1][1]) +
+                ', ' +
+                (colors[2][0][2] + v * colors[2][1][2])) +
             ')'
-          : 'rgb(' + 0 + ', ' + 0 + ', ' + 0 + ')'
         : '#f0f0f040'
     }
 
@@ -2426,7 +2610,7 @@ void (function () {
       }
     }
 
-    function make_data_entry(u, e, rank, name, color) {
+    function make_data_entry(u, e, rank, total, name, color) {
       for (
         var i = Object.hasOwn(e.data, u.parsed.x) ? e.data[u.parsed.x].length : 0,
           t = JSON.parse(u.traces[u.base_trace]);
@@ -2434,16 +2618,16 @@ void (function () {
 
       ) {
         t.text[i] = e.features.name
-        t.x[i] = e.data[u.parsed.x][i]
-        t.y[i] = e.data[u.parsed.y][i]
+        t.x[i] = e.data[u.parsed.x][i - u.parsed.x_offset]
+        t.y[i] = e.data[u.parsed.y][i - u.parsed.y_offset]
       }
-      t.type = valueOf(t.type)
+      t.type = u.parsed.base_trace
       t.color =
         t.line.color =
         t.marker.color =
         t.textfont.color =
           color ||
-          pal(e.data[u.parsed.color][u.parsed.time], u.parsed.palette, u.parsed.summary, u.parsed.time, rank) ||
+          pal(e.data[u.parsed.color][u.parsed.time], u.parsed.palette, u.parsed.summary, u.parsed.time, rank, total) ||
           '#adadad'
       if ('bar' === t.type) t.marker.line.width = 0
       t.name = name || e.features.name
@@ -3071,7 +3255,7 @@ void (function () {
           // resolve options
           if (o.options_source) {
             if (patterns.palette.test(o.options_source)) {
-              for (v in palettes) if (Object.hasOwn(palettes, v)) o.add(v, v)
+              for (v in palettes) if (Object.hasOwn(palettes, v)) o.add(v, palettes[v].name)
               o.options = o.e.getElementsByTagName(o.type === 'select' ? 'option' : 'input')
               o.reset()
             } else if (patterns.datasets.test(o.options_source)) {
@@ -3345,6 +3529,7 @@ void (function () {
           view: e.getAttribute('data-view') || defaults.dataview,
           id: e.id || 'out' + n++,
           note: e.getAttribute('aria-description') || '',
+          reference_options: {},
           e: e,
         }
         if (o.note) o.e.addEventListener('mouseover', tooltip_trigger.bind(o))
@@ -3355,6 +3540,8 @@ void (function () {
           : void 0
         if (o.options) {
           if (Object.hasOwn(o.options, 'options')) o.options = o.options.options
+          for (k in o.options)
+            if (Object.hasOwn(o.options, k) && Object.hasOwn(_u, o.options[k])) o.reference_options[k] = o.options[k]
           if (Object.hasOwn(o.options, 'subto')) {
             if ('string' === typeof o.options.subto) o.options.subto = [o.options.subto]
             for (v = o.options.subto.length; v--; ) add_subs(o.options.subto[v], o)
@@ -3481,32 +3668,37 @@ void (function () {
 
     async function init_summaries(view) {
       view = view || defaults.dataview
-      var m, o, v, d, y, i, l, k, da, ev
+      var m, o, v, d, y, i, l, k, da, ev, ny, n, at
       for (v in variables)
         if (Object.hasOwn(variables, v)) {
-          if (!Object.hasOwn(variables[v], view)) variables[v][view] = {order: {}, selected_order: {}, summaries: {}}
+          if (!Object.hasOwn(variables[v], view))
+            variables[v][view] = {order: {}, selected_order: {}, selected_summaries: {}, summaries: {}}
           m = variables[v][view]
           for (d in variables[v].info) {
             if (Object.hasOwn(variables[v].info, d)) {
+              variables[v].info[d].n_times = ny =
+                variables[v].info[d].time_range[1] - variables[v].info[d].time_range[0] + 1
               if (Object.hasOwn(site.data, d) && !Object.hasOwn(variables[v].info[d], 'order')) {
                 variables[v].info[d].order = o = []
-                for (y = meta.time_n; y--; ) {
+                for (y = ny; y--; ) {
                   o.push([])
                 }
                 da = site.data[d]
+                n = site.metadata.info[d].entity_count
+                at = !n || n > 65535 ? Uint32Array : n > 255 ? Uint16Array : Uint8Array
                 for (k in da)
-                  if (Object.hasOwn(da, k)) {
+                  if (Object.hasOwn(da, k) && Object.hasOwn(da[k], v)) {
                     ev = da[k][v]
-                    for (y = meta.time_n; y--; ) {
+                    for (y = ny; y--; ) {
                       o[y].push([k, ev[y]])
                     }
                     if (!Object.hasOwn(entities, k)) {
                       entities[k] = {rank: {}, subset_rank: {}}
                     }
-                    entities[k].rank[v] = new Uint32Array(meta.time_n)
-                    entities[k].subset_rank[v] = new Uint32Array(meta.time_n)
+                    entities[k].rank[v] = new at(ny)
+                    entities[k].subset_rank[v] = new at(ny)
                   }
-                for (y = meta.time_n; y--; ) {
+                for (y = ny; y--; ) {
                   ev = o[y]
                   ev.sort(check_funs.sort_a1)
                   Object.freeze(ev)
@@ -3519,23 +3711,23 @@ void (function () {
               if (!Object.hasOwn(m.summaries, d)) {
                 m.order[d] = []
                 m.selected_order[d] = []
+                m.selected_summaries[d] = {n: [], missing: []}
                 if ('string' === variables[v].info[d].type) {
                   m.table = {}
                   for (l in variables[v].levels_ids)
                     if (Object.hasOwn(variables[v].levels_ids, l)) {
                       m.table[l] = []
-                      for (y = meta.time_n; y--; ) m.table[l].push(0)
+                      for (y = ny; y--; ) m.table[l].push(0)
                     }
                   m.summaries[d] = {
                     filled: false,
-                    time_range: [0, 0],
                     missing: [],
                     n: [],
                     mode: [],
                     level_ids: variables[v].levels_ids,
                     levels: variables[v].levels,
                   }
-                  for (y = meta.time_n; y--; ) {
+                  for (y = ny; y--; ) {
                     m.order[d].push([])
                     m.selected_order[d].push([])
                     m.summaries[d].missing.push(0)
@@ -3545,22 +3737,34 @@ void (function () {
                 } else {
                   m.summaries[d] = {
                     filled: false,
-                    time_range: [0, 0],
                     missing: [],
                     n: [],
                     sum: [],
                     max: [],
                     q3: [],
                     mean: [],
+                    range: [],
                     norm_median: [],
+                    break_median: [],
+                    lower_median_min: [],
+                    lower_median_range: [],
+                    upper_median_min: [],
+                    upper_median_range: [],
                     norm_mean: [],
+                    break_mean: [],
+                    lower_mean_min: [],
+                    lower_mean_range: [],
+                    upper_mean_min: [],
+                    upper_mean_range: [],
                     median: [],
                     q1: [],
                     min: [],
                   }
-                  for (y = meta.time_n; y--; ) {
+                  for (y = ny; y--; ) {
                     m.order[d].push([])
                     m.selected_order[d].push([])
+                    m.selected_summaries[d].n.push(0)
+                    m.selected_summaries[d].missing.push(0)
                     m.summaries[d].missing.push(0)
                     m.summaries[d].n.push(0)
                     m.summaries[d].sum.push(0)
@@ -3568,7 +3772,17 @@ void (function () {
                     m.summaries[d].q3.push(0)
                     m.summaries[d].mean.push(0)
                     m.summaries[d].norm_median.push(0)
+                    m.summaries[d].break_median.push(-1)
+                    m.summaries[d].lower_median_min.push(-1)
+                    m.summaries[d].lower_median_range.push(-1)
+                    m.summaries[d].upper_median_min.push(-1)
+                    m.summaries[d].upper_median_range.push(-1)
                     m.summaries[d].norm_mean.push(0)
+                    m.summaries[d].break_mean.push(-1)
+                    m.summaries[d].lower_mean_min.push(-1)
+                    m.summaries[d].lower_mean_range.push(-1)
+                    m.summaries[d].upper_mean_min.push(-1)
+                    m.summaries[d].upper_mean_range.push(-1)
                     m.summaries[d].median.push(0)
                     m.summaries[d].q1.push(0)
                     m.summaries[d].min.push(Infinity)
@@ -3576,6 +3790,7 @@ void (function () {
                 }
                 Object.seal(m.order[d])
                 Object.seal(m.selected_order[d])
+                Object.seal(m.selected_summaries[d])
                 Object.seal(m.summaries[d])
               }
             }
@@ -3593,14 +3808,17 @@ void (function () {
         m = variables[measure][view],
         mo = m.order[dataset],
         mso = m.selected_order[dataset],
+        mss = m.selected_summaries[dataset],
         ms = m.summaries[dataset],
-        ny = meta.time_n,
+        ny = variables[measure].info[dataset].n_times,
         order = variables[measure].info[dataset].order,
         levels = variables[measure].levels_ids,
         subset = v.n_selected.all !== v.n_selected.dataset
-      for (var i, k, value, en, l, o, y = meta.time_n, rank; y--; ) {
+      for (var i, k, value, en, l, o, y = ny, rank, bmd, bme, n; y--; ) {
         mo[y] = subset ? [] : order[y]
         mso[y] = subset ? [] : order[y]
+        mss.missing[y] = 0
+        mss.n[y] = 0
         ms.missing[y] = 0
         ms.n[y] = 0
         if (levels) {
@@ -3611,6 +3829,8 @@ void (function () {
           ms.mean[y] = 0
           ms.max[y] = -Infinity
           ms.min[y] = Infinity
+          ms.break_mean[y] = -1
+          ms.break_median[y] = -1
         }
       }
       for (y = 0; y < ny; y++) {
@@ -3621,21 +3841,21 @@ void (function () {
           if (Object.hasOwn(s, k)) {
             en = s[k]
             if (!y) {
-              if (!Object.hasOwn(en.summary, measure))
-                en.summary[measure] = {n: 0, time_range: [Infinity, -Infinity], overall: ms, order: mo}
+              if (!Object.hasOwn(en.summary, measure)) en.summary[measure] = {n: 0, overall: ms, order: mo}
               en.summary[measure].n = 0
-              en.summary[measure].time_range[0] = Infinity
-              en.summary[measure].time_range[1] = -Infinity
             }
             en.subset_rank[measure][y] = --rank
             if (full && subset) {
               mo[y].splice(0, 0, o[i])
-              if (Object.hasOwn(a, k)) mso[y].splice(0, 0, o[i])
+              if (Object.hasOwn(a, k)) {
+                mso[y].splice(0, 0, o[i])
+                if (levels ? Object.hasOwn(levels, value) : 'number' === typeof value) {
+                  mss.n[y]++
+                } else mss.missing[y]++
+              }
             }
             if (levels ? Object.hasOwn(levels, value) : 'number' === typeof value) {
               en.summary[measure].n++
-              if (y < en.summary[measure].time_range[0]) en.summary[measure].time_range[0] = y
-              if (y > en.summary[measure].time_range[1]) en.summary[measure].time_range[1] = y
               ms.n[y]++
               if (levels) {
                 m.table[value][y]++
@@ -3648,14 +3868,11 @@ void (function () {
           }
         }
       }
-      ms.time_range[0] = Infinity
-      ms.time_range[1] = -Infinity
       if (full) {
         for (y = 0; y < ny; y++) {
+          o = mo[y]
           if (levels) {
             if (ms.n[y]) {
-              if (y < ms.time_range[0]) ms.time_range[0] = y
-              if (y > ms.time_range[1]) ms.time_range[1] = y
               l = 0
               for (k in m.table)
                 if (Object.hasOwn(m.table, k)) {
@@ -3664,19 +3881,28 @@ void (function () {
               ms.mode[y] = variables[measure].levels[l]
             } else ms.mode[y] = NaN
           } else {
-            o = mo[y]
             if (ms.n[y]) {
-              if (y < ms.time_range[0]) ms.time_range[0] = y
-              if (y > ms.time_range[1]) ms.time_range[1] = y
               ms.mean[y] = ms.sum[y] / ms.n[y]
               if (!isFinite(ms.min[y])) ms.min[y] = ms.mean[y]
               if (!isFinite(ms.max[y])) ms.max[y] = ms.mean[y]
+              ms.range[y] = ms.max[y] - ms.min[y]
               if (1 === ms.n[y]) {
                 ms.q3[y] = ms.median[y] = ms.q1[y] = null == o[0][1] ? ms.mean[y] : o[0][1]
               } else {
                 ms.median[y] = quantile(0.5, ms.n[y], ms.missing[y], o)
                 ms.q3[y] = quantile(0.75, ms.n[y], ms.missing[y], o)
                 ms.q1[y] = quantile(0.25, ms.n[y], ms.missing[y], o)
+              }
+              for (i = ms.missing[y], n = o.length, bmd = false, bme = false; i < n; i++) {
+                if (!bmd && o[i][1] > ms.median[y]) {
+                  ms.break_median[y] = i - 1
+                  bmd = true
+                }
+                if (!bme && o[i][1] > ms.mean[y]) {
+                  ms.break_mean[y] = i - 1
+                  bme = true
+                }
+                if (bmd && bme) break
               }
             } else {
               ms.max[y] = 0
@@ -3685,21 +3911,31 @@ void (function () {
               ms.q1[y] = 0
               ms.min[y] = 0
             }
-            ms.norm_median[y] =
-              'number' === typeof ms.max[y] && ms.max[y] - ms.min[y]
-                ? (ms.median[y] - ms.min[y]) / (ms.max[y] - ms.min[y])
-                : ms.median[y]
-            ms.norm_mean[y] =
-              'number' === typeof ms.max[y] && ms.max[y] - ms.min[y]
-                ? (ms.mean[y] - ms.min[y]) / (ms.max[y] - ms.min[y])
-                : ms.mean[y]
+            if (ms.n[y]) {
+              ms.norm_median[y] = ms.range[y] ? (ms.median[y] - ms.min[y]) / ms.range[y] : ms.median[y]
+              if (-1 !== ms.break_median[y]) {
+                ms.lower_median_min[y] = ms.norm_median[y] - (o[ms.missing[y]][1] - ms.min[y]) / ms.range[y]
+                ms.lower_median_range[y] =
+                  ms.norm_median[y] - ((o[ms.break_median[y]][1] - ms.min[y]) / ms.range[y] - ms.lower_median_min[y])
+                ms.upper_median_min[y] = ms.norm_median[y] - (o[ms.break_median[y]][1] - ms.min[y]) / ms.range[y]
+                ms.upper_median_range[y] =
+                  (o[o.length - 1][1] - ms.min[y]) / ms.range[y] - ms.norm_median[y] - ms.upper_median_min[y]
+              }
+              ms.norm_mean[y] = ms.range[y] ? (ms.mean[y] - ms.min[y]) / ms.range[y] : ms.mean[y]
+              if (-1 !== ms.break_mean[y]) {
+                ms.lower_mean_min[y] = ms.norm_mean[y] - (o[ms.missing[y]][1] - ms.min[y]) / ms.range[y]
+                ms.lower_mean_range[y] =
+                  ms.norm_mean[y] - ((o[ms.break_mean[y]][1] - ms.min[y]) / ms.range[y] - ms.lower_mean_min[y])
+                ms.upper_mean_min[y] = ms.norm_mean[y] - (o[ms.break_mean[y]][1] - ms.min[y]) / ms.range[y]
+                ms.upper_mean_range[y] =
+                  (o[o.length - 1][1] - ms.min[y]) / ms.range[y] - ms.norm_mean[y] - ms.upper_mean_min[y]
+              }
+            }
           }
         }
       } else {
         for (y = 0; y < ny; y++) {
           if (ms.n[y]) {
-            if (y < ms.time_range[0]) ms.time_range[0] = y
-            if (y > ms.time_range[1]) ms.time_range[1] = y
             if (levels) {
               q1 = 0
               for (k in m.table)
@@ -4092,12 +4328,13 @@ void (function () {
         }.bind(v),
         variables: function (e) {
           if (e.data) {
-            for (var i = this.parsed.variable_values.length, pass = true, v; i--; ) {
+            for (var i = this.parsed.variable_values.length, os, pass = true, v; i--; ) {
               v = this.parsed.variable_values[i]
+              os = variables[v.name].info[this.parsed.dataset].time_range[0]
               pass =
                 !Object.hasOwn(e.data, v.name) ||
-                v.value_type !== typeof e.data[v.name][this.parsed.time_agg] ||
-                check_funs[v.operator](v.value, e.data[v.name][this.parsed.time_agg])
+                v.value_type !== typeof e.data[v.name][this.parsed.time_agg - os] ||
+                check_funs[v.operator](v.value, e.data[v.name][this.parsed.time_agg - os])
               if (!pass) break
             }
             return pass
@@ -4243,6 +4480,7 @@ void (function () {
         showing = this.deferred || !this.tab || this.tab.classList.contains('show')
       if (showing && window.L) {
         this.map = L.map(this.e, this.options)
+        this.options = this.map.options
         this.displaying = L.featureGroup().addTo(this.map)
         this.tiles = {}
         var k, i
