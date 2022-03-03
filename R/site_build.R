@@ -17,6 +17,7 @@
 #' @param aggregate Logical; if \code{TRUE}, and there is a larger datasets with IDs that partially match
 #' IDs in a smaller dataset or that has a map to those IDs, and there are NAs in the smaller dataset, will
 #' attempt to fill NAs with averages from the larger dataset.
+#' @param sparse_time Logical; if \code{FALSE}, will not trim times from a variable that are all missing.
 #' @param force Logical; if \code{TRUE}, will reprocess data even if the source data is older than the existing
 #' processed version.
 #' @param version Version of the base script and stylesheet: \code{"v1"} (default) for the version 1 stable release,
@@ -36,8 +37,8 @@
 #' @export
 
 site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html", variables = NULL,
-                       options = list(), bundle_data = FALSE, open_after = FALSE, aggregate = TRUE, force = FALSE,
-                       version = "v1", parent = NULL) {
+                       options = list(), bundle_data = FALSE, open_after = FALSE, aggregate = TRUE, sparse_time = TRUE,
+                       force = FALSE, version = "v1", parent = NULL) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., dir = ".")')
   page <- paste0(dir, "/", file)
   if (!file.exists(page)) cli_abort("{.file {page}} does not exist")
@@ -187,12 +188,16 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
                 data <- do.call(rbind, sdata)
                 times <- data[[time]]
                 for (i in seq_along(d$schema$fields)) {
-                  v <- data[[d$schema$fields[[i]]$name]]
-                  d$schema$fields[[i]]$time_range <- which(unname(tapply(v, times, function(v) any(!is.na(v))))) - 1
-                  d$schema$fields[[i]]$time_range <- if (length(d$schema$fields[[i]]$time_range)) {
-                    d$schema$fields[[i]]$time_range[c(1, length(d$schema$fields[[i]]$time_range))]
+                  if (sparse_time) {
+                    v <- data[[d$schema$fields[[i]]$name]]
+                    d$schema$fields[[i]]$time_range <- which(unname(tapply(v, times, function(v) any(!is.na(v))))) - 1
+                    d$schema$fields[[i]]$time_range <- if (length(d$schema$fields[[i]]$time_range)) {
+                      d$schema$fields[[i]]$time_range[c(1, length(d$schema$fields[[i]]$time_range))]
+                    } else {
+                      c(-1, -1)
+                    }
                   } else {
-                    c(-1, -1)
+                    d$schema$fields[[i]]$time_range <- c(0, length(unique(data[[d$schema$fields[[i]]$name]])) - 1)
                   }
                 }
               }
@@ -201,9 +206,11 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
               sdata <- lapply(sdata, function(e) {
                 if (length(vars)) e <- if (class(e)[1] == "data.table") e[, vars, with = FALSE] else e[, vars]
                 e <- as.list(e)
-                for (f in d$schema$fields) {
-                  if (f$name %in% names(e)) {
-                    e[[f$name]] <- if (f$time_range[[1]] == -1) NULL else e[[f$name]][seq(f$time_range[[1]], f$time_range[[2]]) + 1]
+                if (sparse_time) {
+                  for (f in d$schema$fields) {
+                    if (f$name %in% names(e)) {
+                      e[[f$name]] <- if (f$time_range[[1]] == -1) NULL else e[[f$name]][seq(f$time_range[[1]], f$time_range[[2]]) + 1]
+                    }
                   }
                 }
                 e
@@ -215,7 +222,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
         info[[d$name]] <- d
       }
     } else {
-      data_files <- list.files(ddir, "\\.(csv|tsv|txt)")
+      data_files <- list.files(ddir, "\\.(?:csv|tsv|txt)")
       if (length(data_files)) {
         init_data(sub("^.*/", "", normalizePath(dir, "/", FALSE)), dir = dir, data_paths = data_files)
         if (file.exists(f)) {

@@ -15,6 +15,7 @@
 #' @param key Dataverse API key; only needed if the requested dataset is not published. If not specified,
 #' looks for the key in \code{Sys.getenv("DATAVERSE_KEY")} and \code{getOption("dataverse.key")}.
 #' @param load Logical; if \code{FALSE}, files will be downloaded but not loaded.
+#' @param decompress Logical; if \code{TRUE}, will attempt to decompress compressed files.
 #' @param refresh Logical; if \code{TRUE}, downloads and replaces any existing files.
 #' @param branch Name of the repository branch, if \code{id} is the name of a repository; uses the default branch
 #' if not specified.
@@ -31,7 +32,8 @@
 #' @export
 
 download_dataverse_data <- function(id, outdir = tempdir(), files = NULL, version = ":latest",
-                                    server = NULL, key = NULL, load = TRUE, refresh = FALSE, branch = NULL, verbose = FALSE) {
+                                    server = NULL, key = NULL, load = TRUE, decompress = FALSE,
+                                    refresh = FALSE, branch = NULL, verbose = FALSE) {
   if (missing(id)) cli_abort("{.arg id} must be specified")
   if (!is.character(outdir)) cli_abort("{.arg outdir} must be a character")
   meta <- download_dataverse_info(id, server = server, key = key, refresh = refresh, branch = branch)
@@ -41,7 +43,7 @@ download_dataverse_data <- function(id, outdir = tempdir(), files = NULL, versio
       files[files <= length(fs)]
     } else {
       grep(paste0(
-        "(?:", paste(gsub(".", "\\\\.", files, fixed = TRUE), collapse = "|"), ")"
+        "(?:", paste(gsub(".", "\\.", files, fixed = TRUE), collapse = "|"), ")"
       ), fs, TRUE)
     }
   } else {
@@ -57,7 +59,7 @@ download_dataverse_data <- function(id, outdir = tempdir(), files = NULL, versio
   dir.create(outdir, FALSE, TRUE)
   data <- list()
   ffsx <- paste0(outdir, fs)
-  ffs <- sub("\\.(?:xz|bz|gz)$", "", ffsx)
+  ffs <- sub("\\.[gbx]z$", "", ffsx)
   if (refresh) unlink(c(ffsx, ffs))
   if (is.null(key)) {
     if (verbose) cli_alert_info("looking for API key in fall-backs")
@@ -128,7 +130,7 @@ download_dataverse_data <- function(id, outdir = tempdir(), files = NULL, versio
       if (verbose && m$dataFile$md5 != md5sum(ffsx[i])) {
         cli_warn("file was downloaded but its checksum did not match: {.file {ffsx[i]}}")
       }
-      if (grepl("(?:xz|bz|gz)$", ffsx[i])) {
+      if (decompress && grepl("[gbx]z$", ffsx[i])) {
         if (verbose) cli_alert_info("decompressing file: {.file {ffsx[i]}}")
         system2(
           c(xz = "xz", bz = "bunzip2", gz = "gzip")[substring(ffsx[i], nchar(ffsx[i]) - 1)],
@@ -136,11 +138,16 @@ download_dataverse_data <- function(id, outdir = tempdir(), files = NULL, versio
         )
       }
     }
-    if (load && file.exists(ffs[i])) {
+    if (load && file.exists(if (decompress) ffs[i] else ffsx[i])) {
       if (verbose) cli_alert_info("loading file: {.file {ffs[i]}}")
       fn <- sub("\\..*", "", m$label)
+      json <- grepl("\\.json$", ffs[i])
       data[[fn]] <- tryCatch(
-        (if (grepl("\\.json$", ffs[i])) read_json else fread)(ffs[i]),
+        if (decompress || json) {
+          (if (json) read_json else fread)(ffs[i])
+        } else {
+          as.data.table(read.csv(gzfile(ffsx[i])))
+        },
         error = function(e) NULL
       )
       if (verbose && is.null(data[[fn]])) {
@@ -148,6 +155,7 @@ download_dataverse_data <- function(id, outdir = tempdir(), files = NULL, versio
       }
     }
   }
+  if (!decompress) ffs <- ffsx
   ffs <- ffs[which_files]
   if (verbose && any(!file.exists(ffs))) {
     cli_warn("failed to download file{?s}: {.file {ffs[!file.exists(ffs)]}}")

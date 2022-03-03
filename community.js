@@ -2045,72 +2045,74 @@ void (function () {
               : false
             this.parsed.time = y
             this.parsed.color = variable
-            if (view.valid && summary) {
+            if (view.valid && summary && y < summary.n.length) {
               this.integer =
                 variable_info[variable] && variable_info[variable].type
                   ? patterns.int_types.test(variable_info[variable].type)
                   : true
-              this.current_palette = pn
-              this.parts.scale.innerHTML = ''
-              if ('discrete' === palettes[pn].type) {
-                if (site.settings.color_by_order || 'none' === site.settings.color_scale_center) {
-                  for (var i = 0, n = p.length; i < n; i++) {
-                    this.parts.scale.appendChild(document.createElement('span'))
-                    this.parts.scale.lastElementChild.setAttribute('of', this.id)
-                    this.parts.scale.lastElementChild.style.background = p[i]
+              if (pn !== this.current_palette) {
+                this.current_palette = pn
+                this.parts.scale.innerHTML = ''
+                if ('discrete' === palettes[pn].type) {
+                  if (site.settings.color_by_order || 'none' === site.settings.color_scale_center) {
+                    for (var i = 0, n = p.length; i < n; i++) {
+                      this.parts.scale.appendChild(document.createElement('span'))
+                      this.parts.scale.lastElementChild.setAttribute('of', this.id)
+                      this.parts.scale.lastElementChild.style.background = p[i]
+                    }
+                  } else {
+                    var i = 0,
+                      n = Math.ceil(p.length / 2),
+                      e
+                    this.parts.scale.appendChild((e = document.createElement('div')))
+                    e.setAttribute('of', this.id)
+                    e.style.left = 0
+                    for (; i < n; i++) {
+                      e.appendChild(document.createElement('span'))
+                      e.lastElementChild.setAttribute('of', this.id)
+                      e.lastElementChild.style.background = p[i]
+                    }
+                    this.parts.scale.appendChild((e = document.createElement('div')))
+                    e.setAttribute('of', this.id)
+                    e.style.right = 0
+                    for (i = Math.floor(p.length / 2), n = p.length; i < n; i++) {
+                      e.appendChild(document.createElement('span'))
+                      e.lastElementChild.setAttribute('of', this.id)
+                      e.lastElementChild.style.background = p[i]
+                    }
                   }
                 } else {
-                  var i = 0,
-                    n = Math.ceil(p.length / 2),
-                    e
-                  this.parts.scale.appendChild((e = document.createElement('div')))
-                  e.setAttribute('of', this.id)
-                  e.style.left = 0
-                  for (; i < n; i++) {
-                    e.appendChild(document.createElement('span'))
-                    e.lastElementChild.setAttribute('of', this.id)
-                    e.lastElementChild.style.background = p[i]
-                  }
-                  this.parts.scale.appendChild((e = document.createElement('div')))
-                  e.setAttribute('of', this.id)
-                  e.style.right = 0
-                  for (i = Math.floor(p.length / 2), n = p.length; i < n; i++) {
-                    e.appendChild(document.createElement('span'))
-                    e.lastElementChild.setAttribute('of', this.id)
-                    e.lastElementChild.style.background = p[i]
-                  }
+                  this.parts.scale.appendChild(document.createElement('span'))
+                  this.parts.scale.appendChild(document.createElement('span'))
+                  this.parts.scale.firstElementChild.style.background =
+                    'linear-gradient(0.25turn, rgb(' +
+                    p[2][0][0] +
+                    ', ' +
+                    p[2][0][1] +
+                    ', ' +
+                    p[2][0][2] +
+                    '), rgb(' +
+                    p[1][0] +
+                    ', ' +
+                    p[1][1] +
+                    ', ' +
+                    p[1][2] +
+                    '))'
+                  this.parts.scale.lastElementChild.style.background =
+                    'linear-gradient(0.25turn, rgb(' +
+                    p[1][0] +
+                    ', ' +
+                    p[1][1] +
+                    ', ' +
+                    p[1][2] +
+                    '), rgb(' +
+                    p[0][0][0] +
+                    ', ' +
+                    p[0][0][1] +
+                    ', ' +
+                    p[0][0][2] +
+                    '))'
                 }
-              } else {
-                this.parts.scale.appendChild(document.createElement('span'))
-                this.parts.scale.appendChild(document.createElement('span'))
-                this.parts.scale.firstElementChild.style.background =
-                  'linear-gradient(0.25turn, rgb(' +
-                  p[2][0][0] +
-                  ', ' +
-                  p[2][0][1] +
-                  ', ' +
-                  p[2][0][2] +
-                  '), rgb(' +
-                  p[1][0] +
-                  ', ' +
-                  p[1][1] +
-                  ', ' +
-                  p[1][2] +
-                  '))'
-                this.parts.scale.lastElementChild.style.background =
-                  'linear-gradient(0.25turn, rgb(' +
-                  p[1][0] +
-                  ', ' +
-                  p[1][1] +
-                  ', ' +
-                  p[1][2] +
-                  '), rgb(' +
-                  p[0][0][0] +
-                  ', ' +
-                  p[0][0][1] +
-                  ', ' +
-                  p[0][0][2] +
-                  '))'
               }
               if (site.settings.color_by_order) {
                 this.ticks.center.classList.add('hidden')
@@ -2170,7 +2172,7 @@ void (function () {
                 max = this.parsed.summary.max[this.parsed.time],
                 tv = min + p * (max - min)
               var i, n
-              if (this.parsed.order.length) {
+              if (this.parsed.order && this.parsed.order.length) {
                 n = this.parsed.selected_summary.missing[this.parsed.time]
                 if (n < this.parsed.order.length) {
                   if (1 === this.parsed.order.length || !p) {
@@ -2611,28 +2613,42 @@ void (function () {
     }
 
     function make_data_entry(u, e, rank, total, name, color) {
-      for (
-        var i = Object.hasOwn(e.data, u.parsed.x) ? e.data[u.parsed.x].length : 0,
-          t = JSON.parse(u.traces[u.base_trace]);
-        i--;
-
+      if (
+        e.data &&
+        Object.hasOwn(e.data, u.parsed.x) &&
+        Object.hasOwn(e.data, u.parsed.y) &&
+        Object.hasOwn(e.data, u.parsed.color)
       ) {
-        t.text[i] = e.features.name
-        t.x[i] = e.data[u.parsed.x][i - u.parsed.x_offset]
-        t.y[i] = e.data[u.parsed.y][i - u.parsed.y_offset]
+        for (
+          var i = Object.hasOwn(e.data, u.parsed.x) ? e.data[u.parsed.x].length : 0,
+            t = JSON.parse(u.traces[u.base_trace]);
+          i--;
+
+        ) {
+          t.text[i] = e.features.name
+          t.x[i] = e.data[u.parsed.x][i - u.parsed.x_offset]
+          t.y[i] = e.data[u.parsed.y][i - u.parsed.y_offset]
+        }
+        t.type = u.parsed.base_trace
+        t.color =
+          t.line.color =
+          t.marker.color =
+          t.textfont.color =
+            color ||
+            pal(
+              e.data[u.parsed.color][u.parsed.time],
+              u.parsed.palette,
+              u.parsed.summary,
+              u.parsed.time,
+              rank,
+              total
+            ) ||
+            '#adadad'
+        if ('bar' === t.type) t.marker.line.width = 0
+        t.name = name || e.features.name
+        t.id = e.features.id
+        return t
       }
-      t.type = u.parsed.base_trace
-      t.color =
-        t.line.color =
-        t.marker.color =
-        t.textfont.color =
-          color ||
-          pal(e.data[u.parsed.color][u.parsed.time], u.parsed.palette, u.parsed.summary, u.parsed.time, rank, total) ||
-          '#adadad'
-      if ('bar' === t.type) t.marker.line.width = 0
-      t.name = name || e.features.name
-      t.id = e.features.id
-      return t
     }
 
     function make_variable_source(s) {
@@ -2724,9 +2740,10 @@ void (function () {
       if ('statement' === type) {
         for (var m, v; (m = patterns.mustache.exec(s)); ) {
           if ('value' === m[1]) {
-            v = entity
-              ? format_value(entity.data[e.v][e.time], patterns.int_types.test(variable_info[e.v].type))
-              : 'unknown'
+            v =
+              entity && Object.hasOwn(entity.data, e.v)
+                ? format_value(entity.data[e.v][e.time], patterns.int_types.test(variable_info[e.v].type))
+                : 'unknown'
             s = s.replace(
               m[0],
               'unknown' !== v && Object.hasOwn(value_types, variable_info[e.v].type)

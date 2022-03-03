@@ -4,7 +4,7 @@
 #'
 #' @param template Name of the template (e.g., \code{"function"}).
 #' @param name Name of the template instance (e.g., \code{"test_function"}).
-#' @param dir Path to the based directory of the template.
+#' @param dir Path to the base directory of the template.
 #' @param spec The template's spec; specify if template spec files do not exist.
 #' @examples
 #' \dontrun{

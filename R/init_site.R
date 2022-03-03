@@ -124,7 +124,7 @@ init_site <- function(dir, title = "app", with_data = TRUE, overwrite = FALSE, q
       "# now edit the site and build it from site.R"
     ), collapse = "\n"), paths[6])
   }
-  if (!file.exists(paths[7])) writeLines("Version: 1.0\n", paths[7])
+  if (!file.exists(paths[7]) && !any(grepl("\\.Rproj$", list.files(dir)))) writeLines("Version: 1.0\n", paths[7])
   dir.create(paste0(dir, "/docs"), FALSE)
   docs <- grep("/docs/", check$files, fixed = TRUE, value = TRUE)
   if (any(!file.exists(docs))) file.create(docs[!file.exists(docs)])

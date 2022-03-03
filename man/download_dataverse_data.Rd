@@ -8,7 +8,7 @@
 \usage{
 download_dataverse_data(id, outdir = tempdir(), files = NULL,
   version = ":latest", server = NULL, key = NULL, load = TRUE,
-  refresh = FALSE, branch = NULL, verbose = FALSE)
+  decompress = FALSE, refresh = FALSE, branch = NULL, verbose = FALSE)
 
 download_dataverse_info(id, server = NULL, key = NULL, refresh = FALSE,
   branch = NULL, verbose = FALSE)
@@ -33,6 +33,8 @@ even if only a selection is requested.}
 looks for the key in \code{Sys.getenv("DATAVERSE_KEY")} and \code{getOption("dataverse.key")}.}
 
 \item{load}{Logical; if \code{FALSE}, files will be downloaded but not loaded.}
+
+\item{decompress}{Logical; if \code{TRUE}, will attempt to decompress compressed files.}
 
 \item{refresh}{Logical; if \code{TRUE}, downloads and replaces any existing files.}
 

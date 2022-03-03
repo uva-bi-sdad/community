@@ -1,0 +1,6 @@
+{
+  "name": "datacommons",
+  "context": "datacommons",
+  "dir": ".",
+  "files": ["info.json", ".gitignore", "README.md", "views", "build.R", "repo_list.txt"]
+}

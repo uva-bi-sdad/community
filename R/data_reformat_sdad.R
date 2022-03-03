@@ -49,7 +49,10 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
   data <- list()
   names <- list()
   for (f in files) {
-    d <- tryCatch(fread(f), error = function(e) NULL)
+    d <- tryCatch(
+      if (grepl("[gbx]z$", f)) as.data.table(read.csv(gzfile(f))) else fread(f),
+      error = function(e) NULL
+    )
     if (is.null(d)) cli_abort("failed to read in file {.file {f}}")
     if (any(su <- !vars %in% colnames(d))) {
       if (all(su)) cli_abort("no variables found in file {.file {f}}")

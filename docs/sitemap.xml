@@ -46,6 +46,12 @@
     <loc>/reference/community-package.html</loc>
   </url>
   <url>
+    <loc>/reference/datacommons_map_variables.html</loc>
+  </url>
+  <url>
+    <loc>/reference/datacommons_refresh.html</loc>
+  </url>
+  <url>
     <loc>/reference/data_add.html</loc>
   </url>
   <url>
@@ -62,6 +68,9 @@
   </url>
   <url>
     <loc>/reference/init_data.html</loc>
+  </url>
+  <url>
+    <loc>/reference/init_datacommons.html</loc>
   </url>
   <url>
     <loc>/reference/init_function.html</loc>

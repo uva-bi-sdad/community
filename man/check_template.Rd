@@ -11,7 +11,7 @@ check_template(template, name = "", dir = ".", spec = NULL)
 
 \item{name}{Name of the template instance (e.g., \code{"test_function"}).}
 
-\item{dir}{Path to the based directory of the template.}
+\item{dir}{Path to the base directory of the template.}
 
 \item{spec}{The template's spec; specify if template spec files do not exist.}
 }
