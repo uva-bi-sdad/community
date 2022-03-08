@@ -78,7 +78,7 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
     names <- c(names, list(colnames(d)))
     set(d, NULL, "file", f)
     d[[value_name]] <- sub("^:", "", paste0(
-      sub("^.*[\\\\/]", "", gsub("^.*\\d{4}(?:q\\d)?_|\\.\\w{3,4}$", "", f)), ":", d[[value_name]]
+      sub("^.*[\\\\/]", "", gsub("^.*\\d{4}(?:q\\d)?_|\\.\\w{3,4}(?:\\.[gbx]z2?)?$", "", f)), ":", d[[value_name]]
     ))
     data <- c(data, list(d))
   }
@@ -103,7 +103,7 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
   data <- do.call(rbind, lapply(data, function(d) {
     d <- d[, vars, with = FALSE]
     if (id %in% vars) d[[id]] <- trimws(format(d[[id]], scientific = FALSE))
-    d
+    d[rowSums(vapply(d, is.na, logical(nrow(d)))) == 0,]
   }))
   cn <- colnames(data)
   if (!is.null(formatters)) {
