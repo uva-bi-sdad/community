@@ -1,0 +1,6 @@
+{
+  "name": "datapackage",
+  "context": "datapackage",
+  "dir": ".",
+  "files": ["README.md", ".gitignore", ".Rbuildignore", "DESCRIPTION", "LICENSE", "NAMESPACE", "R", "data", "data-raw"]
+}

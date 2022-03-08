@@ -121,7 +121,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
               sdata <- split(data, ids)
               # aggregating if needed
               pn <- nchar(names(sdata)[1])
-              fixed_ids <- pn > 1 && all(nchar(names(sdata)) == pn)
+              fixed_ids <- pn > 1 && all(nchar(names(sdata)) == pn) && !any(grepl("[^0-9]", names(sdata)))
               aggregated <- FALSE
               if (aggregate && length(previous_data) && anyNA(data)) {
                 cn <- colnames(sdata[[1]])

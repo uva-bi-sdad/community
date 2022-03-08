@@ -46,7 +46,7 @@ datacommons_map_variables <- function(dir, search_pattern = "\\.csv\\.xz", varia
       if (!is.character(variable_location) || variable_location %in% colnames(d)) {
         vars <- unique(if (is.factor(variable_location)) variable_location(d) else d[, variable_location, drop = TRUE])
         map[[f]] <- data.frame(variable = vars, full_name = sub("^:", "", paste0(
-          sub("^.*[\\\\/]", "", gsub("^.*\\d{4}(?:q\\d)?_|\\.\\w{3,4}$|\\..*$", "", basename(f))), ":", vars
+          sub("^.*[\\\\/]", "", gsub("^.*\\d{4}(?:q\\d)?_|\\.\\w{3,4}(?:\\.[gbx]z2?)?$|\\..*$", "", basename(f))), ":", vars
         )), file = f)
       } else {
         novars <- c(novars, f)
