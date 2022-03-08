@@ -12,6 +12,7 @@
   --lowlight: #212121;
   --lowlight-text: #c3c3c3;
   --warning: #dc3545;
+  --na: #f0f0f040;
 }
 .light-theme {
   --background: #ffffff;
@@ -27,6 +28,7 @@
   --lowlight: #e9ecef;
   --lowlight-text: #212529;
   --warning: #a11320;
+  --na: #48484840;
 }
 
 body,
@@ -126,6 +128,10 @@ body::-webkit-scrollbar-track,
 .form-select:disabled {
   background-color: var(--lowlight);
   color: var(--lowlight-text);
+}
+.na {
+  background-color: var(--na);
+  fill: var(--na);
 }
 
 .wrapper > label {
@@ -529,6 +535,28 @@ button.has-note::after {
   text-align: center;
   overflow: hidden;
   cursor: pointer;
+}
+.legend-wrap {
+  display: table;
+  width: 100%;
+}
+.legend-wrap > div {
+  display: table-cell;
+}
+.legend-na {
+  text-align: center;
+  width: 30px;
+  position: relative;
+}
+.legend-na .legend-scale {
+  padding: 0 5px;
+}
+.legend-na p {
+  margin: 0;
+  font-size: 0.8em;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
 }
 .legend-scale {
   width: 100%;

@@ -10,17 +10,29 @@
 #' @param subto A vector of output IDs to receive hover events from.
 #' @param click The ID of an input to set to an entity's ID near the current cursor location on the current scale.
 #' @param class Class names to add to the legend element.
+#' @param show_na Logical; if \code{FALSE}, does not add the separate section showing the color of missing values.
 #' @examples
 #' output_legend()
 #' @return A character vector of the contents to be added.
 #' @export
 
-output_legend <- function(palette = "", dataview = NULL, id = NULL, click = NULL, subto = NULL, class = "") {
+output_legend <- function(palette = "", dataview = NULL, id = NULL, click = NULL, subto = NULL,
+                          class = "", show_na = TRUE) {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   if (is.null(id)) id <- paste0("legend", caller$uid)
   options <- list(palette = palette, subto = subto)
   r <- c(
+    if (show_na) {
+      c(
+        '<div class="legend-wrap">',
+        '<div class="legend-na">',
+        '<div class="legend-ticks"></div>',
+        '<div class="legend-scale"><span class="na"></span></div>',
+        '<div class="legend-summary"><p>NA</p></div>',
+        "</div>"
+      )
+    },
     paste(c(
       '<div id="', id, '" auto-type="legend" class="auto-output legend',
       if (class != "") c(" ", class), '"',
@@ -31,7 +43,8 @@ output_legend <- function(palette = "", dataview = NULL, id = NULL, click = NULL
     '<div class="legend-ticks"></div>',
     '<div class="legend-scale"></div>',
     '<div class="legend-summary"></div>',
-    "</div>"
+    "</div>",
+    if (show_na) "</div>"
   )
   if (building) {
     caller$legend[[id]] <- options

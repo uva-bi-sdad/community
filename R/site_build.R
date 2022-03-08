@@ -24,6 +24,10 @@
 #' \code{"dev"} for the current unstable release, or \code{"local"} for a copy of the development files
 #' (\code{community.js} and \code{community.css}) served from a local \code{dist} directory.
 #' @param parent Directory path or repository URL of a data site from which to use data, rather than using local data.
+#' @param serve Logical; if \code{TRUE}, starts a local server from the site's \code{docs} directory.
+#' Once a server is running, you can use \code{\link[httpuv]{stopAllServers}} to stop it.
+#' @param host The IPv4 address to listen to if \code{serve} is \code{TRUE}; defaults to \code{"127.0.0.1"}.
+#' @param port The port to listen on if \code{serve} is \code{TRUE}; defaults to 3000.
 #' @examples
 #' \dontrun{
 #' # run from within a site project directory, initialized with `init_site()`
@@ -38,7 +42,7 @@
 
 site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html", variables = NULL,
                        options = list(), bundle_data = FALSE, open_after = FALSE, aggregate = TRUE, sparse_time = TRUE,
-                       force = FALSE, version = "v1", parent = NULL) {
+                       force = FALSE, version = "v1", parent = NULL, serve = FALSE, host = "127.0.0.1", port = 3000) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., dir = ".")')
   page <- paste0(dir, "/", file)
   if (!file.exists(page)) cli_abort("{.file {page}} does not exist")
@@ -65,9 +69,15 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
       for (oi in seq_along(dataset_order)) {
         i <- dataset_order[oi]
         d <- meta$resources[[i]]
+        time_info <- list()
+        temp <- list()
+        for (v in d$schema$fields) {
+          if ((length(d$time) && v$name == d$time[[1]]) || v$name %in% vars) {
+            temp[[v$name]] <- v
+            if (length(d$time) && v$name == d$time[[1]]) time_info <- v
+          }
+        }
         if (length(variables)) {
-          temp <- list()
-          for (v in d$schema$fields) if (v$name %in% vars) temp[[v$name]] <- v
           vars <- vars[vars %in% names(temp)]
           if (!identical(vars, variables)) {
             cli_warn(paste0(
@@ -85,7 +95,11 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
           path <- paste0(dir, "/docs/", d$site_file)
           if (file.exists(file)) {
             if (force || (!file.exists(path) || file.mtime(file) > file.mtime(path))) {
-              data <- fread(file)
+              data <- if (grepl("[gbx]z2?$", file)) {
+                as.data.table(read.csv(gzfile(file), check.names = FALSE))
+              } else {
+                fread(file)
+              }
               time <- NULL
               if (length(d$time) && d$time[[1]] %in% colnames(data)) {
                 time <- d$time[[1]]
@@ -184,38 +198,52 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
                   }
                 }
               }
-              if (aggregated) {
-                data <- do.call(rbind, sdata)
-                times <- data[[time]]
-                for (i in seq_along(d$schema$fields)) {
-                  if (sparse_time) {
-                    v <- data[[d$schema$fields[[i]]$name]]
-                    d$schema$fields[[i]]$time_range <- which(unname(tapply(v, times, function(v) any(!is.na(v))))) - 1
-                    d$schema$fields[[i]]$time_range <- if (length(d$schema$fields[[i]]$time_range)) {
-                      d$schema$fields[[i]]$time_range[c(1, length(d$schema$fields[[i]]$time_range))]
-                    } else {
-                      c(-1, -1)
-                    }
+              data <- do.call(rbind, sdata)
+              times <- if (is.null(time)) rep(1, nrow(data)) else data[[time]]
+              if (sparse_time && aggregated) {
+                for (vi in seq_along(d$schema$fields)) {
+                  v <- data[[d$schema$fields[[vi]]$name]]
+                  d$schema$fields[[vi]]$time_range <- which(unname(tapply(v, times, function(v) any(!is.na(v))))) - 1
+                  d$schema$fields[[vi]]$time_range <- if (length(d$schema$fields[[vi]]$time_range)) {
+                    d$schema$fields[[vi]]$time_range[c(1, length(d$schema$fields[[vi]]$time_range))]
                   } else {
-                    d$schema$fields[[i]]$time_range <- c(0, length(unique(data[[d$schema$fields[[i]]$name]])) - 1)
+                    c(-1, -1)
                   }
                 }
+                meta$resources[[i]] <- d
+                write_json(meta, f, pretty = TRUE, auto_unbox = TRUE)
               }
               if (fixed_ids) id_lengths[d$name] <- pn
               previous_data[[d$name]] <- sdata
+              evars <- vars
+              if (!length(evars)) evars <- colnames(data)
+              if (!is.null(time) && time %in% evars) evars <- evars[evars != time]
+              var_code <- structure(paste0("X", seq_along(evars)), names = evars)
               sdata <- lapply(sdata, function(e) {
-                if (length(vars)) e <- if (class(e)[1] == "data.table") e[, vars, with = FALSE] else e[, vars]
+                e <- if (class(e)[1] == "data.table") e[, evars, with = FALSE] else e[, evars]
                 e <- as.list(e)
                 if (sparse_time) {
                   for (f in d$schema$fields) {
                     if (f$name %in% names(e)) {
-                      e[[f$name]] <- if (f$time_range[[1]] == -1) NULL else e[[f$name]][seq(f$time_range[[1]], f$time_range[[2]]) + 1]
+                      e[[f$name]] <- if (f$time_range[[1]] == -1 || all(is.na(e[[f$name]]))) {
+                        NULL
+                      } else {
+                        e[[f$name]][seq(f$time_range[[1]], f$time_range[[2]]) + 1]
+                      }
                     }
                   }
                 }
+                names(e) <- var_code[names(e)]
                 e
               })
-              write_json(sdata, path, dataframe = "columns")
+              sdata[["_meta"]] <- list(
+                time = list(
+                  value = unique(times),
+                  name = d$time
+                ),
+                variables = as.list(var_code)
+              )
+              write_json(sdata, path, dataframe = "columns", auto_unbox = TRUE)
             }
           }
         }
@@ -224,7 +252,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     } else {
       data_files <- list.files(ddir, "\\.(?:csv|tsv|txt)")
       if (length(data_files)) {
-        init_data(sub("^.*/", "", normalizePath(dir, "/", FALSE)), dir = dir, data_paths = data_files)
+        init_data(sub("^.*/", "", normalizePath(dir, "/", FALSE)), dir = dir, path = data_files)
         if (file.exists(f)) {
           return(data_preprocess(aggregate))
         }
@@ -233,7 +261,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     list(
       package = if (file.exists(f)) sub(paste0(dir, "/docs/"), "", f, fixed = TRUE),
       datasets = if (length(meta$resources) == 1) list(names(info)) else names(info),
-      variables = vars,
+      variables = vars[!vars %in% d$time],
       info = info,
       files = vapply(info, "[[", "", "filename")
     )
@@ -246,10 +274,10 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
   }
   defaults <- list(
     digits = 2, summary_selection = "all", color_by_order = FALSE, boxplots = TRUE,
-    theme_dark = FALSE, partial_init = TRUE, palette = "rdylbu7", hide_url_parameters = FALSE,
-    background_shapes = TRUE, iqr_box = TRUE, polygon_outline = 1.5, color_scale_center = "median",
+    theme_dark = FALSE, partial_init = TRUE, palette = "purple", hide_url_parameters = FALSE,
+    background_shapes = TRUE, iqr_box = TRUE, polygon_outline = 1.5, color_scale_center = "none",
     table_autoscroll = TRUE, table_scroll_behavior = "smooth", hide_tooltips = FALSE,
-    map_zoom_animation = TRUE
+    map_animations = "all"
   )
   for (s in names(defaults)) {
     if (!is.null(options[[s]])) {
@@ -258,18 +286,13 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
   }
   times <- unname(vapply(settings$metadata$info, function(d) if (length(d$time)) d$time else "", ""))
   times <- times[times != ""]
-  variables <- unique(c(times, variables))
   if (!is.null(variables)) variables <- variables[!grepl("^_", variables)]
   if (!missing(aggregate) || !is.null(settings$metadata) && length(settings$metadata$variables) &&
-    !identical(as.character(settings$metadata$variables), variables)) {
+    !identical(as.character(settings$metadata$variables), variables[!variables %in% times])) {
     force <- TRUE
   }
+  if (!is.null(variables)) variables <- unique(c(times, variables))
   settings$metadata <- data_preprocess(aggregate)
-  if (!length(times)) {
-    times <- unname(vapply(settings$metadata$info, function(d) if (length(d$time)) d$time else "", ""))
-    times <- times[times != ""]
-    settings$metadata$variables <- unique(c(times, variables))
-  }
   parts <- make_build_environment()
   parts$dependencies <- c(
     if (version == "v1" || version == "stable") {
@@ -402,9 +425,29 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     "</html>"
   )
   writeLines(r, out)
-  if (interactive()) {
-    cli_bullets(c(v = paste("built", name, "file:"), "*" = paste0("{.path ", out, "}")))
-    if (open_after) viewer(out)
+  cli_bullets(c(v = paste("built", name, "file:"), "*" = paste0("{.path ", out, "}")))
+  if (serve) {
+    static_path <- list("/" = staticPath(paste0(dir, "/docs"), TRUE))
+    server_exists <- FALSE
+    for (s in listServers()) {
+      if (s$getHost() == host && s$getPort() == port) {
+        if (!identical(s$getStaticPaths(), static_path)) {
+          stopServer(s)
+        } else {
+          server_exists <- TRUE
+        }
+        break
+      }
+    }
+    if (!server_exists) {
+      s <- tryCatch(startServer(host, port, list(staticPaths = static_path)), error = function(e) NULL)
+      if (is.null(s)) {
+        cli_warn(paste0("failed to create server on ", host, ":", port))
+        open_after <- FALSE
+      }
+    }
+    cli_alert_info(paste0("listening on ", host, ":", port))
   }
+  if (open_after) viewer(if (serve) paste0("http://", host, ":", port) else out)
   invisible(out)
 }

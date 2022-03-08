@@ -90,19 +90,19 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, id =
       )
       caller$dependencies$datatables_style <- list(
         type = "stylesheet",
-        src = "https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css",
+        src = "https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css",
         hash = "sha384-yT2pwyD9a3Oee/HtjWTccnRmchDWH2EDHjzH7gwf8yAK0RilKFL164FCHX9fzlxh"
       )
       caller$dependencies$datatables <- list(
         type = "script",
-        src = "https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.11.4/b-2.2.2/b-html5-2.2.2/b-print-2.2.2/rg-1.1.4/sc-2.0.5/datatables.min.js",
-        hash = "sha384-l0hLA2PVlDEFWu4jf3mJlb+OaKa8A1pcaCV7yJ5s6T3LS94pAD4kxHrmLtA7KYxX",
+        src = "https://cdn.datatables.net/v/dt/dt-1.11.5/b-2.2.2/b-html5-2.2.2/sc-2.0.5/datatables.min.js",
+        hash = "sha384-0rCDA/8OgbzPbIGy/YCZwdLAmLIMEXHq/uDT1+6eAtgyFBi3ov7Ii5r1z7YzEV5e",
         loading = "defer"
       )
       caller$credits$datatables <- list(
         name = "DataTables",
         url = "https://datatables.net",
-        version = "1.11.4"
+        version = "1.11.5"
       )
     }
     if (datatables) caller$datatable[[id]] <- options else caller$table[[id]] <- options

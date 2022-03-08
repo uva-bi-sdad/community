@@ -63,7 +63,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
   if (write) {
     if (is.character(package)) {
       if (!file.exists(package)) {
-        package <- normalizePath(paste0(dirname(path), "/", package_path), "/", FALSE)
+        package <- normalizePath(paste0(dirname(path[[1]]), "/", package_path), "/", FALSE)
       }
       if (file.exists(package)) {
         package_path <- package
@@ -87,7 +87,13 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
     if (is.na(format)) format <- "rds"
     info <- file.info(f)
     metas <- list()
-    data <- tryCatch(if (format == "rds") readRDS(f) else fread(f), error = function(e) NULL)
+    data <- tryCatch(
+      if (format == "rds") {
+        readRDS(f)
+      } else
+      if (grepl("[gbx]z2?$", f)) as.data.table(read.csv(gzfile(f), check.names = FALSE)) else fread(f),
+      error = function(e) NULL
+    )
     if (is.null(data)) {
       cli_abort(c(
         paste0("failed to read in the data file ({.file {f}})"),
@@ -122,7 +128,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       if (!ids[[i]]$variable %in% idvars) idvars <- c(idvars, ids[[i]]$variable)
     }
     timevar <- unlist(unpack_meta("time"))
-    times <- if (is.null(timevar)) seq_len(nrow(data)) else data[[timevar]]
+    times <- if (is.null(timevar)) rep(1, nrow(data)) else data[[timevar]]
     res <- list(
       bytes = as.integer(info$size),
       encoding = stri_enc_detect(f)[[1]][1, 1],

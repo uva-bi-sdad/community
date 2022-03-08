@@ -7,7 +7,8 @@
 site_build(dir, file = "site.R", outdir = "docs", name = "index.html",
   variables = NULL, options = list(), bundle_data = FALSE,
   open_after = FALSE, aggregate = TRUE, sparse_time = TRUE,
-  force = FALSE, version = "v1", parent = NULL)
+  force = FALSE, version = "v1", parent = NULL, serve = FALSE,
+  host = "127.0.0.1", port = 3000)
 }
 \arguments{
 \item{dir}{Path to the site project directory.}
@@ -44,6 +45,13 @@ processed version.}
 (\code{community.js} and \code{community.css}) served from a local \code{dist} directory.}
 
 \item{parent}{Directory path or repository URL of a data site from which to use data, rather than using local data.}
+
+\item{serve}{Logical; if \code{TRUE}, starts a local server from the site's \code{docs} directory.
+Once a server is running, you can use \code{\link[httpuv]{stopAllServers}} to stop it.}
+
+\item{host}{The IPv4 address to listen to if \code{serve} is \code{TRUE}; defaults to \code{"127.0.0.1"}.}
+
+\item{port}{The port to listen on if \code{serve} is \code{TRUE}; defaults to 3000.}
 }
 \value{
 Invisible path to the written file.

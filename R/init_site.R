@@ -4,8 +4,9 @@
 #'
 #' @param dir Directory in which to create the site's structure. Will be created if it does not exist.
 #' @param title Title of the site.
-#' @param with_data logical; if \code{FALSE}, a data sub-directory and package will not be created.
-#' @param overwrite logical; if \code{TRUE}, will overwrite existing site files in \code{dir}.
+#' @param with_data Logical; if \code{FALSE}, a data sub-directory and package will not be created.
+#' @param node_project Logical; if \code{TRUE}, includes files used to run the site from a Node.js server.
+#' @param overwrite Logical; if \code{TRUE}, will overwrite existing site files in \code{dir}.
 #' @param quiet Logical; if \code{TRUE}, suppresses messages and does not navigate to the file when finished.
 #' @examples
 #' \dontrun{
@@ -15,7 +16,7 @@
 #' @return Path to the created site directory.
 #' @export
 
-init_site <- function(dir, title = "app", with_data = TRUE, overwrite = FALSE, quiet = !interactive()) {
+init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE, overwrite = FALSE, quiet = !interactive()) {
   if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = ".")')
   check <- check_template("site", dir = dir)
   if (!quiet && check$exists && !overwrite) {
@@ -68,11 +69,11 @@ init_site <- function(dir, title = "app", with_data = TRUE, overwrite = FALSE, q
       ")",
       "",
       "# render the site:",
-      paste0('site_build("', dir, '", bundle_data = TRUE, open_after = TRUE)'),
+      paste0('site_build("', dir, '", bundle_data = TRUE, serve = TRUE, open_after = TRUE)'),
       ""
     ), collapse = "\n"), paths[2])
   }
-  if (!file.exists(paths[3])) {
+  if (node_project && !file.exists(paths[3])) {
     write_json(list(
       name = gsub("\\s+", "_", tolower(title)),
       version = "1.0.0",
@@ -85,7 +86,7 @@ init_site <- function(dir, title = "app", with_data = TRUE, overwrite = FALSE, q
       license = "ISC"
     ), paths[3], pretty = TRUE, auto_unbox = TRUE)
   }
-  if (!file.exists(paths[4])) {
+  if (node_project && !file.exists(paths[4])) {
     writeLines(paste(c(
       "'use strict'",
       "const express = require('express'), app = express()",
@@ -130,7 +131,7 @@ init_site <- function(dir, title = "app", with_data = TRUE, overwrite = FALSE, q
   if (any(!file.exists(docs))) file.create(docs[!file.exists(docs)])
   if (with_data && !file.exists(paste0(dir, "/docs/data/datapackage.json"))) {
     dir.create(paste0(dir, "/docs/data"), FALSE)
-    init_data(title, dir = dir, quiet = TRUE)
+    init_data(title, dir = paste0(dir, "/docs/data"), quiet = TRUE)
   }
   if (!quiet) {
     cli_bullets(c(

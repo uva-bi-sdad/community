@@ -26,7 +26,7 @@
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -66,7 +66,8 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">site_build</span><span class="op">(</span><span class="va">dir</span>, file <span class="op">=</span> <span class="st">"site.R"</span>, outdir <span class="op">=</span> <span class="st">"docs"</span>, name <span class="op">=</span> <span class="st">"index.html"</span>,
   variables <span class="op">=</span> <span class="cn">NULL</span>, options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, bundle_data <span class="op">=</span> <span class="cn">FALSE</span>,
   open_after <span class="op">=</span> <span class="cn">FALSE</span>, aggregate <span class="op">=</span> <span class="cn">TRUE</span>, sparse_time <span class="op">=</span> <span class="cn">TRUE</span>,
-  force <span class="op">=</span> <span class="cn">FALSE</span>, version <span class="op">=</span> <span class="st">"v1"</span>, parent <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></code></pre></div>
+  force <span class="op">=</span> <span class="cn">FALSE</span>, version <span class="op">=</span> <span class="st">"v1"</span>, parent <span class="op">=</span> <span class="cn">NULL</span>, serve <span class="op">=</span> <span class="cn">FALSE</span>,
+  host <span class="op">=</span> <span class="st">"127.0.0.1"</span>, port <span class="op">=</span> <span class="fl">3000</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -106,6 +107,13 @@ processed version.</p></dd>
 (<code>community.js</code> and <code>community.css</code>) served from a local <code>dist</code> directory.</p></dd>
 <dt>parent</dt>
 <dd><p>Directory path or repository URL of a data site from which to use data, rather than using local data.</p></dd>
+<dt>serve</dt>
+<dd><p>Logical; if <code>TRUE</code>, starts a local server from the site's <code>docs</code> directory.
+Once a server is running, you can use <code><a href="https://rdrr.io/pkg/httpuv/man/stopAllServers.html" class="external-link">stopAllServers</a></code> to stop it.</p></dd>
+<dt>host</dt>
+<dd><p>The IPv4 address to listen to if <code>serve</code> is <code>TRUE</code>; defaults to <code>"127.0.0.1"</code>.</p></dd>
+<dt>port</dt>
+<dd><p>The port to listen on if <code>serve</code> is <code>TRUE</code>; defaults to 3000.</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>

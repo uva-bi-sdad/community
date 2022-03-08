@@ -41,7 +41,7 @@ datacommons_map_variables <- function(dir, search_pattern = "\\.csv\\.xz", varia
   noread <- novars <- NULL
   for (i in seq_along(files)) {
     f <- files[[i]]
-    d <- tryCatch(reader(if (grepl("[gbx]z$", f)) gzfile(f) else f, 1), error = function(e) NULL)
+    d <- tryCatch(reader(if (grepl("[gbx]z2?$", f)) gzfile(f) else f, 1), error = function(e) NULL)
     if (!is.null(d)) {
       if (!is.character(variable_location) || variable_location %in% colnames(d)) {
         vars <- unique(if (is.factor(variable_location)) variable_location(d) else d[, variable_location, drop = TRUE])

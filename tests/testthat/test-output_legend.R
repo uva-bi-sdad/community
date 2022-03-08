@@ -3,8 +3,10 @@ library(xml2)
 test_that("structure is intact", {
   raw <- output_legend()
   expect_true(is.character(raw) && !any(raw == ""))
-  html <- read_html(paste(raw, collapse = ""))
-  expect_true(xml_length(xml_child(xml_child(html))) == 3)
+  html <- xml_child(xml_child(read_html(paste(raw, collapse = ""))))
+  expect_true(xml_length(html) == 2)
+  expect_true(xml_length(xml_child(html)) == 3)
+  expect_true(xml_length(xml_child(html, 2)) == 3)
 })
 
 test_that("build environment is added to", {

@@ -32,40 +32,45 @@ We can use the `build.R` file to set up a repeatable data importing process. Rep
 ```r
 # remotes::install_github("uva-bi-sdad/catchment")
 library(catchment)
+library(community)
 library(sf)
 
+if (!is.character(dir)) dir <- "../arrests_site"
+
 # download county shapes -- only needs to be run once
-shapes <- download_census_shapes(
-  paste0(dir, "/docs"), "Illinois", "county", "counties",
-  simplify = rmapshaper::ms_simplify, keep_shapes = TRUE
-)
-
-## the data separates Chicago from the rest of the county it's in,
-## so we will need separate shapes for Cook County
-shapes_subs <- download_census_shapes(
-  paste0(dir, "/docs"), "Illinois", "cousub", "subcounties",
-  simplify = rmapshaper::ms_simplify, keep_shapes = TRUE
-)
-
-### get the subcounties within Cook County
-cook_county <- shapes_subs[shapes_subs$COUNTYFP == "031",]
-
-### Replace the overall Cook county shape with Chicago and Cook county suburb shapes
-cook <- st_drop_geometry(shapes[shapes$COUNTYFP == "031",])
-
-chicago <- st_as_sf(cbind(cook[, 1:3], cook_county[1, -(1:4)]))
-chicago$NAME = "cook chicago"
-
-cook_suburbs <- cbind(cook[, 1:5], cook_county[2, -(1:6)])
-cook_suburbs$NAME = "cook county suburbs"
-cook_suburbs[, c("ALAND", "AWATER")] <- colSums(st_drop_geometry(cook_county[-1, c("ALAND", "AWATER")]))
-st_geometry(cook_suburbs) <- st_union(cook_county[-1,])
-
-shapes[shapes$NAME == "De Witt", "NAME"] <- "dewitt"
-shapes <- rbind(shapes[shapes$NAME != "Cook",], chicago, cook_suburbs)
-unlink(paste0(dir, "/docs/counties.geojson"))
-st_write(shapes, paste0(dir, "/docs/counties.geojson"))
-
+if (!file.exists(paste0(dir, "/docs/counties.geojson"))) {
+  shapes <- download_census_shapes(
+    paste0(dir, "/docs"), "Illinois", "county", "counties",
+    simplify = rmapshaper::ms_simplify, keep_shapes = TRUE
+  )
+  
+  ## the data separates Chicago from the rest of the county it's in,
+  ## so we will need separate shapes for Cook County
+  shapes_subs <- download_census_shapes(
+    paste0(dir, "/docs"), "Illinois", "cousub", "subcounties",
+    simplify = rmapshaper::ms_simplify, keep_shapes = TRUE
+  )
+  
+  ### get the subcounties within Cook County
+  cook_county <- shapes_subs[shapes_subs$COUNTYFP == "031",]
+  
+  ### Replace the overall Cook county shape with Chicago and Cook county suburb shapes
+  cook <- st_drop_geometry(shapes[shapes$COUNTYFP == "031",])
+  
+  chicago <- st_as_sf(cbind(cook[, 1:3], cook_county[1, -(1:4)]))
+  chicago$NAME = "cook chicago"
+  
+  cook_suburbs <- cbind(cook[, 1:5], cook_county[2, -(1:6)])
+  cook_suburbs$NAME = "cook county suburbs"
+  cook_suburbs[, c("ALAND", "AWATER")] <- colSums(st_drop_geometry(cook_county[-1, c("ALAND", "AWATER")]))
+  st_geometry(cook_suburbs) <- st_union(cook_county[-1,])
+  
+  shapes[shapes$NAME == "De Witt", "NAME"] <- "dewitt"
+  shapes <- rbind(shapes[shapes$NAME != "Cook",], chicago, cook_suburbs)
+  unlink(paste0(dir, "/docs/counties.geojson"))
+  st_write(shapes, paste0(dir, "/docs/counties.geojson"))
+}
+  
 # download arrests data -- run any time the data are updated
 data_sex <- read.csv("https://icjia.illinois.gov/arrestexplorer/api/?split=county,gender")
 data_age <- read.csv("https://icjia.illinois.gov/arrestexplorer/api/?split=county,age_group")
@@ -92,6 +97,9 @@ data_add(
 # Build Interface
 Now we can specify the interface in `site.R` and build it:
 ```r
+library(community)
+if (!is.character(dir)) dir <- "../arrests_site"
+
 page_head(
   title = "Illinois Arrests",
   icon = "https://icjia.illinois.gov/researchhub/docs/assets/favicon.ico"
@@ -117,15 +125,15 @@ output_info(
 )
 output_map(
   c(data = paste0(dir, "/docs/counties.geojson")),
-  id = "main_map", dataview = "main_view", subto = "main_plot"
+  id = "main_map", dataview = "main_view", subto = c("main_plot", "main_legend")
 )
-output_legend()
+output_legend(id = "main_legend")
 page_tabgroup(
   list(
     name = "Plot",
     output_plot(
       "Year", "selected_variable", id = "main_plot",
-      dataview = "main_view", subto = "main_map"
+      dataview = "main_view", subto = c("main_map", "main_legend")
     )
   ),
   list(
@@ -134,5 +142,5 @@ page_tabgroup(
   )
 )
 
-site_build(dir, bundle_data = TRUE)
+site_build(dir, open_after = TRUE, serve = TRUE)
 ```

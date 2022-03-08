@@ -30,12 +30,12 @@ library(community)
 
 # this can be in an existing or new directory
 # for this example, it is a temporary directory
-dir <- paste0(tempdir(), "/example_site")
-init_site(dir)
+output <- paste0(tempdir(), "/example_site")
+init_site(output)
 ```
 
 ## 2. Add Data
-Now you should have a `data` folder in `dir` where you can put your data files, and a
+Now you should have a `data` folder in `output` where you can put your data files, and a
 `build.R` file which you can use to reformat those files if needed, and add them to the site.
 
 ```r
@@ -46,10 +46,10 @@ data <- data.frame(
 )
 
 # write that set to a file
-write.csv(data, paste0(dir, "/docs/data/data.csv"), row.names = FALSE)
+write.csv(data, paste0(output, "/docs/data/data.csv"), row.names = FALSE)
 
 # add it to the site
-data_add(paste0(dir, "/docs/data/data.csv"))
+data_add(paste0(output, "/docs/data/data.csv"))
 ```
 
 This sets up the data's metadata (written to `datapackage.json`), which the site will use when it's built.
@@ -72,14 +72,12 @@ output_plot("x", "y", "z")
 
 Then save and build the site:
 ```r
-site_build(dir, bundle_data = TRUE, open_after = TRUE)
+site_build(output, open_after = TRUE, serve = TRUE)
 ```
 
-`bundle_data` specifies that the data should be included in the site's index file,
-rather than a separate one. This is nice for running locally or for small datasets, but when the site is being
-served publicly, it might be better to keep the data separate.
+`open_after` opens the build page in a browser, which might get annoying as you edit and rebuild the site.
 
-`open_after` just opens the build page in a browser, which might get annoying as you edit and rebuild the site.
+`serve` starts a local server to view the page.
 
 # Add inputs
 Inputs can be named and then referred to in outputs. For example, you might want to allow plot variables to be changed.
@@ -94,7 +92,7 @@ output_plot("selected_x", "y", "z")
 
 Then rebuild:
 ```r
-site_build(dir, bundle_data = TRUE)
+site_build(output, open_after = TRUE, serve = TRUE)
 ```
 
 # Add structure
@@ -127,15 +125,12 @@ page_menu(
   input_select("X Variable:", "variables", default = "x", id = "selected_x"),
   default_open = TRUE
 )
-page_section(
-  wraps = "col", sizes = c(8, 4),
-  # give the plot an ID
-  output_plot("selected_x", "y", "z", id = "main_plot"),
-  # then make an information output that subscribes to it
-  output_info("features.name", c(
-    "variables.short_name" = "value"
-  ), subto = "main_plot")
-)
+# give the plot an ID
+output_plot("selected_x", "y", "z", id = "main_plot")
+# then make an information output that subscribes to it
+output_info("features.name", c(
+  "variables.short_name" = "value"
+), subto = "main_plot", floating = TRUE)
 ```
 
 In `output_info`, `features.`, `variables.`, and `data.` refer to aspects of the hovered-over entity.
@@ -152,7 +147,7 @@ add the data.
 For example, run the same `data_add` command as before, but include some information about one of the variables:
 ```r
 data_add(
-  paste0(dir, "/docs/data/data.csv"),
+  paste0(output, "/docs/data/data.csv"),
   list(
     variables = list(
       z = list(
@@ -172,15 +167,12 @@ page_menu(
   input_select("X Variable:", "variables", default = "x", id = "selected_x"),
   default_open = TRUE
 )
-page_section(
-  wraps = "col", sizes = c(8, 4),
-  output_plot("selected_x", "y", "z", id = "main_plot"),
-  output_info("features.name", c(
-    "variables.long_name" = "value",
-    "variables.description",
-    "variables.statement"
-  ), subto = "main_plot")
-)
+output_plot("selected_x", "y", "z", id = "main_plot")
+output_info("features.name", c(
+  "variables.long_name" = "value",
+  "variables.description",
+  "variables.statement"
+), subto = "main_plot", floating = TRUE)
 ```
 
 # Add a Map
@@ -194,7 +186,7 @@ For example, we might download the shapes of states:
 library(catchment)
 
 # save the state shapes to the distribution directory
-download_census_shapes(paste0(dir, "/docs"), name = "states")
+download_census_shapes(paste0(output, "/docs"), name = "states")
 ```
 
 Then add a map to `site.R` (also subscribing the info pane to it):
@@ -204,17 +196,14 @@ page_menu(
   input_select("X Variable:", "variables", default = "x", id = "selected_x"),
   default_open = TRUE
 )
-page_section(
-  wraps = "col", sizes = c(8, 4),
-  output_plot("selected_x", "y", "z", id = "main_plot"),
-  output_info("features.name", c(
-    "variables.long_name" = "value",
-    "variables.description",
-    "variables.statement"
-  ), subto = c("main_plot", "main_map"))
-)
+output_plot("selected_x", "y", "z", id = "main_plot")
+output_info("features.name", c(
+  "variables.long_name" = "value",
+  "variables.description",
+  "variables.statement"
+), subto = c("main_plot", "main_map"), floating = TRUE)
 output_map(
-  list(name = "data", url = paste0(dir, "/docs/states.geojson")),
+  list(name = "data", url = paste0(output, "/docs/states.geojson")),
   color = "z", id = "main_map"
 )
 ```
@@ -236,7 +225,7 @@ For example, you might add names to some of the entries for which there is no st
 ```r
 # include the ids list in your call to `data_add`
 data_add(
-  paste0(dir, "/docs/data/data.csv"),
+  paste0(output, "/docs/data/data.csv"),
   list(
     variables = list(
       z = list(
@@ -256,7 +245,7 @@ data_add(
 )
 
 # then rebuild
-site_build(dir, bundle_data = TRUE)
+site_build(output, open_after = TRUE, serve = TRUE)
 ```
 
 Now you should see names for entities 3 and 7.

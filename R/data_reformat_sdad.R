@@ -25,6 +25,13 @@
 #' (e.g., \code{list(region_name = function(x) sub(",.*$", "", x))} to strip text after a comma in the
 #' "region_name" column).
 #' @param out Path to a directory to write files to; if not specified, files will not be written.
+#' @param compression A character specifying the type of compression to use on the created files,
+#' between \code{"gzip"}, \code{"bzip2"}, and \code{"xz"}. Set to \code{FALSE} to disable compression.
+#' @param read_existing Logical; if \code{TRUE}, will read in existing sets that are not to be overwritten.
+#' Useful if you use the returned sets.
+#' @param overwrite Logical; if \code{TRUE}, will overwrite existing reformatted files, even if
+#' the source files are older than it.
+#' @param verbose Logical; if \code{FALSE}, will not print status messages.
 #' @examples
 #' \dontrun{
 #' data_reformat_sdad("data/directory")
@@ -35,7 +42,8 @@
 data_reformat_sdad <- function(files, value = "value", value_name = "measure", id = "geoid", time = "year",
                                dataset = "region_type", value_info = "measure_type",
                                entity_info = c(type = "region_type", name = "region_name"),
-                               formatters = NULL, out = NULL) {
+                               formatters = NULL, out = NULL, compression = "xz", read_existing = FALSE, overwrite = FALSE,
+                               verbose = TRUE) {
   if (length(files) == 1 && dir.exists(files)) {
     files <- list.files(files, full.names = TRUE)
   }
@@ -48,6 +56,8 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
   )
   data <- list()
   names <- list()
+  if (verbose) cli_progress_step("reading in {length(files)} original file{?s}")
+  min_age <- -Inf
   for (f in files) {
     d <- tryCatch(
       if (grepl("[gbx]z$", f)) as.data.table(read.csv(gzfile(f))) else fread(f),
@@ -64,6 +74,7 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
       vars <- vars[!su]
       spec <- spec[!su]
     }
+    if (file.mtime(f) > min_age) min_age <- file.mtime(f)
     names <- c(names, list(colnames(d)))
     set(d, NULL, "file", f)
     d[[value_name]] <- sub("^:", "", paste0(
@@ -71,6 +82,7 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
     ))
     data <- c(data, list(d))
   }
+  if (verbose) cli_progress_done()
   common <- Reduce(intersect, names)
   if (!value %in% vars) {
     a <- common[!common %in% vars]
@@ -124,10 +136,17 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
   datasets <- unique(data[[dataset]])
   variables <- unique(data[[value_name]])
   times <- sort(unique(data[[time]]))
-  if (!is.null(out)) {
+  entity_info <- paste0(out, "/entity_info.json")
+  if (!is.null(out) && (overwrite || !file.exists(entity_info) || min_age > file.mtime(entity_info))) {
     entity_info <- as.list(entity_info)
     entity_info <- entity_info[unlist(entity_info) %in% colnames(data)]
     if (length(entity_info)) {
+      if (verbose) {
+        cli_progress_step(
+          "writing entity file",
+          msg_done = paste0("wrote entity metadata file: {.file ", entity_info, "}")
+        )
+      }
       e <- as.data.frame(data[!duplicated(data[[id]])])
       e <- e[, c(id, dataset, unlist(entity_info)), drop = FALSE]
       if (!is.null(names(entity_info))) {
@@ -139,46 +158,80 @@ data_reformat_sdad <- function(files, value = "value", value_name = "measure", i
         paste0(out, "/entity_info.json"),
         auto_unbox = TRUE
       )
-      if (interactive()) {
-        cli_bullets(c(
-          v = "Created entity metadata file:",
-          `*` = paste0("{.file ", out, "/entity_info.json}")
-        ))
-      }
+      if (verbose) cli_progress_done()
     }
   }
   if (all(nchar(times) == 4)) times <- seq(min(times), max(times))
+  if (!is.null(out)) {
+    files <- paste0(out, "/", gsub("\\s+", "_", tolower(datasets)), ".csv")
+    if (is.character(compression) && grepl("^[gbx]", compression, FALSE)) {
+      compression <- tolower(substr(compression, 1, 1))
+      files <- paste0(files, ".", c(g = "gz", b = "bz2", x = "xz")[[compression]])
+    } else {
+      compression <- FALSE
+    }
+    names(files) <- datasets
+  }
+  write <- vapply(files, function(f) is.null(out) || overwrite || !file.exists(f) || min_age > file.mtime(f), TRUE)
   sets <- lapply(datasets, function(dn) {
-    d <- if (dataset %in% vars) data[data[[dataset]] == dn] else data
-    do.call(rbind, lapply(unique(d[[id]]), function(e) {
-      ed <- d[d[[id]] == e]
-      n <- length(times)
-      r <- data.frame(
-        ID = rep(as.character(e), n), time = times, check.names = FALSE,
-        matrix(NA, n, length(variables), dimnames = list(times, variables))
-      )
-      for (v in variables) {
-        su <- ed[[value_name]] == v
-        su[su] <- !is.na(ed[[value]][su])
-        if (sum(su)) {
-          vals <- ed[su]
-          r[as.character(vals[[time]]), v] <- vals[[value]]
-        }
+    if (write[[dn]]) {
+      d <- if (dataset %in% vars) data[data[[dataset]] == dn] else data
+      dc <- list()
+      ids <- unique(d[[id]])
+      i <- 1
+      if (verbose) {
+        cli_progress_step(
+          "creating {dn} dataset (ID {i}/{length(ids)})",
+          msg_done = "created {dn} dataset ({length(ids)} IDs)", spinner = TRUE
+        )
       }
-      rownames(r) <- NULL
-      r
-    }))
+      for (i in seq_along(ids)) {
+        if (verbose) cli_progress_update()
+        e <- ids[[i]]
+        ed <- d[d[[id]] == e]
+        n <- length(times)
+        r <- data.frame(
+          ID = rep(as.character(e), n), time = times, check.names = FALSE,
+          matrix(NA, n, length(variables), dimnames = list(times, variables))
+        )
+        for (v in variables) {
+          su <- ed[[value_name]] == v
+          su[su] <- !is.na(ed[[value]][su])
+          if (sum(su)) {
+            vals <- ed[su]
+            r[as.character(vals[[time]]), v] <- vals[[value]]
+          }
+        }
+        rownames(r) <- NULL
+        dc[[i]] <- r
+      }
+      do.call(rbind, dc)
+    } else if (read_existing && file.exists(files[[dn]])) {
+      if (verbose) cli_progress_step("reading in existing {dn} dataset", msg_done = "read existing {dn} dataset")
+      read.csv(gzfile(files[[dn]]), check.names = FALSE)
+    }
   })
-  datasets <- gsub("\\s+", "_", tolower(datasets))
   names(sets) <- datasets
   if (!is.null(out)) {
-    for (f in datasets) {
-      write.csv(sets[[f]], paste0(out, "/", f, ".csv"), row.names = FALSE)
-    }
-    if (interactive()) {
+    if (any(write)) {
+      if (verbose) cli_progress_step("writing data files", msg_done = "wrote reformatted datasets:")
+      for (i in seq_along(sets)) {
+        if (write[[i]]) {
+          if (is.character(compression)) o <- do.call(paste0(compression, "zfile"), list(files[[i]]))
+          write.csv(sets[[i]], o, row.names = FALSE)
+        }
+      }
+      if (verbose) {
+        cli_progress_done()
+        cli_bullets(structure(
+          paste0("{.file ", files[write], "}"),
+          names = rep("*", sum(write))
+        ))
+      }
+    } else if (verbose) {
       cli_bullets(c(
-        v = "Reformatted data files written:",
-        structure(paste0("{.file ", out, "/", datasets, ".csv}"), names = rep("*", length(datasets)))
+        v = "all files are already up to date:",
+        structure(paste0("{.file ", files, "}"), names = rep("*", length(files)))
       ))
     }
   }

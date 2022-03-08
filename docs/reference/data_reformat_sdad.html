@@ -26,7 +26,7 @@
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -66,7 +66,8 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">data_reformat_sdad</span><span class="op">(</span><span class="va">files</span>, value <span class="op">=</span> <span class="st">"value"</span>, value_name <span class="op">=</span> <span class="st">"measure"</span>,
   id <span class="op">=</span> <span class="st">"geoid"</span>, time <span class="op">=</span> <span class="st">"year"</span>, dataset <span class="op">=</span> <span class="st">"region_type"</span>,
   value_info <span class="op">=</span> <span class="st">"measure_type"</span>, entity_info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>type <span class="op">=</span> <span class="st">"region_type"</span>, name <span class="op">=</span>
-  <span class="st">"region_name"</span><span class="op">)</span>, formatters <span class="op">=</span> <span class="cn">NULL</span>, out <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></code></pre></div>
+  <span class="st">"region_name"</span><span class="op">)</span>, formatters <span class="op">=</span> <span class="cn">NULL</span>, out <span class="op">=</span> <span class="cn">NULL</span>, compression <span class="op">=</span> <span class="st">"xz"</span>,
+  read_existing <span class="op">=</span> <span class="cn">FALSE</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -97,6 +98,17 @@ variables they refer to in entity features.</p></dd>
 "region_name" column).</p></dd>
 <dt>out</dt>
 <dd><p>Path to a directory to write files to; if not specified, files will not be written.</p></dd>
+<dt>compression</dt>
+<dd><p>A character specifying the type of compression to use on the created files,
+between <code>"gzip"</code>, <code>"bzip2"</code>, and <code>"xz"</code>. Set to <code>FALSE</code> to disable compression.</p></dd>
+<dt>read_existing</dt>
+<dd><p>Logical; if <code>TRUE</code>, will read in existing sets that are not to be overwritten.
+Useful if you use the returned sets.</p></dd>
+<dt>overwrite</dt>
+<dd><p>Logical; if <code>TRUE</code>, will overwrite existing reformatted files, even if
+the source files are older than it.</p></dd>
+<dt>verbose</dt>
+<dd><p>Logical; if <code>FALSE</code>, will not print status messages.</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>

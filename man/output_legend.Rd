@@ -5,7 +5,7 @@
 \title{Adds a legend to a website}
 \usage{
 output_legend(palette = "", dataview = NULL, id = NULL, click = NULL,
-  subto = NULL, class = "")
+  subto = NULL, class = "", show_na = TRUE)
 }
 \arguments{
 \item{palette}{Name of an included color palette (from
@@ -21,6 +21,8 @@ output_legend(palette = "", dataview = NULL, id = NULL, click = NULL,
 \item{subto}{A vector of output IDs to receive hover events from.}
 
 \item{class}{Class names to add to the legend element.}
+
+\item{show_na}{Logical; if \code{FALSE}, does not add the separate section showing the color of missing values.}
 }
 \value{
 A character vector of the contents to be added.

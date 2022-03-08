@@ -67,7 +67,7 @@ output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dat
     caller$credits$plotly <- list(
       name = "Plotly",
       url = "https://plotly.com/javascript/getting-started",
-      version = "2.8.3"
+      version = "2.9.0"
     )
     if (plotly) caller$plotly[[id]] <- options else caller$echarts[[id]] <- options
     caller$content <- c(caller$content, r)

@@ -4,17 +4,19 @@
 \alias{init_site}
 \title{Create a website}
 \usage{
-init_site(dir, title = "app", with_data = TRUE, overwrite = FALSE,
-  quiet = !interactive())
+init_site(dir, title = "app", with_data = TRUE, node_project = FALSE,
+  overwrite = FALSE, quiet = !interactive())
 }
 \arguments{
 \item{dir}{Directory in which to create the site's structure. Will be created if it does not exist.}
 
 \item{title}{Title of the site.}
 
-\item{with_data}{logical; if \code{FALSE}, a data sub-directory and package will not be created.}
+\item{with_data}{Logical; if \code{FALSE}, a data sub-directory and package will not be created.}
 
-\item{overwrite}{logical; if \code{TRUE}, will overwrite existing site files in \code{dir}.}
+\item{node_project}{Logical; if \code{TRUE}, includes files used to run the site from a Node.js server.}
+
+\item{overwrite}{Logical; if \code{TRUE}, will overwrite existing site files in \code{dir}.}
 
 \item{quiet}{Logical; if \code{TRUE}, suppresses messages and does not navigate to the file when finished.}
 }

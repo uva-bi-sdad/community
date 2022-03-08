@@ -26,7 +26,7 @@
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -63,8 +63,8 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">init_site</span><span class="op">(</span><span class="va">dir</span>, title <span class="op">=</span> <span class="st">"app"</span>, with_data <span class="op">=</span> <span class="cn">TRUE</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>,
-  quiet <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">init_site</span><span class="op">(</span><span class="va">dir</span>, title <span class="op">=</span> <span class="st">"app"</span>, with_data <span class="op">=</span> <span class="cn">TRUE</span>, node_project <span class="op">=</span> <span class="cn">FALSE</span>,
+  overwrite <span class="op">=</span> <span class="cn">FALSE</span>, quiet <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -74,9 +74,11 @@
 <dt>title</dt>
 <dd><p>Title of the site.</p></dd>
 <dt>with_data</dt>
-<dd><p>logical; if <code>FALSE</code>, a data sub-directory and package will not be created.</p></dd>
+<dd><p>Logical; if <code>FALSE</code>, a data sub-directory and package will not be created.</p></dd>
+<dt>node_project</dt>
+<dd><p>Logical; if <code>TRUE</code>, includes files used to run the site from a Node.js server.</p></dd>
 <dt>overwrite</dt>
-<dd><p>logical; if <code>TRUE</code>, will overwrite existing site files in <code>dir</code>.</p></dd>
+<dd><p>Logical; if <code>TRUE</code>, will overwrite existing site files in <code>dir</code>.</p></dd>
 <dt>quiet</dt>
 <dd><p>Logical; if <code>TRUE</code>, suppresses messages and does not navigate to the file when finished.</p></dd>
 </dl></div>

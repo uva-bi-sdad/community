@@ -8,7 +8,7 @@ test_that("downloads and processes files", {
     "doi:10.18130/V3/NAZO4B", dir,
     files = 11, server = "dataverse.lib.virginia.edu"
   )
-  expect_true(file.exists(paste0(dir, "/dc_bl_abc_2021_address_block_counts.csv")))
+  expect_true(file.exists(paste0(dir, "/dc_bl_abc_2021_address_block_counts.csv.xz")))
   expect_identical(
     d,
     download_dataverse_data("doi:10.18130/V3/NAZO4B", dir, files = "dc_bl_abc_2021_address_block_counts")
@@ -21,7 +21,7 @@ test_that("unpublished sets are accessible with a key", {
     download_dataverse_data("doi:10.18130/V3/GMIVZZ", dir, files = 1, server = "dataverse.lib.virginia.edu", key = FALSE)
   ))
   d <- download_dataverse_data("doi:10.18130/V3/GMIVZZ", dir, files = 1, server = "dataverse.lib.virginia.edu")
-  expect_true(file.exists(paste0(dir, "/va013_trbg_arlopendata_2021_parks_catchment_scores.csv")))
+  expect_true(file.exists(paste0(dir, "/va013_trbg_arlopendata_2021_parks_catchment_scores.csv.xz")))
   expect_identical(
     d,
     download_dataverse_data("doi:10.18130/V3/GMIVZZ", dir, files = "va013_trbg_arlopendata_2021_parks_catchment_scores")
