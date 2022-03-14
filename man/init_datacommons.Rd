@@ -5,7 +5,7 @@
 \title{Initialize a Data Commons}
 \usage{
 init_datacommons(dir, name = "data commons", repos = NULL,
-  default_user = "", overwrite = FALSE, quiet = !interactive())
+  default_user = "", overwrite = FALSE, verbose = interactive())
 }
 \arguments{
 \item{dir}{Path to the desired data commons directory.}
@@ -18,7 +18,7 @@ init_datacommons(dir, name = "data commons", repos = NULL,
 
 \item{overwrite}{logical; if \code{TRUE}, will overwrite existing datacommons files in \code{dir}.}
 
-\item{quiet}{Logical; if \code{TRUE}, suppresses messages.}
+\item{verbose}{Logical; if \code{FALSE}, suppresses messages.}
 }
 \value{
 Path to the datacommons directory.

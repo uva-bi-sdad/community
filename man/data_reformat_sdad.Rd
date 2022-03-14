@@ -4,14 +4,21 @@
 \alias{data_reformat_sdad}
 \title{Reformat an SDAD-formatted dataset}
 \usage{
-data_reformat_sdad(files, value = "value", value_name = "measure",
-  id = "geoid", time = "year", dataset = "region_type",
-  value_info = "measure_type", entity_info = c(type = "region_type", name =
-  "region_name"), formatters = NULL, out = NULL, compression = "xz",
-  read_existing = FALSE, overwrite = FALSE, verbose = TRUE)
+data_reformat_sdad(files, out = NULL, variables = NULL, ids = NULL,
+  value = "value", value_name = "measure", id = "geoid", time = "year",
+  dataset = "region_type", value_info = "measure_type",
+  entity_info = c(type = "region_type", name = "region_name"),
+  formatters = NULL, compression = "xz", read_existing = FALSE,
+  overwrite = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{files}{A character vector of file paths, or the path to a directory containing data files.}
+
+\item{out}{Path to a directory to write files to; if not specified, files will not be written.}
+
+\item{variables}{Vector of variable names (in the \code{value_name} column) to be included.}
+
+\item{ids}{Vector of IDs (in the \code{id} column) to be included.}
 
 \item{value}{Name of the column containing variable values.}
 
@@ -34,8 +41,6 @@ variables they refer to in entity features.}
 \item{formatters}{A list of functions to pass columns through, with names identifying those columns
 (e.g., \code{list(region_name = function(x) sub(",.*$", "", x))} to strip text after a comma in the
 "region_name" column).}
-
-\item{out}{Path to a directory to write files to; if not specified, files will not be written.}
 
 \item{compression}{A character specifying the type of compression to use on the created files,
 between \code{"gzip"}, \code{"bzip2"}, and \code{"xz"}. Set to \code{FALSE} to disable compression.}

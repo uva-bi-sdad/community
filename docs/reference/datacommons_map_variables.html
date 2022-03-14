@@ -63,9 +63,10 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">datacommons_map_variables</span><span class="op">(</span><span class="va">dir</span>, search_pattern <span class="op">=</span> <span class="st">"\\.csv\\.xz"</span>,
-  variable_location <span class="op">=</span> <span class="st">"measure"</span>, reader <span class="op">=</span> <span class="va">read.csv</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>,
-  quiet <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">datacommons_map_variables</span><span class="op">(</span><span class="va">dir</span>,
+  search_pattern <span class="op">=</span> <span class="st">"(?:\\d{4}).+\\.csv\\.[gbx]z2?$"</span>,
+  variable_location <span class="op">=</span> <span class="st">"measure"</span>, sources <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"repos"</span>, <span class="st">"cache"</span><span class="op">)</span>,
+  reader <span class="op">=</span> <span class="va">read.csv</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -77,17 +78,22 @@
 <dt>variable_location</dt>
 <dd><p>The name of a column contain variable names in each dataset, or a function to retrieve
 variable names (e.g., <code>colnames</code>).</p></dd>
+<dt>sources</dt>
+<dd><p>Sub-directories of the data commons project to search for files in. If multiple are included,
+prefers files from those in the earlier locations in the case of duplicates. Default is to prefer files
+in the primary repository.</p></dd>
 <dt>reader</dt>
 <dd><p>A function capable of handling a connection in its first argument, which returns a matrix-like object.</p></dd>
 <dt>overwrite</dt>
 <dd><p>Logical; if <code>TRUE</code>, creates a new map even if one exists.</p></dd>
-<dt>quiet</dt>
-<dd><p>Logical; if <code>TRUE</code>, supresses messages.</p></dd>
+<dt>verbose</dt>
+<dd><p>Logical; if <code>FALSE</code>, does not print status messages.</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>
     <p>An invisible <code>data.frame</code> of the mapped variables, with <code>variable</code> (variable name),
-<code>full_name</code> (variable name with a prefix from the file's name), and <code>file</code> (path to the file) columns.</p>
+<code>repo</code> (the repository containing the file), <code>full_name</code> (variable name with a prefix from the file's name),
+and <code>file</code> (path to the file) columns.</p>
     </div>
 
     <div id="ref-examples">

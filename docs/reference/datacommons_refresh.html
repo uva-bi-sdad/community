@@ -64,7 +64,8 @@
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">datacommons_refresh</span><span class="op">(</span><span class="va">dir</span>, clone_method <span class="op">=</span> <span class="st">"http"</span>,
-  include_distributions <span class="op">=</span> <span class="cn">TRUE</span>, only_new <span class="op">=</span> <span class="cn">FALSE</span>, quiet <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+  include_distributions <span class="op">=</span> <span class="cn">TRUE</span>, refresh_distributions <span class="op">=</span> <span class="cn">FALSE</span>,
+  only_new <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -74,12 +75,14 @@
 <dt>clone_method</dt>
 <dd><p>Means of cloning new repositories; either <code>"http"</code> (default) or <code>"ssh"</code>.</p></dd>
 <dt>include_distributions</dt>
-<dd><p>Logical; if <code>TRUE</code>, will attempt to locate and cache copies of datasets
+<dd><p>Logical; if <code>TRUE</code> (default), will attempt to locate and cache copies of datasets
 pointed to from the data repositories (so far just from Dataverse, implicitly from DOI files).</p></dd>
+<dt>refresh_distributions</dt>
+<dd><p>Logical; if <code>TRUE</code>, will download fresh copies of the distribution metadata.</p></dd>
 <dt>only_new</dt>
 <dd><p>Logical; if <code>TRUE</code>, only repositories that do not yet exist will be processed.</p></dd>
-<dt>quiet</dt>
-<dd><p>Logical; if <code>TRUE</code>, will not show updated repositories.</p></dd>
+<dt>verbose</dt>
+<dd><p>Logical; if <code>FALSE</code>, will not show updated repositories.</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>

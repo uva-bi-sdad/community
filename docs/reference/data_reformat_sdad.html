@@ -63,17 +63,24 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">data_reformat_sdad</span><span class="op">(</span><span class="va">files</span>, value <span class="op">=</span> <span class="st">"value"</span>, value_name <span class="op">=</span> <span class="st">"measure"</span>,
-  id <span class="op">=</span> <span class="st">"geoid"</span>, time <span class="op">=</span> <span class="st">"year"</span>, dataset <span class="op">=</span> <span class="st">"region_type"</span>,
-  value_info <span class="op">=</span> <span class="st">"measure_type"</span>, entity_info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>type <span class="op">=</span> <span class="st">"region_type"</span>, name <span class="op">=</span>
-  <span class="st">"region_name"</span><span class="op">)</span>, formatters <span class="op">=</span> <span class="cn">NULL</span>, out <span class="op">=</span> <span class="cn">NULL</span>, compression <span class="op">=</span> <span class="st">"xz"</span>,
-  read_existing <span class="op">=</span> <span class="cn">FALSE</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">data_reformat_sdad</span><span class="op">(</span><span class="va">files</span>, out <span class="op">=</span> <span class="cn">NULL</span>, variables <span class="op">=</span> <span class="cn">NULL</span>, ids <span class="op">=</span> <span class="cn">NULL</span>,
+  value <span class="op">=</span> <span class="st">"value"</span>, value_name <span class="op">=</span> <span class="st">"measure"</span>, id <span class="op">=</span> <span class="st">"geoid"</span>, time <span class="op">=</span> <span class="st">"year"</span>,
+  dataset <span class="op">=</span> <span class="st">"region_type"</span>, value_info <span class="op">=</span> <span class="st">"measure_type"</span>,
+  entity_info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>type <span class="op">=</span> <span class="st">"region_type"</span>, name <span class="op">=</span> <span class="st">"region_name"</span><span class="op">)</span>,
+  formatters <span class="op">=</span> <span class="cn">NULL</span>, compression <span class="op">=</span> <span class="st">"xz"</span>, read_existing <span class="op">=</span> <span class="cn">FALSE</span>,
+  overwrite <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>files</dt>
 <dd><p>A character vector of file paths, or the path to a directory containing data files.</p></dd>
+<dt>out</dt>
+<dd><p>Path to a directory to write files to; if not specified, files will not be written.</p></dd>
+<dt>variables</dt>
+<dd><p>Vector of variable names (in the <code>value_name</code> column) to be included.</p></dd>
+<dt>ids</dt>
+<dd><p>Vector of IDs (in the <code>id</code> column) to be included.</p></dd>
 <dt>value</dt>
 <dd><p>Name of the column containing variable values.</p></dd>
 <dt>value_name</dt>
@@ -96,8 +103,6 @@ variables they refer to in entity features.</p></dd>
 <dd><p>A list of functions to pass columns through, with names identifying those columns
 (e.g., <code>list(region_name = function(x) sub(",.*$", "", x))</code> to strip text after a comma in the
 "region_name" column).</p></dd>
-<dt>out</dt>
-<dd><p>Path to a directory to write files to; if not specified, files will not be written.</p></dd>
 <dt>compression</dt>
 <dd><p>A character specifying the type of compression to use on the created files,
 between <code>"gzip"</code>, <code>"bzip2"</code>, and <code>"xz"</code>. Set to <code>FALSE</code> to disable compression.</p></dd>

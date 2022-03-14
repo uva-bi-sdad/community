@@ -4,9 +4,10 @@
 \alias{datacommons_map_variables}
 \title{Map Data Commons Variables}
 \usage{
-datacommons_map_variables(dir, search_pattern = "\\\\.csv\\\\.xz",
-  variable_location = "measure", reader = read.csv, overwrite = FALSE,
-  quiet = FALSE)
+datacommons_map_variables(dir,
+  search_pattern = "(?:\\\\d{4}).+\\\\.csv\\\\.[gbx]z2?$",
+  variable_location = "measure", sources = c("repos", "cache"),
+  reader = read.csv, overwrite = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{dir}{Directory of the data commons projects.}
@@ -16,15 +17,20 @@ datacommons_map_variables(dir, search_pattern = "\\\\.csv\\\\.xz",
 \item{variable_location}{The name of a column contain variable names in each dataset, or a function to retrieve
 variable names (e.g., \code{colnames}).}
 
+\item{sources}{Sub-directories of the data commons project to search for files in. If multiple are included,
+prefers files from those in the earlier locations in the case of duplicates. Default is to prefer files
+in the primary repository.}
+
 \item{reader}{A function capable of handling a connection in its first argument, which returns a matrix-like object.}
 
 \item{overwrite}{Logical; if \code{TRUE}, creates a new map even if one exists.}
 
-\item{quiet}{Logical; if \code{TRUE}, supresses messages.}
+\item{verbose}{Logical; if \code{FALSE}, does not print status messages.}
 }
 \value{
 An invisible \code{data.frame} of the mapped variables, with \code{variable} (variable name),
-\code{full_name} (variable name with a prefix from the file's name), and \code{file} (path to the file) columns.
+\code{repo} (the repository containing the file), \code{full_name} (variable name with a prefix from the file's name),
+and \code{file} (path to the file) columns.
 }
 \description{
 Extract variables from files in datacommons repositories

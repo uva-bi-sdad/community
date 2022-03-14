@@ -45,3 +45,17 @@ make_build_environment <- function() {
   e$uid <- 0
   e
 }
+
+calculate_sha <- function(file, level) {
+  if (Sys.which("openssl") != "") {
+    tryCatch(
+      strsplit(
+        system2("openssl", c("dgst", paste0("-sha", level), shQuote(file)), TRUE), " ",
+        fixed = TRUE
+      )[[1]][2],
+      error = function(e) ""
+    )
+  } else {
+    ""
+  }
+}

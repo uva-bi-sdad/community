@@ -180,14 +180,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
     )
     if ("_references" %in% names(varinf)) res[["_references"]] <- varinf[["_references"]]
     if (Sys.which("openssl") != "") {
-      res[[paste0("sha", sha)]] <- tryCatch(
-        strsplit(
-          system2("openssl", c("dgst", paste0("-sha", sha), shQuote(f)), TRUE), " ",
-          fixed = TRUE
-        )[[1]][2],
-        error = function(e) ""
-      )
-      res <- res[c(1:3, length(res), seq(4, length(res) - 1))]
+      res[[paste0("sha", sha)]] <- calculate_sha(f, sha)
     }
     res
   }

@@ -5,19 +5,22 @@
 \title{Refresh Data Commons Repositories}
 \usage{
 datacommons_refresh(dir, clone_method = "http",
-  include_distributions = TRUE, only_new = FALSE, quiet = FALSE)
+  include_distributions = TRUE, refresh_distributions = FALSE,
+  only_new = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{dir}{Directory of the data commons projects, as created by \code{\link{init_datacommons}}.}
 
 \item{clone_method}{Means of cloning new repositories; either \code{"http"} (default) or \code{"ssh"}.}
 
-\item{include_distributions}{Logical; if \code{TRUE}, will attempt to locate and cache copies of datasets
+\item{include_distributions}{Logical; if \code{TRUE} (default), will attempt to locate and cache copies of datasets
 pointed to from the data repositories (so far just from Dataverse, implicitly from DOI files).}
+
+\item{refresh_distributions}{Logical; if \code{TRUE}, will download fresh copies of the distribution metadata.}
 
 \item{only_new}{Logical; if \code{TRUE}, only repositories that do not yet exist will be processed.}
 
-\item{quiet}{Logical; if \code{TRUE}, will not show updated repositories.}
+\item{verbose}{Logical; if \code{FALSE}, will not show updated repositories.}
 }
 \value{
 An invisible character vector of updated repositories.

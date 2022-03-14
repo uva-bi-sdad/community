@@ -172,7 +172,7 @@ void (function () {
         levels: /^lev/,
         ids: /^ids/,
         minmax: /^m[inax]{2}$/,
-        int_types: /^(?:count|year|integer)$/,
+        int_types: /^(?:year|integer)$/,
         end_punct: /[.?!]$/,
         mustache: /\{(.*?)\}/g,
         measure_name: /(?:^measure|_name)$/,
@@ -320,14 +320,13 @@ void (function () {
           }
         },
         dataview: function (f) {
-          const d = f.get.dataset(),
-            state = f.value()
+          const state = f.value()
           if (state !== f.state) {
             var c,
               id,
               first_all = '',
               summary_state = site.settings.summary_selection
-            if (init_log[d]) {
+            if (init_log[f.parsed.dataset]) {
               f.valid = true
               f.n_selected.ids = 0
               f.n_selected.features = 0
@@ -380,13 +379,14 @@ void (function () {
               if (first_all && summary_state !== f.summary_state) {
                 f.summary_state = summary_state
                 for (id in variables)
-                  if (id !== meta.times[d].name && Object.hasOwn(variables, id)) calculate_summary(id, f.id, true)
+                  if (id !== meta.times[f.parsed.dataset].name && Object.hasOwn(variables, id))
+                    calculate_summary(id, f.id, true)
                 update_subs(f.id, 'update')
               }
               request_queue(f.id)
             } else {
               f.valid = false
-              data_queue[d][f.id] = function () {
+              data_queue[f.parsed.dataset][f.id] = function () {
                 return conditionals.dataview(f)
               }
             }
@@ -3592,6 +3592,7 @@ void (function () {
             }
           compile_dataview(e)
           conditionals.dataview(e)
+          e.reparse()
         }
       // initialize outputs
       for (c = document.getElementsByClassName('auto-output'), i = c.length, n = 0; i--; ) {
@@ -3624,7 +3625,11 @@ void (function () {
           if (!Object.hasOwn(_c, o.view + '_filter')) _c[o.view + '_filter'] = []
         }
         if (Object.hasOwn(elements, o.type) && Object.hasOwn(elements[o.type], 'init')) {
-          elements[o.type].init(o)
+          if (!o.view || Object.hasOwn(init_log, _u[o.view].parsed.dataset)) {
+            elements[o.type].init(o)
+          } else {
+            data_queue[_u[o.view].parsed.dataset][o.id] = elements[o.type].init.bind(null, o)
+          }
         }
       }
     }

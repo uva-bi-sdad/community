@@ -5,8 +5,10 @@ devtools::document()
 pkgdown::build_site()
 
 # move web resource to dist
+update_stable <- TRUE
 for (f in paste0('community.min', c('.js', '.css'))) if (file.exists(f)) {
   file.copy(f, paste0('docs/dist/', sub('^.*\\.', '', f)), TRUE)
+  if (update_stable) file.copy(f, paste0('docs/dist/', sub('^.*\\.', '', f), "/", sub(".", ".v1.", f, fixed = TRUE)), TRUE)
   file.remove(f)
 }
 

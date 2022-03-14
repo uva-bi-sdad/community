@@ -1,0 +1,6 @@
+{
+  "name": "datacommons_view",
+  "context": "datacommons",
+  "dir": "views",
+  "files": ["view.json", "manifest.json"]
+}

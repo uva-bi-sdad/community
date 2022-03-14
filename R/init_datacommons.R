@@ -7,7 +7,7 @@
 #' @param default_user GitHub username to prepend to repository names if needed.
 #' @param repos A vector of repository names to add to \code{repo_list.txt}.
 #' @param overwrite logical; if \code{TRUE}, will overwrite existing datacommons files in \code{dir}.
-#' @param quiet Logical; if \code{TRUE}, suppresses messages.
+#' @param verbose Logical; if \code{FALSE}, suppresses messages.
 #' @examples
 #' \dontrun{
 #' init_datacommons("../datacommons")
@@ -15,7 +15,7 @@
 #' @return Path to the datacommons directory.
 #' @export
 
-init_datacommons <- function(dir, name = "data commons", repos = NULL, default_user = "", overwrite = FALSE, quiet = !interactive()) {
+init_datacommons <- function(dir, name = "data commons", repos = NULL, default_user = "", overwrite = FALSE, verbose = interactive()) {
   if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = ".")')
   check <- check_template("datacommons", dir = dir)
   if (overwrite) unlink(check$files, TRUE)
@@ -23,15 +23,17 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
   dir.create(paste0(dir, "/repos"), FALSE, TRUE)
   dir.create(paste0(dir, "/cache"), FALSE)
   dir.create(paste0(dir, "/views"), FALSE)
-  paths <- paste0(dir, "/", c("info.json", "README.md", ".gitignore", "repo_list.txt", "build.R", "project.Rproj"))
+  paths <- paste0(dir, "/", c("commons.json", "README.md", ".gitignore", "project.Rproj"))
   if (!file.exists(paths[1])) {
-    write_json(list(name = name, default_user = default_user), paths[1], pretty = TRUE, auto_unbox = TRUE)
+    write_json(list(
+      name = name, default_user = default_user, repositories = repos
+    ), paths[1], pretty = TRUE, auto_unbox = TRUE)
   }
   if (!file.exists(paths[2])) {
     writeLines(c(
       paste("#", name),
       "",
-      "Consists of the repositories listed in (repo_list.txt)[repo_list.txt].",
+      "Consists of the repositories listed in (commons.json)[commons.json].",
       "",
       "This will refresh and check them:",
       "```R",
@@ -58,18 +60,10 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
       ""
     ), paths[3])
   }
-  if (!file.exists(paths[4])) {
-    if (length(repos)) {
-      writeLines(c(repos, ""), paths[4])
-    } else {
-      file.create(paths[4])
-    }
+  if (!file.exists(paths[4]) && !any(grepl("\\.Rproj$", list.files(dir)))) {
+    writeLines("Version: 1.0\n", paths[4])
   }
-  if (!file.exists(paths[5])) file.create(paths[5])
-  if (!file.exists(paths[6]) && !any(grepl("\\.Rproj$", list.files(dir)))) {
-    writeLines("Version: 1.0\n", paths[6])
-  }
-  if (!quiet) {
+  if (verbose) {
     cli_bullets(c(
       v = "created {name}:",
       "*" = paste0("{.path ", normalizePath(dir, "/", FALSE), "}"),
@@ -81,6 +75,6 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
       }
     ))
   }
-  if (length(repos)) datacommons_refresh(dir, quiet = quiet)
+  if (length(repos)) datacommons_refresh(dir, verbose = verbose)
   invisible(dir)
 }
