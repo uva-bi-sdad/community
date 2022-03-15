@@ -8,6 +8,7 @@
 #' pointed to from the data repositories (so far just from Dataverse, implicitly from DOI files).
 #' @param refresh_distributions Logical; if \code{TRUE}, will download fresh copies of the distribution metadata.
 #' @param only_new Logical; if \code{TRUE}, only repositories that do not yet exist will be processed.
+#' @param reset_repos Logical; if \code{TRUE}, will fetch and hard reset the repositories to remove any local changes.
 #' @param verbose Logical; if \code{FALSE}, will not show updated repositories.
 #' @examples
 #' \dontrun{
@@ -18,7 +19,7 @@
 #' @export
 
 datacommons_refresh <- function(dir, clone_method = "http", include_distributions = TRUE,
-                                refresh_distributions = FALSE, only_new = FALSE, verbose = TRUE) {
+                                refresh_distributions = FALSE, only_new = FALSE, reset_repos = FALSE, verbose = TRUE) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., as ".")')
   if (Sys.which("git") == "") {
     cli_abort(c(
@@ -58,24 +59,32 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
   updated <- dist_updated <- logical(length(repos))
   wd <- getwd()
   on.exit(setwd(wd))
-  dir.create(paste0(dir, "/repos"), FALSE, TRUE)
-  setwd(paste0(dir, "/repos"))
+  repo_dir <- paste0(normalizePath(paste0(dir, "/repos/"), "/", FALSE), "/")
+  dir.create(repo_dir, FALSE, TRUE)
+  setwd(repo_dir)
   method <- if (clone_method == "ssh") "git@github.com:" else "https://github.com/"
   if (include_distributions) dir.create("../cache", FALSE)
   for (i in seq_along(repos)) {
     r <- repos[[i]]
     rn <- sub("^.*/", "", r)
-    if (verbose) cli_alert_info(paste(if (dir.exists(rn)) "pulling" else "cloning", rn))
-    s <- tryCatch(if (dir.exists(rn)) {
-      shell(paste("cd", rn, "&& git pull"), intern = TRUE)
+    change_dir <- dir.exists(rn)
+    if (verbose) cli_alert_info(paste(if (change_dir) "pulling" else "cloning", rn))
+    if (change_dir) setwd(paste0(repo_dir, rn))
+    s <- tryCatch(if (change_dir) {
+      if (reset_repos) {
+        system2("git", "fetch", stdout = TRUE)
+        system2("git", "reset --hard FETCH_HEAD", stdout = TRUE)
+      } else {
+        system2("git", "pull", stdout = TRUE)
+      }
     } else {
       system2("git", c("clone", paste0(method, r, ".git")), stdout = TRUE)
     }, error = function(e) e$message)
+    if (change_dir) setwd(repo_dir)
     if (length(s) != 1 || s != "Already up to date.") {
       if (!is.null(attr(s, "status"))) {
         cli_alert_warning(c(
-          x = paste0("failed to retrieve ", r, ":"),
-          structure(s, names = rep("!", length(s)))
+          x = paste0("failed to retrieve ", r, ": ", paste(s, collapse = " "))
         ))
       } else {
         updated[i] <- TRUE
@@ -108,13 +117,14 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
                   if (verbose) cli_li("checking existing version of {.file {f$dataFile$filename}}")
                   if (md5sum(existing) == f$dataFile$md5) next
                 }
+                unlink(existing)
                 if (verbose) cli_li("downloading {.file {f$dataFile$filename}}")
                 res <- tryCatch(download_dataverse_data(
                   dataset_doi, paste0("../cache/", rn),
                   files = f$label, load = FALSE, decompress = FALSE
                 ), error = function(e) NULL)
-                if (verbose && is.null(res)) {
-                  cli_li(col_red("failed to download {.file {f$dataFile$filename}}"))
+                if (is.null(res)) {
+                  if (verbose) cli_li(col_red("failed to download {.file {f$dataFile$filename}}"))
                 } else {
                   dist_updated[i] <- TRUE
                 }

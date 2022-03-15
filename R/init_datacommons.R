@@ -5,8 +5,8 @@
 #' @param dir Path to the desired data commons directory.
 #' @param name Name of the data commons.
 #' @param default_user GitHub username to prepend to repository names if needed.
-#' @param repos A vector of repository names to add to \code{repo_list.txt}.
-#' @param overwrite logical; if \code{TRUE}, will overwrite existing datacommons files in \code{dir}.
+#' @param repos A vector of repository names to add to \code{commons.json}.
+#' @param overwrite Logical; if \code{TRUE}, will overwrite existing datacommons files in \code{dir}.
 #' @param verbose Logical; if \code{FALSE}, suppresses messages.
 #' @examples
 #' \dontrun{
@@ -69,7 +69,7 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
       "*" = paste0("{.path ", normalizePath(dir, "/", FALSE), "}"),
       i = if (!length(repos)) {
         paste0(
-          "add repository names to {.file repo_list.txt}, then use",
+          "add repository names to {.file commons.json}, then use",
           '{.code datacommons_refresh("', dir, '")} to clone them'
         )
       }

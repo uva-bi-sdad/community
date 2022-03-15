@@ -6,7 +6,7 @@
 \usage{
 datacommons_refresh(dir, clone_method = "http",
   include_distributions = TRUE, refresh_distributions = FALSE,
-  only_new = FALSE, verbose = TRUE)
+  only_new = FALSE, reset_repos = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{dir}{Directory of the data commons projects, as created by \code{\link{init_datacommons}}.}
@@ -19,6 +19,8 @@ pointed to from the data repositories (so far just from Dataverse, implicitly fr
 \item{refresh_distributions}{Logical; if \code{TRUE}, will download fresh copies of the distribution metadata.}
 
 \item{only_new}{Logical; if \code{TRUE}, only repositories that do not yet exist will be processed.}
+
+\item{reset_repos}{Logical; if \code{TRUE}, will fetch and hard reset the repositories to remove any local changes.}
 
 \item{verbose}{Logical; if \code{FALSE}, will not show updated repositories.}
 }

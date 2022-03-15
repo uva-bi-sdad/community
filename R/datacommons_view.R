@@ -40,7 +40,6 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
     if (is.na(name)) cli_abort("{.arg name} must be specified since no views are present in {commons}")
   }
   check <- check_template("datacommons", dir = commons)
-  if (overwrite) unlink(check$files, TRUE)
   view_dir <- normalizePath(paste0(commons, "/views/", name), "/", FALSE)
   dir.create(view_dir, FALSE, TRUE)
   paths <- paste0(view_dir, "/", c("view.json", "manifest.json", "run_after.R", "run_before.R"))
@@ -97,6 +96,8 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
     }
     if (verbose && write_view) cli_alert_info("updating existing {.file view.json}")
   }
+  if (length(view$variables)) view$variables <- as.character(view$variables)
+  if (length(view$ids)) view$ids <- as.character(view$ids)
   view$output <- paste0(sub("/docs(?:/data)?", "", if (is.null(view$output)) view_dir else view$output), "/docs/data")
   if (write_view) write_json(view, paths[1], pretty = TRUE, auto_unbox = TRUE)
   if (execute) {
@@ -108,14 +109,17 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       source(local = source_env, exprs = src)
     }
     map_file <- paste0(commons, "/cache/variable_map.csv")
-    map <- if (!file.exists(map_file)) {
+    map <- if (overwrite || !file.exists(map_file)) {
       if (verbose) cli_alert_info("mapping commons files")
-      datacommons_map_variables(commons, verbose = verbose)
+      datacommons_map_variables(commons, overwrite = overwrite, verbose = verbose)
     } else {
       read.csv(map_file)
     }
-    files <- map[(if (length(view$files)) grepl(view$files, map$file) else TRUE) &
-      (map$full_name %in% view$variables | map$variable %in% view$variables), , drop = FALSE]
+    files <- map[
+      (if (length(view$files)) grepl(view$files, map$file) else TRUE) &
+        (if (length(view$variables)) (map$full_name %in% view$variables | map$variable %in% view$variables) else TRUE), ,
+      drop = FALSE
+    ]
     if (nrow(files)) {
       files <- files[!duplicated(files$full_name), , drop = FALSE]
       if (verbose) cli_alert_info("updating manifest: {.file {paths[2]}}")
@@ -133,7 +137,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
         measure_info <- if (length(measure_info) == 1 && file.exists(measure_info)) read_json(measure_info) else as.list(measure_info)
       }
       for (r in unique(files$repo)) {
-        rf <- paste0(commons, "/repos/", r, "/docs/data/measure_info.json")
+        rf <- paste0(commons, "/repos/", r, "/data/measure_info.json")
         if (file.exists(rf)) {
           ri <- read_json(rf)
           ri <- ri[!names(ri) %in% names(measure_info)]

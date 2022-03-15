@@ -12,11 +12,11 @@ init_datacommons(dir, name = "data commons", repos = NULL,
 
 \item{name}{Name of the data commons.}
 
-\item{repos}{A vector of repository names to add to \code{repo_list.txt}.}
+\item{repos}{A vector of repository names to add to \code{commons.json}.}
 
 \item{default_user}{GitHub username to prepend to repository names if needed.}
 
-\item{overwrite}{logical; if \code{TRUE}, will overwrite existing datacommons files in \code{dir}.}
+\item{overwrite}{Logical; if \code{TRUE}, will overwrite existing datacommons files in \code{dir}.}
 
 \item{verbose}{Logical; if \code{FALSE}, suppresses messages.}
 }

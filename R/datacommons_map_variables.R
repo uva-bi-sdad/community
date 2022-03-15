@@ -31,7 +31,7 @@ datacommons_map_variables <- function(dir, search_pattern = "(?:\\d{4}).+\\.csv\
       i = paste0('use {.code datacommons_refresh("', dir, '")} to bring in remote data')
     ))
   }
-  files <- list.files(paste0(dir, "/", sources), search_pattern, recursive = TRUE, full.names = TRUE)
+  files <- list.files(paste0(dir, "/", sources), search_pattern, full.names = TRUE, recursive = TRUE)
   if (!length(files)) cli_abort("no files were found")
   files <- files[!duplicated(basename(files)) & files != "variable_map.csv"]
   res <- paste0(dir, "/cache/variable_map.csv")

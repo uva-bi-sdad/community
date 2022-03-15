@@ -101,16 +101,23 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     }
   }
   vars <- c(vars, "file")
-  if (!is.null(variables)) variables <- unique(as.character(variables))
-  if (!is.null(ids)) ids <- unique(as.character(ids))
+  check_variables <- check_ids <- FALSE
+  if (length(variables)) {
+    check_variables <- TRUE
+    variables <- unique(as.character(variables))
+  }
+  if (length(ids)) {
+    check_ids <- TRUE
+    ids <- unique(as.character(ids))
+  }
   data <- do.call(rbind, lapply(data, function(d) {
     d <- d[, vars, with = FALSE]
     d <- d[rowSums(vapply(d, is.na, logical(nrow(d)))) == 0, ]
     if (id %in% vars) {
       d[[id]] <- trimws(format(d[[id]], scientific = FALSE))
-      if (!is.null(ids)) d <- d[d[[id]] %in% ids]
+      if (check_ids) d <- d[d[[id]] %in% ids]
     }
-    if (!is.null(variables)) {
+    if (check_variables) {
       d <- d[d[[value_name]] %in% variables]
     }
     d
@@ -144,8 +151,10 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   data[[dataset]] <- gsub("\\s+", "_", data[[dataset]])
   datasets <- unique(data[[dataset]])
   present_vars <- unique(data[[value_name]])
-  variables <- variables[!variables %in% present_vars]
-  if (length(variables)) cli_warn("requested variable{?s} not found in datasets: {.val {variables}}")
+  if (check_variables) {
+    variables <- variables[!variables %in% present_vars]
+    if (length(variables)) cli_warn("requested variable{?s} not found in datasets: {.val {variables}}")
+  }
   times <- sort(unique(data[[time]]))
   if (!is.null(out) && (is.list(entity_info) || is.character(entity_info))) {
     entity_info_file <- paste0(out, "/entity_info.json")
