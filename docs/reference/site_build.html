@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">community</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.1.100</span>
       </span>
     </div>
 
@@ -54,7 +54,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Render a Website</h1>
-    <small class="dont-index">Source: <a href="https://github.com/uva-bi-sdad/community/blob/HEAD/R/site_build.R" class="external-link"><code>R/site_build.R</code></a></small>
+    <small class="dont-index">Source: <a href="https://github.com/uva-bi-sdad/community/blob/HEAD/R/site_build.R" class="external-link"><code>R/site_build.R</code></a>, <a href="https://github.com/uva-bi-sdad/community/blob/HEAD/R/site_start_server.R" class="external-link"><code>R/site_start_server.R</code></a></small>
     <div class="hidden name"><code>site_build.Rd</code></div>
     </div>
 
@@ -63,11 +63,12 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">site_build</span><span class="op">(</span><span class="va">dir</span>, file <span class="op">=</span> <span class="st">"site.R"</span>, outdir <span class="op">=</span> <span class="st">"docs"</span>, name <span class="op">=</span> <span class="st">"index.html"</span>,
-  variables <span class="op">=</span> <span class="cn">NULL</span>, options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, bundle_data <span class="op">=</span> <span class="cn">FALSE</span>,
-  open_after <span class="op">=</span> <span class="cn">FALSE</span>, aggregate <span class="op">=</span> <span class="cn">TRUE</span>, sparse_time <span class="op">=</span> <span class="cn">TRUE</span>,
-  force <span class="op">=</span> <span class="cn">FALSE</span>, version <span class="op">=</span> <span class="st">"v1"</span>, parent <span class="op">=</span> <span class="cn">NULL</span>, serve <span class="op">=</span> <span class="cn">FALSE</span>,
-  host <span class="op">=</span> <span class="st">"127.0.0.1"</span>, port <span class="op">=</span> <span class="fl">3000</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">site_build</span><span class="op">(</span><span class="va">dir</span>, file <span class="op">=</span> <span class="st">"site.R"</span>, name <span class="op">=</span> <span class="st">"index.html"</span>, variables <span class="op">=</span> <span class="cn">NULL</span>,
+  options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, bundle_data <span class="op">=</span> <span class="cn">FALSE</span>, open_after <span class="op">=</span> <span class="cn">FALSE</span>,
+  aggregate <span class="op">=</span> <span class="cn">TRUE</span>, sparse_time <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">FALSE</span>, version <span class="op">=</span> <span class="st">"v1"</span>,
+  parent <span class="op">=</span> <span class="cn">NULL</span>, serve <span class="op">=</span> <span class="cn">FALSE</span>, host <span class="op">=</span> <span class="st">"127.0.0.1"</span>, port <span class="op">=</span> <span class="fl">3000</span><span class="op">)</span>
+
+<span class="fu">site_start_server</span><span class="op">(</span><span class="va">dir</span>, host <span class="op">=</span> <span class="st">"127.0.0.1"</span>, port <span class="op">=</span> <span class="fl">3000</span>, open_after <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -76,9 +77,6 @@
 <dd><p>Path to the site project directory.</p></dd>
 <dt>file</dt>
 <dd><p>Name of the R file to build the site from.</p></dd>
-<dt>outdir</dt>
-<dd><p>Subdirectory of <code>dir</code> in which to place the built site files (where the site is to be
-served from).</p></dd>
 <dt>name</dt>
 <dd><p>Name of the HTML file to be created.</p></dd>
 <dt>variables</dt>
@@ -130,8 +128,13 @@ Once a server is running, you can use <code><a href="https://rdrr.io/pkg/httpuv/
 <span class="r-in"><span class="co"># run from within a site project directory, initialized with `init_site()`</span></span>
 <span class="r-in"><span class="fu">site_build</span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span>
 <span class="r-in"></span>
-<span class="r-in"><span class="co"># bundle data to most easily run locally</span></span>
-<span class="r-in"><span class="fu">site_build</span><span class="op">(</span><span class="st">"."</span>, bundle_data <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span class="r-in"><span class="co"># serve locally and view the site</span></span>
+<span class="r-in"><span class="fu">site_build</span><span class="op">(</span><span class="st">"."</span>, serve <span class="op">=</span> <span class="cn">TRUE</span>, open_after <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span class="r-in"><span class="op">}</span></span>
+<span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
+<span class="r-in"><span class="co"># serve a site that has already been built</span></span>
+<span class="r-in"><span class="co"># from the parent directory of a "docs" directory to be served</span></span>
+<span class="r-in"><span class="fu">site_start_server</span><span class="op">(</span><span class="st">"."</span><span class="op">)</span></span>
 <span class="r-in"><span class="op">}</span></span>
 </code></pre></div>
     </div>

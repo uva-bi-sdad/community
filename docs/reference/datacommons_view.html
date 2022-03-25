@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">community</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.1.100</span>
       </span>
     </div>
 
@@ -65,8 +65,8 @@
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">datacommons_view</span><span class="op">(</span><span class="va">commons</span>, <span class="va">name</span>, output <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span>, variables <span class="op">=</span> <span class="cn">NULL</span>,
   ids <span class="op">=</span> <span class="cn">NULL</span>, files <span class="op">=</span> <span class="cn">NULL</span>, run_after <span class="op">=</span> <span class="cn">NULL</span>, run_before <span class="op">=</span> <span class="cn">NULL</span>,
-  measure_info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, execute <span class="op">=</span> <span class="cn">TRUE</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>,
-  verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+  measure_info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, execute <span class="op">=</span> <span class="cn">TRUE</span>, prefer_repo <span class="op">=</span> <span class="cn">FALSE</span>,
+  overwrite <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -98,8 +98,11 @@ file created from such files in each data repository (such as general entries li
 <code>"_references"</code>). These will supersede any entries of the same name found in data repositories.</p></dd>
 <dt>execute</dt>
 <dd><p>Logical; if <code>FALSE</code>, will create/update, but not run the view.</p></dd>
+<dt>prefer_repo</dt>
+<dd><p>Logical; if <code>TRUE</code>, will prefer repository files over those from distributions
+(such as Dataverse).</p></dd>
 <dt>overwrite</dt>
-<dd><p>Logical; if <code>TRUE</code>, replaces any existing view files.</p></dd>
+<dd><p>Logical; if <code>TRUE</code>, overwrites existing file maps, and reformatted files in <code>output</code>.</p></dd>
 <dt>verbose</dt>
 <dd><p>Logical; if <code>FALSE</code>, will not show status messages.</p></dd>
 </dl></div>

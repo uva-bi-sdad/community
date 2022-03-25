@@ -49,7 +49,10 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   if (length(files) == 1 && dir.exists(files)) {
     files <- list.files(files, full.names = TRUE)
   }
-  if (any(!file.exists(files))) cli_abort("file{? does/s do} not exist: {.file {files[!file.exists(files)]}}")
+  if (any(!file.exists(files))) {
+    files <- files[!file.exists(files)]
+    cli_abort("file{? does/s do} not exist: {.file {files}}")
+  }
   vars <- c(value, value_name, id, time, dataset, value_info, entity_info)
   spec <- c(
     missing(value), missing(value_name), missing(id), missing(time), missing(dataset),

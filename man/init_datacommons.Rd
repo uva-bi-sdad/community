@@ -5,7 +5,9 @@
 \title{Initialize a Data Commons}
 \usage{
 init_datacommons(dir, name = "data commons", repos = NULL,
-  default_user = "", overwrite = FALSE, verbose = interactive())
+  default_user = "", refresh_after = TRUE, overwrite = FALSE,
+  serve = FALSE, host = "127.0.0.1", port = 3000, open_after = FALSE,
+  verbose = interactive())
 }
 \arguments{
 \item{dir}{Path to the desired data commons directory.}
@@ -16,7 +18,21 @@ init_datacommons(dir, name = "data commons", repos = NULL,
 
 \item{default_user}{GitHub username to prepend to repository names if needed.}
 
-\item{overwrite}{Logical; if \code{TRUE}, will overwrite existing datacommons files in \code{dir}.}
+\item{refresh_after}{Logical; if \code{FALSE}, will not run \code{\link{datacommons_refresh}}
+after initiating the project.}
+
+\item{overwrite}{Logical; if \code{TRUE}, will overwrite existing datacommons files in \code{dir}.
+The included \code{.js} and \code{.sh} files are always rewritten, and if \code{name},
+\code{repos}, or \code{default_user} is specified, \code{commons.json} will also be rewritten
+regardless of \code{overwrite}.}
+
+\item{serve}{Logical; if \code{TRUE}, will serve the \code{docs} directory.}
+
+\item{host}{The IPv4 address to listen to if \code{serve} is \code{TRUE}; defaults to \code{"127.0.0.1"}.}
+
+\item{port}{The port to listen on if \code{serve} is \code{TRUE}; defaults to 3000.}
+
+\item{open_after}{Logical; if \code{TRUE}, will open the served monitor site in a browser after it is built.}
 
 \item{verbose}{Logical; if \code{FALSE}, suppresses messages.}
 }

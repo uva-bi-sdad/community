@@ -6,8 +6,8 @@
 \usage{
 datacommons_view(commons, name, output = NULL, ..., variables = NULL,
   ids = NULL, files = NULL, run_after = NULL, run_before = NULL,
-  measure_info = list(), execute = TRUE, overwrite = FALSE,
-  verbose = TRUE)
+  measure_info = list(), execute = TRUE, prefer_repo = FALSE,
+  overwrite = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{commons}{Path to the data commons project.}
@@ -37,7 +37,10 @@ file created from such files in each data repository (such as general entries li
 
 \item{execute}{Logical; if \code{FALSE}, will create/update, but not run the view.}
 
-\item{overwrite}{Logical; if \code{TRUE}, replaces any existing view files.}
+\item{prefer_repo}{Logical; if \code{TRUE}, will prefer repository files over those from distributions
+(such as Dataverse).}
+
+\item{overwrite}{Logical; if \code{TRUE}, overwrites existing file maps, and reformatted files in \code{output}.}
 
 \item{verbose}{Logical; if \code{FALSE}, will not show status messages.}
 }

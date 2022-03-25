@@ -11,7 +11,7 @@ download_dataverse_data(id, outdir = tempdir(), files = NULL,
   decompress = FALSE, refresh = FALSE, branch = NULL, verbose = FALSE)
 
 download_dataverse_info(id, server = NULL, key = NULL, refresh = FALSE,
-  branch = NULL, verbose = FALSE)
+  branch = NULL, version = ":latest", verbose = FALSE)
 }
 \arguments{
 \item{id}{The dataset's persistent ID (e.g., \code{"doi:10.18130/V3/SWK71R"}), or a GitHub repository

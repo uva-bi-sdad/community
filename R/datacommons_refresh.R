@@ -18,13 +18,13 @@
 #' @return An invisible character vector of updated repositories.
 #' @export
 
-datacommons_refresh <- function(dir, clone_method = "http", include_distributions = TRUE,
-                                refresh_distributions = FALSE, only_new = FALSE, reset_repos = FALSE, verbose = TRUE) {
+datacommons_refresh <- function(dir, clone_method = "http", include_distributions = TRUE, refresh_distributions = FALSE,
+                                only_new = FALSE, reset_repos = FALSE, verbose = TRUE) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., as ".")')
   if (Sys.which("git") == "") {
     cli_abort(c(
       x = "the {.emph git} command could not be located",
-      i = "install git if necessary: {.url https://git-scm.com/downloads}"
+      i = "you might need to install git: {.url https://git-scm.com/downloads}"
     ))
   }
   check <- check_template("datacommons", dir = dir)
@@ -34,21 +34,23 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
       i = paste0('initialize it with {.code init_datacommons("', dir, '")}')
     ))
   }
+  dir <- normalizePath(dir, "/", FALSE)
   commons <- read_json(paste0(dir, "/commons.json"))
   repos <- Filter(length, commons$repositories)
+  if (!length(repos)) repos <- readLines(paste0(dir, "/scripts/repos.txt"))
   if (!length(repos)) cli_abort("no repositories are listed in {.file commons.json}.")
   repos <- gsub("^[\"']+|['\"]+$|^.*github\\.com/", "", repos)
   su <- !grepl("/", repos, fixed = TRUE)
   if (any(su)) {
-    if (commons$default_user == "") {
-      cli_abort(c(
-        x = "repo{?s are/ is} missing a username prefix: {.files {repos[su]}}",
-        i = "add these, or fill in the default user in {.file commons.json}"
-      ))
-    }
-    repos[su] <- paste0(commons$default_user, "/", repos[su])
+    repos <- repos[su]
+    cli_abort("repo{?s are/ is} missing a username prefix: {.files {repos}}")
   }
-  repos <- sub("^([^/]+/[^/#@]+).*$", "\\1", repos)
+  repos <- sub("^([^/]+/[^/#@]+)[^/]*$", "\\1", repos)
+  if (!identical(unlist(commons$repositories, use.names = FALSE), repos)) {
+    commons$repositories <- repos
+    write_json(commons, paste0(dir, "/commons.json"), pretty = TRUE, auto_unbox = TRUE)
+  }
+  writeLines(repos, paste0(dir, "/scripts/repos.txt"))
   if (only_new) {
     repos <- repos[!file.exists(paste0(dir, "/repos/", sub("^.*/", "", repos)))]
     if (!length(repos)) {
@@ -64,12 +66,15 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
   setwd(repo_dir)
   method <- if (clone_method == "ssh") "git@github.com:" else "https://github.com/"
   if (include_distributions) dir.create("../cache", FALSE)
+  manifest_file <- paste0(dir, "/manifest/repos.json")
+  repo_manifest <- if (file.exists(manifest_file)) read_json(manifest_file) else list()
   for (i in seq_along(repos)) {
     r <- repos[[i]]
     rn <- sub("^.*/", "", r)
+    cr <- paste0(repo_dir, rn)
     change_dir <- dir.exists(rn)
     if (verbose) cli_alert_info(paste(if (change_dir) "pulling" else "cloning", rn))
-    if (change_dir) setwd(paste0(repo_dir, rn))
+    if (change_dir) setwd(cr)
     s <- tryCatch(if (change_dir) {
       if (reset_repos) {
         system2("git", "fetch", stdout = TRUE)
@@ -90,65 +95,92 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
         updated[i] <- TRUE
       }
     } else if (!length(list.files(rn))) system2("rm", c("-rf", rn))
-    if (include_distributions) {
-      dataset_doi <- NULL
-      if (file.exists(paste0(rn, "/R/sysdata.rda"))) {
-        load(paste0(rn, "/R/sysdata.rda"))
-        if (!is.null(dataset_doi)) {
-          if (verbose) {
-            ul <- cli_ul()
-            iul <- cli_ul()
-            cli_li("including Dataverse distribution for {.emph {dataset_doi}}")
-          }
-          meta <- tryCatch(download_dataverse_info(dataset_doi, refresh = refresh_distributions), error = function(e) NULL)
-          if (is.null(meta)) {
-            if (verbose) {
-              cli_li(col_red("failed to download Dataverse metadata for {.emph {dataset_doi}}"))
-              cli_end(iul)
-              cli_end(ul)
+    repo_manifest[[r]]$url <- paste0("https://github.com/", r)
+    files <- list.files(
+      paste0(cr, "/data"), "\\.(?:csv|tsv|txt|dat|rda|rdata)(?:\\.[gdx]z2?)?$",
+      full.names = TRUE, recursive = TRUE, ignore.case = TRUE
+    )
+    repo_manifest[[r]]$files <- lapply(files, function(f) {
+      list(
+        location = sub("^.+/data(/[^/]+/)?.*$", "data\\1", f),
+        size = file.size(f),
+        md5 = md5sum(f)[[1]]
+      )
+    })
+    names(repo_manifest[[r]]$files) <- basename(files)
+    doi <- repo_manifest[[r]]$distributions$dataverse$doi
+    if (include_distributions && !is.null(doi)) {
+      if (verbose) {
+        ul <- cli_ul()
+        iul <- cli_ul()
+        cli_li("including Dataverse distribution for {.emph {doi}}")
+      }
+      meta_file <- paste0("../cache/", rn, "/dataverse_metadata.json")
+      meta <- if (!refresh_distributions && file.exists(meta_file)) {
+        read_json(meta_file)
+      } else {
+        tryCatch(download_dataverse_info(doi, refresh = refresh_distributions), error = function(e) NULL)
+      }
+      if (is.null(meta)) {
+        if (verbose) {
+          cli_li(col_red("failed to download Dataverse metadata for {.emph {doi}}"))
+          cli_end(iul)
+          cli_end(ul)
+        }
+      } else {
+        if (is.null(meta$latestVersion)) meta$latestVersion <- list(files = meta$files)
+        dir.create(paste0("../cache/", rn), FALSE)
+        write_json(meta, meta_file, pretty = TRUE, auto_unbox = TRUE)
+        repo_manifest[[r]]$distributions$dataverse$files <- list()
+        if (length(meta$latestVersion$files)) {
+          for (f in meta$latestVersion$files) {
+            existing <- paste0("../cache/", rn, "/", f$dataFile$filename)
+            if (file.exists(existing)) {
+              if (verbose) cli_li("checking existing version of {.file {f$dataFile$filename}}")
+              if (md5sum(existing) != f$dataFile$md5) unlink(existing)
             }
-          } else {
-            dir.create(paste0("../cache/", rn), FALSE)
-            write_json(meta, paste0("../cache/", rn, "/dataverse_metadata.json"), pretty = TRUE, auto_unbox = TRUE)
-            if (length(meta$latestVersion$files)) {
-              for (f in meta$latestVersion$files) {
-                existing <- paste0("../cache/", rn, "/", f$dataFile$filename)
-                if (file.exists(existing)) {
-                  if (verbose) cli_li("checking existing version of {.file {f$dataFile$filename}}")
-                  if (md5sum(existing) == f$dataFile$md5) next
-                }
-                unlink(existing)
-                if (verbose) cli_li("downloading {.file {f$dataFile$filename}}")
-                res <- tryCatch(download_dataverse_data(
-                  dataset_doi, paste0("../cache/", rn),
-                  files = f$label, load = FALSE, decompress = FALSE
-                ), error = function(e) NULL)
-                if (is.null(res)) {
-                  if (verbose) cli_li(col_red("failed to download {.file {f$dataFile$filename}}"))
-                } else {
-                  dist_updated[i] <- TRUE
-                }
+            if (!file.exists(existing)) {
+              if (verbose) cli_li("downloading {.file {f$dataFile$filename}}")
+              res <- tryCatch(download_dataverse_data(
+                doi, paste0("../cache/", rn),
+                files = f$label, load = FALSE, decompress = FALSE
+              ), error = function(e) NULL)
+              if (is.null(res)) {
+                if (verbose) cli_li(col_red("failed to download {.file {f$dataFile$filename}}"))
+              } else {
+                dist_updated[i] <- TRUE
               }
             }
-          }
-          if (verbose) {
-            cli_end(iul)
-            cli_end(ul)
+            if (file.exists(existing)) {
+              repo_manifest[[r]]$distributions$dataverse$files[[basename(existing)]] <- list(
+                id = f$dataFile$id,
+                size = file.size(existing),
+                md5 = md5sum(existing)[[1]]
+              )
+            }
           }
         }
+      }
+      if (verbose) {
+        cli_end(iul)
+        cli_end(ul)
       }
     }
   }
   if (verbose) {
     if (any(updated)) {
-      cli_alert_success("updated data repositor{?ies/y}: {.file {repos[updated]}}")
+      updated_repos <- repos[updated]
+      cli_alert_success("updated data repositor{?ies/y}: {.file {updated_repos}}")
     }
     if (any(dist_updated)) {
-      cli_alert_success("updated distributed file{?s} in: {.file {repos[dist_updated]}}")
+      updated_distributions <- repos[dist_updated]
+      cli_alert_success("updated distributed file{?s} in: {.file {updated_distributions}}")
     }
     if (!any(updated | dist_updated)) {
       cli_alert_success("all data repositories are up to date")
     }
   }
+  write_json(repo_manifest, manifest_file, pretty = TRUE, auto_unbox = TRUE)
+  init_datacommons(dir, refresh_after = FALSE, verbose = FALSE)
   invisible(repos[updated | dist_updated])
 }

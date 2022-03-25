@@ -5,10 +5,12 @@ devtools::document()
 pkgdown::build_site()
 
 # move web resource to dist
-update_stable <- TRUE
-for (f in paste0('community.min', c('.js', '.css'))) if (file.exists(f)) {
+update_stable <- FALSE
+for (f in list.files(".", "min\\.[cjs]+$")) {
   file.copy(f, paste0('docs/dist/', sub('^.*\\.', '', f)), TRUE)
-  if (update_stable) file.copy(f, paste0('docs/dist/', sub('^.*\\.', '', f), "/", sub(".", ".v1.", f, fixed = TRUE)), TRUE)
+  if (grepl("^com", f) && update_stable) file.copy(
+    f, paste0('docs/dist/', sub('^.*\\.', '', f), "/", sub(".", ".v1.", f, fixed = TRUE)), TRUE
+  )
   file.remove(f)
 }
 
@@ -25,3 +27,11 @@ if (!dir.exists("../test_site")) {
 system2("npm", "test")
 covr::report(file = "coverage/package.html", browse = FALSE)
 system2("xcopy", c("/S /Y", shQuote("coverage"), shQuote("docs/coverage")))
+
+# increment development version
+description <- readLines("DESCRIPTION")
+description[3] <- paste0(
+  sub("\\d+$", "", description[3]),
+  as.numeric(substring(description[3], nchar(description[3]) - 2)) + 1
+)
+writeLines(description, "DESCRIPTION")

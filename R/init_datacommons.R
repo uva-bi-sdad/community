@@ -4,9 +4,18 @@
 #'
 #' @param dir Path to the desired data commons directory.
 #' @param name Name of the data commons.
-#' @param default_user GitHub username to prepend to repository names if needed.
 #' @param repos A vector of repository names to add to \code{commons.json}.
+#' @param default_user GitHub username to prepend to repository names if needed.
+#' @param refresh_after Logical; if \code{FALSE}, will not run \code{\link{datacommons_refresh}}
+#' after initiating the project.
 #' @param overwrite Logical; if \code{TRUE}, will overwrite existing datacommons files in \code{dir}.
+#' The included \code{.js} and \code{.sh} files are always rewritten, and if \code{name},
+#' \code{repos}, or \code{default_user} is specified, \code{commons.json} will also be rewritten
+#' regardless of \code{overwrite}.
+#' @param serve Logical; if \code{TRUE}, will serve the \code{docs} directory.
+#' @param host The IPv4 address to listen to if \code{serve} is \code{TRUE}; defaults to \code{"127.0.0.1"}.
+#' @param port The port to listen on if \code{serve} is \code{TRUE}; defaults to 3000.
+#' @param open_after Logical; if \code{TRUE}, will open the served monitor site in a browser after it is built.
 #' @param verbose Logical; if \code{FALSE}, suppresses messages.
 #' @examples
 #' \dontrun{
@@ -15,19 +24,36 @@
 #' @return Path to the datacommons directory.
 #' @export
 
-init_datacommons <- function(dir, name = "data commons", repos = NULL, default_user = "", overwrite = FALSE, verbose = interactive()) {
+init_datacommons <- function(dir, name = "data commons", repos = NULL, default_user = "",
+                             refresh_after = TRUE, overwrite = FALSE, serve = FALSE, host = "127.0.0.1",
+                             port = 3000, open_after = FALSE, verbose = interactive()) {
   if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = ".")')
   check <- check_template("datacommons", dir = dir)
-  if (overwrite) unlink(check$files, TRUE)
   dir <- normalizePath(paste0(dir, "/", check$spec$dir), "/", FALSE)
   dir.create(paste0(dir, "/repos"), FALSE, TRUE)
+  dir.create(paste0(dir, "/manifest"), FALSE)
   dir.create(paste0(dir, "/cache"), FALSE)
   dir.create(paste0(dir, "/views"), FALSE)
-  paths <- paste0(dir, "/", c("commons.json", "README.md", ".gitignore", "project.Rproj"))
-  if (!file.exists(paths[1])) {
-    write_json(list(
-      name = name, default_user = default_user, repositories = repos
-    ), paths[1], pretty = TRUE, auto_unbox = TRUE)
+  dir.create(paste0(dir, "/docs"), FALSE)
+  dir.create(paste0(dir, "/scripts"), FALSE)
+  paths <- paste0(dir, "/", c(
+    "commons.json", "README.md", ".gitignore", "project.Rproj",
+    "scripts/repos.txt", "scripts/get_repos.sh", "scripts/update_repos.sh",
+    "docs/index.html", "docs/request.js"
+  ))
+  if (overwrite) unlink(paths, TRUE)
+  if (file.exists(paths[1])) {
+    existing <- read_json(paths[1])
+    name <- existing$name
+    if (is.null(repos)) {
+      repos <- if (file.exists(paths[5]) && (!length(existing$repositories) || file.mtime(paths[5]) > file.mtime(paths[1]))) {
+        readLines(paths[5])
+      } else {
+        existing$repositories
+      }
+    }
+  } else {
+    write_json(list(name = name, repositories = repos), paths[1], pretty = TRUE, auto_unbox = TRUE)
   }
   if (!file.exists(paths[2])) {
     writeLines(c(
@@ -63,18 +89,141 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
   if (!file.exists(paths[4]) && !any(grepl("\\.Rproj$", list.files(dir)))) {
     writeLines("Version: 1.0\n", paths[4])
   }
+  if (!length(repos) && file.exists(paths[5])) repos <- readLines(paths[5])
+  if (length(repos)) {
+    if (default_user != "") repos <- paste0(default_user, "/", repos)
+    repos <- unlist(regmatches(repos, regexec("[^/]+/[^/#@]+$", repos)), use.names = FALSE)
+  }
+  writeLines(if (length(repos)) Filter(nchar, repos) else "", paths[5])
+  writeLines(c(
+    "#!/bin/bash",
+    'script_dir="$(dirname "$(realpath "$0")")"',
+    'repos_dir="$(dirname "$script_dir")/repos/"',
+    "while read repo",
+    "do",
+    '  repo_path="$repos_dir""$(basename "$repo")"',
+    '  if [[ -d "$repo_path" ]]',
+    "  then",
+    '    echo "pulling "$repo""',
+    '    cd "$repo_path"',
+    "    git pull",
+    '    cd "$script_dir"',
+    "  else",
+    '    echo "cloning "$repo""',
+    "    git clone git@github.com:$repo.git",
+    "  fi",
+    'done < ""$(dirname "$0")"/repos.txt"',
+    ""
+  ), paths[6])
+  writeLines(c(
+    "#!/bin/bash",
+    'if [[ -z "$1" ]]',
+    "then",
+    '  echo "privide a commit message as the first argument"',
+    "else",
+    '  read -r -p "Are you sure you want to commit and push all changes in all repositories? (y/N): "',
+    '  if [[ "$REPLY" =~ ^[Yy] ]]',
+    "  then",
+    '    repo_dir="$(dirname "$(dirname "$(realpath "$0")")")/repos/"',
+    '    for repo in "$repo_dir"*',
+    "    do",
+    '      echo "updating "$(basename "$repo")""',
+    '      cd "$repo"',
+    "      git add -A",
+    '      git commit -m "$1"',
+    "      git push",
+    "    done",
+    "  fi",
+    "fi",
+    ""
+  ), paths[7])
+  writeLines(c(
+    "<!doctype html>",
+    '<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">',
+    "<head>",
+    '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />',
+    '<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />',
+    '<meta name="viewport" content="width=device-width,initial-scale=1" />',
+    "<title>Data Commons Monitor</title>",
+    unlist(lapply(list(
+      list(type = "stylesheet", src = "dist/datacommons.css"),
+      list(type = "script", src = "dist/datacommons.js"),
+      list(
+        type = "stylesheet",
+        src = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css",
+        hash = "sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+      ),
+      list(
+        type = "script",
+        src = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js",
+        hash = "sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+      )
+    ), head_import, dir = dir)),
+    paste0('<meta name="generator" content="community v', packageVersion("community"), '" />'),
+    paste(c(
+      '<script type="text/javascript">',
+      "var commons",
+      paste0(
+        "window.onload = function(){commons = new DataCommons(",
+        gsub("\\s+", "", paste0(readLines(paste0(dir, "/commons.json")), collapse = "")),
+        ", {",
+        "repos:", paste0(readLines(paste0(dir, "/manifest/repos.json")), collapse = ""),
+        ",files:", paste0(readLines(paste0(dir, "/manifest/files.json")), collapse = ""),
+        "}, ",
+        toJSON(Filter(length, lapply(
+          list.dirs(paste0(dir, "/views"), FALSE)[-1], function(v) {
+            f <- paste0(dir, "/views/", v, "/", "view.json")
+            if (file.exists(f)) list(name = v, view = read_json(f))
+          }
+        )), auto_unbox = TRUE),
+        ")}"
+      ),
+      "</script>"
+    ), collapse = "\n"),
+    "</head>",
+    "<body>",
+    '<div id="site_wrap" style="position: fixed; height: 100%; width: 100%">',
+    page_navbar(
+      title = paste(name, "Monitor"),
+      input_button("Refresh", id = "refresh_button"),
+      input_button("Views", id = "views_menu")
+    ),
+    '<div class="content container-fluid">',
+    "</div>",
+    "</div>",
+    '<noscript style="width: 100%; text-align: center; padding: 5em">Please enable JavaScript to view this site.</noscript>',
+    "</body>",
+    "</html>"
+  ), paths[8])
+  writeLines(c(
+    "'use strict'",
+    "onmessage = function(m){",
+    "  const v = JSON.parse(m.data),",
+    "    f = new XMLHttpRequest()",
+    "  f.onreadystatechange = function () {",
+    "    if (4 === f.readyState && 200 === f.status) {",
+    "      v.response = f.responseText",
+    "      postMessage(JSON.stringify(v))",
+    "    }",
+    "  }",
+    "  f.open('GET', v.url, true)",
+    "  f.send()",
+    "}",
+    ""
+  ), paths[9])
   if (verbose) {
     cli_bullets(c(
       v = "created {name}:",
       "*" = paste0("{.path ", normalizePath(dir, "/", FALSE), "}"),
       i = if (!length(repos)) {
         paste0(
-          "add repository names to {.file commons.json}, then use",
+          "add repository names to {.file commons.json} or {.file scripts/repos.txt}, then use ",
           '{.code datacommons_refresh("', dir, '")} to clone them'
         )
       }
     ))
   }
-  if (length(repos)) datacommons_refresh(dir, verbose = verbose)
+  if (refresh_after && length(repos)) datacommons_refresh(dir, verbose = verbose)
+  if (serve) site_start_server(dir, host, port, open_after)
   invisible(dir)
 }

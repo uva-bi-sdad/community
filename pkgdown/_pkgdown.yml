@@ -4,13 +4,12 @@ template:
 
 reference:
 - title: Site
-  desc: Most functions are used to add components to a website.
+  desc: Most functions are used to add components to and build a website.
   contents:
+  - starts_with("site_")
   - starts_with("page_")
   - starts_with("input_")
   - starts_with("output_")
-  - site_build
-  - site_make_child
 
 - title: Data Commons
   desc: datacommons_ function help manage sets of data repositories.

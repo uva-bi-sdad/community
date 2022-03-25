@@ -1,0 +1,83 @@
+:root {
+  --background: #212121;
+  --background-border: #414141;
+  --background-input: #000000;
+  --body-text: #ffffff;
+  --background-secondary: #202020;
+  --background-highlight: #141414;
+  --link: #acc7ff;
+  --highlight: #595959;
+  --highlight-text: #ffffff;
+  --highlight-secondary: #2e2e2e;
+  --highlight-secondary-text: #ffffff;
+  --lowlight: #212121;
+  --lowlight-text: #c3c3c3;
+  --warning: #dc3545;
+  --na: #f0f0f040;
+}
+body,
+html,
+.modal-content,
+.offcanvas {
+  background-color: var(--background);
+  border-color: var(--background-border);
+  color: var(--body-text);
+}
+.content p {
+  color: var(--body-text);
+  margin-bottom: 0;
+}
+a:link,
+a:visited {
+  text-decoration: none;
+  color: var(--link);
+}
+.btn:hover {
+  opacity: 0.8;
+}
+.navbar,
+.navbar .btn,
+.navbar .btn:hover {
+  background-color: var(--highlight);
+  color: var(--highlight-text);
+}
+.navbar-collapse {
+  flex-direction: row-reverse;
+}
+.content {
+  position: absolute;
+  top: 54px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+}
+div.card {
+  background-color: var(--background-secondary);
+  border-color: var(--background-border);
+}
+.commons {
+  margin: auto;
+  max-width: 1000px;
+}
+.repo_container {
+  margin: 1em 0.5em;
+}
+p.repo_header {
+  background-color: var(--background-highlight);
+  font-size: 1.5em;
+  font-weight: bold;
+}
+.repo_links a {
+  border-radius: 10px;
+  font-size: 0.8em;
+  padding: 0.5em;
+  margin: 0 0.5em 0 0;
+  background-color: var(--highlight-secondary);
+}
+.repo_files {
+  margin: 1em 0 0 0;
+  padding: 1em;
+  background-color: var(--highlight-secondary);
+  border-radius: 5px;
+}

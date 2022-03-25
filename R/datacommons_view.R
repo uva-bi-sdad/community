@@ -18,7 +18,9 @@
 #' file created from such files in each data repository (such as general entries like
 #' \code{"_references"}). These will supersede any entries of the same name found in data repositories.
 #' @param execute Logical; if \code{FALSE}, will create/update, but not run the view.
-#' @param overwrite Logical; if \code{TRUE}, replaces any existing view files.
+#' @param prefer_repo Logical; if \code{TRUE}, will prefer repository files over those from distributions
+#' (such as Dataverse).
+#' @param overwrite Logical; if \code{TRUE}, overwrites existing file maps, and reformatted files in \code{output}.
 #' @param verbose Logical; if \code{FALSE}, will not show status messages.
 #' @examples
 #' \dontrun{
@@ -33,7 +35,7 @@
 
 datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL, ids = NULL,
                              files = NULL, run_after = NULL, run_before = NULL, measure_info = list(),
-                             execute = TRUE, overwrite = FALSE, verbose = TRUE) {
+                             execute = TRUE, prefer_repo = FALSE, overwrite = FALSE, verbose = TRUE) {
   if (missing(commons)) cli_abort('{.arg commons} must be speficied (e.g., commons = ".")')
   if (missing(name)) {
     name <- list.files(paste0(commons, "/views"))[1]
@@ -43,7 +45,6 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
   view_dir <- normalizePath(paste0(commons, "/views/", name), "/", FALSE)
   dir.create(view_dir, FALSE, TRUE)
   paths <- paste0(view_dir, "/", c("view.json", "manifest.json", "run_after.R", "run_before.R"))
-  if (overwrite) unlink(paths)
   if (!is.null(run_after) && (length(run_after) > 1 || !file.exists(run_after))) {
     if (verbose) cli_alert_info("writting {.file run_after.R}")
     writeLines(run_after, paths[3])
@@ -108,37 +109,51 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       src <- parse(text = gsub("community::datacommons_view", "datacommons_view", readLines(view$run_before, warn = FALSE), fixed = TRUE))
       source(local = source_env, exprs = src)
     }
-    map_file <- paste0(commons, "/cache/variable_map.csv")
-    map <- if (overwrite || !file.exists(map_file)) {
-      if (verbose) cli_alert_info("mapping commons files")
-      datacommons_map_variables(commons, overwrite = overwrite, verbose = verbose)
-    } else {
-      read.csv(map_file)
-    }
-    files <- map[
-      (if (length(view$files)) grepl(view$files, map$file) else TRUE) &
-        (if (length(view$variables)) (map$full_name %in% view$variables | map$variable %in% view$variables) else TRUE), ,
+    if (verbose) cli_alert_info("checking for file maps")
+    map <- datacommons_map_files(commons, overwrite = overwrite, verbose = verbose)
+    files <- map$variables[
+      (if (length(view$files)) grepl(view$files, map$variables$file) else TRUE) &
+        (if (length(view$variables)) (map$variables$full_name %in% view$variables | map$variables$variable %in% view$variables) else TRUE) &
+        (if (length(view$ids)) {
+          map$variables$file %in% sub("^/", "", unique(unlist(
+            lapply(map$ids[view$ids %in% names(map$ids)], "[[", "files"),
+            use.names = FALSE
+          )))
+        } else {
+          TRUE
+        }), ,
       drop = FALSE
     ]
     if (nrow(files)) {
+      files <- files[order(grepl(if (prefer_repo) "cache/" else "repos/", files$file)), ]
       files <- files[!duplicated(files$full_name), , drop = FALSE]
       if (verbose) cli_alert_info("updating manifest: {.file {paths[2]}}")
-      write_json(lapply(split(files, files$repo), function(r) {
-        unname(lapply(split(r, r$file), function(f) {
-          list(
-            file = basename(f$file[[1]]),
-            file_date = file.mtime(f$file[[1]]),
-            md5 = unname(md5sum(f$file[[1]])),
-            variables = f$full_name
-          )
-        }))
-      }), paths[2], pretty = TRUE, auto_unbox = TRUE)
+
+      repo_manifest <- read_json(paste0(commons, "/manifest/repos.json"))
+      manifest <- lapply(split(files, files$repo), function(r) {
+        hr <- repo_manifest[[r$repo[[1]]]]
+        files <- paste0(commons, "/", unique(r$file))
+        list(
+          repository = r$repo[[1]],
+          files = lapply(files, function(f) {
+            name <- basename(f)
+            if (grepl("repos/", f, fixed = TRUE)) {
+              m <- hr$files[[name]]
+              m$baseurl <- hr$url
+            } else {
+              m <- hr$distributions$dataverse$files[[name]]
+              m$baseurl <- hr$distributions$dataverse$server
+            }
+            m
+          })
+        )
+      })
       if (is.character(measure_info)) {
         measure_info <- if (length(measure_info) == 1 && file.exists(measure_info)) read_json(measure_info) else as.list(measure_info)
       }
       for (r in unique(files$repo)) {
-        rf <- paste0(commons, "/repos/", r, "/data/measure_info.json")
-        if (file.exists(rf)) {
+        rf <- list.files(paste0(commons, "/repos/", sub("^.+/", "", r)), "^measure_info\\.json$", full.names = TRUE, recursive = TRUE)[[1]]
+        if (length(rf)) {
           ri <- read_json(rf)
           ri <- ri[!names(ri) %in% names(measure_info)]
           if (length(ri)) measure_info[names(ri)] <- ri
@@ -150,7 +165,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
         write_json(rev(measure_info), measure_info_file, pretty = TRUE, auto_unbox = TRUE)
       }
       args <- list(...)
-      args$files <- unique(files$file)
+      args$files <- paste0(commons, "/", unique(files$file))
       args$out <- view$output
       args$variables <- view$variables
       args$ids <- view$ids
@@ -166,5 +181,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       source(local = source_env, exprs = src)
     }
   }
+  write_json(manifest, paste0(view$output, "/manifest.json"), pretty = TRUE, auto_unbox = TRUE)
+  init_datacommons(commons, refresh_after = FALSE, verbose = FALSE)
   invisible(view)
 }

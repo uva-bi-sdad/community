@@ -3258,7 +3258,8 @@ void (function () {
           load_data(site.metadata.datasets[i], site.metadata.info[site.metadata.datasets[i]].site_file)
         }
       } else {
-        throw new Error('No data or metadata information present')
+        queue_init()
+        drop_load_screen()
       }
 
       if (page.load_screen) {
@@ -3676,7 +3677,7 @@ void (function () {
       if (Object.hasOwn(site.map._raw, source.url)) {
         process_layer(source, u)
       } else {
-        var f = new window.XMLHttpRequest()
+        const f = new window.XMLHttpRequest()
         f.onreadystatechange = function (u) {
           if (4 === f.readyState && 200 === f.status) {
             site.map._raw[source.url] = f.responseText

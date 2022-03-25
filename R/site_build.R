@@ -4,8 +4,6 @@
 #'
 #' @param dir Path to the site project directory.
 #' @param file Name of the R file to build the site from.
-#' @param outdir Subdirectory of \code{dir} in which to place the built site files (where the site is to be
-#' served from).
 #' @param name Name of the HTML file to be created.
 #' @param variables A character vector of variable names to include from the data. If no specified,
 #' all variables are included.
@@ -33,25 +31,25 @@
 #' # run from within a site project directory, initialized with `init_site()`
 #' site_build(".")
 #'
-#' # bundle data to most easily run locally
-#' site_build(".", bundle_data = TRUE)
+#' # serve locally and view the site
+#' site_build(".", serve = TRUE, open_after = TRUE)
 #' }
 #' @return Invisible path to the written file.
 #' @seealso To initialize a site project, use \code{\link{init_site}}.
 #' @export
 
-site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html", variables = NULL,
+site_build <- function(dir, file = "site.R", name = "index.html", variables = NULL,
                        options = list(), bundle_data = FALSE, open_after = FALSE, aggregate = TRUE, sparse_time = TRUE,
                        force = FALSE, version = "v1", parent = NULL, serve = FALSE, host = "127.0.0.1", port = 3000) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., dir = ".")')
   page <- paste0(dir, "/", file)
   if (!file.exists(page)) cli_abort("{.file {page}} does not exist")
-  out <- paste(c(dir, outdir, name), collapse = "/")
+  out <- paste(c(dir, "docs", name), collapse = "/")
   data_preprocess <- function(aggregate) {
     ddir <- paste0(dir, "/docs/data/")
     f <- paste0(ddir, "datapackage.json")
     path <- paste0(dir, "/docs/")
-    info <- list()
+    info <- meta <- list()
     vars <- variables
     if (!is.null(parent) && (force || !file.exists(f) || file.size(f) < 250)) {
       if (file.exists(paste0(parent, "/docs/data/datapackage.json"))) {
@@ -292,7 +290,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     force <- TRUE
   }
   if (!is.null(variables)) variables <- unique(c(times, variables))
-  settings$metadata <- data_preprocess(aggregate)
+  settings$metadata <- if (file.exists(paste0(dir, "/docs/data/datapackage.json"))) data_preprocess(aggregate) else list()
   parts <- make_build_environment()
   parts$dependencies <- c(
     if (version == "v1" || version == "stable") {
@@ -381,22 +379,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
         "}\n</script>"
       )
     },
-    unlist(lapply(parts$dependencies[c(2, 4, seq_len(length(parts$dependencies) - 4) + 4, 1, 3)], function(d) {
-      if (!d$src %in% c("script.js", "style.css") || (file.exists(paste0(dir, "/docs/", d$src)) &&
-        file.size(paste0(dir, "/docs/", d$src)))) {
-        paste(c(
-          "<", if (d$type == "script") 'script type="application/javascript" src="' else 'link href="', d$src, '"',
-          if (!is.null(d$hash)) c(' integrity="', d$hash, '"', ' crossorigin="anonymous"'),
-          if (d$type == "stylesheet") {
-            c(
-              ' rel="', if (!is.null(d$loading)) d$loading else "preload", '" as="style" media="all"',
-              ' onload="this.onload=null;this.rel=\'stylesheet\'"'
-            )
-          },
-          if (d$type == "script") c(" ", if (!is.null(d$loading)) d$loading else "async"), ">", if (d$type == "script") "</script>"
-        ), collapse = "")
-      }
-    })),
+    unlist(lapply(parts$dependencies[c(2, 4, seq_len(length(parts$dependencies) - 4) + 4, 1, 3)], head_import, dir = dir)),
     paste0('<meta name="generator" content="community v', packageVersion("community"), '" />'),
     unlist(parts$head[!duplicated(names(parts$head))], use.names = FALSE),
     "</head>",
@@ -404,13 +387,9 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
     '<div id="site_wrap" style="visibility: hidden; position: fixed; height: 100%; width: 100%">',
     if (!is.null(parts$header)) parts$header,
     if (!is.null(parts$body)) parts$body,
-    if (!is.null(parts$content)) {
-      c(
-        '<div class="content container-fluid">',
-        parts$content,
-        "</div>"
-      )
-    },
+    '<div class="content container-fluid">',
+    if (!is.null(parts$content)) parts$content,
+    "</div>",
     "</div>",
     paste0(
       '<div id="load_screen" style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; background-color: inherit">',
@@ -426,28 +405,7 @@ site_build <- function(dir, file = "site.R", outdir = "docs", name = "index.html
   )
   writeLines(r, out)
   cli_bullets(c(v = paste("built", name, "file:"), "*" = paste0("{.path ", out, "}")))
-  if (serve) {
-    static_path <- list("/" = staticPath(paste0(dir, "/docs"), TRUE))
-    server_exists <- FALSE
-    for (s in listServers()) {
-      if (s$getHost() == host && s$getPort() == port) {
-        if (!identical(s$getStaticPaths(), static_path)) {
-          stopServer(s)
-        } else {
-          server_exists <- TRUE
-        }
-        break
-      }
-    }
-    if (!server_exists) {
-      s <- tryCatch(startServer(host, port, list(staticPaths = static_path)), error = function(e) NULL)
-      if (is.null(s)) {
-        cli_warn(paste0("failed to create server on ", host, ":", port))
-        open_after <- FALSE
-      }
-    }
-    cli_alert_info(paste0("listening on ", host, ":", port))
-  }
+  if (serve) site_start_server(dir, host, port, open_after)
   if (open_after) viewer(if (serve) paste0("http://", host, ":", port) else out)
   invisible(out)
 }

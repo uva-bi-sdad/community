@@ -59,3 +59,20 @@ calculate_sha <- function(file, level) {
     ""
   }
 }
+
+head_import <- function(d, dir = ".") {
+  if (!d$src %in% c("script.js", "style.css") || (file.exists(paste0(dir, "/docs/", d$src)) &&
+    file.size(paste0(dir, "/docs/", d$src)))) {
+    paste(c(
+      "<", if (d$type == "script") 'script type="application/javascript" src="' else 'link href="', d$src, '"',
+      if (!is.null(d$hash)) c(' integrity="', d$hash, '"', ' crossorigin="anonymous"'),
+      if (d$type == "stylesheet") {
+        c(
+          ' rel="', if (!is.null(d$loading)) d$loading else "preload", '" as="style" media="all"',
+          ' onload="this.onload=null;this.rel=\'stylesheet\'"'
+        )
+      },
+      if (d$type == "script") c(" ", if (!is.null(d$loading)) d$loading else "async"), ">", if (d$type == "script") "</script>"
+    ), collapse = "")
+  }
+}

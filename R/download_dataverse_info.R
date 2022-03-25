@@ -2,7 +2,8 @@
 #' @return \code{download_dataverse_info}: A list with the dataset's metadata.
 #' @export
 
-download_dataverse_info <- function(id, server = NULL, key = NULL, refresh = FALSE, branch = NULL, verbose = FALSE) {
+download_dataverse_info <- function(id, server = NULL, key = NULL, refresh = FALSE, branch = NULL,
+                                    version = ":latest", verbose = FALSE) {
   if (missing(id)) cli_abort("an id must be specified")
   if (!grepl("doi", tolower(id), fixed = TRUE) && (grepl("github", id, fixed = TRUE) || grepl("^[^/]+/[^/]+$", id))) {
     if (is.null(branch) && grepl("@|/tree/", id)) {
@@ -62,10 +63,7 @@ download_dataverse_info <- function(id, server = NULL, key = NULL, refresh = FAL
     }
     if (is.null(key)) {
       if (verbose) cli_alert_info("looking for API key in fall-backs")
-      key <- Sys.getenv("DATAVERSE_KEY")
-      if (key == "") {
-        key <- getOption("dataverse.key")
-      }
+      key <- Sys.getenv("DATAVERSE_KEY", getOption("dataverse.key", ""))
     }
     if (!grepl("://", server, fixed = TRUE)) server <- paste0("https://", server)
     server <- sub("/api/.*$", "/", gsub("//+$", "/", paste0(server, "/")))
@@ -74,17 +72,25 @@ download_dataverse_info <- function(id, server = NULL, key = NULL, refresh = FAL
     {
       if (!file.exists(temp)) {
         if (verbose) cli_alert_info("downloading dataset metadata for {id} from {server}")
-        if (is.character(key) && Sys.which("curl") != "") {
+        if (is.character(key) && key != "" && Sys.which("curl") != "") {
           if (verbose) cli_alert_info("trying with key")
-          system2("curl", c(
-            paste0("-H X-Dataverse-key:", key),
-            "-o", temp,
-            paste0(server, "api/datasets/:persistentId?persistentId=doi:", id)
-          ), stdout = TRUE)
-          if (file.exists(temp)) res <- read_json(temp)$data
+          download.file(
+            paste0(server, "api/datasets/:persistentId/versions/", version, "?persistentId=doi:", id), temp,
+            quiet = TRUE, headers = c("X-Dataverse-key" = key)
+          )
+          if (file.exists(temp)) {
+            res <- read_json(temp)
+            if (is.null(res$data)) {
+              unlink(temp)
+              stop(res$message)
+            }
+            res <- res$data
+          } else {
+            stop("download failed")
+          }
         } else {
           if (verbose) cli_alert_info("trying without key")
-          res <- read_json(paste0(server, "api/datasets/:persistentId?persistentId=doi:", id))$data
+          res <- read_json(paste0(server, "api/datasets/:persistentId/versions/", version, "?persistentId=doi:", id))$data
         }
         res$server <- server
         write_json(res, temp, auto_unbox = TRUE)
@@ -99,7 +105,7 @@ download_dataverse_info <- function(id, server = NULL, key = NULL, refresh = FAL
   if (is.character(res)) {
     if (file.exists(temp)) {
       cli_abort(cli_bullets(c(
-        x = "downloaded the metadata, but failed to read it in",
+        x = "downloaded the metadata, but failed to read it in: {res}",
         i = paste0("check {.file ", temp, "}")
       )))
     } else {
@@ -108,9 +114,10 @@ download_dataverse_info <- function(id, server = NULL, key = NULL, refresh = FAL
         i = paste0(
           "tried for this dataset: {.url ", server, "dataset.xhtml?persistentId=doi:", id, "}"
         ),
-        if (length(res)) i <- paste("got this error:", res)
+        if (length(res)) c("!" = paste("got this error:", res))
       )))
     }
   }
+  if (is.null(res$latestVersion)) res$latestVersion = res
   res
 }

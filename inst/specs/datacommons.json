@@ -2,5 +2,14 @@
   "name": "datacommons",
   "context": "datacommons",
   "dir": ".",
-  "files": ["commons.json", "README.md", ".gitignore", "project.Rproj"]
+  "files": [
+    "commons.json",
+    "README.md",
+    ".gitignore",
+    "scripts/repos.txt",
+    "scripts/get_repos.sh",
+    "scripts/update_repos.sh",
+    "docs/index.html",
+    "docs/view_loader.js"
+  ]
 }
