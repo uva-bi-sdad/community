@@ -10,6 +10,6 @@
     "scripts/get_repos.sh",
     "scripts/update_repos.sh",
     "docs/index.html",
-    "docs/view_loader.js"
+    "docs/request.js"
   ]
 }

@@ -45,16 +45,14 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
   if (file.exists(paths[1])) {
     existing <- read_json(paths[1])
     name <- existing$name
-    if (is.null(repos)) {
-      repos <- if (file.exists(paths[5]) && (!length(existing$repositories) || file.mtime(paths[5]) > file.mtime(paths[1]))) {
-        readLines(paths[5])
-      } else {
-        existing$repositories
-      }
-    }
-  } else {
-    write_json(list(name = name, repositories = repos), paths[1], pretty = TRUE, auto_unbox = TRUE)
+    if (is.null(repos)) repos <- existing$repositories
   }
+  if (!length(repos) && file.exists(paths[5])) repos <- readLines(paths[5])
+  if (length(repos)) {
+    if (default_user != "") repos <- paste0(default_user, "/", repos)
+    repos <- unlist(regmatches(repos, regexec("[^/]+/[^/#@]+$", repos)), use.names = FALSE)
+  }
+  write_json(list(name = name, repositories = repos), paths[1], pretty = TRUE, auto_unbox = TRUE)
   if (!file.exists(paths[2])) {
     writeLines(c(
       paste("#", name),
@@ -88,11 +86,6 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
   }
   if (!file.exists(paths[4]) && !any(grepl("\\.Rproj$", list.files(dir)))) {
     writeLines("Version: 1.0\n", paths[4])
-  }
-  if (!length(repos) && file.exists(paths[5])) repos <- readLines(paths[5])
-  if (length(repos)) {
-    if (default_user != "") repos <- paste0(default_user, "/", repos)
-    repos <- unlist(regmatches(repos, regexec("[^/]+/[^/#@]+$", repos)), use.names = FALSE)
   }
   writeLines(if (length(repos)) Filter(nchar, repos) else "", paths[5])
   writeLines(c(
@@ -137,6 +130,7 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
     "fi",
     ""
   ), paths[7])
+  manifest_files <- paste0(dir, "/manifest/", c("repos", "files"), ".json")
   writeLines(c(
     "<!doctype html>",
     '<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">',
@@ -167,8 +161,8 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
         "window.onload = function(){commons = new DataCommons(",
         gsub("\\s+", "", paste0(readLines(paste0(dir, "/commons.json")), collapse = "")),
         ", {",
-        "repos:", paste0(readLines(paste0(dir, "/manifest/repos.json")), collapse = ""),
-        ",files:", paste0(readLines(paste0(dir, "/manifest/files.json")), collapse = ""),
+        "repos:", if (file.exists(manifest_files[1])) paste0(readLines(manifest_files[1]), collapse = "") else "{}",
+        ",files:", if (file.exists(manifest_files[2])) paste0(readLines(manifest_files[2]), collapse = "") else "{}",
         "}, ",
         toJSON(Filter(length, lapply(
           list.dirs(paste0(dir, "/views"), FALSE)[-1], function(v) {
