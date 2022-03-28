@@ -9,6 +9,8 @@
 #' @param refresh_distributions Logical; if \code{TRUE}, will download fresh copies of the distribution metadata.
 #' @param only_new Logical; if \code{TRUE}, only repositories that do not yet exist will be processed.
 #' @param reset_repos Logical; if \code{TRUE}, will fetch and hard reset the repositories to remove any local changes.
+#' @param rescan_only Logical; if \code{TRUE}, will only read the files that are already in place, without checking for
+#' updates from the remote repository.
 #' @param verbose Logical; if \code{FALSE}, will not show updated repositories.
 #' @examples
 #' \dontrun{
@@ -19,7 +21,7 @@
 #' @export
 
 datacommons_refresh <- function(dir, clone_method = "http", include_distributions = TRUE, refresh_distributions = FALSE,
-                                only_new = FALSE, reset_repos = FALSE, verbose = TRUE) {
+                                only_new = FALSE, reset_repos = FALSE, rescan_only = FALSE, verbose = TRUE) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., as ".")')
   if (Sys.which("git") == "") {
     cli_abort(c(
@@ -72,42 +74,44 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
     r <- repos[[i]]
     rn <- sub("^.*/", "", r)
     cr <- paste0(repo_dir, rn)
-    change_dir <- dir.exists(rn)
-    if (verbose) cli_alert_info(paste(if (change_dir) "pulling" else "cloning", rn))
-    if (change_dir) setwd(cr)
-    s <- tryCatch(if (change_dir) {
-      if (reset_repos) {
-        system2("git", "fetch", stdout = TRUE)
-        system2("git", "reset --hard FETCH_HEAD", stdout = TRUE)
+    if (!rescan_only) {
+      change_dir <- dir.exists(rn)
+      if (verbose) cli_alert_info(paste(if (change_dir) "pulling" else "cloning", rn))
+      if (change_dir) setwd(cr)
+      s <- tryCatch(if (change_dir) {
+        if (reset_repos) {
+          system2("git", "fetch", stdout = TRUE)
+          system2("git", "reset --hard FETCH_HEAD", stdout = TRUE)
+        } else {
+          system2("git", "pull", stdout = TRUE)
+        }
       } else {
-        system2("git", "pull", stdout = TRUE)
-      }
-    } else {
-      system2("git", c("clone", paste0(method, r, ".git")), stdout = TRUE)
-    }, error = function(e) e$message)
-    if (change_dir) setwd(repo_dir)
-    if (length(s) != 1 || s != "Already up to date.") {
-      if (!is.null(attr(s, "status"))) {
-        cli_alert_warning(c(
-          x = paste0("failed to retrieve ", r, ": ", paste(s, collapse = " "))
-        ))
-      } else {
-        updated[i] <- TRUE
-      }
-    } else if (!length(list.files(rn))) system2("rm", c("-rf", rn))
-    repo_manifest[[r]]$url <- paste0("https://github.com/", r)
+        system2("git", c("clone", paste0(method, r, ".git")), stdout = TRUE)
+      }, error = function(e) e$message)
+      if (change_dir) setwd(repo_dir)
+      if (length(s) != 1 || s != "Already up to date.") {
+        if (!is.null(attr(s, "status"))) {
+          cli_alert_warning(c(
+            x = paste0("failed to retrieve ", r, ": ", paste(s, collapse = " "))
+          ))
+        } else {
+          updated[i] <- TRUE
+        }
+      } else if (!length(list.files(rn))) system2("rm", c("-rf", rn))
+    }
     files <- list.files(
       paste0(cr, "/data"), "\\.(?:csv|tsv|txt|dat|rda|rdata)(?:\\.[gdx]z2?)?$",
       full.names = TRUE, recursive = TRUE, ignore.case = TRUE
     )
-    repo_manifest[[r]]$files <- lapply(files, function(f) {
-      list(
+    for (f in files) {
+      repo_manifest[[r]]$files[[basename(f)]] <- list(
         location = sub("^.+/data(/[^/]+/)?.*$", "data\\1", f),
+        date = format(file.mtime(f), "%Y-%m-%dT%H:%M:%SZ"),
         size = file.size(f),
+        sha = system2("git", c("hash-object", f), stdout = TRUE),
         md5 = md5sum(f)[[1]]
       )
-    })
-    names(repo_manifest[[r]]$files) <- basename(files)
+    }
     doi <- repo_manifest[[r]]$distributions$dataverse$doi
     if (include_distributions && !is.null(doi)) {
       if (verbose) {
@@ -131,6 +135,8 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
         if (is.null(meta$latestVersion)) meta$latestVersion <- list(files = meta$files)
         dir.create(paste0("../cache/", rn), FALSE)
         write_json(meta, meta_file, pretty = TRUE, auto_unbox = TRUE)
+        repo_manifest[[r]]$distributions$dataverse$id <- meta$datasetId
+        repo_manifest[[r]]$distributions$dataverse$server <- meta$server
         repo_manifest[[r]]$distributions$dataverse$files <- list()
         if (length(meta$latestVersion$files)) {
           for (f in meta$latestVersion$files) {
@@ -154,6 +160,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
             if (file.exists(existing)) {
               repo_manifest[[r]]$distributions$dataverse$files[[basename(existing)]] <- list(
                 id = f$dataFile$id,
+                date = paste0(f$dataFile$creationDate, "T00:00:00Z"),
                 size = file.size(existing),
                 md5 = md5sum(existing)[[1]]
               )
@@ -180,7 +187,12 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
       cli_alert_success("all data repositories are up to date")
     }
   }
-  write_json(repo_manifest, manifest_file, pretty = TRUE, auto_unbox = TRUE)
+  su <- names(repo_manifest) %in% repos
+  if (any(su)) {
+    write_json(repo_manifest[su], manifest_file, pretty = TRUE, auto_unbox = TRUE)
+  } else {
+    cli_warn("no repos were found in the existing repo manifest")
+  }
   init_datacommons(dir, refresh_after = FALSE, verbose = FALSE)
   invisible(repos[updated | dist_updated])
 }

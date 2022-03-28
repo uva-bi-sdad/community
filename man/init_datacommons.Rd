@@ -5,7 +5,7 @@
 \title{Initialize a Data Commons}
 \usage{
 init_datacommons(dir, name = "data commons", repos = NULL,
-  default_user = "", refresh_after = TRUE, overwrite = FALSE,
+  default_user = "", refresh_after = FALSE, overwrite = FALSE,
   serve = FALSE, host = "127.0.0.1", port = 3000, open_after = FALSE,
   verbose = interactive())
 }
@@ -19,7 +19,7 @@ init_datacommons(dir, name = "data commons", repos = NULL,
 \item{default_user}{GitHub username to prepend to repository names if needed.}
 
 \item{refresh_after}{Logical; if \code{FALSE}, will not run \code{\link{datacommons_refresh}}
-after initiating the project.}
+after initiating the project. Defaults to \code{TRUE} when first creating a data commons project.}
 
 \item{overwrite}{Logical; if \code{TRUE}, will overwrite existing datacommons files in \code{dir}.
 The included \code{.js} and \code{.sh} files are always rewritten, and if \code{name},

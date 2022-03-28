@@ -7,7 +7,7 @@
 #' @param repos A vector of repository names to add to \code{commons.json}.
 #' @param default_user GitHub username to prepend to repository names if needed.
 #' @param refresh_after Logical; if \code{FALSE}, will not run \code{\link{datacommons_refresh}}
-#' after initiating the project.
+#' after initiating the project. Defaults to \code{TRUE} when first creating a data commons project.
 #' @param overwrite Logical; if \code{TRUE}, will overwrite existing datacommons files in \code{dir}.
 #' The included \code{.js} and \code{.sh} files are always rewritten, and if \code{name},
 #' \code{repos}, or \code{default_user} is specified, \code{commons.json} will also be rewritten
@@ -25,10 +25,11 @@
 #' @export
 
 init_datacommons <- function(dir, name = "data commons", repos = NULL, default_user = "",
-                             refresh_after = TRUE, overwrite = FALSE, serve = FALSE, host = "127.0.0.1",
+                             refresh_after = FALSE, overwrite = FALSE, serve = FALSE, host = "127.0.0.1",
                              port = 3000, open_after = FALSE, verbose = interactive()) {
   if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = ".")')
   check <- check_template("datacommons", dir = dir)
+  if (missing(refresh_after) && !check$exists) refresh_after <- TRUE
   dir <- normalizePath(paste0(dir, "/", check$spec$dir), "/", FALSE)
   dir.create(paste0(dir, "/repos"), FALSE, TRUE)
   dir.create(paste0(dir, "/manifest"), FALSE)
@@ -42,12 +43,17 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
     "docs/index.html", "docs/request.js"
   ))
   if (overwrite) unlink(paths, TRUE)
+  if (
+    file.exists(paths[5]) && (!length(repos) ||
+      (file.exists(paths[1]) && file.mtime(paths[5]) > file.mtime(paths[1])))
+  ) {
+    repos <- readLines(paths[5], warn = FALSE)
+  }
   if (file.exists(paths[1])) {
     existing <- read_json(paths[1])
     name <- existing$name
-    if (is.null(repos)) repos <- existing$repositories
+    if (!length(repos)) repos <- existing$repositories
   }
-  if (!length(repos) && file.exists(paths[5])) repos <- readLines(paths[5])
   if (length(repos)) {
     if (default_user != "") repos <- paste0(default_user, "/", repos)
     repos <- unlist(regmatches(repos, regexec("[^/]+/[^/#@]+$", repos)), use.names = FALSE)
@@ -59,13 +65,22 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
       "",
       "Consists of the repositories listed in (commons.json)[commons.json].",
       "",
-      "This will refresh and check them:",
+      "You can clone this repository and run these commands to establish and work from local data:",
       "```R",
       '# remotes::install_github("uva-bi-sdad/community")',
       "library(community)",
       "",
-      "# clone and/or pull repositories:",
-      paste0('datacommons_refresh("', dir, '")'),
+      "# clone and/or pull repositories and distributions:",
+      'datacommons_refresh(".")',
+      "",
+      "# map files:",
+      'datacommons_map_files(".")',
+      "",
+      "# refresh a view (rebuild a view's site data):",
+      'datacommons_view(".", "view_name")',
+      "",
+      "# run the monitor site locally:",
+      'init_datacommons(".", serve = TRUE)',
       "```",
       ""
     ), paths[2])
@@ -81,6 +96,7 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
       "node_modules",
       "package-lock.json",
       "repos",
+      "docs/dist",
       ""
     ), paths[3])
   }
@@ -112,7 +128,7 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
     "#!/bin/bash",
     'if [[ -z "$1" ]]',
     "then",
-    '  echo "privide a commit message as the first argument"',
+    '  echo "provide a commit message as the first argument"',
     "else",
     '  read -r -p "Are you sure you want to commit and push all changes in all repositories? (y/N): "',
     '  if [[ "$REPLY" =~ ^[Yy] ]]',
@@ -139,9 +155,10 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
     '<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />',
     '<meta name="viewport" content="width=device-width,initial-scale=1" />',
     "<title>Data Commons Monitor</title>",
+    '<meta name="description" content="Data commons monitoring site.">',
     unlist(lapply(list(
-      list(type = "stylesheet", src = "dist/datacommons.css"),
-      list(type = "script", src = "dist/datacommons.js"),
+      list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/datacommons.min.css"),
+      list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/datacommons.min.js"),
       list(
         type = "stylesheet",
         src = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css",
@@ -179,8 +196,7 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
     '<div id="site_wrap" style="position: fixed; height: 100%; width: 100%">',
     page_navbar(
       title = paste(name, "Monitor"),
-      input_button("Refresh", id = "refresh_button"),
-      input_button("Views", id = "views_menu")
+      input_button("Check All", id = "refresh_button")
     ),
     '<div class="content container-fluid">',
     "</div>",
@@ -195,7 +211,7 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
     "  const v = JSON.parse(m.data),",
     "    f = new XMLHttpRequest()",
     "  f.onreadystatechange = function () {",
-    "    if (4 === f.readyState && 200 === f.status) {",
+    "    if (4 === f.readyState) {",
     "      v.response = f.responseText",
     "      postMessage(JSON.stringify(v))",
     "    }",
@@ -207,7 +223,7 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
   ), paths[9])
   if (verbose) {
     cli_bullets(c(
-      v = "created {name}:",
+      v = paste(if (check$exists) "updated" else "created", "{name}:"),
       "*" = paste0("{.path ", normalizePath(dir, "/", FALSE), "}"),
       i = if (!length(repos)) {
         paste0(

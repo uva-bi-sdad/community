@@ -25,17 +25,17 @@
 datacommons_map_files <- function(dir, search_pattern = "(?:\\d{4}).+\\.csv\\.[gbx]z2?$", variable_location = "measure",
                                   id_location = "geoid", reader = read.csv, overwrite = FALSE, verbose = TRUE) {
   if (missing(dir)) cli_abort("{.arg dir} must be specified")
-  if (!dir.exists(paste0(dir, "/repos"))) {
-    cli_abort(c(
-      x = "no {.path repos} directory found in {.arg dir}",
-      i = paste0('use {.code datacommons_refresh("', dir, '")} to bring in remote data')
-    ))
-  }
   check <- check_template("datacommons", dir = dir)
   if (!check$exists) {
     cli_abort(c(
       x = "{.arg dir} does not appear to point to a data commons project",
       i = paste0('initialize it with {.code init_datacommons("', dir, '")}')
+    ))
+  }
+  if (!dir.exists(paste0(dir, "/repos"))) {
+    cli_abort(c(
+      x = "no {.path repos} directory found in {.arg dir}",
+      i = paste0('use {.code datacommons_refresh("', dir, '")} to bring in remote data')
     ))
   }
   commons <- read_json(paste0(dir, "/commons.json"))
