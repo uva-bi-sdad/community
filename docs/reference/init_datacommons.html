@@ -102,6 +102,15 @@ regardless of <code>overwrite</code>.</p></dd>
     <h2>Value</h2>
     <p>Path to the datacommons directory.</p>
     </div>
+    <div id="details">
+    <h2>Details</h2>
+    <p>The shell scripts included in the project's <code>scripts</code> directory can be used to retrieve
+and update repositories over SSH.</p>
+<p>This will clone or pull repositories listed in <code>scripts/repos.txt</code>:
+<code>sh scripts/get_repos.sh</code></p>
+<p>This will add, commit, and push all changes in all repositories:
+<code>sh scripts/update_repos.sh "commit message"</code></p>
+    </div>
 
     <div id="ref-examples">
     <h2>Examples</h2>

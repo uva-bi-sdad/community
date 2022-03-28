@@ -42,6 +42,16 @@ Path to the datacommons directory.
 \description{
 Initialize a project to keep track of separate dataset repositories and distributions.
 }
+\details{
+The shell scripts included in the project's \code{scripts} directory can be used to retrieve
+and update repositories over SSH.
+
+This will clone or pull repositories listed in \code{scripts/repos.txt}:
+\code{sh scripts/get_repos.sh}
+
+This will add, commit, and push all changes in all repositories:
+\code{sh scripts/update_repos.sh "commit message"}
+}
 \examples{
 \dontrun{
 init_datacommons("../datacommons")

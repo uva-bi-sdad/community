@@ -17,6 +17,15 @@
 #' @param port The port to listen on if \code{serve} is \code{TRUE}; defaults to 3000.
 #' @param open_after Logical; if \code{TRUE}, will open the served monitor site in a browser after it is built.
 #' @param verbose Logical; if \code{FALSE}, suppresses messages.
+#' @details
+#' The shell scripts included in the project's \code{scripts} directory can be used to retrieve
+#' and update repositories over SSH.
+#'
+#' This will clone or pull repositories listed in \code{scripts/repos.txt}:
+#' \code{sh scripts/get_repos.sh}
+#'
+#' This will add, commit, and push all changes in all repositories:
+#' \code{sh scripts/update_repos.sh "commit message"}
 #' @examples
 #' \dontrun{
 #' init_datacommons("../datacommons")
@@ -51,7 +60,7 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
   }
   if (file.exists(paths[1])) {
     existing <- read_json(paths[1])
-    name <- existing$name
+    if (missing(name)) name <- existing$name
     if (!length(repos)) repos <- existing$repositories
   }
   if (length(repos)) {
@@ -63,7 +72,7 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
     writeLines(c(
       paste("#", name),
       "",
-      "Consists of the repositories listed in (commons.json)[commons.json].",
+      "Consists of the repositories listed in [commons.json](commons.json).",
       "",
       "You can clone this repository and run these commands to establish and work from local data:",
       "```R",
@@ -96,6 +105,7 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
       "node_modules",
       "package-lock.json",
       "repos",
+      "cache",
       "docs/dist",
       ""
     ), paths[3])
@@ -110,17 +120,19 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
     'repos_dir="$(dirname "$script_dir")/repos/"',
     "while read repo",
     "do",
+    '  repo="${repo%$\'\\r\'}"',
     '  repo_path="$repos_dir""$(basename "$repo")"',
     '  if [[ -d "$repo_path" ]]',
     "  then",
     '    echo "pulling "$repo""',
     '    cd "$repo_path"',
     "    git pull",
-    '    cd "$script_dir"',
     "  else",
     '    echo "cloning "$repo""',
-    "    git clone git@github.com:$repo.git",
+    '    cd "$repos_dir"',
+    '    git clone "git@github.com:""$repo"".git"',
     "  fi",
+    '  cd "$script_dir"',
     'done < ""$(dirname "$0")"/repos.txt"',
     ""
   ), paths[6])
