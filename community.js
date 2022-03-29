@@ -156,6 +156,30 @@ void (function () {
             ],
           ],
         },
+        vik: {
+          name: 'vik',
+          type: 'continuous-polynomial',
+          colors: [
+            [0.3146, 16.3598, 93.5256],
+            [276.4877, 654.9863, 678.309],
+            [-6250.9645, -4422.6246, -6687.2207],
+            [42090.4367, 25322.3241, 36184.6603],
+            [-93988.2948, -56997.3024, -80039.8587],
+            [86717.7586, 53230.7712, 74475.8209],
+            [-28753.6504, -17788.6284, -24705.0099],
+          ],
+        },
+        lajolla: {
+          name: 'lajolla',
+          type: 'continuous-polynomial',
+          colors: [
+            [256.0016, 255.9138, 204.945],
+            [-187.6735, -46.2889, -768.5655],
+            [1022.785, -1057.5602, 1782.0325],
+            [-2032.382, 1490.8271, -1785.9056],
+            [966.8373, -617.1949, 567.7715],
+          ],
+        },
       },
       patterns = {
         seps: /[\s._-]/g,
@@ -2071,7 +2095,7 @@ void (function () {
                     for (var i = 0, n = p.length; i < n; i++) {
                       this.parts.scale.appendChild(document.createElement('span'))
                       this.parts.scale.lastElementChild.setAttribute('of', this.id)
-                      this.parts.scale.lastElementChild.style.background = p[i]
+                      this.parts.scale.lastElementChild.style.backgroundColor = p[i]
                     }
                   } else {
                     var i = 0,
@@ -2083,7 +2107,7 @@ void (function () {
                     for (; i < n; i++) {
                       e.appendChild(document.createElement('span'))
                       e.lastElementChild.setAttribute('of', this.id)
-                      e.lastElementChild.style.background = p[i]
+                      e.lastElementChild.style.backgroundColor = p[i]
                     }
                     this.parts.scale.appendChild((e = document.createElement('div')))
                     e.setAttribute('of', this.id)
@@ -2091,8 +2115,20 @@ void (function () {
                     for (i = Math.floor(p.length / 2), n = p.length; i < n; i++) {
                       e.appendChild(document.createElement('span'))
                       e.lastElementChild.setAttribute('of', this.id)
-                      e.lastElementChild.style.background = p[i]
+                      e.lastElementChild.style.backgroundColor = p[i]
                     }
+                  }
+                } else if ('continuous-polynomial' === palettes[pn].type) {
+                  this.parts.scale.appendChild(document.createElement('div'))
+                  this.parts.scale.appendChild(document.createElement('div'))
+                  for (var i = 0, n = 256, v, e; i < n; i++) {
+                    v = i / n
+                    this.parts.scale[i < 129 ? 'firstElementChild' : 'lastElementChild'].appendChild(
+                      (e = document.createElement('span'))
+                    )
+                    e.setAttribute('of', this.id)
+                    e.style.backgroundColor =
+                      'rgb(' + poly_channel(0, v, p) + ', ' + poly_channel(1, v, p) + ', ' + poly_channel(2, v, p) + ')'
                   }
                 } else {
                   this.parts.scale.appendChild(document.createElement('span'))
@@ -2413,9 +2449,16 @@ void (function () {
       page.content.style.top = h + 'px'
     }
 
+    function poly_channel(ch, pos, coefs) {
+      for (var v = coefs[0][ch] + pos * coefs[1][ch], i = 2, n = coefs.length; i < n; i++) {
+        v += Math.pow(pos, i) * coefs[i][ch]
+      }
+      return Math.max(0, Math.min(256, v))
+    }
     function pal(value, which, summary, index, rank, total) {
       const centered = 'none' !== site.settings.color_scale_center && !site.settings.color_by_order,
         fixed = 'discrete' === palettes[which].type,
+        poly = 'continuous-polynomial' === palettes[which].type,
         colors = palettes[which].colors,
         string = Object.hasOwn(summary, 'levels'),
         min = !string ? summary.min[index] : 0,
@@ -2449,8 +2492,10 @@ void (function () {
         : p
       if (!fixed) {
         v = Math.max(0, Math.min(1, v))
-        if (upper) v = 1 - v
-        if (!centered) v *= 2
+        if (!poly) {
+          if (upper) v = 1 - v
+          if (!centered) v *= 2
+        }
       }
       return (string ? Object.hasOwn(summary.level_ids, value) : 'number' === typeof value)
         ? fixed
@@ -2464,7 +2509,9 @@ void (function () {
               )
             ]
           : 'rgb(' +
-            (upper
+            (poly
+              ? poly_channel(0, v, colors) + ', ' + poly_channel(1, v, colors) + ', ' + poly_channel(2, v, colors)
+              : upper
               ? colors[0][0][0] +
                 v * colors[0][1][0] +
                 ', ' +

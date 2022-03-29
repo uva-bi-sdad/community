@@ -64,7 +64,8 @@
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">util_make_palette</span><span class="op">(</span><span class="va">colors</span>, continuous <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">colors</span><span class="op">)</span> <span class="op">&lt;</span> <span class="fl">5</span>,
-  divergent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">colors</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">2</span>, name <span class="op">=</span> <span class="st">"custom"</span>, print <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+  divergent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">colors</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">2</span>, polynomial <span class="op">=</span> <span class="cn">FALSE</span>, degrees <span class="op">=</span> <span class="fl">6</span>,
+  pad <span class="op">=</span> <span class="fl">10</span>, name <span class="op">=</span> <span class="st">"custom"</span>, preview <span class="op">=</span> <span class="cn">TRUE</span>, print <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -80,8 +81,19 @@ last color, with the central color (or average of the central colors) as the mid
 <dt>divergent</dt>
 <dd><p>Logical; if <code>TRUE</code>, marks continuous scales as divergent,
 which will reverse the lower half of the scale.</p></dd>
+<dt>polynomial</dt>
+<dd><p>Logical; if <code>TRUE</code>, will fit a polynomial regression model to each color
+channel in the specified <code>colors</code> sequence. Used to either compress a long sequence
+(e.g., model a fully manually specified scale), or interpolate a scale between anchors.</p></dd>
+<dt>degrees</dt>
+<dd><p>Number of polynomial degrees, if <code>polynomial</code> is <code>TRUE</code>.</p></dd>
+<dt>pad</dt>
+<dd><p>If <code>polynomial</code> is <code>TRUE</code>, number of repeated observations of the
+initial and final colors in the sequence to add in order to reduce warping at the edges.</p></dd>
 <dt>name</dt>
 <dd><p>Name of the palette.</p></dd>
+<dt>preview</dt>
+<dd><p>Logical; if <code>TRUE</code>, makes a plot showing the palette colors / scale.</p></dd>
 <dt>print</dt>
 <dd><p>Logical; if <code>FALSE</code>, will not print a version of the palette.</p></dd>
 </dl></div>

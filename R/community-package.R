@@ -7,7 +7,8 @@
 #' @importFrom rstudioapi navigateToFile viewer
 #' @importFrom data.table fread set as.data.table
 #' @importFrom stringi stri_enc_detect
-#' @importFrom stats sd
+#' @importFrom stats sd lm poly
+#' @importFrom graphics axis mtext points
 #' @importFrom lingmatch lma_dict
 #' @importFrom grDevices rgb col2rgb
 #' @importFrom httpuv listServers staticPath startServer stopServer stopAllServers

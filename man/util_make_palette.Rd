@@ -5,7 +5,8 @@
 \title{Format a JavaScript Color Palette}
 \usage{
 util_make_palette(colors, continuous = length(colors) < 5,
-  divergent = length(colors) > 2, name = "custom", print = TRUE)
+  divergent = length(colors) > 2, polynomial = FALSE, degrees = 6,
+  pad = 10, name = "custom", preview = TRUE, print = TRUE)
 }
 \arguments{
 \item{colors}{A vector of color names or HEX codes, or a matrix-like object with
@@ -19,7 +20,18 @@ last color, with the central color (or average of the central colors) as the mid
 \item{divergent}{Logical; if \code{TRUE}, marks continuous scales as divergent,
 which will reverse the lower half of the scale.}
 
+\item{polynomial}{Logical; if \code{TRUE}, will fit a polynomial regression model to each color
+channel in the specified \code{colors} sequence. Used to either compress a long sequence
+(e.g., model a fully manually specified scale), or interpolate a scale between anchors.}
+
+\item{degrees}{Number of polynomial degrees, if \code{polynomial} is \code{TRUE}.}
+
+\item{pad}{If \code{polynomial} is \code{TRUE}, number of repeated observations of the
+initial and final colors in the sequence to add in order to reduce warping at the edges.}
+
 \item{name}{Name of the palette.}
+
+\item{preview}{Logical; if \code{TRUE}, makes a plot showing the palette colors / scale.}
 
 \item{print}{Logical; if \code{FALSE}, will not print a version of the palette.}
 }
