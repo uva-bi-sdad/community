@@ -329,6 +329,16 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     url = "https://getbootstrap.com",
     version = "5.1.3"
   )
+  parts$credits$colorbrewer <- list(
+    name = "ColorBrewer",
+    url = "https://colorbrewer2.org",
+    description = "Discrete color palettes"
+  )
+  parts$credits$scico <- list(
+    name = "Scico",
+    url = "https://github.com/thomasp85/scico",
+    description = "Implementation of color palettes by Fabio Crameri"
+  )
   src <- parse(text = gsub("community::site_build", "site_build", readLines(page, warn = FALSE), fixed = TRUE))
   source(local = parts, exprs = src)
   for (e in c(

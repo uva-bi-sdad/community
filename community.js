@@ -851,7 +851,14 @@ void (function () {
                 )
               }
               o.show = function (e) {
-                var trace = make_data_entry(this, e, 0, 0, 'hover_line', site.settings.theme_dark ? '#fff' : '#000')
+                var trace = make_data_entry(
+                  this,
+                  e,
+                  0,
+                  0,
+                  'hover_line',
+                  defaults['border_highlight_' + site.settings.theme_dark]
+                )
                 if (trace) {
                   trace.line.width = 4
                   trace.marker.size = 12
@@ -872,14 +879,14 @@ void (function () {
                     }
                   }
                 if (!Object.hasOwn(p, 'textfont')) p.textfont = {}
-                if (!Object.hasOwn(p.textfont, 'color')) p.textfont.color = '#adadad'
+                if (!Object.hasOwn(p.textfont, 'color')) p.textfont.color = defaults.background_highlight
                 if (!Object.hasOwn(p, 'line')) p.line = {}
-                if (!Object.hasOwn(p.line, 'color')) p.line.color = '#adadad'
+                if (!Object.hasOwn(p.line, 'color')) p.line.color = defaults.background_highlight
                 if (!Object.hasOwn(p, 'marker')) p.marker = {}
                 p.marker.size = 8
-                if (!Object.hasOwn(p.marker, 'color')) p.marker.color = '#adadad'
+                if (!Object.hasOwn(p.marker, 'color')) p.marker.color = defaults.background_highlight
                 if (!Object.hasOwn(p.marker, 'line')) p.marker.line = {}
-                if (!Object.hasOwn(p.marker.line, 'color')) p.marker.line.color = '#adadad'
+                if (!Object.hasOwn(p.marker.line, 'color')) p.marker.line.color = defaults.background_highlight
                 if (!Object.hasOwn(p, 'text')) p.text = []
                 if (!Object.hasOwn(p, 'x')) p.x = []
                 if ('box' !== p.type && !Object.hasOwn(p, 'y')) p.y = []
@@ -1016,7 +1023,7 @@ void (function () {
                   if (site.settings.boxplots && Object.hasOwn(this.traces, 'box') && s[k]) {
                     state += 'box' + site.settings.iqr_box
                     traces.push((b = JSON.parse(this.traces.box)))
-                    b.line.color = site.settings.dark_theme ? '#757575' : '#787878'
+                    b.line.color = defaults.border
                     b.median = summary.median
                     b.q3 = summary.q3
                     b.q1 = summary.q1
@@ -1089,7 +1096,7 @@ void (function () {
             o.show = function (e) {
               if (e && e.layer && e.layer[this.id]) {
                 e.layer[this.id].setStyle({
-                  color: '#ffffff',
+                  color: defaults['border_highlight_' + site.settings.theme_dark],
                 })
                 e.layer[this.id].bringToFront()
               }
@@ -1097,7 +1104,7 @@ void (function () {
             o.revert = function (e) {
               if (e && e.layer && e.layer[this.id]) {
                 e.layer[this.id].setStyle({
-                  color: '#000000',
+                  color: defaults.border,
                 })
               }
             }
@@ -1115,7 +1122,7 @@ void (function () {
           },
           mouseover: function (e) {
             e.target.setStyle({
-              color: '#ffffff',
+              color: defaults['border_highlight_' + site.settings.theme_dark],
             })
             e.target.bringToFront()
             update_subs(this.id, 'show', entities[e.target.feature.properties[e.target.source.id_property]])
@@ -1123,7 +1130,7 @@ void (function () {
           mouseout: function (e) {
             update_subs(this.id, 'revert', entities[e.target.feature.properties[e.target.source.id_property]])
             e.target.setStyle({
-              color: '#000000',
+              color: defaults.border,
             })
           },
           click: function (e) {
@@ -1147,7 +1154,7 @@ void (function () {
                 const vstate = view.value() + site.settings.background_shapes,
                   a = view.selection.all,
                   s = view.selection[site.settings.background_shapes && this.options.background_shapes ? 'ids' : 'all'],
-                  bgc = site.settings.theme_dark ? '#666' : '#000',
+                  bgc = defaults.border,
                   c = valueOf(this.color || view.y),
                   subset = 'all' === site.settings.summary_selection ? 'subset_rank' : 'rank',
                   ys = this.time
@@ -1198,7 +1205,7 @@ void (function () {
                           s[k].layer[this.id].setStyle({
                             fillOpacity: 0,
                             color: bgc,
-                            weight: 1,
+                            weight: 0.3,
                           })
                         }
                         if (!this.vstate) this.vstate = vstate
@@ -1254,7 +1261,7 @@ void (function () {
                             ls[id]._path.classList[fg ? 'remove' : 'add']('na')
                             ls[id].setStyle({
                               fillOpacity: 0.7,
-                              color: '#000000',
+                              color: defaults.border,
                               fillColor: fg,
                               weight: site.settings.polygon_outline,
                             })
@@ -1631,7 +1638,7 @@ void (function () {
               if (Object.hasOwn(this.rows, e.features.id)) {
                 const row = this.rows[e.features.id].node()
                 if (row) {
-                  row.style.backgroundColor = '#adadad'
+                  row.style.backgroundColor = defaults.background_highlight
                   if (site.settings.table_autoscroll)
                     this.e.parentElement.scroll({
                       top: row.getBoundingClientRect().y - this.e.getBoundingClientRect().y,
@@ -1927,7 +1934,7 @@ void (function () {
             if (e.target._DT_CellIndex && Object.hasOwn(this.rowIds, e.target._DT_CellIndex.row)) {
               const id = this.rowIds[e.target._DT_CellIndex.row],
                 row = this.rows[id].node()
-              if (row) row.style.backgroundColor = '#adadad'
+              if (row) row.style.backgroundColor = defaults.background_highlight
               if (Object.hasOwn(entities, id)) {
                 update_subs(this.id, 'show', entities[id])
               }
@@ -2413,7 +2420,15 @@ void (function () {
       variable_codes = {},
       variable_info = {},
       queue = {_timeout: 0},
-      defaults = {time: 'time', dataview: 'default_view', palette: 'vik'},
+      defaults = {
+        time: 'time',
+        dataview: 'default_view',
+        palette: 'vik',
+        background_highlight: '#adadad',
+        border: '#7e7e7e',
+        border_highlight_true: '#ffffff',
+        border_highlight_false: '#000000',
+      },
       summary_levels = {dataset: 'Overall', filtered: 'Filtered', all: 'Selection'},
       data_queue = {},
       data_loaded = {},
@@ -2733,7 +2748,7 @@ void (function () {
               rank,
               total
             ) ||
-            '#adadad'
+            defaults.border
         if ('bar' === t.type) t.marker.line.width = 0
         t.name = name || e.features.name
         t.id = e.features.id
