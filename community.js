@@ -1195,7 +1195,6 @@ void (function () {
                         s[k].layer[this.id].addTo(this.displaying)
                         if (!fg) {
                           s[k].layer[this.id].bringToBack()
-                          s[k].layer[this.id]._path.classList.remove('na')
                           s[k].layer[this.id].setStyle({
                             fillOpacity: 0,
                             color: bgc,
@@ -1250,7 +1249,7 @@ void (function () {
                                   a[k][subset][c][this.parsed.time] - this.parsed.summary.missing[this.parsed.time],
                                   n
                                 )
-                              : ''
+                              : '#00000000'
                           if (d === ls[id].entity.group) {
                             ls[id]._path.classList[fg ? 'remove' : 'add']('na')
                             ls[id].setStyle({
@@ -1956,8 +1955,15 @@ void (function () {
             add_dependency(o.view, {type: 'update', id: o.id})
             if (_u[o.view].y) add_dependency(_u[o.view].y, {type: 'update', id: o.id})
             if (Object.hasOwn(_u, _u[o.view].time_agg)) add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
-            if (!o.palette)
-              o.palette = Object.hasOwn(_u, 'settings.palette') ? 'settings.palette' : site.settings.palette
+            if (!o.palette) {
+              if (_u[o.view].palette) {
+                o.palette = _u[o.view].palette
+                if (Object.hasOwn(_u, _u[o.view].palette))
+                  add_dependency(_u[o.view].palette, {type: 'update', id: o.id})
+              } else {
+                o.palette = Object.hasOwn(_u, 'settings.palette') ? 'settings.palette' : site.settings.palette
+              }
+            }
             o.parsed = {summary: {}, order: [], selection: {}, selected_summary: {}, time: 0, color: ''}
             o.parts = {
               ticks: o.e.getElementsByClassName('legend-ticks')[0],
@@ -2029,7 +2035,10 @@ void (function () {
                     (p > 96 || p < 4) && e.features.name.length > 13
                       ? e.features.name.substring(0, 12) + '…'
                       : e.features.name
-                } else if (site.settings.color_by_order) {
+                } else if (
+                  site.settings.color_by_order &&
+                  Object.hasOwn(entities[e.features.id][subset], c.parsed.color)
+                ) {
                   var i =
                       entities[e.features.id][subset][c.parsed.color][c.parsed.time] - summary.missing[c.parsed.time],
                     po = (i / (summary.n[c.parsed.time] - 1)) * 100
@@ -2050,7 +2059,7 @@ void (function () {
               this.ticks.entity.firstElementChild.classList.add('hidden')
             }
             add_dependency(o.view, {type: 'update', id: o.id})
-            if (Object.hasOwn(_u, o.palette)) {
+            if (Object.hasOwn(_u, o.palette) && _u[o.palette].e) {
               _u[o.palette].e.addEventListener('change', o.update)
             }
             o.update()
@@ -2117,18 +2126,6 @@ void (function () {
                       e.lastElementChild.setAttribute('of', this.id)
                       e.lastElementChild.style.backgroundColor = p[i]
                     }
-                  }
-                } else if ('continuous-polynomial' === palettes[pn].type) {
-                  this.parts.scale.appendChild(document.createElement('div'))
-                  this.parts.scale.appendChild(document.createElement('div'))
-                  for (var i = 0, n = 256, v, e; i < n; i++) {
-                    v = i / n
-                    this.parts.scale[i < 129 ? 'firstElementChild' : 'lastElementChild'].appendChild(
-                      (e = document.createElement('span'))
-                    )
-                    e.setAttribute('of', this.id)
-                    e.style.backgroundColor =
-                      'rgb(' + poly_channel(0, v, p) + ', ' + poly_channel(1, v, p) + ', ' + poly_channel(2, v, p) + ')'
                   }
                 } else {
                   this.parts.scale.appendChild(document.createElement('span'))
@@ -2416,7 +2413,7 @@ void (function () {
       variable_codes = {},
       variable_info = {},
       queue = {_timeout: 0},
-      defaults = {time: 'time', dataview: 'default_view', palette: 'grey'},
+      defaults = {time: 'time', dataview: 'default_view', palette: 'vik'},
       summary_levels = {dataset: 'Overall', filtered: 'Filtered', all: 'Selection'},
       data_queue = {},
       data_loaded = {},
@@ -2449,16 +2446,9 @@ void (function () {
       page.content.style.top = h + 'px'
     }
 
-    function poly_channel(ch, pos, coefs) {
-      for (var v = coefs[0][ch] + pos * coefs[1][ch], i = 2, n = coefs.length; i < n; i++) {
-        v += Math.pow(pos, i) * coefs[i][ch]
-      }
-      return Math.max(0, Math.min(256, v))
-    }
     function pal(value, which, summary, index, rank, total) {
       const centered = 'none' !== site.settings.color_scale_center && !site.settings.color_by_order,
         fixed = 'discrete' === palettes[which].type,
-        poly = 'continuous-polynomial' === palettes[which].type,
         colors = palettes[which].colors,
         string = Object.hasOwn(summary, 'levels'),
         min = !string ? summary.min[index] : 0,
@@ -2492,10 +2482,8 @@ void (function () {
         : p
       if (!fixed) {
         v = Math.max(0, Math.min(1, v))
-        if (!poly) {
-          if (upper) v = 1 - v
-          if (!centered) v *= 2
-        }
+        if (upper) v = 1 - v
+        if (!centered) v *= 2
       }
       return (string ? Object.hasOwn(summary.level_ids, value) : 'number' === typeof value)
         ? fixed
@@ -2509,9 +2497,7 @@ void (function () {
               )
             ]
           : 'rgb(' +
-            (poly
-              ? poly_channel(0, v, colors) + ', ' + poly_channel(1, v, colors) + ', ' + poly_channel(2, v, colors)
-              : upper
+            (upper
               ? colors[0][0][0] +
                 v * colors[0][1][0] +
                 ', ' +
@@ -2934,6 +2920,27 @@ void (function () {
         site.settings[k] = c
       }
     if (site && site.metadata) map_variables()
+
+    // preprocess polynomial palettes
+    function poly_channel(ch, pos, coefs) {
+      for (var v = coefs[0][ch] + pos * coefs[1][ch], i = 2, n = coefs.length; i < n; i++) {
+        v += Math.pow(pos, i) * coefs[i][ch]
+      }
+      return Math.max(0, Math.min(255, v))
+    }
+    for (k in palettes)
+      if (Object.hasOwn(palettes, k) && 'continuous-polynomial' === palettes[k].type) {
+        c = palettes[k].colors
+        palettes[k].type = 'discrete'
+        palettes[k].colors = []
+        i = 0
+        for (var n = 255, v; i < n; i++) {
+          v = i / n
+          palettes[k].colors.push(
+            'rgb(' + poly_channel(0, v, c) + ', ' + poly_channel(1, v, c) + ', ' + poly_channel(2, v, c) + ')'
+          )
+        }
+      }
 
     window.onload = function () {
       var k, i, e, c, p, ci, n, o

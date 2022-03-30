@@ -12,7 +12,7 @@
   --lowlight: #212121;
   --lowlight-text: #c3c3c3;
   --warning: #dc3545;
-  --na: #f0f0f040;
+  --na: #ffffff;
 }
 .light-theme {
   --background: #ffffff;
@@ -28,7 +28,7 @@
   --lowlight: #e9ecef;
   --lowlight-text: #212529;
   --warning: #a11320;
-  --na: #48484840;
+  --na: #000000;
 }
 
 body,
@@ -130,7 +130,8 @@ body::-webkit-scrollbar-track,
   color: var(--lowlight-text);
 }
 .na {
-  background-color: var(--na);
+  background-color: '#00000000';
+  border: 2px solid var(--na);
   fill: var(--na);
 }
 
