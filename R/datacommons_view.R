@@ -17,6 +17,12 @@
 #' @param measure_info A list of variable metadata to include in the \code{measure_info.json}
 #' file created from such files in each data repository (such as general entries like
 #' \code{"_references"}). These will supersede any entries of the same name found in data repositories.
+#' @param remote Name of the view's GitHub repository (\code{"username/reponame"}).
+#' @param url URL of the view's site; defaults to the GitHub Pages URL associated with \code{remote}
+#' if provided (\code{"https://username.github.io/reponame"}).
+#' @param children A list of child sites associated with the view. Each entry should contain at least a
+#' \code{remote} entry (GitHub repository, including user name and repo name), and optionally \code{name}
+#' and \code{url} (link to the served site), which will otherwise be derived from \code{remote}.
 #' @param execute Logical; if \code{FALSE}, will create/update, but not run the view.
 #' @param prefer_repo Logical; if \code{TRUE}, will prefer repository files over those from distributions
 #' (such as Dataverse).
@@ -30,12 +36,13 @@
 #' # refresh that view
 #' datacommons_view(".", "view_name")
 #' }
-#' @return An invisible version of the view list (the view's view.json file).
+#' @return An invisible version of the view list (the view's \code{view.json} file).
 #' @export
 
 datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL, ids = NULL,
                              files = NULL, run_after = NULL, run_before = NULL, measure_info = list(),
-                             execute = TRUE, prefer_repo = FALSE, overwrite = FALSE, verbose = TRUE) {
+                             remote = NULL, url = NULL, children = list(), execute = TRUE, prefer_repo = FALSE,
+                             overwrite = FALSE, verbose = TRUE) {
   if (missing(commons)) cli_abort('{.arg commons} must be speficied (e.g., commons = ".")')
   if (missing(name)) {
     name <- list.files(paste0(commons, "/views"))[1]
@@ -61,16 +68,27 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
     if (verbose) cli_alert_info("writting new {.file view.json}")
     view <- list(
       name = name,
+      remote = remote,
+      url = url,
       output = output,
       run_after = run_after,
       run_before = run_before,
       variables = variables,
       ids = ids,
-      files = files
+      files = files,
+      children = children
     )
     write_view <- TRUE
   } else {
     view <- read_json(paths[1])
+    if (!is.null(remote) && !identical(view$remote, remote)) {
+      view$remote <- remote
+      write_view <- TRUE
+    }
+    if (!is.null(url) && !identical(view$url, url)) {
+      view$url <- url
+      write_view <- TRUE
+    }
     if (!is.null(output) && !identical(view$output, output)) {
       view$output <- output
       write_view <- TRUE
@@ -95,7 +113,28 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       view$files <- files
       write_view <- TRUE
     }
+    if (!is.null(children) && !identical(view$children, children)) {
+      view$children <- children
+      write_view <- TRUE
+    }
     if (verbose && write_view) cli_alert_info("updating existing {.file view.json}")
+  }
+  if (!is.null(view$remote) && is.null(view$url)) {
+    remote_parts <- strsplit(sub("^(?:http?://)?(?:www\\.)?github\\.com/", "", view$remote), "/")[[1]]
+    view$url <- paste0("https://", remote_parts[1], ".github.io/", remote_parts[2])
+  }
+  if (length(view$children)) {
+    if (!is.null(names(view$children))) view$children <- list(view$children)
+    view$children <- lapply(view$children, function(ch) {
+      if (is.null(ch$name)) {
+        ch$name <- sub("^.*/", "", ch$remote)
+      }
+      if (is.null(ch$url)) {
+        remote_parts <- strsplit(sub("^(?:http?://)?(?:www\\.)?github\\.com/", "", ch$remote), "/")[[1]]
+        ch$url <- paste0("https://", remote_parts[1], ".github.io/", remote_parts[2])
+      }
+      ch
+    })
   }
   if (length(view$variables)) view$variables <- as.character(view$variables)
   if (length(view$ids)) view$ids <- as.character(view$ids)
@@ -180,8 +219,8 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       src <- parse(text = gsub("community::datacommons_view", "datacommons_view", readLines(view$run_after, warn = FALSE), fixed = TRUE))
       source(local = source_env, exprs = src)
     }
+    write_json(manifest, paste0(view$output, "/manifest.json"), pretty = TRUE, auto_unbox = TRUE)
   }
-  write_json(manifest, paste0(view$output, "/manifest.json"), pretty = TRUE, auto_unbox = TRUE)
   init_datacommons(commons, refresh_after = FALSE, verbose = FALSE)
   invisible(view)
 }

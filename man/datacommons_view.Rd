@@ -6,8 +6,9 @@
 \usage{
 datacommons_view(commons, name, output = NULL, ..., variables = NULL,
   ids = NULL, files = NULL, run_after = NULL, run_before = NULL,
-  measure_info = list(), execute = TRUE, prefer_repo = FALSE,
-  overwrite = FALSE, verbose = TRUE)
+  measure_info = list(), remote = NULL, url = NULL, children = list(),
+  execute = TRUE, prefer_repo = FALSE, overwrite = FALSE,
+  verbose = TRUE)
 }
 \arguments{
 \item{commons}{Path to the data commons project.}
@@ -35,6 +36,15 @@ be added to such a script.}
 file created from such files in each data repository (such as general entries like
 \code{"_references"}). These will supersede any entries of the same name found in data repositories.}
 
+\item{remote}{Name of the view's GitHub repository (\code{"username/reponame"}).}
+
+\item{url}{URL of the view's site; defaults to the GitHub Pages URL associated with \code{remote}
+if provided (\code{"https://username.github.io/reponame"}).}
+
+\item{children}{A list of child sites associated with the view. Each entry should contain at least a
+\code{remote} entry (GitHub repository, including user name and repo name), and optionally \code{name}
+and \code{url} (link to the served site), which will otherwise be derived from \code{remote}.}
+
 \item{execute}{Logical; if \code{FALSE}, will create/update, but not run the view.}
 
 \item{prefer_repo}{Logical; if \code{TRUE}, will prefer repository files over those from distributions
@@ -45,7 +55,7 @@ file created from such files in each data repository (such as general entries li
 \item{verbose}{Logical; if \code{FALSE}, will not show status messages.}
 }
 \value{
-An invisible version of the view list (the view's view.json file).
+An invisible version of the view list (the view's \code{view.json} file).
 }
 \description{
 Add, edit, or refresh a view within a data commons project.

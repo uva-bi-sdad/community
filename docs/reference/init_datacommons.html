@@ -63,10 +63,10 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">init_datacommons</span><span class="op">(</span><span class="va">dir</span>, name <span class="op">=</span> <span class="st">"data commons"</span>, repos <span class="op">=</span> <span class="cn">NULL</span>,
-  default_user <span class="op">=</span> <span class="st">""</span>, refresh_after <span class="op">=</span> <span class="cn">FALSE</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>,
-  serve <span class="op">=</span> <span class="cn">FALSE</span>, host <span class="op">=</span> <span class="st">"127.0.0.1"</span>, port <span class="op">=</span> <span class="fl">3000</span>, open_after <span class="op">=</span> <span class="cn">FALSE</span>,
-  verbose <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">init_datacommons</span><span class="op">(</span><span class="va">dir</span>, name <span class="op">=</span> <span class="st">"Data Commons"</span>, repos <span class="op">=</span> <span class="cn">NULL</span>,
+  default_user <span class="op">=</span> <span class="st">""</span>, remote <span class="op">=</span> <span class="cn">NULL</span>, url <span class="op">=</span> <span class="cn">NULL</span>, refresh_after <span class="op">=</span> <span class="cn">FALSE</span>,
+  overwrite <span class="op">=</span> <span class="cn">FALSE</span>, serve <span class="op">=</span> <span class="cn">FALSE</span>, host <span class="op">=</span> <span class="st">"127.0.0.1"</span>, port <span class="op">=</span> <span class="fl">3000</span>,
+  open_after <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -79,6 +79,11 @@
 <dd><p>A vector of repository names to add to <code>commons.json</code>.</p></dd>
 <dt>default_user</dt>
 <dd><p>GitHub username to prepend to repository names if needed.</p></dd>
+<dt>remote</dt>
+<dd><p>Name of the data commons' GitHub repository (<code>"username/reponame"</code>).</p></dd>
+<dt>url</dt>
+<dd><p>URL of the data commons' monitor site; defaults to the GitHub Pages URL associated with <code>remote</code>
+if provided (<code>"https://username.github.io/reponame"</code>).</p></dd>
 <dt>refresh_after</dt>
 <dd><p>Logical; if <code>FALSE</code>, will not run <code><a href="datacommons_refresh.html">datacommons_refresh</a></code>
 after initiating the project. Defaults to <code>TRUE</code> when first creating a data commons project.</p></dd>
@@ -115,7 +120,11 @@ and update repositories over SSH.</p>
     <div id="ref-examples">
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
-<span class="r-in"><span class="fu">init_datacommons</span><span class="op">(</span><span class="st">"../datacommons"</span><span class="op">)</span></span>
+<span class="r-in"><span class="fu">init_datacommons</span><span class="op">(</span></span>
+<span class="r-in">  <span class="st">"../datacommons"</span>,</span>
+<span class="r-in">  name <span class="op">=</span> <span class="st">"Data Commons"</span>,</span>
+<span class="r-in">  remote <span class="op">=</span> <span class="st">""</span></span>
+<span class="r-in"><span class="op">)</span></span>
 <span class="r-in"><span class="op">}</span></span>
 </code></pre></div>
     </div>

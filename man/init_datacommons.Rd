@@ -4,10 +4,10 @@
 \alias{init_datacommons}
 \title{Initialize a Data Commons}
 \usage{
-init_datacommons(dir, name = "data commons", repos = NULL,
-  default_user = "", refresh_after = FALSE, overwrite = FALSE,
-  serve = FALSE, host = "127.0.0.1", port = 3000, open_after = FALSE,
-  verbose = interactive())
+init_datacommons(dir, name = "Data Commons", repos = NULL,
+  default_user = "", remote = NULL, url = NULL, refresh_after = FALSE,
+  overwrite = FALSE, serve = FALSE, host = "127.0.0.1", port = 3000,
+  open_after = FALSE, verbose = interactive())
 }
 \arguments{
 \item{dir}{Path to the desired data commons directory.}
@@ -17,6 +17,11 @@ init_datacommons(dir, name = "data commons", repos = NULL,
 \item{repos}{A vector of repository names to add to \code{commons.json}.}
 
 \item{default_user}{GitHub username to prepend to repository names if needed.}
+
+\item{remote}{Name of the data commons' GitHub repository (\code{"username/reponame"}).}
+
+\item{url}{URL of the data commons' monitor site; defaults to the GitHub Pages URL associated with \code{remote}
+if provided (\code{"https://username.github.io/reponame"}).}
 
 \item{refresh_after}{Logical; if \code{FALSE}, will not run \code{\link{datacommons_refresh}}
 after initiating the project. Defaults to \code{TRUE} when first creating a data commons project.}
@@ -54,6 +59,10 @@ This will add, commit, and push all changes in all repositories:
 }
 \examples{
 \dontrun{
-init_datacommons("../datacommons")
+init_datacommons(
+  "../datacommons",
+  name = "Data Commons",
+  remote = ""
+)
 }
 }

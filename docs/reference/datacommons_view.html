@@ -65,8 +65,9 @@
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">datacommons_view</span><span class="op">(</span><span class="va">commons</span>, <span class="va">name</span>, output <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span>, variables <span class="op">=</span> <span class="cn">NULL</span>,
   ids <span class="op">=</span> <span class="cn">NULL</span>, files <span class="op">=</span> <span class="cn">NULL</span>, run_after <span class="op">=</span> <span class="cn">NULL</span>, run_before <span class="op">=</span> <span class="cn">NULL</span>,
-  measure_info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, execute <span class="op">=</span> <span class="cn">TRUE</span>, prefer_repo <span class="op">=</span> <span class="cn">FALSE</span>,
-  overwrite <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+  measure_info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, remote <span class="op">=</span> <span class="cn">NULL</span>, url <span class="op">=</span> <span class="cn">NULL</span>, children <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,
+  execute <span class="op">=</span> <span class="cn">TRUE</span>, prefer_repo <span class="op">=</span> <span class="cn">FALSE</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>,
+  verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -96,6 +97,15 @@ be added to such a script.</p></dd>
 <dd><p>A list of variable metadata to include in the <code>measure_info.json</code>
 file created from such files in each data repository (such as general entries like
 <code>"_references"</code>). These will supersede any entries of the same name found in data repositories.</p></dd>
+<dt>remote</dt>
+<dd><p>Name of the view's GitHub repository (<code>"username/reponame"</code>).</p></dd>
+<dt>url</dt>
+<dd><p>URL of the view's site; defaults to the GitHub Pages URL associated with <code>remote</code>
+if provided (<code>"https://username.github.io/reponame"</code>).</p></dd>
+<dt>children</dt>
+<dd><p>A list of child sites associated with the view. Each entry should contain at least a
+<code>remote</code> entry (GitHub repository, including user name and repo name), and optionally <code>name</code>
+and <code>url</code> (link to the served site), which will otherwise be derived from <code>remote</code>.</p></dd>
 <dt>execute</dt>
 <dd><p>Logical; if <code>FALSE</code>, will create/update, but not run the view.</p></dd>
 <dt>prefer_repo</dt>
@@ -108,7 +118,7 @@ file created from such files in each data repository (such as general entries li
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>An invisible version of the view list (the view's view.json file).</p>
+    <p>An invisible version of the view list (the view's <code>view.json</code> file).</p>
     </div>
 
     <div id="ref-examples">

@@ -6,6 +6,9 @@
 #' @param name Name of the data commons.
 #' @param repos A vector of repository names to add to \code{commons.json}.
 #' @param default_user GitHub username to prepend to repository names if needed.
+#' @param remote Name of the data commons' GitHub repository (\code{"username/reponame"}).
+#' @param url URL of the data commons' monitor site; defaults to the GitHub Pages URL associated with \code{remote}
+#' if provided (\code{"https://username.github.io/reponame"}).
 #' @param refresh_after Logical; if \code{FALSE}, will not run \code{\link{datacommons_refresh}}
 #' after initiating the project. Defaults to \code{TRUE} when first creating a data commons project.
 #' @param overwrite Logical; if \code{TRUE}, will overwrite existing datacommons files in \code{dir}.
@@ -28,14 +31,18 @@
 #' \code{sh scripts/update_repos.sh "commit message"}
 #' @examples
 #' \dontrun{
-#' init_datacommons("../datacommons")
+#' init_datacommons(
+#'   "../datacommons",
+#'   name = "Data Commons",
+#'   remote = ""
+#' )
 #' }
 #' @return Path to the datacommons directory.
 #' @export
 
-init_datacommons <- function(dir, name = "data commons", repos = NULL, default_user = "",
-                             refresh_after = FALSE, overwrite = FALSE, serve = FALSE, host = "127.0.0.1",
-                             port = 3000, open_after = FALSE, verbose = interactive()) {
+init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_user = "",
+                             remote = NULL, url = NULL, refresh_after = FALSE, overwrite = FALSE, serve = FALSE,
+                             host = "127.0.0.1", port = 3000, open_after = FALSE, verbose = interactive()) {
   if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = ".")')
   check <- check_template("datacommons", dir = dir)
   if (missing(refresh_after) && !check$exists) refresh_after <- TRUE
@@ -208,7 +215,7 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
     '<div id="site_wrap" style="position: fixed; height: 100%; width: 100%">',
     page_navbar(
       title = paste(name, "Monitor"),
-      input_button("Check All", id = "refresh_button")
+      input_button("check repos", id = "refresh_button")
     ),
     '<div class="content container-fluid">',
     "</div>",
@@ -220,15 +227,15 @@ init_datacommons <- function(dir, name = "data commons", repos = NULL, default_u
   writeLines(c(
     "'use strict'",
     "onmessage = function(m){",
-    "  const v = JSON.parse(m.data),",
-    "    f = new XMLHttpRequest()",
+    "  const f = new XMLHttpRequest()",
     "  f.onreadystatechange = function () {",
     "    if (4 === f.readyState) {",
-    "      v.response = f.responseText",
-    "      postMessage(JSON.stringify(v))",
+    "      m.data.status = f.status",
+    "      m.data.response = f.responseText",
+    "      postMessage(m.data)",
     "    }",
     "  }",
-    "  f.open('GET', v.url, true)",
+    "  f.open('GET', m.data.url, true)",
     "  f.send()",
     "}",
     ""
