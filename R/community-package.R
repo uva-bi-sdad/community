@@ -9,7 +9,7 @@
 #' @importFrom stringi stri_enc_detect
 #' @importFrom stats sd lm poly
 #' @importFrom graphics axis mtext points
-#' @importFrom lingmatch lma_dict
+#' @importFrom lingmatch lma_dict lma_dtm lma_simets
 #' @importFrom grDevices rgb col2rgb
 #' @importFrom httpuv listServers staticPath startServer stopServer stopAllServers
 #' @keywords internal

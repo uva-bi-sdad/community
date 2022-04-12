@@ -193,7 +193,7 @@ init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_u
     paste(c(
       '<script type="text/javascript">',
       "var commons",
-      paste0(
+      gsub("\\s+(?=\\W)", "", paste0(
         "window.onload = function(){commons = new DataCommons(",
         gsub("\\s+", "", paste0(readLines(paste0(dir, "/commons.json")), collapse = "")),
         ", {",
@@ -207,7 +207,7 @@ init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_u
           }
         )), auto_unbox = TRUE),
         ")}"
-      ),
+      ), perl = TRUE),
       "</script>"
     ), collapse = "\n"),
     "</head>",

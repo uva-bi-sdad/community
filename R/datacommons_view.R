@@ -26,7 +26,8 @@
 #' @param execute Logical; if \code{FALSE}, will create/update, but not run the view.
 #' @param prefer_repo Logical; if \code{TRUE}, will prefer repository files over those from distributions
 #' (such as Dataverse).
-#' @param overwrite Logical; if \code{TRUE}, overwrites existing file maps, and reformatted files in \code{output}.
+#' @param refresh_map Logical; if \code{TRUE}, overwrites any existing map files.
+#' @param overwrite Logical; if \code{TRUE}, reformatted files in \code{output}.
 #' @param verbose Logical; if \code{FALSE}, will not show status messages.
 #' @examples
 #' \dontrun{
@@ -42,7 +43,7 @@
 datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL, ids = NULL,
                              files = NULL, run_after = NULL, run_before = NULL, measure_info = list(),
                              remote = NULL, url = NULL, children = list(), execute = TRUE, prefer_repo = FALSE,
-                             overwrite = FALSE, verbose = TRUE) {
+                             refresh_map = FALSE, overwrite = FALSE, verbose = TRUE) {
   if (missing(commons)) cli_abort('{.arg commons} must be speficied (e.g., commons = ".")')
   if (missing(name)) {
     name <- list.files(paste0(commons, "/views"))[1]
@@ -149,7 +150,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       source(local = source_env, exprs = src)
     }
     if (verbose) cli_alert_info("checking for file maps")
-    map <- datacommons_map_files(commons, overwrite = overwrite, verbose = verbose)
+    map <- datacommons_map_files(commons, overwrite = refresh_map, verbose = verbose)
     files <- map$variables[
       (if (length(view$files)) grepl(view$files, map$variables$file) else TRUE) &
         (if (length(view$variables)) (map$variables$full_name %in% view$variables | map$variables$variable %in% view$variables) else TRUE) &
@@ -164,10 +165,13 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       drop = FALSE
     ]
     if (nrow(files)) {
-      files <- files[order(grepl(if (prefer_repo) "cache/" else "repos/", files$file)), ]
-      files <- files[!duplicated(files$full_name), , drop = FALSE]
+      cfs <- paste0("/", files$file)
+      files <- files[order(
+        grepl(if (prefer_repo) "cache/" else "repos/", files$file) -
+          Reduce("+", lapply(view$ids, function(id) cfs %in% map$ids[[id]]$file))
+      ), ]
+      files <- files[!duplicated(paste(files$full_name, basename(files$file))), , drop = FALSE]
       if (verbose) cli_alert_info("updating manifest: {.file {paths[2]}}")
-
       repo_manifest <- read_json(paste0(commons, "/manifest/repos.json"))
       manifest <- lapply(split(files, files$repo), function(r) {
         hr <- repo_manifest[[r$repo[[1]]]]

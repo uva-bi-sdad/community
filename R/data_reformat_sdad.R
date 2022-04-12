@@ -187,6 +187,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     }
   }
   if (all(nchar(times) == 4)) times <- seq(min(times), max(times))
+  n <- length(times)
   if (!is.null(out)) {
     files <- paste0(out, "/", gsub("\\s+", "_", tolower(datasets)), ".csv")
     if (is.character(compression) && grepl("^[gbx]", compression, FALSE)) {
@@ -214,7 +215,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
         if (verbose) cli_progress_update()
         e <- ids[[i]]
         ed <- d[d[[id]] == e]
-        n <- length(times)
+        ed <- ed[!duplicated(do.call(paste, ed[, vars[2:4], with = FALSE]))]
         r <- data.frame(
           ID = rep(as.character(e), n), time = times, check.names = FALSE,
           matrix(NA, n, length(present_vars), dimnames = list(times, present_vars))

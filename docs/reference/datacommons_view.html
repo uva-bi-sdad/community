@@ -66,8 +66,8 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">datacommons_view</span><span class="op">(</span><span class="va">commons</span>, <span class="va">name</span>, output <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span>, variables <span class="op">=</span> <span class="cn">NULL</span>,
   ids <span class="op">=</span> <span class="cn">NULL</span>, files <span class="op">=</span> <span class="cn">NULL</span>, run_after <span class="op">=</span> <span class="cn">NULL</span>, run_before <span class="op">=</span> <span class="cn">NULL</span>,
   measure_info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, remote <span class="op">=</span> <span class="cn">NULL</span>, url <span class="op">=</span> <span class="cn">NULL</span>, children <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,
-  execute <span class="op">=</span> <span class="cn">TRUE</span>, prefer_repo <span class="op">=</span> <span class="cn">FALSE</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>,
-  verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+  execute <span class="op">=</span> <span class="cn">TRUE</span>, prefer_repo <span class="op">=</span> <span class="cn">FALSE</span>, refresh_map <span class="op">=</span> <span class="cn">FALSE</span>,
+  overwrite <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -111,8 +111,10 @@ and <code>url</code> (link to the served site), which will otherwise be derived 
 <dt>prefer_repo</dt>
 <dd><p>Logical; if <code>TRUE</code>, will prefer repository files over those from distributions
 (such as Dataverse).</p></dd>
+<dt>refresh_map</dt>
+<dd><p>Logical; if <code>TRUE</code>, overwrites any existing map files.</p></dd>
 <dt>overwrite</dt>
-<dd><p>Logical; if <code>TRUE</code>, overwrites existing file maps, and reformatted files in <code>output</code>.</p></dd>
+<dd><p>Logical; if <code>TRUE</code>, reformatted files in <code>output</code>.</p></dd>
 <dt>verbose</dt>
 <dd><p>Logical; if <code>FALSE</code>, will not show status messages.</p></dd>
 </dl></div>
