@@ -155,6 +155,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   datasets <- unique(data[[dataset]])
   present_vars <- unique(data[[value_name]])
   if (check_variables) {
+    present_vars <- variables[variables %in% present_vars]
     variables <- variables[!variables %in% present_vars]
     if (length(variables)) cli_warn("requested variable{?s} not found in datasets: {.val {variables}}")
   }

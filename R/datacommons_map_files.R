@@ -22,7 +22,7 @@
 #' each of which with entries for \code{repos} (repositories in which the ID appears) and \code{files} (files in which the ID appears).
 #' @export
 
-datacommons_map_files <- function(dir, search_pattern = "(?:\\d{4}).+\\.csv\\.[gbx]z2?$", variable_location = "measure",
+datacommons_map_files <- function(dir, search_pattern = "(?:\\d{4}).+\\.csv(?:\\.[gbx]z2?)?$", variable_location = "measure",
                                   id_location = "geoid", reader = read.csv, overwrite = FALSE, verbose = TRUE) {
   if (missing(dir)) cli_abort("{.arg dir} must be specified")
   check <- check_template("datacommons", dir = dir)

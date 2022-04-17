@@ -64,6 +64,8 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
       ids_maps <- list()
       child <- id_lengths <- NULL
       dataset_order <- order(-vapply(meta$resources, "[[", 0, "bytes"))
+      var_codes <- unique(unlist(lapply(meta$resources, function(d) vapply(d$schema$fields, "[[", "", "name")), use.names = FALSE))
+      var_codes <- structure(paste0("X", seq_along(var_codes)), names = var_codes)
       for (oi in seq_along(dataset_order)) {
         i <- dataset_order[oi]
         d <- meta$resources[[i]]
@@ -198,40 +200,41 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
               }
               data <- do.call(rbind, sdata)
               times <- if (is.null(time)) rep(1, nrow(data)) else data[[time]]
-              if (sparse_time && aggregated) {
-                for (vi in seq_along(d$schema$fields)) {
-                  v <- data[[d$schema$fields[[vi]]$name]]
-                  d$schema$fields[[vi]]$time_range <- which(unname(tapply(v, times, function(v) any(!is.na(v))))) - 1
-                  d$schema$fields[[vi]]$time_range <- if (length(d$schema$fields[[vi]]$time_range)) {
-                    d$schema$fields[[vi]]$time_range[c(1, length(d$schema$fields[[vi]]$time_range))]
-                  } else {
-                    c(-1, -1)
-                  }
-                }
-                meta$resources[[i]] <- d
-                write_json(meta, f, pretty = TRUE, auto_unbox = TRUE)
-              }
+              ntimes <- length(unique(times))
               if (fixed_ids) id_lengths[d$name] <- pn
               previous_data[[d$name]] <- sdata
               evars <- vars
               if (!length(evars)) evars <- colnames(data)
               if (!is.null(time) && time %in% evars) evars <- evars[evars != time]
-              var_code <- structure(paste0("X", seq_along(evars)), names = evars)
+              var_meta <- lapply(evars, function(vn) list(
+                code = var_codes[[vn]],
+                time_range = if (sparse_time) {
+                  v <- data[[vn]]
+                  range <- which(unname(tapply(v, times, function(v) any(!is.na(v))))) - 1
+                  if (length(range)) {
+                    range[c(1, length(range))]
+                  } else {
+                    if (aggregate) cli_warn("no observations of {vn} in {d$filename}")
+                    c(-1, -1)
+                  }
+                } else c(0, ntimes - 1)
+              ))
+              names(var_meta) <- evars
               sdata <- lapply(sdata, function(e) {
                 e <- if (class(e)[1] == "data.table") e[, evars, with = FALSE] else e[, evars]
                 e <- as.list(e)
                 if (sparse_time) {
-                  for (f in d$schema$fields) {
-                    if (f$name %in% names(e)) {
-                      e[[f$name]] <- if (f$time_range[[1]] == -1 || all(is.na(e[[f$name]]))) {
+                  for (f in evars) {
+                    if (f %in% names(e)) {
+                      e[[f]] <- if (var_meta[[f]]$time_range[[1]] == -1 || all(is.na(e[[f]]))) {
                         NULL
                       } else {
-                        e[[f$name]][seq(f$time_range[[1]], f$time_range[[2]]) + 1]
+                        e[[f]][seq(var_meta[[f]]$time_range[[1]], var_meta[[f]]$time_range[[2]]) + 1]
                       }
                     }
                   }
                 }
-                names(e) <- var_code[names(e)]
+                names(e) <- var_codes[names(e)]
                 e
               })
               sdata[["_meta"]] <- list(
@@ -239,7 +242,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                   value = unique(times),
                   name = d$time
                 ),
-                variables = as.list(var_code)
+                variables = var_meta
               )
               write_json(sdata, path, dataframe = "columns", auto_unbox = TRUE)
             }

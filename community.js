@@ -469,7 +469,7 @@ void (function () {
                 elements.dataview.time_range(u, c, passive)
               })
             }
-            r = r.info[d].time_range
+            r = r.time_range[d]
             u.time_range.variable = variable
             u.time_range.index[0] = r[0]
             u.time_range.time[0] = u.time_range.filtered[0] = t + r[0]
@@ -948,16 +948,16 @@ void (function () {
                 if (init_log[d] && s) {
                   this.parsed.base_trace = valueOf(this.base_trace)
                   this.parsed.x = valueOf(this.x)
-                  this.parsed.x_range = variables[this.parsed.x].info[d].time_range
+                  this.parsed.x_range = variables[this.parsed.x].time_range[d]
                   this.parsed.y = valueOf(this.y)
-                  this.parsed.y_range = variables[this.parsed.y].info[d].time_range
+                  this.parsed.y_range = variables[this.parsed.y].time_range[d]
                   this.parsed.view = v
                   this.parsed.dataset = d
                   this.parsed.palette = valueOf(v.palette) || site.settings.palette
                   if (!Object.hasOwn(palettes, this.parsed.palette)) this.parsed.palette = defaults.palette
                   this.parsed.color = valueOf(this.color || v.y || this.parsed.y)
                   this.parsed.time =
-                    (y ? y.value() - meta.times[d].range[0] : 0) - variables[this.parsed.color].info[d].time_range[0]
+                    (y ? y.value() - meta.times[d].range[0] : 0) - variables[this.parsed.color].time_range[d][0]
                   this.parsed.summary = variables[this.parsed.color][this.view].summaries[d]
                   const summary = variables[this.parsed.y][this.view].summaries[d],
                     subset = this.parsed.summary.n[this.parsed.time] !== v.n_selected.all,
@@ -1222,7 +1222,7 @@ void (function () {
                   this.parsed.palette = valueOf(view.palette) || site.settings.palette
                   if (!Object.hasOwn(palettes, this.parsed.palette)) this.parsed.palette = defaults.palette
                   this.parsed.time =
-                    (ys.parsed ? ys.value() - meta.times[d].range[0] : 0) - variables[c].info[d].time_range[0]
+                    (ys.parsed ? ys.value() - meta.times[d].range[0] : 0) - variables[c].time_range[d][0]
                   this.parsed.color = c
                   this.parsed.summary = Object.hasOwn(variables[c], this.view)
                     ? variables[c][this.view].summaries[d]
@@ -1259,7 +1259,6 @@ void (function () {
                                 )
                               : '#00000000'
                           if (d === ls[id].entity.group) {
-                            ls[id]._path.classList[fg ? 'remove' : 'add']('na')
                             ls[id].setStyle({
                               fillOpacity: 0.7,
                               color: defaults.border,
@@ -1476,7 +1475,7 @@ void (function () {
             this.v = valueOf(this.options.variable || (caller && (caller.color || caller.y)) || v.y)
             this.dataset = v.get.dataset()
             this.time_agg = y ? y.value() - meta.times[this.dataset].range[0] : 0
-            this.time = this.v ? this.time_agg - variables[this.v].info[this.dataset].time_range[0] : 0
+            this.time = this.v ? this.time_agg - variables[this.v].time_range[this.dataset][0] : 0
             if (!this.processed) {
               this.processed = true
               if (this.view) {
@@ -1678,8 +1677,8 @@ void (function () {
               k = c.name || c
               o.header.push({title: 'Name', data: 'entity.features.name'})
               if (time.is_single) o.variable_header = true
-              t = variables[k].info[o.parsed.dataset].time_range
-              for (n = t[1] - t[0] + 1; n--; ) {
+              t = variables[k].time_range[o.parsed.dataset]
+              for (n = t[2]; n--; ) {
                 o.header[n + 1] = {
                   title: o.variable_header ? c.title || format_label(k) : time.value[n + t[0]] + '',
                   data: data_retrievers.vector,
@@ -1712,14 +1711,14 @@ void (function () {
                         render: function (d, type, row) {
                           if ('data' === this.c.source) {
                             if (Object.hasOwn(variables, this.c.name)) {
-                              const i = row.time - variables[this.c.name].info[row.entity.group].time_range[0]
-                              return i < 0 ? 'NA' : row.entity.get_value(this.c.name, i)
-                            } else return 'NA'
+                              const i = row.time - variables[this.c.name].time_range[this.o.parsed.dataset][0]
+                              return i < 0 ? NaN : row.entity.get_value(this.c.name, i)
+                            } else return NaN
                           } else
                             return Object.hasOwn(row.entity, this.c.source) &&
                               Object.hasOwn(row.entity[this.c.source], this.c.name)
                               ? row.entity[this.c.source][this.c.name]
-                              : 'NA'
+                              : NaN
                         }.bind({o, c}),
                       }
                 )
@@ -1737,7 +1736,7 @@ void (function () {
                       ? 'number' === typeof d[t]
                         ? format_value(d[t], true)
                         : d[t]
-                      : 'NA'
+                      : NaN
                   },
                 })
               }
@@ -1805,7 +1804,7 @@ void (function () {
                       const time = valueOf(v.time_agg)
                       this.parsed.dataset = d
                       this.parsed.color = vn
-                      this.parsed.time_range = variables[vn].info[d].time_range
+                      this.parsed.time_range = variables[vn].time_range[d]
                       this.parsed.time =
                         ('number' === typeof time ? time - meta.times[d].range[0] : 0) - this.parsed.time_range[0]
                       this.parsed.summary = Object.hasOwn(variables[vn], this.view)
@@ -1819,7 +1818,7 @@ void (function () {
                         $(this.e).empty()
                         this.header = [{title: 'Name', data: 'entity.features.name'}]
                         if (-1 !== this.parsed.time_range[0]) {
-                          for (n = this.parsed.time_range[1] - this.parsed.time_range[0] + 1; n--; ) {
+                          for (n = this.parsed.time_range[2]; n--; ) {
                             this.header[n + 1] = {
                               variable: vn,
                               title: this.variable_header
@@ -1885,7 +1884,7 @@ void (function () {
                           va.push({
                             variable: vn,
                             int: patterns.int_types.test(variable_info[vn].type),
-                            time_range: variables[vn].info[d].time_range,
+                            time_range: variables[vn].time_range[d],
                             renderer: function (o, s) {
                               for (var r = this.time_range, n = r[1], ci = r[0]; ci <= n; ci++) {
                                 o.rows[s.features.id] = o.table.row.add({
@@ -2025,6 +2024,7 @@ void (function () {
                   range = summary ? (string ? summary.levels.length - min : summary.range[c.parsed.time]) : 1,
                   subset = 'all' === site.settings.summary_selection ? 'subset_rank' : 'rank',
                   value = e.get_value(c.parsed.color, c.parsed.time),
+                  n = summary.n[c.parsed.time],
                   p =
                     ((string ? Object.hasOwn(summary.level_ids, value) : 'number' === typeof value)
                       ? site.settings.color_by_order
@@ -2049,14 +2049,14 @@ void (function () {
                 ) {
                   var i =
                       entities[e.features.id][subset][c.parsed.color][c.parsed.time] - summary.missing[c.parsed.time],
-                    po = (i / (summary.n[c.parsed.time] - 1)) * 100
+                    po = (i / (n - 1)) * 100
                   this.ticks.entity.firstElementChild.firstElementChild.innerText =
                     i > -1 && (po > 96 || po < 4) && e.features.name.length > 13
                       ? e.features.name.substring(0, 12) + '…'
                       : e.features.name
                   if (i > -1) {
                     t.parentElement.classList.remove('hidden')
-                    t.innerText = '# ' + (i + 1)
+                    t.innerText = '# ' + (n - i)
                     this.ticks.entity.style.left = po + '%'
                   }
                 }
@@ -2077,9 +2077,7 @@ void (function () {
               variable = valueOf(view.y),
               time = valueOf(view.time_agg),
               d = view.get.dataset(),
-              y =
-                ('number' === typeof time ? time - meta.times[d].range[0] : 0) -
-                variables[variable].info[d].time_range[0],
+              y = ('number' === typeof time ? time - meta.times[d].range[0] : 0) - variables[variable].time_range[d][0],
               summary = Object.hasOwn(variables[variable], this.view)
                 ? variables[variable][this.view].summaries[d]
                 : false,
@@ -2170,8 +2168,8 @@ void (function () {
               }
               if (site.settings.color_by_order) {
                 this.ticks.center.classList.add('hidden')
-                this.ticks.min.firstElementChild.firstElementChild.innerText = '# ' + (summary.n[y] ? 1 : 0)
-                this.ticks.max.firstElementChild.firstElementChild.innerText = '# ' + (summary.n[y] ? summary.n[y] : 0)
+                this.ticks.min.firstElementChild.firstElementChild.innerText = '# ' + (summary.n[y] ? summary.n[y] : 0)
+                this.ticks.max.firstElementChild.firstElementChild.innerText = '# ' + (summary.n[y] ? 1 : 0)
               } else {
                 this.ticks.center.classList.remove('hidden')
                 this.ticks.min.firstElementChild.firstElementChild.innerText = summary.n[y]
@@ -2348,16 +2346,16 @@ void (function () {
       },
       data_retrievers = {
         single: function (v, t) {
-          if (t < 0) return 'NA'
+          if (t < 0) return NaN
           if (variables[v].is_time) {
-            return t < this.time.value.length ? this.time.value[t] : 'NA'
+            return t < this.time.value.length ? this.time.value[t] : NaN
           } else {
             v = variables[v].code
-            return 0 === t && Object.hasOwn(this.data, v) ? this.data[v] : 'NA'
+            return 0 === t && Object.hasOwn(this.data, v) ? this.data[v] : NaN
           }
         },
         multi: function (v, t) {
-          if (t < 0) return 'NA'
+          if (t < 0) return NaN
           if (variables[v].is_time) {
             return this.time.value[t]
           } else {
@@ -2366,11 +2364,11 @@ void (function () {
               ? 'object' === typeof this.data[v]
                 ? t < this.data[v].length
                   ? this.data[v][t]
-                  : 'NA'
+                  : NaN
                 : 0 === t
                 ? this.data[v]
-                : 'NA'
-              : 'NA'
+                : NaN
+              : NaN
           }
         },
         vector: function (r) {
@@ -2382,12 +2380,12 @@ void (function () {
               ? 'object' === typeof r.entity.data[v]
                 ? r.entity.data[v]
                 : [r.entity.data[v]]
-              : ['NA']
+              : [NaN]
           }
         },
         row_time: function (d, type, row) {
           const i = this.i - (row.offset - this.o)
-          return d && i >= 0 && i < d.length ? ('number' === typeof d[i] ? format_value(d[i], row.int) : d[i]) : 'NA'
+          return d && i >= 0 && i < d.length ? ('number' === typeof d[i] ? format_value(d[i], row.int) : d[i]) : NaN
         },
       },
       value_types = {
@@ -2576,15 +2574,16 @@ void (function () {
     }
 
     function format_value(v, int) {
-      if (null === v) return 'unknown'
-      if (!int && 'number' === typeof v) {
+      if (null === v || isNaN(v)) {
+        return 'unknown'
+      } else if (int) {
+        return v
+      } else {
         if (site.settings.digits > 0) {
           const d = Math.pow(10, site.settings.digits),
             r = (Math.round(v * d) / d + '').split('.')
           return r[0] + ('.' + (1 === r.length ? '' : r[1]) + '0000000000').substring(0, site.settings.digits + 1)
         } else return Math.round(v)
-      } else {
-        return 'NA' === v ? 'unknown' : v
       }
     }
 
@@ -2727,13 +2726,13 @@ void (function () {
         const x = data_retrievers.vector({variable: u.parsed.x, entity: e}),
           y = data_retrievers.vector({variable: u.parsed.y, entity: e})
         for (
-          var i = variables[u.parsed.x].info[u.parsed.dataset].n_times, ci, t = JSON.parse(u.traces[u.base_trace]);
+          var i = variables[u.parsed.x].time_range[u.parsed.dataset][2], t = JSON.parse(u.traces[u.base_trace]);
           i--;
 
         ) {
           t.text[i] = e.features.name
-          t.x[i] = u.parsed.x_range[0] <= i && i <= u.parsed.x_range[1] ? x[i - u.parsed.x_range[0]] : 'NA'
-          t.y[i] = u.parsed.y_range[0] <= i && i <= u.parsed.y_range[1] ? y[i - u.parsed.y_range[0]] : 'NA'
+          t.x[i] = u.parsed.x_range[0] <= i && i <= u.parsed.x_range[1] ? x[i - u.parsed.x_range[0]] : NaN
+          t.y[i] = u.parsed.y_range[0] <= i && i <= u.parsed.y_range[1] ? y[i - u.parsed.y_range[0]] : NaN
         }
         t.type = u.parsed.base_trace
         t.color =
@@ -3825,8 +3824,11 @@ void (function () {
             vi[view] = {order: {}, selected_order: {}, selected_summaries: {}, summaries: {}}
           m = vi[view]
           for (d in vi.info) {
-            if (Object.hasOwn(vi.info, d)) {
-              vi.info[d].n_times = ny = vi.info[d].time_range[1] - vi.info[d].time_range[0] + 1
+            if (Object.hasOwn(site.data, d)) {
+              if (!Object.hasOwn(vi.time_range, d)) {
+                vi.time_range[d] = [0, meta.times[d].n - 1]
+              }
+              vi.time_range[d][2] = ny = vi.time_range[d][1] - vi.time_range[d][0] + 1
               if (Object.hasOwn(site.data, d) && !Object.hasOwn(vi.info[d], 'order')) {
                 vi.info[d].order = o = []
                 for (y = ny; y--; ) {
@@ -3839,11 +3841,14 @@ void (function () {
                   if ('_meta' !== k && Object.hasOwn(da, k) && Object.hasOwn(da[k], c)) {
                     ev = da[k][c]
                     if (1 === ny) {
+                      if ('number' !== typeof ev) da[k][c] = ev = NaN
                       o[0].push([k, ev])
                     } else {
                       for (y = ny; y--; ) {
+                        if ('number' !== typeof ev[y]) ev[y] = NaN
                         o[y].push([k, ev[y]])
                       }
+                      Object.freeze(ev)
                     }
                     if (!Object.hasOwn(entities, k)) {
                       entities[k] = {rank: {}, subset_rank: {}}
@@ -3963,7 +3968,7 @@ void (function () {
         mso = m.selected_order[dataset],
         mss = m.selected_summaries[dataset],
         ms = m.summaries[dataset],
-        ny = variables[measure].info[dataset].n_times,
+        ny = variables[measure].time_range[dataset][2],
         order = variables[measure].info[dataset].order,
         levels = variables[measure].levels_ids,
         subset = v.n_selected.all !== v.n_selected.dataset
@@ -4197,7 +4202,7 @@ void (function () {
                   }
               }
             } else {
-              variables[v[i].name] = {datasets: [k], info: {}}
+              variables[v[i].name] = {datasets: [k], info: {}, time_range: {}}
               variables[v[i].name].info[k] = v[i]
               variables[v[i].name].type = v[i].type
               if ('string' === v[i].type) {
@@ -4245,27 +4250,6 @@ void (function () {
         k,
         overwrite = false
       if (Object.hasOwn(site.data, g) && !init_log[g]) {
-        if (Object.hasOwn(site.data[g], '_meta')) {
-          if (Object.hasOwn(variables, site.data[g]._meta.time.name)) {
-            meta.times[g] = site.data[g]._meta.time
-            meta.times[g].info = variables[meta.times[g].name]
-            meta.times[g].info.is_time = true
-            if ('object' !== typeof meta.times[g].value) meta.times[g].value = [meta.times[g].value]
-            meta.times[g].n = meta.times[g].value.length
-            meta.times[g].is_single = 1 === meta.times[g].n
-            meta.times[g].range = [meta.times[g].value[0], meta.times[g].value[meta.times[g].n - 1]]
-          } else {
-            meta.times[g] = {value: [0], n: 1, range: [0, 0], name: defaults.time, is_single: true}
-          }
-          meta.variables[g] = site.data[g]._meta.variables || {}
-          for (k in meta.variables[g])
-            if (Object.hasOwn(variables, k)) {
-              variables[k].name = k
-              variables[k].code = meta.variables[g][k]
-              variable_codes[variables[k].code] = variables[k]
-            }
-          delete site.data[g]._meta
-        }
         for (id in site.data[g]) {
           if (Object.hasOwn(site.data[g], id)) {
             overwrite = data_maps[g][id]
@@ -4492,7 +4476,7 @@ void (function () {
           if (e.data) {
             for (var i = this.parsed.variable_values.length, pass = true, v, ev; i--; ) {
               v = this.parsed.variable_values[i]
-              ev = e.get_value(v.name, this.parsed.time_agg - variables[v.name].info[this.parsed.dataset].time_range[0])
+              ev = e.get_value(v.name, this.parsed.time_agg - variables[v.name].time_range[this.parsed.dataset][0])
               pass = v.value_type !== typeof ev || check_funs[v.operator](v.value, ev)
               if (!pass) break
             }
@@ -4695,8 +4679,31 @@ void (function () {
       f.onreadystatechange = function () {
         if (4 === f.readyState) {
           if (200 === f.status) {
-            site.data[name] = JSON.parse(f.responseText)
+            const d = JSON.parse(f.responseText)
+            site.data[name] = d
             data_loaded[name] = true
+            if (Object.hasOwn(d, '_meta')) {
+              if (Object.hasOwn(variables, d._meta.time.name)) {
+                meta.times[name] = d._meta.time
+                meta.times[name].info = variables[meta.times[name].name]
+                meta.times[name].info.is_time = true
+                if ('object' !== typeof meta.times[name].value) meta.times[name].value = [meta.times[name].value]
+                meta.times[name].n = meta.times[name].value.length
+                meta.times[name].is_single = 1 === meta.times[name].n
+                meta.times[name].range = [meta.times[name].value[0], meta.times[name].value[meta.times[name].n - 1]]
+              } else {
+                meta.times[name] = {value: [0], n: 1, range: [0, 0], name: defaults.time, is_single: true}
+              }
+              meta.variables[name] = d._meta.variables || {}
+              for (var k in meta.variables[name])
+                if (Object.hasOwn(variables, k)) {
+                  variables[k].name = k
+                  variables[k].code = meta.variables[name][k].code
+                  variables[k].time_range[name] = meta.variables[name][k].time_range
+                  variable_codes[variables[k].code] = variables[k]
+                }
+              delete d._meta
+            }
             if (site.settings.partial_init) {
               queue_init()
             } else {
