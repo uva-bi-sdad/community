@@ -5,7 +5,7 @@
 \title{Map Data Commons Files}
 \usage{
 datacommons_map_files(dir,
-  search_pattern = "(?:\\\\d{4}).+\\\\.csv\\\\.[gbx]z2?$",
+  search_pattern = "(?:\\\\d{4}).+\\\\.csv(?:\\\\.[gbx]z2?)?$",
   variable_location = "measure", id_location = "geoid",
   reader = read.csv, overwrite = FALSE, verbose = TRUE)
 }

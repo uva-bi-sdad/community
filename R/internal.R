@@ -61,8 +61,8 @@ calculate_sha <- function(file, level) {
 }
 
 head_import <- function(d, dir = ".") {
-  if (!d$src %in% c("script.js", "style.css") || (file.exists(paste0(dir, "/docs/", d$src)) &&
-    file.size(paste0(dir, "/docs/", d$src)))) {
+  if (!is.null(d$src) && (!d$src %in% c("script.js", "style.css") || (file.exists(paste0(dir, "/docs/", d$src)) &&
+    file.size(paste0(dir, "/docs/", d$src))))) {
     paste(c(
       "<", if (d$type == "script") 'script type="application/javascript" src="' else 'link href="', d$src, '"',
       if (!is.null(d$hash)) c(' integrity="', d$hash, '"', ' crossorigin="anonymous"'),

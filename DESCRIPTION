@@ -11,6 +11,7 @@ Description: Offers a framework and toolset for the analysis of communities. Hel
   of that community, and (3) present and disseminate final data.
 URL: https://github.com/uva-bi-sdad/community
 BugReports: https://github.com/uva-bi-sdad/community/issues
+Depends: R (>= 3.5)
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE, old_usage = TRUE)

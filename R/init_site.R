@@ -24,9 +24,12 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
   }
   dir <- normalizePath(paste0(dir, "/", check$spec$dir), "/", FALSE)
   dir.create(dir, FALSE, TRUE)
-  paths <- paste0(dir, "/", c("README.md", "site.R", "package.json", "server.js", ".gitignore", "build.R", "project.Rproj"))
+  paths <- paste0(dir, "/", c(
+    "README.md", "site.R", "package.json", "server.js", ".gitignore", "build.R", "project.Rproj",
+    "netlify.toml", "docs/functions/api.js"
+  ))
   if (!file.exists(paths[1])) {
-    writeLines(paste(c(
+    writeLines(c(
       paste("#", title),
       "<template: Describe the site>",
       "\n## Run",
@@ -35,12 +38,11 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
       "library(community)",
       "\n# from the site directory:",
       "site_build()",
-      "```",
-      ""
-    ), collapse = "\n"), paths[1])
+      "```"
+    ), paths[1])
   }
   if (!file.exists(paths[2])) {
-    writeLines(paste(c(
+    writeLines(c(
       "library(community)",
       "# prepare and connect data in build.R:",
       paste0('# source("', dir, '/build.R")'),
@@ -69,9 +71,8 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
       ")",
       "",
       "# render the site:",
-      paste0('site_build("', dir, '", bundle_data = TRUE, serve = TRUE, open_after = TRUE)'),
-      ""
-    ), collapse = "\n"), paths[2])
+      paste0('site_build("', dir, '", bundle_data = TRUE, serve = TRUE, open_after = TRUE)')
+    ), paths[2])
   }
   if (node_project && !file.exists(paths[3])) {
     write_json(list(
@@ -87,18 +88,17 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
     ), paths[3], pretty = TRUE, auto_unbox = TRUE)
   }
   if (node_project && !file.exists(paths[4])) {
-    writeLines(paste(c(
+    writeLines(c(
       "'use strict'",
       "const express = require('express'), app = express()",
       "app.use(express.static('docs'))",
       "app.listen(3000, function () {",
       "  console.log('listening on port 3000')",
-      "})",
-      ""
-    ), collapse = "\n"), paths[4])
+      "})"
+    ), paths[4])
   }
   if (!file.exists(paths[5])) {
-    writeLines(paste(c(
+    writeLines(c(
       ".Rproj.user",
       ".Rhistory",
       ".Rdata",
@@ -107,12 +107,11 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
       "*.Rproj",
       "node_modules",
       "package-lock.json",
-      "docs/dist",
-      ""
-    ), collapse = "\n"), paths[5])
+      "docs/dist"
+    ), paths[5])
   }
   if (!file.exists(paths[6])) {
-    writeLines(paste(c(
+    writeLines(c(
       "# if there are datasets to add, include any preprocessing steps here",
       paste0('write.csv(cbind(name = rownames(mtcars), mtcars), "', dir, '/docs/data/mtcars.csv", row.names = FALSE)'),
       "",
@@ -123,10 +122,30 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
       ),
       "",
       "# now edit the site and build it from site.R"
-    ), collapse = "\n"), paths[6])
+    ), paths[6])
   }
   if (!file.exists(paths[7]) && !any(grepl("\\.Rproj$", list.files(dir)))) writeLines("Version: 1.0\n", paths[7])
+  if (!file.exists(paths[8])) {
+    writeLines(c(
+      "[build]",
+      "  functions = 'docs/functions'",
+      "[[redirects]]", "  from = '/api'",
+      "  to = '/.netlify/functions/api'",
+      "  status = 200"
+    ), paths[8])
+  }
   dir.create(paste0(dir, "/docs"), FALSE)
+  dir.create(paste0(dir, "/docs/functions"), FALSE)
+  if (!file.exists(paths[9])) {
+    writeLines(c(
+      "'use strict'",
+      "const DataHandler = require('../docs/data_handler.js').",
+      "  data = new DataHandler(require('../docs/settings.json'))",
+      "module.export.handler = async function(event){",
+      "  return data.export(event.queryStringParameters)",
+      "}"
+    ), paths[9])
+  }
   docs <- grep("/docs/", check$files, fixed = TRUE, value = TRUE)
   if (any(!file.exists(docs))) file.create(docs[!file.exists(docs)])
   if (with_data && !file.exists(paste0(dir, "/docs/data/datapackage.json"))) {

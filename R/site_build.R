@@ -206,19 +206,23 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
               evars <- vars
               if (!length(evars)) evars <- colnames(data)
               if (!is.null(time) && time %in% evars) evars <- evars[evars != time]
-              var_meta <- lapply(evars, function(vn) list(
-                code = var_codes[[vn]],
-                time_range = if (sparse_time) {
-                  v <- data[[vn]]
-                  range <- which(unname(tapply(v, times, function(v) any(!is.na(v))))) - 1
-                  if (length(range)) {
-                    range[c(1, length(range))]
+              var_meta <- lapply(evars, function(vn) {
+                list(
+                  code = var_codes[[vn]],
+                  time_range = if (sparse_time) {
+                    v <- data[[vn]]
+                    range <- which(unname(tapply(v, times, function(v) any(!is.na(v))))) - 1
+                    if (length(range)) {
+                      range[c(1, length(range))]
+                    } else {
+                      if (aggregate) cli_warn("no observations of {vn} in {d$filename}")
+                      c(-1, -1)
+                    }
                   } else {
-                    if (aggregate) cli_warn("no observations of {vn} in {d$filename}")
-                    c(-1, -1)
+                    c(0, ntimes - 1)
                   }
-                } else c(0, ntimes - 1)
-              ))
+                )
+              })
               names(var_meta) <- evars
               sdata <- lapply(sdata, function(e) {
                 e <- if (class(e)[1] == "data.table") e[, evars, with = FALSE] else e[, evars]
@@ -303,8 +307,8 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
       )
     } else if (version == "local") {
       list(
-        base_style = list(type = "stylesheet", src = "dist/community.css"),
-        base = list(type = "script", src = "dist/community.js")
+        base_style = list(type = "stylesheet", src = "dist/dev/community.css"),
+        base = list(type = "script", src = "dist/dev/community.js")
       )
     } else {
       list(
@@ -312,18 +316,35 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js")
       )
     },
-    list(
-      custom_style = list(type = "stylesheet", src = "style.css"),
-      custom = list(type = "script", src = "script.js"),
-      bootstrap_style = list(
-        type = "stylesheet",
-        src = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css",
-        hash = "sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
-      ),
-      bootstrap = list(
-        type = "script",
-        src = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js",
-        hash = "sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+    c(
+      lapply(names(cache_scripts), function(f) {
+        dir.create(paste0(dir, "/", cache_scripts[[f]]$location), FALSE, TRUE)
+        lf <- paste0(dir, "/", cache_scripts[[f]]$location, "/", basename(cache_scripts[[f]]$source))
+        if (version == "local") {
+          lff <- paste0("dist/dev/", sub(".min", "", basename(cache_scripts[[f]]$source), fixed = TRUE))
+          file.copy(paste0(dir, "/docs/", lff), lf)
+          if (file.exists(lf)) list(type = "script", src = lff)
+        } else {
+          file.copy(paste0("dist/dev/", basename(cache_scripts[[f]]$source)), lf)
+          if (!file.exists(lf) || md5sum(lf)[[1]] != cache_scripts[[f]]$md5) {
+            tryCatch(download.file(cache_scripts[[f]]$source, lf, quiet = TRUE), error = function(e) NULL)
+          }
+          if (file.exists(lf)) list(type = "script", src = sub("^.*docs/", "", lf))
+        }
+      }),
+      list(
+        custom_style = list(type = "stylesheet", src = "style.css"),
+        custom = list(type = "script", src = "script.js"),
+        bootstrap_style = list(
+          type = "stylesheet",
+          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css",
+          hash = "sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+        ),
+        bootstrap = list(
+          type = "script",
+          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js",
+          hash = "sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+        )
       )
     )
   )
