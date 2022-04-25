@@ -413,7 +413,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         "}\n</script>"
       )
     },
-    unlist(lapply(parts$dependencies[c(2, 4, seq_len(length(parts$dependencies) - 4) + 4, 1, 3)], head_import, dir = dir)),
+    unlist(lapply(parts$dependencies[c(2, 5, seq_len(length(parts$dependencies) - 5) + 5, 3, 1, 4)], head_import, dir = dir)),
     paste0('<meta name="generator" content="community v', packageVersion("community"), '" />'),
     unlist(parts$head[!duplicated(names(parts$head))], use.names = FALSE),
     "</head>",

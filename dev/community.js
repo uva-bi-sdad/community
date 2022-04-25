@@ -503,14 +503,30 @@ void (function () {
             o.e.addEventListener(
               'click',
               o.settings.effects
-                ? function () {
-                    for (var k in this.settings.effects)
-                      if (Object.hasOwn(_u, k)) {
-                        this.settings.effects[k] === '' || -1 == this.settings.effects[k]
-                          ? _u[k].reset()
-                          : _u[k].set(this.settings.effects[k])
+                ? 'export' === o.target
+                  ? function () {
+                      const f = {}
+                      for (var k in this.query) if (Object.hasOwn(this.query, k)) f[k] = valueOf(this.query[k])
+                      if (Object.hasOwn(_u, this.dataview)) {
+                        if (!Object.hasOwn(f, 'include') && _u[this.dataview].y)
+                          f.include = valueOf(_u[this.dataview].y)
                       }
-                  }.bind(o)
+                      site.data.export(
+                        Object.hasOwn(_u, this.dataview) && Object.hasOwn(_u[this.dataview], 'selection')
+                          ? _u[this.dataview].selection.all
+                          : site.data.entities,
+                        f,
+                        true
+                      )
+                    }.bind(o.settings)
+                  : function () {
+                      for (var k in this.settings.effects)
+                        if (Object.hasOwn(_u, k)) {
+                          this.settings.effects[k] === '' || -1 == this.settings.effects[k]
+                            ? _u[k].reset()
+                            : _u[k].set(this.settings.effects[k])
+                        }
+                    }.bind(o)
                 : 'refresh' === o.target
                 ? global_update
                 : 'reset_selection' === o.target
@@ -1767,7 +1783,7 @@ void (function () {
                 title: 'Variable',
                 data: function (row) {
                   return Object.hasOwn(row.entity.variables, row.variable)
-                    ? row.entity.variables[row.variable].short_name
+                    ? row.entity.variables[row.variable].meta.short_name
                     : row.variable
                 },
               })

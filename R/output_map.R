@@ -44,13 +44,13 @@ output_map <- function(shapes = NULL, color = NULL, color_time = NULL, dataview 
   if (building) {
     caller$dependencies$leaflet_style <- list(
       type = "stylesheet",
-      src = "https://unpkg.com/leaflet@1.7.1/dist/leaflet.css",
-      hash = "sha384-VzLXTJGPSyTLX6d96AxgkKvE/LRb7ECGyTxuwtpjHnVWVZs2gp5RDjeM/tgBnVdM"
+      src = "https://unpkg.com/leaflet@1.8.0/dist/leaflet.css",
+      hash = "sha384-Nh5DPXalR9stszhRpPoPEIgr5F2M4xe7DWJ7iqTp8FtJz0cvNdO/NvY2yjUSLfIS"
     )
     caller$dependencies$leaflet <- list(
       type = "script",
-      src = "https://unpkg.com/leaflet@1.7.1/dist/leaflet.js",
-      hash = "sha384-RFZC58YeKApoNsIbBxf4z6JJXmh+geBSgkCQXFyh+4tiFSJmJBt+2FbjxW7Ar16M"
+      src = "https://unpkg.com/leaflet@1.8.0/dist/leaflet.js",
+      hash = "sha384-4Dmmo81xejNChaqLOci80VhUcuEAD5pXpCtqtizmdgWEzdETh3zrJvzOhU4T79cN"
     )
     options$subto <- if (!is.null(subto) && length(subto) == 1) list(subto) else subto
     if (is.null(options[["center"]])) options$center <- c(40, -95)
@@ -81,7 +81,7 @@ output_map <- function(shapes = NULL, color = NULL, color_time = NULL, dataview 
     caller$credits$leaflet <- list(
       name = "Leaflet",
       url = "https://leafletjs.com",
-      version = "1.7.1",
+      version = "1.8.0",
       description = "A JS library for interactive maps"
     )
     if (!missing(attribution) || missing(tiles)) {

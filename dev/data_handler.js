@@ -17,6 +17,7 @@ function DataHandler(settings, defaults, data, hooks) {
   this.defaults = defaults
   this.settings = settings
   this.info = settings && settings.metadata.info
+  this.features = {}
   this.variables = {}
   this.variable_codes = {}
   this.variable_info = {}
@@ -87,10 +88,55 @@ function make_variable_reference(c) {
   return e
 }
 
-const patterns = {
-  seps: /[\s._-]/g,
-  word_start: /\b(\w)/g,
+function passes_filter(entity, filter) {
+  return true
 }
+
+const patterns = {
+    seps: /[\s._-]/g,
+    word_start: /\b(\w)/g,
+    operator_start: /[<>!]$/,
+  },
+  export_defaults = {
+    sep: ',',
+    table_format: 'tall',
+    features: {ID: 'id', Name: 'name'},
+  },
+  row_writers = {
+    tall: function (entity, feats, vars, sep) {
+      const op = [],
+        time = this.meta.times[entity.group].value
+      var tr = '',
+        yn = 0,
+        y = 0,
+        vc,
+        i = 0,
+        r = '',
+        n = vars.length,
+        f,
+        range,
+        v
+      for (f in feats)
+        if (Object.hasOwn(feats, f)) {
+          tr += entity.features[feats[f]] + sep
+        }
+      for (; i < n; i++) {
+        vc = entity.variables[vars[i]].code
+        if (Object.hasOwn(entity.data, vc)) {
+          range = this.meta.variables[entity.group][vars[i]].time_range
+          r = ''
+          for (yn = range[1] - range[0] + 1, y = 0; y < yn; y++) {
+            v = 1 === yn ? entity.data[vc] : entity.data[vc][y]
+            if (!isNaN(v)) {
+              r += (r ? '\n' : '') + tr + time[range[0] + y] + sep + '"' + vars[i] + '"' + sep + v
+            }
+          }
+          if (r) op.push(r)
+        }
+      }
+      return op.join('\n')
+    },
+  }
 
 DataHandler.prototype = {
   constructor: DataHandler,
@@ -127,6 +173,20 @@ DataHandler.prototype = {
     },
     sort_a1: function (a, b) {
       return isNaN(a[1]) ? (isNaN(b[1]) ? 0 : -1) : isNaN(b[1]) ? 1 : a[1] - b[1]
+    },
+  },
+  export_checks: {
+    file_format: function (a) {
+      return -1 === ['csv'].indexOf(a)
+    },
+    table_format: function (a) {
+      return -1 === ['tall'].indexOf(a)
+    },
+    include: function (a, vars) {
+      for (var i = a.length; i--; ) {
+        if (!Object.hasOwn(vars, a[i])) return a[i]
+      }
+      return ''
     },
   },
   retrievers: {
@@ -507,12 +567,12 @@ DataHandler.prototype = {
             mo[y].splice(0, 0, o[i])
             if (Object.hasOwn(a, k)) {
               mso[y].splice(0, 0, o[i])
-              if (levels ? Object.hasOwn(levels, value) : 'number' === typeof value) {
+              if (levels ? Object.hasOwn(levels, value) : !isNaN(value)) {
                 mss.n[y]++
               } else mss.missing[y]++
             }
           }
-          if (levels ? Object.hasOwn(levels, value) : 'number' === typeof value) {
+          if (levels ? Object.hasOwn(levels, value) : !isNaN(value)) {
             en.summary[measure].n++
             ms.n[y]++
             if (levels) {
@@ -688,8 +748,10 @@ DataHandler.prototype = {
             this.entities[id].variables = this.variables
             if (!Object.hasOwn(this.entities[id], 'features')) this.entities[id].features = {}
             for (k in f)
-              if ('id' === k || (Object.hasOwn(f, k) && (overwrite || !Object.hasOwn(this.entities[id].features, k))))
+              if ('id' === k || (Object.hasOwn(f, k) && (overwrite || !Object.hasOwn(this.entities[id].features, k)))) {
+                if (!Object.hasOwn(this.features, k)) this.features[k] = this.format_label(k)
                 this.entities[id].features[k] = f[k]
+              }
             this.entities[id].summary = {}
             if (!Object.hasOwn(this.entities[id], 'rank')) {
               this.entities[id].rank = {}
@@ -728,6 +790,89 @@ DataHandler.prototype = {
           }
         this.hooks.onload && this.hooks.onload()
       })
+    }
+  },
+  parse_query: function (q) {
+    const f = JSON.parse(JSON.stringify(export_defaults))
+    if ('string' === typeof q) {
+      aq = q.substring(1).split('&')
+      q = {}
+      for (var i = aq.length, a; i--; ) {
+        a = aq[i].split('=')
+        q[a[0]] = a.length > 1 ? a[1] : ''
+      }
+    }
+    for (var k in q)
+      if (Object.hasOwn(q, k)) {
+        if ('include' === k || 'exclude' === k || Object.hasOwn(f, k)) {
+          f[k] = q[k]
+        } else {
+          f[k] = {name: k, operator: '=', value: q[k]}
+          if (patterns.operator_start.test(k)) {
+            f[k].name = k.substring(0, k.length - 1)
+            f[k].operator = k.substring(k.length - 1)
+          }
+        }
+      }
+    return f
+  },
+  export: function (entities, query, in_browser) {
+    entities = entities || this.entities
+    query = this.parse_query(query)
+    if (!Object.hasOwn(row_writers, query.table_format)) query.table_format = 'tall'
+    const res = {statusCode: 400, headers: {'Content-Type': 'text/plain; charset=utf-8'}, body: 'Invalid Request'},
+      inc =
+        query.include && query.include.length
+          ? 'string' === typeof query.include
+            ? query.include.split(',')
+            : query.include
+          : Object.keys(this.variables),
+      exc = query.exclude || [],
+      vars = [],
+      feats = query.features || JSON.parse(JSON.stringify(export_defaults.features)),
+      rows = [],
+      sep = query.sep || export_defaults.sep,
+      rw = row_writers[query.table_format].bind(this)
+    for (var n = inc.length, i = 0, k, r; i < n; i++)
+      if (Object.hasOwn(this.features, inc[i]) && !Object.hasOwn(feats, inc[i])) {
+        feats[inc[i]] = this.format_label(inc[i])
+      }
+    for (k in this.export_checks)
+      if (Object.hasOwn(query, k)) {
+        r = this.export_checks[k]('include' === k ? inc : query[k], this.variables)
+        if (r) {
+          res.body = 'Failed check for ' + k + ': ' + r
+          return res
+        }
+      }
+    for (k in this.variables) if (-1 !== inc.indexOf(k) && -1 === exc.indexOf(k)) vars.push(k)
+    rows.push(
+      Object.keys(feats).join(sep) +
+        sep +
+        ('tall' === query.table_format ? ['time', 'variable', 'value'] : vars).join(sep)
+    )
+    for (k in entities)
+      if (Object.hasOwn(entities, k) && passes_filter(entities[k], query)) {
+        r = rw(entities[k], feats, vars, sep)
+        if (r) rows.push(r)
+      }
+    res.headers['Content-Type'] = 'text/' + (',' === sep ? 'csv' : 'plain') + '; charset=utf-8'
+    res.body = rows.join('\n')
+    if (in_browser) {
+      const e = document.createElement('a')
+      document.body.appendChild(e)
+      e.rel = 'noreferrer'
+      e.target = '_blank'
+      e.download = 'data_export.' + (',' === sep ? 'csv' : 'txt')
+      e.href = URL.createObjectURL(new Blob([res.body], {type: res.headers['Content-Type']}))
+      setTimeout(function () {
+        e.dispatchEvent(new MouseEvent('click'))
+        URL.revokeObjectURL.bind(null, e.href)
+        document.body.removeChild(e)
+      }, 0)
+    } else {
+      res.statusCode = 200
+      return res
     }
   },
 }

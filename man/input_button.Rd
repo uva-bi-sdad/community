@@ -4,8 +4,8 @@
 \alias{input_button}
 \title{Add a button to a website}
 \usage{
-input_button(label, target = "reset_selection", id = label, class = "",
-  ..., note = NULL)
+input_button(label, target = "reset_selection", id = label,
+  dataview = NULL, query = list(), class = "", ..., note = NULL)
 }
 \arguments{
 \item{label}{Text in the button for the user.}
@@ -13,10 +13,14 @@ input_button(label, target = "reset_selection", id = label, class = "",
 \item{target}{The ID of an input element to reset, a vector with IDs of input elements as names and values to set
 those inputs to as values, or the name of a function to trigger (e.g., \code{c(input_a = 1)}). Available function
 are \code{refresh} (to force a reprocessing of the current input state), \code{reset_selection} (to reset all input
-elements that are not settings), and \code{reset_storage} (to clear local storage, reset all settings, and reload).
-This can also be a URL (including protocol) for a button-like link.}
+elements that are not settings), \code{reset_storage} (to clear local storage, reset all settings, and reload),
+and \code{export} (to download data). This can also be a URL (including protocol) for a button-like link.}
 
 \item{id}{Unique ID of the element to be created.}
+
+\item{dataview}{Name of a data view to get selection and filter options from for export.}
+
+\item{query}{A list of query parameters, if \code{target} is \code{"export"}.}
 
 \item{class}{Additional class names to add to the element.}
 
@@ -28,7 +32,7 @@ This can also be a URL (including protocol) for a button-like link.}
 A character vector of the contents to be added.
 }
 \description{
-Adds a button to reset an input or trigger a predefined function to a website.
+Adds a button to reset an input or trigger a predefined function (including data export) to a website.
 }
 \examples{
 \dontrun{
