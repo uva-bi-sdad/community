@@ -41,7 +41,7 @@ function DataHandler(settings, defaults, data, hooks) {
     k = settings.metadata.datasets[i]
     this.loaded[k] = Object.hasOwn(data, k)
     if (this.loaded[k]) {
-      this.sets[k] = data[k]
+      this.ingest_data(data[k], k)
     } else {
       this.retrieve(k, settings.metadata.info[k].site_file)
     }
@@ -99,7 +99,6 @@ const patterns = {
     seps: /[\s._-]/g,
     word_start: /\b(\w)/g,
     operator_start: /[<>!]$/,
-    file_path: /(?:[^/\\]*[/\\]+)+/,
   },
   export_defaults = {
     sep: ',',
@@ -295,22 +294,18 @@ DataHandler.prototype = {
     }
   },
   retrieve: async function (name, url) {
-    if ('undefined' !== typeof window) {
-      const f = new window.XMLHttpRequest()
-      f.onreadystatechange = () => {
-        if (4 === f.readyState) {
-          if (200 === f.status) {
-            this.ingest_data(JSON.parse(f.responseText), name)
-          } else {
-            throw new Error('load_data failed: ' + f.responseText)
-          }
+    const f = new window.XMLHttpRequest()
+    f.onreadystatechange = () => {
+      if (4 === f.readyState) {
+        if (200 === f.status) {
+          this.ingest_data(JSON.parse(f.responseText), name)
+        } else {
+          throw new Error('load_data failed: ' + f.responseText)
         }
       }
-      f.open('GET', url, true)
-      f.send()
-    } else {
-      this.ingest_data(require('./' + url.replace(patterns.file_path, '')), name)
     }
+    f.open('GET', url, true)
+    f.send()
   },
   ingest_map: function (m, url, field) {
     this.data_maps[url].resource = m

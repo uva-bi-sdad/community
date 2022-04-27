@@ -25,8 +25,7 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
   dir <- normalizePath(paste0(dir, "/", check$spec$dir), "/", FALSE)
   dir.create(dir, FALSE, TRUE)
   paths <- paste0(dir, "/", c(
-    "README.md", "site.R", "package.json", "server.js", ".gitignore", "build.R", "project.Rproj",
-    "netlify.toml", "docs/functions/api.js"
+    "README.md", "site.R", "package.json", "server.js", ".gitignore", "build.R", "project.Rproj", "netlify.toml"
   ))
   if (!file.exists(paths[1])) {
     writeLines(c(
@@ -140,16 +139,6 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
   }
   dir.create(paste0(dir, "/docs"), FALSE)
   dir.create(paste0(dir, "/docs/functions"), FALSE)
-  if (!file.exists(paths[9])) {
-    writeLines(c(
-      "'use strict'",
-      "const DataHandler = require('../data_handler.min.js'),",
-      "  data = new DataHandler(require('../settings.json'))",
-      "module.exports.handler = async function (event) {",
-      "  return data.export(event.queryStringParameters)",
-      "}"
-    ), paths[9])
-  }
   docs <- grep("/docs/", check$files, fixed = TRUE, value = TRUE)
   if (any(!file.exists(docs))) file.create(docs[!file.exists(docs)])
   if (with_data && !file.exists(paste0(dir, "/docs/data/datapackage.json"))) {
