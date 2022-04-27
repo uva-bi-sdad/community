@@ -104,6 +104,7 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
       ".Rdata",
       ".httr-oauth",
       ".DS_Store",
+      ".netlify",
       "*.Rproj",
       "node_modules",
       "package-lock.json",
@@ -128,10 +129,13 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
   if (!file.exists(paths[8])) {
     writeLines(c(
       "[build]",
-      "  functions = 'docs/functions'",
-      "[[redirects]]", "  from = '/api'",
+      "  publish = 'docs'",
+      "[[redirects]]",
+      "  from = '/api'",
       "  to = '/.netlify/functions/api'",
-      "  status = 200"
+      "  status = 200",
+      "[functions]",
+      "  directory = 'docs/functions'"
     ), paths[8])
   }
   dir.create(paste0(dir, "/docs"), FALSE)
@@ -139,9 +143,9 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
   if (!file.exists(paths[9])) {
     writeLines(c(
       "'use strict'",
-      "const DataHandler = require('../docs/data_handler.js').",
-      "  data = new DataHandler(require('../docs/settings.json'))",
-      "module.export.handler = async function(event){",
+      "const DataHandler = require('../data_handler.min.js'),",
+      "  data = new DataHandler(require('../settings.json'))",
+      "module.exports.handler = async function (event) {",
       "  return data.export(event.queryStringParameters)",
       "}"
     ), paths[9])

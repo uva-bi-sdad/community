@@ -512,10 +512,10 @@ void (function () {
                           f.include = valueOf(_u[this.dataview].y)
                       }
                       site.data.export(
+                        f,
                         Object.hasOwn(_u, this.dataview) && Object.hasOwn(_u[this.dataview], 'selection')
                           ? _u[this.dataview].selection.all
                           : site.data.entities,
-                        f,
                         true
                       )
                     }.bind(o.settings)

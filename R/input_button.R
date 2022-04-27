@@ -52,7 +52,7 @@ input_button <- function(label, target = "reset_selection", id = label, dataview
   )
   caller <- parent.frame()
   if (!is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts") {
-    if (target == "export") {
+    if (length(target) == 1 && target == "export") {
       caller$button[[id]] <- list(
         effects = target,
         dataview = dataview,

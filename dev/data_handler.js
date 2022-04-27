@@ -14,7 +14,7 @@ function DataHandler(settings, defaults, data, hooks) {
     })
   }
   this.hooks = hooks || {}
-  this.defaults = defaults
+  this.defaults = defaults || {dataview: 'default_view', time: 'time'}
   this.settings = settings
   this.info = settings && settings.metadata.info
   this.features = {}
@@ -31,8 +31,12 @@ function DataHandler(settings, defaults, data, hooks) {
   this.sets = {}
   this.data_maps = {}
   this.data_queue = {}
+  this.data_ready = new Promise(resolve => {
+    this.all_data_ready = resolve
+  })
   data = data || {}
   if ('string' === typeof settings.metadata.datasets) settings.metadata.datasets = [settings.metadata.datasets]
+  this.map_variables()
   for (var k, i = settings.metadata.datasets.length; i--; ) {
     k = settings.metadata.datasets[i]
     this.loaded[k] = Object.hasOwn(data, k)
@@ -42,7 +46,6 @@ function DataHandler(settings, defaults, data, hooks) {
       this.retrieve(k, settings.metadata.info[k].site_file)
     }
   }
-  this.map_variables()
 }
 
 function quantile(p, n, o, x) {
@@ -96,6 +99,7 @@ const patterns = {
     seps: /[\s._-]/g,
     word_start: /\b(\w)/g,
     operator_start: /[<>!]$/,
+    file_path: /(?:[^/\\]*[/\\]+)+/,
   },
   export_defaults = {
     sep: ',',
@@ -255,57 +259,76 @@ DataHandler.prototype = {
           return w.toUpperCase()
         })
   },
+  ingest_data: function (d, name) {
+    this.sets[name] = d
+    this.loaded[name] = true
+    var k
+    if (Object.hasOwn(d, '_meta')) {
+      if (Object.hasOwn(this.variables, d._meta.time.name)) {
+        this.meta.times[name] = d._meta.time
+        this.meta.times[name].info = this.variables[this.meta.times[name].name]
+        this.meta.times[name].info.is_time = true
+        if ('object' !== typeof this.meta.times[name].value) this.meta.times[name].value = [this.meta.times[name].value]
+        this.meta.times[name].n = this.meta.times[name].value.length
+        this.meta.times[name].is_single = 1 === this.meta.times[name].n
+        this.meta.times[name].range = [
+          this.meta.times[name].value[0],
+          this.meta.times[name].value[this.meta.times[name].n - 1],
+        ]
+      } else {
+        this.meta.times[name] = {value: [0], n: 1, range: [0, 0], name: this.defaults.time, is_single: true}
+      }
+      this.meta.variables[name] = d._meta.variables || {}
+      for (k in this.meta.variables[name])
+        if (Object.hasOwn(this.variables, k)) {
+          this.variables[k].name = k
+          this.variables[k].code = this.meta.variables[name][k].code
+          this.variables[k].time_range[name] = this.meta.variables[name][k].time_range
+          this.variable_codes[this.variables[k].code] = this.variables[k]
+        }
+    }
+    if (this.in_browser && this.settings.settings.partial_init) {
+      this.load_id_maps()
+    } else {
+      for (k in this.loaded) if (Object.hasOwn(this.loaded, k) && !this.loaded[k]) return void 0
+      this.load_id_maps()
+    }
+  },
   retrieve: async function (name, url) {
-    const f = new window.XMLHttpRequest()
-    f.onreadystatechange = () => {
-      if (4 === f.readyState) {
-        if (200 === f.status) {
-          const d = JSON.parse(f.responseText)
-          this.sets[name] = d
-          this.loaded[name] = true
-          if (Object.hasOwn(d, '_meta')) {
-            if (Object.hasOwn(this.variables, d._meta.time.name)) {
-              this.meta.times[name] = d._meta.time
-              this.meta.times[name].info = this.variables[this.meta.times[name].name]
-              this.meta.times[name].info.is_time = true
-              if ('object' !== typeof this.meta.times[name].value)
-                this.meta.times[name].value = [this.meta.times[name].value]
-              this.meta.times[name].n = this.meta.times[name].value.length
-              this.meta.times[name].is_single = 1 === this.meta.times[name].n
-              this.meta.times[name].range = [
-                this.meta.times[name].value[0],
-                this.meta.times[name].value[this.meta.times[name].n - 1],
-              ]
-            } else {
-              this.meta.times[name] = {value: [0], n: 1, range: [0, 0], name: this.defaults.time, is_single: true}
-            }
-            this.meta.variables[name] = d._meta.variables || {}
-            for (var k in this.meta.variables[name])
-              if (Object.hasOwn(this.variables, k)) {
-                this.variables[k].name = k
-                this.variables[k].code = this.meta.variables[name][k].code
-                this.variables[k].time_range[name] = this.meta.variables[name][k].time_range
-                this.variable_codes[this.variables[k].code] = this.variables[k]
-              }
-            delete d._meta
-          }
-          if (this.settings.settings.partial_init) {
-            this.load_id_maps()
+    if ('undefined' !== typeof window) {
+      const f = new window.XMLHttpRequest()
+      f.onreadystatechange = () => {
+        if (4 === f.readyState) {
+          if (200 === f.status) {
+            this.ingest_data(JSON.parse(f.responseText), name)
           } else {
-            for (var k in this.loaded) if (Object.hasOwn(this.loaded, k) && !this.loaded[k]) return void 0
-            this.load_id_maps()
+            throw new Error('load_data failed: ' + f.responseText)
           }
-        } else {
-          throw new Error('load_data failed: ' + f.responseText)
         }
       }
+      f.open('GET', url, true)
+      f.send()
+    } else {
+      this.ingest_data(require('./' + url.replace(patterns.file_path, '')), name)
     }
-    f.open('GET', url, true)
-    f.send()
+  },
+  ingest_map: function (m, url, field) {
+    this.data_maps[url].resource = m
+    this.data_maps[url].retrieved = true
+    for (var k, i = this.data_maps[url].queue.length; i--; ) {
+      k = this.data_maps[url].queue[i]
+      if (Object.hasOwn(this.info, k) && this.info[k].schema.fields.length > field) {
+        this.info[k].schema.fields[field].ids = this.data_maps[k] = Object.hasOwn(this.data_maps[url].resource, k)
+          ? this.data_maps[url].resource[k]
+          : this.data_maps[url].resource
+        this.map_entities(k)
+      }
+    }
+    this.hooks.data_load && this.hooks.data_load()
   },
   load_id_maps: async function () {
-    var ids, i, f, k, has_map
-    for (k in this.info)
+    for (var si = this.settings.metadata.datasets.length, ids, i, f, k, has_map; si--; ) {
+      k = this.settings.metadata.datasets[si]
       if (Object.hasOwn(this.sets, k)) {
         for (ids = this.info[k].ids, i = ids.length, has_map = false; i--; )
           if (Object.hasOwn(ids[i], 'map')) {
@@ -337,36 +360,33 @@ DataHandler.prototype = {
               this.map_entities(k)
             } else {
               this.data_maps[ids[i].map] = {queue: [k], resource: {}, retrieved: false}
-              f = new window.XMLHttpRequest()
-              f.onreadystatechange = function (url, fi) {
-                if (4 === f.readyState) {
-                  if (200 === f.status) {
-                    this.data_maps[url].resource = JSON.parse(f.responseText)
-                    this.data_maps[url].retrieved = true
-                    for (var k, i = this.data_maps[url].queue.length; i--; ) {
-                      k = this.data_maps[url].queue[i]
-                      if (Object.hasOwn(this.info, k) && this.info[k].schema.fields.length > fi) {
-                        this.info[k].schema.fields[fi].ids = this.data_maps[k] = Object.hasOwn(
-                          this.data_maps[url].resource,
-                          k
-                        )
-                          ? this.data_maps[url].resource[k]
-                          : this.data_maps[url].resource
-                        this.map_entities(k)
-                      }
+              if ('undefined' !== typeof window) {
+                f = new window.XMLHttpRequest()
+                f.onreadystatechange = function (url, fi) {
+                  if (4 === f.readyState) {
+                    if (200 === f.status) {
+                      this.ingest_map(JSON.parse(f.responseText), url, fi)
+                    } else {
+                      throw new Error('load_id_maps failed: ' + f.responseText)
                     }
-                    // for (k in _c)
-                    //   if (Object.hasOwn(_c, k)) {
-                    //     request_queue(k)
-                    //   }
-                    this.hooks.data_load && this.hooks.data_load()
-                  } else {
-                    throw new Error('load_id_maps failed: ' + f.responseText)
                   }
-                }
-              }.bind(this, ids[i].map, i)
-              f.open('GET', ids[i].map, true)
-              f.send()
+                }.bind(this, ids[i].map, i)
+                f.open('GET', ids[i].map, true)
+                f.send()
+              } else {
+                const fi = i
+                require('https')
+                  .get(ids[fi].map, r => {
+                    const c = []
+                    r.on('data', d => {
+                      c.push(d)
+                    })
+                    r.on('end', () => {
+                      this.ingest_map(JSON.parse(c.join('')), r.req.protocol + '//' + r.req.host + r.req.path, fi)
+                    })
+                  })
+                  .end()
+              }
             }
           }
         if (!has_map) {
@@ -374,6 +394,7 @@ DataHandler.prototype = {
           this.map_entities(k)
         }
       }
+    }
   },
   init_summaries: async function (view) {
     view = view || this.defaults.dataview
@@ -669,7 +690,7 @@ DataHandler.prototype = {
     }
     ms.filled = true
   },
-  map_variables: async function () {
+  map_variables: function () {
     var k, v, i, t, m, l
     for (k in this.info)
       if (Object.hasOwn(this.info, k)) {
@@ -720,7 +741,7 @@ DataHandler.prototype = {
               this.variable_info[v[i].name] = this.variables[v[i].name].meta
           }
         }
-        if (Object.hasOwn(m, '_references')) {
+        if (this.in_browser && Object.hasOwn(m, '_references')) {
           if (!Object.hasOwn(this.variable_info, '_references')) this.variable_info._references = {}
           for (t in m._references)
             if (Object.hasOwn(m._references, t))
@@ -791,6 +812,8 @@ DataHandler.prototype = {
         this.hooks.onload && this.hooks.onload()
       })
     }
+    for (k in this.info) if (Object.hasOwn(this.info, k) && !this.inited[k]) return void 0
+    this.all_data_ready()
   },
   parse_query: function (q) {
     const f = JSON.parse(JSON.stringify(export_defaults))
@@ -816,9 +839,10 @@ DataHandler.prototype = {
       }
     return f
   },
-  export: function (entities, query, in_browser) {
-    entities = entities || this.entities
+  export: async function (query, entities, in_browser) {
+    await this.data_ready
     query = this.parse_query(query)
+    entities = entities || this.entities
     if (!Object.hasOwn(row_writers, query.table_format)) query.table_format = 'tall'
     const res = {statusCode: 400, headers: {'Content-Type': 'text/plain; charset=utf-8'}, body: 'Invalid Request'},
       inc =
@@ -872,9 +896,10 @@ DataHandler.prototype = {
       }, 0)
     } else {
       res.statusCode = 200
+      res.headers['Content-Disposition'] = 'attachment; filename=data_export.csv'
       return res
     }
   },
 }
 
-if ('undefined' !== typeof module) module.export = DataHandler
+if ('undefined' !== typeof module) module.exports = DataHandler

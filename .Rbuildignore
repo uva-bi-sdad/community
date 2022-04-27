@@ -2,6 +2,7 @@
 ^\.Rproj\.user$
 ^\.vscode$
 ^\.nyc_output$
+^\.netlify$
 ^docs$
 ^pkgdown$
 ^LICENSE\.md$
