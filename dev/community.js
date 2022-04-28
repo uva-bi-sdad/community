@@ -936,7 +936,7 @@ void (function () {
             }
           },
           mouseover: function (d) {
-            if (d.points && d.points.length === 1 && this.e.data[d.points[0].fullData.index]) {
+            if (d.points && 1 === d.points.length && this.e.data[d.points[0].fullData.index]) {
               this.e.data[d.points[0].fullData.index].line.width = 4
               // this.e.data[d.points[0].fullData.index].marker.size = 12
               Plotly.react(this.e, this.e.data, this.e.layout)
@@ -1050,12 +1050,14 @@ void (function () {
                     b.q3 = summary.q3
                     b.q1 = summary.q1
                     if (site.settings.iqr_box) {
-                      for (b.upperfence = [], b.lowerfence = [], i = b.q1.length; i--; ) {
+                      b.boxpoints = 'suspectedoutliers'
+                      for (b.y = [], b.upperfence = [], b.lowerfence = [], i = b.q1.length; i--; ) {
                         n = (b.q3[i] - b.q1[i]) * 1.5
                         b.q3[i] = Math.max(b.median[i], b.q3[i])
                         b.upperfence[i] = b.q3[i] + n
                         b.q1[i] = Math.min(b.median[i], b.q1[i])
                         b.lowerfence[i] = b.q1[i] - n
+                        b.y[i] = [summary.min[i], summary.max[i]]
                       }
                     } else {
                       b.upperfence = summary.max
@@ -1661,7 +1663,7 @@ void (function () {
               o.e.addEventListener('click', elements.datatable.click.bind(o))
             }
             o.show = function (e) {
-              if (Object.hasOwn(this.rows, e.features.id)) {
+              if (e && Object.hasOwn(this.rows, e.features.id)) {
                 const row = this.rows[e.features.id].node()
                 if (row) {
                   row.style.backgroundColor = defaults.background_highlight
@@ -1674,7 +1676,7 @@ void (function () {
               }
             }
             o.revert = function (e) {
-              if (Object.hasOwn(this.rows, e.features.id)) {
+              if (e && Object.hasOwn(this.rows, e.features.id)) {
                 const row = this.rows[e.features.id].node()
                 if (row) row.style.backgroundColor = 'inherit'
               }
@@ -2056,7 +2058,7 @@ void (function () {
             o.ticks.min.className = 'legend-tick-end min'
             o.ticks.center.style.left = '50%'
             o.show = function (e, c) {
-              if (Object.hasOwn(c, 'parsed')) {
+              if (e && Object.hasOwn(c, 'parsed')) {
                 const summary = c.parsed.summary,
                   string = summary && Object.hasOwn(summary, 'levels'),
                   min = summary && !string ? summary.min[c.parsed.time] : 0,

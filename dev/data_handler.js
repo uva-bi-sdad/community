@@ -101,9 +101,13 @@ const patterns = {
     operator_start: /[<>!]$/,
   },
   export_defaults = {
-    sep: ',',
-    table_format: 'tall',
+    file_format: 'csv',
+    table_format: 'mixed',
     features: {ID: 'id', Name: 'name'},
+  },
+  export_options = {
+    file_format: ['csv', 'tsv'],
+    table_format: ['tall', 'mixed'],
   },
   row_writers = {
     tall: function (entity, feats, vars, sep) {
@@ -136,6 +140,50 @@ const patterns = {
           }
           if (r) op.push(r)
         }
+      }
+      return op.join('\n')
+    },
+    mixed: function (entity, feats, vars, sep) {
+      const op = [],
+        time = this.meta.times[entity.group].value
+      var tr = '',
+        yn = 0,
+        y = 0,
+        vc,
+        i = 0,
+        r = '',
+        n = vars.length,
+        f,
+        trange,
+        range = [Infinity, -Infinity],
+        v
+      for (f in feats)
+        if (Object.hasOwn(feats, f)) {
+          tr += entity.features[feats[f]] + sep
+        }
+      for (; i < n; i++) {
+        trange = this.meta.variables[entity.group][vars[i]].time_range
+        if (trange[0] < range[0]) range[0] = trange[0]
+        if (trange[1] > range[1]) range[1] = trange[1]
+      }
+      for (yn = range[1] + 1, y = range[0]; y < yn; y++) {
+        r = tr + time[y]
+        for (i = 0; i < n; i++) {
+          vc = entity.variables[vars[i]].code
+          if (Object.hasOwn(entity.data, vc)) {
+            trange = this.meta.variables[entity.group][vars[i]].time_range
+            v =
+              1 === trange[2]
+                ? y === trange[0]
+                  ? entity.data[vc]
+                  : NaN
+                : y < trange[0] || y > trange[1]
+                ? NaN
+                : entity.data[vc][y - trange[0]]
+            r += sep + (isNaN(v) ? 'NA' : v)
+          } else r += sep + 'NA'
+        }
+        op.push(r)
       }
       return op.join('\n')
     },
@@ -180,10 +228,10 @@ DataHandler.prototype = {
   },
   export_checks: {
     file_format: function (a) {
-      return -1 === ['csv'].indexOf(a)
+      return -1 === export_options.file_format.indexOf(a)
     },
     table_format: function (a) {
-      return -1 === ['tall'].indexOf(a)
+      return -1 === export_options.table_format.indexOf(a)
     },
     include: function (a, vars) {
       for (var i = a.length; i--; ) {
@@ -838,7 +886,8 @@ DataHandler.prototype = {
     await this.data_ready
     query = this.parse_query(query)
     entities = entities || this.entities
-    if (!Object.hasOwn(row_writers, query.table_format)) query.table_format = 'tall'
+    if (-1 === export_options.file_format.indexOf(query.file_format)) query.file_format = export_defaults.file_format
+    if (!Object.hasOwn(row_writers, query.table_format)) query.table_format = export_defaults.table_format
     const res = {statusCode: 400, headers: {'Content-Type': 'text/plain; charset=utf-8'}, body: 'Invalid Request'},
       inc =
         query.include && query.include.length
@@ -850,7 +899,7 @@ DataHandler.prototype = {
       vars = [],
       feats = query.features || JSON.parse(JSON.stringify(export_defaults.features)),
       rows = [],
-      sep = query.sep || export_defaults.sep,
+      sep = 'csv' === query.file_format ? ',' : '\t',
       rw = row_writers[query.table_format].bind(this)
     for (var n = inc.length, i = 0, k, r; i < n; i++)
       if (Object.hasOwn(this.features, inc[i]) && !Object.hasOwn(feats, inc[i])) {
@@ -864,11 +913,19 @@ DataHandler.prototype = {
           return res
         }
       }
-    for (k in this.variables) if (-1 !== inc.indexOf(k) && -1 === exc.indexOf(k)) vars.push(k)
+    for (k in this.variable_codes)
+      if (
+        Object.hasOwn(this.variable_codes, k) &&
+        -1 !== inc.indexOf(this.variable_codes[k].name) &&
+        -1 === exc.indexOf(this.variable_codes[k].name)
+      )
+        vars.push(this.variable_codes[k].name)
     rows.push(
       Object.keys(feats).join(sep) +
         sep +
-        ('tall' === query.table_format ? ['time', 'variable', 'value'] : vars).join(sep)
+        'time' +
+        sep +
+        ('tall' === query.table_format ? ['variable', 'value'] : vars).join(sep)
     )
     for (k in entities)
       if (Object.hasOwn(entities, k) && passes_filter(entities[k], query)) {
@@ -882,7 +939,7 @@ DataHandler.prototype = {
       document.body.appendChild(e)
       e.rel = 'noreferrer'
       e.target = '_blank'
-      e.download = 'data_export.' + (',' === sep ? 'csv' : 'txt')
+      e.download = 'data_export.' + query.file_format
       e.href = URL.createObjectURL(new Blob([res.body], {type: res.headers['Content-Type']}))
       setTimeout(function () {
         e.dispatchEvent(new MouseEvent('click'))
@@ -891,7 +948,7 @@ DataHandler.prototype = {
       }, 0)
     } else {
       res.statusCode = 200
-      res.headers['Content-Disposition'] = 'attachment; filename=data_export.csv'
+      res.headers['Content-Disposition'] = 'attachment; filename=data_export.' + query.file_format
       return res
     }
   },
