@@ -49,14 +49,17 @@
 data_add <- function(path, meta = list(), package_path = "datapackage.json", dir = ".", write = TRUE,
                      refresh = FALSE, sha = "512", clean = FALSE, open_after = FALSE) {
   if (missing(path)) cli_abort("{.arg path} must be specified")
+  if (missing(dir)) dir <- dirname(path[[1]])
   if (check_template("site", dir = dir)$status[["strict"]]) dir <- paste0(dir, "/docs/data")
   opath <- path
-  path <- normalizePath(paste0(dir, "/", path), "/", FALSE)
+  path <- normalizePath(if (file.exists(paste0(dir, "/", path))) paste0(dir, "/", path) else path, "/", FALSE)
   ck <- !file.exists(path)
   if (any(ck)) path[ck] <- opath[ck]
   if (any(!file.exists(path))) cli_abort("{?a path/paths} did not exist: {path[!file.exists(path)]}")
-  package <- if (is.character(package_path) && !file.exists(package_path)) {
+  package <- if (is.character(package_path) && file.exists(paste0(dir, "/", package_path))) {
     normalizePath(paste0(dir, "/", package_path), "/", FALSE)
+  } else if (is.character(package_path) && file.exists(package_path)) {
+    normalizePath(package_path, "/", FALSE)
   } else {
     package_path
   }

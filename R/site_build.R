@@ -60,6 +60,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         tryCatch(download.file(paste0(parent, "/data/datapackage.json"), f, quiet = TRUE), error = function(e) NULL)
       }
     }
+    time_vars <- NULL
     if (file.exists(f)) {
       meta <- read_json(f)
       previous_data <- list()
@@ -73,6 +74,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         d <- meta$resources[[i]]
         time_info <- list()
         temp <- list()
+        time_vars <- c(time_vars, d$time)
         for (v in d$schema$fields) {
           if ((length(d$time) && v$name == d$time[[1]]) || v$name %in% vars) {
             temp[[v$name]] <- v
@@ -268,7 +270,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     list(
       package = if (file.exists(f)) sub(paste0(dir, "/docs/"), "", f, fixed = TRUE),
       datasets = if (length(meta$resources) == 1) list(names(info)) else names(info),
-      variables = vars[!vars %in% d$time],
+      variables = vars[!vars %in% time_vars],
       info = info,
       files = vapply(info, "[[", "", "filename")
     )
