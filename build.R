@@ -8,8 +8,8 @@ pkgdown::build_site()
 update_stable <- FALSE
 for (f in list.files("dev", "min\\.[cjs]+$", full.names = TRUE)) {
   file.copy(f, paste0('docs/dist/', sub('^.*\\.', '', f)), TRUE)
-  if (grepl("^com", f) && update_stable) file.copy(
-    f, paste0('docs/dist/', sub('^.*\\.', '', f), "/", sub(".", ".v1.", f, fixed = TRUE)), TRUE
+  if (grepl("^dev/(?:com|data_)", f) && update_stable) file.copy(
+    f, paste0('docs/dist/', sub('^.*\\.', '', f), "/", sub(".", ".v1.", basename(f), fixed = TRUE)), TRUE
   )
   file.remove(f)
 }

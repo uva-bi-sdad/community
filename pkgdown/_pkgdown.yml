@@ -42,4 +42,4 @@ home:
         title: Test Coverage
         text:
         - '<a href="coverage/package.html" target="_blank" rel="noreferrer">R</a><br />'
-        - '<a href="coverage/community.js.html" target="_blank" rel="noreferrer">Javascript</a>'
+        - '<a href="coverage/index.html" target="_blank" rel="noreferrer">Javascript</a>'

@@ -301,8 +301,9 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   if (!is.null(variables)) variables <- unique(c(times, variables))
   settings$metadata <- if (file.exists(paste0(dir, "/docs/data/datapackage.json"))) data_preprocess(aggregate) else list()
   parts <- make_build_environment()
+  stable <- version == "v1" || version == "stable"
   parts$dependencies <- c(
-    if (version == "v1" || version == "stable") {
+    if (stable) {
       list(
         base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.v1.min.css"),
         base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.v1.min.js")
@@ -321,13 +322,15 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     c(
       lapply(names(cache_scripts), function(f) {
         dir.create(paste0(dir, "/", cache_scripts[[f]]$location), FALSE, TRUE)
-        lf <- paste0(dir, "/", cache_scripts[[f]]$location, "/", basename(cache_scripts[[f]]$source))
+        scripts <- c(basename(cache_scripts[[f]]$source), sub(".min", ".v1.min", basename(cache_scripts[[f]]$source), fixed = TRUE))
+        script <- scripts[stable + 1]
+        lf <- paste0(dir, "/", cache_scripts[[f]]$location, "/", script)
         if (version == "local") {
-          lff <- paste0("dist/dev/", sub(".min", "", basename(cache_scripts[[f]]$source), fixed = TRUE))
+          lff <- paste0("dist/dev/", sub(".min", "", script, fixed = TRUE))
           file.copy(paste0(dir, "/docs/", lff), lf)
           if (file.exists(lf)) list(type = "script", src = lff)
         } else {
-          file.copy(paste0("dist/dev/", basename(cache_scripts[[f]]$source)), lf)
+          file.copy(paste0("dist/dev/", script), lf)
           if (!file.exists(lf) || md5sum(lf)[[1]] != cache_scripts[[f]]$md5) {
             tryCatch(download.file(cache_scripts[[f]]$source, lf, quiet = TRUE), error = function(e) NULL)
           }

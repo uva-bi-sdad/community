@@ -3246,7 +3246,7 @@ void (function () {
         site.data.retrievers.vector = site.data.retrievers.vector.bind(site.data)
       }
 
-      if (page.load_screen) {
+      if (page.load_screen && site.data.inited) {
         site.data.inited.load_screen = setTimeout(drop_load_screen, 3000)
       } else {
         page.wrap.style.visibility = 'visible'
@@ -3254,7 +3254,7 @@ void (function () {
     }
 
     function drop_load_screen() {
-      clearTimeout(site.data.inited.load_screen)
+      if (site.data.inited) clearTimeout(site.data.inited.load_screen)
       page.wrap.style.visibility = 'visible'
       page.load_screen.style.display = 'none'
     }

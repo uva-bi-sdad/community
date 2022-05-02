@@ -16,7 +16,7 @@ function DataHandler(settings, defaults, data, hooks) {
   this.hooks = hooks || {}
   this.defaults = defaults || {dataview: 'default_view', time: 'time'}
   this.settings = settings
-  this.info = settings && settings.metadata.info
+  this.info = (settings && settings.metadata.info) || {}
   this.features = {}
   this.variables = {}
   this.variable_codes = {}
@@ -48,13 +48,13 @@ function DataHandler(settings, defaults, data, hooks) {
   }
 }
 
-function quantile(p, n, o, x) {
+function quantile(p, n, o, x, l1) {
   var a = p * (n - 1),
     ap = a % 1,
     bp = 1 - ap,
     b = o + Math.ceil(a)
   a = o + Math.floor(a)
-  return x[a][1] * ap + x[b][1] * bp
+  return l1 ? x[a] * ap + x[b] * bp : x[a][1] * ap + x[b][1] * bp
 }
 
 function make_variable_reference(c) {
@@ -91,23 +91,70 @@ function make_variable_reference(c) {
   return e
 }
 
+function vector_summary(vec) {
+  if ('object' === typeof vec) {
+    var n = vec.length,
+      i = vec.length,
+      o = [],
+      v
+    const r = {
+      first: vec[0],
+      min: Infinity,
+      mean: 0,
+      sum: 0,
+      max: -Infinity,
+      last: vec[n - 1],
+    }
+    for (; i--; ) {
+      v = vec[i]
+      o.push(v)
+      if (!isNaN(v)) {
+        if (r.min > v) r.min = v
+        if (r.max < v) r.max = v
+        r.sum += v
+      }
+    }
+    r.mean = r.sum / n
+    r.median = quantile(0.5, n, 0, o.sort(), true)
+    return r
+  } else {
+    return {first: vec, min: vec, mean: vec, median: vec, max: vec, last: vec}
+  }
+}
+
 function passes_filter(entity, filter) {
+  const s = {}
+  for (var i = filter.filter_by.length; i--; ) {
+    if (!Object.hasOwn(entity.data, filter.filter_by[i])) return false
+    s[filter.filter_by[i]] = vector_summary(entity.data[filter.filter_by[i]])
+  }
+  for (i = filter.conditions.length; i--; ) {
+    if (!filter.conditions[i].check(s[filter.conditions[i].name])) return false
+  }
   return true
 }
 
 const patterns = {
     seps: /[\s._-]/g,
     word_start: /\b(\w)/g,
+    single_operator: /([<>!])([^=])/,
     operator_start: /[<>!]$/,
+    component: /^(.+)\[(.+)\]/,
+    number: /^[0-9.+-]+$/,
   },
   export_defaults = {
     file_format: 'csv',
     table_format: 'mixed',
     features: {ID: 'id', Name: 'name'},
+    variables: {
+      filter_by: [],
+      conditions: [],
+    },
   },
   export_options = {
     file_format: ['csv', 'tsv'],
     table_format: ['tall', 'mixed'],
+    filter_components: ['first', 'min', 'mean', 'sum', 'median', 'max', 'last'],
   },
   row_writers = {
     tall: function (entity, feats, vars, sep) {
@@ -173,7 +220,7 @@ const patterns = {
           if (Object.hasOwn(entity.data, vc)) {
             trange = this.meta.variables[entity.group][vars[i]].time_range
             v =
-              1 === trange[2]
+              trange[0] === trange[1]
                 ? y === trange[0]
                   ? entity.data[vc]
                   : NaN
@@ -310,29 +357,43 @@ DataHandler.prototype = {
     this.sets[name] = d
     this.loaded[name] = true
     var k
+    if (!Object.hasOwn(this.info, name)) this.info[name] = {schema: {fields: []}, ids: []}
     if (Object.hasOwn(d, '_meta')) {
+      this.meta.times[name] = d._meta.time
+      if ('object' !== typeof this.meta.times[name].value) this.meta.times[name].value = [this.meta.times[name].value]
+      this.meta.times[name].n = this.meta.times[name].value.length
+      this.meta.times[name].is_single = 1 === this.meta.times[name].n
+      this.meta.times[name].range = [
+        this.meta.times[name].value[0],
+        this.meta.times[name].value[this.meta.times[name].n - 1],
+      ]
       if (Object.hasOwn(this.variables, d._meta.time.name)) {
-        this.meta.times[name] = d._meta.time
         this.meta.times[name].info = this.variables[this.meta.times[name].name]
         this.meta.times[name].info.is_time = true
-        if ('object' !== typeof this.meta.times[name].value) this.meta.times[name].value = [this.meta.times[name].value]
-        this.meta.times[name].n = this.meta.times[name].value.length
-        this.meta.times[name].is_single = 1 === this.meta.times[name].n
-        this.meta.times[name].range = [
-          this.meta.times[name].value[0],
-          this.meta.times[name].value[this.meta.times[name].n - 1],
-        ]
-      } else {
-        this.meta.times[name] = {value: [0], n: 1, range: [0, 0], name: this.defaults.time, is_single: true}
       }
       this.meta.variables[name] = d._meta.variables || {}
-      for (k in this.meta.variables[name])
-        if (Object.hasOwn(this.variables, k)) {
-          this.variables[k].name = k
-          this.variables[k].code = this.meta.variables[name][k].code
-          this.variables[k].time_range[name] = this.meta.variables[name][k].time_range
-          this.variable_codes[this.variables[k].code] = this.variables[k]
+      for (k in this.meta.variables[name]) {
+        if (!Object.hasOwn(this.variables, k)) {
+          this.variables[k] = {
+            datasets: [name],
+            info: {},
+            time_range: {},
+            type: 'unknown',
+            meta: {
+              full_name: k,
+              measure: k.split(':')[1] || k,
+              short_name: this.format_label(k),
+              long_name: k,
+              type: 'unknown',
+            },
+          }
+          this.variable_info[k] = this.variables[k].meta
         }
+        this.variables[k].name = k
+        this.variables[k].code = this.meta.variables[name][k].code
+        this.variables[k].time_range[name] = this.meta.variables[name][k].time_range
+        this.variable_codes[this.variables[k].code] = this.variables[k]
+      }
     }
     if (this.in_browser && this.settings.settings.partial_init) {
       this.load_id_maps()
@@ -734,7 +795,7 @@ DataHandler.prototype = {
     ms.filled = true
   },
   map_variables: function () {
-    var k, v, i, t, m, l
+    var k, v, vn, i, t, m, l
     for (k in this.info)
       if (Object.hasOwn(this.info, k)) {
         this.data_queue[k] = {}
@@ -742,46 +803,50 @@ DataHandler.prototype = {
         m.id_vars = []
         for (v = m.schema.fields, i = m.ids.length; i--; ) m.id_vars.push(m.ids[i].variable)
         for (i = v.length; i--; ) {
-          if (Object.hasOwn(this.variables, v[i].name)) {
-            this.variables[v[i].name].datasets.push(k)
-            this.variables[v[i].name].info[k] = v[i]
+          vn = v[i].name
+          if (Object.hasOwn(this.variables, vn)) {
+            this.variables[vn].datasets.push(k)
+            this.variables[vn].info[k] = v[i]
             if ('string' === v[i].type) {
               for (l in v[i].table)
-                if (Object.hasOwn(v[i].table, l) && !Object.hasOwn(this.variables[v[i].name].levels_ids, l)) {
-                  this.variables[v[i].name].levels_ids[l] = this.variables[v[i].name].levels.length
-                  this.variables[v[i].name].levels.push(l)
+                if (Object.hasOwn(v[i].table, l) && !Object.hasOwn(this.variables[vn].levels_ids, l)) {
+                  this.variables[vn].levels_ids[l] = this.variables[vn].levels.length
+                  this.variables[vn].levels.push(l)
                 }
             }
           } else {
-            this.variables[v[i].name] = {datasets: [k], info: {}, time_range: {}}
-            this.variables[v[i].name].info[k] = v[i]
-            this.variables[v[i].name].type = v[i].type
+            this.variables[vn] = {
+              datasets: [k],
+              info: {},
+              time_range: {},
+              type: v[i].type,
+            }
+            this.variables[vn].info[k] = v[i]
             if ('string' === v[i].type) {
-              this.variables[v[i].name].levels = []
-              this.variables[v[i].name].levels_ids = {}
+              this.variables[vn].levels = []
+              this.variables[vn].levels_ids = {}
               for (l in v[i].table)
                 if (Object.hasOwn(v[i].table, l)) {
-                  this.variables[v[i].name].levels_ids[l] = this.variables[v[i].name].levels.length
-                  this.variables[v[i].name].levels.push(l)
+                  this.variables[vn].levels_ids[l] = this.variables[vn].levels.length
+                  this.variables[vn].levels.push(l)
                 }
             }
-            this.variables[v[i].name].meta = this.variables[v[i].name].info[k].info
-            if (!this.variables[v[i].name].meta)
-              this.variables[v[i].name].meta = {
-                full_name: v[i].name,
-                measure: v[i].name.split(':')[1],
-                short_name: this.format_label(v[i].name),
+            this.variables[vn].meta = this.variables[vn].info[k].info
+            if (!this.variables[vn].meta)
+              this.variables[vn].meta = {
+                full_name: vn,
+                measure: vn.split(':')[1],
+                short_name: this.format_label(vn),
                 type: 'integer',
               }
-            this.variables[v[i].name].meta.full_name = v[i].name
-            if (!Object.hasOwn(this.variables[v[i].name].meta, 'measure'))
-              this.variables[v[i].name].meta.measure = v[i].name.split(':')[1] || v[i].name
-            if (!Object.hasOwn(this.variables[v[i].name].meta, 'short_name'))
-              this.variables[v[i].name].meta.short_name = this.format_label(v[i].name)
-            if (!Object.hasOwn(this.variables[v[i].name].meta, 'long_name'))
-              this.variables[v[i].name].meta.long_name = this.variables[v[i].name].meta.short_name
-            if (!Object.hasOwn(this.variable_info, v[i].name))
-              this.variable_info[v[i].name] = this.variables[v[i].name].meta
+            this.variables[vn].meta.full_name = vn
+            if (!Object.hasOwn(this.variables[vn].meta, 'measure'))
+              this.variables[vn].meta.measure = vn.split(':')[1] || vn
+            if (!Object.hasOwn(this.variables[vn].meta, 'short_name'))
+              this.variables[vn].meta.short_name = this.format_label(vn)
+            if (!Object.hasOwn(this.variables[vn].meta, 'long_name'))
+              this.variables[vn].meta.long_name = this.variables[vn].meta.short_name
+            if (!Object.hasOwn(this.variable_info, vn)) this.variable_info[vn] = this.variables[vn].meta
           }
         }
         if (this.in_browser && Object.hasOwn(m, '_references')) {
@@ -802,7 +867,7 @@ DataHandler.prototype = {
       overwrite = false
     if (Object.hasOwn(this.sets, g) && !this.inited[g]) {
       for (id in this.sets[g]) {
-        if (Object.hasOwn(this.sets[g], id)) {
+        if ('_meta' !== id && Object.hasOwn(this.sets[g], id)) {
           overwrite = this.data_maps[g][id]
           f = overwrite || {id: id, name: id}
           f.id = id
@@ -860,23 +925,45 @@ DataHandler.prototype = {
   },
   parse_query: function (q) {
     const f = JSON.parse(JSON.stringify(export_defaults))
+    var k, a, i, aq, tf
     if ('string' === typeof q) {
-      aq = q.substring(1).split('&')
+      if ('?' === q[0]) q = q.substring(1)
+      aq = q.split('&')
       q = {}
-      for (var i = aq.length, a; i--; ) {
+      for (i = aq.length; i--; ) {
         a = aq[i].split('=')
         q[a[0]] = a.length > 1 ? a[1] : ''
       }
     }
-    for (var k in q)
+    for (k in q)
       if (Object.hasOwn(q, k)) {
         if ('include' === k || 'exclude' === k || Object.hasOwn(f, k)) {
           f[k] = q[k]
         } else {
-          f[k] = {name: k, operator: '=', value: q[k]}
-          if (patterns.operator_start.test(k)) {
-            f[k].name = k.substring(0, k.length - 1)
-            f[k].operator = k.substring(k.length - 1)
+          if (patterns.single_operator.test(k)) {
+            a = k.replace(patterns.single_operator, '$1=$2').split('=')
+            if (a.length > 1) {
+              k = a[0]
+              q[k] = a[1]
+            }
+          }
+          aq = patterns.component.exec(k)
+          tf = {name: k, component: 'mean', operator: '=', value: patterns.number.test(q[k]) ? Number(q[k]) : q[k]}
+          if (aq && -1 !== export_options.filter_components.indexOf(aq[2])) {
+            tf.component = aq[2]
+            tf.name = aq[1]
+          }
+          if (patterns.operator_start.test(k) && Object.hasOwn(this.checks, k[k.length - 1])) {
+            tf.operator = k[k.length - 1]
+            if (k === tf.name) tf.name = k.substring(0, k.length - 1)
+          }
+          if (Object.hasOwn(this.variables, tf.name)) {
+            tf.check = (s, f = this.checks[tf.operator]) => {
+              return f(s[tf.component], tf.value)
+            }
+            tf.name = this.variables[tf.name].code
+            if (-1 === f.variables.filter_by.indexOf(tf.name)) f.variables.filter_by.push(tf.name)
+            f.variables.conditions.push(tf)
           }
         }
       }
@@ -928,7 +1015,10 @@ DataHandler.prototype = {
         ('tall' === query.table_format ? ['variable', 'value'] : vars).join(sep)
     )
     for (k in entities)
-      if (Object.hasOwn(entities, k) && passes_filter(entities[k], query)) {
+      if (
+        Object.hasOwn(entities, k) &&
+        (!query.variables.filter_by.length || passes_filter(entities[k], query.variables))
+      ) {
         r = rw(entities[k], feats, vars, sep)
         if (r) rows.push(r)
       }

@@ -9,7 +9,7 @@
     "test": "tests/js"
   },
   "scripts": {
-    "test": "nyc --reporter=html mocha tests/js/index.js"
+    "test": "nyc --reporter=html mocha tests/js"
   },
   "repository": {
     "type": "git",
