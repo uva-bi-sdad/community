@@ -323,20 +323,23 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     },
     c(
       lapply(names(cache_scripts), function(f) {
-        dir.create(paste0(dir, "/", cache_scripts[[f]]$location), FALSE, TRUE)
-        scripts <- c(basename(cache_scripts[[f]]$source), sub(".min", ".v1.min", basename(cache_scripts[[f]]$source), fixed = TRUE))
-        script <- scripts[stable + 1]
-        lf <- paste0(dir, "/", cache_scripts[[f]]$location, "/", script)
+        cached <- cache_scripts[[f]][[if (stable) "stable" else "dev"]]
+        dir.create(paste0(dir, "/", cached$location), FALSE, TRUE)
+        scripts <- paste0(sub("(?:\\.v1)?(?:\\.min)?\\.js", "", basename(cached$source)), c("", ".min", ".v1.min"), ".js")
+        script <- scripts[stable + 2]
+        lf <- paste0(dir, "/", cached$location, "/", script)
+        lff <- paste0("dist/dev/", sub(".min", "", script, fixed = TRUE))
         if (version == "local") {
-          lff <- paste0("dist/dev/", sub(".min", "", script, fixed = TRUE))
           file.copy(paste0(dir, "/docs/", lff), lf)
           if (file.exists(lf)) list(type = "script", src = lff)
         } else {
-          file.copy(paste0("dist/dev/", script), lf)
-          if (!file.exists(lf) || md5sum(lf)[[1]] != cache_scripts[[f]]$md5) {
-            tryCatch(download.file(cache_scripts[[f]]$source, lf, quiet = TRUE), error = function(e) NULL)
+          if (file.exists(paste0("dist/dev/", script))) file.copy(paste0("dist/dev/", script), lf)
+          unlink(paste0(dir, "/", cached$location, "/", scripts[scripts != script]))
+          if (!file.exists(lf) || md5sum(lf)[[1]] != cached$md5) {
+            tryCatch(download.file(cached$source, lf, quiet = TRUE), error = function(e) NULL)
           }
-          if (file.exists(lf)) list(type = "script", src = sub("^.*docs/", "", lf))
+          if (!file.exists(lf)) cli_abort("failed to download script from {cached$source}")
+          list(type = "script", src = sub("^.*docs/", "", lf))
         }
       }),
       list(

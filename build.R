@@ -17,9 +17,16 @@ for (f in list.files("dev", "min\\.[cjs]+$", full.names = TRUE)) {
 ## update cache script information
 cache_scripts = list(
   data_handler = list(
-    source = "https://uva-bi-sdad.github.io/community/dist/js/data_handler.min.js",
-    location = "docs",
-    md5 = tools::md5sum("docs/dist/js/data_handler.min.js")[[1]]
+    dev = list(
+      source = "https://uva-bi-sdad.github.io/community/dist/js/data_handler.min.js",
+      location = "docs",
+      md5 = tools::md5sum("docs/dist/js/data_handler.min.js")[[1]]
+    ),
+    stable = list(
+      source = "https://uva-bi-sdad.github.io/community/dist/js/data_handler.v1.min.js",
+      location = "docs",
+      md5 = tools::md5sum("docs/dist/js/data_handler.v1.min.js")[[1]]
+    )
   )
 )
 save(cache_scripts, file = "R/sysdata.rda")
