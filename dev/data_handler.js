@@ -987,7 +987,8 @@ DataHandler.prototype = {
       feats = query.features || JSON.parse(JSON.stringify(export_defaults.features)),
       rows = [],
       sep = 'csv' === query.file_format ? ',' : '\t',
-      rw = row_writers[query.table_format].bind(this)
+      rw = row_writers[query.table_format].bind(this),
+      no_filter = !query.variables.filter_by.length
     for (var n = inc.length, i = 0, k, r; i < n; i++)
       if (Object.hasOwn(this.features, inc[i]) && !Object.hasOwn(feats, inc[i])) {
         feats[inc[i]] = this.format_label(inc[i])
@@ -1016,8 +1017,8 @@ DataHandler.prototype = {
     )
     for (k in entities)
       if (
-        Object.hasOwn(entities, k) &&
-        (!query.variables.filter_by.length || passes_filter(entities[k], query.variables))
+        Object.hasOwn(entities, k) && Object.hasOwn(entities[k], 'data') &&
+        (no_filter || passes_filter(entities[k], query.variables))
       ) {
         r = rw(entities[k], feats, vars, sep)
         if (r) rows.push(r)
