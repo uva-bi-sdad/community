@@ -100,7 +100,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
       } else if (!length(list.files(rn))) system2("rm", c("-rf", rn))
     }
     files <- list.files(
-      paste0(cr, "/data"), "\\.(?:csv|tsv|txt|dat|rda|rdata)(?:\\.[gdx]z2?)?$",
+      paste0(cr, "/data"), "\\.(?:csv|tsv|txt|dat|rda|rdata)(?:\\.[gbx]z2?)?$",
       full.names = TRUE, recursive = TRUE, ignore.case = TRUE
     )
     for (f in files) {

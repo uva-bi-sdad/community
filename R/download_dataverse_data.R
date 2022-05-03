@@ -59,7 +59,7 @@ download_dataverse_data <- function(id, outdir = tempdir(), files = NULL, versio
   dir.create(outdir, FALSE, TRUE)
   data <- list()
   ffsx <- paste0(outdir, fs)
-  ffs <- sub("\\.[gbx]z$", "", ffsx)
+  ffs <- sub("\\.[gbx]z2?$", "", ffsx)
   if (refresh) unlink(c(ffsx, ffs))
   if (is.null(key)) {
     if (verbose) cli_alert_info("looking for API key in fall-backs")
@@ -130,7 +130,7 @@ download_dataverse_data <- function(id, outdir = tempdir(), files = NULL, versio
       if (verbose && m$dataFile$md5 != md5sum(ffsx[i])) {
         cli_warn("file was downloaded but its checksum did not match: {.file {ffsx[i]}}")
       }
-      if (decompress && grepl("[gbx]z$", ffsx[i])) {
+      if (decompress && grepl("[gbx]z2?$", ffsx[i])) {
         if (verbose) cli_alert_info("decompressing file: {.file {ffsx[i]}}")
         system2(
           c(xz = "xz", bz = "bunzip2", gz = "gzip")[substring(ffsx[i], nchar(ffsx[i]) - 1)],

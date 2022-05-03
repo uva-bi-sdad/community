@@ -52,7 +52,9 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
   if (missing(dir)) dir <- dirname(path[[1]])
   if (check_template("site", dir = dir)$status[["strict"]]) dir <- paste0(dir, "/docs/data")
   opath <- path
-  path <- normalizePath(if (file.exists(paste0(dir, "/", path))) paste0(dir, "/", path) else path, "/", FALSE)
+  path <- vapply(path, function(f) {
+    normalizePath(if (file.exists(paste0(dir, "/", f))) paste0(dir, "/", f) else f, "/", FALSE)
+  }, "")
   ck <- !file.exists(path)
   if (any(ck)) path[ck] <- opath[ck]
   if (any(!file.exists(path))) cli_abort("{?a path/paths} did not exist: {path[!file.exists(path)]}")

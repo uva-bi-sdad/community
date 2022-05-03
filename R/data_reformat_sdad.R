@@ -65,7 +65,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   max_age <- max(file.mtime(files))
   for (f in files) {
     d <- tryCatch(
-      if (grepl("[gbx]z$", f)) as.data.table(read.csv(gzfile(f))) else fread(f),
+      if (grepl("[gbx]z2?$", f)) as.data.table(read.csv(gzfile(f))) else fread(f),
       error = function(e) NULL
     )
     if (is.null(d)) cli_abort("failed to read in file {.file {f}}")
