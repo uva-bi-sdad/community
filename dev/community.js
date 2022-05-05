@@ -470,11 +470,13 @@ void (function () {
               })
             }
             r = r.time_range[d]
-            u.time_range.variable = variable
-            u.time_range.index[0] = r[0]
-            u.time_range.time[0] = u.time_range.filtered[0] = t + r[0]
-            u.time_range.index[1] = r[1]
-            u.time_range.time[1] = u.time_range.filtered[1] = t + r[1]
+            if (-1 !== r[0]) {
+              u.time_range.variable = variable
+              u.time_range.index[0] = r[0]
+              u.time_range.time[0] = u.time_range.filtered[0] = t + r[0]
+              u.time_range.index[1] = r[1]
+              u.time_range.time[1] = u.time_range.filtered[1] = t + r[1]
+            }
             if (!passive && s) {
               for (i = s.length; i--; ) {
                 value = _u[s[i].id].value()
