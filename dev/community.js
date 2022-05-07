@@ -912,10 +912,12 @@ void (function () {
                 if (!Object.hasOwn(p.marker.line, 'color')) p.marker.line.color = defaults.background_highlight
                 if (!Object.hasOwn(p, 'text')) p.text = []
                 if (!Object.hasOwn(p, 'x')) p.x = []
-                if ('box' !== p.type && !Object.hasOwn(p, 'y')) p.y = []
-                o.traces[site.plotly[o.id].data[i].type] = JSON.stringify(site.plotly[o.id].data[i])
+                if ('box' === p.type) {
+                  p.hoverinfo = 'none'
+                } else if (!Object.hasOwn(p, 'y')) p.y = []
+                o.traces[site.plotly[o.id].data[i].type] = JSON.stringify(p)
                 if (!i) {
-                  o.base_trace = site.plotly[o.id].data[i].type
+                  o.base_trace = p.type
                   if (Object.hasOwn(_u, o.base_trace)) add_dependency(o.base_trace, {type: 'update', id: o.id})
                 }
               }
@@ -1052,14 +1054,12 @@ void (function () {
                     b.q3 = summary.q3
                     b.q1 = summary.q1
                     if (site.settings.iqr_box) {
-                      b.boxpoints = 'suspectedoutliers'
-                      for (b.y = [], b.upperfence = [], b.lowerfence = [], i = b.q1.length; i--; ) {
+                      for (b.upperfence = [], b.lowerfence = [], i = b.q1.length; i--; ) {
                         n = (b.q3[i] - b.q1[i]) * 1.5
                         b.q3[i] = Math.max(b.median[i], b.q3[i])
                         b.upperfence[i] = b.q3[i] + n
                         b.q1[i] = Math.min(b.median[i], b.q1[i])
                         b.lowerfence[i] = b.q1[i] - n
-                        b.y[i] = [summary.min[i], summary.max[i]]
                       }
                     } else {
                       b.upperfence = summary.max

@@ -82,7 +82,7 @@ and <code>export</code> (to download data). This can also be a URL (including pr
 <dt>dataview</dt>
 <dd><p>Name of a data view to get selection and filter options from for export.</p></dd>
 <dt>query</dt>
-<dd><p>A list of query parameters, if <code>target</code> is <code>"export"</code>.</p></dd>
+<dd><p>A list of query parameters, if <code>target</code> is <code>"export"</code>. See the API section.</p></dd>
 <dt>class</dt>
 <dd><p>Additional class names to add to the element.</p></dd>
 <dt>...</dt>
@@ -94,6 +94,47 @@ and <code>export</code> (to download data). This can also be a URL (including pr
     <h2>Value</h2>
     <p>A character vector of the contents to be added.</p>
     </div>
+    <div id="api-query">
+    <h2>API Query</h2>
+    
+
+<p>The <code>query</code> argument can be used to specify export options for a download button.
+These options can also be included as query parameters in a site API's URL:</p><dl><dt>Format</dt>
+<dd><p>These options affect the format of the returned file:</p><ul><li><p><strong><code>file_format</code></strong>: Specifies the separator between columns:
+<code>'csv'</code> (default) for commas, or <code>'tsv'</code> for tabs.</p></li>
+<li><p><strong><code>table_format</code></strong>: Specifies the layout of the data:
+<code>'tall'</code> for a row for each value, with all values in the same column
+(repeats over entities, times, and variables);
+<code>'mixed'</code> (default) for a row for each time, with a column for each variable
+(repeats over entities);
+<code>'wide'</code> for a row for each entity, with a column for each variable at each time.</p></li>
+<li><p><strong><code>features</code></strong>: Specifies which features to include in the
+first columns of the file: A list with names for year column name, and value with the
+feature name to include in that column. Currently not available through the URL.</p></li>
+<li><p><strong><code>include</code></strong>: Specifies which variables to include:
+a vector or variable names, or (for the URL interface) a string with variable
+names separated by commas. By default, all variables are included.</p></li>
+<li><p><strong><code>exclude</code></strong>: Specifies which variables to exclude:
+a vector or variable names, or (for the URL interface) a string with variable
+names separated by commas.</p></li>
+</ul></dd>
+
+<dt>Filters</dt>
+<dd><p>These options can be used to subset data:</p><ul><li><p><strong><code>dataset</code></strong>: The name of a dataset, or vector (comma separated string)
+of dataset names. Includes all datasets by default.</p></li>
+<li><p><strong><code>variable[component]=value</code></strong>: Sets conditions
+on the summary of a variable. The summary of a variable is within each entity, which results in
+a set of summary components: <code>"first"</code>, <code>"min"</code>, <code>"mean"</code>, <code>"sum"</code>,
+<code>"median"</code>, <code>"max"</code>, <code>"last"</code>. The <code>=</code> sign can be another operator:
+<code>"!="</code>, <code>"&gt;="</code>, <code>"&lt;="</code>. values can be comma-separated sets of values.</p></li>
+<li><p><strong><code>feature=value</code></strong>: Sets conditions on a feature of each entity.</p></li>
+<li><p><strong><code>time_range</code></strong>: Selects a time or time range to include:
+<code>"&gt;="</code> or <code>"&lt;="</code> with a single minimal or maximal time, or <code>"="</code>
+with a single time, or comma-separated set of two times.</p></li>
+</ul></dd>
+
+
+</dl></div>
     <div id="see-also">
     <h2>See also</h2>
     <div class="dont-index"><p>For buttons to select between a set of options, use <code><a href="input_buttongroup.html">input_buttongroup</a></code>.</p></div>
@@ -102,7 +143,23 @@ and <code>export</code> (to download data). This can also be a URL (including pr
     <div id="ref-examples">
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
+<span class="r-in"><span class="co"># a selection reset button</span></span>
 <span class="r-in"><span class="fu">input_button</span><span class="op">(</span><span class="st">"Reset"</span><span class="op">)</span></span>
+<span class="r-in"></span>
+<span class="r-in"><span class="co"># a button to export all data, plus some added features</span></span>
+<span class="r-in"><span class="fu">input_button</span><span class="op">(</span><span class="st">"Download All Data"</span>, <span class="st">"export"</span>, query <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span class="r-in">  features <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>ID <span class="op">=</span> <span class="st">"id"</span>, Feature_A <span class="op">=</span> <span class="st">"ft_a"</span><span class="op">)</span></span>
+<span class="r-in"><span class="op">)</span><span class="op">)</span></span>
+<span class="r-in"></span>
+<span class="r-in"><span class="co"># a button to export a special subset</span></span>
+<span class="r-in"><span class="co"># from a URL:</span></span>
+<span class="r-in"><span class="co">#   https://example.com/api?dataset=set_a&amp;include=variable_a,variable_b&amp;</span></span>
+<span class="r-in"><span class="co">#   variable_a[min]&gt;=10&amp;feature_a=type_a,type_b</span></span>
+<span class="r-in"><span class="fu">input_button</span><span class="op">(</span><span class="st">"Download Subset"</span>, <span class="st">"export"</span>, query <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span class="r-in">  dataset <span class="op">=</span> <span class="st">"set_a"</span>, include <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"variable_a"</span>, <span class="st">"variable_b"</span><span class="op">)</span>,</span>
+<span class="r-in">  variable_a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>component <span class="op">=</span> <span class="st">"min"</span>, operator <span class="op">=</span> <span class="st">"&gt;"</span>, value <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>,</span>
+<span class="r-in">  feature_a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"type_a"</span>, <span class="st">"type_b"</span><span class="op">)</span></span>
+<span class="r-in"><span class="op">)</span><span class="op">)</span></span>
 <span class="r-in"><span class="op">}</span></span>
 </code></pre></div>
     </div>
