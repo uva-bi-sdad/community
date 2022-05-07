@@ -98,7 +98,7 @@ function make_variable_reference(c) {
 
 function vector_summary(vec, range) {
   if ('object' === typeof vec) {
-    var n = Math.min(range[0] + 1, vec.length),
+    var n = Math.min(range[1] + 1, vec.length),
       on = 0,
       i = Math.max(range[0], 0),
       o = [],
@@ -111,7 +111,6 @@ function vector_summary(vec, range) {
       max: -Infinity,
       last: vec[n - 1],
     }
-    r.median = quantile(0.5, n, i, o.sort(), true)
     for (; i < n; i++) {
       v = vec[i]
       o.push(v)
@@ -125,15 +124,19 @@ function vector_summary(vec, range) {
     r.mean = on ? r.sum / on : 0
     return r
   } else {
-    return {first: vec, min: vec, mean: vec, median: vec, max: vec, last: vec}
+    return {first: vec, min: vec, mean: vec, max: vec, last: vec}
   }
 }
 
-function passes_filter(entity, time_range, filter) {
+function passes_filter(entity, time_range, filter, codes) {
   const s = {}
-  for (var i = filter.filter_by.length; i--; ) {
+  for (var i = filter.filter_by.length, r; i--; ) {
     if (!Object.hasOwn(entity.data, filter.filter_by[i])) return false
-    s[filter.filter_by[i]] = vector_summary(entity.data[filter.filter_by[i]], time_range)
+    r = codes[filter.filter_by[i]].time_range[entity.group]
+    s[filter.filter_by[i]] = vector_summary(entity.data[filter.filter_by[i]], [
+      time_range[0] - r[0],
+      Math.max(time_range[1] - r[0], time_range[1] - r[1]),
+    ])
   }
   for (i = filter.conditions.length; i--; ) {
     if (!filter.conditions[i].check(s[filter.conditions[i].name])) return false
@@ -168,7 +171,7 @@ const patterns = {
   export_options = {
     file_format: ['csv', 'tsv'],
     table_format: ['tall', 'mixed', 'wide'],
-    filter_components: ['first', 'min', 'mean', 'sum', 'median', 'max', 'last'],
+    filter_components: ['first', 'min', 'mean', 'sum', 'max', 'last'],
   },
   row_writers = {
     tall: function (entity, time_range, feats, vars, sep) {
@@ -253,6 +256,7 @@ const patterns = {
         n = vars.length,
         f,
         trange,
+        range,
         v
       for (f in feats)
         if (Object.hasOwn(feats, f)) {
@@ -260,22 +264,25 @@ const patterns = {
         }
       for (i = 0; i < n; i++) {
         vc = entity.variables[vars[i]].code
-        if (Object.hasOwn(entity.data, vc)) {
-          trange = this.meta.variables[entity.group][vars[i]].time_range
-          for (yn = time_range[1] + 1, y = time_range[0]; y < yn; y++) {
-            v =
-              y < trange[0] || y > trange[1]
-                ? NaN
-                : trange[0] === trange[1]
-                ? y === trange[0]
-                  ? entity.data[vc]
-                  : NaN
-                : y < trange[0] || y > trange[1]
-                ? NaN
-                : entity.data[vc][y - trange[0]]
-            r += sep + (isNaN(v) ? 'NA' : v)
+        range = this.meta.ranges[vars[i]]
+        trange = this.meta.variables[entity.group][vars[i]].time_range
+        for (yn = time_range[1] + 1, y = time_range[0]; y < yn; y++) {
+          if (y >= range[0] && y <= range[1]) {
+            if (Object.hasOwn(entity.data, vc)) {
+              v =
+                y < trange[0] || y > trange[1]
+                  ? NaN
+                  : trange[0] === trange[1]
+                  ? y === trange[0]
+                    ? entity.data[vc]
+                    : NaN
+                  : y < trange[0] || y > trange[1]
+                  ? NaN
+                  : entity.data[vc][y - trange[0]]
+              r += sep + (isNaN(v) ? 'NA' : v)
+            } else r += sep + 'NA'
           }
-        } else r += sep + 'NA'
+        }
       }
       return r
     },
@@ -1057,11 +1064,11 @@ DataHandler.prototype = {
           if ('time_range' === tf.name) {
             if ('object' === typeof tf.value) {
               f.time_range = [
-                this.meta.overall.value.indexOf(tf.value[0]),
-                this.meta.overall.value.indexOf(tf.value[1]),
+                this.meta.overall.value.indexOf(Number(tf.value[0])),
+                this.meta.overall.value.indexOf(Number(tf.value[1])),
               ]
             } else {
-              i = this.meta.overall.value.indexOf(tf.value)
+              i = this.meta.overall.value.indexOf(Number(tf.value))
               f.time_range =
                 '=' === tf.operator ? [i, i] : '>' === tf.operator ? [i, this.meta.overall.value.length - 1] : [0, i]
             }
@@ -1139,10 +1146,11 @@ DataHandler.prototype = {
     if ('wide' === query.table_format) {
       for (n = vars.length, i = 0; i < n; i++) {
         for (
-          yn = Math.min(query.time_range[1], this.meta.ranges[vars[i]][1]),
-            y = Math.max(query.time_range[0], this.meta.ranges[vars[i]][0]);
-          i < n;
-          i++
+          tr = this.meta.ranges[vars[i]],
+            yn = Math.min(query.time_range[1], tr[1]) + 1,
+            y = Math.max(query.time_range[0], tr[0]);
+          y < yn;
+          y++
         ) {
           rows[0] += sep + vars[i] + '_' + this.meta.overall.value[y]
         }
@@ -1153,7 +1161,7 @@ DataHandler.prototype = {
         Object.hasOwn(entities, k) &&
         (!in_group || in_group(entities[k].group)) &&
         (no_feature_filter || passes_feature_filter(entities[k], query.feature_conditions)) &&
-        (no_filter || passes_filter(entities[k], query.time_range, query.variables))
+        (no_filter || passes_filter(entities[k], query.time_range, query.variables, this.variable_codes))
       ) {
         r = rw(entities[k], query.time_range, feats, vars, sep)
         if (r) rows.push(r)

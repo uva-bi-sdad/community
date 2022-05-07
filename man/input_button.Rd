@@ -69,7 +69,7 @@ of dataset names. Includes all datasets by default.
 \item \strong{\code{variable[component]=value}}: Sets conditions
 on the summary of a variable. The summary of a variable is within each entity, which results in
 a set of summary components: \code{"first"}, \code{"min"}, \code{"mean"}, \code{"sum"},
-\code{"median"}, \code{"max"}, \code{"last"}. The \code{=} sign can be another operator:
+\code{"max"}, \code{"last"}. The \code{=} sign can be another operator:
 \code{"!="}, \code{">="}, \code{"<="}. values can be comma-separated sets of values.
 \item \strong{\code{feature=value}}: Sets conditions on a feature of each entity.
 \item \strong{\code{time_range}}: Selects a time or time range to include:
