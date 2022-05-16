@@ -283,10 +283,10 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   }
   defaults <- list(
     digits = 2, summary_selection = "all", color_by_order = FALSE, boxplots = TRUE,
-    theme_dark = FALSE, partial_init = TRUE, palette = "purple", hide_url_parameters = FALSE,
+    theme_dark = FALSE, partial_init = TRUE, palette = "vik", hide_url_parameters = FALSE,
     background_shapes = TRUE, iqr_box = TRUE, polygon_outline = 1.5, color_scale_center = "none",
     table_autoscroll = TRUE, table_scroll_behavior = "smooth", hide_tooltips = FALSE,
-    map_animations = "all"
+    map_animations = "all", trace_limit = 20
   )
   for (s in names(defaults)) {
     if (!is.null(options[[s]])) {

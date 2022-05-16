@@ -1,0 +1,27 @@
+Binding: init_repository
+Title: Community Data Repository
+OpenFiles: README.md
+
+Parameter: init_data
+Widget: CheckboxInput
+Label: Initialize Data
+Default: On
+Position: left
+
+Parameter: init_site
+Widget: CheckboxInput
+Label: Initialize Site
+Default: On
+Position: left
+
+Parameter: init_git
+Widget: CheckboxInput
+Label: Initialize Git
+Default: On
+Position: left
+
+Parameter: overwrite
+Widget: CheckboxInput
+Label: Overwrite
+Default: Off
+Position: right

@@ -1,0 +1,14 @@
+{
+  "name": "repository",
+  "context": "repository",
+  "dir": ".",
+  "files": [
+    "README.md",
+    ".gitignore",
+    "src",
+    "src/retrieve.R",
+    "docs",
+    "data",
+    "data/distribution/measure_info.json"
+  ]
+}

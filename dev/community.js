@@ -1287,7 +1287,7 @@ void (function () {
                                   a[k][subset][c][this.parsed.time] - this.parsed.summary.missing[this.parsed.time],
                                   n
                                 )
-                              : '#00000000'
+                              : defaults.missing
                           if (d === ls[id].entity.group) {
                             ls[id].setStyle({
                               fillOpacity: 0.7,
@@ -1494,7 +1494,7 @@ void (function () {
             o.update()
           },
           update: function (entity, caller, pass) {
-            const v = site.dataviews[this.view]
+            const v = site.dataviews[this.view || defaults.dataview]
             var p,
               e,
               i,
@@ -1510,6 +1510,7 @@ void (function () {
               this.processed = true
               if (this.view) {
                 add_dependency(this.view, {type: 'update', id: this.id})
+                if (Object.hasOwn(_u, v.y)) add_dependency(v.y, {type: 'update', id: this.id})
                 if (y) add_dependency(v.time_agg, {type: 'update', id: this.id})
               } else this.view = defaults.dataview
               if (this.parts.body)
@@ -2357,6 +2358,9 @@ void (function () {
         'drive time': function (v) {
           return v + ' minutes'
         },
+        minutes: function (v) {
+          return v + ' minutes'
+        },
         dollar: function (v) {
           return '$' + v
         },
@@ -2386,6 +2390,7 @@ void (function () {
         border: '#7e7e7e',
         border_highlight_true: '#ffffff',
         border_highlight_false: '#000000',
+        missing: '#00000000',
       },
       summary_levels = {dataset: 'Overall', filtered: 'Filtered', all: 'Selection'},
       meta = {
@@ -2414,6 +2419,7 @@ void (function () {
     }
 
     function pal(value, which, summary, index, rank, total) {
+      if (isNaN(value)) return defaults.missing
       const centered = 'none' !== site.settings.color_scale_center && !site.settings.color_by_order,
         fixed = 'discrete' === palettes[which].type,
         colors = palettes[which].colors,
@@ -2478,7 +2484,7 @@ void (function () {
                 ', ' +
                 (colors[2][0][2] + v * colors[2][1][2])) +
             ')'
-        : ''
+        : defaults.missing
     }
 
     function init_text(o, text) {

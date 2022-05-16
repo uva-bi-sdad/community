@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">41.23% </span>
+                <span class="strong">41.31% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>308/747</span>
+                <span class='fraction'>309/748</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">36.48% </span>
+                <span class="strong">36.12% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>220/603</span>
+                <span class='fraction'>220/609</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">41.88% </span>
+                <span class="strong">41.97% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>284/678</span>
+                <span class='fraction'>285/679</span>
             </div>
         
             
@@ -1254,7 +1254,8 @@
 <a name='L1189'></a><a href='#L1189'>1189</a>
 <a name='L1190'></a><a href='#L1190'>1190</a>
 <a name='L1191'></a><a href='#L1191'>1191</a>
-<a name='L1192'></a><a href='#L1192'>1192</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1192'></a><a href='#L1192'>1192</a>
+<a name='L1193'></a><a href='#L1193'>1193</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1287,6 +1288,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -1325,10 +1327,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2483,6 +2485,7 @@ function DataHandler(settings, defaults, data, hooks) {
   this.sets = {}
   this.data_maps = {}
   this.data_queue = {}
+  this.in_browser = 'undefined' === typeof module
   this.data_ready = new Promise(resolve =&gt; {
     this.all_data_ready = resolve
   })
@@ -2515,7 +2518,8 @@ function <span class="fstat-no" title="function not covered" >make_variable_refe
     i--;
 &nbsp;
   ) {
-<span class="cstat-no" title="statement not covered" >    s = (i ? j : '') + c.author[i].family + ', ' + c.author[i].given.substring(0, 1) + '.' + s</span>
+<span class="cstat-no" title="statement not covered" >    s =</span>
+      (i ? j : '') + c.author[i].family + (c.author[i].given ? ', ' + c.author[i].given.substring(0, 1) + '.' : '') + s
 <span class="cstat-no" title="statement not covered" >    j = ', '</span>
   }
 <span class="cstat-no" title="statement not covered" >  e.innerHTML =</span>
@@ -2524,12 +2528,11 @@ function <span class="fstat-no" title="function not covered" >make_variable_refe
     c.year +
     '). ' +
     c.title +
-    '. &lt;em&gt;' +
-    c.journal +
-    (c.volume ? ', ' + c.volume : '') +
-    '&lt;/em&gt;' +
-    (c.page ? ', ' + c.page : '') +
     '.' +
+    (c.journal
+      ? ' &lt;em&gt;' + c.journal + (c.volume ? ', ' + c.volume : '') + '&lt;/em&gt;' + (c.page ? ', ' + c.page : '') + '.'
+      : '') +
+    (c.version ? ' Version ' + c.version + '.' : '') +
     (c.doi || c.url
       ? (c.doi ? ' doi: ' : ' url: ') +
         (c.doi || c.url
@@ -2636,7 +2639,7 @@ const patterns = {
         v
       for (f in feats)
         <span class="missing-if-branch" title="else path not taken" >E</span>if (Object.hasOwn(feats, f)) {
-          tr += entity.features[feats[f]] + sep
+          tr += '"' + entity.features[feats[f]] + '"' + sep
         }
       for (; i &lt; n; i++) {
         vc = entity.variables[vars[i]].code
@@ -2671,7 +2674,7 @@ const patterns = {
         v
       for (f in feats)
         <span class="missing-if-branch" title="else path not taken" >E</span>if (Object.hasOwn(feats, f)) {
-          tr += entity.features[feats[f]] + sep
+          tr += '"' + entity.features[feats[f]] + '"' + sep
         }
       for (yn = time_range[1] + 1, y = time_range[0]; y &lt; yn; y++) {
         r = tr + time[y]
@@ -2707,7 +2710,7 @@ const patterns = {
         v
       for (f in feats)
         <span class="missing-if-branch" title="else path not taken" >E</span>if (Object.hasOwn(feats, f)) {
-          r += (r ? sep : '') + entity.features[feats[f]]
+          r += (r ? sep : '') + '"' + entity.features[feats[f]] + '"'
         }
       for (i = 0; i &lt; n; i++) {
         vc = entity.variables[vars[i]].code
@@ -3643,7 +3646,7 @@ DataHandler.prototype = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at Sat May 07 2022 16:58:42 GMT-0400 (Eastern Daylight Time)
+                at Mon May 16 2022 01:39:30 GMT-0400 (Eastern Daylight Time)
             </div>
         <script src="prettify.js"></script>
         <script>

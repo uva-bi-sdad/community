@@ -1,0 +1,26 @@
+Binding: init_site
+Title: Community Data Site
+OpenFiles: site.R
+
+Parameter: title
+Widget: TextInput
+Label: Title
+Default: app
+
+Parameter: with_data
+Widget: CheckboxInput
+Label: Include data documentation files 
+Default: On
+Position: left
+
+Parameter: node_project
+Widget: CheckboxInput
+Label: Include Node files
+Default: off
+Position: left
+
+Parameter: overwrite
+Widget: CheckboxInput
+Label: Overwrite
+Default: Off
+Position: right

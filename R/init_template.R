@@ -42,22 +42,23 @@ init_template <- function(name, files, dir = ".", spec_dir = ".", context = name
     dir = spec_dir,
     files = files
   )
-  if (!overwrite && check_template(context, spec = spec)$exists) {
-    cli_abort("files already exists")
+  test_path <- paste0(dir, "/tests/testthat/test-init_", name, ".R")
+  template_test <- file.exists(test_path)
+  init_function(paste0("init_", name), dir = dir, overwrite = overwrite)
+  if (overwrite || !template_test) {
+    writeLines(paste0(
+      "test_that(\"check_template passes\", {",
+      "\n  dir <- tempdir(TRUE)",
+      "\n  on.exit(unlink(dir, TRUE, TRUE))",
+      if (spec$name != spec$context) {
+        paste0("\n  init_", spec$context, "(\"test_context\", dir = dir)\n  dir <- paste0(dir, \"/test_context\")")
+      },
+      "\n  init_", name, "(\"test_", name, "\", dir = dir)",
+      "\n  expect_true(check_template(\"", name, "\", \"test_", name, "\", dir = dir)$exists)",
+      "\n})",
+      sep = ""
+    ), test_path)
   }
-  function_paths <- init_function(paste0("init_", name), dir = dir, overwrite = overwrite)
-  writeLines(paste0(
-    "test_that(\"check_template passes\", {",
-    "\n  dir <- tempdir(TRUE)",
-    "\n  on.exit(unlink(dir, TRUE, TRUE))",
-    if (spec$name != spec$context) {
-      paste0("\n  init_", spec$context, "(\"test_context\", dir = dir)\n  dir <- paste0(dir, \"/test_context\")")
-    },
-    "\n  init_", name, "(\"test_", name, "\", dir = dir)",
-    "\n  expect_true(check_template(\"", name, "\", \"test_", name, "\", dir = dir)$exists)",
-    "\n})",
-    sep = ""
-  ), function_paths[2])
   path <- normalizePath(paste0(
     dir,
     if (file.exists(paste0(dir, "/inst"))) "/inst",
@@ -65,7 +66,7 @@ init_template <- function(name, files, dir = ".", spec_dir = ".", context = name
     name,
     ".json"
   ), "/", FALSE)
-  write_json(spec, path, pretty = TRUE, auto_unbox = TRUE)
+  if (overwrite || !file.exists(path)) write_json(spec, path, pretty = TRUE, auto_unbox = TRUE)
   if (interactive()) {
     cli_bullets(c(v = "created a spec file for {name}:", "*" = paste0("{.file ", path, "}")))
   }

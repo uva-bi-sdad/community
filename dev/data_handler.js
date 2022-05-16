@@ -36,6 +36,7 @@ function DataHandler(settings, defaults, data, hooks) {
   this.sets = {}
   this.data_maps = {}
   this.data_queue = {}
+  this.in_browser = 'undefined' === typeof module
   this.data_ready = new Promise(resolve => {
     this.all_data_ready = resolve
   })
@@ -68,7 +69,8 @@ function make_variable_reference(c) {
     i--;
 
   ) {
-    s = (i ? j : '') + c.author[i].family + ', ' + c.author[i].given.substring(0, 1) + '.' + s
+    s =
+      (i ? j : '') + c.author[i].family + (c.author[i].given ? ', ' + c.author[i].given.substring(0, 1) + '.' : '') + s
     j = ', '
   }
   e.innerHTML =
@@ -77,12 +79,11 @@ function make_variable_reference(c) {
     c.year +
     '). ' +
     c.title +
-    '. <em>' +
-    c.journal +
-    (c.volume ? ', ' + c.volume : '') +
-    '</em>' +
-    (c.page ? ', ' + c.page : '') +
     '.' +
+    (c.journal
+      ? ' <em>' + c.journal + (c.volume ? ', ' + c.volume : '') + '</em>' + (c.page ? ', ' + c.page : '') + '.'
+      : '') +
+    (c.version ? ' Version ' + c.version + '.' : '') +
     (c.doi || c.url
       ? (c.doi ? ' doi: ' : ' url: ') +
         (c.doi || c.url
@@ -189,7 +190,7 @@ const patterns = {
         v
       for (f in feats)
         if (Object.hasOwn(feats, f)) {
-          tr += entity.features[feats[f]] + sep
+          tr += '"' + entity.features[feats[f]] + '"' + sep
         }
       for (; i < n; i++) {
         vc = entity.variables[vars[i]].code
@@ -224,7 +225,7 @@ const patterns = {
         v
       for (f in feats)
         if (Object.hasOwn(feats, f)) {
-          tr += entity.features[feats[f]] + sep
+          tr += '"' + entity.features[feats[f]] + '"' + sep
         }
       for (yn = time_range[1] + 1, y = time_range[0]; y < yn; y++) {
         r = tr + time[y]
@@ -260,7 +261,7 @@ const patterns = {
         v
       for (f in feats)
         if (Object.hasOwn(feats, f)) {
-          r += (r ? sep : '') + entity.features[feats[f]]
+          r += (r ? sep : '') + '"' + entity.features[feats[f]] + '"'
         }
       for (i = 0; i < n; i++) {
         vc = entity.variables[vars[i]].code
