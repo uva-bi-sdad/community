@@ -6,7 +6,7 @@
 #' a \code{url} entry (the URL of the file), and will need a \code{name} entry (associating it
 #' with one of the site's datasets) if the site has multiple datasets. The file's features
 #' must each have a \code{properties} field containing an ID found in the data -- by default
-#' this is assumed to be called \code{"GEOID"}, but this can be specified with an \code{id_property}
+#' this is assumed to be called \code{"geoid"}, but this can be specified with an \code{id_property}
 #' entry in the list. For example \code{shapes = list(name = "data", }\code{
 #' url = "https://example.com/shapes.geojson", id_property = "id")}.
 #' @param color The name of a variable, or id of a variable selector, to be used to color polygons.
@@ -63,7 +63,7 @@ output_map <- function(shapes = NULL, color = NULL, color_time = NULL, dataview 
     snames <- names(shapes)
     for (i in seq_along(shapes)) {
       if (!is.null(snames[i])) shapes[[i]]$name <- snames[i]
-      if (is.null(shapes[[i]]$id_property)) shapes[[i]]$id_property <- "GEOID"
+      if (is.null(shapes[[i]]$id_property)) shapes[[i]]$id_property <- "geoid"
     }
     caller$map[[id]] <- list(shapes = unname(shapes), options = options, tiles = tiles)
   }

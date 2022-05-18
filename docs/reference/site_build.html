@@ -66,8 +66,8 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">site_build</span><span class="op">(</span><span class="va">dir</span>, file <span class="op">=</span> <span class="st">"site.R"</span>, name <span class="op">=</span> <span class="st">"index.html"</span>, variables <span class="op">=</span> <span class="cn">NULL</span>,
   options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, bundle_data <span class="op">=</span> <span class="cn">FALSE</span>, open_after <span class="op">=</span> <span class="cn">FALSE</span>,
   aggregate <span class="op">=</span> <span class="cn">TRUE</span>, sparse_time <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">FALSE</span>, version <span class="op">=</span> <span class="st">"v1"</span>,
-  parent <span class="op">=</span> <span class="cn">NULL</span>, include_api <span class="op">=</span> <span class="cn">TRUE</span>, serve <span class="op">=</span> <span class="cn">FALSE</span>, host <span class="op">=</span> <span class="st">"127.0.0.1"</span>,
-  port <span class="op">=</span> <span class="fl">3000</span><span class="op">)</span>
+  parent <span class="op">=</span> <span class="cn">NULL</span>, include_api <span class="op">=</span> <span class="cn">TRUE</span>, endpoint <span class="op">=</span> <span class="cn">NULL</span>, serve <span class="op">=</span> <span class="cn">FALSE</span>,
+  host <span class="op">=</span> <span class="st">"127.0.0.1"</span>, port <span class="op">=</span> <span class="fl">3000</span><span class="op">)</span>
 
 <span class="fu">site_start_server</span><span class="op">(</span><span class="va">dir</span>, host <span class="op">=</span> <span class="st">"127.0.0.1"</span>, port <span class="op">=</span> <span class="fl">3000</span>, open_after <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
     </div>
@@ -108,6 +108,8 @@ processed version.</p></dd>
 <dd><p>Directory path or repository URL of a data site from which to use data, rather than using local data.</p></dd>
 <dt>include_api</dt>
 <dd><p>Logical; if <code>FALSE</code>, will not write the <code>docs/functions/api.js</code> file.</p></dd>
+<dt>endpoint</dt>
+<dd><p>URL of the served API.</p></dd>
 <dt>serve</dt>
 <dd><p>Logical; if <code>TRUE</code>, starts a local server from the site's <code>docs</code> directory.
 Once a server is running, you can use <code><a href="https://rdrr.io/pkg/httpuv/man/stopAllServers.html" class="external-link">stopAllServers</a></code> to stop it.</p></dd>

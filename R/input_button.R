@@ -7,10 +7,13 @@
 #' those inputs to as values, or the name of a function to trigger (e.g., \code{c(input_a = 1)}). Available function
 #' are \code{refresh} (to force a reprocessing of the current input state), \code{reset_selection} (to reset all input
 #' elements that are not settings), \code{reset_storage} (to clear local storage, reset all settings, and reload),
-#' and \code{export} (to download data). This can also be a URL (including protocol) for a button-like link.
+#' \code{export} (to download data), and \code{copy} (to save an API link to the clipboard).
+#' This can also be a URL (including protocol) for a button-like link.
 #' @param id Unique ID of the element to be created.
 #' @param dataview Name of a data view to get selection and filter options from for export.
-#' @param query A list of query parameters, if \code{target} is \code{"export"}. See the API section.
+#' @param query A list of query parameters, if \code{target} is \code{"export"} or \code{"copy"}. See the API section.
+#' @param from_api Logical; if \code{TRUE}, \code{target} is \code{"export"}, and an endpoint has been provided
+#' in \code{\link{site_build}}, links to the API rather than exporting from the browser.
 #' @param class Additional class names to add to the element.
 #' @param ... Additional attributes to set on the element.
 #' @param note Text to display as a tooltip for the button.
@@ -82,7 +85,7 @@
 #' @export
 
 input_button <- function(label, target = "reset_selection", id = label, dataview = NULL,
-                         query = list(), class = "", ..., note = NULL) {
+                         query = list(), from_api = FALSE, class = "", ..., note = NULL) {
   id <- gsub("\\s", "", id)
   a <- list(...)
   if (missing(target) && !(missing(dataview) || missing(query))) {
@@ -111,11 +114,12 @@ input_button <- function(label, target = "reset_selection", id = label, dataview
   )
   caller <- parent.frame()
   if (!is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts") {
-    if (length(target) == 1 && target == "export") {
+    if (length(target) == 1 && target %in% c("export", "copy")) {
       caller$button[[id]] <- list(
         effects = target,
         dataview = dataview,
-        query = query
+        query = query,
+        api = from_api
       )
     } else if (!is.null(names(target))) caller$button[[id]] <- list(effects = target)
     caller$content <- c(caller$content, r)

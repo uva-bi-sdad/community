@@ -23,6 +23,7 @@
 #' (\code{community.js} and \code{community.css}) served from a local \code{dist} directory.
 #' @param parent Directory path or repository URL of a data site from which to use data, rather than using local data.
 #' @param include_api Logical; if \code{FALSE}, will not write the \code{docs/functions/api.js} file.
+#' @param endpoint URL of the served API.
 #' @param serve Logical; if \code{TRUE}, starts a local server from the site's \code{docs} directory.
 #' Once a server is running, you can use \code{\link[httpuv]{stopAllServers}} to stop it.
 #' @param host The IPv4 address to listen to if \code{serve} is \code{TRUE}; defaults to \code{"127.0.0.1"}.
@@ -41,8 +42,8 @@
 
 site_build <- function(dir, file = "site.R", name = "index.html", variables = NULL,
                        options = list(), bundle_data = FALSE, open_after = FALSE, aggregate = TRUE, sparse_time = TRUE,
-                       force = FALSE, version = "v1", parent = NULL, include_api = TRUE, serve = FALSE, host = "127.0.0.1",
-                       port = 3000) {
+                       force = FALSE, version = "v1", parent = NULL, include_api = TRUE, endpoint = NULL, serve = FALSE,
+                       host = "127.0.0.1", port = 3000) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., dir = ".")')
   page <- paste0(dir, "/", file)
   if (!file.exists(page)) cli_abort("{.file {page}} does not exist")
@@ -394,6 +395,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
       }
     }
   }
+  if (!is.null(endpoint)) settings$endpoint <- endpoint
   write_json(settings, paste0(dir, "/docs/settings.json"), pretty = TRUE, auto_unbox = TRUE)
   if (include_api) {
     dir.create(paste0(dir, "/docs/functions"), FALSE, TRUE)

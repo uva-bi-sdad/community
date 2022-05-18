@@ -502,25 +502,57 @@ void (function () {
         button: {
           init: function (o) {
             o.target = o.e.getAttribute('target')
+            if ('copy' === o.target) o.settings.endpoint = site.endpoint
             o.e.addEventListener(
               'click',
               o.settings.effects
-                ? 'export' === o.target
-                  ? function () {
-                      const f = {}
-                      for (var k in this.query) if (Object.hasOwn(this.query, k)) f[k] = valueOf(this.query[k])
-                      if (Object.hasOwn(_u, this.dataview)) {
-                        if (!Object.hasOwn(f, 'include') && _u[this.dataview].y)
-                          f.include = valueOf(_u[this.dataview].y)
+                ? 'export' === o.target || 'copy' === o.target
+                  ? function (e) {
+                      const f = {},
+                        s = this.settings
+                      for (var k in s.query) if (Object.hasOwn(s.query, k)) f[k] = valueOf(s.query[k])
+                      if (Object.hasOwn(_u, s.dataview)) {
+                        if (!Object.hasOwn(f, 'include') && _u[s.dataview].y) f.include = valueOf(_u[s.dataview].y)
                       }
-                      site.data.export(
-                        f,
-                        Object.hasOwn(_u, this.dataview) && Object.hasOwn(_u[this.dataview], 'selection')
-                          ? _u[this.dataview].selection.all
-                          : site.data.entities,
-                        true
-                      )
-                    }.bind(o.settings)
+                      if ('copy' === this.target || this.api) {
+                        var q = []
+                        if (Object.hasOwn(f, 'include')) q.push('include=' + f.include)
+                        if (Object.hasOwn(f, 'dataset')) q.push('dataset=' + f.dataset)
+                        k = s.endpoint + (q.length ? '?' + q.join('&') : '')
+                        if (this.api) {
+                          window.location.href = k
+                        } else {
+                          navigator.clipboard.writeText(k).then(
+                            () => {
+                              if ('Copied!' !== o.e.innerText) {
+                                o.text = o.e.innerText
+                                o.e.innerText = 'Copied!'
+                                setTimeout(function () {
+                                  o.e.innerText = o.text
+                                }, 500)
+                              }
+                            },
+                            e => {
+                              if (e !== o.e.innerText) {
+                                o.text = o.e.innerText
+                                o.e.innerText = e
+                                setTimeout(function () {
+                                  o.e.innerText = o.text
+                                }, 1500)
+                              }
+                            }
+                          )
+                        }
+                      } else {
+                        site.data.export(
+                          f,
+                          Object.hasOwn(_u, s.dataview) && Object.hasOwn(_u[s.dataview], 'selection')
+                            ? _u[s.dataview].selection.all
+                            : site.data.entities,
+                          true
+                        )
+                      }
+                    }.bind(o)
                   : function () {
                       for (var k in this.settings.effects)
                         if (Object.hasOwn(_u, k)) {
