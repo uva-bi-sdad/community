@@ -90,19 +90,19 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, id =
       )
       caller$dependencies$datatables_style <- list(
         type = "stylesheet",
-        src = "https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css",
-        hash = "sha384-yT2pwyD9a3Oee/HtjWTccnRmchDWH2EDHjzH7gwf8yAK0RilKFL164FCHX9fzlxh"
+        src = "https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css",
+        hash = "sha384-1acln9x8L/qLiaGGA71iWpzCKwZpGAPXErmVAFNPf2k/3GYOsLOZfQ3+0uxxFtM5"
       )
       caller$dependencies$datatables <- list(
         type = "script",
-        src = "https://cdn.datatables.net/v/dt/dt-1.11.5/b-2.2.2/b-html5-2.2.2/sc-2.0.5/datatables.min.js",
-        hash = "sha384-0rCDA/8OgbzPbIGy/YCZwdLAmLIMEXHq/uDT1+6eAtgyFBi3ov7Ii5r1z7YzEV5e",
+        src = "https://cdn.datatables.net/v/dt/dt-1.12.1/b-2.2.3/b-html5-2.2.3/sc-2.0.6/datatables.min.js",
+        hash = "sha384-Y1427YBZOapB/AX5kZw63iJdU684kyxYD0YN9KKGerEFpcup72cecHo99tqZ59Zf",
         loading = "defer"
       )
       caller$credits$datatables <- list(
         name = "DataTables",
         url = "https://datatables.net",
-        version = "1.11.5"
+        version = "1.12.1"
       )
     }
     if (datatables) caller$datatable[[id]] <- options else caller$table[[id]] <- options

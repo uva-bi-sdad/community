@@ -1001,7 +1001,7 @@ void (function () {
                   d = v.get.dataset(),
                   y = _u[this.time || v.time_agg],
                   rank = 'all' === site.settings.summary_selection ? 'subset_rank' : 'rank'
-                if (site.data.inited[d] && s) {
+                if (site.data.inited[d] && s && v.time_range && v.time_range.filtered.length) {
                   this.parsed.base_trace = valueOf(this.base_trace)
                   this.parsed.x = valueOf(this.x)
                   this.parsed.x_range = site.data.variables[this.parsed.x].time_range[d]
@@ -1136,8 +1136,8 @@ void (function () {
                   if (state !== this.state) {
                     Plotly.react(this.e, traces, this.e.layout)
                     setTimeout(trigger_resize, 300)
+                    this.state = state
                   }
-                  this.state = state
                 }
               }
             }
@@ -2825,7 +2825,7 @@ void (function () {
 
     var k, i, e, c
     // get options from url
-    k = window.location.search.replace('?', '')
+    site.query = k = window.location.search.replace('?', '')
     site.url_options = {}
     if (k) {
       e = k.split('&')
@@ -3284,6 +3284,7 @@ void (function () {
           },
         })
         site.data.retrievers.vector = site.data.retrievers.vector.bind(site.data)
+        if (site.query) site.parsed_query = site.data.parse_query(site.query)
       }
 
       if (page.load_screen && site.data.inited) {

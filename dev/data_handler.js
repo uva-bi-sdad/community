@@ -1074,7 +1074,8 @@ DataHandler.prototype = {
                 '=' === tf.operator ? [i, i] : '>' === tf.operator ? [i, this.meta.overall.value.length - 1] : [0, i]
             }
             if (-1 === f.time_range[0]) f.time_range[0] = 0
-            if (-1 === f.time_range[1]) f.time_range[1] = this.meta.overall.value.length - 1
+            if (-1 === f.time_range[1])
+              f.time_range[1] = this.meta.overall.value.length ? this.meta.overall.value.length - 1 : 0
           } else if ('dataset' === tf.name) {
             f.dataset = tf
           } else if (Object.hasOwn(this.features, tf.name)) {
@@ -1090,7 +1091,8 @@ DataHandler.prototype = {
           }
         }
       }
-    if (!Object.hasOwn(f, 'time_range')) f.time_range = [0, this.meta.overall.value.length - 1]
+    if (!Object.hasOwn(f, 'time_range'))
+      f.time_range = [0, this.meta.overall.value.length ? this.meta.overall.value.length - 1 : 0]
     return f
   },
   export: async function (query, entities, in_browser) {
