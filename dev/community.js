@@ -404,7 +404,11 @@ void (function () {
               if (first_all && summary_state !== f.summary_state) {
                 f.summary_state = summary_state
                 for (id in site.data.variables)
-                  if (id !== site.data.meta.times[f.parsed.dataset].name && Object.hasOwn(site.data.variables, id))
+                  if (
+                    id !== site.data.meta.times[f.parsed.dataset].name &&
+                    Object.hasOwn(site.data.variables, id) &&
+                    Object.hasOwn(site.data.variables[id].time_range, f.parsed.dataset)
+                  )
                     site.data.calculate_summary(id, f.id, true)
                 update_subs(f.id, 'update')
               }
@@ -1885,13 +1889,14 @@ void (function () {
                       this.parsed.order = Object.hasOwn(site.data.variables[vn], this.view)
                         ? site.data.variables[vn][this.view].order[d][this.parsed.time]
                         : false
-                      if (this.header.length < 2 || vn !== this.header[1].variable) {
+                      if (this.header.length < 2 || d !== this.header[1].dataset || vn !== this.header[1].variable) {
                         this.table.destroy()
                         $(this.e).empty()
                         this.header = [{title: 'Name', data: 'entity.features.name'}]
                         if (-1 !== this.parsed.time_range[0]) {
                           for (n = this.parsed.time_range[2]; n--; ) {
                             this.header[n + 1] = {
+                              dataset: d,
                               variable: vn,
                               title: this.variable_header
                                 ? this.options.variables.title || site.data.format_label(k)
@@ -1921,6 +1926,7 @@ void (function () {
                           if (vn) {
                             if (Object.hasOwn(v.selection.all[k].summary, vn)) {
                               this.rows[k] = this.table.row.add({
+                                dataset: d,
                                 variable: vn,
                                 offset: this.parsed.time_range[0],
                                 entity: v.selection.all[k],
@@ -1966,6 +1972,7 @@ void (function () {
                                 o.rows[s.features.id] = o.table.row.add({
                                   offset: this.time_range[0],
                                   time: ci - this.time_range[0],
+                                  dataset: d,
                                   variable: this.variable,
                                   entity: s,
                                   int: this.int,
@@ -1987,6 +1994,7 @@ void (function () {
                             ) {
                               this.rows[k] = this.table.row.add({
                                 offset: this.parsed.time_range[0],
+                                dataset: d,
                                 variable: vn,
                                 entity: v.selection.all[k],
                                 int: patterns.int_types.test(site.data.variable_info[vn].type),
@@ -3270,6 +3278,7 @@ void (function () {
       if (!site.metadata.datasets) drop_load_screen()
 
       if ('undefined' !== typeof DataHandler) {
+        defaults.dataset = valueOf(site.dataviews[defaults.dataview].dataset)
         site.data = new DataHandler(site, defaults, site.data, {
           init: init,
           onload: function () {
@@ -3821,7 +3830,7 @@ void (function () {
         'object' === typeof v.get.ids()
           ? DataHandler.prototype.checks.includes
           : function (a, b) {
-              return !a || -1 == a || a === b || (b && a.length > 2 && a === b.substring(0, a.length))
+              return !a || -1 == a || a === b || (b && a.length > 2 && a === String(b).substring(0, a.length))
             }
       v.parsed = {
         dataset: '',

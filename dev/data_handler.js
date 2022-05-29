@@ -483,7 +483,7 @@ DataHandler.prototype = {
         }
       }
     }
-    if (this.in_browser && this.settings.settings.partial_init) {
+    if (this.in_browser && this.settings.settings.partial_init && k === this.defaults.dataset) {
       this.load_id_maps()
     } else {
       for (k in this.loaded) if (Object.hasOwn(this.loaded, k) && !this.loaded[k]) return void 0

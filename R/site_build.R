@@ -251,7 +251,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                   value = unique(times),
                   name = d$time
                 ),
-                variables = var_meta
+                variables = Filter(function(l) l$time_range[1] != -1 && l$time_range[2] != -1, var_meta)
               )
               write_json(sdata, path, dataframe = "columns", auto_unbox = TRUE)
             }
@@ -401,7 +401,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     dir.create(paste0(dir, "/docs/functions"), FALSE, TRUE)
     writeLines(c(
       "'use strict'",
-      "const DataHandler = require('../data_handler.min.js'),",
+      paste0("const DataHandler = require('../data_handler", if (stable) ".v1", ".min.js'),"),
       "  data = new DataHandler(require('../settings.json'), void 0, {",
       paste0(
         "    ",
