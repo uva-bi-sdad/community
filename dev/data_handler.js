@@ -21,6 +21,7 @@ function DataHandler(settings, defaults, data, hooks) {
   this.variables = {}
   this.variable_codes = {}
   this.variable_info = {}
+  this.references = {}
   this.entities = {}
   this.meta = {
     times: {},
@@ -36,6 +37,7 @@ function DataHandler(settings, defaults, data, hooks) {
   this.sets = {}
   this.data_maps = {}
   this.data_queue = {}
+  this.load_requests = {}
   this.in_browser = 'undefined' === typeof module
   this.data_ready = new Promise(resolve => {
     this.all_data_ready = resolve
@@ -46,11 +48,12 @@ function DataHandler(settings, defaults, data, hooks) {
   for (var k, i = settings.metadata.datasets.length; i--; ) {
     k = settings.metadata.datasets[i]
     this.loaded[k] = Object.hasOwn(data, k)
-    if (this.loaded[k]) {
-      this.ingest_data(data[k], k)
-    } else {
-      this.retrieve(k, settings.metadata.info[k].site_file)
-    }
+    if (!this.settings.settings.partial_init || !this.defaults.dataset || k === this.defaults.dataset)
+      if (this.loaded[k]) {
+        this.ingest_data(data[k], k)
+      } else {
+        this.retrieve(k, settings.metadata.info[k].site_file)
+      }
   }
 }
 
@@ -483,7 +486,11 @@ DataHandler.prototype = {
         }
       }
     }
-    if (this.in_browser && this.settings.settings.partial_init && k === this.defaults.dataset) {
+    if (
+      this.in_browser &&
+      this.settings.settings.partial_init &&
+      (!this.defaults.dataset || name === this.defaults.dataset || site.data.inited.first)
+    ) {
       this.load_id_maps()
     } else {
       for (k in this.loaded) if (Object.hasOwn(this.loaded, k) && !this.loaded[k]) return void 0
@@ -491,18 +498,21 @@ DataHandler.prototype = {
     }
   },
   retrieve: async function (name, url) {
-    const f = new window.XMLHttpRequest()
-    f.onreadystatechange = () => {
-      if (4 === f.readyState) {
-        if (200 === f.status) {
-          this.ingest_data(JSON.parse(f.responseText), name)
-        } else {
-          throw new Error('load_data failed: ' + f.responseText)
+    if (!this.load_requests[name]) {
+      this.load_requests[name] = url
+      const f = new window.XMLHttpRequest()
+      f.onreadystatechange = () => {
+        if (4 === f.readyState) {
+          if (200 === f.status) {
+            this.ingest_data(JSON.parse(f.responseText), name)
+          } else {
+            throw new Error('load_data failed: ' + f.responseText)
+          }
         }
       }
+      f.open('GET', url, true)
+      f.send()
     }
-    f.open('GET', url, true)
-    f.send()
   },
   ingest_map: function (m, url, field) {
     this.data_maps[url].resource = m
@@ -940,11 +950,13 @@ DataHandler.prototype = {
         if (this.in_browser && Object.hasOwn(m, '_references')) {
           if (!Object.hasOwn(this.variable_info, '_references')) this.variable_info._references = {}
           for (t in m._references)
-            if (Object.hasOwn(m._references, t))
+            if (Object.hasOwn(m._references, t)) {
+              if (!Object.hasOwn(this.references, t)) this.references[t] = make_variable_reference(m._references[t])
               this.variable_info._references[t] = {
                 reference: m._references[t],
-                element: make_variable_reference(m._references[t]),
+                element: this.references[t],
               }
+            }
         }
       }
   },
@@ -1096,7 +1108,7 @@ DataHandler.prototype = {
     return f
   },
   export: async function (query, entities, in_browser) {
-    await this.data_ready
+    if (!in_browser) await this.data_ready
     query = this.parse_query(query)
     entities = entities || this.entities
     if (-1 === export_options.file_format.indexOf(query.file_format)) query.file_format = export_defaults.file_format
