@@ -189,6 +189,7 @@ void (function () {
         word_start: /\b(\w)/g,
         settings: /^settings\./,
         features: /^features\./,
+        filter: /^filter\./,
         data: /^data\./,
         variables: /^variables\./,
         palette: /^pal/,
@@ -345,6 +346,7 @@ void (function () {
           }
         },
         dataview: function (f) {
+          f = f || _u[defaults.dataview]
           const state = f.value()
           if (state !== f.state) {
             var c,
@@ -365,7 +367,7 @@ void (function () {
               f.selection.dataset = {}
               f.selection.filtered = {}
               f.selection.all = {}
-              f.reparse()
+              // f.reparse()
               for (id in site.data.entities)
                 if (Object.hasOwn(site.data.entities, id)) {
                   c = f.check(site.data.entities[id])
@@ -507,10 +509,16 @@ void (function () {
           init: function (o) {
             o.target = o.e.getAttribute('target')
             if ('copy' === o.target) o.settings.endpoint = site.endpoint
+            if ('filter' === o.target) {
+              o.e.setAttribute('data-bs-toggle', 'modal')
+              o.e.setAttribute('data-bs-target', '#filter_display')
+            }
             o.e.addEventListener(
               'click',
               o.settings.effects
-                ? 'export' === o.target || 'copy' === o.target
+                ? 'filter' === o.target
+                  ? toggle_filter
+                  : 'export' === o.target || 'copy' === o.target
                   ? function (e) {
                       const f = {},
                         s = this.settings,
@@ -2852,7 +2860,7 @@ void (function () {
       return s
     }
 
-    var k, i, e, c
+    var k, i, e, ee, c
     // get options from url
     site.query = k = window.location.search.replace('?', '')
     site.url_options = {}
@@ -2992,8 +3000,14 @@ void (function () {
           init: false,
           e: document.createElement('div'),
         },
+        filter: {
+          init: false,
+          e: document.createElement('div'),
+        },
       }
       page.load_screen = document.getElementById('load_screen')
+
+      // make variable info popup
       e = page.modal.info.e
       document.body.appendChild(e)
       page.modal.info.init = true
@@ -3017,6 +3031,7 @@ void (function () {
       e.header.lastElementChild.className = 'btn-close'
       e.header.lastElementChild.setAttribute('data-bs-dismiss', 'modal')
       e.header.lastElementChild.title = 'close'
+      e.header.lastElementChild.addEventListener('click', conditionals.dataview)
       e.header.insertAdjacentElement('afterEnd', (e.body = document.createElement('div')))
       e.body.className = 'modal-body'
       e.body.appendChild((e.title = document.createElement('p')))
@@ -3054,6 +3069,70 @@ void (function () {
       e.references.firstElementChild.innerText = 'References'
       e.references.appendChild((e = document.createElement('ul')))
       e.className = 'reference-list'
+
+      // set up filter's time range
+      document.body.appendChild((e = page.modal.filter.e))
+      page.modal.filter.init = true
+      e.id = 'filter_display'
+      e.className = 'modal fade'
+      e.setAttribute('tabindex', '-1')
+      e.setAttribute('aria-labelledby', 'filter_title')
+      e.ariaHidden = 'true'
+      e.appendChild(document.createElement('div'))
+      e.firstElementChild.className = 'modal-dialog'
+      e.firstElementChild.appendChild(document.createElement('div'))
+      e.firstElementChild.firstElementChild.className = 'modal-content'
+      e.firstElementChild.firstElementChild.appendChild((page.modal.filter.header = document.createElement('div')))
+      e = page.modal.filter
+      e.header.className = 'modal-header'
+      e.header.appendChild(document.createElement('p'))
+      e.header.firstElementChild.className = 'h5 modal-title'
+      e.header.firstElementChild.id = 'filter_title'
+      e.header.firstElementChild.innerText = 'Filter'
+      e.header.appendChild(document.createElement('button'))
+      e.header.lastElementChild.type = 'button'
+      e.header.lastElementChild.className = 'btn-close'
+      e.header.lastElementChild.setAttribute('data-bs-dismiss', 'modal')
+      e.header.lastElementChild.title = 'close'
+      e.header.insertAdjacentElement('afterEnd', (e.body = document.createElement('div')))
+      e.body.className = 'modal-body'
+      e.body.appendChild(document.createElement('p'))
+      e.body.lastElementChild.className = 'h6 text-muted'
+      e.body.lastElementChild.innerText = 'Time Range'
+
+      e.body.appendChild((e.time_range = document.createElement('div')))
+      e.time_range.className = 'row'
+
+      e.time_range.appendChild(document.createElement('div'))
+      e.time_range.lastElementChild.className = 'col'
+      e.time_range.lastElementChild.appendChild((ee = document.createElement('div')))
+      ee.className = 'form-floating text-wrapper wrapper'
+      ee.appendChild(document.createElement('input'))
+      ee.lastElementChild.className = 'form-control auto-input'
+      ee.lastElementChild.setAttribute('auto-type', 'number')
+      ee.lastElementChild.setAttribute('default', 'min')
+      ee.lastElementChild.max = 'filter.time_max'
+      ee.lastElementChild.type = 'number'
+      ee.lastElementChild.autoType = 'number'
+      ee.lastElementChild.id = 'filter.time_min'
+      ee.appendChild(document.createElement('label'))
+      ee.lastElementChild.innerText = 'First Time'
+      ee.lastElementChild.setAttribute('for', 'filter.time_min')
+      e.time_range.appendChild(document.createElement('div'))
+      e.time_range.lastElementChild.className = 'col'
+      e.time_range.lastElementChild.appendChild((ee = document.createElement('div')))
+      ee.className = 'form-floating text-wrapper wrapper'
+      ee.appendChild(document.createElement('input'))
+      ee.lastElementChild.className = 'form-control auto-input'
+      ee.lastElementChild.setAttribute('auto-type', 'number')
+      ee.lastElementChild.setAttribute('default', 'max')
+      ee.lastElementChild.min = 'filter.time_min'
+      ee.lastElementChild.type = 'number'
+      ee.lastElementChild.autoType = 'number'
+      ee.lastElementChild.id = 'filter.time_max'
+      ee.appendChild(document.createElement('label'))
+      ee.lastElementChild.innerText = 'Last Time'
+      ee.lastElementChild.setAttribute('for', 'filter.time_max')
 
       for (i = page.panels.length; i--; ) {
         page.content_bounds[page.panels[i].classList.contains('panel-left') ? 'left' : 'right'] =
@@ -3371,7 +3450,7 @@ void (function () {
     }
 
     function init() {
-      var k, i, e, c, n, o, cond, v
+      var k, i, e, ee, c, n, o, cond, v
       defaults.dataset = site.metadata.datasets[0]
 
       // initialize inputs
@@ -3687,6 +3766,153 @@ void (function () {
           }
         }
       }
+
+      // make filter popup
+      e = page.modal.filter
+
+      e.body.appendChild((e.variable_filters = document.createElement('div')))
+      e.variable_filters.appendChild(document.createElement('p'))
+      e.variable_filters.lastElementChild.className = 'h6 text-muted'
+      e.variable_filters.lastElementChild.innerText = 'Variable Conditions'
+
+      function add_filter_condition(event) {
+        if ('A' === event.target.tagName) {
+          const e = document.createElement('div')
+          var ee, f
+          if (!site.data.filter) site.data.filter = new Map()
+          e.setAttribute('index', site.data.filter.size)
+          site.data.filter.set(
+            site.data.filter.size,
+            (f = {
+              e,
+              index: site.data.filter.size,
+              variable: event.target.innerText,
+              component: 'selected',
+              operator: '>=',
+              value: '',
+            })
+          )
+          e.className = 'row'
+          e.appendChild(document.createElement('div'))
+          e.lastElementChild.className = 'col'
+          e.lastElementChild.appendChild((ee = document.createElement('p')))
+          ee.innerText = event.target.innerText
+
+          e.appendChild(document.createElement('div'))
+          e.lastElementChild.style.maxWidth = '130px'
+          e.lastElementChild.className = 'col'
+          e.lastElementChild.appendChild((ee = document.createElement('select')))
+          ee.className = 'form-select'
+          ee.default = '0'
+          ee.addEventListener('change', e => {
+            f.component = e.target.selectedOptions[0].value
+            conditionals.dataview()
+          })
+          var options = ['selected']
+          options.forEach(k => {
+            ee.appendChild(document.createElement('option'))
+            ee.lastElementChild.component = ee.lastElementChild.innerText = k
+            conditionals.dataview()
+          })
+
+          e.appendChild(document.createElement('div'))
+          e.lastElementChild.style.maxWidth = '90px'
+          e.lastElementChild.className = 'col'
+          e.lastElementChild.appendChild((ee = document.createElement('select')))
+          ee.className = 'form-select'
+          ee.default = '0'
+          ee.addEventListener('change', e => {
+            f.operator = e.target.selectedOptions[0].value
+            conditionals.dataview()
+          })
+          options = ['>=', '<=']
+          options.forEach(k => {
+            ee.appendChild(document.createElement('option'))
+            ee.lastElementChild.value = ee.lastElementChild.innerText = k
+            conditionals.dataview()
+          })
+
+          e.appendChild(document.createElement('div'))
+          e.lastElementChild.className = 'col-2'
+          e.lastElementChild.appendChild((ee = document.createElement('input')))
+          ee.className = 'form-control'
+          ee.type = 'number'
+          ee.addEventListener('change', e => {
+            f.value = e.target.value
+            conditionals.dataview()
+          })
+
+          e.appendChild(document.createElement('div'))
+          e.lastElementChild.style.maxWidth = '36px'
+          e.lastElementChild.className = 'col'
+          e.lastElementChild.appendChild((ee = document.createElement('button')))
+          ee.className = 'btn btn-close'
+          ee.type = 'button'
+          ee.addEventListener(
+            'click',
+            function () {
+              this.e.parentElement.removeChild(this.e)
+              site.data.filter.delete(this.index)
+            }.bind(f)
+          )
+
+          page.modal.filter.variable_filters.lastElementChild.appendChild(e)
+        }
+      }
+
+      e.variable_filters.appendChild((ee = document.createElement('div')))
+      ee.className = 'row'
+
+      ee.appendChild(document.createElement('div'))
+      ee.lastElementChild.className = 'col'
+      ee.lastElementChild.appendChild((c = document.createElement('div')))
+      c.className = 'dropdown'
+      c.appendChild(document.createElement('button'))
+      c.lastElementChild.type = 'button'
+      c.lastElementChild.id = 'filter_variable_dropdown'
+      c.lastElementChild.className = 'btn dropdown-toggle'
+      c.lastElementChild.setAttribute('data-bs-toggle', 'dropdown')
+      c.lastElementChild.setAttribute('aria-expanded', false)
+      c.lastElementChild.innerText = 'Add Variable Condition'
+      c.appendChild(document.createElement('ul'))
+      c.lastElementChild.addEventListener('click', add_filter_condition.bind(e))
+      c.lastElementChild.className = 'dropdown-menu'
+      c.lastElementChild.setAttribute('aria-labelledby', 'filter_variable_dropdown')
+      Object.keys(site.data.variables).forEach(k => {
+        const e = document.createElement('li')
+        e.appendChild(document.createElement('a'))
+        e.lastElementChild.className = 'dropdown-item'
+        e.lastElementChild.href = '#'
+        e.lastElementChild.innerText = k
+        c.lastElementChild.appendChild(e)
+      })
+
+      // ee.appendChild(document.createElement('div'))
+      // ee.lastElementChild.className = 'col'
+      // ee.lastElementChild.appendChild((c = document.createElement('div')))
+      // c.className = 'dropdown'
+      // c.appendChild(document.createElement('button'))
+      // c.lastElementChild.type = 'button'
+      // c.lastElementChild.id = 'filter_feature_dropdown'
+      // c.lastElementChild.className = 'btn dropdown-toggle'
+      // c.lastElementChild.setAttribute('data-bs-toggle', 'dropdown')
+      // c.lastElementChild.setAttribute('aria-expanded', false)
+      // c.lastElementChild.innerText = 'Add Feature Condition'
+      // c.appendChild(document.createElement('ul'))
+      // c.lastElementChild.addEventListener('click', add_filter_condition.bind(e))
+      // c.lastElementChild.className = 'dropdown-menu'
+      // c.lastElementChild.setAttribute('aria-labelledby', 'filter_feature_dropdown')
+      // Object.keys(site.data.features).forEach(k => {
+      //   const e = document.createElement('li')
+      //   e.appendChild(document.createElement('a'))
+      //   e.lastElementChild.className = 'dropdown-item'
+      //   e.lastElementChild.href = '#'
+      //   e.lastElementChild.innerText = k
+      //   c.lastElementChild.appendChild(e)
+      // })
+
+      e.variable_filters.appendChild(document.createElement('div'))
+      e.variable_filters.lastElementChild.className = 'row'
     }
 
     function valueOf(v) {
@@ -3790,6 +4016,10 @@ void (function () {
       var i
       v.times = []
       if (v.time_filters) {
+        v.time_filters = [
+          {variable: defaults.time, type: '>=', value: 'filter.time_min'},
+          {variable: defaults.time, type: '<=', value: 'filter.time_max'},
+        ]
         for (i = v.time_filters.length; i--; )
           if (Object.hasOwn(_u, v.time_filters[i].value)) {
             add_dependency(v.time_filters[i].value, {type: 'time_filters', id: v.id})
@@ -3819,7 +4049,7 @@ void (function () {
           return s
         },
         variables: function () {
-          if (v.variables) {
+          if (v.variables || site.data.filter?.size) {
             if (!v.parsed.variable_values.length) v.reparse()
             for (var s = '', i = v.parsed.variable_values.length; i--; )
               s +=
@@ -3885,9 +4115,20 @@ void (function () {
             }
           this.parsed.features = this.get.features()
         } else this.parsed.features = ''
-        if (this.variables) {
-          this.parsed.variable_values = []
-          for (var i = this.variables.length, v; i--; ) {
+        this.parsed.variable_values = []
+        if (site.data.filter?.size)
+          site.data.filter.forEach(f => {
+            const v = Number(f.value)
+            if (!isNaN(v))
+              this.parsed.variable_values.push({
+                name: f.variable,
+                operator: f.operator,
+                value: v,
+                value_type: 'number',
+              })
+          })
+        if (this.variables || this.parsed.variable_values.length) {
+          for (var i = this.variables?.length, v; i--; ) {
             v = valueOf(this.variables[i].value)
             this.parsed.variable_values.push({
               name: valueOf(this.variables[i].variable),
@@ -3972,7 +4213,7 @@ void (function () {
         return {
           ids: !this.ids || this.checks.ids(e),
           features: !this.features || this.checks.features(e),
-          variables: !this.variables || this.checks.variables(e),
+          variables: (!this.variables && !site.data.filter?.size) || this.checks.variables(e),
           dataset: !this.dataset || this.checks.dataset(e),
         }
       }.bind(v)
@@ -3981,6 +4222,38 @@ void (function () {
     function clear_storage() {
       if (window.localStorage) window.localStorage.clear()
       window.location.reload()
+    }
+
+    function toggle_filter() {
+      const v = _u[this.view],
+        info = site.data.variable_info[valueOf(this.v || v.y)]
+      var n, i
+      page.modal.info.header.firstElementChild.innerText = info.short_name
+      page.modal.info.title.innerText = info.long_name
+      page.modal.info.description.innerText = info.long_description || info.description || info.short_description || ''
+      page.modal.info.name.lastElementChild.innerText = info.measure || ''
+      page.modal.info.type.lastElementChild.innerText = info.type || ''
+      if (info.sources?.length) {
+        page.modal.info.sources.lastElementChild.lastElementChild.innerHTML = ''
+        page.modal.info.sources.classList.remove('hidden')
+        for (n = info.sources.length, i = 0; i < n; i++) {
+          page.modal.info.sources.lastElementChild.lastElementChild.appendChild(make_variable_source(info.sources[i]))
+        }
+      } else page.modal.info.sources.classList.add('hidden')
+      if (info.citations?.length && 'string' !== typeof info.citations) {
+        page.modal.info.references.lastElementChild.innerHTML = ''
+        page.modal.info.references.classList.remove('hidden')
+        if ('string' === typeof info.citations) info.citations = [info.citations]
+        for (n = info.citations.length, i = 0; i < n; i++)
+          if (
+            site.data.variable_info._references &&
+            Object.hasOwn(site.data.variable_info._references, info.citations[i])
+          ) {
+            page.modal.info.references.lastElementChild.appendChild(
+              site.data.variable_info._references[info.citations[i]].element
+            )
+          }
+      } else page.modal.info.references.classList.add('hidden')
     }
 
     function global_update() {

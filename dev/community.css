@@ -102,7 +102,8 @@ input {
 .form-control,
 .form-control:focus,
 body::-webkit-scrollbar-track,
-.dataTables_wrapper .dataTables_length select {
+.dataTables_wrapper .dataTables_length select,
+.dropdown-menu {
   background-color: var(--background-input);
   border-color: var(--background-border);
   color: var(--body-text);
@@ -330,7 +331,9 @@ button.btn-danger {
   padding-top: 1.5rem;
   padding-bottom: 0;
 }
-
+button.dropdown-toggle {
+  width: 100%;
+}
 .info-body {
   display: flex;
   flex-direction: column;
