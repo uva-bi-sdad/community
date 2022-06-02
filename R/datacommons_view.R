@@ -171,6 +171,26 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
           Reduce("+", lapply(view$ids, function(id) cfs %in% map$ids[[id]]$file))
       ), ]
       files <- files[!duplicated(paste(files$full_name, basename(files$file))), , drop = FALSE]
+      sel_files <- unlist(lapply(split(files, files$full_name), function(fs) {
+        if (nrow(fs) == 1) {
+          fs$file
+        } else {
+          ccfs <- paste0("/", fs$file)
+          ifm <- vapply(map$ids[view$ids], function(im) ccfs %in% im$files, logical(length(ccfs)))
+          is <- colSums(ifm) != 0
+          sel <- NULL
+          for (i in seq_along(ccfs)) {
+            if (any(is[ifm[i, ]])) {
+              sel <- c(sel, fs$file[i])
+              is[ifm[i, ]] <- FALSE
+            } else {
+              break
+            }
+          }
+          sel
+        }
+      }), use.names = FALSE)
+      files <- files[files$file %in% sel_files, ]
       if (verbose) cli_alert_info("updating manifest: {.file {paths[2]}}")
       repo_manifest <- read_json(paste0(commons, "/manifest/repos.json"))
       manifest <- lapply(split(files, files$repo), function(r) {
@@ -195,10 +215,10 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
         measure_info <- if (length(measure_info) == 1 && file.exists(measure_info)) read_json(measure_info) else as.list(measure_info)
       }
       for (r in unique(files$repo)) {
-        rf <- list.files(paste0(commons, "/repos/", sub("^.+/", "", r)), "^measure_info\\.json$", full.names = TRUE, recursive = TRUE)[[1]]
+        rf <- list.files(paste0(commons, "/repos/", sub("^.+/", "", r)), "^measure_info\\.json$", full.names = TRUE, recursive = TRUE)
         if (length(rf)) {
-          ri <- read_json(rf)
-          ri <- ri[!names(ri) %in% names(measure_info)]
+          ri <- read_json(rf[[1]])
+          ri <- ri[names(ri) %in% view$variables & !names(ri) %in% names(measure_info)]
           if (length(ri)) measure_info[names(ri)] <- ri
         }
       }

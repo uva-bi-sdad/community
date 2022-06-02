@@ -63,12 +63,29 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   names <- list()
   if (verbose) cli_progress_step("reading in {length(files)} original file{?s}")
   max_age <- max(file.mtime(files))
+  check_variables <- check_ids <- FALSE
+  if (length(ids)) {
+    check_ids <- TRUE
+    ids <- unique(as.character(ids))
+  }
   for (f in files) {
     d <- tryCatch(
       if (grepl("[gbx]z2?$", f)) as.data.table(read.csv(gzfile(f))) else fread(f),
       error = function(e) NULL
     )
     if (is.null(d)) cli_abort("failed to read in file {.file {f}}")
+    if (check_ids) {
+      if (id %in% colnames(d)) {
+        su <- grepl("^[0-9]+$", d[[id]])
+        if (any(su)) {
+          d[[id]][su] <- trimws(format(as.numeric(d[[id]][su]), scientific = FALSE))
+        }
+        d <- d[d[[id]] %in% ids]
+        if (!nrow(d)) next
+      } else {
+        next
+      }
+    }
     if (any(su <- !vars %in% colnames(d))) {
       if (all(su)) cli_abort("no variables found in file {.file {f}}")
       if (any(!spec[su])) {
@@ -104,22 +121,13 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     }
   }
   vars <- c(vars, "file")
-  check_variables <- check_ids <- FALSE
   if (length(variables)) {
     check_variables <- TRUE
     variables <- unique(as.character(variables))
   }
-  if (length(ids)) {
-    check_ids <- TRUE
-    ids <- unique(as.character(ids))
-  }
   data <- do.call(rbind, lapply(data, function(d) {
     d <- d[, vars, with = FALSE]
     d <- d[rowSums(vapply(d, is.na, logical(nrow(d)))) == 0, ]
-    if (id %in% vars) {
-      d[[id]] <- trimws(format(d[[id]], scientific = FALSE))
-      if (check_ids) d <- d[d[[id]] %in% ids]
-    }
     if (check_variables) {
       d <- d[d[[value_name]] %in% variables]
     }

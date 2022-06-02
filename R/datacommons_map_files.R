@@ -39,12 +39,12 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
     ))
   }
   commons <- read_json(paste0(dir, "/commons.json"))
-  all_files <- list.files(paste0(dir, "/", c("cache", "repos/data")), search_pattern, full.names = TRUE, recursive = TRUE)
-  all_files <- all_files[!grepl("[/\\](?:working|original)[/\\]", all_files)]
+  all_files <- list.files(paste0(dir, "/", c("cache", "repos")), search_pattern, full.names = TRUE, recursive = TRUE)
+  all_files <- all_files[!grepl("[/\\](?:working|original)[/\\]|variable_map", all_files)]
   if (!length(all_files)) cli_abort("no files were found")
   res <- paste0(dir, "/cache/", c("variable_map.csv", "id_map.json"))
   if (overwrite) unlink(res)
-  if (all(file.exists(res)) && all(as.numeric(file.mtime(res)) > max(as.numeric(file.mtime(all_files))))) {
+  if (all(file.exists(res)) && all(file.mtime(res) > max(file.mtime(all_files)))) {
     if (verbose) cli_alert_success("the maps are up to date")
     return(invisible(list(variables = read.csv(res[1]), ids = read_json(res[2]))))
   }
@@ -61,6 +61,7 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
       paste0(dir, "/", c("repos", "cache"), "/", sub("^[^/]+/", "", r)), search_pattern,
       full.names = TRUE, recursive = TRUE, ignore.case = TRUE
     )
+    files <- files[files %in% all_files]
     for (f in files) {
       d <- tryCatch(reader(if (grepl("[gbx]z2?$", f)) gzfile(f) else f, 1), error = function(e) NULL)
       if (!is.null(d)) {
