@@ -2048,7 +2048,7 @@ void (function () {
             }
           },
           mouseover: function (e) {
-            if (Object.hasOwn(this.rowIds, e.target._DT_CellIndex.row)) {
+            if (Object.hasOwn(this.rowIds, e.target._DT_CellIndex?.row)) {
               const id = this.rowIds[e.target._DT_CellIndex.row],
                 row = this.rows[id].node()
               if (row) row.style.backgroundColor = defaults.background_highlight
@@ -2058,7 +2058,7 @@ void (function () {
             }
           },
           mouseout: function (e) {
-            if (Object.hasOwn(this.rowIds, e.target._DT_CellIndex.row)) {
+            if (Object.hasOwn(this.rowIds, e.target._DT_CellIndex?.row)) {
               const id = this.rowIds[e.target._DT_CellIndex.row],
                 row = this.rows[id].node()
               if (row) row.style.backgroundColor = 'inherit'
@@ -2068,7 +2068,7 @@ void (function () {
             }
           },
           click: function (e) {
-            if (this.clickto && Object.hasOwn(this.rowIds, e.target._DT_CellIndex.row)) {
+            if (this.clickto && Object.hasOwn(this.rowIds, e.target._DT_CellIndex?.row)) {
               const id = this.rowIds[e.target._DT_CellIndex.row]
               if (Object.hasOwn(site.data.entities, id)) this.clickto.set(id)
             }

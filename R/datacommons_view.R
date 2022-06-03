@@ -171,7 +171,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
           Reduce("+", lapply(view$ids, function(id) cfs %in% map$ids[[id]]$file))
       ), ]
       files <- files[!duplicated(paste(files$full_name, basename(files$file))), , drop = FALSE]
-      sel_files <- unlist(lapply(split(files, files$full_name), function(fs) {
+      sel_files <- unique(unlist(lapply(split(files, files$full_name), function(fs) {
         if (nrow(fs) == 1) {
           fs$file
         } else {
@@ -183,13 +183,11 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
             if (any(is[ifm[i, ]])) {
               sel <- c(sel, fs$file[i])
               is[ifm[i, ]] <- FALSE
-            } else {
-              break
             }
           }
           sel
         }
-      }), use.names = FALSE)
+      }), use.names = FALSE))
       files <- files[files$file %in% sel_files, ]
       if (verbose) cli_alert_info("updating manifest: {.file {paths[2]}}")
       repo_manifest <- read_json(paste0(commons, "/manifest/repos.json"))
@@ -218,7 +216,17 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
         rf <- list.files(paste0(commons, "/repos/", sub("^.+/", "", r)), "^measure_info\\.json$", full.names = TRUE, recursive = TRUE)
         if (length(rf)) {
           ri <- read_json(rf[[1]])
-          ri <- ri[names(ri) %in% view$variables & !names(ri) %in% names(measure_info)]
+          nri <- names(ri)
+          es <- nri[nri %in% names(measure_info) & !nri %in% view$variables]
+          if (length(es)) {
+            for (e in es) {
+              if (!is.null(names(ri[[e]]))) {
+                su <- !names(ri[[e]]) %in% names(measure_info[[e]])
+                if (any(su)) measure_info[[e]] <- c(measure_info[[e]], ri[[e]][su])
+              }
+            }
+          }
+          ri <- ri[nri %in% view$variables & !nri %in% names(measure_info)]
           if (length(ri)) measure_info[names(ri)] <- ri
         }
       }

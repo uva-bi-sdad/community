@@ -120,7 +120,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       vars <- c(value, vars)
     }
   }
-  vars <- c(vars, "file")
+  vars <- unique(c(vars, "file"))
   if (length(variables)) {
     check_variables <- TRUE
     variables <- unique(as.character(variables))
