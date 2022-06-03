@@ -29,10 +29,10 @@
 #' "region_name" column).
 #' @param compression A character specifying the type of compression to use on the created files,
 #' between \code{"gzip"}, \code{"bzip2"}, and \code{"xz"}. Set to \code{FALSE} to disable compression.
-#' @param read_existing Logical; if \code{TRUE}, will read in existing sets that are not to be overwritten.
-#' Useful if you use the returned sets.
+#' @param read_existing Logical; if \code{FALSE}, will not read in existing sets.
 #' @param overwrite Logical; if \code{TRUE}, will overwrite existing reformatted files, even if
 #' the source files are older than it.
+#' @param get_coverage Logical; if \code{FALSE}, will not calculate a summary of variable coverage (\code{coverage.csv}).
 #' @param verbose Logical; if \code{FALSE}, will not print status messages.
 #' @examples
 #' \dontrun{
@@ -44,8 +44,8 @@
 data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, value = "value", value_name = "measure",
                                id = "geoid", time = "year", dataset = "region_type", value_info = "measure_type",
                                entity_info = c(type = "region_type", name = "region_name"),
-                               formatters = NULL, compression = "xz", read_existing = FALSE, overwrite = FALSE,
-                               verbose = TRUE) {
+                               formatters = NULL, compression = "xz", read_existing = TRUE, overwrite = FALSE,
+                               get_coverage = TRUE, verbose = TRUE) {
   if (length(files) == 1 && dir.exists(files)) {
     files <- list.files(files, full.names = TRUE)
   }
@@ -248,6 +248,16 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   })
   names(sets) <- datasets
   if (!is.null(out)) {
+    if (get_coverage) {
+      variables <- sort(if (length(variables)) variables else unique(unlist(lapply(sets, colnames), use.names = FALSE)))
+      write.csv(vapply(sets, function(d) {
+        allcounts <- structure(numeric(length(variables)), names = variables)
+        counts <- colSums(!is.na(d))
+        counts <- counts[variables %in% names(counts)]
+        allcounts[names(counts)] <- counts
+        allcounts
+      }, numeric(length(variables))), paste0(out, "/coverage.csv"))
+    }
     if (any(write)) {
       if (verbose) cli_progress_step("writing data files", msg_done = "wrote reformatted datasets:")
       for (i in seq_along(sets)) {

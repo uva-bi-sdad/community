@@ -15,7 +15,8 @@ input_button(label, target = "reset_selection", id = label,
 those inputs to as values, or the name of a function to trigger (e.g., \code{c(input_a = 1)}). Available function
 are \code{refresh} (to force a reprocessing of the current input state), \code{reset_selection} (to reset all input
 elements that are not settings), \code{reset_storage} (to clear local storage, reset all settings, and reload),
-\code{export} (to download data), and \code{copy} (to save an API link to the clipboard).
+\code{export} (to download data), \code{copy} (to save an API link to the clipboard), and
+\code{filter} (to open a data filter menu).
 This can also be a URL (including protocol) for a button-like link.}
 
 \item{id}{Unique ID of the element to be created.}

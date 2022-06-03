@@ -8,8 +8,8 @@ data_reformat_sdad(files, out = NULL, variables = NULL, ids = NULL,
   value = "value", value_name = "measure", id = "geoid", time = "year",
   dataset = "region_type", value_info = "measure_type",
   entity_info = c(type = "region_type", name = "region_name"),
-  formatters = NULL, compression = "xz", read_existing = FALSE,
-  overwrite = FALSE, verbose = TRUE)
+  formatters = NULL, compression = "xz", read_existing = TRUE,
+  overwrite = FALSE, get_coverage = TRUE, verbose = TRUE)
 }
 \arguments{
 \item{files}{A character vector of file paths, or the path to a directory containing data files.}
@@ -45,11 +45,12 @@ variables they refer to in entity features.}
 \item{compression}{A character specifying the type of compression to use on the created files,
 between \code{"gzip"}, \code{"bzip2"}, and \code{"xz"}. Set to \code{FALSE} to disable compression.}
 
-\item{read_existing}{Logical; if \code{TRUE}, will read in existing sets that are not to be overwritten.
-Useful if you use the returned sets.}
+\item{read_existing}{Logical; if \code{FALSE}, will not read in existing sets.}
 
 \item{overwrite}{Logical; if \code{TRUE}, will overwrite existing reformatted files, even if
 the source files are older than it.}
+
+\item{get_coverage}{Logical; if \code{FALSE}, will not calculate a summary of variable coverage (\code{coverage.csv}).}
 
 \item{verbose}{Logical; if \code{FALSE}, will not print status messages.}
 }
