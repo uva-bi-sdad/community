@@ -3853,6 +3853,7 @@ void (function () {
             function () {
               this.e.parentElement.removeChild(this.e)
               site.data.filter.delete(this.index)
+              conditionals.dataview()
             }.bind(f)
           )
 
@@ -4020,6 +4021,8 @@ void (function () {
           {variable: defaults.time, type: '>=', value: 'filter.time_min'},
           {variable: defaults.time, type: '<=', value: 'filter.time_max'},
         ]
+        add_dependency(v.id + '_time', {type: 'min', id: 'filter.time_min'})
+        add_dependency(v.id + '_time', {type: 'max', id: 'filter.time_max'})
         for (i = v.time_filters.length; i--; )
           if (Object.hasOwn(_u, v.time_filters[i].value)) {
             add_dependency(v.time_filters[i].value, {type: 'time_filters', id: v.id})
@@ -4202,7 +4205,7 @@ void (function () {
                 v.name,
                 this.parsed.time_agg - site.data.variables[v.name].time_range[this.parsed.dataset][0]
               )
-              pass = v.value_type !== typeof ev || DataHandler.prototype.checks[v.operator](v.value, ev)
+              pass = v.value_type !== typeof ev || DataHandler.prototype.checks[v.operator](ev, v.value)
               if (!pass) break
             }
             return pass
