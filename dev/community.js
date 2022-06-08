@@ -548,6 +548,10 @@ void (function () {
                                 q.push(k + '=' + f[k])
                               }
                             })
+                          site.data.filter?.forEach(f => {
+                            const v = Number(f.value)
+                            if (!isNaN(v)) q.push(f.variable + f.operator + v)
+                          })
                         }
                         k = s.endpoint + (q.length ? '?' + q.join('&') : '')
                         if (this.api) {
@@ -4205,7 +4209,7 @@ void (function () {
                 v.name,
                 this.parsed.time_agg - site.data.variables[v.name].time_range[this.parsed.dataset][0]
               )
-              pass = v.value_type !== typeof ev || DataHandler.prototype.checks[v.operator](ev, v.value)
+              pass = isNaN(ev) || v.value_type !== typeof ev || DataHandler.prototype.checks[v.operator](ev, v.value)
               if (!pass) break
             }
             return pass

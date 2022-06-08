@@ -132,11 +132,11 @@ function vector_summary(vec, range) {
   }
 }
 
-function passes_filter(entity, time_range, filter, codes) {
+function passes_filter(entity, time_range, filter, variables) {
   const s = {}
   for (var i = filter.filter_by.length, r; i--; ) {
     if (!Object.hasOwn(entity.data, filter.filter_by[i])) return false
-    r = codes[filter.filter_by[i]].time_range[entity.group]
+    r = variables[filter.filter_by[i]].info[entity.group].time_range
     s[filter.filter_by[i]] = vector_summary(entity.data[filter.filter_by[i]], [
       time_range[0] - r[0],
       Math.max(time_range[1] - r[0], time_range[1] - r[1]),
@@ -158,6 +158,8 @@ const patterns = {
     comma: /,/,
     word_start: /\b(\w)/g,
     single_operator: /([<>!])([^=])/,
+    greater: /%3E$/,
+    less: /%3C$/,
     operator_start: /[<>!]$/,
     component: /^(.+)\[(.+)\]/,
     number: /^[0-9.+-]+$/,
@@ -1055,12 +1057,18 @@ DataHandler.prototype = {
             }
           }
           aq = patterns.component.exec(k)
-          tf = {name: k, component: 'mean', operator: '=', value: patterns.number.test(q[k]) ? Number(q[k]) : q[k]}
+          tf = {
+            name: k.replace(patterns.greater, '>').replace(patterns.less, '<'),
+            component: 'mean',
+            operator: '=',
+            value: patterns.number.test(q[k]) ? Number(q[k]) : q[k],
+          }
           if ('object' === typeof q[k]) {
             if (Object.hasOwn(q[k], 'component')) tf.component = q[k].component
             if (Object.hasOwn(q[k], 'operator')) tf.operator = q[k].operator
             if (Object.hasOwn(q[k], 'value')) tf.value = q[k].value
           }
+          k = tf.name
           if (aq && -1 !== export_options.filter_components.indexOf(aq[2])) {
             tf.component = aq[2]
             tf.name = aq[1]
@@ -1097,7 +1105,6 @@ DataHandler.prototype = {
             tf.check = function (s) {
               return this.check(s[this.condition.component], this.condition.value)
             }.bind({check: this.checks[tf.operator], condition: tf})
-            tf.name = this.variables[tf.name].code
             if (-1 === f.variables.filter_by.indexOf(tf.name)) f.variables.filter_by.push(tf.name)
             f.variables.conditions.push(tf)
           }
@@ -1176,7 +1183,7 @@ DataHandler.prototype = {
         Object.hasOwn(entities, k) &&
         (!in_group || in_group(entities[k].group)) &&
         (no_feature_filter || passes_feature_filter(entities[k], query.feature_conditions)) &&
-        (no_filter || passes_filter(entities[k], query.time_range, query.variables, this.variable_codes))
+        (no_filter || passes_filter(entities[k], query.time_range, query.variables, this.variables))
       ) {
         r = rw(entities[k], query.time_range, feats, vars, sep)
         if (r) rows.push(r)

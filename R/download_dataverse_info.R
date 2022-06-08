@@ -72,7 +72,7 @@ download_dataverse_info <- function(id, server = NULL, key = NULL, refresh = FAL
     {
       if (!file.exists(temp)) {
         if (verbose) cli_alert_info("downloading dataset metadata for {id} from {server}")
-        if (is.character(key) && key != "" && Sys.which("curl") != "") {
+        if (is.character(key) && key != "") {
           if (verbose) cli_alert_info("trying with key")
           download.file(
             paste0(server, "api/datasets/:persistentId/versions/", version, "?persistentId=doi:", id), temp,
