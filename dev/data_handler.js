@@ -149,7 +149,15 @@ function passes_filter(entity, time_range, filter, variables) {
 }
 
 function passes_feature_filter(entity, filter) {
-  for (var i = filter.length; i--; ) if (!filter[i].check(entity.features[filter[i].name])) return false
+  for (var i = filter.length; i--; ) if ('id' === filter[i].name) {
+    if (
+      filter[i].group && Object.hasOwn(entity.features, filter[i].group)
+      ? filter[i].value !== entity.features[filter[i].group]
+      : filter[i].value.length < entity.features.id.length
+      ? filter[i].value !== entity.features.id.substring(0, filter[i].value.length)
+      : filter[i].value !== entity.features.id
+    ) return false
+  } else if (!filter[i].check(entity.features[filter[i].name])) return false
   return true
 }
 
@@ -1099,6 +1107,10 @@ DataHandler.prototype = {
           } else if ('dataset' === tf.name) {
             f.dataset = tf
           } else if (Object.hasOwn(this.features, tf.name)) {
+            if ('id' === tf.name) {
+              tf.value = String(tf.value)
+              if (Object.hasOwn(this.entities, tf.value)) tf.group = this.entities[tf.value].group
+            }
             tf.check = group_checks[tf.operator].bind(tf.value)
             f.feature_conditions.push(tf)
           } else if (Object.hasOwn(this.variables, tf.name)) {

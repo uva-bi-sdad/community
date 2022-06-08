@@ -527,11 +527,13 @@ void (function () {
                       for (var k in s.query) if (Object.hasOwn(s.query, k)) f[k] = valueOf(s.query[k])
                       if (Object.hasOwn(_u, s.dataview)) {
                         if (!Object.hasOwn(f, 'include') && v.y) f.include = valueOf(v.y)
+                        if (!Object.hasOwn(f, 'id') && v.ids) f.id = valueOf(v.ids)
                       }
                       if ('copy' === this.target || this.api) {
                         var q = []
                         if (Object.hasOwn(f, 'include')) q.push('include=' + f.include)
                         if (Object.hasOwn(f, 'dataset')) q.push('dataset=' + f.dataset)
+                        if (Object.hasOwn(f, 'id')) q.push('id=' + f.id)
                         if (v) {
                           if (!f.time_range)
                             q.push(
