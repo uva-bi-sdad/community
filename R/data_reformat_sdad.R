@@ -248,7 +248,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   })
   names(sets) <- datasets
   if (!is.null(out)) {
-    if (get_coverage) {
+    if (get_coverage && read_existing) {
       variables <- sort(if (length(variables)) variables else unique(unlist(lapply(sets, colnames), use.names = FALSE)))
       write.csv(vapply(sets, function(d) {
         allcounts <- structure(numeric(length(variables)), names = variables)

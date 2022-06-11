@@ -303,6 +303,20 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   }
   if (!is.null(variables)) variables <- unique(c(times, variables))
   settings$metadata <- if (file.exists(paste0(dir, "/docs/data/datapackage.json"))) data_preprocess(aggregate) else list()
+  coverage_file <- paste0(dir, "/docs/data/coverage.csv")
+  if (file.exists(coverage_file)) {
+    coverage <- read.csv(coverage_file, row.names = 1)
+    have_metadata <- unique(unlist(lapply(settings$metadata$info, function(d) {
+      vapply(d$schema$fields, function(e) if (!is.null(e$info$full_name)) e$name else "", "")
+    }), use.names = TRUE))
+    if (length(have_metadata)) {
+      metadata_bin <- structure(numeric(nrow(coverage)), names = rownames(coverage))
+      metadata_bin[have_metadata[have_metadata %in% names(metadata_bin)]] <- 1
+      if (is.null(coverage$metadata) || !all(coverage$metadata == metadata_bin)) {
+        write.csv(cbind(metadata = metadata_bin, coverage[, colnames(coverage) != "metadata"]), coverage_file)
+      }
+    }
+  }
   parts <- make_build_environment()
   stable <- version == "v1" || version == "stable"
   parts$dependencies <- c(
