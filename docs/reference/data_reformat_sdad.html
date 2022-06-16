@@ -75,50 +75,85 @@
     <h2>Arguments</h2>
     <dl><dt>files</dt>
 <dd><p>A character vector of file paths, or the path to a directory containing data files.</p></dd>
+
+
 <dt>out</dt>
 <dd><p>Path to a directory to write files to; if not specified, files will not be written.</p></dd>
+
+
 <dt>variables</dt>
 <dd><p>Vector of variable names (in the <code>value_name</code> column) to be included.</p></dd>
+
+
 <dt>ids</dt>
 <dd><p>Vector of IDs (in the <code>id</code> column) to be included.</p></dd>
+
+
 <dt>value</dt>
 <dd><p>Name of the column containing variable values.</p></dd>
+
+
 <dt>value_name</dt>
 <dd><p>Name of the column containing variable names; assumed to be a single variable per file if
 not present.</p></dd>
+
+
 <dt>id</dt>
 <dd><p>Column name IDs which uniquely identify entities.</p></dd>
+
+
 <dt>time</dt>
 <dd><p>Column name of the variable representing time.</p></dd>
+
+
 <dt>dataset</dt>
 <dd><p>Column name used to separate entity scales.</p></dd>
+
+
 <dt>value_info</dt>
 <dd><p>A vector of column names which provide additional information about values
 (such as their name and type).</p></dd>
+
+
 <dt>entity_info</dt>
 <dd><p>A list containing variable names to extract and create an ids map from (
 <code>entity_info.json</code>, created in the output directory). Entries can be named to rename the
 variables they refer to in entity features.</p></dd>
+
+
 <dt>formatters</dt>
 <dd><p>A list of functions to pass columns through, with names identifying those columns
 (e.g., <code>list(region_name = function(x) sub(",.*$", "", x))</code> to strip text after a comma in the
 "region_name" column).</p></dd>
+
+
 <dt>compression</dt>
 <dd><p>A character specifying the type of compression to use on the created files,
 between <code>"gzip"</code>, <code>"bzip2"</code>, and <code>"xz"</code>. Set to <code>FALSE</code> to disable compression.</p></dd>
+
+
 <dt>read_existing</dt>
 <dd><p>Logical; if <code>FALSE</code>, will not read in existing sets.</p></dd>
+
+
 <dt>overwrite</dt>
 <dd><p>Logical; if <code>TRUE</code>, will overwrite existing reformatted files, even if
 the source files are older than it.</p></dd>
+
+
 <dt>get_coverage</dt>
 <dd><p>Logical; if <code>FALSE</code>, will not calculate a summary of variable coverage (<code>coverage.csv</code>).</p></dd>
+
+
 <dt>verbose</dt>
 <dd><p>Logical; if <code>FALSE</code>, will not print status messages.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>An invisible list of the unified variable datasets, split into datasets.</p>
+    
+
+<p>An invisible list of the unified variable datasets, split into datasets.</p>
     </div>
     <div id="details">
     <h2>Details</h2>
@@ -148,7 +183,7 @@ and which (c1) have names, and (c2) population and demographic counts (d) betwee
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>

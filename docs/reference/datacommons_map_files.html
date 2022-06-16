@@ -72,24 +72,39 @@
     <h2>Arguments</h2>
     <dl><dt>dir</dt>
 <dd><p>Directory of the data commons projects.</p></dd>
+
+
 <dt>search_pattern</dt>
 <dd><p>A regular expression string used be passed to <code><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></code>.</p></dd>
+
+
 <dt>variable_location</dt>
 <dd><p>The name of a column contain variable names in each dataset, or a function to retrieve
 variable names (e.g., <code>colnames</code>).</p></dd>
+
+
 <dt>id_location</dt>
 <dd><p>The name of a column contain IDs in each dataset, or a function to retrieve
 IDs (e.g., <code>rownames</code>).</p></dd>
+
+
 <dt>reader</dt>
 <dd><p>A function capable of handling a connection in its first argument, which returns a matrix-like object.</p></dd>
+
+
 <dt>overwrite</dt>
 <dd><p>Logical; if <code>TRUE</code>, creates a new map even if one exists.</p></dd>
+
+
 <dt>verbose</dt>
 <dd><p>Logical; if <code>FALSE</code>, does not print status messages.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>An invisible <code>list</code>, including a <code>data.frame</code> of the mapped variables, with <code>variable</code> (variable name),
+    
+
+<p>An invisible <code>list</code>, including a <code>data.frame</code> of the mapped variables, with <code>variable</code> (variable name),
 <code>repo</code> (the repository containing the file), <code>full_name</code> (variable name with a prefix from the file's name),
 and <code>file</code> (path to the file) columns, and a <code>list</code> of the mapped IDs, with an entry for each ID,
 each of which with entries for <code>repos</code> (repositories in which the ID appears) and <code>files</code> (files in which the ID appears).</p>
@@ -115,7 +130,7 @@ each of which with entries for <code>repos</code> (repositories in which the ID 
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>

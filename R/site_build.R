@@ -287,7 +287,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     theme_dark = FALSE, partial_init = TRUE, palette = "vik", hide_url_parameters = FALSE,
     background_shapes = TRUE, iqr_box = TRUE, polygon_outline = 1.5, color_scale_center = "none",
     table_autoscroll = TRUE, table_scroll_behavior = "smooth", hide_tooltips = FALSE,
-    map_animations = "all", trace_limit = 20
+    map_animations = "all", trace_limit = 20, map_overlay = TRUE
   )
   for (s in names(defaults)) {
     if (!is.null(options[[s]])) {
@@ -404,6 +404,13 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         for (s in m$shapes) {
           if (!is.null(s$url) && file.exists(s$url)) {
             settings$map[["_raw"]][[s$url]] <- paste(readLines(s$url), collapse = "")
+          }
+        }
+        for (v in m$overlays) {
+          for (s in v$source) {
+            if (!is.null(s$url) && file.exists(s$url) && !s$url %in% names(settings$map[["_raw"]])) {
+              settings$map[["_raw"]][[s$url]] <- paste(readLines(s$url), collapse = "")
+            }
           }
         }
       }

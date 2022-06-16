@@ -73,39 +73,66 @@
     <h2>Arguments</h2>
     <dl><dt>dir</dt>
 <dd><p>Path to the desired data commons directory.</p></dd>
+
+
 <dt>name</dt>
 <dd><p>Name of the data commons.</p></dd>
+
+
 <dt>repos</dt>
 <dd><p>A vector of repository names to add to <code>commons.json</code>.</p></dd>
+
+
 <dt>default_user</dt>
 <dd><p>GitHub username to prepend to repository names if needed.</p></dd>
+
+
 <dt>remote</dt>
 <dd><p>Name of the data commons' GitHub repository (<code>"username/reponame"</code>).</p></dd>
+
+
 <dt>url</dt>
 <dd><p>URL of the data commons' monitor site; defaults to the GitHub Pages URL associated with <code>remote</code>
 if provided (<code>"https://username.github.io/reponame"</code>).</p></dd>
+
+
 <dt>refresh_after</dt>
 <dd><p>Logical; if <code>FALSE</code>, will not run <code><a href="datacommons_refresh.html">datacommons_refresh</a></code>
 after initiating the project. Defaults to <code>TRUE</code> when first creating a data commons project.</p></dd>
+
+
 <dt>overwrite</dt>
 <dd><p>Logical; if <code>TRUE</code>, will overwrite existing datacommons files in <code>dir</code>.
 The included <code>.js</code> and <code>.sh</code> files are always rewritten, and if <code>name</code>,
 <code>repos</code>, or <code>default_user</code> is specified, <code>commons.json</code> will also be rewritten
 regardless of <code>overwrite</code>.</p></dd>
+
+
 <dt>serve</dt>
 <dd><p>Logical; if <code>TRUE</code>, will serve the <code>docs</code> directory.</p></dd>
+
+
 <dt>host</dt>
 <dd><p>The IPv4 address to listen to if <code>serve</code> is <code>TRUE</code>; defaults to <code>"127.0.0.1"</code>.</p></dd>
+
+
 <dt>port</dt>
 <dd><p>The port to listen on if <code>serve</code> is <code>TRUE</code>; defaults to 3000.</p></dd>
+
+
 <dt>open_after</dt>
 <dd><p>Logical; if <code>TRUE</code>, will open the served monitor site in a browser after it is built.</p></dd>
+
+
 <dt>verbose</dt>
 <dd><p>Logical; if <code>FALSE</code>, suppresses messages.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>Path to the datacommons directory.</p>
+    
+
+<p>Path to the datacommons directory.</p>
     </div>
     <div id="details">
     <h2>Details</h2>
@@ -140,7 +167,7 @@ and update repositories over SSH.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>

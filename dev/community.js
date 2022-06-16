@@ -246,6 +246,13 @@ void (function () {
               )
             } else if ('hide_tooltips' === u.setting) {
               v ? page.script_style.sheet.insertRule(tooltip_icon_rule, 0) : page.script_style.sheet.removeRule(0)
+            } else if ('map_overlay' === u.setting) {
+              if (!v) {
+                Object.keys(site.map).forEach(id => {
+                  if ('_' !== id[0]) site.map[id].overlay.clearLayers()
+                })
+                this.overlay_control.remove()
+              }
             } else {
               global_update()
             }
@@ -1191,18 +1198,31 @@ void (function () {
             o.parsed = {}
             o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0
             o.show = function (e) {
-              if (e?.layer[this.id]) {
-                e.layer[this.id].setStyle({
-                  color: defaults['border_highlight_' + site.settings.theme_dark],
-                })
-                e.layer[this.id].bringToFront()
+              if (site.map[this.id].has_time) {
+                if (e.layer && e.layer[this.id]) {
+                  const time = site.map[this.id].match_time(site.data.meta.overall.value[this.parsed.time])
+                  e.layer[this.id][time]?.setStyle({
+                    color: defaults['border_highlight_' + site.settings.theme_dark],
+                  })
+                  e.layer[this.id][time]?.bringToFront()
+                }
+              } else {
+                if (e.layer && e.layer[this.id]) {
+                  e.layer[this.id].setStyle({
+                    color: defaults['border_highlight_' + site.settings.theme_dark],
+                  })
+                  e.layer[this.id].bringToFront()
+                }
               }
             }
             o.revert = function (e) {
-              if (e?.layer[this.id]) {
-                e.layer[this.id].setStyle({
-                  color: defaults.border,
-                })
+              if (site.map[this.id].has_time) {
+                if (e.layer && e.layer[this.id]) {
+                  const time = site.map[this.id].match_time(site.data.meta.overall.value[this.parsed.time])
+                  e.layer[this.id][time]?.setStyle({color: defaults.border})
+                }
+              } else {
+                if (e.layer && e.layer[this.id]) e.layer[this.id].setStyle({color: defaults.border})
               }
             }
             if (o.view) {
@@ -1241,9 +1261,12 @@ void (function () {
             } else {
               if (this.view && this.displaying) {
                 const view = site.dataviews[this.view],
-                  d = view.get.dataset()
-                if (site.map._queue && Object.hasOwn(site.map._queue, d) && !site.map._queue[d].retrieved) {
-                  return retrieve_layer(this, site.map._queue[d], () => this.update(void 0, void 0, true))
+                  d = view.get.dataset(),
+                  time = valueOf(view.time_agg),
+                  match_time = site.map[this.id].has_time ? site.map[this.id].match_time(time) : time,
+                  mapId = d + (site.map[this.id].has_time ? match_time : '')
+                if (site.map._queue && Object.hasOwn(site.map._queue, mapId) && !site.map._queue[mapId].retrieved) {
+                  return retrieve_layer(this, site.map._queue[mapId], () => this.update(void 0, void 0, true))
                 }
                 if (!view.valid && site.data.inited[d]) {
                   view.state = ''
@@ -1252,7 +1275,11 @@ void (function () {
                 this.parsed.view = view
                 this.parsed.dataset = d
                 const vstate =
-                    view.value() + site.settings.background_shapes + site.data.inited[this.options.background_shapes],
+                    view.value() +
+                    time +
+                    site.settings.map_overlay +
+                    site.settings.background_shapes +
+                    site.data.inited[this.options.background_shapes],
                   a = view.selection.all,
                   s = view.selection[site.settings.background_shapes && this.options.background_shapes ? 'ids' : 'all'],
                   bgc = defaults.border,
@@ -1269,7 +1296,13 @@ void (function () {
                   n = 0,
                   fg,
                   id
-                if (site.data.inited[d + '_map'] && s && view.valid) {
+                if (site.settings.map_overlay && Object.hasOwn(site.map[this.id].triggers, c)) {
+                  show_overlay(this, site.map[this.id].triggers[c], site.data.meta.overall.value[view.parsed.time_agg])
+                } else {
+                  this.overlay_control.remove()
+                  this.overlay.clearLayers()
+                }
+                if (site.data.inited[mapId + '_map'] && s && view.valid) {
                   if (vstate !== this.vstate) {
                     // updating shapes
                     // if (
@@ -1296,26 +1329,25 @@ void (function () {
                     this.vstate = false
                     for (k in s) {
                       fg = Object.hasOwn(a, k)
-                      if (
-                        Object.hasOwn(s, k) &&
-                        s[k].layer &&
-                        s[k].layer[this.id] &&
-                        (fg || this.options.background_shapes === site.data.entities[k].group)
-                      ) {
-                        s[k].layer[this.id].options.interactive = fg
-                        n++
-                        s[k].layer[this.id].addTo(this.displaying)
-                        if (!fg) {
-                          s[k].layer[this.id].bringToBack()
-                          s[k].layer[this.id].setStyle({
-                            fillOpacity: 0,
-                            color: bgc,
-                            weight: 0.3,
-                          })
+                      if (Object.hasOwn(s, k) && s[k].layer) {
+                        const cl = site.map[this.id]?.has_time ? s[k].layer[this.id][match_time] : s[k].layer[this.id]
+                        if (cl && (fg || this.options.background_shapes === site.data.entities[k].group)) {
+                          n++
+                          cl.options.interactive = fg
+                          cl.addTo(this.displaying)
+                          if (!fg) {
+                            cl.bringToBack()
+                            cl.setStyle({
+                              fillOpacity: 0,
+                              color: bgc,
+                              weight: 0.3,
+                            })
+                          }
+                          if (!this.vstate) this.vstate = vstate
                         }
-                        if (!this.vstate) this.vstate = vstate
                       }
                     }
+                    this.overlay.bringToFront()
                     if (n)
                       this.map['fly' === site.settings.map_animations ? 'flyToBounds' : 'fitBounds'](
                         this.displaying.getBounds()
@@ -1342,11 +1374,7 @@ void (function () {
                     site.settings.color_scale_center
                   if (c && k !== this.cstate) {
                     this.cstate = k
-                    if (
-                      site.map[this.id]._layers &&
-                      Object.hasOwn(site.map[this.id]._layers, d) &&
-                      Object.hasOwn(site.data.variables[c], this.view)
-                    ) {
+                    if (site.map[this.id] && Object.hasOwn(site.data.variables[c], this.view)) {
                       const ls = this.displaying._layers
                       n = this.parsed.summary.n[this.parsed.time] - 1
                       for (id in ls)
@@ -3037,7 +3065,6 @@ void (function () {
       e.header.lastElementChild.className = 'btn-close'
       e.header.lastElementChild.setAttribute('data-bs-dismiss', 'modal')
       e.header.lastElementChild.title = 'close'
-      e.header.lastElementChild.addEventListener('click', conditionals.dataview)
       e.header.insertAdjacentElement('afterEnd', (e.body = document.createElement('div')))
       e.body.className = 'modal-body'
       e.body.appendChild((e.title = document.createElement('p')))
@@ -3417,7 +3444,7 @@ void (function () {
 
     function content_resize() {
       page.content.style.top =
-        ('open' === page?.top_menu.state
+        ('open' === page.top_menu?.state
           ? page.top_menu.getBoundingClientRect().height
           : page.content_bounds.top +
             (!page.top_menu || page.bottom_menu || 'open' === page.right_menu?.state || 'open' === page.left_menu?.state
@@ -3961,13 +3988,17 @@ void (function () {
     async function retrieve_layer(u, source, callback) {
       if (Object.hasOwn(site.map._raw, source.url)) {
         process_layer(source, u)
+        site.map._queue[source.name + (source.time ?? '')].retrieved = true
+        callback && callback()
       } else {
         const f = new window.XMLHttpRequest()
         f.onreadystatechange = function (u) {
           if (4 === f.readyState && 200 === f.status) {
             site.map._raw[source.url] = f.responseText
-            site.map._queue[source.name].retrieved = true
-            process_layer(this, u)
+            if (source.name) {
+              site.map._queue[source.name + (source.time ?? '')].retrieved = true
+              process_layer(this, u)
+            }
             callback && callback()
           }
         }.bind(source, u)
@@ -3977,13 +4008,13 @@ void (function () {
     }
 
     function process_layer(source, u) {
-      var k, l, p, f, id
-      site.map[u.id]._layers[source.name] = L.geoJSON(JSON.parse(site.map._raw[source.url]), {
+      var l, p, f, id
+      const layerId = site.map[u.id].has_time ? source.name + source.time : source.name
+      site.map[u.id]._layers[layerId] = L.geoJSON(JSON.parse(site.map._raw[source.url]), {
         onEachFeature: add_layer_listeners.bind(u),
       })
-      site.data.inited[source.name + '_map'] = true
-      Object.keys(site.map[u.id]._layers[source.name]._layers).forEach(k => {
-        l = site.map[u.id]._layers[source.name]._layers[k]
+      site.data.inited[layerId + '_map'] = true
+      site.map[u.id]._layers[layerId].eachLayer(l => {
         l.setStyle({weight: 0, fillOpacity: 0})
         l.source = source
         p = l.feature.properties
@@ -3992,11 +4023,13 @@ void (function () {
           id = p[source.id_property] = id.replace(patterns.leading_zeros, '')
         if (Object.hasOwn(site.data.entities, id)) {
           if (!Object.hasOwn(site.data.entities[id], 'layer')) site.data.entities[id].layer = {}
-          site.data.entities[id].layer[u.id] = l
         } else {
           site.data.entities[id] = {layer: {}, features: {id: id}}
-          site.data.entities[id].layer[u.id] = l
         }
+        if (site.map[u.id].has_time) {
+          if (!Object.hasOwn(site.data.entities[id].layer, u.id)) site.data.entities[id].layer[u.id] = {has_time: true}
+          site.data.entities[id].layer[u.id][source.time] = l
+        } else site.data.entities[id].layer[u.id] = l
         l.entity = site.data.entities[id]
         if (site.data.entities[id].features)
           for (f in p)
@@ -4016,6 +4049,60 @@ void (function () {
         for (var i = site.map._waiting[source.name].length; i--; ) {
           request_queue(site.map._waiting[source.name][i])
         }
+      }
+    }
+
+    function show_overlay(u, o, time) {
+      var i,
+        source = 'string' === typeof o.source ? o.source : ''
+      if (!source && undefined !== time) {
+        for (i = o.source?.length; i--; ) {
+          if (time === o.source[i].time) {
+            source = o.source[i].url
+            break
+          }
+        }
+      }
+      if (source) {
+        if (Object.hasOwn(site.map._raw, source)) {
+          if (!Object.hasOwn(site.map[u.id]._layers, source)) {
+            site.map[u.id]._layers[source] = L.geoJSON(JSON.parse(site.map._raw[source]), {
+              pointToLayer: (point, coords) => {
+                return L.circle(coords, {
+                  radius: 2500,
+                  weight: 1.5,
+                  color: '#ffffff',
+                  opacity: 0.5,
+                  fillOpacity: 0.5,
+                  fillColor: 'black',
+                })
+              },
+              onEachFeature: (feature, layer) => {
+                // layer.setStyle({radius: 5, color: '#000000', fillColor: '#ffffff'})
+                const e = document.createElement('table')
+                Object.keys(feature.properties).forEach(f => {
+                  const r = document.createElement('tr')
+                  r.appendChild(document.createElement('td'))
+                  r.appendChild(document.createElement('td'))
+                  r.firstElementChild.innerText = f
+                  r.lastElementChild.innerText = feature.properties[f]
+                  e.appendChild(r)
+                })
+                layer.bindTooltip(e)
+              },
+            })
+          }
+          u.overlay.clearLayers()
+          site.map[u.id]._layers[source].eachLayer(l => {
+            if (o.filter) {
+              for (var i = o.filter.length; i--; ) {
+                if (!o.filter[i].check(l.feature.properties[o.filter[i].feature], o.filter[i].value)) return
+              }
+            }
+            l.addTo(u.overlay)
+          })
+          u.overlay_control.addTo(u.map)
+        } else return retrieve_layer(u, o, show_overlay.bind(null, u, o, time))
       }
     }
 
@@ -4397,9 +4484,15 @@ void (function () {
       if (showing && window.L) {
         this.map = L.map(this.e, this.options)
         this.options = this.map.options
+        this.overlay = L.featureGroup().addTo(this.map)
         this.displaying = L.featureGroup().addTo(this.map)
+        this.overlay_control = L.control
+          .layers()
+          .setPosition('topleft')
+          .addOverlay(this.overlay, 'Overlay')
+          .addTo(this.map)
         this.tiles = {}
-        var k, i
+        var k, i, f, mapId
         if (Object.hasOwn(site.map, this.id)) {
           site.map[this.id].u = this
           if (site.map[this.id].tiles) {
@@ -4418,11 +4511,51 @@ void (function () {
           if (!Object.hasOwn(site.map, '_queue')) site.map._queue = {}
           if (!Object.hasOwn(site.map[this.id], '_layers')) site.map[this.id]._layers = {}
           for (i = site.map[this.id].shapes.length; i--; ) {
+            if (!site.map[this.id].has_time) {
+              site.map[this.id].has_time = Object.hasOwn(site.map[this.id].shapes[i], 'time')
+              if (site.map[this.id].has_time) {
+                add_dependency(this.view, {type: 'update', id: this.id})
+                site.map[this.id].match_time =
+                  'exact' === site.map[this.id].shapes[i].resolution
+                    ? time => {
+                        return time + ''
+                      }
+                    : time => {
+                        return String(time).substring(0, 3) + '0'
+                      }
+              }
+            }
             k = site.map[this.id].shapes[i].name
             if (!k)
               site.map[this.id].shapes[i].name = k = site.metadata.datasets[i < site.metadata.datasets.length ? i : 0]
-            site.map._queue[k] = site.map[this.id].shapes[i]
-            if (site.data.loaded[k]) retrieve_layer(this, site.map[this.id].shapes[i])
+            mapId = k + (site.map[this.id].shapes[i].time ?? '')
+            site.map._queue[mapId] = site.map[this.id].shapes[i]
+            if (
+              site.data.loaded[k] &&
+              (k === mapId ||
+                site.map[this.id].shapes[i].time ==
+                  site.map[this.id].match_time(site.data.meta.overall.value[_u[this.view].parsed.time_agg]))
+            )
+              retrieve_layer(this, site.map[this.id].shapes[i])
+          }
+          site.map[this.id].triggers = {}
+          for (i = site.map[this.id].overlays?.length; i--; ) {
+            if ('string' === typeof site.map[this.id].overlays[i].source)
+              site.map[this.id].overlays[i].source = [{url: site.map[this.id].overlays[i].source}]
+            const source = site.map[this.id].overlays[i].source
+            source.forEach(s => {
+              s.retrieved = Object.hasOwn(site.map._raw, s.url)
+              site.map._queue[s.url] = s
+            })
+            site.map[this.id].triggers[site.map[this.id].overlays[i].variable] = {source}
+            const fs = site.map[this.id].overlays[i].filter
+            if (fs) {
+              const fa = Array.isArray(fs) ? fs : [fs]
+              site.map[this.id].triggers[site.map[this.id].overlays[i].variable].filter = fa
+              for (f = fa.length; f--; ) {
+                fa[f].check = site.data.checks[fa[f].operator]
+              }
+            }
           }
         }
       } else {

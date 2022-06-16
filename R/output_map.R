@@ -8,7 +8,15 @@
 #' must each have a \code{properties} field containing an ID found in the data -- by default
 #' this is assumed to be called \code{"geoid"}, but this can be specified with an \code{id_property}
 #' entry in the list. For example \code{shapes = list(name = "data", }\code{
-#' url = "https://example.com/shapes.geojson", id_property = "id")}.
+#' url = "https://example.com/shapes.geojson", id_property = "id")}. A \code{time} entry can also
+#' specify different maps for the same dataset, based on the selected time, along with a \code{resolution}
+#' entry to specify how to match the year; either \code{"decade"} (default) or \code{"exact"}.
+#' @param overlays additional layers to add to the map, based on the selected variable; a list or list of
+#' lists with entries at least for \code{variable} (name of the variable associated with the layer) and
+#' \code{source} (path to the layer file, or a list with entries including entries for \code{url} and
+#' \code{time}). Entries can also include a \code{filter} entry, with a list or list of lists of conditions,
+#' including entries for \code{feature} (name of the feature on which to condition entity inclusion),
+#' \code{operator}, and \code{value}.
 #' @param color The name of a variable, or id of a variable selector, to be used to color polygons.
 #' @param color_time The ID of a selector to specify which timepoint of \code{color} to use.
 #' @param dataview The ID of an \code{\link{input_dataview}} component.
@@ -29,8 +37,8 @@
 #' @return A character vector of the content to be added.
 #' @export
 
-output_map <- function(shapes = NULL, color = NULL, color_time = NULL, dataview = NULL, id = NULL, click = NULL,
-                       subto = NULL, background_shapes = NULL,
+output_map <- function(shapes = NULL, overlays = NULL, color = NULL, color_time = NULL, dataview = NULL,
+                       id = NULL, click = NULL, subto = NULL, background_shapes = NULL,
                        options = list(), tiles = list(
                          url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                          options = list(maxZoom = 19)
@@ -65,7 +73,15 @@ output_map <- function(shapes = NULL, color = NULL, color_time = NULL, dataview 
       if (!is.null(snames[i])) shapes[[i]]$name <- snames[i]
       if (is.null(shapes[[i]]$id_property)) shapes[[i]]$id_property <- "geoid"
     }
-    caller$map[[id]] <- list(shapes = unname(shapes), options = options, tiles = tiles)
+    if (!is.null(overlays)) {
+      if (is.character(overlays)) overlays <- lapply(overlays, function(s) list(url = s))
+      if (is.list(overlays) && !is.list(overlays[[1]])) overlays <- list(overlays)
+      snames <- names(overlays)
+      for (i in seq_along(overlays)) {
+        if (!is.null(snames[i])) overlays[[i]]$name <- snames[i]
+      }
+    }
+    caller$map[[id]] <- list(shapes = unname(shapes), overlays = unname(overlays), options = options, tiles = tiles)
   }
   r <- paste(c(
     '<div class="auto-output leaflet"',

@@ -76,40 +76,65 @@
     <dl><dt>id</dt>
 <dd><p>The dataset's persistent ID (e.g., <code>"doi:10.18130/V3/SWK71R"</code>), or a GitHub repository
 (<code>"username/repo"</code>) with a <code>R/sysdata.rda</code> file containing a <code>dataset_doi</code>.</p></dd>
+
+
 <dt>outdir</dt>
 <dd><p>Directory in which to save files; defaults to a temporary directory.</p></dd>
+
+
 <dt>files</dt>
 <dd><p>Names (full or partial) of files to download, or a number or vector of numbers
 identifying file by index as listed on Dataverse; downloads all files in a dataset if not specified.</p></dd>
+
+
 <dt>version</dt>
 <dd><p>Version of the dataset to download. Specifying this will download all files,
 even if only a selection is requested.</p></dd>
+
+
 <dt>server</dt>
 <dd><p>Dataverse server; tries to get this from the DOI redirect, but falls back on
 <code>Sys.getenv("DATAVERSE_SERVER")</code>, then <code>getOption("dataverse.server")</code>, then
 <code>"dataverse.lib.virginia.edu"</code>.</p></dd>
+
+
 <dt>key</dt>
 <dd><p>Dataverse API key; only needed if the requested dataset is not published. If not specified,
 looks for the key in <code>Sys.getenv("DATAVERSE_KEY")</code> and <code>getOption("dataverse.key")</code>.</p></dd>
+
+
 <dt>load</dt>
 <dd><p>Logical; if <code>FALSE</code>, files will be downloaded but not loaded.</p></dd>
+
+
 <dt>decompress</dt>
 <dd><p>Logical; if <code>TRUE</code>, will attempt to decompress compressed files.</p></dd>
+
+
 <dt>refresh</dt>
 <dd><p>Logical; if <code>TRUE</code>, downloads and replaces any existing files.</p></dd>
+
+
 <dt>branch</dt>
 <dd><p>Name of the repository branch, if <code>id</code> is the name of a repository; uses the default branch
 if not specified.</p></dd>
+
+
 <dt>verbose</dt>
 <dd><p>Logical; if <code>TRUE</code>, prints status updates and warnings.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p><code>download_dataverse_data</code>: If <code>load</code> is <code>TRUE</code>, an invisible list with
+    
+
+<p><code>download_dataverse_data</code>: If <code>load</code> is <code>TRUE</code>, an invisible list with
 an entry for each data file if there are multiple files, or the loaded data file if a single file
 is requested. Tabular data files are loaded as <code>data.table</code>s. If <code>load</code> is <code>FALSE</code>,
-a list with the dataset's metadata.
-<code>download_dataverse_info</code>: A list with the dataset's metadata.</p>
+a list with the dataset's metadata.</p>
+
+
+<p><code>download_dataverse_info</code>: A list with the dataset's metadata.</p>
     </div>
 
     <div id="ref-examples">
@@ -132,7 +157,7 @@ a list with the dataset's metadata.
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>

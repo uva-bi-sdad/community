@@ -72,6 +72,8 @@
     <h2>Arguments</h2>
     <dl><dt>label</dt>
 <dd><p>Text in the button for the user.</p></dd>
+
+
 <dt>target</dt>
 <dd><p>The ID of an input element to reset, a vector with IDs of input elements as names and values to set
 those inputs to as values, or the name of a function to trigger (e.g., <code>c(input_a = 1)</code>). Available function
@@ -80,25 +82,42 @@ elements that are not settings), <code>reset_storage</code> (to clear local stor
 <code>export</code> (to download data), <code>copy</code> (to save an API link to the clipboard), and
 <code>filter</code> (to open a data filter menu).
 This can also be a URL (including protocol) for a button-like link.</p></dd>
+
+
 <dt>id</dt>
 <dd><p>Unique ID of the element to be created.</p></dd>
+
+
 <dt>dataview</dt>
 <dd><p>Name of a data view to get selection and filter options from for export.</p></dd>
+
+
 <dt>query</dt>
 <dd><p>A list of query parameters, if <code>target</code> is <code>"export"</code> or <code>"copy"</code>. See the API section.</p></dd>
+
+
 <dt>from_api</dt>
 <dd><p>Logical; if <code>TRUE</code>, <code>target</code> is <code>"export"</code>, and an endpoint has been provided
 in <code><a href="site_build.html">site_build</a></code>, links to the API rather than exporting from the browser.</p></dd>
+
+
 <dt>class</dt>
 <dd><p>Additional class names to add to the element.</p></dd>
+
+
 <dt>...</dt>
 <dd><p>Additional attributes to set on the element.</p></dd>
+
+
 <dt>note</dt>
 <dd><p>Text to display as a tooltip for the button.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>A character vector of the contents to be added.</p>
+    
+
+<p>A character vector of the contents to be added.</p>
     </div>
     <div id="api-query">
     <h2>API Query</h2>
@@ -181,7 +200,7 @@ with a single time, or comma-separated set of two times.</p></li>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>

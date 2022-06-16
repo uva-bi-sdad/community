@@ -74,53 +74,90 @@
     <h2>Arguments</h2>
     <dl><dt>commons</dt>
 <dd><p>Path to the data commons project.</p></dd>
+
+
 <dt>name</dt>
 <dd><p>Name of the view (it's directory in the project's <code>"views"</code> directory).
 Defaults to the first view.</p></dd>
+
+
 <dt>output</dt>
 <dd><p>Path to a site project's main directory.</p></dd>
+
+
 <dt>...</dt>
 <dd><p>Passes arguments to <code><a href="data_reformat_sdad.html">data_reformat_sdad</a></code> if the view is to be executed.</p></dd>
+
+
 <dt>variables</dt>
 <dd><p>A vector of variables, to be added to the view's <code>view.json</code> file.</p></dd>
+
+
 <dt>ids</dt>
 <dd><p>A vector of ids, to be added to the view's <code>view.json</code> file.</p></dd>
+
+
 <dt>files</dt>
 <dd><p>A regular expression string used to filter files containing <code>variables</code>.</p></dd>
+
+
 <dt>run_after</dt>
 <dd><p>Path to a script to be sourced after refreshing the view, or code to
 be added to such a script (e.g., <code>"../data_site/build.R"</code>).</p></dd>
+
+
 <dt>run_before</dt>
 <dd><p>Path to a script to be sourced before refreshing the view, or code to
 be added to such a script.</p></dd>
+
+
 <dt>measure_info</dt>
 <dd><p>A list of variable metadata to include in the <code>measure_info.json</code>
 file created from such files in each data repository (such as general entries like
 <code>"_references"</code>). These will supersede any entries of the same name found in data repositories.</p></dd>
+
+
 <dt>remote</dt>
 <dd><p>Name of the view's GitHub repository (<code>"username/reponame"</code>).</p></dd>
+
+
 <dt>url</dt>
 <dd><p>URL of the view's site; defaults to the GitHub Pages URL associated with <code>remote</code>
 if provided (<code>"https://username.github.io/reponame"</code>).</p></dd>
+
+
 <dt>children</dt>
 <dd><p>A list of child sites associated with the view. Each entry should contain at least a
 <code>remote</code> entry (GitHub repository, including user name and repo name), and optionally <code>name</code>
 and <code>url</code> (link to the served site), which will otherwise be derived from <code>remote</code>.</p></dd>
+
+
 <dt>execute</dt>
 <dd><p>Logical; if <code>FALSE</code>, will create/update, but not run the view.</p></dd>
+
+
 <dt>prefer_repo</dt>
 <dd><p>Logical; if <code>TRUE</code>, will prefer repository files over those from distributions
 (such as Dataverse).</p></dd>
+
+
 <dt>refresh_map</dt>
 <dd><p>Logical; if <code>TRUE</code>, overwrites any existing map files.</p></dd>
+
+
 <dt>overwrite</dt>
 <dd><p>Logical; if <code>TRUE</code>, reformatted files in <code>output</code>.</p></dd>
+
+
 <dt>verbose</dt>
 <dd><p>Logical; if <code>FALSE</code>, will not show status messages.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>An invisible version of the view list (the view's <code>view.json</code> file).</p>
+    
+
+<p>An invisible version of the view list (the view's <code>view.json</code> file).</p>
     </div>
 
     <div id="ref-examples">
@@ -146,7 +183,7 @@ and <code>url</code> (link to the served site), which will otherwise be derived 
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>

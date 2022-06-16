@@ -71,24 +71,37 @@
     <h2>Arguments</h2>
     <dl><dt>name</dt>
 <dd><p>Name of the template to be checked.</p></dd>
+
+
 <dt>files</dt>
 <dd><p>List of paths to required files, relative to dir.
 <code>"{name}"</code> included in a path string will be replaced with <code>name</code> during checks.
 A list within the main list is treated as either alternatives files (when there is a single character vector),
 or alternative strict sets of files (must contain all of at least one list;
 when there are multiple character vectors).</p></dd>
+
+
 <dt>dir</dt>
 <dd><p>Package directory.</p></dd>
+
+
 <dt>spec_dir</dt>
 <dd><p>Parent directory of the <code>files</code>.</p></dd>
+
+
 <dt>context</dt>
 <dd><p>name of the template's context: itself, or another templated structure.</p></dd>
+
+
 <dt>overwrite</dt>
 <dd><p>logical; if <code>TRUE</code>, new files will replace existing ones.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>Creates a name.json file (in <code>dir/inst/specs</code> if it exists, or the current working directory),
+    
+
+<p>Creates a name.json file (in <code>dir/inst/specs</code> if it exists, or the current working directory),
 and invisibly returns its path.</p>
     </div>
 
@@ -122,7 +135,7 @@ and invisibly returns its path.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>

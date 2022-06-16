@@ -645,7 +645,8 @@ button.has-note::after {
 .legend-tick-end.max {
   right: -80px;
 }
-.leaflet-container {
+.leaflet-container,
+.leaflet-control-layers {
   background: var(--background);
 }
 .dataTables_wrapper .row:first-of-type {

@@ -73,33 +73,52 @@
     <dl><dt>colors</dt>
 <dd><p>A vector of color names or HEX codes, or a matrix-like object with
 colors in columns, and their RGB values in separate rows.</p></dd>
+
+
 <dt>continuous</dt>
 <dd><p>Logical; if <code>TRUE</code>, <code>colors</code> are treated as points in a linear
 gradient. One provided color will be from white to that color. Two provided colors will
 be between those colors. Three or four provided colors will be between the first and
 last color, with the central color (or average of the central colors) as the midpoint.</p></dd>
+
+
 <dt>divergent</dt>
 <dd><p>Logical; if <code>TRUE</code>, marks continuous scales as divergent,
 which will reverse the lower half of the scale.</p></dd>
+
+
 <dt>polynomial</dt>
 <dd><p>Logical; if <code>TRUE</code>, will fit a polynomial regression model to each color
 channel in the specified <code>colors</code> sequence. Used to either compress a long sequence
 (e.g., model a fully manually specified scale), or interpolate a scale between anchors.</p></dd>
+
+
 <dt>degrees</dt>
 <dd><p>Number of polynomial degrees, if <code>polynomial</code> is <code>TRUE</code>.</p></dd>
+
+
 <dt>pad</dt>
 <dd><p>If <code>polynomial</code> is <code>TRUE</code>, number of repeated observations of the
 initial and final colors in the sequence to add in order to reduce warping at the edges.</p></dd>
+
+
 <dt>name</dt>
 <dd><p>Name of the palette.</p></dd>
+
+
 <dt>preview</dt>
 <dd><p>Logical; if <code>TRUE</code>, makes a plot showing the palette colors / scale.</p></dd>
+
+
 <dt>print</dt>
 <dd><p>Logical; if <code>FALSE</code>, will not print a version of the palette.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>An invisible list of the created palette.</p>
+    
+
+<p>An invisible list of the created palette.</p>
     </div>
 
     <div id="ref-examples">
@@ -161,7 +180,7 @@ initial and final colors in the sequence to add in order to reduce warping at th
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>

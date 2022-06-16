@@ -4,12 +4,12 @@
 \alias{output_map}
 \title{Add a map to a webpage}
 \usage{
-output_map(shapes = NULL, color = NULL, color_time = NULL,
-  dataview = NULL, id = NULL, click = NULL, subto = NULL,
-  background_shapes = NULL, options = list(), tiles = list(url =
-  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", options = list(maxZoom
-  = 19)), attribution = list(name = "OpenStreetMap", url =
-  "https://www.openstreetmap.org/copyright"))
+output_map(shapes = NULL, overlays = NULL, color = NULL,
+  color_time = NULL, dataview = NULL, id = NULL, click = NULL,
+  subto = NULL, background_shapes = NULL, options = list(),
+  tiles = list(url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  options = list(maxZoom = 19)), attribution = list(name = "OpenStreetMap",
+  url = "https://www.openstreetmap.org/copyright"))
 }
 \arguments{
 \item{shapes}{A list or list of lists specifying GeoJSON files. Each list should have at least
@@ -18,7 +18,16 @@ with one of the site's datasets) if the site has multiple datasets. The file's f
 must each have a \code{properties} field containing an ID found in the data -- by default
 this is assumed to be called \code{"geoid"}, but this can be specified with an \code{id_property}
 entry in the list. For example \code{shapes = list(name = "data", }\code{
-url = "https://example.com/shapes.geojson", id_property = "id")}.}
+url = "https://example.com/shapes.geojson", id_property = "id")}. A \code{time} entry can also
+specify different maps for the same dataset, based on the selected time, along with a \code{resolution}
+entry to specify how to match the year; either \code{"decade"} (default) or \code{"exact"}.}
+
+\item{overlays}{additional layers to add to the map, based on the selected variable; a list or list of
+lists with entries at least for \code{variable} (name of the variable associated with the layer) and
+\code{source} (path to the layer file, or a list with entries including entries for \code{url} and
+\code{time}). Entries can also include a \code{filter} entry, with a list or list of lists of conditions,
+including entries for \code{feature} (name of the feature on which to condition entity inclusion),
+\code{operator}, and \code{value}.}
 
 \item{color}{The name of a variable, or id of a variable selector, to be used to color polygons.}
 

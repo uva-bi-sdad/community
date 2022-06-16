@@ -72,28 +72,47 @@
     <h2>Arguments</h2>
     <dl><dt>path</dt>
 <dd><p>A character vector of paths to plain-text tabular data files.</p></dd>
+
+
 <dt>meta</dt>
 <dd><p>Information about each data file. A list with a list entry for each entry in <code>path</code>; see details.</p></dd>
+
+
 <dt>package_path</dt>
 <dd><p>Package to add the metadata to; path to the .json file, or a list with the read-in version.</p></dd>
+
+
 <dt>dir</dt>
 <dd><p>Directory in which to look for <code>path</code>, and write <code>package_path</code>.</p></dd>
+
+
 <dt>write</dt>
 <dd><p>Logical; if <code>FALSE</code>, returns the <code>paths</code> metadata without reading or rewriting
 <code>package_path</code>.</p></dd>
+
+
 <dt>refresh</dt>
 <dd><p>Logical; if <code>TRUE</code>, will remove any existing dataset information.</p></dd>
+
+
 <dt>sha</dt>
 <dd><p>A number specifying the Secure Hash Algorithm function,
 if <code>openssl</code> is available (checked with <code>Sys.which('openssl')</code>).</p></dd>
+
+
 <dt>clean</dt>
 <dd><p>Logical; if <code>TRUE</code>, strips special characters before saving.</p></dd>
+
+
 <dt>open_after</dt>
 <dd><p>Logical; if <code>TRUE</code>, opens the written datapackage after saving.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>An invisible version of the metadata, which is also added to <code>datapackage.json</code> if <code>write = TRUE</code>.</p>
+    
+
+<p>An invisible version of the metadata, which is also added to <code>datapackage.json</code> if <code>write = TRUE</code>.</p>
     </div>
     <div id="details">
     <h2>Details</h2>
@@ -144,7 +163,7 @@ whereas hosted files will be loaded client-side.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>

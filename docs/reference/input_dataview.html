@@ -74,46 +74,69 @@
 <dd><p>An ID of the data view, for association with output elements. Defaults to <code>'view'</code> appended
 with a zero-index of views, based on the order in which they were specified
 (e.g., <code>'view0'</code> for the first view).</p></dd>
+
+
 <dt>y</dt>
 <dd><p>Primary variable of interest, used by default to color elements in outputs, and shown on the y-axis
 of plots; name of a variable or ID of a variable selector.</p></dd>
+
+
 <dt>x</dt>
 <dd><p>Secondary variable, shown by default on the x-axis of plots, and across columns in a single-variable table;
 name of a variable or ID of a variable selector.</p></dd>
+
+
 <dt>time</dt>
 <dd><p>Name of a variable giving names to multiple time points (such as a vector of years). Defaults to
 the time specified in an associated metadata, or a sequence along each variable.</p></dd>
+
+
 <dt>time_agg</dt>
 <dd><p>Specifies how multiple time points should be treated when a single value is required.
 Default is to use the last time with data. This could point to an input which selects a time.</p></dd>
+
+
 <dt>time_filters</dt>
 <dd><p>A list with entries specifying which years to display. Each entry should be a list
 with entries for <code>"variable"</code> (which variable is being filtered, which can be <code>"index"</code>),
 <code>"type"</code> (specifying the operator, such as <code>"&gt;"</code>), and <code>"value"</code>. The value of each entry
 can be static (e.g., referring to a variable) or the ID of an input.</p></dd>
+
+
 <dt>dataset</dt>
 <dd><p>Select which dataset to pull from; the name of an included dataset, or ID of a
 selector of dataset names.</p></dd>
+
+
 <dt>ids</dt>
 <dd><p>Select which IDs to include; a vector of IDs that appear in the specified dataset, or the ID of a
 selector of IDs. If an IDs map is included in the site's datapackage, mapped components can be referred to here.</p></dd>
+
+
 <dt>features</dt>
 <dd><p>Select IDs based on their features; a named list or vector, with names corresponding to
 the names of features included in an <code>ids</code> field of the site's datapackage, and values corresponding to
 a value or vector of values, or a selector of values.</p></dd>
+
+
 <dt>variables</dt>
 <dd><p>Select IDs based on the values of their variables; a list of lists with entries for
 <code>"variable"</code> (name of the variable), <code>"type"</code> (comparison operator), and <code>"value"</code> (value to
 check against). For example, <code>list(list(variable = "a", type = "&gt;", value = 0))</code>. Each entry
 may also refer to another input.</p></dd>
+
+
 <dt>palette</dt>
 <dd><p>The name of the color palette used in maps and plots (from
 <a href="https://colorbrewer2.org" class="external-link">colorbrewer</a>); one of <code>"rdylbu7"</code> (default), <code>"orrd7"</code>, <code>"gnbu7"</code>,
 <code>"brbg7"</code>, <code>"puor7"</code>, <code>"prgn6"</code>, <code>"reds5"</code>, <code>"greens5"</code>, <code>"greys4"</code>, <code>"paired4"</code>.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>A list of the entered options.</p>
+    
+
+<p>A list of the entered options.</p>
     </div>
 
     <div id="ref-examples">
@@ -135,7 +158,7 @@ may also refer to another input.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>

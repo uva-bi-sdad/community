@@ -79,38 +79,63 @@ can also refer to feature names, which can be specified with a <code>source</cod
 For example, <code>list(title = "Variable A", name = "a", source = "features")</code>. A vector can also be used
 to specify variable names, with names setting titles (e.g., <code>c("Variable A" = "a")</code>). If not specified,
 sources are attempted to be resolved automatically.</p></dd>
+
+
 <dt>dataset</dt>
 <dd><p>The name of a dataset, or ID of a dataset selector, to find <code>variables</code> in;
 used if <code>dataview</code> is not specified.</p></dd>
+
+
 <dt>dataview</dt>
 <dd><p>The ID of an <code><a href="input_dataview.html">input_dataview</a></code> component.</p></dd>
+
+
 <dt>id</dt>
 <dd><p>Unique ID of the table.</p></dd>
+
+
 <dt>click</dt>
 <dd><p>The ID of an input to set to a clicked row's entity ID.</p></dd>
+
+
 <dt>subto</dt>
 <dd><p>A vector of output IDs to receive hover events from.</p></dd>
+
+
 <dt>options</dt>
 <dd><p>A list of configuration options if <code>datatables</code> is <code>TRUE</code>, see
 <a href="https://datatables.net/reference/option" class="external-link">DataTables Documentation</a>.</p></dd>
+
+
 <dt>features</dt>
 <dd><p>A list of features columns to include if multiple variables are included and <code>wide</code> is
 <code>TRUE</code>.</p></dd>
+
+
 <dt>filters</dt>
 <dd><p>A list with names of <code>meta</code> entries (from <code>variable</code> entry in <code><a href="data_add.html">data_add</a></code>'s
 <code>meta</code> list), and values of target values for those entries, or the IDs of value selectors.</p></dd>
+
+
 <dt>wide</dt>
 <dd><p>Logical; if <code>FALSE</code>, variables and years are spread across rows rather than columns.
 If <code>variables</code> specifies a single variable, <code>wide = FALSE</code> will show the variable in a column, and
 <code>wide = TRUE</code> will show the variable across time columns.</p></dd>
+
+
 <dt>class</dt>
 <dd><p>Class names to add to the table.</p></dd>
+
+
 <dt>datatables</dt>
 <dd><p>Logical; if <code>TRUE</code>, uses <a href="https://datatables.net" class="external-link">DataTables</a>.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>A character vector of the content to be added.</p>
+    
+
+<p>A character vector of the content to be added.</p>
     </div>
 
     <div id="ref-examples">
@@ -131,7 +156,7 @@ If <code>variables</code> specifies a single variable, <code>wide = FALSE</code>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>
