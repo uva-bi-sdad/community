@@ -217,10 +217,11 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
         if (length(rf)) {
           ri <- read_json(rf[[1]])
           nri <- names(ri)
-          es <- nri[nri %in% names(measure_info) & !nri %in% view$variables]
+          es <- nri[grepl("^_", nri) & !nri %in% view$variables]
           if (length(es)) {
             for (e in es) {
               if (!is.null(names(ri[[e]]))) {
+                if (is.null(measure_info[[e]])) measure_info[[e]] <- list()
                 su <- !names(ri[[e]]) %in% names(measure_info[[e]])
                 if (any(su)) measure_info[[e]] <- c(measure_info[[e]], ri[[e]][su])
               }

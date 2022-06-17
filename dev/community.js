@@ -247,12 +247,16 @@ void (function () {
             } else if ('hide_tooltips' === u.setting) {
               v ? page.script_style.sheet.insertRule(tooltip_icon_rule, 0) : page.script_style.sheet.removeRule(0)
             } else if ('map_overlay' === u.setting) {
-              if (!v) {
-                Object.keys(site.map).forEach(id => {
-                  if ('_' !== id[0]) site.map[id].overlay.clearLayers()
-                })
-                this.overlay_control.remove()
-              }
+              Object.keys(site.map).forEach(id => {
+                if ('_' !== id[0]) {
+                  if (v) {
+                    site.map[id].u.update()
+                  } else {
+                    site.map[id].u.overlay.clearLayers()
+                    site.map[id].u.overlay_control.remove()
+                  }
+                }
+              })
             } else {
               global_update()
             }
@@ -374,51 +378,50 @@ void (function () {
               f.selection.dataset = {}
               f.selection.filtered = {}
               f.selection.all = {}
-              // f.reparse()
-              for (id in site.data.entities)
-                if (Object.hasOwn(site.data.entities, id)) {
-                  c = f.check(site.data.entities[id])
-                  c.all = 0
-                  if (c.ids) {
-                    f.selection.ids[id] = site.data.entities[id]
-                    f.n_selected.ids++
-                    c.all++
-                  }
-                  if (c.features) {
-                    f.selection.features[id] = site.data.entities[id]
-                    f.n_selected.features++
-                    c.all++
-                  }
-                  if (c.variables) {
-                    f.selection.variables[id] = site.data.entities[id]
-                    f.n_selected.variables++
-                    c.all++
-                  }
-                  if (c.dataset) {
-                    f.selection.dataset[id] = site.data.entities[id]
-                    f.n_selected.dataset++
-                    c.all++
-                  }
-                  if (c.features && c.dataset) {
-                    f.selection.filtered[id] = site.data.entities[id]
-                    f.n_selected.filtered++
-                  }
-                  if (4 === c.all) {
-                    if (!first_all) first_all = id
-                    f.selection.all[id] = site.data.entities[id]
-                    f.n_selected.all++
-                    summary_state += id
-                  }
+              Object.keys(site.data.entities).forEach(id => {
+                c = f.check(site.data.entities[id])
+                c.all = 0
+                if (c.ids) {
+                  f.selection.ids[id] = site.data.entities[id]
+                  f.n_selected.ids++
+                  c.all++
                 }
+                if (c.features) {
+                  f.selection.features[id] = site.data.entities[id]
+                  f.n_selected.features++
+                  c.all++
+                }
+                if (c.variables) {
+                  f.selection.variables[id] = site.data.entities[id]
+                  f.n_selected.variables++
+                  c.all++
+                }
+                if (c.dataset) {
+                  f.selection.dataset[id] = site.data.entities[id]
+                  f.n_selected.dataset++
+                  c.all++
+                }
+                if (c.features && c.dataset) {
+                  f.selection.filtered[id] = site.data.entities[id]
+                  f.n_selected.filtered++
+                }
+                if (4 === c.all) {
+                  if (!first_all) first_all = id
+                  f.selection.all[id] = site.data.entities[id]
+                  f.n_selected.all++
+                  summary_state += id
+                }
+              })
               if (first_all && summary_state !== f.summary_state) {
                 f.summary_state = summary_state
-                for (id in site.data.variables)
+                Object.keys(site.data.variables).forEach(id => {
                   if (
                     id !== site.data.meta.times[f.parsed.dataset].name &&
                     Object.hasOwn(site.data.variables, id) &&
                     Object.hasOwn(site.data.variables[id].time_range, f.parsed.dataset)
                   )
                     site.data.calculate_summary(id, f.id, true)
+                })
                 update_subs(f.id, 'update')
               }
               request_queue(f.id)
@@ -1046,7 +1049,7 @@ void (function () {
                   d = v.get.dataset(),
                   y = _u[this.time || v.time_agg],
                   rank = 'all' === site.settings.summary_selection ? 'subset_rank' : 'rank'
-                if (site.data.inited[d] && s && v.time_range?.filtered.length) {
+                if (site.data.inited[d] && s) {
                   this.parsed.base_trace = valueOf(this.base_trace)
                   this.parsed.x = valueOf(this.x)
                   this.parsed.x_range = site.data.variables[this.parsed.x].time_range[d]
@@ -1198,31 +1201,35 @@ void (function () {
             o.parsed = {}
             o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0
             o.show = function (e) {
-              if (site.map[this.id].has_time) {
-                if (e.layer && e.layer[this.id]) {
-                  const time = site.map[this.id].match_time(site.data.meta.overall.value[this.parsed.time])
+              if (e.layer && e.layer[this.id]) {
+                if (!site.data.inited[this.parsed.dataset + '_map']) {
+                  const time = site.map[this.id].match_time(
+                    site.data.meta.overall.value[
+                      site.data.variables[this.parsed.color].time_range[this.parsed.dataset][0] + this.parsed.time
+                    ]
+                  )
                   e.layer[this.id][time]?.setStyle({
                     color: defaults['border_highlight_' + site.settings.theme_dark],
                   })
-                  e.layer[this.id][time]?.bringToFront()
-                }
-              } else {
-                if (e.layer && e.layer[this.id]) {
+                } else {
                   e.layer[this.id].setStyle({
                     color: defaults['border_highlight_' + site.settings.theme_dark],
                   })
-                  e.layer[this.id].bringToFront()
                 }
               }
             }
             o.revert = function (e) {
-              if (site.map[this.id].has_time) {
-                if (e.layer && e.layer[this.id]) {
-                  const time = site.map[this.id].match_time(site.data.meta.overall.value[this.parsed.time])
+              if (e.layer && e.layer[this.id]) {
+                if (!site.data.inited[this.parsed.dataset + '_map']) {
+                  const time = site.map[this.id].match_time(
+                    site.data.meta.overall.value[
+                      site.data.variables[this.parsed.color].time_range[this.parsed.dataset][0] + this.parsed.time
+                    ]
+                  )
                   e.layer[this.id][time]?.setStyle({color: defaults.border})
+                } else {
+                  e.layer[this.id].setStyle({color: defaults.border})
                 }
-              } else {
-                if (e.layer && e.layer[this.id]) e.layer[this.id].setStyle({color: defaults.border})
               }
             }
             if (o.view) {
@@ -1241,7 +1248,6 @@ void (function () {
             e.target.setStyle({
               color: defaults['border_highlight_' + site.settings.theme_dark],
             })
-            e.target.bringToFront()
             update_subs(this.id, 'show', site.data.entities[e.target.feature.properties[e.target.source.id_property]])
           },
           mouseout: function (e) {
@@ -1264,7 +1270,8 @@ void (function () {
                   d = view.get.dataset(),
                   time = valueOf(view.time_agg),
                   match_time = site.map[this.id].has_time ? site.map[this.id].match_time(time) : time,
-                  mapId = d + (site.map[this.id].has_time ? match_time : '')
+                  has_time = Object.hasOwn(site.data.inited, d + match_time + '_map'),
+                  mapId = has_time ? d + match_time : d
                 if (site.map._queue && Object.hasOwn(site.map._queue, mapId) && !site.map._queue[mapId].retrieved) {
                   return retrieve_layer(this, site.map._queue[mapId], () => this.update(void 0, void 0, true))
                 }
@@ -1276,8 +1283,7 @@ void (function () {
                 this.parsed.dataset = d
                 const vstate =
                     view.value() +
-                    time +
-                    site.settings.map_overlay +
+                    mapId +
                     site.settings.background_shapes +
                     site.data.inited[this.options.background_shapes],
                   a = view.selection.all,
@@ -1304,20 +1310,6 @@ void (function () {
                 }
                 if (site.data.inited[mapId + '_map'] && s && view.valid) {
                   if (vstate !== this.vstate) {
-                    // updating shapes
-                    // if (
-                    //   site.settings.background_shapes && this.options.background_shapes
-                    //     ? !site.data.inited[this.options.background_shapes]
-                    //     : false
-                    // ) {
-                    //   view.valid = false
-                    //   site.data.data_queue[this.options.background_shapes][this.id] = this.update.bind(
-                    //     void 0,
-                    //     void 0,
-                    //     true
-                    //   )
-                    //   return void 0
-                    // }
                     this.map._zoomAnimated = 'none' !== site.settings.map_animations
                     for (k in this.reference_options)
                       if (Object.hasOwn(this.reference_options, k)) {
@@ -1330,7 +1322,7 @@ void (function () {
                     for (k in s) {
                       fg = Object.hasOwn(a, k)
                       if (Object.hasOwn(s, k) && s[k].layer) {
-                        const cl = site.map[this.id]?.has_time ? s[k].layer[this.id][match_time] : s[k].layer[this.id]
+                        const cl = s[k].layer[this.id].has_time ? s[k].layer[this.id][match_time] : s[k].layer[this.id]
                         if (cl && (fg || this.options.background_shapes === site.data.entities[k].group)) {
                           n++
                           cl.options.interactive = fg
@@ -1607,6 +1599,7 @@ void (function () {
               y = _u[v.time_agg]
             this.v = valueOf(this.options.variable || caller?.color || caller?.y || v.y)
             this.dataset = v.get.dataset()
+            if (y && !Object.hasOwn(site.data.meta.times, this.dataset)) return
             this.time_agg = y ? y.value() - site.data.meta.times[this.dataset].range[0] : 0
             this.time = this.v ? this.time_agg - site.data.variables[this.v].time_range[this.dataset][0] : 0
             if (!this.processed) {
@@ -2497,6 +2490,8 @@ void (function () {
         border_highlight_true: '#ffffff',
         border_highlight_false: '#000000',
         missing: '#00000000',
+        polygon_outline: 1.5,
+        circle_radius: 25e2,
       },
       summary_levels = {dataset: 'Overall', filtered: 'Filtered', all: 'Selection'},
       meta = {
@@ -3819,7 +3814,7 @@ void (function () {
             (f = {
               e,
               index: site.data.filter.size,
-              variable: event.target.innerText,
+              variable: event.target.value,
               component: 'selected',
               operator: '>=',
               value: '',
@@ -3913,12 +3908,15 @@ void (function () {
       c.lastElementChild.className = 'dropdown-menu'
       c.lastElementChild.setAttribute('aria-labelledby', 'filter_variable_dropdown')
       Object.keys(site.data.variables).forEach(k => {
-        const e = document.createElement('li')
-        e.appendChild(document.createElement('a'))
-        e.lastElementChild.className = 'dropdown-item'
-        e.lastElementChild.href = '#'
-        e.lastElementChild.innerText = k
-        c.lastElementChild.appendChild(e)
+        if ('time' !== k) {
+          const e = document.createElement('li')
+          e.appendChild(document.createElement('a'))
+          e.lastElementChild.className = 'dropdown-item'
+          e.lastElementChild.href = '#'
+          e.lastElementChild.value = k
+          e.lastElementChild.innerText = site.data.variable_info[k]?.short_name || k
+          c.lastElementChild.appendChild(e)
+        }
       })
 
       // ee.appendChild(document.createElement('div'))
@@ -4008,8 +4006,9 @@ void (function () {
     }
 
     function process_layer(source, u) {
-      var l, p, f, id
-      const layerId = site.map[u.id].has_time ? source.name + source.time : source.name
+      var p, f, id
+      const has_time = Object.hasOwn(source, 'time'),
+        layerId = source.name + (has_time ? source.time : '')
       site.map[u.id]._layers[layerId] = L.geoJSON(JSON.parse(site.map._raw[source.url]), {
         onEachFeature: add_layer_listeners.bind(u),
       })
@@ -4026,7 +4025,7 @@ void (function () {
         } else {
           site.data.entities[id] = {layer: {}, features: {id: id}}
         }
-        if (site.map[u.id].has_time) {
+        if (has_time) {
           if (!Object.hasOwn(site.data.entities[id].layer, u.id)) site.data.entities[id].layer[u.id] = {has_time: true}
           site.data.entities[id].layer[u.id][source.time] = l
         } else site.data.entities[id].layer[u.id] = l
@@ -4068,17 +4067,9 @@ void (function () {
           if (!Object.hasOwn(site.map[u.id]._layers, source)) {
             site.map[u.id]._layers[source] = L.geoJSON(JSON.parse(site.map._raw[source]), {
               pointToLayer: (point, coords) => {
-                return L.circle(coords, {
-                  radius: 2500,
-                  weight: 1.5,
-                  color: '#ffffff',
-                  opacity: 0.5,
-                  fillOpacity: 0.5,
-                  fillColor: 'black',
-                })
+                return L.circle(coords)
               },
               onEachFeature: (feature, layer) => {
-                // layer.setStyle({radius: 5, color: '#000000', fillColor: '#ffffff'})
                 const e = document.createElement('table')
                 Object.keys(feature.properties).forEach(f => {
                   const r = document.createElement('tr')
@@ -4099,10 +4090,17 @@ void (function () {
                 if (!o.filter[i].check(l.feature.properties[o.filter[i].feature], o.filter[i].value)) return
               }
             }
+            l.setRadius(site.settings.circle_radius || defaults.circle_radius).setStyle({
+              weight: site.settings.polygon_outline || defaults.polygon_outline,
+              color: 'white',
+              opacity: 0.5,
+              fillOpacity: 0.5,
+              fillColor: 'black',
+            })
             l.addTo(u.overlay)
           })
           u.overlay_control.addTo(u.map)
-        } else return retrieve_layer(u, o, show_overlay.bind(null, u, o, time))
+        } else return retrieve_layer(u, o.source[i], show_overlay.bind(null, u, o, time))
       }
     }
 
@@ -4492,7 +4490,7 @@ void (function () {
           .addOverlay(this.overlay, 'Overlay')
           .addTo(this.map)
         this.tiles = {}
-        var k, i, f, mapId
+        var k, i, f, has_time, mapId
         if (Object.hasOwn(site.map, this.id)) {
           site.map[this.id].u = this
           if (site.map[this.id].tiles) {
@@ -4511,24 +4509,24 @@ void (function () {
           if (!Object.hasOwn(site.map, '_queue')) site.map._queue = {}
           if (!Object.hasOwn(site.map[this.id], '_layers')) site.map[this.id]._layers = {}
           for (i = site.map[this.id].shapes.length; i--; ) {
-            if (!site.map[this.id].has_time) {
-              site.map[this.id].has_time = Object.hasOwn(site.map[this.id].shapes[i], 'time')
-              if (site.map[this.id].has_time) {
-                add_dependency(this.view, {type: 'update', id: this.id})
-                site.map[this.id].match_time =
-                  'exact' === site.map[this.id].shapes[i].resolution
-                    ? time => {
-                        return time + ''
-                      }
-                    : time => {
-                        return String(time).substring(0, 3) + '0'
-                      }
-              }
+            has_time = Object.hasOwn(site.map[this.id].shapes[i], 'time')
+            if (!site.map[this.id].has_time && has_time) {
+              site.map[this.id].has_time = true
+              add_dependency(this.view, {type: 'update', id: this.id})
+              site.map[this.id].match_time =
+                'exact' === site.map[this.id].shapes[i].resolution
+                  ? time => {
+                      return time + ''
+                    }
+                  : time => {
+                      return String(time).substring(0, 3) + '0'
+                    }
             }
             k = site.map[this.id].shapes[i].name
             if (!k)
               site.map[this.id].shapes[i].name = k = site.metadata.datasets[i < site.metadata.datasets.length ? i : 0]
-            mapId = k + (site.map[this.id].shapes[i].time ?? '')
+            mapId = k + (has_time ? site.map[this.id].shapes[i].time : '')
+            site.data.inited[mapId + '_map'] = false
             site.map._queue[mapId] = site.map[this.id].shapes[i]
             if (
               site.data.loaded[k] &&

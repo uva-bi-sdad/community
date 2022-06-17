@@ -160,7 +160,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     value_name <- "file"
   }
   data[[dataset]] <- gsub("\\s+", "_", data[[dataset]])
-  datasets <- unique(data[[dataset]])
+  datasets <- sort(unique(data[[dataset]]))
   present_vars <- unique(data[[value_name]])
   if (check_variables) {
     present_vars <- variables[variables %in% present_vars]
