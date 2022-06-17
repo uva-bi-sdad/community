@@ -1049,7 +1049,7 @@ void (function () {
                   d = v.get.dataset(),
                   y = _u[this.time || v.time_agg],
                   rank = 'all' === site.settings.summary_selection ? 'subset_rank' : 'rank'
-                if (site.data.inited[d] && s) {
+                if (site.data.inited[d] && s && v.state) {
                   this.parsed.base_trace = valueOf(this.base_trace)
                   this.parsed.x = valueOf(this.x)
                   this.parsed.x_range = site.data.variables[this.parsed.x].time_range[d]
