@@ -348,7 +348,8 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
           file.copy(paste0(dir, "/docs/", lff), lf)
           if (file.exists(lf)) list(type = "script", src = lff)
         } else {
-          if (file.exists(paste0("dist/dev/", script))) file.copy(paste0("dist/dev/", script), lf)
+          lff <- paste0(dir, "/docs/dist/docs/dist/js/", script)
+          if (file.exists(lff) && md5sum(lff)[[1]] == cached$md5) file.copy(lff, lf)
           unlink(paste0(dir, "/", cached$location, "/", scripts[scripts != script]))
           if (!file.exists(lf) || md5sum(lf)[[1]] != cached$md5) {
             tryCatch(download.file(cached$source, lf, quiet = TRUE), error = function(e) NULL)
