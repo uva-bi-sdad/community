@@ -361,7 +361,6 @@ void (function () {
           const state = f.value()
           if (state !== f.state) {
             var c,
-              id,
               first_all = '',
               summary_state = site.settings.summary_selection
             if (site.data.inited[f.parsed.dataset]) {
@@ -3824,10 +3823,11 @@ void (function () {
           e.appendChild(document.createElement('div'))
           e.lastElementChild.className = 'col'
           e.lastElementChild.appendChild((ee = document.createElement('p')))
+          ee.className = 'cell-text'
           ee.innerText = event.target.innerText
 
           e.appendChild(document.createElement('div'))
-          e.lastElementChild.style.maxWidth = '130px'
+          e.lastElementChild.style.maxWidth = '140px'
           e.lastElementChild.className = 'col'
           e.lastElementChild.appendChild((ee = document.createElement('select')))
           ee.className = 'form-select'

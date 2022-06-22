@@ -134,10 +134,11 @@ function vector_summary(vec, range) {
 
 function passes_filter(entity, time_range, filter, variables) {
   const s = {}
-  for (var i = filter.filter_by.length, r; i--; ) {
-    if (!Object.hasOwn(entity.data, filter.filter_by[i])) return false
+  for (var i = filter.filter_by.length, c, r; i--; ) {
+    c = variables[filter.filter_by[i]].code
+    if (!Object.hasOwn(entity.data, c)) return false
     r = variables[filter.filter_by[i]].info[entity.group].time_range
-    s[filter.filter_by[i]] = vector_summary(entity.data[filter.filter_by[i]], [
+    s[filter.filter_by[i]] = vector_summary(entity.data[c], [
       time_range[0] - r[0],
       Math.max(time_range[1] - r[0], time_range[1] - r[1]),
     ])
@@ -149,15 +150,18 @@ function passes_filter(entity, time_range, filter, variables) {
 }
 
 function passes_feature_filter(entity, filter) {
-  for (var i = filter.length; i--; ) if ('id' === filter[i].name) {
-    if (
-      filter[i].group && Object.hasOwn(entity.features, filter[i].group)
-      ? filter[i].value !== entity.features[filter[i].group]
-      : filter[i].value.length < entity.features.id.length
-      ? filter[i].value !== entity.features.id.substring(0, filter[i].value.length)
-      : filter[i].value !== entity.features.id
-    ) return false
-  } else if (!filter[i].check(entity.features[filter[i].name])) return false
+  for (var i = filter.length; i--; )
+    if (filter[i].value !== '-1')
+      if ('id' === filter[i].name) {
+        if (
+          filter[i].group && Object.hasOwn(entity.features, filter[i].group)
+            ? filter[i].value !== entity.features[filter[i].group]
+            : filter[i].value.length < entity.features.id.length
+            ? filter[i].value !== entity.features.id.substring(0, filter[i].value.length)
+            : filter[i].value !== entity.features.id
+        )
+          return false
+      } else if (!filter[i].check(entity.features[filter[i].name])) return false
   return true
 }
 

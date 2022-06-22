@@ -10,7 +10,7 @@
   --highlight-secondary: #2e2e2e;
   --highlight-secondary-text: #ffffff;
   --lowlight: #212121;
-  --lowlight-text: #c3c3c3;
+  --lowlight-text: #acacac;
   --warning: #dc3545;
   --na: #7e7e7e;
 }
@@ -26,7 +26,7 @@
   --highlight-secondary: #eaeaea;
   --highlight-secondary-text: #000000;
   --lowlight: #e9ecef;
-  --lowlight-text: #212529;
+  --lowlight-text: #575757;
   --warning: #a11320;
   --na: #7e7e7e;
 }
@@ -35,7 +35,8 @@ body,
 html,
 .modal-content,
 table.dataTable tbody tr,
-.offcanvas {
+.offcanvas,
+.leaflet-tooltip {
   background-color: var(--background);
   border-color: var(--background-border);
   color: var(--body-text);
@@ -126,6 +127,9 @@ body::-webkit-scrollbar-track,
 .nav-tabs {
   border-color: var(--background-border);
 }
+.text-muted {
+  color: var(--lowlight-text) !important;
+}
 .form-select:disabled {
   background-color: var(--lowlight);
   color: var(--lowlight-text);
@@ -185,6 +189,9 @@ input[type='text'],
   background: inherit;
   border: none;
 }
+.btn-link:focus {
+  color: var(--lowlight-text);
+}
 
 .navbar-expand-md .navbar-collapse {
   flex: 0;
@@ -196,9 +203,6 @@ input[type='text'],
   margin-top: 0;
   margin-right: 0;
   margin-left: 0;
-}
-.row > * {
-  padding: 0;
 }
 .row > div[class^='col'] {
   padding-left: calc(var(--bs-gutter-x) * 0.5);
@@ -490,6 +494,10 @@ button.has-note::after {
   list-style-type: none;
   margin: 0 0 0 1.5em;
   text-indent: -1.5em;
+}
+.cell-text {
+  padding: 0.4em;
+  margin: 0;
 }
 
 .table > :not(:first-child) {
@@ -857,7 +865,6 @@ input[type='range']::-ms-thumb {
 @media screen and (max-width: 600px) {
   .content .row > div {
     width: 100%;
-    padding: 0;
   }
   .menu {
     flex-wrap: wrap;
