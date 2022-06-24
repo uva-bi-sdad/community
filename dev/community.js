@@ -320,7 +320,7 @@ void (function () {
             v = _u[u.view || c.view],
             variable
           if (patterns.minmax.test(cv)) cv = c.parsed.min
-          if (v?.y) {
+          if (v && v.y) {
             variable = valueOf(v.y)
             if (Object.hasOwn(site.data.variables, variable)) {
               if (!v.time_range.time.length) conditionals.time_range(v, u, true)
@@ -341,7 +341,7 @@ void (function () {
             v = _u[u.view || c.view],
             variable
           if (patterns.minmax.test(cv)) cv = c.parsed.max
-          if (v?.y) {
+          if (v && v.y) {
             variable = valueOf(v.y)
             if (Object.hasOwn(site.data.variables, variable)) {
               if (!v.time_range.time.length) conditionals.time_range(v, u, true)
@@ -366,12 +366,14 @@ void (function () {
             if (site.data.inited[f.parsed.dataset]) {
               f.valid = true
               f.n_selected.ids = 0
+              f.n_selected.children = 0
               f.n_selected.features = 0
               f.n_selected.variables = 0
               f.n_selected.dataset = 0
               f.n_selected.filtered = 0
               f.n_selected.all = 0
               f.selection.ids = {}
+              f.selection.children = {}
               f.selection.features = {}
               f.selection.variables = {}
               f.selection.dataset = {}
@@ -399,6 +401,10 @@ void (function () {
                   f.selection.dataset[id] = site.data.entities[id]
                   f.n_selected.dataset++
                   c.all++
+                }
+                if (c.dataset && c.ids) {
+                  f.selection.children[id] = site.data.entities[id]
+                  f.n_selected.children++
                 }
                 if (c.features && c.dataset) {
                   f.selection.filtered[id] = site.data.entities[id]
@@ -429,6 +435,7 @@ void (function () {
               site.data.data_queue[f.parsed.dataset][f.id] = function () {
                 return conditionals.dataview(f)
               }
+              if (site.data.loaded[f.parsed.dataset]) site.data.load_id_maps()
             }
           }
         },
@@ -468,7 +475,7 @@ void (function () {
             }
         },
         time_range: function (u, c, passive) {
-          const v = c?.value(),
+          const v = c && c.value(),
             d = u.get.dataset(),
             tv = u.time ? valueOf(u.time) : defaults.time,
             t = Object.hasOwn(site.data.variables, tv) ? site.data.variables[tv].info[d].min : '',
@@ -480,7 +487,7 @@ void (function () {
             value
           if (r) {
             if (!Object.hasOwn(r, u.id)) {
-              return site.data.init_summaries(u.id).then(function () {
+              return site.data.init_summaries().then(function () {
                 elements.dataview.time_range(u, c, passive)
               })
             }
@@ -559,10 +566,11 @@ void (function () {
                                 q.push(k + '=' + f[k])
                               }
                             })
-                          site.data.filter?.forEach(f => {
-                            const v = Number(f.value)
-                            if (!isNaN(v)) q.push(f.variable + f.operator + v)
-                          })
+                          if (site.data.filter)
+                            site.data.filter.forEach(f => {
+                              const v = Number(f.value)
+                              if (!isNaN(v)) q.push(f.variable + f.operator + v)
+                            })
                         }
                         k = s.endpoint + (q.length ? '?' + q.join('&') : '')
                         if (this.api) {
@@ -776,7 +784,7 @@ void (function () {
         },
         number: {
           init: function (o) {
-            if (o.e.previousElementSibling?.classList.contains('number-down')) {
+            if (o.e.previousElementSibling && o.e.previousElementSibling.classList.contains('number-down')) {
               o.e.previousElementSibling.addEventListener(
                 'click',
                 function () {
@@ -921,7 +929,7 @@ void (function () {
             var e = document.createElement('option')
             e.value = value
             e.innerText = display
-            if (meta?.info) {
+            if (meta && meta.info) {
               e.title = meta.info.description || meta.info.short_description
             }
             this.e.appendChild(e)
@@ -1019,7 +1027,7 @@ void (function () {
             }
           },
           mouseover: function (d) {
-            if (1 === d.points?.length && this.e.data[d.points[0].fullData.index]) {
+            if (d.points && 1 === d.points.length && this.e.data[d.points[0].fullData.index]) {
               this.e.data[d.points[0].fullData.index].line.width = 4
               // this.e.data[d.points[0].fullData.index].marker.size = 12
               Plotly.react(this.e, this.e.data, this.e.layout)
@@ -1027,7 +1035,7 @@ void (function () {
             }
           },
           mouseout: function (d) {
-            if (d.points?.length === 1 && this.e.data[d.points[0].fullData.index]) {
+            if (d.points && 1 === d.points.length && this.e.data[d.points[0].fullData.index]) {
               this.e.data[d.points[0].fullData.index].line.width = 2
               // this.e.data[d.points[0].fullData.index].marker.size = 8
               Plotly.react(this.e, this.e.data, this.e.layout)
@@ -1035,7 +1043,7 @@ void (function () {
             }
           },
           click: function (d) {
-            this.clickto?.set(d.points[0].data.id)
+            this.clickto && this.clickto.set(d.points[0].data.id)
           },
           update: function (pass) {
             clearTimeout(this.queue)
@@ -1044,10 +1052,13 @@ void (function () {
             } else {
               if (this.e.layout) {
                 const v = _u[this.view],
-                  s = v.selection?.all,
+                  s = v.selection && v.selection.all,
                   d = v.get.dataset(),
                   y = _u[this.time || v.time_agg],
-                  rank = 'all' === site.settings.summary_selection ? 'subset_rank' : 'rank'
+                  rank =
+                    'all' === site.settings.summary_selection || 'children' === site.settings.summary_selection
+                      ? 'subset_rank'
+                      : 'rank'
                 if (site.data.inited[d] && s && v.state) {
                   this.parsed.base_trace = valueOf(this.base_trace)
                   this.parsed.x = valueOf(this.x)
@@ -1099,7 +1110,7 @@ void (function () {
                         make_data_entry(
                           this,
                           s[k],
-                          s[k][rank][this.parsed.color][this.parsed.time] -
+                          s[k][this.view][rank][this.parsed.color][this.parsed.time] -
                             this.parsed.summary.missing[this.parsed.time],
                           n
                         )
@@ -1116,7 +1127,7 @@ void (function () {
                           make_data_entry(
                             this,
                             s[k],
-                            s[k][rank][this.parsed.color][this.parsed.time] -
+                            s[k][this.view][rank][this.parsed.color][this.parsed.time] -
                               this.parsed.summary.missing[this.parsed.time],
                             n
                           )
@@ -1201,15 +1212,16 @@ void (function () {
             o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0
             o.show = function (e) {
               if (e.layer && e.layer[this.id]) {
-                if (!site.data.inited[this.parsed.dataset + '_map']) {
+                if (!site.data.inited[this.parsed.dataset + o.id]) {
                   const time = site.map[this.id].match_time(
                     site.data.meta.overall.value[
                       site.data.variables[this.parsed.color].time_range[this.parsed.dataset][0] + this.parsed.time
                     ]
                   )
-                  e.layer[this.id][time]?.setStyle({
-                    color: defaults['border_highlight_' + site.settings.theme_dark],
-                  })
+                  if (e.layer[this.id][time])
+                    e.layer[this.id][time].setStyle({
+                      color: defaults['border_highlight_' + site.settings.theme_dark],
+                    })
                 } else {
                   e.layer[this.id].setStyle({
                     color: defaults['border_highlight_' + site.settings.theme_dark],
@@ -1219,13 +1231,13 @@ void (function () {
             }
             o.revert = function (e) {
               if (e.layer && e.layer[this.id]) {
-                if (!site.data.inited[this.parsed.dataset + '_map']) {
+                if (!site.data.inited[this.parsed.dataset + this.id]) {
                   const time = site.map[this.id].match_time(
                     site.data.meta.overall.value[
                       site.data.variables[this.parsed.color].time_range[this.parsed.dataset][0] + this.parsed.time
                     ]
                   )
-                  e.layer[this.id][time]?.setStyle({color: defaults.border})
+                  if (e.layer[this.id][time]) e.layer[this.id][time].setStyle({color: defaults.border})
                 } else {
                   e.layer[this.id].setStyle({color: defaults.border})
                 }
@@ -1256,7 +1268,7 @@ void (function () {
             })
           },
           click: function (e) {
-            this.clickto?.set(e.target.feature.properties[e.target.source.id_property])
+            if (this.clickto) this.clickto.set(e.target.feature.properties[e.target.source.id_property])
           },
           update: function (entity, caller, pass) {
             clearTimeout(this.queue)
@@ -1269,9 +1281,9 @@ void (function () {
                   d = view.get.dataset(),
                   time = valueOf(view.time_agg),
                   match_time = site.map[this.id].has_time ? site.map[this.id].match_time(time) : time,
-                  has_time = Object.hasOwn(site.data.inited, d + match_time + '_map'),
+                  has_time = Object.hasOwn(site.data.inited, d + match_time + this.id),
                   mapId = has_time ? d + match_time : d
-                if (site.map._queue && Object.hasOwn(site.map._queue, mapId) && !site.map._queue[mapId].retrieved) {
+                if (site.map._queue && Object.hasOwn(site.map._queue, mapId) && !site.data.inited[mapId + this.id]) {
                   return retrieve_layer(this, site.map._queue[mapId], () => this.update(void 0, void 0, true))
                 }
                 if (!view.valid && site.data.inited[d]) {
@@ -1289,7 +1301,10 @@ void (function () {
                   s = view.selection[site.settings.background_shapes && this.options.background_shapes ? 'ids' : 'all'],
                   bgc = defaults.border,
                   c = valueOf(this.color || view.y),
-                  subset = 'all' === site.settings.summary_selection ? 'subset_rank' : 'rank',
+                  subset =
+                    'all' === site.settings.summary_selection || 'children' === site.settings.summary_selection
+                      ? 'subset_rank'
+                      : 'rank',
                   ys = this.time
                     ? _u[this.time]
                     : view.time_agg
@@ -1307,7 +1322,7 @@ void (function () {
                   this.overlay_control.remove()
                   this.overlay.clearLayers()
                 }
-                if (site.data.inited[mapId + '_map'] && s && view.valid) {
+                if (site.data.inited[mapId + this.id] && s && view.valid) {
                   if (vstate !== this.vstate) {
                     this.map._zoomAnimated = 'none' !== site.settings.map_animations
                     for (k in this.reference_options)
@@ -1320,7 +1335,7 @@ void (function () {
                     this.vstate = false
                     for (k in s) {
                       fg = Object.hasOwn(a, k)
-                      if (Object.hasOwn(s, k) && s[k].layer) {
+                      if (Object.hasOwn(s, k) && s[k].layer && s[k].layer[this.id]) {
                         const cl = s[k].layer[this.id].has_time ? s[k].layer[this.id][match_time] : s[k].layer[this.id]
                         if (cl && (fg || this.options.background_shapes === site.data.entities[k].group)) {
                           n++
@@ -1372,13 +1387,14 @@ void (function () {
                         if (Object.hasOwn(ls, id)) {
                           k = ls[id].entity.features.id
                           fg =
-                            Object.hasOwn(a, k) && Object.hasOwn(a[k][subset], c)
+                            Object.hasOwn(a, k) && Object.hasOwn(a[k][this.view][subset], c)
                               ? pal(
                                   a[k].get_value(c, this.parsed.time),
                                   this.parsed.palette,
                                   this.parsed.summary,
                                   this.parsed.time,
-                                  a[k][subset][c][this.parsed.time] - this.parsed.summary.missing[this.parsed.time],
+                                  a[k][this.view][subset][c][this.parsed.time] -
+                                    this.parsed.summary.missing[this.parsed.time],
                                   n
                                 )
                               : defaults.missing
@@ -1477,7 +1493,7 @@ void (function () {
                         const info = site.data.variable_info[this.parsed.data],
                           v = site.data.format_value(
                             entity.get_value(this.parsed.data, this.parent.time),
-                            info?.type ? patterns.int_types.test(info.type) : true
+                            info && info.type ? patterns.int_types.test(info.type) : true
                           )
                         return 'unknown' !== v && Object.hasOwn(value_types, info.type) ? value_types[info.type](v) : v
                       }
@@ -1596,7 +1612,7 @@ void (function () {
               ci,
               k,
               y = _u[v.time_agg]
-            this.v = valueOf(this.options.variable || caller?.color || caller?.y || v.y)
+            this.v = valueOf(this.options.variable || (caller && (caller.color || caller.y)) || v.y)
             this.dataset = v.get.dataset()
             if (y && !Object.hasOwn(site.data.meta.times, this.dataset)) return
             this.time_agg = y ? y.value() - site.data.meta.times[this.dataset].range[0] : 0
@@ -1761,7 +1777,7 @@ void (function () {
               o.e.addEventListener('click', elements.datatable.click.bind(o))
             }
             o.show = function (e) {
-              if (Object.hasOwn(this.rows, e?.features.id)) {
+              if (e.features && Object.hasOwn(this.rows, e.features.id)) {
                 const row = this.rows[e.features.id].node()
                 if (row) {
                   row.style.backgroundColor = defaults.background_highlight
@@ -1774,7 +1790,7 @@ void (function () {
               }
             }
             o.revert = function (e) {
-              if (Object.hasOwn(this.rows, e?.features.id)) {
+              if (e.features && Object.hasOwn(this.rows, e.features.id)) {
                 const row = this.rows[e.features.id].node()
                 if (row) row.style.backgroundColor = 'inherit'
               }
@@ -1862,7 +1878,7 @@ void (function () {
                   data: 'entity.time.value',
                   render: function (d, type, row) {
                     const t = row.time + row.offset
-                    return t >= 0 && t < d?.length
+                    return d && t >= 0 && t < d.length
                       ? 'number' === typeof d[t]
                         ? site.data.format_value(d[t], true)
                         : d[t]
@@ -1983,7 +1999,7 @@ void (function () {
                       for (k in v.selection.all)
                         if (Object.hasOwn(v.selection.all, k)) {
                           if (vn) {
-                            if (Object.hasOwn(v.selection.all[k].summary, vn)) {
+                            if (Object.hasOwn(v.selection.all[k][this.view].summary, vn)) {
                               this.rows[k] = this.table.row.add({
                                 dataset: d,
                                 variable: vn,
@@ -2048,7 +2064,7 @@ void (function () {
                         if (Object.hasOwn(v.selection.all, k)) {
                           if (this.options.single_variable) {
                             if (
-                              Object.hasOwn(v.selection.all[k].summary, vn) &&
+                              Object.hasOwn(v.selection.all[k][v].summary, vn) &&
                               Object.hasOwn(v.selection.all[k].data, site.data.variables[vn].code)
                             ) {
                               this.rows[k] = this.table.row.add({
@@ -2074,7 +2090,7 @@ void (function () {
             }
           },
           mouseover: function (e) {
-            if (Object.hasOwn(this.rowIds, e.target._DT_CellIndex?.row)) {
+            if (e.target._DT_CellIndex && Object.hasOwn(this.rowIds, e.target._DT_CellIndex.row)) {
               const id = this.rowIds[e.target._DT_CellIndex.row],
                 row = this.rows[id].node()
               if (row) row.style.backgroundColor = defaults.background_highlight
@@ -2084,7 +2100,7 @@ void (function () {
             }
           },
           mouseout: function (e) {
-            if (Object.hasOwn(this.rowIds, e.target._DT_CellIndex?.row)) {
+            if (e.target._DT_CellIndex && Object.hasOwn(this.rowIds, e.target._DT_CellIndex.row)) {
               const id = this.rowIds[e.target._DT_CellIndex.row],
                 row = this.rows[id].node()
               if (row) row.style.backgroundColor = 'inherit'
@@ -2094,7 +2110,7 @@ void (function () {
             }
           },
           click: function (e) {
-            if (this.clickto && Object.hasOwn(this.rowIds, e.target._DT_CellIndex?.row)) {
+            if (this.clickto && e.target._DT_CellIndex && Object.hasOwn(this.rowIds, e.target._DT_CellIndex.row)) {
               const id = this.rowIds[e.target._DT_CellIndex.row]
               if (Object.hasOwn(site.data.entities, id)) this.clickto.set(id)
             }
@@ -2165,7 +2181,10 @@ void (function () {
                   string = summary && Object.hasOwn(summary, 'levels'),
                   min = summary && !string ? summary.min[c.parsed.time] : 0,
                   range = summary ? (string ? summary.levels.length - min : summary.range[c.parsed.time]) : 1,
-                  subset = 'all' === site.settings.summary_selection ? 'subset_rank' : 'rank',
+                  subset =
+                    'all' === site.settings.summary_selection || 'children' === site.settings.summary_selection
+                      ? 'subset_rank'
+                      : 'rank',
                   value = e.get_value(c.parsed.color, c.parsed.time),
                   n = summary.n[c.parsed.time],
                   p =
@@ -2188,10 +2207,10 @@ void (function () {
                       : e.features.name
                 } else if (
                   site.settings.color_by_order &&
-                  Object.hasOwn(site.data.entities[e.features.id][subset], c.parsed.color)
+                  Object.hasOwn(site.data.entities[e.features.id][this.view][subset], c.parsed.color)
                 ) {
                   var i =
-                      site.data.entities[e.features.id][subset][c.parsed.color][c.parsed.time] -
+                      site.data.entities[e.features.id][this.view][subset][c.parsed.color][c.parsed.time] -
                       summary.missing[c.parsed.time],
                     po = (i / (n - 1)) * 100
                   this.ticks.entity.firstElementChild.firstElementChild.innerText =
@@ -2211,7 +2230,7 @@ void (function () {
               this.ticks.entity.firstElementChild.classList.add('hidden')
             }
             add_dependency(o.view, {type: 'update', id: o.id})
-            if (_u[o.palette]?.e) {
+            if (_u[o.palette] && _u[o.palette].e) {
               _u[o.palette].e.addEventListener('change', o.update)
             }
             o.update()
@@ -2243,10 +2262,11 @@ void (function () {
               : false
             this.parsed.time = y
             this.parsed.color = variable
-            if (view.valid && y < summary?.n.length) {
-              this.integer = site.data.variable_info[variable]?.type
-                ? patterns.int_types.test(site.data.variable_info[variable].type)
-                : true
+            if (view.valid && summary && y < summary.n.length) {
+              this.integer =
+                site.data.variable_info[variable] && site.data.variable_info[variable].type
+                  ? patterns.int_types.test(site.data.variable_info[variable].type)
+                  : true
               if (pn !== this.current_palette + site.settings.color_scale_center) {
                 this.current_palette = pn + site.settings.color_scale_center
                 this.parts.scale.innerHTML = ''
@@ -2374,7 +2394,7 @@ void (function () {
                 max = this.parsed.summary.max[this.parsed.time],
                 tv = min + p * (max - min)
               var i, n
-              if (this.parsed.order?.length) {
+              if (this.parsed.order && this.parsed.order.length) {
                 n = this.parsed.selected_summary.missing[this.parsed.time]
                 if (n < this.parsed.order.length) {
                   if (1 === this.parsed.order.length || !p) {
@@ -2401,7 +2421,7 @@ void (function () {
             }
           },
           mouseout: function (e) {
-            if (this.id !== e.relatedTarget?.getAttribute('of')) {
+            if (e.relatedTarget && this.id !== e.relatedTarget.getAttribute('of')) {
               this.revert()
               if (this.entity) {
                 update_subs(this.id, 'revert', this.entity)
@@ -2418,13 +2438,13 @@ void (function () {
         },
         credits: {
           init: function (o) {
-            var s = site.credit_output?.[o.id],
+            var s = site.credit_output && site.credit_output[o.id],
               k,
               e
             o.exclude = []
             o.add = {}
-            o.exclude = s?.exclude || []
-            o.add = s?.add || {}
+            o.exclude = (s && s.exclude) || []
+            o.add = (s && s.add) || {}
             o.e.appendChild(document.createElement('ul'))
             for (k in site.credits)
               if (Object.hasOwn(site.credits, k) && -1 === o.exclude.indexOf(k)) {
@@ -2490,7 +2510,7 @@ void (function () {
         border_highlight_false: '#000000',
         missing: '#00000000',
         polygon_outline: 1.5,
-        circle_radius: 25e2,
+        circle_radius: 20,
       },
       summary_levels = {dataset: 'Overall', filtered: 'Filtered', all: 'Selection'},
       meta = {
@@ -2503,7 +2523,9 @@ void (function () {
       tree = {}
 
     document.body.className =
-      'true' === window.localStorage?.getItem('theme_dark') || site.settings.theme_dark ? 'dark-theme' : 'light-theme'
+      (window.localStorage && 'true' === window.localStorage.getItem('theme_dark')) || site.settings.theme_dark
+        ? 'dark-theme'
+        : 'light-theme'
     if (page.content) {
       var i = page.menus.length,
         h = page.navbar ? page.navbar.getBoundingClientRect().height : 0
@@ -2603,7 +2625,7 @@ void (function () {
             text.parts.lastElementChild.addEventListener('blur', tooltip_clear)
           } else {
             text.parts.lastElementChild.className = 'btn btn-link'
-            if ('function' === typeof _u[p.target]?.[p.type]) {
+            if (_u[p.target] && 'function' === typeof _u[p.target][p.type]) {
               text.parts.lastElementChild.setAttribute('aria-label', p.text.join(''))
               text.parts.lastElementChild.addEventListener('click', _u[p.target][p.type])
             }
@@ -2637,6 +2659,7 @@ void (function () {
         site.data.data_queue[d][u.id] = function () {
           return fill_ids_options(u, d, out)
         }
+        if (site.data.loaded[d]) site.data.load_id_maps()
         return
       }
       var s, k
@@ -2645,7 +2668,7 @@ void (function () {
       u.values = out[d].values
       u.display = out[d].display
       for (k in site.data.entities)
-        if (d === site.data.entities[k]?.group) {
+        if (site.data.entities[k] && d === site.data.entities[k].group) {
           s.push(u.add(k, site.data.entities[k].features.name))
           u.values.push(k)
           u.display.push(site.data.entities[k].features.name)
@@ -2704,6 +2727,7 @@ void (function () {
         site.data.data_queue[d][u.id] = function () {
           return fill_levels_options(u, d, v, out)
         }
+        if (site.data.loaded[d]) site.data.load_id_maps()
       }
       Object.hasOwn(site.url_options, u.id) ? u.set(site.url_options[u.id]) : u.reset()
     }
@@ -2831,14 +2855,14 @@ void (function () {
       page.modal.info.description.innerText = info.long_description || info.description || info.short_description || ''
       page.modal.info.name.lastElementChild.innerText = info.measure || ''
       page.modal.info.type.lastElementChild.innerText = info.type || ''
-      if (info.sources?.length) {
+      if (info.sources && info.sources.length) {
         page.modal.info.sources.lastElementChild.lastElementChild.innerHTML = ''
         page.modal.info.sources.classList.remove('hidden')
         for (n = info.sources.length, i = 0; i < n; i++) {
           page.modal.info.sources.lastElementChild.lastElementChild.appendChild(make_variable_source(info.sources[i]))
         }
       } else page.modal.info.sources.classList.add('hidden')
-      if (info.citations?.length && 'string' !== typeof info.citations) {
+      if (info.citations && info.citations.length) {
         page.modal.info.references.lastElementChild.innerHTML = ''
         page.modal.info.references.classList.remove('hidden')
         if ('string' === typeof info.citations) info.citations = [info.citations]
@@ -2959,7 +2983,7 @@ void (function () {
       return Math.max(0, Math.min(255, v))
     }
     for (k in palettes)
-      if ('continuous-polynomial' === palettes[k]?.type) {
+      if (palettes[k] && 'continuous-polynomial' === palettes[k].type) {
         c = palettes[k].colors
         palettes[k].type = 'discrete'
         palettes[k].colors = []
@@ -3301,7 +3325,7 @@ void (function () {
       }
 
       // initialize variables
-      if (site.variables?.length) {
+      if (site.variables && site.variables.length) {
         for (n = site.variables.length; n--; ) {
           k = site.variables[n].id
           _u[k] = {
@@ -3371,7 +3395,7 @@ void (function () {
       }
 
       // initialize rules
-      if (site.rules?.length) {
+      if (site.rules && site.rules.length) {
         for (ci = site.rules.length; ci--; ) {
           for (k in site.rules[ci].effects)
             if ('display' === k) {
@@ -3438,10 +3462,12 @@ void (function () {
 
     function content_resize() {
       page.content.style.top =
-        ('open' === page.top_menu?.state
+        (page.top_menu && 'open' === page.top_menu.state
           ? page.top_menu.getBoundingClientRect().height
           : page.content_bounds.top +
-            (!page.top_menu || page.bottom_menu || 'open' === page.right_menu?.state || 'open' === page.left_menu?.state
+            (!page.top_menu ||
+            page.bottom_menu ||
+            (page.right_menu && ('open' === page.right_menu.state || 'open' === page.left_menu.state))
               ? 0
               : 40)) + 'px'
       page.content.style.right =
@@ -3564,7 +3590,11 @@ void (function () {
                   add_dependency(view.y, {type: 'update', id: this.id})
                 }
                 if (variable !== this.variable) this.reset()
-                if (site.data.variables[variable][this.view].summaries[d]?.filled) this.variable = variable
+                if (
+                  site.data.variables[variable][this.view].summaries[d] &&
+                  site.data.variables[variable][this.view].summaries[d].filled
+                )
+                  this.variable = variable
               } else {
                 this.e.min = this.parsed.min
                 if (this.parsed.min > this.source || (!this.source && 'min' === this.default)) this.set(this.parsed.min)
@@ -3790,6 +3820,7 @@ void (function () {
             elements[o.type].init(o)
           } else {
             site.data.data_queue[_u[o.view].parsed.dataset][o.id] = elements[o.type].init.bind(null, o)
+            if (site.data.loaded[_u[o.view].parsed.dataset]) site.data.load_id_maps()
           }
         }
       }
@@ -3844,7 +3875,7 @@ void (function () {
           })
 
           e.appendChild(document.createElement('div'))
-          e.lastElementChild.style.maxWidth = '90px'
+          e.lastElementChild.style.maxWidth = '95px'
           e.lastElementChild.className = 'col'
           e.lastElementChild.appendChild((ee = document.createElement('select')))
           ee.className = 'form-select'
@@ -3914,7 +3945,7 @@ void (function () {
           e.lastElementChild.className = 'dropdown-item'
           e.lastElementChild.href = '#'
           e.lastElementChild.value = k
-          e.lastElementChild.innerText = site.data.variable_info[k]?.short_name || k
+          e.lastElementChild.innerText = (site.data.variable_info[k] && site.data.variable_info[k].short_name) || k
           c.lastElementChild.appendChild(e)
         }
       })
@@ -3949,7 +3980,7 @@ void (function () {
 
     function valueOf(v) {
       v = 'string' === typeof v && Object.hasOwn(_u, v) ? _u[v] : v
-      if (v?.value) v = valueOf(v.value())
+      if (v && v.value) v = valueOf(v.value())
       return v
     }
 
@@ -3986,7 +4017,7 @@ void (function () {
     async function retrieve_layer(u, source, callback) {
       if (Object.hasOwn(site.map._raw, source.url)) {
         process_layer(source, u)
-        site.map._queue[source.name + (source.time ?? '')].retrieved = true
+        site.map._queue[source.name + (source.time ? source.time : '')].retrieved = true
         callback && callback()
       } else {
         const f = new window.XMLHttpRequest()
@@ -3994,7 +4025,7 @@ void (function () {
           if (4 === f.readyState && 200 === f.status) {
             site.map._raw[source.url] = f.responseText
             if (source.name) {
-              site.map._queue[source.name + (source.time ?? '')].retrieved = true
+              site.map._queue[source.name + (source.time ? source.time : '')].retrieved = true
               process_layer(this, u)
             }
             callback && callback()
@@ -4012,7 +4043,7 @@ void (function () {
       site.map[u.id]._layers[layerId] = L.geoJSON(JSON.parse(site.map._raw[source.url]), {
         onEachFeature: add_layer_listeners.bind(u),
       })
-      site.data.inited[layerId + '_map'] = true
+      site.data.inited[layerId + u.id] = true
       site.map[u.id]._layers[layerId].eachLayer(l => {
         l.setStyle({weight: 0, fillOpacity: 0})
         l.source = source
@@ -4044,7 +4075,7 @@ void (function () {
               }
             }
       })
-      if (site.map._waiting?.[source.name]) {
+      if (site.map._waiting && site.map._waiting[source.name]) {
         for (var i = site.map._waiting[source.name].length; i--; ) {
           request_queue(site.map._waiting[source.name][i])
         }
@@ -4054,8 +4085,8 @@ void (function () {
     function show_overlay(u, o, time) {
       var i,
         source = 'string' === typeof o.source ? o.source : ''
-      if (!source && undefined !== time) {
-        for (i = o.source?.length; i--; ) {
+      if (!source && undefined !== time && o.source) {
+        for (i = o.source.length; i--; ) {
           if (time === o.source[i].time) {
             source = o.source[i].url
             break
@@ -4067,7 +4098,7 @@ void (function () {
           if (!Object.hasOwn(site.map[u.id]._layers, source)) {
             site.map[u.id]._layers[source] = L.geoJSON(JSON.parse(site.map._raw[source]), {
               pointToLayer: (point, coords) => {
-                return L.circle(coords)
+                return L.circleMarker(coords)
               },
               onEachFeature: (feature, layer) => {
                 const e = document.createElement('table')
@@ -4143,7 +4174,7 @@ void (function () {
           return s
         },
         variables: function () {
-          if (v.variables || site.data.filter?.size) {
+          if (v.variables || (site.data.filter && site.data.filter.size)) {
             if (!v.parsed.variable_values.length) v.reparse()
             for (var s = '', i = v.parsed.variable_values.length; i--; )
               s +=
@@ -4155,7 +4186,7 @@ void (function () {
         },
         time_filters: function () {
           var s = ''
-          if (v.time_filters?.length) {
+          if (v.time_filters && v.time_filters.length) {
             for (i = v.time_filters.length; i--; )
               s += Object.hasOwn(_u, v.time_filters[i].value)
                 ? valueOf(v.time_filters[i].value)
@@ -4210,7 +4241,7 @@ void (function () {
           this.parsed.features = this.get.features()
         } else this.parsed.features = ''
         this.parsed.variable_values = []
-        if (site.data.filter?.size)
+        if (site.data.filter && site.data.filter.size)
           site.data.filter.forEach(f => {
             const v = Number(f.value)
             if (!isNaN(v))
@@ -4222,15 +4253,16 @@ void (function () {
               })
           })
         if (this.variables || this.parsed.variable_values.length) {
-          for (var i = this.variables?.length, v; i--; ) {
-            v = valueOf(this.variables[i].value)
-            this.parsed.variable_values.push({
-              name: valueOf(this.variables[i].variable),
-              operator: valueOf(this.variables[i].type),
-              value: v,
-              value_type: typeof v,
-            })
-          }
+          if (this.variables)
+            for (var i = this.variables.length, v; i--; ) {
+              v = valueOf(this.variables[i].value)
+              this.parsed.variable_values.push({
+                name: valueOf(this.variables[i].variable),
+                operator: valueOf(this.variables[i].type),
+                value: v,
+                value_type: typeof v,
+              })
+            }
           this.parsed.variables = this.get.variables()
         } else this.parsed.variables = ''
       }.bind(v)
@@ -4270,7 +4302,7 @@ void (function () {
                 )
               }
           : function (e) {
-              return this.ids_check(this.parsed.ids, e.features?.id)
+              return e.features && this.ids_check(this.parsed.ids, e.features.id)
             }
         ).bind(v),
         features: function (e) {
@@ -4307,7 +4339,7 @@ void (function () {
         return {
           ids: !this.ids || this.checks.ids(e),
           features: !this.features || this.checks.features(e),
-          variables: (!this.variables && !site.data.filter?.size) || this.checks.variables(e),
+          variables: (!this.variables && (!site.data.filter || !site.data.filter.size)) || this.checks.variables(e),
           dataset: !this.dataset || this.checks.dataset(e),
         }
       }.bind(v)
@@ -4327,14 +4359,14 @@ void (function () {
       page.modal.info.description.innerText = info.long_description || info.description || info.short_description || ''
       page.modal.info.name.lastElementChild.innerText = info.measure || ''
       page.modal.info.type.lastElementChild.innerText = info.type || ''
-      if (info.sources?.length) {
+      if (info.sources && info.sources.length) {
         page.modal.info.sources.lastElementChild.lastElementChild.innerHTML = ''
         page.modal.info.sources.classList.remove('hidden')
         for (n = info.sources.length, i = 0; i < n; i++) {
           page.modal.info.sources.lastElementChild.lastElementChild.appendChild(make_variable_source(info.sources[i]))
         }
       } else page.modal.info.sources.classList.add('hidden')
-      if (info.citations?.length && 'string' !== typeof info.citations) {
+      if (info.citations && info.citations.length && 'string' !== typeof info.citations) {
         page.modal.info.references.lastElementChild.innerHTML = ''
         page.modal.info.references.classList.remove('hidden')
         if ('string' === typeof info.citations) info.citations = [info.citations]
@@ -4378,6 +4410,7 @@ void (function () {
         if ('_timeout' !== k && Object.hasOwn(queue, k) && queue[k]) {
           if ((d = refresh_conditions(k))) {
             site.data.data_queue[d][k] = run_queue
+            if (site.data.loaded[d]) site.data.load_id_maps()
             return false
           }
           queue[k] = false
@@ -4410,8 +4443,8 @@ void (function () {
           pass,
           k,
           ch,
-          v = c?.value() + '',
-          dd = (c?.dataset && valueOf(c.dataset)) || v
+          v = c && c.value() + '',
+          dd = (c && c.dataset && valueOf(c.dataset)) || v
         if (c && (!meta.retain_state || c.state !== v)) {
           if (dd in site.metadata.info && !site.data.loaded[dd]) {
             site.data.retrieve(dd, site.metadata.info[dd].site_file)
@@ -4526,8 +4559,8 @@ void (function () {
             if (!k)
               site.map[this.id].shapes[i].name = k = site.metadata.datasets[i < site.metadata.datasets.length ? i : 0]
             mapId = k + (has_time ? site.map[this.id].shapes[i].time : '')
-            site.data.inited[mapId + '_map'] = false
             site.map._queue[mapId] = site.map[this.id].shapes[i]
+            site.data.inited[mapId + this.id] = false
             if (
               site.data.loaded[k] &&
               (k === mapId ||
@@ -4537,24 +4570,25 @@ void (function () {
               retrieve_layer(this, site.map[this.id].shapes[i])
           }
           site.map[this.id].triggers = {}
-          for (i = site.map[this.id].overlays?.length; i--; ) {
-            if ('string' === typeof site.map[this.id].overlays[i].source)
-              site.map[this.id].overlays[i].source = [{url: site.map[this.id].overlays[i].source}]
-            const source = site.map[this.id].overlays[i].source
-            source.forEach(s => {
-              s.retrieved = Object.hasOwn(site.map._raw, s.url)
-              site.map._queue[s.url] = s
-            })
-            site.map[this.id].triggers[site.map[this.id].overlays[i].variable] = {source}
-            const fs = site.map[this.id].overlays[i].filter
-            if (fs) {
-              const fa = Array.isArray(fs) ? fs : [fs]
-              site.map[this.id].triggers[site.map[this.id].overlays[i].variable].filter = fa
-              for (f = fa.length; f--; ) {
-                fa[f].check = site.data.checks[fa[f].operator]
+          if (site.map[this.id].overlays)
+            for (i = site.map[this.id].overlays.length; i--; ) {
+              if ('string' === typeof site.map[this.id].overlays[i].source)
+                site.map[this.id].overlays[i].source = [{url: site.map[this.id].overlays[i].source}]
+              const source = site.map[this.id].overlays[i].source
+              source.forEach(s => {
+                s.retrieved = Object.hasOwn(site.map._raw, s.url)
+                site.map._queue[s.url] = s
+              })
+              site.map[this.id].triggers[site.map[this.id].overlays[i].variable] = {source}
+              const fs = site.map[this.id].overlays[i].filter
+              if (fs) {
+                const fa = Array.isArray(fs) ? fs : [fs]
+                site.map[this.id].triggers[site.map[this.id].overlays[i].variable].filter = fa
+                for (f = fa.length; f--; ) {
+                  fa[f].check = site.data.checks[fa[f].operator]
+                }
               }
             }
-          }
         }
       } else {
         this.deferred = true

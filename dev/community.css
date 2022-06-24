@@ -124,6 +124,12 @@ body::-webkit-scrollbar-track,
   background-color: var(--background);
   border-color: var(--highlight-secondary);
 }
+.leaflet-tooltip-right:before {
+  border-right-color: var(--highlight-secondary);
+}
+.leaflet-tooltip-left:before {
+  border-left-color: var(--highlight-secondary);
+}
 .nav-tabs {
   border-color: var(--background-border);
 }

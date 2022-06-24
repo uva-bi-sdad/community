@@ -48,7 +48,7 @@ function DataHandler(settings, defaults, data, hooks) {
   for (var k, i = settings.metadata.datasets.length; i--; ) {
     k = settings.metadata.datasets[i]
     this.loaded[k] = Object.hasOwn(data, k)
-    if (!this.settings.settings.partial_init || !this.defaults.dataset || k === this.defaults.dataset)
+    if (!this.in_browser || !this.settings.partial_init || !this.defaults.dataset || k === this.defaults.dataset)
       if (this.loaded[k]) {
         this.ingest_data(data[k], k)
       } else {
@@ -137,7 +137,9 @@ function passes_filter(entity, time_range, filter, variables) {
   for (var i = filter.filter_by.length, c, r; i--; ) {
     c = variables[filter.filter_by[i]].code
     if (!Object.hasOwn(entity.data, c)) return false
-    r = variables[filter.filter_by[i]].info[entity.group].time_range
+    r = Object.hasOwn(variables[filter.filter_by[i]].info, entity.group)
+      ? variables[filter.filter_by[i]].info[entity.group].time_range
+      : variables[filter.filter_by[i]].time_range
     s[filter.filter_by[i]] = vector_summary(entity.data[c], [
       time_range[0] - r[0],
       Math.max(time_range[1] - r[0], time_range[1] - r[1]),
@@ -149,18 +151,26 @@ function passes_filter(entity, time_range, filter, variables) {
   return true
 }
 
-function passes_feature_filter(entity, filter) {
+function passes_feature_filter(entities, id, filter) {
+  const entity = entities[id]
   for (var i = filter.length; i--; )
     if (filter[i].value !== '-1')
       if ('id' === filter[i].name) {
-        if (
-          filter[i].group && Object.hasOwn(entity.features, filter[i].group)
-            ? filter[i].value !== entity.features[filter[i].group]
-            : filter[i].value.length < entity.features.id.length
-            ? filter[i].value !== entity.features.id.substring(0, filter[i].value.length)
-            : filter[i].value !== entity.features.id
-        )
-          return false
+        var pass = false
+        filter[i].value.forEach(id => {
+          if (!pass) {
+            const group = Object.hasOwn(entities, id) && entities[id].group
+            if (
+              group && Object.hasOwn(entity.features, group)
+                ? id === entity.features[group]
+                : id.length < entity.features.id.length
+                ? id === entity.features.id.substring(0, id.length)
+                : id === entity.features.id
+            )
+              pass = true
+          }
+        })
+        return pass
       } else if (!filter[i].check(entity.features[filter[i].name])) return false
   return true
 }
@@ -514,6 +524,7 @@ DataHandler.prototype = {
   retrieve: async function (name, url) {
     if (!this.load_requests[name]) {
       this.load_requests[name] = url
+      this.inited[name] = false
       const f = new window.XMLHttpRequest()
       f.onreadystatechange = () => {
         if (4 === f.readyState) {
@@ -612,11 +623,10 @@ DataHandler.prototype = {
       }
     }
   },
-  init_summaries: async function (view) {
-    view = view || this.defaults.dataview
-    var m, o, v, vi, d, y, i, l, k, da, ev, ny, n, at, c
-    for (v in this.variables)
-      if (Object.hasOwn(this.variables, v)) {
+  init_summaries: async function () {
+    Object.keys(this.in_browser ? site.dataviews : {default_view: true}).forEach(view => {
+      Object.keys(this.variables).forEach(v => {
+        var m, o, vi, d, y, l, k, da, ev, ny, n, at, c
         vi = this.variables[v]
         c = vi.code
         if (!Object.hasOwn(vi, view)) vi[view] = {order: {}, selected_order: {}, selected_summaries: {}, summaries: {}}
@@ -627,42 +637,60 @@ DataHandler.prototype = {
               vi.time_range[d] = [0, this.meta.times[d].n - 1]
             }
             vi.time_range[d][2] = ny = vi.time_range[d][1] - vi.time_range[d][0] + 1
-            if (Object.hasOwn(this.sets, d) && !Object.hasOwn(vi.info[d], 'order')) {
-              vi.info[d].order = o = []
-              for (y = ny; y--; ) {
-                o.push([])
-              }
+            if (Object.hasOwn(this.sets, d)) {
               da = this.sets[d]
               n = this.info[d].entity_count
               at = !n || n > 65535 ? Uint32Array : n > 255 ? Uint16Array : Uint8Array
-              for (k in da)
-                if ('_meta' !== k && Object.hasOwn(da, k) && Object.hasOwn(da[k], c)) {
-                  ev = da[k][c]
-                  if (1 === ny) {
-                    if ('number' !== typeof ev) da[k][c] = ev = NaN
-                    o[0].push([k, ev])
-                  } else {
-                    for (y = ny; y--; ) {
-                      if ('number' !== typeof ev[y]) ev[y] = NaN
-                      o[y].push([k, ev[y]])
-                    }
-                    Object.freeze(ev)
-                  }
+              if (Object.hasOwn(vi.info[d], 'order')) {
+                o = vi.info[d].order
+                Object.keys(da).forEach(k => {
                   if (!Object.hasOwn(this.entities, k)) {
-                    this.entities[k] = {rank: {}, subset_rank: {}}
+                    this.entities[k] = {}
                   }
-                  this.entities[k].rank[v] = new at(ny)
-                  this.entities[k].subset_rank[v] = new at(ny)
+                  if (!Object.hasOwn(this.entities[k], view))
+                    this.entities[k][view] = {summary: {}, rank: {}, subset_rank: {}}
+                  this.entities[k][view].rank[v] = new at(ny)
+                  this.entities[k][view].subset_rank[v] = new at(ny)
+                })
+              } else {
+                vi.info[d].order = o = []
+                for (y = ny; y--; ) {
+                  o.push([])
                 }
-              for (y = ny; y--; ) {
-                ev = o[y]
-                ev.sort(this.checks.sort_a1)
-                Object.freeze(ev)
-                for (i = ev.length; i--; ) {
-                  this.entities[ev[i][0]].rank[v][y] = i
-                }
+                for (k in da)
+                  if ('_meta' !== k && Object.hasOwn(da, k) && Object.hasOwn(da[k], c)) {
+                    ev = da[k][c]
+                    if (1 === ny) {
+                      if ('number' !== typeof ev) da[k][c] = ev = NaN
+                      o[0].push([k, ev])
+                    } else {
+                      for (y = ny; y--; ) {
+                        if ('number' !== typeof ev[y]) ev[y] = NaN
+                        o[y].push([k, ev[y]])
+                      }
+                      Object.freeze(ev)
+                    }
+                    if (!Object.hasOwn(this.entities, k)) {
+                      this.entities[k] = {}
+                    }
+                    if (!Object.hasOwn(this.entities[k], view))
+                      this.entities[k][view] = {summary: {}, rank: {}, subset_rank: {}}
+                    if (!Object.hasOwn(this.entities[k][view].rank, v)) this.entities[k][view].rank[v] = new at(ny)
+                    if (!Object.hasOwn(this.entities[k][view].subset_rank, v))
+                      this.entities[k][view].subset_rank[v] = new at(ny)
+                  }
+                Object.freeze(o)
               }
-              Object.freeze(o)
+              o.forEach((ev, y) => {
+                ev = o[y]
+                if (!Object.isFrozen(ev)) {
+                  ev.sort(this.checks.sort_a1)
+                  Object.freeze(ev)
+                }
+                ev.forEach((r, i) => {
+                  this.entities[r[0]][view].rank[v][y] = i
+                })
+              })
             }
             if (!Object.hasOwn(m.summaries, d)) {
               m.order[d] = []
@@ -751,7 +779,8 @@ DataHandler.prototype = {
             }
           }
         }
-      }
+      })
+    })
   },
   calculate_summary: async function (measure, view, full) {
     if (!Object.hasOwn(this.variables[measure], view))
@@ -790,11 +819,12 @@ DataHandler.prototype = {
     }
     for (y = 0; y < ny; y++) {
       o = order[y]
-      for (i = o.length, rank = v.n_selected[this.settings.settings.summary_selection]; i--; ) {
+      rank = v.n_selected[this.settings.settings.summary_selection]
+      for (i = o.length; i--; ) {
         k = o[i][0]
         value = o[i][1]
         if (Object.hasOwn(s, k)) {
-          en = s[k]
+          en = s[k][view]
           if (!y) {
             if (!Object.hasOwn(en.summary, measure)) en.summary[measure] = {n: 0, overall: ms, order: mo}
             en.summary[measure].n = 0
@@ -907,72 +937,71 @@ DataHandler.prototype = {
     ms.filled = true
   },
   map_variables: function () {
-    var k, v, vn, i, t, m, l
-    for (k in this.info)
-      if (Object.hasOwn(this.info, k)) {
-        this.data_queue[k] = {}
-        m = this.info[k]
-        m.id_vars = []
-        for (v = m.schema.fields, i = m.ids.length; i--; ) m.id_vars.push(m.ids[i].variable)
-        for (i = v.length; i--; ) {
-          vn = v[i].name
-          if (Object.hasOwn(this.variables, vn)) {
-            this.variables[vn].datasets.push(k)
-            this.variables[vn].info[k] = v[i]
-            if ('string' === v[i].type) {
-              for (l in v[i].table)
-                if (Object.hasOwn(v[i].table, l) && !Object.hasOwn(this.variables[vn].levels_ids, l)) {
-                  this.variables[vn].levels_ids[l] = this.variables[vn].levels.length
-                  this.variables[vn].levels.push(l)
-                }
-            }
-          } else {
-            this.variables[vn] = {
-              datasets: [k],
-              info: {},
-              time_range: {},
-              type: v[i].type,
-            }
-            this.variables[vn].info[k] = v[i]
-            if ('string' === v[i].type) {
-              this.variables[vn].levels = []
-              this.variables[vn].levels_ids = {}
-              for (l in v[i].table)
-                if (Object.hasOwn(v[i].table, l)) {
-                  this.variables[vn].levels_ids[l] = this.variables[vn].levels.length
-                  this.variables[vn].levels.push(l)
-                }
-            }
-            this.variables[vn].meta = this.variables[vn].info[k].info
-            if (!this.variables[vn].meta)
-              this.variables[vn].meta = {
-                full_name: vn,
-                measure: vn.split(':')[1],
-                short_name: this.format_label(vn),
-                type: 'integer',
+    var v, vn, i, t, m, l
+    Object.keys(this.info).forEach(k => {
+      this.data_queue[k] = {}
+      m = this.info[k]
+      m.id_vars = []
+      for (v = m.schema.fields, i = m.ids.length; i--; ) m.id_vars.push(m.ids[i].variable)
+      for (i = v.length; i--; ) {
+        vn = v[i].name
+        if (Object.hasOwn(this.variables, vn)) {
+          this.variables[vn].datasets.push(k)
+          this.variables[vn].info[k] = v[i]
+          if ('string' === v[i].type) {
+            for (l in v[i].table)
+              if (Object.hasOwn(v[i].table, l) && !Object.hasOwn(this.variables[vn].levels_ids, l)) {
+                this.variables[vn].levels_ids[l] = this.variables[vn].levels.length
+                this.variables[vn].levels.push(l)
               }
-            this.variables[vn].meta.full_name = vn
-            if (!Object.hasOwn(this.variables[vn].meta, 'measure'))
-              this.variables[vn].meta.measure = vn.split(':')[1] || vn
-            if (!Object.hasOwn(this.variables[vn].meta, 'short_name'))
-              this.variables[vn].meta.short_name = this.format_label(vn)
-            if (!Object.hasOwn(this.variables[vn].meta, 'long_name'))
-              this.variables[vn].meta.long_name = this.variables[vn].meta.short_name
-            if (!Object.hasOwn(this.variable_info, vn)) this.variable_info[vn] = this.variables[vn].meta
           }
-        }
-        if (this.in_browser && Object.hasOwn(m, '_references')) {
-          if (!Object.hasOwn(this.variable_info, '_references')) this.variable_info._references = {}
-          for (t in m._references)
-            if (Object.hasOwn(m._references, t)) {
-              if (!Object.hasOwn(this.references, t)) this.references[t] = make_variable_reference(m._references[t])
-              this.variable_info._references[t] = {
-                reference: m._references[t],
-                element: this.references[t],
+        } else {
+          this.variables[vn] = {
+            datasets: [k],
+            info: {},
+            time_range: {},
+            type: v[i].type,
+          }
+          this.variables[vn].info[k] = v[i]
+          if ('string' === v[i].type) {
+            this.variables[vn].levels = []
+            this.variables[vn].levels_ids = {}
+            for (l in v[i].table)
+              if (Object.hasOwn(v[i].table, l)) {
+                this.variables[vn].levels_ids[l] = this.variables[vn].levels.length
+                this.variables[vn].levels.push(l)
               }
+          }
+          this.variables[vn].meta = this.variables[vn].info[k].info
+          if (!this.variables[vn].meta)
+            this.variables[vn].meta = {
+              full_name: vn,
+              measure: vn.split(':')[1],
+              short_name: this.format_label(vn),
+              type: 'integer',
             }
+          this.variables[vn].meta.full_name = vn
+          if (!Object.hasOwn(this.variables[vn].meta, 'measure'))
+            this.variables[vn].meta.measure = vn.split(':')[1] || vn
+          if (!Object.hasOwn(this.variables[vn].meta, 'short_name'))
+            this.variables[vn].meta.short_name = this.format_label(vn)
+          if (!Object.hasOwn(this.variables[vn].meta, 'long_name'))
+            this.variables[vn].meta.long_name = this.variables[vn].meta.short_name
+          if (!Object.hasOwn(this.variable_info, vn)) this.variable_info[vn] = this.variables[vn].meta
         }
       }
+      if (this.in_browser && Object.hasOwn(m, '_references')) {
+        if (!Object.hasOwn(this.variable_info, '_references')) this.variable_info._references = {}
+        for (t in m._references)
+          if (Object.hasOwn(m._references, t)) {
+            if (!Object.hasOwn(this.references, t)) this.references[t] = make_variable_reference(m._references[t])
+            this.variable_info._references[t] = {
+              reference: m._references[t],
+              element: this.references[t],
+            }
+          }
+      }
+    })
   },
   map_entities: async function (g) {
     var id,
@@ -999,22 +1028,19 @@ DataHandler.prototype = {
                   this.entities[id].features[k] = f[k]
                 }
               }
-            this.entities[id].summary = {}
-            if (!Object.hasOwn(this.entities[id], 'rank')) {
-              this.entities[id].rank = {}
-              this.entities[id].subset_rank = {}
-            }
           } else {
             this.entities[id] = {
               group: g,
               data: this.sets[g][id],
               variables: this.variables,
               features: f,
-              summary: {},
-              rank: {},
-              subset_rank: {},
             }
           }
+          Object.keys(this.in_browser ? site.dataviews : {default_view: true}).forEach(v => {
+            if (!Object.hasOwn(this.entities[id], v)) {
+              this.entities[id][v] = {summary: {}, rank: {}, subset_rank: {}}
+            }
+          })
           for (k in f)
             if (Object.hasOwn(f, k) && !Object.hasOwn(this.features, k)) this.features[k] = this.format_label(k)
           this.entities[id].time = this.meta.times[g]
@@ -1090,6 +1116,7 @@ DataHandler.prototype = {
             if (('<' === tf.operator || '>' === tf.operator) && !a.length) tf.operator += '='
             if (k === tf.name) tf.name = k.substring(0, k.length - 1)
           }
+          if (undefined === tf.value) break
           if (('=' === tf.operator || '!' === tf.operator) && patterns.comma.test(tf.value)) {
             tf.value = tf.value.split(',')
             tf.operator = '=' === tf.operator ? 'includes' : 'excludes'
@@ -1112,8 +1139,7 @@ DataHandler.prototype = {
             f.dataset = tf
           } else if (Object.hasOwn(this.features, tf.name)) {
             if ('id' === tf.name) {
-              tf.value = String(tf.value)
-              if (Object.hasOwn(this.entities, tf.value)) tf.group = this.entities[tf.value].group
+              tf.value = Array.isArray(tf.value) ? tf.value : String(tf.value).split(',')
             }
             tf.check = group_checks[tf.operator].bind(tf.value)
             f.feature_conditions.push(tf)
@@ -1198,7 +1224,7 @@ DataHandler.prototype = {
       if (
         Object.hasOwn(entities, k) &&
         (!in_group || in_group(entities[k].group)) &&
-        (no_feature_filter || passes_feature_filter(entities[k], query.feature_conditions)) &&
+        (no_feature_filter || passes_feature_filter(entities, k, query.feature_conditions)) &&
         (no_filter || passes_filter(entities[k], query.time_range, query.variables, this.variables))
       ) {
         r = rw(entities[k], query.time_range, feats, vars, sep)
