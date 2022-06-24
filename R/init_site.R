@@ -24,9 +24,11 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
   }
   dir <- normalizePath(paste0(dir, "/", check$spec$dir), "/", FALSE)
   dir.create(dir, FALSE, TRUE)
+  dir <- normalizePath(dir, "/", FALSE)
   paths <- paste0(dir, "/", c(
     "README.md", "site.R", "package.json", "server.js", ".gitignore", "build.R", "project.Rproj", "netlify.toml"
   ))
+  if (overwrite) unlink(paths)
   if (!file.exists(paths[1])) {
     writeLines(c(
       paste("#", title),
