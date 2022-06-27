@@ -32,7 +32,6 @@ cache_scripts = list(
 save(cache_scripts, file = "R/sysdata.rda")
 
 # check
-testthat::test_local()
 devtools::check()
 
 # generate coverage reports
