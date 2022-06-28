@@ -85,7 +85,7 @@ See the [Build a Data Site](https://uva-bi-sdad.github.io/community/articles/qui
 
 ## JavaScript Testing
 
-To run the JavaScript tests, first make sure [Node.js](https://nodejs.org) is installed.
+To run the JavaScript tests, first make sure [Node.js](https://nodejs.org) is installed. Additionally, make sure to run ```buid.R``` prior to running the tests as well.
 
 Then install dependencies if needed, from a terminal in the package directory:
 
