@@ -93,7 +93,14 @@ Then install dependencies if needed, from a terminal in the package directory:
 npm install
 ```
 
-And run the tests, which will also rebuild the html report in the created `coverage` directory:
+To test, you need to create an example test site:
+```R
+init_site("test_site", dir = "../test_site")
+source("../test_site/build.R")
+site_build("../test_site")
+```
+
+Now run the tests, which will also rebuild the html report in the created `coverage` directory:
 
 ```bash
 npm test
