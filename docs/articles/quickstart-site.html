@@ -95,7 +95,7 @@
 
     
     
-<p><em>Built with R 4.2.0 on June 16 2022</em></p>
+<p><em>Built with R 4.2.1 on June 28 2022</em></p>
 <hr>
 <div class="section level2">
 <h2 id="basic-example">Basic example<a class="anchor" aria-label="anchor" href="#basic-example"></a>
@@ -111,12 +111,12 @@
 </h3>
 <p>Start by loading the library and initializing a site.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uva-bi-sdad/community" class="external-link">community</a></span><span class="op">)</span>
-
-<span class="co"># this can be in an existing or new directory</span>
-<span class="co"># for this example, it is a temporary directory</span>
-<span class="va">output</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"/example_site"</span><span class="op">)</span>
-<span class="fu"><a href="../reference/init_site.html">init_site</a></span><span class="op">(</span><span class="va">output</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uva-bi-sdad/community" class="external-link">community</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># this can be in an existing or new directory</span></span>
+<span><span class="co"># for this example, it is a temporary directory</span></span>
+<span><span class="va">output</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"/example_site"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/init_site.html">init_site</a></span><span class="op">(</span><span class="va">output</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="add-data">2. Add Data<a class="anchor" aria-label="anchor" href="#add-data"></a>
@@ -126,17 +126,17 @@ where you can put your data files, and a <code>build.R</code> file which
 you can use to reformat those files if needed, and add them to the
 site.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># make a simple example set</span>
-<span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>
-  ID <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">78</span>,
-  <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">234</span><span class="op">)</span>, <span class="fl">78</span>, dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="cn">NULL</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
-<span class="op">)</span>
-
-<span class="co"># write that set to a file</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">data</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/data/data.csv"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
-
-<span class="co"># add it to the site</span>
-<span class="fu"><a href="../reference/data_add.html">data_add</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/data/data.csv"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># make a simple example set</span></span>
+<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  ID <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">78</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">234</span><span class="op">)</span>, <span class="fl">78</span>, dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="cn">NULL</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># write that set to a file</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">data</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/data/data.csv"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># add it to the site</span></span>
+<span><span class="fu"><a href="../reference/data_add.html">data_add</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/data/data.csv"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>This sets up the data’s metadata (written to
 <code>datapackage.json</code>), which the site will use when it’s
 built.</p>
@@ -156,11 +156,11 @@ function.</p>
 <p>For an initial site, replace the template content of
 <code>site.R</code> with this:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/page_navbar.html">page_navbar</a></span><span class="op">(</span><span class="st">"Site Title"</span><span class="op">)</span>
-<span class="fu"><a href="../reference/output_plot.html">output_plot</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/page_navbar.html">page_navbar</a></span><span class="op">(</span><span class="st">"Site Title"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/output_plot.html">output_plot</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span><span class="op">)</span></span></code></pre></div>
 <p>Then save and build the site:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/site_build.html">site_build</a></span><span class="op">(</span><span class="va">output</span>, open_after <span class="op">=</span> <span class="cn">TRUE</span>, serve <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/site_build.html">site_build</a></span><span class="op">(</span><span class="va">output</span>, open_after <span class="op">=</span> <span class="cn">TRUE</span>, serve <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><code>open_after</code> opens the build page in a browser, which
 might get annoying as you edit and rebuild the site.</p>
 <p><code>serve</code> starts a local server to view the page.</p>
@@ -174,12 +174,12 @@ might want to allow plot variables to be changed. To do that, you can
 add a select input with variables as options.</p>
 <p>Change <code>site.R</code> to this:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/page_navbar.html">page_navbar</a></span><span class="op">(</span><span class="st">"Site Title"</span><span class="op">)</span>
-<span class="fu"><a href="../reference/input_select.html">input_select</a></span><span class="op">(</span><span class="st">"X Variable:"</span>, <span class="st">"variables"</span>, default <span class="op">=</span> <span class="st">"x"</span>, id <span class="op">=</span> <span class="st">"selected_x"</span><span class="op">)</span>
-<span class="fu"><a href="../reference/output_plot.html">output_plot</a></span><span class="op">(</span><span class="st">"selected_x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/page_navbar.html">page_navbar</a></span><span class="op">(</span><span class="st">"Site Title"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/input_select.html">input_select</a></span><span class="op">(</span><span class="st">"X Variable:"</span>, <span class="st">"variables"</span>, default <span class="op">=</span> <span class="st">"x"</span>, id <span class="op">=</span> <span class="st">"selected_x"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/output_plot.html">output_plot</a></span><span class="op">(</span><span class="st">"selected_x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span><span class="op">)</span></span></code></pre></div>
 <p>Then rebuild:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/site_build.html">site_build</a></span><span class="op">(</span><span class="va">output</span>, open_after <span class="op">=</span> <span class="cn">TRUE</span>, serve <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/site_build.html">site_build</a></span><span class="op">(</span><span class="va">output</span>, open_after <span class="op">=</span> <span class="cn">TRUE</span>, serve <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="add-structure">Add structure<a class="anchor" aria-label="anchor" href="#add-structure"></a>
@@ -190,15 +190,15 @@ elements.</p>
 <p><code>page_menu</code> can be a nice way to arrange inputs.</p>
 <p>These can be added to the previous example like this:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/page_navbar.html">page_navbar</a></span><span class="op">(</span><span class="st">"Site Title"</span><span class="op">)</span>
-<span class="fu"><a href="../reference/page_menu.html">page_menu</a></span><span class="op">(</span>
-  <span class="fu"><a href="../reference/input_select.html">input_select</a></span><span class="op">(</span><span class="st">"X Variable:"</span>, <span class="st">"variables"</span>, default <span class="op">=</span> <span class="st">"x"</span>, id <span class="op">=</span> <span class="st">"selected_x"</span><span class="op">)</span>,
-  default_open <span class="op">=</span> <span class="cn">TRUE</span>
-<span class="op">)</span>
-<span class="fu"><a href="../reference/page_section.html">page_section</a></span><span class="op">(</span>
-  wraps <span class="op">=</span> <span class="st">"col"</span>,
-  <span class="fu"><a href="../reference/output_plot.html">output_plot</a></span><span class="op">(</span><span class="st">"selected_x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span><span class="op">)</span>
-<span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/page_navbar.html">page_navbar</a></span><span class="op">(</span><span class="st">"Site Title"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/page_menu.html">page_menu</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="../reference/input_select.html">input_select</a></span><span class="op">(</span><span class="st">"X Variable:"</span>, <span class="st">"variables"</span>, default <span class="op">=</span> <span class="st">"x"</span>, id <span class="op">=</span> <span class="st">"selected_x"</span><span class="op">)</span>,</span>
+<span>  default_open <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/page_section.html">page_section</a></span><span class="op">(</span></span>
+<span>  wraps <span class="op">=</span> <span class="st">"col"</span>,</span>
+<span>  <span class="fu"><a href="../reference/output_plot.html">output_plot</a></span><span class="op">(</span><span class="st">"selected_x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="add-interactions">Add interactions<a class="anchor" aria-label="anchor" href="#add-interactions"></a>
@@ -209,17 +209,17 @@ displaying additional information.</p>
 <p>For example, we can tie a tooltip-like output to the plot like
 this:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/page_navbar.html">page_navbar</a></span><span class="op">(</span><span class="st">"Site Title"</span><span class="op">)</span>
-<span class="fu"><a href="../reference/page_menu.html">page_menu</a></span><span class="op">(</span>
-  <span class="fu"><a href="../reference/input_select.html">input_select</a></span><span class="op">(</span><span class="st">"X Variable:"</span>, <span class="st">"variables"</span>, default <span class="op">=</span> <span class="st">"x"</span>, id <span class="op">=</span> <span class="st">"selected_x"</span><span class="op">)</span>,
-  default_open <span class="op">=</span> <span class="cn">TRUE</span>
-<span class="op">)</span>
-<span class="co"># give the plot an ID</span>
-<span class="fu"><a href="../reference/output_plot.html">output_plot</a></span><span class="op">(</span><span class="st">"selected_x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span>, id <span class="op">=</span> <span class="st">"main_plot"</span><span class="op">)</span>
-<span class="co"># then make an information output that subscribes to it</span>
-<span class="fu"><a href="../reference/output_info.html">output_info</a></span><span class="op">(</span><span class="st">"features.name"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>
-  <span class="st">"variables.short_name"</span> <span class="op">=</span> <span class="st">"value"</span>
-<span class="op">)</span>, subto <span class="op">=</span> <span class="st">"main_plot"</span>, floating <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/page_navbar.html">page_navbar</a></span><span class="op">(</span><span class="st">"Site Title"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/page_menu.html">page_menu</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="../reference/input_select.html">input_select</a></span><span class="op">(</span><span class="st">"X Variable:"</span>, <span class="st">"variables"</span>, default <span class="op">=</span> <span class="st">"x"</span>, id <span class="op">=</span> <span class="st">"selected_x"</span><span class="op">)</span>,</span>
+<span>  default_open <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co"># give the plot an ID</span></span>
+<span><span class="fu"><a href="../reference/output_plot.html">output_plot</a></span><span class="op">(</span><span class="st">"selected_x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span>, id <span class="op">=</span> <span class="st">"main_plot"</span><span class="op">)</span></span>
+<span><span class="co"># then make an information output that subscribes to it</span></span>
+<span><span class="fu"><a href="../reference/output_info.html">output_info</a></span><span class="op">(</span><span class="st">"features.name"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"variables.short_name"</span> <span class="op">=</span> <span class="st">"value"</span></span>
+<span><span class="op">)</span>, subto <span class="op">=</span> <span class="st">"main_plot"</span>, floating <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>In <code>output_info</code>, <code>features.</code>,
 <code>variables.</code>, and <code>data.</code> refer to aspects of the
 hovered-over entity. <code>variables.</code> and <code>data.</code> also
@@ -238,32 +238,32 @@ the variables, which you can fill in when you add the data.</p>
 <p>For example, run the same <code>data_add</code> command as before,
 but include some information about one of the variables:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/data_add.html">data_add</a></span><span class="op">(</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/data/data.csv"</span><span class="op">)</span>,
-  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
-    variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
-      z <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
-        long_name <span class="op">=</span> <span class="st">"Variable Z"</span>,
-        description <span class="op">=</span> <span class="st">"A random variable, drawn from a normal distribution."</span>,
-        statement <span class="op">=</span> <span class="st">"{features.name} has a Z value of {value}"</span>
-      <span class="op">)</span>
-    <span class="op">)</span>
-  <span class="op">)</span>
-<span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/data_add.html">data_add</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/data/data.csv"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>      z <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        long_name <span class="op">=</span> <span class="st">"Variable Z"</span>,</span>
+<span>        description <span class="op">=</span> <span class="st">"A random variable, drawn from a normal distribution."</span>,</span>
+<span>        statement <span class="op">=</span> <span class="st">"{features.name} has a Z value of {value}"</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>Then, you can draw from that in the information output in
 <code>site.R</code>:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/page_navbar.html">page_navbar</a></span><span class="op">(</span><span class="st">"Site Title"</span><span class="op">)</span>
-<span class="fu"><a href="../reference/page_menu.html">page_menu</a></span><span class="op">(</span>
-  <span class="fu"><a href="../reference/input_select.html">input_select</a></span><span class="op">(</span><span class="st">"X Variable:"</span>, <span class="st">"variables"</span>, default <span class="op">=</span> <span class="st">"x"</span>, id <span class="op">=</span> <span class="st">"selected_x"</span><span class="op">)</span>,
-  default_open <span class="op">=</span> <span class="cn">TRUE</span>
-<span class="op">)</span>
-<span class="fu"><a href="../reference/output_plot.html">output_plot</a></span><span class="op">(</span><span class="st">"selected_x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span>, id <span class="op">=</span> <span class="st">"main_plot"</span><span class="op">)</span>
-<span class="fu"><a href="../reference/output_info.html">output_info</a></span><span class="op">(</span><span class="st">"features.name"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>
-  <span class="st">"variables.long_name"</span> <span class="op">=</span> <span class="st">"value"</span>,
-  <span class="st">"variables.description"</span>,
-  <span class="st">"variables.statement"</span>
-<span class="op">)</span>, subto <span class="op">=</span> <span class="st">"main_plot"</span>, floating <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/page_navbar.html">page_navbar</a></span><span class="op">(</span><span class="st">"Site Title"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/page_menu.html">page_menu</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="../reference/input_select.html">input_select</a></span><span class="op">(</span><span class="st">"X Variable:"</span>, <span class="st">"variables"</span>, default <span class="op">=</span> <span class="st">"x"</span>, id <span class="op">=</span> <span class="st">"selected_x"</span><span class="op">)</span>,</span>
+<span>  default_open <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/output_plot.html">output_plot</a></span><span class="op">(</span><span class="st">"selected_x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span>, id <span class="op">=</span> <span class="st">"main_plot"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/output_info.html">output_info</a></span><span class="op">(</span><span class="st">"features.name"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"variables.long_name"</span> <span class="op">=</span> <span class="st">"value"</span>,</span>
+<span>  <span class="st">"variables.description"</span>,</span>
+<span>  <span class="st">"variables.statement"</span></span>
+<span><span class="op">)</span>, subto <span class="op">=</span> <span class="st">"main_plot"</span>, floating <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="add-a-map">Add a Map<a class="anchor" aria-label="anchor" href="#add-a-map"></a>
@@ -274,29 +274,29 @@ function from the <a href="https://github.com/uva-bi-sdad/catchment" class="exte
 download shapes for Census regions within the United States.</p>
 <p>For example, we might download the shapes of states:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># remotes::install_github("uva-bi-sdad/catchment")</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">catchment</span><span class="op">)</span>
-
-<span class="co"># save the state shapes to the distribution directory</span>
-<span class="fu"><a href="https://rdrr.io/pkg/catchment/man/download_census_shapes.html" class="external-link">download_census_shapes</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs"</span><span class="op">)</span>, name <span class="op">=</span> <span class="st">"states"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># remotes::install_github("uva-bi-sdad/catchment")</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">catchment</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># save the state shapes to the distribution directory</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/catchment/man/download_census_shapes.html" class="external-link">download_census_shapes</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs"</span><span class="op">)</span>, name <span class="op">=</span> <span class="st">"states"</span><span class="op">)</span></span></code></pre></div>
 <p>Then add a map to <code>site.R</code> (also subscribing the info pane
 to it):</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/page_navbar.html">page_navbar</a></span><span class="op">(</span><span class="st">"Site Title"</span><span class="op">)</span>
-<span class="fu"><a href="../reference/page_menu.html">page_menu</a></span><span class="op">(</span>
-  <span class="fu"><a href="../reference/input_select.html">input_select</a></span><span class="op">(</span><span class="st">"X Variable:"</span>, <span class="st">"variables"</span>, default <span class="op">=</span> <span class="st">"x"</span>, id <span class="op">=</span> <span class="st">"selected_x"</span><span class="op">)</span>,
-  default_open <span class="op">=</span> <span class="cn">TRUE</span>
-<span class="op">)</span>
-<span class="fu"><a href="../reference/output_plot.html">output_plot</a></span><span class="op">(</span><span class="st">"selected_x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span>, id <span class="op">=</span> <span class="st">"main_plot"</span><span class="op">)</span>
-<span class="fu"><a href="../reference/output_info.html">output_info</a></span><span class="op">(</span><span class="st">"features.name"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>
-  <span class="st">"variables.long_name"</span> <span class="op">=</span> <span class="st">"value"</span>,
-  <span class="st">"variables.description"</span>,
-  <span class="st">"variables.statement"</span>
-<span class="op">)</span>, subto <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"main_plot"</span>, <span class="st">"main_map"</span><span class="op">)</span>, floating <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="fu"><a href="../reference/output_map.html">output_map</a></span><span class="op">(</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"data"</span>, url <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/states.geojson"</span><span class="op">)</span><span class="op">)</span>,
-  color <span class="op">=</span> <span class="st">"z"</span>, id <span class="op">=</span> <span class="st">"main_map"</span>
-<span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/page_navbar.html">page_navbar</a></span><span class="op">(</span><span class="st">"Site Title"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/page_menu.html">page_menu</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="../reference/input_select.html">input_select</a></span><span class="op">(</span><span class="st">"X Variable:"</span>, <span class="st">"variables"</span>, default <span class="op">=</span> <span class="st">"x"</span>, id <span class="op">=</span> <span class="st">"selected_x"</span><span class="op">)</span>,</span>
+<span>  default_open <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/output_plot.html">output_plot</a></span><span class="op">(</span><span class="st">"selected_x"</span>, <span class="st">"y"</span>, <span class="st">"z"</span>, id <span class="op">=</span> <span class="st">"main_plot"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/output_info.html">output_info</a></span><span class="op">(</span><span class="st">"features.name"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"variables.long_name"</span> <span class="op">=</span> <span class="st">"value"</span>,</span>
+<span>  <span class="st">"variables.description"</span>,</span>
+<span>  <span class="st">"variables.statement"</span></span>
+<span><span class="op">)</span>, subto <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"main_plot"</span>, <span class="st">"main_map"</span><span class="op">)</span>, floating <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/output_map.html">output_map</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"data"</span>, id_property <span class="op">=</span> <span class="st">"GEOID"</span>, url <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/states.geojson"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  color <span class="op">=</span> <span class="st">"z"</span>, id <span class="op">=</span> <span class="st">"main_map"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>Because the shapes also had some properties, these were added as
 entity features, giving some names.</p>
 <p>Here, shapes were loaded in from a local file as part of the build
@@ -317,29 +317,29 @@ can be added in an <code>ids</code> entry.</p>
 <p>For example, you might add names to some of the entries for which
 there is no state:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># include the ids list in your call to `data_add`</span>
-<span class="fu"><a href="../reference/data_add.html">data_add</a></span><span class="op">(</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/data/data.csv"</span><span class="op">)</span>,
-  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
-    variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
-      z <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
-        long_name <span class="op">=</span> <span class="st">"Variable Z"</span>,
-        description <span class="op">=</span> <span class="st">"A random variable, drawn from a normal distribution."</span>,
-        statement <span class="op">=</span> <span class="st">"{features.name} has a Z value of {value}"</span>
-      <span class="op">)</span>
-    <span class="op">)</span>,
-    ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
-      variable <span class="op">=</span> <span class="st">"ID"</span>,
-      map <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
-        <span class="st">"3"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"No State 3"</span><span class="op">)</span>,
-        <span class="st">"7"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"No State 7"</span><span class="op">)</span>
-      <span class="op">)</span>
-    <span class="op">)</span>
-  <span class="op">)</span>
-<span class="op">)</span>
-
-<span class="co"># then rebuild</span>
-<span class="fu"><a href="../reference/site_build.html">site_build</a></span><span class="op">(</span><span class="va">output</span>, open_after <span class="op">=</span> <span class="cn">TRUE</span>, serve <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># include the ids list in your call to `data_add`</span></span>
+<span><span class="fu"><a href="../reference/data_add.html">data_add</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/data/data.csv"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>      z <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        long_name <span class="op">=</span> <span class="st">"Variable Z"</span>,</span>
+<span>        description <span class="op">=</span> <span class="st">"A random variable, drawn from a normal distribution."</span>,</span>
+<span>        statement <span class="op">=</span> <span class="st">"{features.name} has a Z value of {value}"</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>    ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>      variable <span class="op">=</span> <span class="st">"ID"</span>,</span>
+<span>      map <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        <span class="st">"3"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"No State 3"</span><span class="op">)</span>,</span>
+<span>        <span class="st">"7"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"No State 7"</span><span class="op">)</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># then rebuild</span></span>
+<span><span class="fu"><a href="../reference/site_build.html">site_build</a></span><span class="op">(</span><span class="va">output</span>, open_after <span class="op">=</span> <span class="cn">TRUE</span>, serve <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>Now you should see names for entities 3 and 7.</p>
 <p>The <code>ids</code> field might be particularly useful if you
 already have metadata like this in a separate file, or plan to use that
@@ -366,7 +366,7 @@ dynamically.</p>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer>

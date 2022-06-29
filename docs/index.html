@@ -127,11 +127,11 @@
 </h2>
 <p>Download R from <a href="https://www.r-project.org/" class="external-link">r-project.org</a>, then install the package from an R console:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># install.packages('remotes')</span>
-<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">'uva-bi-sdad/community'</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># install.packages('remotes')</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">'uva-bi-sdad/community'</span><span class="op">)</span></span></code></pre></div>
 <p>And load the package:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uva-bi-sdad/community" class="external-link">community</a></span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uva-bi-sdad/community" class="external-link">community</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="use-cases">Use Cases<a class="anchor" aria-label="anchor" href="#use-cases"></a>
@@ -140,22 +140,22 @@
 <h3 id="documenting-a-dataset">Documenting a Dataset<a class="anchor" aria-label="anchor" href="#documenting-a-dataset"></a>
 </h3>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># say you had some data like this</span>
-<span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>
-  x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>,
-  y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>,
-  g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span>, <span class="fl">100</span>, <span class="cn">TRUE</span><span class="op">)</span>
-<span class="op">)</span>
-
-<span class="co"># in a file like this</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"data.csv"</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
-
-<span class="co"># you would make a datapackage.json file to document it like this</span>
-<span class="fu"><a href="reference/init_data.html">init_data</a></span><span class="op">(</span><span class="st">"example_data"</span>, path <span class="op">=</span> <span class="st">"data.csv"</span><span class="op">)</span>
-
-<span class="co"># or like this</span>
-<span class="fu"><a href="reference/init_data.html">init_data</a></span><span class="op">(</span><span class="st">"example_data"</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="fu"><a href="reference/data_add.html">data_add</a></span><span class="op">(</span><span class="st">"data.csv"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># say you had some data like this</span></span>
+<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>,</span>
+<span>  y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>,</span>
+<span>  g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span>, <span class="fl">100</span>, <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># in a file like this</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"data.csv"</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># you would make a datapackage.json file to document it like this</span></span>
+<span><span class="fu"><a href="reference/init_data.html">init_data</a></span><span class="op">(</span><span class="st">"example_data"</span>, path <span class="op">=</span> <span class="st">"data.csv"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># or like this</span></span>
+<span><span class="fu"><a href="reference/init_data.html">init_data</a></span><span class="op">(</span><span class="st">"example_data"</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/data_add.html">data_add</a></span><span class="op">(</span><span class="st">"data.csv"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="making-a-data-site">Making a Data Site<a class="anchor" aria-label="anchor" href="#making-a-data-site"></a>
@@ -163,26 +163,30 @@
 <p>Data sites build off of data documentation to present datasets interactively.</p>
 <p>This example creates a site to explore the <code>mtcars</code> dataset:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># initialize the site in a new directory</span>
-<span class="fu"><a href="reference/init_site.html">init_site</a></span><span class="op">(</span><span class="st">"example_site"</span>, dir <span class="op">=</span> <span class="st">"../example_site"</span><span class="op">)</span>
-
-<span class="co"># use the created build.R file to prepare and add data</span>
-<span class="co"># the result should be a plain-text, tabular file with variables in columns</span>
-<span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"../example_site/build.R"</span><span class="op">)</span>
-
-<span class="co"># finally, specify the site in the site.R file, then build it</span>
-<span class="fu"><a href="reference/site_build.html">site_build</a></span><span class="op">(</span><span class="st">"../example_site"</span>, bundle_data <span class="op">=</span> <span class="cn">TRUE</span>, open_after <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># initialize the site in a new directory</span></span>
+<span><span class="fu"><a href="reference/init_site.html">init_site</a></span><span class="op">(</span><span class="st">"example_site"</span>, dir <span class="op">=</span> <span class="st">"../example_site"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># use the created build.R file to prepare and add data</span></span>
+<span><span class="co"># the result should be a plain-text, tabular file with variables in columns</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"../example_site/build.R"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># finally, specify the site in the site.R file, then build it</span></span>
+<span><span class="fu"><a href="reference/site_build.html">site_build</a></span><span class="op">(</span><span class="st">"../example_site"</span>, bundle_data <span class="op">=</span> <span class="cn">TRUE</span>, open_after <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>See the <a href="https://uva-bi-sdad.github.io/community/articles/quickstart-site.html" class="external-link">Build a Data Site</a> article for more.</p>
 </div>
 </div>
 <div class="section level2">
 <h2 id="javascript-testing">JavaScript Testing<a class="anchor" aria-label="anchor" href="#javascript-testing"></a>
 </h2>
-<p>To run the JavaScript tests, first make sure <a href="https://nodejs.org" class="external-link">Node.js</a> is installed.</p>
-<p>Then install dependencies if needed, from a terminal in the package directory:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> install</span></code></pre></div>
-<p>And run the tests, which will also rebuild the html report in the created <code>coverage</code> directory:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> test</span></code></pre></div>
+<p>To run the JavaScript tests, first make sure <a href="https://nodejs.org" class="external-link">Node.js</a> is installed and a test site has been created from R:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/init_site.html">init_site</a></span><span class="op">(</span><span class="st">"test_site"</span>, dir <span class="op">=</span> <span class="st">"../test_site"</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"../test_site/build.R"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/site_build.html">site_build</a></span><span class="op">(</span><span class="st">"../test_site"</span><span class="op">)</span></span></code></pre></div>
+<p>Then install dependencies from a terminal in the package directory:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> install</span></code></pre></div>
+<p>and run the tests, which will also rebuild the html report in the created <code>coverage</code> directory:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> test</span></code></pre></div>
 </div>
 </div>
   </div>
@@ -222,7 +226,7 @@
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer>

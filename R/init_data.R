@@ -34,17 +34,17 @@ init_data <- function(name, title = name, dir = ".", ..., write = TRUE, overwrit
     resources = list()
   )
   if (check_template("site", dir = dir)$status[["strict"]]) dir <- paste0(dir, "/docs/data")
-  path <- normalizePath(paste0(dir, "/datapackage.json"), "/", FALSE)
-  if (write && !overwrite && file.exists(path)) {
-    cli_abort(c("datapackage ({.path {path}}) already exists", i = "add {.code overwrite = TRUE} to overwrite it"))
+  package_path <- normalizePath(paste0(dir, "/datapackage.json"), "/", FALSE)
+  if (write && !overwrite && file.exists(package_path)) {
+    cli_abort(c("datapackage ({.path {package_path}}) already exists", i = "add {.code overwrite = TRUE} to overwrite it"))
   }
   if (length(list(...))) package$resources <- data_add(..., dir = dir, write = FALSE)
   if (write) {
     if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
-    write_json(package, path, auto_unbox = TRUE, pretty = TRUE, digits = 6)
+    write_json(package, package_path, auto_unbox = TRUE, pretty = TRUE, digits = 6)
     if (!quiet) {
-      cli_bullets(c(v = "created metadata template for {name}:", "*" = paste0("{.path ", path, "}")))
-      navigateToFile(path)
+      cli_bullets(c(v = "created metadata template for {name}:", "*" = paste0("{.path ", package_path, "}")))
+      navigateToFile(package_path)
     }
   }
   invisible(package)

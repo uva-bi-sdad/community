@@ -539,7 +539,7 @@ void (function () {
                       const f = {},
                         s = this.settings,
                         v = _u[s.dataview],
-                        d = v.parsed.dataset
+                        d = v && v.parsed.dataset
                       for (var k in s.query) if (Object.hasOwn(s.query, k)) f[k] = valueOf(s.query[k])
                       if (Object.hasOwn(_u, s.dataview)) {
                         if (!Object.hasOwn(f, 'include') && v.y) f.include = valueOf(v.y)
@@ -3618,26 +3618,32 @@ void (function () {
               add_dependency(o.view + '_time', {type: 'min', id: o.id})
             }
             if (!o.view) o.view = defaults.dataview
-            if (null != typeof o.default) {
+            if ('undefined' !== typeof o.default) {
               if (patterns.number.test(o.default)) {
                 o.default = Number(o.default)
               } else
-                o.reset = function () {
-                  if ('max' === this.default) {
-                    if (this.range) this.set(valueOf(this.range[1]))
-                  } else if ('min' === this.default) {
-                    if (this.range) this.set(valueOf(this.range[0]))
-                  } else if (Object.hasOwn(_u, this.default)) {
-                    this.set(valueOf(this.default))
-                  }
-                }.bind(o)
+                o.reset =
+                  'max' === o.default || 'last' === o.default
+                    ? function () {
+                        if (this.range) this.set(valueOf(this.range[1]))
+                      }.bind(o)
+                    : 'min' === o.default || 'first' === o.default
+                    ? function () {
+                        if (this.range) this.set(valueOf(this.range[0]))
+                      }.bind(o)
+                    : Object.hasOwn(_u, this.default)
+                    ? function () {
+                        this.set(valueOf(this.default))
+                      }.bind(o)
+                    : function () {}
             }
             if (o.variable) {
+              const d = -1 === site.metadata.datasets.indexOf(o.dataset) ? defaults.dataset : o.dataset
               if (Object.hasOwn(_u, o.variable)) {
                 add_dependency(o.variable, {type: 'update', id: o.id})
               } else if (Object.hasOwn(site.data.variables, o.variable)) {
-                o.e.min = o.min = o.parsed.min = o.range[0] = site.data.variables[o.variable].info[defaults.dataset].min
-                o.e.max = o.max = o.parsed.max = o.range[1] = site.data.variables[o.variable].info[defaults.dataset].max
+                o.e.min = o.min = o.parsed.min = o.range[0] = site.data.variables[o.variable].info[d].min
+                o.e.max = o.max = o.parsed.max = o.range[1] = site.data.variables[o.variable].info[d].max
               }
             }
           } else {

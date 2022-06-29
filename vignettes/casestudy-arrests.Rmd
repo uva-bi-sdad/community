@@ -124,7 +124,7 @@ output_info(
   floating = TRUE, subto = c("main_map", "main_plot")
 )
 output_map(
-  c(data = paste0(dir, "/docs/counties.geojson")),
+  list(name = "data", url = paste0(dir, "/docs/counties.geojson"), id_property = "GEOID"),
   id = "main_map", dataview = "main_view", subto = c("main_plot", "main_legend")
 )
 output_legend(id = "main_legend")

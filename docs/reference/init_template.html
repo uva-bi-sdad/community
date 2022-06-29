@@ -63,8 +63,8 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">init_template</span><span class="op">(</span><span class="va">name</span>, <span class="va">files</span>, dir <span class="op">=</span> <span class="st">"."</span>, spec_dir <span class="op">=</span> <span class="st">"."</span>, context <span class="op">=</span> <span class="va">name</span>,
-  overwrite <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">init_template</span><span class="op">(</span><span class="va">name</span>, <span class="va">files</span>, dir <span class="op">=</span> <span class="st">"."</span>, spec_dir <span class="op">=</span> <span class="st">"."</span>, context <span class="op">=</span> <span class="va">name</span>,</span>
+<span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -107,20 +107,20 @@ and invisibly returns its path.</p>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># creates a version of the function spec.</span></span>
-<span class="r-in"><span class="fu">init_template</span><span class="op">(</span><span class="st">"function"</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"R/{name}.R"</span>, <span class="st">"tests/testthat/text-{name}.R"</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># creates a version of the shiny function, showing alternative sets</span></span>
-<span class="r-in"><span class="fu">init_template</span><span class="op">(</span><span class="st">"shiny"</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span class="r-in">  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span class="r-in">    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ui.R"</span>, <span class="st">"server.R"</span><span class="op">)</span>,</span>
-<span class="r-in">    <span class="st">"app.R"</span></span>
-<span class="r-in">  <span class="op">)</span>,</span>
-<span class="r-in">  <span class="st">"README.md"</span></span>
-<span class="r-in"><span class="op">)</span>, spec_dir <span class="op">=</span> <span class="st">"app"</span><span class="op">)</span></span>
-<span class="r-in"><span class="op">}</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># creates a version of the function spec.</span></span></span>
+<span class="r-in"><span><span class="fu">init_template</span><span class="op">(</span><span class="st">"function"</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"R/{name}.R"</span>, <span class="st">"tests/testthat/text-{name}.R"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># creates a version of the shiny function, showing alternative sets</span></span></span>
+<span class="r-in"><span><span class="fu">init_template</span><span class="op">(</span><span class="st">"shiny"</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ui.R"</span>, <span class="st">"server.R"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    <span class="st">"app.R"</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"README.md"</span></span></span>
+<span class="r-in"><span><span class="op">)</span>, spec_dir <span class="op">=</span> <span class="st">"app"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -135,7 +135,7 @@ and invisibly returns its path.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

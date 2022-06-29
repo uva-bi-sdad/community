@@ -85,22 +85,21 @@ See the [Build a Data Site](https://uva-bi-sdad.github.io/community/articles/qui
 
 ## JavaScript Testing
 
-To run the JavaScript tests, first make sure [Node.js](https://nodejs.org) is installed.
-
-Then install dependencies if needed, from a terminal in the package directory:
-
-```bash
-npm install
-```
-
-To test, you need to create an example test site:
+To run the JavaScript tests, first make sure [Node.js](https://nodejs.org) is installed
+and a test site has been created from R:
 ```R
 init_site("test_site", dir = "../test_site")
 source("../test_site/build.R")
 site_build("../test_site")
 ```
 
-Now run the tests, which will also rebuild the html report in the created `coverage` directory:
+Then install dependencies from a terminal in the package directory:
+
+```bash
+npm install
+```
+
+and run the tests, which will also rebuild the html report in the created `coverage` directory:
 
 ```bash
 npm test

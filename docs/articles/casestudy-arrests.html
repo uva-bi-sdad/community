@@ -95,7 +95,7 @@
 
     
     
-<p><em>Built with R 4.2.0 on June 16 2022</em></p>
+<p><em>Built with R 4.2.1 on June 28 2022</em></p>
 <hr>
 <p>This example will build a site to explore arrest data in Illinois,
 which is made publicly available by the <a href="https://icjia.illinois.gov/arrestexplorer/docs" class="external-link">Illinois Criminal
@@ -106,9 +106,9 @@ Justice Information Authority</a>.</p>
 <p>Start by initializing the site’s structure in your desired
 directory:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uva-bi-sdad/community" class="external-link">community</a></span><span class="op">)</span>
-<span class="va">dir</span> <span class="op">&lt;-</span> <span class="st">"../arrests_site"</span>
-<span class="fu"><a href="../reference/init_site.html">init_site</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"Illinois Arrests"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uva-bi-sdad/community" class="external-link">community</a></span><span class="op">)</span></span>
+<span><span class="va">dir</span> <span class="op">&lt;-</span> <span class="st">"../arrests_site"</span></span>
+<span><span class="fu"><a href="../reference/init_site.html">init_site</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"Illinois Arrests"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="add-data">Add Data<a class="anchor" aria-label="anchor" href="#add-data"></a>
@@ -116,68 +116,68 @@ directory:</p>
 <p>We can use the <code>build.R</code> file to set up a repeatable data
 importing process. Replace its contents with this:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># remotes::install_github("uva-bi-sdad/catchment")</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">catchment</span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uva-bi-sdad/community" class="external-link">community</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span>
-
-<span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">is.character</a></span><span class="op">(</span><span class="va">dir</span><span class="op">)</span><span class="op">)</span> <span class="va">dir</span> <span class="op">&lt;-</span> <span class="st">"../arrests_site"</span>
-
-<span class="co"># download county shapes -- only needs to be run once</span>
-<span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs/counties.geojson"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
-  <span class="va">shapes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/catchment/man/download_census_shapes.html" class="external-link">download_census_shapes</a></span><span class="op">(</span>
-    <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs"</span><span class="op">)</span>, <span class="st">"Illinois"</span>, <span class="st">"county"</span>, <span class="st">"counties"</span>,
-    simplify <span class="op">=</span> <span class="fu">rmapshaper</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/rmapshaper/man/ms_simplify.html" class="external-link">ms_simplify</a></span>, keep_shapes <span class="op">=</span> <span class="cn">TRUE</span>
-  <span class="op">)</span>
-  
-  <span class="co">## the data separates Chicago from the rest of the county it's in,</span>
-  <span class="co">## so we will need separate shapes for Cook County</span>
-  <span class="va">shapes_subs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/catchment/man/download_census_shapes.html" class="external-link">download_census_shapes</a></span><span class="op">(</span>
-    <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs"</span><span class="op">)</span>, <span class="st">"Illinois"</span>, <span class="st">"cousub"</span>, <span class="st">"subcounties"</span>,
-    simplify <span class="op">=</span> <span class="fu">rmapshaper</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/rmapshaper/man/ms_simplify.html" class="external-link">ms_simplify</a></span>, keep_shapes <span class="op">=</span> <span class="cn">TRUE</span>
-  <span class="op">)</span>
-  
-  <span class="co">### get the subcounties within Cook County</span>
-  <span class="va">cook_county</span> <span class="op">&lt;-</span> <span class="va">shapes_subs</span><span class="op">[</span><span class="va">shapes_subs</span><span class="op">$</span><span class="va">COUNTYFP</span> <span class="op">==</span> <span class="st">"031"</span>,<span class="op">]</span>
-  
-  <span class="co">### Replace the overall Cook county shape with Chicago and Cook county suburb shapes</span>
-  <span class="va">cook</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_drop_geometry</a></span><span class="op">(</span><span class="va">shapes</span><span class="op">[</span><span class="va">shapes</span><span class="op">$</span><span class="va">COUNTYFP</span> <span class="op">==</span> <span class="st">"031"</span>,<span class="op">]</span><span class="op">)</span>
-  
-  <span class="va">chicago</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">cook</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span>, <span class="va">cook_county</span><span class="op">[</span><span class="fl">1</span>, <span class="op">-</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>
-  <span class="va">chicago</span><span class="op">$</span><span class="va">NAME</span> <span class="op">=</span> <span class="st">"cook chicago"</span>
-  
-  <span class="va">cook_suburbs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">cook</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span>, <span class="va">cook_county</span><span class="op">[</span><span class="fl">2</span>, <span class="op">-</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span><span class="op">]</span><span class="op">)</span>
-  <span class="va">cook_suburbs</span><span class="op">$</span><span class="va">NAME</span> <span class="op">=</span> <span class="st">"cook county suburbs"</span>
-  <span class="va">cook_suburbs</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ALAND"</span>, <span class="st">"AWATER"</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colSums</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_drop_geometry</a></span><span class="op">(</span><span class="va">cook_county</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ALAND"</span>, <span class="st">"AWATER"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>
-  <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_geometry</a></span><span class="op">(</span><span class="va">cook_suburbs</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_combine.html" class="external-link">st_union</a></span><span class="op">(</span><span class="va">cook_county</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span>,<span class="op">]</span><span class="op">)</span>
-  
-  <span class="va">shapes</span><span class="op">[</span><span class="va">shapes</span><span class="op">$</span><span class="va">NAME</span> <span class="op">==</span> <span class="st">"De Witt"</span>, <span class="st">"NAME"</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"dewitt"</span>
-  <span class="va">shapes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">shapes</span><span class="op">[</span><span class="va">shapes</span><span class="op">$</span><span class="va">NAME</span> <span class="op">!=</span> <span class="st">"Cook"</span>,<span class="op">]</span>, <span class="va">chicago</span>, <span class="va">cook_suburbs</span><span class="op">)</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs/counties.geojson"</span><span class="op">)</span><span class="op">)</span>
-  <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_write.html" class="external-link">st_write</a></span><span class="op">(</span><span class="va">shapes</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs/counties.geojson"</span><span class="op">)</span><span class="op">)</span>
-<span class="op">}</span>
-  
-<span class="co"># download arrests data -- run any time the data are updated</span>
-<span class="va">data_sex</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"https://icjia.illinois.gov/arrestexplorer/api/?split=county,gender"</span><span class="op">)</span>
-<span class="va">data_age</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"https://icjia.illinois.gov/arrestexplorer/api/?split=county,age_group"</span><span class="op">)</span>
-<span class="va">data_race</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"https://icjia.illinois.gov/arrestexplorer/api/?split=county,race"</span><span class="op">)</span>
-<span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">data_sex</span>, <span class="va">data_age</span><span class="op">[</span>, <span class="op">-</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">)</span><span class="op">]</span>, <span class="va">data_race</span><span class="op">[</span>, <span class="op">-</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">)</span><span class="op">]</span><span class="op">)</span>
-<span class="va">data</span> <span class="op">&lt;-</span> <span class="va">data</span><span class="op">[</span><span class="va">data</span><span class="op">$</span><span class="va">county</span> <span class="op">!=</span> <span class="st">"non county agencies"</span>,<span class="op">]</span>
-
-<span class="co">## get GEOIDs from county names in the shapes file</span>
-<span class="va">data</span><span class="op">$</span><span class="va">GEOID</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/structure.html" class="external-link">structure</a></span><span class="op">(</span><span class="va">shapes</span><span class="op">$</span><span class="va">GEOID</span>, names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/chartr.html" class="external-link">tolower</a></span><span class="op">(</span><span class="va">shapes</span><span class="op">$</span><span class="va">NAME</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="va">data</span><span class="op">$</span><span class="va">county</span><span class="op">]</span>
-
-<span class="co">## write data</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">data</span><span class="op">[</span>, <span class="op">-</span><span class="fl">2</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs/data/data.csv"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
-
-<span class="co">## document the data</span>
-<span class="fu"><a href="../reference/data_add.html">data_add</a></span><span class="op">(</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs/data/data.csv"</span><span class="op">)</span>,
-  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
-    ids <span class="op">=</span> <span class="st">"GEOID"</span>,
-    time <span class="op">=</span> <span class="st">"Year"</span>
-  <span class="op">)</span>
-<span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># remotes::install_github("uva-bi-sdad/catchment")</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">catchment</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uva-bi-sdad/community" class="external-link">community</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">is.character</a></span><span class="op">(</span><span class="va">dir</span><span class="op">)</span><span class="op">)</span> <span class="va">dir</span> <span class="op">&lt;-</span> <span class="st">"../arrests_site"</span></span>
+<span></span>
+<span><span class="co"># download county shapes -- only needs to be run once</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs/counties.geojson"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">shapes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/catchment/man/download_census_shapes.html" class="external-link">download_census_shapes</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs"</span><span class="op">)</span>, <span class="st">"Illinois"</span>, <span class="st">"county"</span>, <span class="st">"counties"</span>,</span>
+<span>    simplify <span class="op">=</span> <span class="fu">rmapshaper</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/rmapshaper/man/ms_simplify.html" class="external-link">ms_simplify</a></span>, keep_shapes <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  <span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co">## the data separates Chicago from the rest of the county it's in,</span></span>
+<span>  <span class="co">## so we will need separate shapes for Cook County</span></span>
+<span>  <span class="va">shapes_subs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/catchment/man/download_census_shapes.html" class="external-link">download_census_shapes</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs"</span><span class="op">)</span>, <span class="st">"Illinois"</span>, <span class="st">"cousub"</span>, <span class="st">"subcounties"</span>,</span>
+<span>    simplify <span class="op">=</span> <span class="fu">rmapshaper</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/rmapshaper/man/ms_simplify.html" class="external-link">ms_simplify</a></span>, keep_shapes <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  <span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co">### get the subcounties within Cook County</span></span>
+<span>  <span class="va">cook_county</span> <span class="op">&lt;-</span> <span class="va">shapes_subs</span><span class="op">[</span><span class="va">shapes_subs</span><span class="op">$</span><span class="va">COUNTYFP</span> <span class="op">==</span> <span class="st">"031"</span>,<span class="op">]</span></span>
+<span>  </span>
+<span>  <span class="co">### Replace the overall Cook county shape with Chicago and Cook county suburb shapes</span></span>
+<span>  <span class="va">cook</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_drop_geometry</a></span><span class="op">(</span><span class="va">shapes</span><span class="op">[</span><span class="va">shapes</span><span class="op">$</span><span class="va">COUNTYFP</span> <span class="op">==</span> <span class="st">"031"</span>,<span class="op">]</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="va">chicago</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">cook</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span>, <span class="va">cook_county</span><span class="op">[</span><span class="fl">1</span>, <span class="op">-</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="va">chicago</span><span class="op">$</span><span class="va">NAME</span> <span class="op">=</span> <span class="st">"cook chicago"</span></span>
+<span>  </span>
+<span>  <span class="va">cook_suburbs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">cook</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span>, <span class="va">cook_county</span><span class="op">[</span><span class="fl">2</span>, <span class="op">-</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<span>  <span class="va">cook_suburbs</span><span class="op">$</span><span class="va">NAME</span> <span class="op">=</span> <span class="st">"cook county suburbs"</span></span>
+<span>  <span class="va">cook_suburbs</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ALAND"</span>, <span class="st">"AWATER"</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colSums</a></span><span class="op">(</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_drop_geometry</a></span><span class="op">(</span><span class="va">cook_county</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ALAND"</span>, <span class="st">"AWATER"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_geometry</a></span><span class="op">(</span><span class="va">cook_suburbs</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_combine.html" class="external-link">st_union</a></span><span class="op">(</span><span class="va">cook_county</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span>,<span class="op">]</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="va">shapes</span><span class="op">[</span><span class="va">shapes</span><span class="op">$</span><span class="va">NAME</span> <span class="op">==</span> <span class="st">"De Witt"</span>, <span class="st">"NAME"</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"dewitt"</span></span>
+<span>  <span class="va">shapes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">shapes</span><span class="op">[</span><span class="va">shapes</span><span class="op">$</span><span class="va">NAME</span> <span class="op">!=</span> <span class="st">"Cook"</span>,<span class="op">]</span>, <span class="va">chicago</span>, <span class="va">cook_suburbs</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs/counties.geojson"</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_write.html" class="external-link">st_write</a></span><span class="op">(</span><span class="va">shapes</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs/counties.geojson"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span>  </span>
+<span><span class="co"># download arrests data -- run any time the data are updated</span></span>
+<span><span class="va">data_sex</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"https://icjia.illinois.gov/arrestexplorer/api/?split=county,gender"</span><span class="op">)</span></span>
+<span><span class="va">data_age</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"https://icjia.illinois.gov/arrestexplorer/api/?split=county,age_group"</span><span class="op">)</span></span>
+<span><span class="va">data_race</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"https://icjia.illinois.gov/arrestexplorer/api/?split=county,race"</span><span class="op">)</span></span>
+<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">data_sex</span>, <span class="va">data_age</span><span class="op">[</span>, <span class="op">-</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">)</span><span class="op">]</span>, <span class="va">data_race</span><span class="op">[</span>, <span class="op">-</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="va">data</span><span class="op">[</span><span class="va">data</span><span class="op">$</span><span class="va">county</span> <span class="op">!=</span> <span class="st">"non county agencies"</span>,<span class="op">]</span></span>
+<span></span>
+<span><span class="co">## get GEOIDs from county names in the shapes file</span></span>
+<span><span class="va">data</span><span class="op">$</span><span class="va">GEOID</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/structure.html" class="external-link">structure</a></span><span class="op">(</span><span class="va">shapes</span><span class="op">$</span><span class="va">GEOID</span>, names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/chartr.html" class="external-link">tolower</a></span><span class="op">(</span><span class="va">shapes</span><span class="op">$</span><span class="va">NAME</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="va">data</span><span class="op">$</span><span class="va">county</span><span class="op">]</span></span>
+<span></span>
+<span><span class="co">## write data</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">data</span><span class="op">[</span>, <span class="op">-</span><span class="fl">2</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs/data/data.csv"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## document the data</span></span>
+<span><span class="fu"><a href="../reference/data_add.html">data_add</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs/data/data.csv"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    ids <span class="op">=</span> <span class="st">"GEOID"</span>,</span>
+<span>    time <span class="op">=</span> <span class="st">"Year"</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="build-interface">Build Interface<a class="anchor" aria-label="anchor" href="#build-interface"></a>
@@ -185,52 +185,52 @@ importing process. Replace its contents with this:</p>
 <p>Now we can specify the interface in <code>site.R</code> and build
 it:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uva-bi-sdad/community" class="external-link">community</a></span><span class="op">)</span>
-<span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">is.character</a></span><span class="op">(</span><span class="va">dir</span><span class="op">)</span><span class="op">)</span> <span class="va">dir</span> <span class="op">&lt;-</span> <span class="st">"../arrests_site"</span>
-
-<span class="fu"><a href="../reference/page_head.html">page_head</a></span><span class="op">(</span>
-  title <span class="op">=</span> <span class="st">"Illinois Arrests"</span>,
-  icon <span class="op">=</span> <span class="st">"https://icjia.illinois.gov/researchhub/docs/assets/favicon.ico"</span>
-<span class="op">)</span>
-<span class="fu"><a href="../reference/page_navbar.html">page_navbar</a></span><span class="op">(</span>
-  title <span class="op">=</span> <span class="st">"Illinois Arrests"</span>,
-  <span class="fu"><a href="../reference/input_button.html">input_button</a></span><span class="op">(</span><span class="st">"About ICJIA"</span>, <span class="st">"https://icjia.illinois.gov"</span><span class="op">)</span>
-<span class="op">)</span>
-
-<span class="fu"><a href="../reference/page_menu.html">page_menu</a></span><span class="op">(</span>
-  <span class="fu"><a href="../reference/input_select.html">input_select</a></span><span class="op">(</span><span class="st">"Variable"</span>, <span class="st">"variables"</span>, <span class="st">"gender_female"</span>, id <span class="op">=</span> <span class="st">"selected_variable"</span><span class="op">)</span>,
-  <span class="fu"><a href="../reference/input_number.html">input_number</a></span><span class="op">(</span>
-    <span class="st">"Focal Year"</span>, <span class="st">"selected_year"</span>, variable <span class="op">=</span> <span class="st">"Year"</span>, default <span class="op">=</span> <span class="st">"max"</span>
-  <span class="op">)</span>,
-  default_open <span class="op">=</span> <span class="cn">TRUE</span>
-<span class="op">)</span>
-
-<span class="fu"><a href="../reference/input_dataview.html">input_dataview</a></span><span class="op">(</span><span class="st">"main_view"</span>, <span class="st">"selected_variable"</span>, time <span class="op">=</span> <span class="st">"Year"</span>, time_agg <span class="op">=</span> <span class="st">"selected_year"</span><span class="op">)</span>
-
-<span class="fu"><a href="../reference/output_info.html">output_info</a></span><span class="op">(</span>
-  <span class="st">"features.name"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"variables.long_name"</span> <span class="op">=</span> <span class="st">"value"</span><span class="op">)</span>,
-  floating <span class="op">=</span> <span class="cn">TRUE</span>, subto <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"main_map"</span>, <span class="st">"main_plot"</span><span class="op">)</span>
-<span class="op">)</span>
-<span class="fu"><a href="../reference/output_map.html">output_map</a></span><span class="op">(</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs/counties.geojson"</span><span class="op">)</span><span class="op">)</span>,
-  id <span class="op">=</span> <span class="st">"main_map"</span>, dataview <span class="op">=</span> <span class="st">"main_view"</span>, subto <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"main_plot"</span>, <span class="st">"main_legend"</span><span class="op">)</span>
-<span class="op">)</span>
-<span class="fu"><a href="../reference/output_legend.html">output_legend</a></span><span class="op">(</span>id <span class="op">=</span> <span class="st">"main_legend"</span><span class="op">)</span>
-<span class="fu"><a href="../reference/page_tabgroup.html">page_tabgroup</a></span><span class="op">(</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
-    name <span class="op">=</span> <span class="st">"Plot"</span>,
-    <span class="fu"><a href="../reference/output_plot.html">output_plot</a></span><span class="op">(</span>
-      <span class="st">"Year"</span>, <span class="st">"selected_variable"</span>, id <span class="op">=</span> <span class="st">"main_plot"</span>,
-      dataview <span class="op">=</span> <span class="st">"main_view"</span>, subto <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"main_map"</span>, <span class="st">"main_legend"</span><span class="op">)</span>
-    <span class="op">)</span>
-  <span class="op">)</span>,
-  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
-    name <span class="op">=</span> <span class="st">"Table"</span>,
-    <span class="fu"><a href="../reference/output_table.html">output_table</a></span><span class="op">(</span><span class="op">)</span>
-  <span class="op">)</span>
-<span class="op">)</span>
-
-<span class="fu"><a href="../reference/site_build.html">site_build</a></span><span class="op">(</span><span class="va">dir</span>, open_after <span class="op">=</span> <span class="cn">TRUE</span>, serve <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/uva-bi-sdad/community" class="external-link">community</a></span><span class="op">)</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">is.character</a></span><span class="op">(</span><span class="va">dir</span><span class="op">)</span><span class="op">)</span> <span class="va">dir</span> <span class="op">&lt;-</span> <span class="st">"../arrests_site"</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/page_head.html">page_head</a></span><span class="op">(</span></span>
+<span>  title <span class="op">=</span> <span class="st">"Illinois Arrests"</span>,</span>
+<span>  icon <span class="op">=</span> <span class="st">"https://icjia.illinois.gov/researchhub/docs/assets/favicon.ico"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/page_navbar.html">page_navbar</a></span><span class="op">(</span></span>
+<span>  title <span class="op">=</span> <span class="st">"Illinois Arrests"</span>,</span>
+<span>  <span class="fu"><a href="../reference/input_button.html">input_button</a></span><span class="op">(</span><span class="st">"About ICJIA"</span>, <span class="st">"https://icjia.illinois.gov"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/page_menu.html">page_menu</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="../reference/input_select.html">input_select</a></span><span class="op">(</span><span class="st">"Variable"</span>, <span class="st">"variables"</span>, <span class="st">"gender_female"</span>, id <span class="op">=</span> <span class="st">"selected_variable"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/input_number.html">input_number</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Focal Year"</span>, <span class="st">"selected_year"</span>, variable <span class="op">=</span> <span class="st">"Year"</span>, default <span class="op">=</span> <span class="st">"max"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  default_open <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/input_dataview.html">input_dataview</a></span><span class="op">(</span><span class="st">"main_view"</span>, <span class="st">"selected_variable"</span>, time <span class="op">=</span> <span class="st">"Year"</span>, time_agg <span class="op">=</span> <span class="st">"selected_year"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/output_info.html">output_info</a></span><span class="op">(</span></span>
+<span>  <span class="st">"features.name"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"variables.long_name"</span> <span class="op">=</span> <span class="st">"value"</span><span class="op">)</span>,</span>
+<span>  floating <span class="op">=</span> <span class="cn">TRUE</span>, subto <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"main_map"</span>, <span class="st">"main_plot"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/output_map.html">output_map</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"data"</span>, url <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/docs/counties.geojson"</span><span class="op">)</span>, id_property <span class="op">=</span> <span class="st">"GEOID"</span><span class="op">)</span>,</span>
+<span>  id <span class="op">=</span> <span class="st">"main_map"</span>, dataview <span class="op">=</span> <span class="st">"main_view"</span>, subto <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"main_plot"</span>, <span class="st">"main_legend"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/output_legend.html">output_legend</a></span><span class="op">(</span>id <span class="op">=</span> <span class="st">"main_legend"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/page_tabgroup.html">page_tabgroup</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    name <span class="op">=</span> <span class="st">"Plot"</span>,</span>
+<span>    <span class="fu"><a href="../reference/output_plot.html">output_plot</a></span><span class="op">(</span></span>
+<span>      <span class="st">"Year"</span>, <span class="st">"selected_variable"</span>, id <span class="op">=</span> <span class="st">"main_plot"</span>,</span>
+<span>      dataview <span class="op">=</span> <span class="st">"main_view"</span>, subto <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"main_map"</span>, <span class="st">"main_legend"</span><span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    name <span class="op">=</span> <span class="st">"Table"</span>,</span>
+<span>    <span class="fu"><a href="../reference/output_table.html">output_table</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/site_build.html">site_build</a></span><span class="op">(</span><span class="va">dir</span>, open_after <span class="op">=</span> <span class="cn">TRUE</span>, serve <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
   </div>
 
@@ -251,7 +251,7 @@ it:</p>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer>

@@ -203,7 +203,7 @@ output_info("features.name", c(
   "variables.statement"
 ), subto = c("main_plot", "main_map"), floating = TRUE)
 output_map(
-  list(name = "data", url = paste0(output, "/docs/states.geojson")),
+  list(name = "data", id_property = "GEOID", url = paste0(output, "/docs/states.geojson")),
   color = "z", id = "main_map"
 )
 ```
