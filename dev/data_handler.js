@@ -15,7 +15,7 @@ function DataHandler(settings, defaults, data, hooks) {
   }
   this.hooks = hooks || {}
   this.defaults = defaults || {dataview: 'default_view', time: 'time'}
-  this.settings = settings
+  this.settings = settings || {}
   this.info = (settings && settings.metadata.info) || {}
   this.features = {}
   this.variables = {}
@@ -48,7 +48,12 @@ function DataHandler(settings, defaults, data, hooks) {
   for (var k, i = settings.metadata.datasets.length; i--; ) {
     k = settings.metadata.datasets[i]
     this.loaded[k] = Object.hasOwn(data, k)
-    if (!this.in_browser || !this.settings.partial_init || !this.defaults.dataset || k === this.defaults.dataset)
+    if (
+      !this.in_browser ||
+      (this.settings.settings && !this.settings.settings.partial_init) ||
+      !this.defaults.dataset ||
+      k === this.defaults.dataset
+    )
       if (this.loaded[k]) {
         this.ingest_data(data[k], k)
       } else {
@@ -623,161 +628,157 @@ DataHandler.prototype = {
       }
     }
   },
-  init_summaries: async function () {
+  init_summaries: async function (d) {
     Object.keys(this.in_browser ? site.dataviews : {default_view: true}).forEach(view => {
       Object.keys(this.variables).forEach(v => {
-        var m, o, vi, d, y, l, k, da, ev, ny, n, at, c
-        vi = this.variables[v]
-        c = vi.code
+        var o, y, ev, ny
+        const vi = this.variables[v]
         if (!Object.hasOwn(vi, view)) vi[view] = {order: {}, selected_order: {}, selected_summaries: {}, summaries: {}}
-        m = vi[view]
-        for (d in vi.info) {
-          if (Object.hasOwn(this.sets, d)) {
-            if (!Object.hasOwn(vi.time_range, d)) {
-              vi.time_range[d] = [0, this.meta.times[d].n - 1]
-            }
-            vi.time_range[d][2] = ny = vi.time_range[d][1] - vi.time_range[d][0] + 1
-            if (Object.hasOwn(this.sets, d)) {
-              da = this.sets[d]
-              n = this.info[d].entity_count
-              at = !n || n > 65535 ? Uint32Array : n > 255 ? Uint16Array : Uint8Array
-              if (Object.hasOwn(vi.info[d], 'order')) {
-                o = vi.info[d].order
-                Object.keys(da).forEach(k => {
-                  if (!Object.hasOwn(this.entities, k)) {
-                    this.entities[k] = {}
-                  }
-                  if (!Object.hasOwn(this.entities[k], view))
-                    this.entities[k][view] = {summary: {}, rank: {}, subset_rank: {}}
-                  this.entities[k][view].rank[v] = new at(ny)
-                  this.entities[k][view].subset_rank[v] = new at(ny)
-                })
-              } else {
-                vi.info[d].order = o = []
-                for (y = ny; y--; ) {
-                  o.push([])
-                }
-                for (k in da)
-                  if ('_meta' !== k && Object.hasOwn(da, k) && Object.hasOwn(da[k], c)) {
-                    ev = da[k][c]
-                    if (1 === ny) {
-                      if ('number' !== typeof ev) da[k][c] = ev = NaN
-                      o[0].push([k, ev])
-                    } else {
-                      for (y = ny; y--; ) {
-                        if ('number' !== typeof ev[y]) ev[y] = NaN
-                        o[y].push([k, ev[y]])
-                      }
-                      Object.freeze(ev)
-                    }
-                    if (!Object.hasOwn(this.entities, k)) {
-                      this.entities[k] = {}
-                    }
-                    if (!Object.hasOwn(this.entities[k], view))
-                      this.entities[k][view] = {summary: {}, rank: {}, subset_rank: {}}
-                    if (!Object.hasOwn(this.entities[k][view].rank, v)) this.entities[k][view].rank[v] = new at(ny)
-                    if (!Object.hasOwn(this.entities[k][view].subset_rank, v))
-                      this.entities[k][view].subset_rank[v] = new at(ny)
-                  }
-                Object.freeze(o)
+        if (!Object.hasOwn(vi.time_range, d)) {
+          vi.time_range[d] = [0, this.meta.times[d].n - 1]
+        }
+        vi.time_range[d][2] = ny = vi.time_range[d][1] - vi.time_range[d][0] + 1
+        const m = vi[view],
+          c = vi.code
+        if (Object.hasOwn(this.sets, d)) {
+          const da = this.sets[d]
+          const n = this.info[d].entity_count
+          const at = !n || n > 65535 ? Uint32Array : n > 255 ? Uint16Array : Uint8Array
+          if (Object.hasOwn(vi.info[d], 'order')) {
+            o = vi.info[d].order
+            Object.keys(da).forEach(k => {
+              if (!Object.hasOwn(this.entities, k)) {
+                this.entities[k] = {}
               }
-              o.forEach((ev, y) => {
-                ev = o[y]
-                if (!Object.isFrozen(ev)) {
-                  ev.sort(this.checks.sort_a1)
+              if (!Object.hasOwn(this.entities[k], view))
+                this.entities[k][view] = {summary: {}, rank: {}, subset_rank: {}}
+              this.entities[k][view].rank[v] = new at(ny)
+              this.entities[k][view].subset_rank[v] = new at(ny)
+            })
+          } else {
+            vi.info[d].order = o = []
+            for (y = ny; y--; ) {
+              o.push([])
+            }
+            Object.keys(da).forEach(k => {
+              if ('_meta' !== k && Object.hasOwn(da, k) && Object.hasOwn(da[k], c)) {
+                ev = da[k][c]
+                if (1 === ny) {
+                  if ('number' !== typeof ev) da[k][c] = ev = NaN
+                  o[0].push([k, ev])
+                } else {
+                  for (y = ny; y--; ) {
+                    if ('number' !== typeof ev[y]) ev[y] = NaN
+                    o[y].push([k, ev[y]])
+                  }
                   Object.freeze(ev)
                 }
-                ev.forEach((r, i) => {
-                  this.entities[r[0]][view].rank[v][y] = i
-                })
-              })
-            }
-            if (!Object.hasOwn(m.summaries, d)) {
-              m.order[d] = []
-              m.selected_order[d] = []
-              m.selected_summaries[d] = {n: [], missing: []}
-              if ('string' === vi.info[d].type) {
-                m.table = {}
-                for (l in vi.levels_ids)
-                  if (Object.hasOwn(vi.levels_ids, l)) {
-                    m.table[l] = []
-                    for (y = ny; y--; ) m.table[l].push(0)
-                  }
-                m.summaries[d] = {
-                  filled: false,
-                  missing: [],
-                  n: [],
-                  mode: [],
-                  level_ids: vi.levels_ids,
-                  levels: vi.levels,
+                if (!Object.hasOwn(this.entities, k)) {
+                  this.entities[k] = {}
                 }
-                for (y = ny; y--; ) {
-                  m.order[d].push([])
-                  m.selected_order[d].push([])
-                  m.summaries[d].missing.push(0)
-                  m.summaries[d].n.push(0)
-                  m.summaries[d].mode.push('')
-                }
-              } else {
-                m.summaries[d] = {
-                  filled: false,
-                  missing: [],
-                  n: [],
-                  sum: [],
-                  max: [],
-                  q3: [],
-                  mean: [],
-                  range: [],
-                  norm_median: [],
-                  break_median: [],
-                  lower_median_min: [],
-                  lower_median_range: [],
-                  upper_median_min: [],
-                  upper_median_range: [],
-                  norm_mean: [],
-                  break_mean: [],
-                  lower_mean_min: [],
-                  lower_mean_range: [],
-                  upper_mean_min: [],
-                  upper_mean_range: [],
-                  median: [],
-                  q1: [],
-                  min: [],
-                }
-                for (y = ny; y--; ) {
-                  m.order[d].push([])
-                  m.selected_order[d].push([])
-                  m.selected_summaries[d].n.push(0)
-                  m.selected_summaries[d].missing.push(0)
-                  m.summaries[d].missing.push(0)
-                  m.summaries[d].n.push(0)
-                  m.summaries[d].sum.push(0)
-                  m.summaries[d].max.push(-Infinity)
-                  m.summaries[d].q3.push(0)
-                  m.summaries[d].mean.push(0)
-                  m.summaries[d].norm_median.push(0)
-                  m.summaries[d].break_median.push(-1)
-                  m.summaries[d].lower_median_min.push(-1)
-                  m.summaries[d].lower_median_range.push(-1)
-                  m.summaries[d].upper_median_min.push(-1)
-                  m.summaries[d].upper_median_range.push(-1)
-                  m.summaries[d].norm_mean.push(0)
-                  m.summaries[d].break_mean.push(-1)
-                  m.summaries[d].lower_mean_min.push(-1)
-                  m.summaries[d].lower_mean_range.push(-1)
-                  m.summaries[d].upper_mean_min.push(-1)
-                  m.summaries[d].upper_mean_range.push(-1)
-                  m.summaries[d].median.push(0)
-                  m.summaries[d].q1.push(0)
-                  m.summaries[d].min.push(Infinity)
-                }
+                if (!Object.hasOwn(this.entities[k], view))
+                  this.entities[k][view] = {summary: {}, rank: {}, subset_rank: {}}
+                if (!Object.hasOwn(this.entities[k][view].rank, v)) this.entities[k][view].rank[v] = new at(ny)
+                if (!Object.hasOwn(this.entities[k][view].subset_rank, v))
+                  this.entities[k][view].subset_rank[v] = new at(ny)
               }
-              Object.seal(m.order[d])
-              Object.seal(m.selected_order[d])
-              Object.seal(m.selected_summaries[d])
-              Object.seal(m.summaries[d])
+            })
+            Object.freeze(o)
+          }
+          o.forEach((ev, y) => {
+            ev = o[y]
+            if (!Object.isFrozen(ev)) {
+              ev.sort(this.checks.sort_a1)
+              Object.freeze(ev)
+            }
+            ev.forEach((r, i) => {
+              this.entities[r[0]][view].rank[v][y] = i
+            })
+          })
+        }
+        if (!Object.hasOwn(m.summaries, d)) {
+          m.order[d] = []
+          m.selected_order[d] = []
+          m.selected_summaries[d] = {n: [], missing: []}
+          if ('string' === vi.info[d].type) {
+            m.table = {}
+            Object.keys(vi.levels_ids).forEach(l => {
+              m.table[l] = []
+              for (y = ny; y--; ) m.table[l].push(0)
+            })
+            m.summaries[d] = {
+              filled: false,
+              missing: [],
+              n: [],
+              mode: [],
+              level_ids: vi.levels_ids,
+              levels: vi.levels,
+            }
+            for (y = ny; y--; ) {
+              m.order[d].push([])
+              m.selected_order[d].push([])
+              m.summaries[d].missing.push(0)
+              m.summaries[d].n.push(0)
+              m.summaries[d].mode.push('')
+            }
+          } else {
+            m.summaries[d] = {
+              filled: false,
+              missing: [],
+              n: [],
+              sum: [],
+              max: [],
+              q3: [],
+              mean: [],
+              range: [],
+              norm_median: [],
+              break_median: [],
+              lower_median_min: [],
+              lower_median_range: [],
+              upper_median_min: [],
+              upper_median_range: [],
+              norm_mean: [],
+              break_mean: [],
+              lower_mean_min: [],
+              lower_mean_range: [],
+              upper_mean_min: [],
+              upper_mean_range: [],
+              median: [],
+              q1: [],
+              min: [],
+            }
+            for (y = ny; y--; ) {
+              m.order[d].push([])
+              m.selected_order[d].push([])
+              m.selected_summaries[d].n.push(0)
+              m.selected_summaries[d].missing.push(0)
+              m.summaries[d].missing.push(0)
+              m.summaries[d].n.push(0)
+              m.summaries[d].sum.push(0)
+              m.summaries[d].max.push(-Infinity)
+              m.summaries[d].q3.push(0)
+              m.summaries[d].mean.push(0)
+              m.summaries[d].norm_median.push(0)
+              m.summaries[d].break_median.push(-1)
+              m.summaries[d].lower_median_min.push(-1)
+              m.summaries[d].lower_median_range.push(-1)
+              m.summaries[d].upper_median_min.push(-1)
+              m.summaries[d].upper_median_range.push(-1)
+              m.summaries[d].norm_mean.push(0)
+              m.summaries[d].break_mean.push(-1)
+              m.summaries[d].lower_mean_min.push(-1)
+              m.summaries[d].lower_mean_range.push(-1)
+              m.summaries[d].upper_mean_min.push(-1)
+              m.summaries[d].upper_mean_range.push(-1)
+              m.summaries[d].median.push(0)
+              m.summaries[d].q1.push(0)
+              m.summaries[d].min.push(Infinity)
             }
           }
+          Object.seal(m.order[d])
+          Object.seal(m.selected_order[d])
+          Object.seal(m.selected_summaries[d])
+          Object.seal(m.summaries[d])
         }
       })
     })
@@ -798,7 +799,7 @@ DataHandler.prototype = {
       order = this.variables[measure].info[dataset].order,
       levels = this.variables[measure].levels_ids,
       subset = v.n_selected.all !== v.n_selected.dataset
-    for (var i, k, value, en, l, o, y = ny, rank, bmd, bme, n; y--; ) {
+    for (let y = ny; y--; ) {
       mo[y] = subset ? [] : order[y]
       mso[y] = subset ? [] : order[y]
       mss.missing[y] = 0
@@ -817,14 +818,13 @@ DataHandler.prototype = {
         ms.break_median[y] = -1
       }
     }
-    for (y = 0; y < ny; y++) {
-      o = order[y]
-      rank = v.n_selected[this.settings.settings.summary_selection]
-      for (i = o.length; i--; ) {
-        k = o[i][0]
-        value = o[i][1]
+    order.forEach((o, y) => {
+      let rank = v.n_selected[this.settings.settings.summary_selection]
+      for (let i = o.length; i--; ) {
+        const k = o[i][0],
+          value = o[i][1]
         if (Object.hasOwn(s, k)) {
-          en = s[k][view]
+          const en = s[k][view]
           if (!y) {
             if (!Object.hasOwn(en.summary, measure)) en.summary[measure] = {n: 0, overall: ms, order: mo}
             en.summary[measure].n = 0
@@ -852,17 +852,15 @@ DataHandler.prototype = {
           } else ms.missing[y]++
         }
       }
-    }
+    })
     if (full) {
-      for (y = 0; y < ny; y++) {
-        o = mo[y]
+      mo.forEach((o, y) => {
         if (levels) {
           if (ms.n[y]) {
             l = 0
-            for (k in m.table)
-              if (Object.hasOwn(m.table, k)) {
-                if (m.table[k][y] > m.table[this.variables[measure].levels[l]][y]) l = levels[k]
-              }
+            Object.keys(m.table).forEach(k => {
+              if (m.table[k][y] > m.table[this.variables[measure].levels[l]][y]) l = levels[k]
+            })
             ms.mode[y] = this.variables[measure].levels[l]
           } else ms.mode[y] = NaN
         } else {
@@ -878,7 +876,8 @@ DataHandler.prototype = {
               ms.q3[y] = quantile(0.75, ms.n[y], ms.missing[y], o)
               ms.q1[y] = quantile(0.25, ms.n[y], ms.missing[y], o)
             }
-            for (i = ms.missing[y], n = o.length, bmd = false, bme = false; i < n; i++) {
+            const n = o.length
+            for (let i = ms.missing[y], bmd = false, bme = false; i < n; i++) {
               if (!bmd && o[i][1] > ms.median[y]) {
                 ms.break_median[y] = i - 1
                 bmd = true
@@ -917,16 +916,15 @@ DataHandler.prototype = {
             }
           }
         }
-      }
+      })
     } else {
-      for (y = 0; y < ny; y++) {
+      for (let y = 0; y < ny; y++) {
         if (ms.n[y]) {
           if (levels) {
             q1 = 0
-            for (k in m.table)
-              if (Object.hasOwn(m.table, k)) {
-                if (m.table[k][y] > m.table[this.variables[measure].levels[q1]][y]) q1 = levels[k]
-              }
+            m.table.forEach(k => {
+              if (m.table[k][y] > m.table[this.variables[measure].levels[q1]][y]) q1 = levels[k]
+            })
             ms.mode[y] = this.variables[measure].levels[q1]
           } else ms.mean[y] = ms.sum[y] / ms.n[y]
         } else {
@@ -937,69 +935,66 @@ DataHandler.prototype = {
     ms.filled = true
   },
   map_variables: function () {
-    var v, vn, i, t, m, l
     Object.keys(this.info).forEach(k => {
       this.data_queue[k] = {}
-      m = this.info[k]
-      m.id_vars = []
-      for (v = m.schema.fields, i = m.ids.length; i--; ) m.id_vars.push(m.ids[i].variable)
-      for (i = v.length; i--; ) {
-        vn = v[i].name
+      const m = this.info[k]
+      m.id_vars = m.ids.map(id => id.variable)
+      m.schema.fields.forEach(v => {
+        const vn = v.name
         if (Object.hasOwn(this.variables, vn)) {
-          this.variables[vn].datasets.push(k)
-          this.variables[vn].info[k] = v[i]
-          if ('string' === v[i].type) {
-            for (l in v[i].table)
-              if (Object.hasOwn(v[i].table, l) && !Object.hasOwn(this.variables[vn].levels_ids, l)) {
-                this.variables[vn].levels_ids[l] = this.variables[vn].levels.length
-                this.variables[vn].levels.push(l)
+          const ve = this.variables[vn]
+          ve.datasets.push(k)
+          ve.info[k] = v
+          if ('string' === v.type) {
+            v.table.forEach(l => {
+              if (!Object.hasOwn(ve.levels_ids, l)) {
+                ve.levels_ids[l] = ve.levels.length
+                ve.levels.push(l)
               }
+            })
           }
         } else {
-          this.variables[vn] = {
+          const ve = (this.variables[vn] = {
             datasets: [k],
             info: {},
             time_range: {},
-            type: v[i].type,
-          }
-          this.variables[vn].info[k] = v[i]
-          if ('string' === v[i].type) {
-            this.variables[vn].levels = []
-            this.variables[vn].levels_ids = {}
-            for (l in v[i].table)
-              if (Object.hasOwn(v[i].table, l)) {
-                this.variables[vn].levels_ids[l] = this.variables[vn].levels.length
-                this.variables[vn].levels.push(l)
+            type: v.type,
+          })
+          ve.info[k] = v
+          if ('string' === v.type) {
+            ve.levels = []
+            ve.levels_ids = {}
+            v.table.forEach(l => {
+              if (Object.hasOwn(v.table, l)) {
+                ve.levels_ids[l] = ve.levels.length
+                ve.levels.push(l)
               }
+            })
           }
-          this.variables[vn].meta = this.variables[vn].info[k].info
-          if (!this.variables[vn].meta)
-            this.variables[vn].meta = {
+          ve.meta = ve.info[k].info
+          if (!ve.meta)
+            ve.meta = {
               full_name: vn,
               measure: vn.split(':')[1],
               short_name: this.format_label(vn),
               type: 'integer',
             }
-          this.variables[vn].meta.full_name = vn
-          if (!Object.hasOwn(this.variables[vn].meta, 'measure'))
-            this.variables[vn].meta.measure = vn.split(':')[1] || vn
-          if (!Object.hasOwn(this.variables[vn].meta, 'short_name'))
-            this.variables[vn].meta.short_name = this.format_label(vn)
-          if (!Object.hasOwn(this.variables[vn].meta, 'long_name'))
-            this.variables[vn].meta.long_name = this.variables[vn].meta.short_name
-          if (!Object.hasOwn(this.variable_info, vn)) this.variable_info[vn] = this.variables[vn].meta
+          ve.meta.full_name = vn
+          if (!Object.hasOwn(ve.meta, 'measure')) ve.meta.measure = vn.split(':')[1] || vn
+          if (!Object.hasOwn(ve.meta, 'short_name')) ve.meta.short_name = this.format_label(vn)
+          if (!Object.hasOwn(ve.meta, 'long_name')) ve.meta.long_name = ve.meta.short_name
+          if (!Object.hasOwn(this.variable_info, vn)) this.variable_info[vn] = ve.meta
         }
-      }
+      })
       if (this.in_browser && Object.hasOwn(m, '_references')) {
         if (!Object.hasOwn(this.variable_info, '_references')) this.variable_info._references = {}
-        for (t in m._references)
-          if (Object.hasOwn(m._references, t)) {
-            if (!Object.hasOwn(this.references, t)) this.references[t] = make_variable_reference(m._references[t])
-            this.variable_info._references[t] = {
-              reference: m._references[t],
-              element: this.references[t],
-            }
+        Object.keys(m._references).forEach(t => {
+          if (!Object.hasOwn(this.references, t)) this.references[t] = make_variable_reference(m._references[t])
+          this.variable_info._references[t] = {
+            reference: m._references[t],
+            element: this.references[t],
           }
+        })
       }
     })
   },
@@ -1053,7 +1048,7 @@ DataHandler.prototype = {
         }
       }
       this.inited[g] = true
-      this.init_summaries().then(() => {
+      this.init_summaries(g).then(() => {
         if (!this.inited.first) {
           this.hooks.init && this.hooks.init()
           this.inited.first = true
@@ -1116,7 +1111,7 @@ DataHandler.prototype = {
             if (('<' === tf.operator || '>' === tf.operator) && !a.length) tf.operator += '='
             if (k === tf.name) tf.name = k.substring(0, k.length - 1)
           }
-          if (undefined === tf.value) break
+          if (undefined === tf.value || '-1' == tf.value) break
           if (('=' === tf.operator || '!' === tf.operator) && patterns.comma.test(tf.value)) {
             tf.value = tf.value.split(',')
             tf.operator = '=' === tf.operator ? 'includes' : 'excludes'

@@ -216,9 +216,7 @@ void (function () {
         'button.has-note::after,.button-wrapper.has-note button::before,.has-note legend::before,.has-note label::before,.wrapper.has-note > div > label::before{display:none}',
       conditionals = {
         setting: function (u) {
-          var k,
-            l,
-            v = u.value(),
+          const v = u.value(),
             theme = v ? 'dark' : 'light'
           if (v !== site.settings[u.setting]) {
             site.settings[u.setting] = v
@@ -226,16 +224,17 @@ void (function () {
               v
                 ? document.body.classList.replace('light-theme', 'dark-theme')
                 : document.body.classList.replace('dark-theme', 'light-theme')
-              if (site.plotly)
-                for (k in site.plotly) if (Object.hasOwn(site.plotly, k)) update_plot_theme(site.plotly[k].u)
+              if (site.plotly) Object.keys(site.plotly).forEach(k => update_plot_theme(site.plotly[k].u))
               if (site.map)
-                for (k in site.map)
-                  if (Object.hasOwn(site.map, k) && site.map[k].u && Object.hasOwn(site.map[k].u.tiles, theme)) {
-                    for (l in site.map[k].u.tiles)
-                      if (theme !== l && Object.hasOwn(site.map[k].u.tiles, l))
-                        site.map[k].u.tiles[l].removeFrom(site.map[k].u.map)
-                    site.map[k].u.tiles[theme].addTo(site.map[k].u.map)
+                Object.keys(site.map).forEach(k => {
+                  const u = site.map[k].u
+                  if (u && Object.hasOwn(u.tiles, theme)) {
+                    Object.keys(u.tiles).forEach(l => {
+                      if (theme !== l) u.tiles[l].removeFrom(u.map)
+                    })
+                    u.tiles[theme].addTo(u.map)
                   }
+                })
             } else if ('hide_url_parameters' === u.setting) {
               window.history.replaceState(
                 Date.now(),
@@ -482,12 +481,10 @@ void (function () {
             s = _c[u.id + '_time'],
             variable = Object.hasOwn(site.data.variables, v) ? v : valueOf(u.y)
           if (!site.data.inited[d]) return void 0
-          var r = site.data.variables[variable],
-            i,
-            value
+          var r = site.data.variables[variable]
           if (r) {
             if (!Object.hasOwn(r, u.id)) {
-              return site.data.init_summaries().then(function () {
+              return site.data.init_summaries(d).then(function () {
                 elements.dataview.time_range(u, c, passive)
               })
             }
@@ -500,21 +497,22 @@ void (function () {
               u.time_range.time[1] = u.time_range.filtered[1] = t + r[1]
             }
             if (!passive && s) {
-              for (i = s.length; i--; ) {
-                value = _u[s[i].id].value()
-                if ('min' === s[i].type) {
-                  if (isFinite(u.time_range.time[0]) && parseFloat(_u[s[i].id].e.min) !== u.time_range.time[0]) {
-                    _u[s[i].id].e.min = u.time_range.time[0]
-                    if (!meta.retain_state || u.time_range.time[0] > value) _u[s[i].id].set(u.time_range.time[0])
+              s.forEach(si => {
+                const su = _u[si.id]
+                const value = su.value()
+                if ('min' === si.type) {
+                  if (isFinite(u.time_range.time[0]) && parseFloat(su.e.min) !== u.time_range.time[0]) {
+                    su.e.min = u.time_range.time[0]
+                    if (!meta.retain_state || u.time_range.time[0] > value) su.set(u.time_range.time[0])
                   }
-                } else if ('max' === s[i].type) {
-                  if (isFinite(u.time_range.time[1]) && parseFloat(_u[s[i].id].e.max) !== u.time_range.time[1]) {
-                    _u[s[i].id].e.max = u.time_range.time[1]
+                } else if ('max' === si.type) {
+                  if (isFinite(u.time_range.time[1]) && parseFloat(su.e.max) !== u.time_range.time[1]) {
+                    su.e.max = u.time_range.time[1]
                     if (!meta.retain_state || u.time_range.time[1] < value || value < u.time_range.time[0])
-                      _u[s[i].id].set(u.time_range.time[1])
+                      su.set(u.time_range.time[1])
                   }
                 }
-              }
+              })
               conditionals.time_filters(u)
             }
           }
@@ -3437,10 +3435,7 @@ void (function () {
             content_resize()
           },
           data_load: function () {
-            for (var k in _c)
-              if (Object.hasOwn(_c, k)) {
-                request_queue(k)
-              }
+            Object.keys(_c).forEach(request_queue)
           },
         })
         site.data.retrievers.vector = site.data.retrievers.vector.bind(site.data)
@@ -3491,14 +3486,13 @@ void (function () {
     }
 
     function get_options_url() {
-      var s = '',
-        k,
-        v
-      for (k in _u)
-        if (Object.hasOwn(_u, k) && _u[k].input && !patterns.settings.test(k)) {
-          v = _u[k].value()
+      var s = ''
+      Object.keys(_u).forEach(k => {
+        if (_u[k].input && !patterns.settings.test(k)) {
+          const v = _u[k].value()
           if ('' !== v && null != v && '-1' != v) s += (s ? '&' : '?') + k + '=' + v
         }
+      })
       return window.location.protocol + '//' + window.location.host + window.location.pathname + s
     }
 
@@ -3507,8 +3501,8 @@ void (function () {
       defaults.dataset = site.metadata.datasets[0]
 
       // initialize inputs
-      for (k in _u)
-        if (Object.hasOwn(_u, k) && Object.hasOwn(elements, _u[k].type)) {
+      Object.keys(_u).forEach(k => {
+        if (Object.hasOwn(elements, _u[k].type)) {
           o = _u[k]
           // resolve options
           if (o.options_source) {
@@ -3677,31 +3671,26 @@ void (function () {
             if (Object.hasOwn(site, o.type) && Object.hasOwn(site[o.type], o.id)) {
               o.filters = site[o.type][o.id]
               o.current_filter = {}
-              for (c in o.filters)
-                if (Object.hasOwn(_u, o.filters[c])) {
-                  add_dependency(o.filters[c], {type: 'filter', id: o.id})
-                }
+              Object.keys(o.filters).forEach(f => {
+                add_dependency(f, {type: 'filter', id: o.id})
+              })
               o.filter = function () {
                 var k, i, pass, last
-                for (k in this.filters)
-                  if (Object.hasOwn(this.filters, k)) {
-                    this.current_filter[k] = valueOf(this.filters[k])
-                  }
-                for (i = this.values.length; i--; ) {
+                Object.keys(this.filters).forEach(f => {
+                  this.current_filter[k] = valueOf(this.filters[k])
+                })
+                this.values.forEach((v, i) => {
                   pass = false
-                  if (
-                    Object.hasOwn(site.data.variables, this.values[i]) &&
-                    Object.hasOwn(site.data.variables[this.values[i]], 'meta')
-                  ) {
+                  if (Object.hasOwn(site.data.variables, v) && Object.hasOwn(site.data.variables[v], 'meta')) {
                     for (k in this.current_filter)
-                      if (Object.hasOwn(site.data.variables[this.values[i]].meta, k)) {
-                        pass = site.data.variables[this.values[i]].meta[k] === this.current_filter[k]
+                      if (Object.hasOwn(site.data.variables[v].meta, k)) {
+                        pass = site.data.variables[v].meta[k] === this.current_filter[k]
                         if (!pass) break
                       }
                   }
-                  if (pass) last = this.values[i]
+                  if (pass) last = v
                   this.options[i].classList[pass ? 'remove' : 'add']('hidden')
-                }
+                })
                 this.current_index = this.values.indexOf(this.value())
                 if (
                   last &&
@@ -3729,69 +3718,69 @@ void (function () {
             o.set(v)
           } else o.reset && o.reset()
         }
+      })
       // initialize dataviews
-      for (k in site.dataviews)
-        if (Object.hasOwn(site.dataviews, k)) {
-          _u[k] = e = site.dataviews[k]
-          e.id = k
-          e.value = function () {
-            if (this.get) {
-              this.reparse()
-              return (
-                '' +
-                this.parsed.dataset +
-                this.parsed.ids +
-                this.parsed.features +
-                this.parsed.variables +
-                site.settings.summary_selection
-              )
-            }
-          }.bind(e)
-          if ('string' === typeof e.palette && Object.hasOwn(_u, e.palette)) {
-            add_dependency(e.palette, {type: 'dataview', id: k})
+      Object.keys(site.dataviews).forEach(k => {
+        _u[k] = e = site.dataviews[k]
+        e.id = k
+        e.value = function () {
+          if (this.get) {
+            this.reparse()
+            return (
+              '' +
+              this.parsed.dataset +
+              this.parsed.ids +
+              this.parsed.features +
+              this.parsed.variables +
+              site.settings.summary_selection
+            )
           }
-          if ('string' === typeof e.dataset && Object.hasOwn(_u, e.dataset)) {
-            add_dependency(e.dataset, {type: 'dataview', id: k})
-          }
-          if ('string' === typeof e.ids && Object.hasOwn(_u, e.ids)) {
-            add_dependency(e.ids, {type: 'dataview', id: k})
-          }
-          e.time_range = {variable: '', index: [], time: [], filtered: []}
-          add_dependency(k, {type: 'time_range', id: k})
-          if (Object.hasOwn(_u, e.x)) {
-            add_dependency(e.x, {type: 'time_range', id: k})
-          }
-          if (Object.hasOwn(_u, e.y)) {
-            add_dependency(e.y, {type: 'time_range', id: k})
-          }
-          for (cond in e.features)
-            if (Object.hasOwn(e.features, cond)) {
-              if ('string' === typeof e.features[cond] && Object.hasOwn(_u, e.features[cond])) {
-                add_dependency(e.features[cond], {type: 'dataview', id: k})
-              }
-            }
-          if (e.variables)
-            for (i = e.variables.length; i--; ) {
-              if (Object.hasOwn(e.variables[i], 'variable')) {
-                if (Object.hasOwn(_u, e.variables[i].variable)) {
-                  add_dependency(e.variables[i].variable, {type: 'dataview', id: k})
-                }
-              } else e.variables.splice(i, 1)
-              if (Object.hasOwn(e.variables[i], 'type')) {
-                if (Object.hasOwn(_u, e.variables[i].type)) {
-                  add_dependency(e.variables[i].type, {type: 'dataview', id: k})
-                }
-              } else e.variables[i].type = '='
-              if (Object.hasOwn(e.variables[i], 'value')) {
-                if (Object.hasOwn(_u, e.variables[i].value)) {
-                  add_dependency(e.variables[i].value, {type: 'dataview', id: k})
-                }
-              } else e.variables[i].value = 0
-            }
-          compile_dataview(e)
-          conditionals.dataview(e)
-          e.reparse()
+        }.bind(e)
+        if ('string' === typeof e.palette && Object.hasOwn(_u, e.palette)) {
+          add_dependency(e.palette, {type: 'dataview', id: k})
         }
+        if ('string' === typeof e.dataset && Object.hasOwn(_u, e.dataset)) {
+          add_dependency(e.dataset, {type: 'dataview', id: k})
+        }
+        if ('string' === typeof e.ids && Object.hasOwn(_u, e.ids)) {
+          add_dependency(e.ids, {type: 'dataview', id: k})
+        }
+        e.time_range = {variable: '', index: [], time: [], filtered: []}
+        add_dependency(k, {type: 'time_range', id: k})
+        if (Object.hasOwn(_u, e.x)) {
+          add_dependency(e.x, {type: 'time_range', id: k})
+        }
+        if (Object.hasOwn(_u, e.y)) {
+          add_dependency(e.y, {type: 'time_range', id: k})
+        }
+        for (cond in e.features)
+          if (Object.hasOwn(e.features, cond)) {
+            if ('string' === typeof e.features[cond] && Object.hasOwn(_u, e.features[cond])) {
+              add_dependency(e.features[cond], {type: 'dataview', id: k})
+            }
+          }
+        if (e.variables)
+          for (i = e.variables.length; i--; ) {
+            if (Object.hasOwn(e.variables[i], 'variable')) {
+              if (Object.hasOwn(_u, e.variables[i].variable)) {
+                add_dependency(e.variables[i].variable, {type: 'dataview', id: k})
+              }
+            } else e.variables.splice(i, 1)
+            if (Object.hasOwn(e.variables[i], 'type')) {
+              if (Object.hasOwn(_u, e.variables[i].type)) {
+                add_dependency(e.variables[i].type, {type: 'dataview', id: k})
+              }
+            } else e.variables[i].type = '='
+            if (Object.hasOwn(e.variables[i], 'value')) {
+              if (Object.hasOwn(_u, e.variables[i].value)) {
+                add_dependency(e.variables[i].value, {type: 'dataview', id: k})
+              }
+            } else e.variables[i].value = 0
+          }
+        compile_dataview(e)
+        conditionals.dataview(e)
+        e.reparse()
+      })
       // initialize outputs
       for (c = document.getElementsByClassName('auto-output'), i = c.length, n = 0; i--; ) {
         e = c[i]
