@@ -797,7 +797,7 @@ DataHandler.prototype = {
       ny = this.variables[measure].time_range[dataset][2],
       order = this.variables[measure].info[dataset].order,
       levels = this.variables[measure].levels_ids,
-      subset = v.n_selected.all !== v.n_selected.dataset
+      subset = v.n_selected[this.settings.summary_selection] !== v.n_selected.dataset
     for (let y = ny; y--; ) {
       mo[y] = subset ? [] : order[y]
       mso[y] = subset ? [] : order[y]

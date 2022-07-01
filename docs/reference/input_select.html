@@ -65,8 +65,9 @@
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">input_select</span><span class="op">(</span><span class="va">label</span>, <span class="va">options</span>, default <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, display <span class="op">=</span> <span class="va">options</span>, id <span class="op">=</span> <span class="va">label</span>,</span>
 <span>  <span class="va">...</span>, note <span class="op">=</span> <span class="cn">NULL</span>, variable <span class="op">=</span> <span class="cn">NULL</span>, dataset <span class="op">=</span> <span class="cn">NULL</span>, depends <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  dataview <span class="op">=</span> <span class="cn">NULL</span>, filters <span class="op">=</span> <span class="cn">NULL</span>, reset_button <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  button_class <span class="op">=</span> <span class="cn">NULL</span>, as.row <span class="op">=</span> <span class="cn">FALSE</span>, floating_label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<span>  dataview <span class="op">=</span> <span class="cn">NULL</span>, subset <span class="op">=</span> <span class="st">"all"</span>, filters <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  reset_button <span class="op">=</span> <span class="cn">FALSE</span>, button_class <span class="op">=</span> <span class="cn">NULL</span>, as.row <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  floating_label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -118,6 +119,12 @@ and <code>variable</code>, depending on this type of input <code>depends</code> 
 <dt>dataview</dt>
 <dd><p>The ID of an <code><a href="input_dataview.html">input_dataview</a></code>, used to filter the set of options, and potentially
 specify dataset if none is specified here.</p></dd>
+
+
+<dt>subset</dt>
+<dd><p>Determines the subset of options shown if <code>options</code> is <code>"ids"</code>; mainly <code>"all"</code>
+(default) to apply all filters, including the current selection, or <code>"full_filter"</code> to apply all
+feature and variable filters, but not the current selection.</p></dd>
 
 
 <dt>filters</dt>

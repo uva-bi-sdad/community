@@ -18,6 +18,9 @@
 #' and \code{variable}, depending on this type of input \code{depends} points to.
 #' @param dataview The ID of an \code{\link{input_dataview}}, used to filter the set of options, and potentially
 #' specify dataset if none is specified here.
+#' @param subset Determines the subset of options shown if \code{options} is \code{"ids"}; mainly \code{"all"}
+#' (default) to apply all filters, including the current selection, or \code{"full_filter"} to apply all
+#' feature and variable filters, but not the current selection.
 #' @param filters A list with names of \code{meta} entries (from \code{variable} entry in \code{\link{data_add}}'s
 #' \code{meta} list), and values of target values for those entries, or the IDs of value selectors.
 #' @param reset_button If specified, adds a button after the select element that will revert the selection
@@ -34,8 +37,8 @@
 #' @export
 
 input_select <- function(label, options, default = -1, display = options, id = label, ...,
-                         note = NULL, variable = NULL, dataset = NULL, depends = NULL, dataview = NULL, filters = NULL,
-                         reset_button = FALSE, button_class = NULL, as.row = FALSE, floating_label = TRUE) {
+                         note = NULL, variable = NULL, dataset = NULL, depends = NULL, dataview = NULL, subset = "all",
+                         filters = NULL, reset_button = FALSE, button_class = NULL, as.row = FALSE, floating_label = TRUE) {
   id <- gsub("\\s", "", id)
   a <- list(...)
   if (as.row) floating_label <- FALSE
@@ -49,6 +52,7 @@ input_select <- function(label, options, default = -1, display = options, id = l
       if (!is.null(default)) paste0(' default="', default, '"'),
       if (!is.null(note)) paste0(' aria-description="', note, '"'),
       if (!is.null(dataview)) paste0(' data-view="', dataview, '"'),
+      if (!is.null(subset)) paste0(' subset="', subset, '"'),
       if (!is.null(depends)) paste0(' depends="', depends, '"'),
       if (!is.null(dataset)) paste0(' dataset="', dataset, '"'),
       if (!is.null(variable)) paste0(' variable="', variable, '"'),

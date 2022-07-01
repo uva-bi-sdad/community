@@ -6,8 +6,9 @@
 \usage{
 input_select(label, options, default = -1, display = options, id = label,
   ..., note = NULL, variable = NULL, dataset = NULL, depends = NULL,
-  dataview = NULL, filters = NULL, reset_button = FALSE,
-  button_class = NULL, as.row = FALSE, floating_label = TRUE)
+  dataview = NULL, subset = "all", filters = NULL,
+  reset_button = FALSE, button_class = NULL, as.row = FALSE,
+  floating_label = TRUE)
 }
 \arguments{
 \item{label}{Label of the input for the user.}
@@ -36,6 +37,10 @@ and \code{variable}, depending on this type of input \code{depends} points to.}
 
 \item{dataview}{The ID of an \code{\link{input_dataview}}, used to filter the set of options, and potentially
 specify dataset if none is specified here.}
+
+\item{subset}{Determines the subset of options shown if \code{options} is \code{"ids"}; mainly \code{"all"}
+(default) to apply all filters, including the current selection, or \code{"full_filter"} to apply all
+feature and variable filters, but not the current selection.}
 
 \item{filters}{A list with names of \code{meta} entries (from \code{variable} entry in \code{\link{data_add}}'s
 \code{meta} list), and values of target values for those entries, or the IDs of value selectors.}

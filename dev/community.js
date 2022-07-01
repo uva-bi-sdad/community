@@ -363,6 +363,7 @@ void (function () {
               f.n_selected.variables = 0
               f.n_selected.dataset = 0
               f.n_selected.filtered = 0
+              f.n_selected.full_filter = 0
               f.n_selected.all = 0
               f.selection.ids = {}
               f.selection.children = {}
@@ -370,6 +371,7 @@ void (function () {
               f.selection.variables = {}
               f.selection.dataset = {}
               f.selection.filtered = {}
+              f.selection.full_filter = {}
               f.selection.all = {}
               Object.keys(site.data.entities).forEach(id => {
                 c = f.check(site.data.entities[id])
@@ -389,16 +391,21 @@ void (function () {
                   f.n_selected.variables++
                   c.all++
                 }
+
                 if (c.dataset) {
                   f.selection.dataset[id] = site.data.entities[id]
                   f.n_selected.dataset++
                   c.all++
                 }
+                if (c.features && c.variables) {
+                  f.selection.full_filter[id] = site.data.entities[id]
+                  f.n_selected.full_filter++
+                }
                 if (c.dataset && c.ids) {
                   f.selection.children[id] = site.data.entities[id]
                   f.n_selected.children++
                 }
-                if (c.features && c.variables) {
+                if (c.features && c.dataset) {
                   f.selection.filtered[id] = site.data.entities[id]
                   f.n_selected.filtered++
                 }
@@ -1038,11 +1045,7 @@ void (function () {
                 const v = _u[this.view],
                   s = v.selection && v.selection.all,
                   d = v.get.dataset(),
-                  y = _u[this.time || v.time_agg],
-                  rank =
-                    'all' === site.settings.summary_selection || 'children' === site.settings.summary_selection
-                      ? 'subset_rank'
-                      : 'rank'
+                  y = _u[this.time || v.time_agg]
                 if (site.data.inited[d] && s && v.state) {
                   this.parsed.base_trace = valueOf(this.base_trace)
                   this.parsed.x = valueOf(this.x)
@@ -1059,14 +1062,15 @@ void (function () {
                     site.data.variables[this.parsed.color].time_range[d][0]
                   this.parsed.summary = site.data.variables[this.parsed.color][this.view].summaries[d]
                   const summary = site.data.variables[this.parsed.y][this.view].summaries[d],
-                    subset = this.parsed.summary.n[this.parsed.time] !== v.n_selected.all,
+                    subset = this.parsed.summary.n[this.parsed.time] !== v.n_selected.dataset,
+                    rank = subset ? 'subset_rank' : 'rank',
                     order = subset
                       ? site.data.variables[this.parsed.color][this.view].order[d][this.parsed.time]
                       : site.data.variables[this.parsed.color].info[d].order[this.parsed.time]
                   var i = this.parsed.summary.missing[this.parsed.time],
                     k,
                     b,
-                    n = this.parsed.summary.n[this.parsed.time] - 1,
+                    n = v.n_selected[site.settings.summary_selection],
                     fn = order ? order.length : 0,
                     traces = [],
                     lim = site.settings.trace_limit || 0,
@@ -1084,10 +1088,11 @@ void (function () {
                       site.settings.color_by_order +
                       site.settings.trace_limit
                   lim = jump = lim && lim < n ? Math.ceil(Math.min(lim / 2, n / 2)) : 0
-                  for (k in this.reference_options)
-                    if (Object.hasOwn(this.reference_options, k)) this.options[k] = valueOf(this.reference_options[k])
+                  Object.keys(this.reference_options).forEach(
+                    k => (this.options[k] = valueOf(this.reference_options[k]))
+                  )
                   for (; i < fn; i++) {
-                    if (Object.hasOwn(s, order[i][0])) {
+                    if (order[i][0] in s) {
                       k = order[i][0]
                       state += k
                       traces.push(
@@ -1104,7 +1109,7 @@ void (function () {
                   }
                   if (lim && i < fn) {
                     for (jump = i, i = fn - 1; i > jump; i--) {
-                      if (Object.hasOwn(s, order[i][0])) {
+                      if (order[i][0] in s) {
                         k = order[i][0]
                         state += k
                         traces.push(
@@ -1284,22 +1289,7 @@ void (function () {
                   a = view.selection.all,
                   s = view.selection[site.settings.background_shapes && this.options.background_shapes ? 'ids' : 'all'],
                   bgc = defaults.border,
-                  c = valueOf(this.color || view.y),
-                  subset =
-                    'all' === site.settings.summary_selection || 'children' === site.settings.summary_selection
-                      ? 'subset_rank'
-                      : 'rank',
-                  ys = this.time
-                    ? _u[this.time]
-                    : view.time_agg
-                    ? Object.hasOwn(_u, view.time_agg)
-                      ? _u[view.time_agg]
-                      : parseInt(view.time_agg)
-                    : 0
-                var k,
-                  n = 0,
-                  fg,
-                  id
+                  c = valueOf(this.color || view.y)
                 if (site.settings.map_overlay && Object.hasOwn(site.map[this.id].triggers, c)) {
                   show_overlay(this, site.map[this.id].triggers[c], site.data.meta.overall.value[view.parsed.time_agg])
                 } else {
@@ -1307,6 +1297,23 @@ void (function () {
                   this.overlay.clearLayers()
                 }
                 if (site.data.inited[mapId + this.id] && s && view.valid) {
+                  const ys = this.time
+                    ? _u[this.time]
+                    : view.time_agg
+                    ? Object.hasOwn(_u, view.time_agg)
+                      ? _u[view.time_agg]
+                      : parseInt(view.time_agg)
+                    : 0
+                  this.parsed.palette = valueOf(view.palette) || site.settings.palette
+                  if (!Object.hasOwn(palettes, this.parsed.palette)) this.parsed.palette = defaults.palette
+                  this.parsed.time =
+                    (ys.parsed ? ys.value() - site.data.meta.times[d].range[0] : 0) -
+                    site.data.variables[c].time_range[d][0]
+                  this.parsed.color = c
+                  this.parsed.summary = site.data.variables[c][this.view].summaries[d]
+                  const subset = this.parsed.summary.n[ys] === view.n_selected.dataset ? 'rank' : 'subset_rank'
+                  var k,
+                    n = 0
                   if (vstate !== this.vstate) {
                     this.map._zoomAnimated = 'none' !== site.settings.map_animations
                     for (k in this.reference_options)
@@ -1317,10 +1324,10 @@ void (function () {
                     this.displaying.clearLayers()
                     this.fresh_shapes = true
                     this.vstate = false
-                    for (k in s) {
-                      fg = Object.hasOwn(a, k)
-                      if (Object.hasOwn(s, k) && s[k].layer && s[k].layer[this.id]) {
-                        const cl = s[k].layer[this.id].has_time ? s[k].layer[this.id][match_time] : s[k].layer[this.id]
+                    Object.keys(s).forEach(k => {
+                      if (s[k].layer && s[k].layer[this.id]) {
+                        const fg = Object.hasOwn(a, k),
+                          cl = s[k].layer[this.id].has_time ? s[k].layer[this.id][match_time] : s[k].layer[this.id]
                         if (cl && (fg || this.options.background_shapes === site.data.entities[k].group)) {
                           n++
                           cl.options.interactive = fg
@@ -1336,7 +1343,7 @@ void (function () {
                           if (!this.vstate) this.vstate = vstate
                         }
                       }
-                    }
+                    })
                     this.overlay.bringToFront()
                     if (n)
                       this.map['fly' === site.settings.map_animations ? 'flyToBounds' : 'fitBounds'](
@@ -1345,15 +1352,6 @@ void (function () {
                   }
 
                   // coloring
-                  this.parsed.palette = valueOf(view.palette) || site.settings.palette
-                  if (!Object.hasOwn(palettes, this.parsed.palette)) this.parsed.palette = defaults.palette
-                  this.parsed.time =
-                    (ys.parsed ? ys.value() - site.data.meta.times[d].range[0] : 0) -
-                    site.data.variables[c].time_range[d][0]
-                  this.parsed.color = c
-                  this.parsed.summary = Object.hasOwn(site.data.variables[c], this.view)
-                    ? site.data.variables[c][this.view].summaries[d]
-                    : false
                   k =
                     c +
                     this.vstate +
@@ -1366,10 +1364,9 @@ void (function () {
                     this.cstate = k
                     if (site.map[this.id] && Object.hasOwn(site.data.variables[c], this.view)) {
                       const ls = this.displaying._layers
-                      n = this.parsed.summary.n[this.parsed.time] - 1
-                      for (id in ls)
-                        if (Object.hasOwn(ls, id)) {
-                          k = ls[id].entity.features.id
+                      n = view.n_selected[site.settings.summary_selection]
+                      Object.keys(ls).forEach(id => {
+                        const k = ls[id].entity.features.id,
                           fg =
                             Object.hasOwn(a, k) && Object.hasOwn(a[k][this.view][subset], c)
                               ? pal(
@@ -1382,15 +1379,15 @@ void (function () {
                                   n
                                 )
                               : defaults.missing
-                          if (d === ls[id].entity.group) {
-                            ls[id].setStyle({
-                              fillOpacity: 0.7,
-                              color: defaults.border,
-                              fillColor: fg,
-                              weight: site.settings.polygon_outline,
-                            })
-                          }
+                        if (d === ls[id].entity.group) {
+                          ls[id].setStyle({
+                            fillOpacity: 0.7,
+                            color: defaults.border,
+                            fillColor: fg,
+                            weight: site.settings.polygon_outline,
+                          })
                         }
+                      })
                     } else {
                       if (!Object.hasOwn(site.map, '_waiting')) site.map._waiting = {}
                       if (!Object.hasOwn(site.map._waiting, d)) site.map._waiting[d] = []
@@ -2134,45 +2131,41 @@ void (function () {
               max: o.parts.summary.appendChild(document.createElement('div')),
               entity: o.parts.ticks.appendChild(document.createElement('div')),
             }
-            var t, e
-            for (t in o.ticks)
-              if (Object.hasOwn(o.ticks, t)) {
-                o.ticks[t].setAttribute('of', o.id)
-                o.ticks[t].className = 'legend-tick'
-                o.ticks[t].appendChild((e = document.createElement('div')))
-                e.setAttribute('of', o.id)
+            Object.keys(o.ticks).forEach(t => {
+              o.ticks[t].setAttribute('of', o.id)
+              o.ticks[t].className = 'legend-tick'
+              o.ticks[t].appendChild((e = document.createElement('div')))
+              e.setAttribute('of', o.id)
+              e.appendChild(document.createElement('p'))
+              e.lastElementChild.setAttribute('of', o.id)
+              if ('m' !== t.substring(0, 1)) {
                 e.appendChild(document.createElement('p'))
                 e.lastElementChild.setAttribute('of', o.id)
-                if ('m' !== t.substring(0, 1)) {
-                  e.appendChild(document.createElement('p'))
-                  e.lastElementChild.setAttribute('of', o.id)
-                  e.appendChild(document.createElement('p'))
-                  e.lastElementChild.setAttribute('of', o.id)
-                  if ('entity' === t) {
-                    o.ticks[t].firstElementChild.lastElementChild.classList.add('entity')
-                  } else {
-                    o.ticks[t].firstElementChild.firstElementChild.classList.add('summary')
-                  }
+                e.appendChild(document.createElement('p'))
+                e.lastElementChild.setAttribute('of', o.id)
+                if ('entity' === t) {
+                  o.ticks[t].firstElementChild.lastElementChild.classList.add('entity')
+                } else {
+                  o.ticks[t].firstElementChild.firstElementChild.classList.add('summary')
                 }
               }
+            })
             o.ticks.entity.firstElementChild.classList.add('hidden')
             o.ticks.max.className = 'legend-tick-end max'
             o.ticks.min.className = 'legend-tick-end min'
             o.ticks.center.style.left = '50%'
             o.show = function (e, c) {
-              if (e && Object.hasOwn(c, 'parsed')) {
-                const summary = c.parsed.summary,
-                  string = summary && Object.hasOwn(summary, 'levels'),
+              if (e && 'parsed' in c) {
+                const view = _u[this.view],
+                  summary = c.parsed.summary,
+                  string = summary && 'levels' in summary,
                   min = summary && !string ? summary.min[c.parsed.time] : 0,
                   range = summary ? (string ? summary.levels.length - min : summary.range[c.parsed.time]) : 1,
-                  subset =
-                    'all' === site.settings.summary_selection || 'children' === site.settings.summary_selection
-                      ? 'subset_rank'
-                      : 'rank',
+                  subset = summary.n[c.parsed.time] === view.n_selected.dataset ? 'rank' : 'subset_rank',
                   value = e.get_value(c.parsed.color, c.parsed.time),
-                  n = summary.n[c.parsed.time],
+                  n = view.n_selected[site.settings.summary_selection],
                   p =
-                    ((string ? Object.hasOwn(summary.level_ids, value) : 'number' === typeof value)
+                    ((string ? value in summary.level_ids : 'number' === typeof value)
                       ? site.settings.color_by_order
                         ? NaN
                         : Math.max(
@@ -3640,7 +3633,7 @@ void (function () {
           }
           // add listeners
           if ('select' === o.type || 'number' === o.type) {
-            if (!o.subset) o.subset = 'all'
+            o.subset = o.e.getAttribute('subset') || 'all'
             o.e.addEventListener('input', o.listen)
             if (
               o.e.parentElement.lastElementChild &&
