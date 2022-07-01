@@ -631,16 +631,16 @@ DataHandler.prototype = {
   init_summaries: async function (d) {
     Object.keys(this.in_browser ? site.dataviews : {default_view: true}).forEach(view => {
       Object.keys(this.variables).forEach(v => {
-        var o, y, ev, ny
         const vi = this.variables[v]
         if (!Object.hasOwn(vi, view)) vi[view] = {order: {}, selected_order: {}, selected_summaries: {}, summaries: {}}
         if (!Object.hasOwn(vi.time_range, d)) {
           vi.time_range[d] = [0, this.meta.times[d].n - 1]
         }
-        vi.time_range[d][2] = ny = vi.time_range[d][1] - vi.time_range[d][0] + 1
+        const ny = (vi.time_range[d][2] = vi.time_range[d][1] - vi.time_range[d][0] + 1)
         const m = vi[view],
           c = vi.code
-        if (Object.hasOwn(this.sets, d)) {
+        if (d in this.sets) {
+          var o
           const da = this.sets[d]
           const n = this.info[d].entity_count
           const at = !n || n > 65535 ? Uint32Array : n > 255 ? Uint16Array : Uint8Array
@@ -657,17 +657,17 @@ DataHandler.prototype = {
             })
           } else {
             vi.info[d].order = o = []
-            for (y = ny; y--; ) {
+            for (let y = ny; y--; ) {
               o.push([])
             }
             Object.keys(da).forEach(k => {
-              if ('_meta' !== k && Object.hasOwn(da, k) && Object.hasOwn(da[k], c)) {
-                ev = da[k][c]
+              if ('_meta' !== k && Object.hasOwn(da[k], c)) {
+                const ev = da[k][c]
                 if (1 === ny) {
                   if ('number' !== typeof ev) da[k][c] = ev = NaN
                   o[0].push([k, ev])
                 } else {
-                  for (y = ny; y--; ) {
+                  for (let y = ny; y--; ) {
                     if ('number' !== typeof ev[y]) ev[y] = NaN
                     o[y].push([k, ev[y]])
                   }
@@ -683,7 +683,6 @@ DataHandler.prototype = {
                   this.entities[k][view].subset_rank[v] = new at(ny)
               }
             })
-            Object.freeze(o)
           }
           o.forEach((ev, y) => {
             ev = o[y]
@@ -704,7 +703,7 @@ DataHandler.prototype = {
             m.table = {}
             Object.keys(vi.levels_ids).forEach(l => {
               m.table[l] = []
-              for (y = ny; y--; ) m.table[l].push(0)
+              for (let y = ny; y--; ) m.table[l].push(0)
             })
             m.summaries[d] = {
               filled: false,
@@ -714,7 +713,7 @@ DataHandler.prototype = {
               level_ids: vi.levels_ids,
               levels: vi.levels,
             }
-            for (y = ny; y--; ) {
+            for (let y = ny; y--; ) {
               m.order[d].push([])
               m.selected_order[d].push([])
               m.summaries[d].missing.push(0)
@@ -747,7 +746,7 @@ DataHandler.prototype = {
               q1: [],
               min: [],
             }
-            for (y = ny; y--; ) {
+            for (let y = ny; y--; ) {
               m.order[d].push([])
               m.selected_order[d].push([])
               m.selected_summaries[d].n.push(0)
@@ -823,7 +822,7 @@ DataHandler.prototype = {
       for (let i = o.length; i--; ) {
         const k = o[i][0],
           value = o[i][1]
-        if (Object.hasOwn(s, k)) {
+        if (k in s) {
           const en = s[k][view]
           if (!y) {
             if (!Object.hasOwn(en.summary, measure)) en.summary[measure] = {n: 0, overall: ms, order: mo}
@@ -1188,17 +1187,14 @@ DataHandler.prototype = {
           return res
         }
       }
-    for (k in this.variable_codes)
-      if (
-        Object.hasOwn(this.variable_codes, k) &&
-        -1 !== inc.indexOf(this.variable_codes[k].name) &&
-        -1 === exc.indexOf(this.variable_codes[k].name)
-      ) {
+    Object.keys(this.variable_codes).forEach(k => {
+      if (-1 !== inc.indexOf(this.variable_codes[k].name) && -1 === exc.indexOf(this.variable_codes[k].name)) {
         vars.push(this.variable_codes[k].name)
         tr = this.meta.ranges[this.variable_codes[k].name]
         if (tr[0] < range[0]) range[0] = tr[0]
         if (tr[1] > range[1]) range[1] = tr[1]
       }
+    })
     if (query.time_range[0] < range[0]) query.time_range[0] = range[0]
     if (query.time_range[1] > range[1]) query.time_range[1] = range[1]
     rows.push(Object.keys(feats).join(sep))

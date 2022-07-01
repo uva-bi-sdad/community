@@ -263,48 +263,41 @@ void (function () {
           }
         },
         options: function (u, c) {
-          var v,
-            i,
-            s,
-            n,
-            ns = 0,
-            k,
-            d = u.dataset
+          const d = u.dataset
               ? valueOf(u.dataset)
               : u.view
               ? _u[u.view].get.dataset()
               : valueOf(c.dataset) || defaults.dataset,
-            va = valueOf(u.variable)
+            va = valueOf(u.variable),
+            k = d + (va ? va : '')
           if (!Object.hasOwn(u, 'option_sets')) u.option_sets = {}
           u.e.innerHTML = ''
-          if (c && Object.hasOwn(u.option_sets, (k = d + (va ? va : '')))) {
+          if (c && k in u.option_sets) {
+            var ns = 0
             u.values = u.option_sets[k].values
             u.display = u.option_sets[k].display
             if (u.view && ('ID' === u.variable || 'ids' === u.options_source)) {
-              for (
-                v = site.dataviews[u.view].selection.all, s = u.option_sets[k].options, n = s.length, ns = 0, i = 0;
-                i < n;
-                i++
-              ) {
-                u.e.appendChild(s[i])
-                if (Object.hasOwn(v, s[i].value)) {
-                  s[i].classList.remove('hidden')
+              const v = site.dataviews[u.view].selection[u.subset]
+              u.option_sets[k].options.forEach(si => {
+                u.e.appendChild(si)
+                if (si.value in v) {
+                  si.classList.remove('hidden')
                   ns++
                 } else {
-                  s[i].classList.add('hidden')
+                  si.classList.add('hidden')
                 }
-              }
+              })
             } else {
-              for (s = u.option_sets[k].options, n = s.length, i = 0; i < n; i++) {
-                u.e.appendChild(s[i])
+              u.option_sets[k].options.forEach(si => {
+                u.e.appendChild(si)
                 ns++
-              }
+              })
             }
             u.e[ns ? 'removeAttribute' : 'setAttribute']('disabled', true)
           } else {
             if (patterns.variable.test(u.options_source)) {
-              d = c.value()
-              if (d) fill_variables_options(u, d, u.option_sets)
+              const dd = c.value()
+              if (dd) fill_variables_options(u, dd, u.option_sets)
             } else if (patterns.levels.test(u.options_source)) {
               fill_levels_options(u, d, va, u.option_sets)
             } else if (patterns.ids.test(u.options_source)) {
@@ -405,7 +398,7 @@ void (function () {
                   f.selection.children[id] = site.data.entities[id]
                   f.n_selected.children++
                 }
-                if (c.features && c.dataset) {
+                if (c.features && c.variables) {
                   f.selection.filtered[id] = site.data.entities[id]
                   f.n_selected.filtered++
                 }
@@ -418,12 +411,9 @@ void (function () {
               })
               if (first_all && summary_state !== f.summary_state) {
                 f.summary_state = summary_state
+                const time = site.data.meta.times[f.parsed.dataset].name
                 Object.keys(site.data.variables).forEach(id => {
-                  if (
-                    id !== site.data.meta.times[f.parsed.dataset].name &&
-                    Object.hasOwn(site.data.variables, id) &&
-                    Object.hasOwn(site.data.variables[id].time_range, f.parsed.dataset)
-                  )
+                  if (id !== time && f.parsed.dataset in site.data.variables[id].time_range)
                     site.data.calculate_summary(id, f.id, true)
                 })
                 update_subs(f.id, 'update')
@@ -465,13 +455,13 @@ void (function () {
             u.time_range.index[1] + u.time_range.filtered[1] - u.time_range.time[1],
           ]
           if (c)
-            for (i = c.length; i--; ) {
-              if ('update' === c[i].type) {
-                _u[c[i].id].update()
-              } else if (Object.hasOwn(conditionals, c[i].type)) {
-                conditionals[c[i].type](_u[c[i].id], u)
+            c.forEach(ci => {
+              if ('update' === ci.type) {
+                _u[ci.id].update()
+              } else if (Object.hasOwn(conditionals, ci.type)) {
+                conditionals[ci.type](_u[ci.id], u)
               }
-            }
+            })
         },
         time_range: function (u, c, passive) {
           const v = c && c.value(),
@@ -533,13 +523,13 @@ void (function () {
                 ? 'filter' === o.target
                   ? toggle_filter
                   : 'export' === o.target || 'copy' === o.target
-                  ? function (e) {
+                  ? function () {
                       const f = {},
                         s = this.settings,
                         v = _u[s.dataview],
                         d = v && v.parsed.dataset
-                      for (var k in s.query) if (Object.hasOwn(s.query, k)) f[k] = valueOf(s.query[k])
-                      if (Object.hasOwn(_u, s.dataview)) {
+                      Object.keys(s.query).forEach(k => (f[k] = valueOf(s.query[k])))
+                      if (v) {
                         if (!Object.hasOwn(f, 'include') && v.y) f.include = valueOf(v.y)
                         if (!Object.hasOwn(f, 'id') && v.ids) f.id = valueOf(v.ids)
                       }
@@ -570,7 +560,7 @@ void (function () {
                               if (!isNaN(v)) q.push(f.variable + f.operator + v)
                             })
                         }
-                        k = s.endpoint + (q.length ? '?' + q.join('&') : '')
+                        const k = s.endpoint + (q.length ? '?' + q.join('&') : '')
                         if (this.api) {
                           window.location.href = k
                         } else {
@@ -607,12 +597,11 @@ void (function () {
                       }
                     }.bind(o)
                   : function () {
-                      for (var k in this.settings.effects)
-                        if (Object.hasOwn(_u, k)) {
-                          this.settings.effects[k] === '' || -1 == this.settings.effects[k]
-                            ? _u[k].reset()
-                            : _u[k].set(this.settings.effects[k])
-                        }
+                      Object.keys(this.settings.effects).forEach(k => {
+                        this.settings.effects[k] === '' || -1 == this.settings.effects[k]
+                          ? _u[k].reset()
+                          : _u[k].set(this.settings.effects[k])
+                      })
                     }.bind(o)
                 : 'refresh' === o.target
                 ? global_update
@@ -842,15 +831,13 @@ void (function () {
             o.update()
           },
           update: function () {
-            var k, i, o, t, c, s, pass, bt
-            for (k in this.reference_options)
-              if (Object.hasOwn(this.reference_options, k)) this.options[k] = valueOf(this.reference_options[k])
-            for (k in this.depends)
-              if (Object.hasOwn(this.depends, k)) {
-                this.depends[k] = valueOf(k)
-                if (Object.hasOwn(site.data.entities, this.depends[k]))
-                  this.depends[k] = site.data.entities[this.depends[k]].features.name
-              }
+            var i, o, t, c, s, pass, bt
+            Object.keys(this.reference_options).forEach(k => (this.options[k] = valueOf(this.reference_options[k])))
+            Object.keys(this.depends).forEach(k => {
+              this.depends[k] = valueOf(k)
+              if (Object.hasOwn(site.data.entities, this.depends[k]))
+                this.depends[k] = site.data.entities[this.depends[k]].features.name
+            })
             for (i = this.text.length; i--; ) {
               pass = true
               o = this.text[i]
@@ -876,19 +863,18 @@ void (function () {
                 }
               }
               if (pass) {
-                for (t = o.text.length; t--; ) {
-                  k = o.text[t]
-                  if ('object' === typeof k) {
-                    for (bt = k.length; bt--; ) {
+                o.text.forEach((k, i) => {
+                  if (Array.isArray(k)) {
+                    k.forEach(ki => {
                       if (
-                        'default' === k[bt].id ||
-                        DataHandler.prototype.checks[k[bt].type](valueOf(k[bt].id), valueOf(k[bt].value))
+                        'default' === ki.id ||
+                        DataHandler.prototype.checks[ki.type](valueOf(ki.id), valueOf(ki.value))
                       )
-                        k = k[bt].text
-                    }
+                        k = ki.text
+                    })
                   }
                   if (Object.hasOwn(this.depends, k)) {
-                    o.parts.children[t].innerText = this.depends[k]
+                    o.parts.children[i].innerText = this.depends[k]
                   } else if (Object.hasOwn(o.button, k)) {
                     for (s = '', bt = o.button[k].text.length; bt--; ) {
                       s =
@@ -896,9 +882,9 @@ void (function () {
                           ? this.depends[o.button[k].text[bt]]
                           : o.button[k].text[bt]) + s
                     }
-                    o.parts.children[t].innerText = s
-                  } else o.parts.children[t].innerText = k
-                }
+                    o.parts.children[i].innerText = s
+                  } else o.parts.children[i].innerText = k
+                })
                 if (this.text[i].length) {
                   this.e.children[i].innerHTML = ''
                   this.e.children[i].appendChild(o.parts)
@@ -2236,140 +2222,135 @@ void (function () {
           update: function () {
             const view = _u[this.view],
               variable = valueOf(view.y),
-              time = valueOf(view.time_agg),
-              d = view.get.dataset(),
-              y =
-                ('number' === typeof time ? time - site.data.meta.times[d].range[0] : 0) -
-                site.data.variables[variable].time_range[d][0],
-              summary = Object.hasOwn(site.data.variables[variable], this.view)
-                ? site.data.variables[variable][this.view].summaries[d]
-                : false,
-              ep = valueOf(this.palette).toLowerCase(),
-              pn = Object.hasOwn(palettes, ep)
-                ? ep
-                : Object.hasOwn(palettes, site.settings.palette)
-                ? site.settings.palette
-                : defaults.palette,
-              p = palettes[pn].colors
-            this.parsed.summary = summary
-            this.parsed.selected_summary = Object.hasOwn(site.data.variables[variable], this.view)
-              ? site.data.variables[variable][this.view].selected_summaries[d]
-              : false
-            this.parsed.order = Object.hasOwn(site.data.variables[variable], this.view)
-              ? site.data.variables[variable][this.view].selected_order[d][y]
-              : false
-            this.parsed.time = y
-            this.parsed.color = variable
-            if (view.valid && summary && y < summary.n.length) {
-              this.integer =
-                site.data.variable_info[variable] && site.data.variable_info[variable].type
-                  ? patterns.int_types.test(site.data.variable_info[variable].type)
-                  : true
-              if (pn !== this.current_palette + site.settings.color_scale_center) {
-                this.current_palette = pn + site.settings.color_scale_center
-                this.parts.scale.innerHTML = ''
-                if ('discrete' === palettes[pn].type) {
-                  if (site.settings.color_by_order || 'none' === site.settings.color_scale_center) {
-                    for (var i = 0, n = p.length; i < n; i++) {
-                      this.parts.scale.appendChild(document.createElement('span'))
-                      this.parts.scale.lastElementChild.setAttribute('of', this.id)
-                      this.parts.scale.lastElementChild.style.backgroundColor = p[i]
+              var_info = site.data.variables[variable]
+            if (view.valid && var_info && this.view in var_info) {
+              const time = valueOf(view.time_agg),
+                d = view.get.dataset(),
+                y =
+                  ('number' === typeof time ? time - site.data.meta.times[d].range[0] : 0) - var_info.time_range[d][0],
+                summary = var_info[this.view].summaries[d],
+                ep = valueOf(this.palette).toLowerCase(),
+                pn = ep in palettes ? ep : site.settings.palette in palettes ? site.settings.palette : defaults.palette,
+                p = palettes[pn].colors
+              this.parsed.summary = summary
+              this.parsed.selected_summary = var_info[this.view].selected_summaries[d]
+              this.parsed.order = var_info[this.view].selected_order[d][y]
+              this.parsed.time = y
+              this.parsed.color = variable
+              if (summary && y < summary.n.length) {
+                this.integer =
+                  site.data.variable_info[variable] && site.data.variable_info[variable].type
+                    ? patterns.int_types.test(site.data.variable_info[variable].type)
+                    : true
+                if (pn + site.settings.color_scale_center !== this.current_palette) {
+                  this.current_palette = pn + site.settings.color_scale_center
+                  this.parts.scale.innerHTML = ''
+                  if ('discrete' === palettes[pn].type) {
+                    if (site.settings.color_by_order || 'none' === site.settings.color_scale_center) {
+                      for (var i = 0, n = p.length; i < n; i++) {
+                        this.parts.scale.appendChild(document.createElement('span'))
+                        this.parts.scale.lastElementChild.setAttribute('of', this.id)
+                        this.parts.scale.lastElementChild.style.backgroundColor = p[i]
+                      }
+                    } else {
+                      var i = 0,
+                        n = Math.ceil(p.length / 2),
+                        e
+                      this.parts.scale.appendChild((e = document.createElement('div')))
+                      e.setAttribute('of', this.id)
+                      e.style.left = 0
+                      for (; i < n; i++) {
+                        e.appendChild(document.createElement('span'))
+                        e.lastElementChild.setAttribute('of', this.id)
+                        e.lastElementChild.style.backgroundColor = p[i]
+                      }
+                      this.parts.scale.appendChild((e = document.createElement('div')))
+                      e.setAttribute('of', this.id)
+                      e.style.right = 0
+                      for (i = Math.floor(p.length / 2), n = p.length; i < n; i++) {
+                        e.appendChild(document.createElement('span'))
+                        e.lastElementChild.setAttribute('of', this.id)
+                        e.lastElementChild.style.backgroundColor = p[i]
+                      }
                     }
                   } else {
-                    var i = 0,
-                      n = Math.ceil(p.length / 2),
-                      e
-                    this.parts.scale.appendChild((e = document.createElement('div')))
-                    e.setAttribute('of', this.id)
-                    e.style.left = 0
-                    for (; i < n; i++) {
-                      e.appendChild(document.createElement('span'))
-                      e.lastElementChild.setAttribute('of', this.id)
-                      e.lastElementChild.style.backgroundColor = p[i]
-                    }
-                    this.parts.scale.appendChild((e = document.createElement('div')))
-                    e.setAttribute('of', this.id)
-                    e.style.right = 0
-                    for (i = Math.floor(p.length / 2), n = p.length; i < n; i++) {
-                      e.appendChild(document.createElement('span'))
-                      e.lastElementChild.setAttribute('of', this.id)
-                      e.lastElementChild.style.backgroundColor = p[i]
-                    }
+                    this.parts.scale.appendChild(document.createElement('span'))
+                    this.parts.scale.appendChild(document.createElement('span'))
+                    this.parts.scale.firstElementChild.style.background =
+                      'linear-gradient(0.25turn, rgb(' +
+                      p[2][0][0] +
+                      ', ' +
+                      p[2][0][1] +
+                      ', ' +
+                      p[2][0][2] +
+                      '), rgb(' +
+                      p[1][0] +
+                      ', ' +
+                      p[1][1] +
+                      ', ' +
+                      p[1][2] +
+                      '))'
+                    this.parts.scale.lastElementChild.style.background =
+                      'linear-gradient(0.25turn, rgb(' +
+                      p[1][0] +
+                      ', ' +
+                      p[1][1] +
+                      ', ' +
+                      p[1][2] +
+                      '), rgb(' +
+                      p[0][0][0] +
+                      ', ' +
+                      p[0][0][1] +
+                      ', ' +
+                      p[0][0][2] +
+                      '))'
                   }
-                } else {
-                  this.parts.scale.appendChild(document.createElement('span'))
-                  this.parts.scale.appendChild(document.createElement('span'))
-                  this.parts.scale.firstElementChild.style.background =
-                    'linear-gradient(0.25turn, rgb(' +
-                    p[2][0][0] +
-                    ', ' +
-                    p[2][0][1] +
-                    ', ' +
-                    p[2][0][2] +
-                    '), rgb(' +
-                    p[1][0] +
-                    ', ' +
-                    p[1][1] +
-                    ', ' +
-                    p[1][2] +
-                    '))'
-                  this.parts.scale.lastElementChild.style.background =
-                    'linear-gradient(0.25turn, rgb(' +
-                    p[1][0] +
-                    ', ' +
-                    p[1][1] +
-                    ', ' +
-                    p[1][2] +
-                    '), rgb(' +
-                    p[0][0][0] +
-                    ', ' +
-                    p[0][0][1] +
-                    ', ' +
-                    p[0][0][2] +
-                    '))'
                 }
-              }
-              if (site.settings.color_by_order) {
-                this.ticks.center.classList.add('hidden')
-                this.ticks.min.firstElementChild.firstElementChild.innerText = '# ' + (summary.n[y] ? summary.n[y] : 0)
-                this.ticks.max.firstElementChild.firstElementChild.innerText = '# ' + (summary.n[y] ? 1 : 0)
-              } else {
-                this.ticks.center.classList.remove('hidden')
-                this.ticks.min.firstElementChild.firstElementChild.innerText = summary.n[y]
-                  ? isFinite(summary.min[y])
-                    ? site.data.format_value(summary.min[y], this.integer)
-                    : 'unknown'
-                  : 'unknown'
-                this.ticks.max.firstElementChild.firstElementChild.innerText = summary.n[y]
-                  ? isFinite(summary.max[y])
-                    ? site.data.format_value(summary.max[y], this.integer)
-                    : 'unknown'
-                  : 'unknown'
-                if ('none' !== site.settings.color_scale_center) {
-                  this.ticks.center.firstElementChild.lastElementChild.innerText =
-                    summary_levels[site.settings.summary_selection] + ' ' + site.settings.color_scale_center
-                  this.ticks.center.firstElementChild.children[1].innerText = site.data.format_value(
-                    summary[site.settings.color_scale_center][y]
-                  )
-                  this.ticks.center.style.left = summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
+                if (site.settings.color_by_order) {
+                  this.ticks.center.classList.add('hidden')
+                  this.ticks.min.firstElementChild.firstElementChild.innerText =
+                    '# ' + (summary.n[y] ? summary.n[y] : 0)
+                  this.ticks.max.firstElementChild.firstElementChild.innerText = '# ' + (summary.n[y] ? 1 : 0)
                 } else {
-                  this.ticks.center.firstElementChild.lastElementChild.innerText =
-                    summary_levels[site.settings.summary_selection] + ' median'
-                  this.ticks.center.firstElementChild.children[1].innerText = site.data.format_value(summary.median[y])
-                  this.ticks.center.style.left = summary.norm_median[y] * 100 + '%'
-                }
-                if (2 === this.parts.scale.childElementCount) {
-                  if ('none' === site.settings.color_scale_center) {
-                    this.parts.scale.firstElementChild.style.width = '50%'
-                    this.parts.scale.lastElementChild.style.width = '50%'
+                  this.ticks.center.classList.remove('hidden')
+                  this.ticks.min.firstElementChild.firstElementChild.innerText = summary.n[y]
+                    ? isFinite(summary.min[y])
+                      ? site.data.format_value(summary.min[y], this.integer)
+                      : 'unknown'
+                    : 'unknown'
+                  this.ticks.max.firstElementChild.firstElementChild.innerText = summary.n[y]
+                    ? isFinite(summary.max[y])
+                      ? site.data.format_value(summary.max[y], this.integer)
+                      : 'unknown'
+                    : 'unknown'
+                  if ('none' !== site.settings.color_scale_center) {
+                    this.ticks.center.firstElementChild.lastElementChild.innerText =
+                      summary_levels[site.settings.summary_selection] + ' ' + site.settings.color_scale_center
+                    this.ticks.center.firstElementChild.children[1].innerText = site.data.format_value(
+                      summary[site.settings.color_scale_center][y]
+                    )
+                    this.ticks.center.style.left = summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
                   } else {
-                    this.parts.scale.firstElementChild.style.width =
-                      summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
-                    this.parts.scale.lastElementChild.style.width =
-                      100 - summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
+                    this.ticks.center.firstElementChild.lastElementChild.innerText =
+                      summary_levels[site.settings.summary_selection] + ' median'
+                    this.ticks.center.firstElementChild.children[1].innerText = site.data.format_value(
+                      summary.median[y]
+                    )
+                    this.ticks.center.style.left = summary.norm_median[y] * 100 + '%'
                   }
+                  if (2 === this.parts.scale.childElementCount) {
+                    if ('none' === site.settings.color_scale_center) {
+                      this.parts.scale.firstElementChild.style.width = '50%'
+                      this.parts.scale.lastElementChild.style.width = '50%'
+                    } else {
+                      this.parts.scale.firstElementChild.style.width =
+                        summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
+                      this.parts.scale.lastElementChild.style.width =
+                        100 - summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
+                    }
+                  }
+                  this.ticks.center.style.marginLeft = -this.ticks.center.getBoundingClientRect().width / 2 + 'px'
                 }
-                this.ticks.center.style.marginLeft = -this.ticks.center.getBoundingClientRect().width / 2 + 'px'
               }
             }
           },
@@ -3497,27 +3478,25 @@ void (function () {
     }
 
     function init() {
-      var k, i, e, ee, c, n, o, cond, v
+      var k, i, e, ee, c, n, o, v
       defaults.dataset = site.metadata.datasets[0]
 
       // initialize inputs
       Object.keys(_u).forEach(k => {
-        if (Object.hasOwn(elements, _u[k].type)) {
-          o = _u[k]
+        if (_u[k].type in elements) {
+          const o = _u[k]
           // resolve options
           if (o.options_source) {
             if (patterns.palette.test(o.options_source)) {
-              for (v in palettes) if (Object.hasOwn(palettes, v)) o.add(v, palettes[v].name)
+              Object.keys(palettes).forEach(v => o.add(v, palettes[v].name))
               o.options = o.e.getElementsByTagName(o.type === 'select' ? 'option' : 'input')
               o.reset()
             } else if (patterns.datasets.test(o.options_source)) {
-              for (i = site.metadata.datasets.length; i--; ) {
-                o.add(i, site.metadata.datasets[i], site.data.format_label(site.metadata.datasets[i]))
-              }
+              site.metadata.datasets.forEach(d => o.add(i, d, site.data.format_label(d)))
               o.options = o.e.getElementsByTagName(o.type === 'select' ? 'option' : 'input')
             } else {
               o.option_sets = {}
-              v = valueOf(o.dataset) || defaults.dataset
+              const v = valueOf(o.dataset) || defaults.dataset
               if (Object.hasOwn(site.metadata.info, v)) {
                 if (patterns.ids.test(o.options_source)) {
                   fill_ids_options(o, v, o.option_sets)
@@ -3661,6 +3640,7 @@ void (function () {
           }
           // add listeners
           if ('select' === o.type || 'number' === o.type) {
+            if (!o.subset) o.subset = 'all'
             o.e.addEventListener('input', o.listen)
             if (
               o.e.parentElement.lastElementChild &&
@@ -3668,21 +3648,21 @@ void (function () {
             ) {
               o.e.parentElement.lastElementChild.addEventListener('click', o.reset)
             }
-            if (Object.hasOwn(site, o.type) && Object.hasOwn(site[o.type], o.id)) {
+            if (o.type in site && o.id in site[o.type]) {
               o.filters = site[o.type][o.id]
               o.current_filter = {}
               Object.keys(o.filters).forEach(f => {
-                add_dependency(f, {type: 'filter', id: o.id})
+                add_dependency(o.filters[f], {type: 'filter', id: o.id})
               })
               o.filter = function () {
-                var k, i, pass, last
                 Object.keys(this.filters).forEach(f => {
-                  this.current_filter[k] = valueOf(this.filters[k])
+                  this.current_filter[f] = valueOf(this.filters[f])
                 })
+                var last
                 this.values.forEach((v, i) => {
-                  pass = false
+                  var pass = false
                   if (Object.hasOwn(site.data.variables, v) && Object.hasOwn(site.data.variables[v], 'meta')) {
-                    for (k in this.current_filter)
+                    for (const k in this.current_filter)
                       if (Object.hasOwn(site.data.variables[v].meta, k)) {
                         pass = site.data.variables[v].meta[k] === this.current_filter[k]
                         if (!pass) break
@@ -3721,7 +3701,8 @@ void (function () {
       })
       // initialize dataviews
       Object.keys(site.dataviews).forEach(k => {
-        _u[k] = e = site.dataviews[k]
+        const e = site.dataviews[k]
+        _u[k] = e
         e.id = k
         e.value = function () {
           if (this.get) {
@@ -3736,47 +3717,46 @@ void (function () {
             )
           }
         }.bind(e)
-        if ('string' === typeof e.palette && Object.hasOwn(_u, e.palette)) {
+        if ('string' === typeof e.palette && e.palette in _u) {
           add_dependency(e.palette, {type: 'dataview', id: k})
         }
-        if ('string' === typeof e.dataset && Object.hasOwn(_u, e.dataset)) {
+        if ('string' === typeof e.dataset && e.dataset in _u) {
           add_dependency(e.dataset, {type: 'dataview', id: k})
         }
-        if ('string' === typeof e.ids && Object.hasOwn(_u, e.ids)) {
+        if ('string' === typeof e.ids && e.ids in _u) {
           add_dependency(e.ids, {type: 'dataview', id: k})
         }
         e.time_range = {variable: '', index: [], time: [], filtered: []}
         add_dependency(k, {type: 'time_range', id: k})
-        if (Object.hasOwn(_u, e.x)) {
+        if (e.x in _u) {
           add_dependency(e.x, {type: 'time_range', id: k})
         }
-        if (Object.hasOwn(_u, e.y)) {
+        if (e.y in _u) {
           add_dependency(e.y, {type: 'time_range', id: k})
         }
-        for (cond in e.features)
-          if (Object.hasOwn(e.features, cond)) {
-            if ('string' === typeof e.features[cond] && Object.hasOwn(_u, e.features[cond])) {
-              add_dependency(e.features[cond], {type: 'dataview', id: k})
-            }
+        Object.keys(e.features).forEach(f => {
+          if ('string' === typeof e.features[f] && e.features[f] in _u) {
+            add_dependency(e.features[f], {type: 'dataview', id: k})
           }
+        })
         if (e.variables)
-          for (i = e.variables.length; i--; ) {
-            if (Object.hasOwn(e.variables[i], 'variable')) {
-              if (Object.hasOwn(_u, e.variables[i].variable)) {
-                add_dependency(e.variables[i].variable, {type: 'dataview', id: k})
+          e.variables.forEach(v => {
+            if (Object.hasOwn(v, 'variable')) {
+              if (Object.hasOwn(_u, v.variable)) {
+                add_dependency(v.variable, {type: 'dataview', id: k})
               }
             } else e.variables.splice(i, 1)
-            if (Object.hasOwn(e.variables[i], 'type')) {
-              if (Object.hasOwn(_u, e.variables[i].type)) {
-                add_dependency(e.variables[i].type, {type: 'dataview', id: k})
+            if (Object.hasOwn(v, 'type')) {
+              if (Object.hasOwn(_u, v.type)) {
+                add_dependency(v.type, {type: 'dataview', id: k})
               }
-            } else e.variables[i].type = '='
-            if (Object.hasOwn(e.variables[i], 'value')) {
-              if (Object.hasOwn(_u, e.variables[i].value)) {
-                add_dependency(e.variables[i].value, {type: 'dataview', id: k})
+            } else v.type = '='
+            if (Object.hasOwn(v, 'value')) {
+              if (Object.hasOwn(_u, v.value)) {
+                add_dependency(v.value, {type: 'dataview', id: k})
               }
-            } else e.variables[i].value = 0
-          }
+            } else v.value = 0
+          })
         compile_dataview(e)
         conditionals.dataview(e)
         e.reparse()
@@ -4379,16 +4359,17 @@ void (function () {
 
     function global_update() {
       meta.retain_state = false
-      for (var k in _u) if (Object.hasOwn(_u, k)) request_queue(k)
+      Object.keys(_u).forEach(request_queue)
     }
 
     function global_reset() {
       meta.retain_state = false
-      for (var k in _u)
-        if (Object.hasOwn(_u, k) && !_u[k].setting && _u[k].reset) {
+      Object.keys(_u).forEach(k => {
+        if (!_u[k].setting && _u[k].reset) {
           _u[k].reset()
           request_queue(k)
         }
+      })
     }
 
     function request_queue(id) {
@@ -4400,26 +4381,28 @@ void (function () {
 
     function run_queue() {
       clearTimeout(queue._timeout)
-      var k, s, d
-      for (k in queue)
-        if ('_timeout' !== k && Object.hasOwn(queue, k) && queue[k]) {
-          if ((d = refresh_conditions(k))) {
+      Object.keys(queue).forEach(k => {
+        if ('_timeout' !== k && queue[k]) {
+          const d = refresh_conditions(k)
+          if (d) {
             site.data.data_queue[d][k] = run_queue
             if (site.data.loaded[d]) site.data.load_id_maps()
             return false
           }
           queue[k] = false
         }
-      k = get_options_url()
+      })
+      const k = get_options_url()
       if (site.data.inited.first && k !== site.state) {
         site.state = k
-        for (s in site.url_options)
-          if (Object.hasOwn(site.url_options, s) && patterns.embed_setting.test(s))
+        Object.keys(site.url_options).forEach(s => {
+          if (patterns.embed_setting.test(s))
             k +=
               '&' +
               s +
               '=' +
               ('navcolor' === s ? site.url_options[s].replace(patterns.hashes, '%23') : site.url_options[s])
+        })
         if (!site.settings.hide_url_parameters) {
           window.history.replaceState(Date.now(), '', k)
         }
@@ -4429,15 +4412,9 @@ void (function () {
 
     function refresh_conditions(id) {
       if (Object.hasOwn(_c, id)) {
-        var c = _u[id],
+        const c = _u[id],
           d = _c[id],
-          i,
-          ci,
-          n,
           r = [],
-          pass,
-          k,
-          ch,
           v = c && c.value() + '',
           dd = (c && c.dataset && valueOf(c.dataset)) || v
         if (c && (!meta.retain_state || c.state !== v)) {
@@ -4446,43 +4423,48 @@ void (function () {
             return dd
           }
           c.state = v
-          for (i = d.length; i--; ) {
-            if ('rule' === d[i].type) {
-              if (-1 === r.indexOf(d[i].rule)) {
-                r.push(site.rules[d[i].rule])
+          d.forEach(di => {
+            if ('rule' === di.type) {
+              if (-1 === r.indexOf(di.rule)) {
+                r.push(site.rules[di.rule])
               }
             } else {
-              if ('function' === typeof _u[d[i].id][d[i].type]) {
-                _u[d[i].id][d[i].type]()
+              if ('function' === typeof _u[di.id][di.type]) {
+                _u[di.id][di.type]()
               } else {
-                conditionals[d[i].type](_u[d[i].id], c)
+                conditionals[di.type](_u[di.id], c)
               }
             }
-          }
-          for (i = r.length; i--; ) {
-            for (n = r[i].condition.length, ci = 0; ci < n; ci++) {
-              pass = r[i].condition[ci].check()
-              if (r[i].condition[ci].any ? pass : !pass) break
+          })
+          r.forEach(ri => {
+            const n = ri.condition.length
+            var pass
+            for (let i = 0; i < n; i++) {
+              pass = ri.condition[i].check()
+              if (ri.condition[i].any ? pass : !pass) break
             }
-            for (k in r[i].effects)
+            Object.keys(ri.effects).forEach(k => {
+              const e = ri.effects[k]
               if (pass) {
                 if (k === 'display') {
-                  r[i].effects[k].e.classList.remove('hidden')
+                  e.e.classList.remove('hidden')
                 } else if (Object.hasOwn(_u, k)) {
-                  _u[k].set(valueOf(r[i].effects[k]))
+                  _u[k].set(valueOf(e))
                 }
               } else if (k === 'display') {
-                r[i].effects[k].e.classList.add('hidden')
-                if (r[i].effects[k].u) r[i].effects[k].u.reset()
-                for (ch = r[i].effects[k].e.getElementsByClassName('auto-input'), ci = ch.length; ci--; ) {
-                  if (Object.hasOwn(_u, ch[ci].id)) _u[ch[ci].id].reset()
+                e.e.classList.add('hidden')
+                if (e.u) e.u.reset()
+                const ch = e.e.getElementsByClassName('auto-input')
+                for (let i = ch.length; i--; ) {
+                  if (Object.hasOwn(_u, ch[i].id)) _u[ch[i].id].reset()
                 }
-              } else if (Object.hasOwn(r[i], 'default')) {
+              } else if (Object.hasOwn(ri, 'default')) {
                 if (Object.hasOwn(_u, k)) {
-                  _u[k].set(valueOf(r[i].default))
+                  _u[k].set(valueOf(ri.default))
                 }
               }
-          }
+            })
+          })
           if (id === meta.lock_after) meta.retain_state = true
         }
       }
@@ -4518,31 +4500,30 @@ void (function () {
           .addOverlay(this.overlay, 'Overlay')
           .addTo(this.map)
         this.tiles = {}
-        var k, i, f, has_time, mapId
-        if (Object.hasOwn(site.map, this.id)) {
+        if (this.id in site.map) {
+          const tiles = site.map[this.id].tiles
           site.map[this.id].u = this
-          if (site.map[this.id].tiles) {
-            if (site.map[this.id].tiles.url) {
-              this.tiles[theme] = L.tileLayer(site.map[this.id].tiles.url, site.map[this.id].tiles.options)
+          if (tiles) {
+            if (tiles.url) {
+              this.tiles[theme] = L.tileLayer(tiles.url, tiles.options)
               this.tiles[theme].addTo(this.map)
             } else {
-              for (k in site.map[this.id].tiles)
-                if (Object.hasOwn(site.map[this.id].tiles, k)) {
-                  this.tiles[k] = L.tileLayer(site.map[this.id].tiles[k].url, site.map[this.id].tiles[k].options)
-                  if (theme === k) this.tiles[k].addTo(this.map)
-                }
+              Object.keys(tiles).forEach(k => {
+                this.tiles[k] = L.tileLayer(tiles[k].url, tiles[k].options)
+                if (theme === k) this.tiles[k].addTo(this.map)
+              })
             }
           }
-          if (!Object.hasOwn(site.map, '_raw')) site.map._raw = {}
-          if (!Object.hasOwn(site.map, '_queue')) site.map._queue = {}
-          if (!Object.hasOwn(site.map[this.id], '_layers')) site.map[this.id]._layers = {}
-          for (i = site.map[this.id].shapes.length; i--; ) {
-            has_time = Object.hasOwn(site.map[this.id].shapes[i], 'time')
+          if (!('_raw' in site.map)) site.map._raw = {}
+          if (!('_queue' in site.map)) site.map._queue = {}
+          if (!('_layers' in site.map[this.id])) site.map[this.id]._layers = {}
+          site.map[this.id].shapes.forEach((shape, i) => {
+            const has_time = 'time' in shape
             if (!site.map[this.id].has_time && has_time) {
               site.map[this.id].has_time = true
               add_dependency(this.view, {type: 'update', id: this.id})
               site.map[this.id].match_time =
-                'exact' === site.map[this.id].shapes[i].resolution
+                'exact' === shape.resolution
                   ? time => {
                       return time + ''
                     }
@@ -4550,40 +4531,37 @@ void (function () {
                       return String(time).substring(0, 3) + '0'
                     }
             }
-            k = site.map[this.id].shapes[i].name
-            if (!k)
-              site.map[this.id].shapes[i].name = k = site.metadata.datasets[i < site.metadata.datasets.length ? i : 0]
-            mapId = k + (has_time ? site.map[this.id].shapes[i].time : '')
-            site.map._queue[mapId] = site.map[this.id].shapes[i]
+            var k = shape.name
+            if (!k) shape.name = k = site.metadata.datasets[i < site.metadata.datasets.length ? i : 0]
+            const mapId = k + (has_time ? shape.time : '')
+            site.map._queue[mapId] = shape
             site.data.inited[mapId + this.id] = false
             if (
               site.data.loaded[k] &&
               (k === mapId ||
-                site.map[this.id].shapes[i].time ==
-                  site.map[this.id].match_time(site.data.meta.overall.value[_u[this.view].parsed.time_agg]))
+                shape.time == site.map[this.id].match_time(site.data.meta.overall.value[_u[this.view].parsed.time_agg]))
             )
-              retrieve_layer(this, site.map[this.id].shapes[i])
-          }
+              retrieve_layer(this, shape)
+          })
           site.map[this.id].triggers = {}
           if (site.map[this.id].overlays)
-            for (i = site.map[this.id].overlays.length; i--; ) {
-              if ('string' === typeof site.map[this.id].overlays[i].source)
-                site.map[this.id].overlays[i].source = [{url: site.map[this.id].overlays[i].source}]
-              const source = site.map[this.id].overlays[i].source
+            site.map[this.id].overlays.forEach(l => {
+              if ('string' === typeof l.source) l.source = [{url: l.source}]
+              const source = l.source
               source.forEach(s => {
                 s.retrieved = Object.hasOwn(site.map._raw, s.url)
                 site.map._queue[s.url] = s
               })
-              site.map[this.id].triggers[site.map[this.id].overlays[i].variable] = {source}
-              const fs = site.map[this.id].overlays[i].filter
+              site.map[this.id].triggers[l.variable] = {source}
+              const fs = l.filter
               if (fs) {
                 const fa = Array.isArray(fs) ? fs : [fs]
-                site.map[this.id].triggers[site.map[this.id].overlays[i].variable].filter = fa
-                for (f = fa.length; f--; ) {
-                  fa[f].check = site.data.checks[fa[f].operator]
-                }
+                site.map[this.id].triggers[l.variable].filter = fa
+                fa.forEach(f => {
+                  f.check = site.data.checks[f.operator]
+                })
               }
-            }
+            })
         }
       } else {
         this.deferred = true
