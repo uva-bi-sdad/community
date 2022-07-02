@@ -4,7 +4,8 @@
 \alias{page_navbar}
 \title{Add a navbar (header) section to a website}
 \usage{
-page_navbar(..., title = "", logo = "", breakpoint = "md")
+page_navbar(..., title = "", logo = "", breakpoint = "md",
+  logo.height = "24px", logo.width = "24px")
 }
 \arguments{
 \item{...}{Content to add to the navbar. Can be lists specifying submenus and their items.}
@@ -19,6 +20,10 @@ Each list can have entries for \code{"name"} (the navbar button text), \code{"ti
 
 \item{breakpoint}{Bootstrap breakpoint code specifying the width at which the menu collapses;
 default is \code{"md"}.}
+
+\item{logo.height}{Character or number setting the height of the logo.}
+
+\item{logo.width}{Character or number setting the width of the logo.}
 }
 \value{
 A character vector of the content to be added.

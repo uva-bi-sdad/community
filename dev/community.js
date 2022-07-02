@@ -355,7 +355,7 @@ void (function () {
             var c,
               first_all = '',
               summary_state = site.settings.summary_selection
-            if (site.data.inited[f.parsed.dataset]) {
+            if (site.data.inited[f.parsed.dataset] && site.variable_monitor.size) {
               f.valid = true
               f.n_selected.ids = 0
               f.n_selected.children = 0
@@ -391,7 +391,6 @@ void (function () {
                   f.n_selected.variables++
                   c.all++
                 }
-
                 if (c.dataset) {
                   f.selection.dataset[id] = site.data.entities[id]
                   f.n_selected.dataset++
@@ -419,7 +418,7 @@ void (function () {
               if (first_all && summary_state !== f.summary_state) {
                 f.summary_state = summary_state
                 const time = site.data.meta.times[f.parsed.dataset].name
-                Object.keys(site.data.variables).forEach(id => {
+                site.variable_monitor.forEach((ch, id) => {
                   if (id !== time && f.parsed.dataset in site.data.variables[id].time_range)
                     site.data.calculate_summary(id, f.id, true)
                 })
@@ -476,13 +475,14 @@ void (function () {
             tv = u.time ? valueOf(u.time) : defaults.time,
             t = Object.hasOwn(site.data.variables, tv) ? site.data.variables[tv].info[d].min : '',
             s = _c[u.id + '_time'],
-            variable = Object.hasOwn(site.data.variables, v) ? v : valueOf(u.y)
+            variable = v in site.data.variables ? v : valueOf(u.y)
           if (!site.data.inited[d]) return void 0
           var r = site.data.variables[variable]
           if (r) {
-            if (!Object.hasOwn(r, u.id)) {
-              return site.data.init_summaries(d).then(function () {
-                elements.dataview.time_range(u, c, passive)
+            if (!site.data.inited_summary[d + '_' + variable]) {
+              return site.data.init_summary(variable, d).then(() => {
+                site.data.calculate_summary(variable, u.id, true)
+                conditionals.time_range(u, c, passive)
               })
             }
             r = r.time_range[d]
@@ -1597,7 +1597,8 @@ void (function () {
             this.dataset = v.get.dataset()
             if (y && !Object.hasOwn(site.data.meta.times, this.dataset)) return
             this.time_agg = y ? y.value() - site.data.meta.times[this.dataset].range[0] : 0
-            this.time = this.v ? this.time_agg - site.data.variables[this.v].time_range[this.dataset][0] : 0
+            const time_range = this.v && site.data.variables[this.v].time_range[this.dataset]
+            this.time = time_range ? this.time_agg - time_range[0] : 0
             if (!this.processed) {
               this.processed = true
               if (this.view) {
@@ -1625,8 +1626,7 @@ void (function () {
                 this.parts.title.temp.innerText = this.parts.title.get(entity, caller)
               }
               if (this.parts.body) {
-                for (i = this.parts.body.rows.length; i--; ) {
-                  p = this.parts.body.rows[i]
+                this.parts.body.rows.forEach(p => {
                   if (p.name.ref) {
                     if (p.name.value_source) p.name.value_source = p.value.text
                     e = p.name.get(entity, caller)
@@ -1641,7 +1641,7 @@ void (function () {
                       p.temp.lastElementChild.innerText = parse_variables(e, p.value.parsed.variables, this, entity)
                     }
                   }
-                }
+                })
               }
             } else if (!this.options.floating) {
               clearTimeout(this.queue)
@@ -2490,9 +2490,12 @@ void (function () {
       },
       subs = {},
       rule_conditions = {},
+      keys = {},
       _u = {},
       _c = {},
       tree = {}
+
+    site.variable_monitor = new Map()
 
     document.body.className =
       (window.localStorage && 'true' === window.localStorage.getItem('theme_dark')) || site.settings.theme_dark
@@ -3354,15 +3357,16 @@ void (function () {
             },
           }
           if (_u[k].source) _u[k].values.push(_u[k].source)
-          for (p = {}, i = _u[k].states.length; i--; ) {
-            _u[k].values.push(_u[k].states[i].value)
-            for (ci = _u[k].states[i].condition.length; ci--; ) {
-              if (!Object.hasOwn(p, _u[k].states[i].condition[ci].id)) {
-                p[_u[k].states[i].condition[ci].id] = {type: 'update', id: k}
+          p = {}
+          _u[k].states.forEach(si => {
+            _u[k].values.push(si.value)
+            si.condition.forEach(c => {
+              if (!Object.hasOwn(p, c.id)) {
+                p[c.id] = {type: 'update', id: k}
               }
-            }
-          }
-          for (k in p) if (Object.hasOwn(p, k)) add_dependency(k, p[k])
+            })
+          })
+          Object.keys(p).forEach(k => add_dependency(k, p[k]))
         }
       }
 
@@ -3396,6 +3400,7 @@ void (function () {
         }
       }
 
+      keys._u = Object.keys(_u)
       window.addEventListener('resize', content_resize)
 
       if (!site.metadata.datasets) drop_load_screen()
@@ -3407,6 +3412,7 @@ void (function () {
           onload: function () {
             setTimeout(drop_load_screen, 250)
             content_resize()
+            delete this.onload
           },
           data_load: function () {
             Object.keys(_c).forEach(request_queue)
@@ -3461,7 +3467,7 @@ void (function () {
 
     function get_options_url() {
       var s = ''
-      Object.keys(_u).forEach(k => {
+      keys._u.forEach(k => {
         if (_u[k].input && !patterns.settings.test(k)) {
           const v = _u[k].value()
           if ('' !== v && null != v && '-1' != v) s += (s ? '&' : '?') + k + '=' + v
@@ -3475,7 +3481,7 @@ void (function () {
       defaults.dataset = site.metadata.datasets[0]
 
       // initialize inputs
-      Object.keys(_u).forEach(k => {
+      keys._u.forEach(k => {
         if (_u[k].type in elements) {
           const o = _u[k]
           // resolve options
@@ -3727,25 +3733,26 @@ void (function () {
         if (e.y in _u) {
           add_dependency(e.y, {type: 'time_range', id: k})
         }
-        Object.keys(e.features).forEach(f => {
-          if ('string' === typeof e.features[f] && e.features[f] in _u) {
-            add_dependency(e.features[f], {type: 'dataview', id: k})
-          }
-        })
+        if (e.features)
+          Object.keys(e.features).forEach(f => {
+            if ('string' === typeof e.features[f] && e.features[f] in _u) {
+              add_dependency(e.features[f], {type: 'dataview', id: k})
+            }
+          })
         if (e.variables)
           e.variables.forEach(v => {
-            if (Object.hasOwn(v, 'variable')) {
-              if (Object.hasOwn(_u, v.variable)) {
+            if ('variable' in v) {
+              if (v.variable in _u) {
                 add_dependency(v.variable, {type: 'dataview', id: k})
               }
             } else e.variables.splice(i, 1)
-            if (Object.hasOwn(v, 'type')) {
-              if (Object.hasOwn(_u, v.type)) {
+            if ('type' in v) {
+              if (v.type in _u) {
                 add_dependency(v.type, {type: 'dataview', id: k})
               }
             } else v.type = '='
-            if (Object.hasOwn(v, 'value')) {
-              if (Object.hasOwn(_u, v.value)) {
+            if ('value' in v) {
+              if (v.value in _u) {
                 add_dependency(v.value, {type: 'dataview', id: k})
               }
             } else v.value = 0
@@ -3766,16 +3773,16 @@ void (function () {
           e: e,
         }
         if (o.note) o.e.addEventListener('mouseover', tooltip_trigger.bind(o))
-        o.options = Object.hasOwn(site, o.type) ? site[o.type][o.id] : void 0
-        if (Object.hasOwn(elements, o.type)) {
-          if (Object.hasOwn(elements[o.type], 'update')) o.update = elements[o.type].update.bind(o)
-        }
+        o.options = o.type in site ? site[o.type][o.id] : void 0
+        if (o.type in elements && 'update' in elements[o.type]) o.update = elements[o.type].update.bind(o)
         if (o.options) {
-          if (Object.hasOwn(o.options, 'options')) o.options = o.options.options
-          for (k in o.options) if (Object.hasOwn(_u, o.options[k])) o.reference_options[k] = o.options[k]
-          if (Object.hasOwn(o.options, 'subto')) {
+          if ('options' in o.options) o.options = o.options.options
+          Object.keys(o.options).forEach(k => {
+            if (o.options[k] in _u) o.reference_options[k] = o.options[k]
+          })
+          if ('subto' in o.options) {
             if ('string' === typeof o.options.subto) o.options.subto = [o.options.subto]
-            for (v = o.options.subto.length; v--; ) add_subs(o.options.subto[v], o)
+            o.options.subto.forEach(v => add_subs(v, o))
           }
         }
         _u[o.id] = o
@@ -3944,6 +3951,8 @@ void (function () {
 
       e.variable_filters.appendChild(document.createElement('div'))
       e.variable_filters.lastElementChild.className = 'row'
+
+      keys._u = Object.keys(_u)
     }
 
     function valueOf(v) {
@@ -4350,14 +4359,40 @@ void (function () {
       } else page.modal.info.references.classList.add('hidden')
     }
 
+    async function refresh_variable_monitor() {
+      site.variable_monitor.clear()
+      const vars = site.data.variables
+      keys._u.forEach(k => {
+        const u = _u[k]
+        if (u.v && u.v in vars) site.variable_monitor.set(u.v, true)
+        if (u.parsed) {
+          if (u.parsed.x && u.parsed.x in vars) site.variable_monitor.set(u.parsed.x, true)
+          if (u.parsed.y && u.parsed.y in vars) site.variable_monitor.set(u.parsed.y, true)
+          if (u.parsed.color && u.parsed.color in vars) site.variable_monitor.set(u.parsed.color, true)
+          if (u.parsed.variable_values) {
+            u.parsed.variable_values.forEach(f => {
+              site.variable_monitor.set(f.name, true)
+            })
+          }
+        }
+      })
+      site.variable_monitor.forEach((ck, v) => {
+        Object.keys(site.data.sets).forEach(async d => {
+          if (!(d + '_' + v in site.data.inited_summary)) {
+            await site.data.init_summary(v, d)
+          }
+        })
+      })
+    }
+
     function global_update() {
       meta.retain_state = false
-      Object.keys(_u).forEach(request_queue)
+      keys._u.forEach(request_queue)
     }
 
     function global_reset() {
       meta.retain_state = false
-      Object.keys(_u).forEach(k => {
+      keys._u.forEach(k => {
         if (!_u[k].setting && _u[k].reset) {
           _u[k].reset()
           request_queue(k)
@@ -4372,8 +4407,9 @@ void (function () {
       meta.lock_after = id
     }
 
-    function run_queue() {
+    async function run_queue() {
       clearTimeout(queue._timeout)
+      await refresh_variable_monitor()
       Object.keys(queue).forEach(k => {
         if ('_timeout' !== k && queue[k]) {
           const d = refresh_conditions(k)

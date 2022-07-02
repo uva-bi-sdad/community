@@ -11,6 +11,8 @@
 #' (a list of menu items).
 #' @param breakpoint Bootstrap breakpoint code specifying the width at which the menu collapses;
 #' default is \code{"md"}.
+#' @param logo.height Character or number setting the height of the logo.
+#' @param logo.width Character or number setting the width of the logo.
 #' @examples
 #' page_navbar(
 #'   title = "Site Name",
@@ -23,7 +25,7 @@
 #' @return A character vector of the content to be added.
 #' @export
 
-page_navbar <- function(..., title = "", logo = "", breakpoint = "md") {
+page_navbar <- function(..., title = "", logo = "", breakpoint = "md", logo.height = "24px", logo.width = "24px") {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   parts <- new.env()
@@ -36,7 +38,7 @@ page_navbar <- function(..., title = "", logo = "", breakpoint = "md") {
     '<div class="container-fluid">',
     if (!missing(logo)) {
       paste0(
-        '<span class="navbar-brand"><img alt="site logo" height="24px" src="', logo, '">'
+        '<span class="navbar-brand"><img alt="site logo" height=', logo.height, " width=", logo.width, ' src="', logo, '">'
       )
     },
     if (!missing(title)) paste0("<span>", title, "</span>"),

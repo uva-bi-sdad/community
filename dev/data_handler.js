@@ -34,6 +34,7 @@ function DataHandler(settings, defaults, data, hooks) {
   }
   this.loaded = {}
   this.inited = {}
+  this.inited_summary = {}
   this.sets = {}
   this.data_maps = {}
   this.data_queue = {}
@@ -449,7 +450,7 @@ DataHandler.prototype = {
     }
   },
   format_label: function (l) {
-    return Object.hasOwn(this.variables, l) && this.variables[l].meta && this.variables[l].meta.short_name
+    return l in this.variables && this.variables[l].meta && this.variables[l].meta.short_name
       ? this.variables[l].meta.short_name
       : l.replace(patterns.seps, ' ').replace(patterns.word_start, function (w) {
           return w.toUpperCase()
@@ -628,9 +629,10 @@ DataHandler.prototype = {
       }
     }
   },
-  init_summaries: async function (d) {
+  init_summary: async function (v, d) {
     Object.keys(this.in_browser ? site.dataviews : {default_view: true}).forEach(view => {
-      Object.keys(this.variables).forEach(v => {
+      if (!this.inited_summary[d + '_' + v]) {
+        this.inited_summary[d + '_' + v] = true
         const vi = this.variables[v]
         if (!Object.hasOwn(vi, view)) vi[view] = {order: {}, selected_order: {}, selected_summaries: {}, summaries: {}}
         if (!Object.hasOwn(vi.time_range, d)) {
@@ -779,159 +781,161 @@ DataHandler.prototype = {
           Object.seal(m.selected_summaries[d])
           Object.seal(m.summaries[d])
         }
-      })
+      }
     })
   },
-  calculate_summary: async function (measure, view, full) {
-    if (!Object.hasOwn(this.variables[measure], view))
-      this.variables[measure][view] = JSON.parse(JSON.stringify(this.variables[measure][this.defaults.dataview]))
-    const v = this.settings.dataviews[view],
-      s = v.selection[this.settings.settings.summary_selection],
-      a = v.selection.all,
-      dataset = v.get.dataset(),
-      m = this.variables[measure][view],
-      mo = m.order[dataset],
-      mso = m.selected_order[dataset],
-      mss = m.selected_summaries[dataset],
-      ms = m.summaries[dataset],
-      ny = this.variables[measure].time_range[dataset][2],
-      order = this.variables[measure].info[dataset].order,
-      levels = this.variables[measure].levels_ids,
-      subset = v.n_selected[this.settings.summary_selection] !== v.n_selected.dataset
-    for (let y = ny; y--; ) {
-      mo[y] = subset ? [] : order[y]
-      mso[y] = subset ? [] : order[y]
-      mss.missing[y] = 0
-      mss.n[y] = 0
-      ms.missing[y] = 0
-      ms.n[y] = 0
-      if (levels) {
-        ms.mode[y] = ''
-        for (k in levels) if (Object.hasOwn(levels, k)) m.table[k][y] = 0
-      } else {
-        ms.sum[y] = 0
-        ms.mean[y] = 0
-        ms.max[y] = -Infinity
-        ms.min[y] = Infinity
-        ms.break_mean[y] = -1
-        ms.break_median[y] = -1
-      }
-    }
-    order.forEach((o, y) => {
-      let rank = v.n_selected[this.settings.settings.summary_selection]
-      for (let i = o.length; i--; ) {
-        const k = o[i][0],
-          value = o[i][1]
-        if (k in s) {
-          const en = s[k][view]
-          if (!y) {
-            if (!Object.hasOwn(en.summary, measure)) en.summary[measure] = {n: 0, overall: ms, order: mo}
-            en.summary[measure].n = 0
-          }
-          en.subset_rank[measure][y] = --rank
-          if (full && subset) {
-            mo[y].splice(0, 0, o[i])
-            if (Object.hasOwn(a, k)) {
-              mso[y].splice(0, 0, o[i])
-              if (levels ? Object.hasOwn(levels, value) : !isNaN(value)) {
-                mss.n[y]++
-              } else mss.missing[y]++
-            }
-          }
-          if (levels ? Object.hasOwn(levels, value) : !isNaN(value)) {
-            en.summary[measure].n++
-            ms.n[y]++
-            if (levels) {
-              m.table[value][y]++
-            } else {
-              ms.sum[y] += value
-              if (value > ms.max[y]) ms.max[y] = value
-              if (value < ms.min[y]) ms.min[y] = value
-            }
-          } else ms.missing[y]++
+  calculate_summary: function (measure, view, full) {
+    const v = this.settings.dataviews[view]
+    if (v.valid) {
+      if (!Object.hasOwn(this.variables[measure], view))
+        this.variables[measure][view] = JSON.parse(JSON.stringify(this.variables[measure][this.defaults.dataview]))
+      const s = v.selection[this.settings.settings.summary_selection],
+        a = v.selection.all,
+        dataset = v.get.dataset(),
+        m = this.variables[measure][view],
+        mo = m.order[dataset],
+        mso = m.selected_order[dataset],
+        mss = m.selected_summaries[dataset],
+        ms = m.summaries[dataset],
+        ny = this.variables[measure].time_range[dataset][2],
+        order = this.variables[measure].info[dataset].order,
+        levels = this.variables[measure].levels_ids,
+        subset = v.n_selected[this.settings.summary_selection] !== v.n_selected.dataset
+      for (let y = ny; y--; ) {
+        mo[y] = subset ? [] : order[y]
+        mso[y] = subset ? [] : order[y]
+        mss.missing[y] = 0
+        mss.n[y] = 0
+        ms.missing[y] = 0
+        ms.n[y] = 0
+        if (levels) {
+          ms.mode[y] = ''
+          for (k in levels) if (Object.hasOwn(levels, k)) m.table[k][y] = 0
+        } else {
+          ms.sum[y] = 0
+          ms.mean[y] = 0
+          ms.max[y] = -Infinity
+          ms.min[y] = Infinity
+          ms.break_mean[y] = -1
+          ms.break_median[y] = -1
         }
       }
-    })
-    if (full) {
-      mo.forEach((o, y) => {
-        if (levels) {
-          if (ms.n[y]) {
-            l = 0
-            Object.keys(m.table).forEach(k => {
-              if (m.table[k][y] > m.table[this.variables[measure].levels[l]][y]) l = levels[k]
-            })
-            ms.mode[y] = this.variables[measure].levels[l]
-          } else ms.mode[y] = NaN
-        } else {
-          if (ms.n[y]) {
-            ms.mean[y] = ms.sum[y] / ms.n[y]
-            if (!isFinite(ms.min[y])) ms.min[y] = ms.mean[y]
-            if (!isFinite(ms.max[y])) ms.max[y] = ms.mean[y]
-            ms.range[y] = ms.max[y] - ms.min[y]
-            if (1 === ms.n[y]) {
-              ms.q3[y] = ms.median[y] = ms.q1[y] = null == o[0][1] ? ms.mean[y] : o[0][1]
-            } else {
-              ms.median[y] = quantile(0.5, ms.n[y], ms.missing[y], o)
-              ms.q3[y] = quantile(0.75, ms.n[y], ms.missing[y], o)
-              ms.q1[y] = quantile(0.25, ms.n[y], ms.missing[y], o)
+      order.forEach((o, y) => {
+        let rank = v.n_selected[this.settings.settings.summary_selection]
+        for (let i = o.length; i--; ) {
+          const k = o[i][0],
+            value = o[i][1]
+          if (k in s) {
+            const en = s[k][view]
+            if (!y) {
+              if (!Object.hasOwn(en.summary, measure)) en.summary[measure] = {n: 0, overall: ms, order: mo}
+              en.summary[measure].n = 0
             }
-            const n = o.length
-            for (let i = ms.missing[y], bmd = false, bme = false; i < n; i++) {
-              if (!bmd && o[i][1] > ms.median[y]) {
-                ms.break_median[y] = i - 1
-                bmd = true
+            en.subset_rank[measure][y] = --rank
+            if (full && subset) {
+              mo[y].splice(0, 0, o[i])
+              if (Object.hasOwn(a, k)) {
+                mso[y].splice(0, 0, o[i])
+                if (levels ? Object.hasOwn(levels, value) : !isNaN(value)) {
+                  mss.n[y]++
+                } else mss.missing[y]++
               }
-              if (!bme && o[i][1] > ms.mean[y]) {
-                ms.break_mean[y] = i - 1
-                bme = true
+            }
+            if (levels ? Object.hasOwn(levels, value) : !isNaN(value)) {
+              en.summary[measure].n++
+              ms.n[y]++
+              if (levels) {
+                m.table[value][y]++
+              } else {
+                ms.sum[y] += value
+                if (value > ms.max[y]) ms.max[y] = value
+                if (value < ms.min[y]) ms.min[y] = value
               }
-              if (bmd && bme) break
-            }
-          } else {
-            ms.max[y] = 0
-            ms.q3[y] = 0
-            ms.median[y] = 0
-            ms.q1[y] = 0
-            ms.min[y] = 0
-          }
-          if (ms.n[y]) {
-            ms.norm_median[y] = ms.range[y] ? (ms.median[y] - ms.min[y]) / ms.range[y] : ms.median[y]
-            if (-1 !== ms.break_median[y]) {
-              ms.lower_median_min[y] = ms.norm_median[y] - (o[ms.missing[y]][1] - ms.min[y]) / ms.range[y]
-              ms.lower_median_range[y] =
-                ms.norm_median[y] - ((o[ms.break_median[y]][1] - ms.min[y]) / ms.range[y] - ms.lower_median_min[y])
-              ms.upper_median_min[y] = ms.norm_median[y] - (o[ms.break_median[y]][1] - ms.min[y]) / ms.range[y]
-              ms.upper_median_range[y] =
-                (o[o.length - 1][1] - ms.min[y]) / ms.range[y] - ms.norm_median[y] - ms.upper_median_min[y]
-            }
-            ms.norm_mean[y] = ms.range[y] ? (ms.mean[y] - ms.min[y]) / ms.range[y] : ms.mean[y]
-            if (-1 !== ms.break_mean[y]) {
-              ms.lower_mean_min[y] = ms.norm_mean[y] - (o[ms.missing[y]][1] - ms.min[y]) / ms.range[y]
-              ms.lower_mean_range[y] =
-                ms.norm_mean[y] - ((o[ms.break_mean[y]][1] - ms.min[y]) / ms.range[y] - ms.lower_mean_min[y])
-              ms.upper_mean_min[y] = ms.norm_mean[y] - (o[ms.break_mean[y]][1] - ms.min[y]) / ms.range[y]
-              ms.upper_mean_range[y] =
-                (o[o.length - 1][1] - ms.min[y]) / ms.range[y] - ms.norm_mean[y] - ms.upper_mean_min[y]
-            }
+            } else ms.missing[y]++
           }
         }
       })
-    } else {
-      for (let y = 0; y < ny; y++) {
-        if (ms.n[y]) {
+      if (full) {
+        mo.forEach((o, y) => {
           if (levels) {
-            q1 = 0
-            m.table.forEach(k => {
-              if (m.table[k][y] > m.table[this.variables[measure].levels[q1]][y]) q1 = levels[k]
-            })
-            ms.mode[y] = this.variables[measure].levels[q1]
-          } else ms.mean[y] = ms.sum[y] / ms.n[y]
-        } else {
-          ms[levels ? 'mode' : 'mean'][y] = NaN
+            if (ms.n[y]) {
+              l = 0
+              Object.keys(m.table).forEach(k => {
+                if (m.table[k][y] > m.table[this.variables[measure].levels[l]][y]) l = levels[k]
+              })
+              ms.mode[y] = this.variables[measure].levels[l]
+            } else ms.mode[y] = NaN
+          } else {
+            if (ms.n[y]) {
+              ms.mean[y] = ms.sum[y] / ms.n[y]
+              if (!isFinite(ms.min[y])) ms.min[y] = ms.mean[y]
+              if (!isFinite(ms.max[y])) ms.max[y] = ms.mean[y]
+              ms.range[y] = ms.max[y] - ms.min[y]
+              if (1 === ms.n[y]) {
+                ms.q3[y] = ms.median[y] = ms.q1[y] = null == o[0][1] ? ms.mean[y] : o[0][1]
+              } else {
+                ms.median[y] = quantile(0.5, ms.n[y], ms.missing[y], o)
+                ms.q3[y] = quantile(0.75, ms.n[y], ms.missing[y], o)
+                ms.q1[y] = quantile(0.25, ms.n[y], ms.missing[y], o)
+              }
+              const n = o.length
+              for (let i = ms.missing[y], bmd = false, bme = false; i < n; i++) {
+                if (!bmd && o[i][1] > ms.median[y]) {
+                  ms.break_median[y] = i - 1
+                  bmd = true
+                }
+                if (!bme && o[i][1] > ms.mean[y]) {
+                  ms.break_mean[y] = i - 1
+                  bme = true
+                }
+                if (bmd && bme) break
+              }
+            } else {
+              ms.max[y] = 0
+              ms.q3[y] = 0
+              ms.median[y] = 0
+              ms.q1[y] = 0
+              ms.min[y] = 0
+            }
+            if (ms.n[y]) {
+              ms.norm_median[y] = ms.range[y] ? (ms.median[y] - ms.min[y]) / ms.range[y] : ms.median[y]
+              if (-1 !== ms.break_median[y]) {
+                ms.lower_median_min[y] = ms.norm_median[y] - (o[ms.missing[y]][1] - ms.min[y]) / ms.range[y]
+                ms.lower_median_range[y] =
+                  ms.norm_median[y] - ((o[ms.break_median[y]][1] - ms.min[y]) / ms.range[y] - ms.lower_median_min[y])
+                ms.upper_median_min[y] = ms.norm_median[y] - (o[ms.break_median[y]][1] - ms.min[y]) / ms.range[y]
+                ms.upper_median_range[y] =
+                  (o[o.length - 1][1] - ms.min[y]) / ms.range[y] - ms.norm_median[y] - ms.upper_median_min[y]
+              }
+              ms.norm_mean[y] = ms.range[y] ? (ms.mean[y] - ms.min[y]) / ms.range[y] : ms.mean[y]
+              if (-1 !== ms.break_mean[y]) {
+                ms.lower_mean_min[y] = ms.norm_mean[y] - (o[ms.missing[y]][1] - ms.min[y]) / ms.range[y]
+                ms.lower_mean_range[y] =
+                  ms.norm_mean[y] - ((o[ms.break_mean[y]][1] - ms.min[y]) / ms.range[y] - ms.lower_mean_min[y])
+                ms.upper_mean_min[y] = ms.norm_mean[y] - (o[ms.break_mean[y]][1] - ms.min[y]) / ms.range[y]
+                ms.upper_mean_range[y] =
+                  (o[o.length - 1][1] - ms.min[y]) / ms.range[y] - ms.norm_mean[y] - ms.upper_mean_min[y]
+              }
+            }
+          }
+        })
+      } else {
+        for (let y = 0; y < ny; y++) {
+          if (ms.n[y]) {
+            if (levels) {
+              q1 = 0
+              m.table.forEach(k => {
+                if (m.table[k][y] > m.table[this.variables[measure].levels[q1]][y]) q1 = levels[k]
+              })
+              ms.mode[y] = this.variables[measure].levels[q1]
+            } else ms.mean[y] = ms.sum[y] / ms.n[y]
+          } else {
+            ms[levels ? 'mode' : 'mean'][y] = NaN
+          }
         }
       }
+      ms.filled = true
     }
-    ms.filled = true
   },
   map_variables: function () {
     Object.keys(this.info).forEach(k => {
@@ -1047,7 +1051,7 @@ DataHandler.prototype = {
         }
       }
       this.inited[g] = true
-      this.init_summaries(g).then(() => {
+      this.init_summary(this.meta.times[g].name, g).then(() => {
         if (!this.inited.first) {
           this.hooks.init && this.hooks.init()
           this.inited.first = true
