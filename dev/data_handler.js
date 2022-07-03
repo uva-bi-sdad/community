@@ -38,6 +38,8 @@ function DataHandler(settings, defaults, data, hooks) {
   this.sets = {}
   this.data_maps = {}
   this.data_queue = {}
+  this.data_promise = {}
+  this.data_processed = {}
   this.load_requests = {}
   this.in_browser = 'undefined' === typeof module
   this.data_ready = new Promise(resolve => {
@@ -46,9 +48,11 @@ function DataHandler(settings, defaults, data, hooks) {
   data = data || {}
   if ('string' === typeof settings.metadata.datasets) settings.metadata.datasets = [settings.metadata.datasets]
   this.map_variables()
-  for (var k, i = settings.metadata.datasets.length; i--; ) {
-    k = settings.metadata.datasets[i]
+  settings.metadata.datasets.forEach(k => {
     this.loaded[k] = Object.hasOwn(data, k)
+    this.data_processed[k] = new Promise(resolve => {
+      this.data_promise[k] = resolve
+    })
     if (
       !this.in_browser ||
       (this.settings.settings && !this.settings.settings.partial_init) ||
@@ -60,16 +64,16 @@ function DataHandler(settings, defaults, data, hooks) {
       } else {
         this.retrieve(k, settings.metadata.info[k].site_file)
       }
-  }
+  })
 }
 
 function quantile(p, n, o, x, l1) {
-  var a = p * (n - 1),
+  const a = p * (n - 1),
     ap = a % 1,
     bp = 1 - ap,
-    b = o + Math.ceil(a)
-  a = o + Math.floor(a)
-  return l1 ? x[a] * ap + x[b] * bp : x[a][1] * ap + x[b][1] * bp
+    b = o + Math.ceil(a),
+    i = o + Math.floor(a)
+  return l1 ? x[i] * ap + x[b] * bp : x[i][1] * ap + x[b][1] * bp
 }
 
 function make_variable_reference(c) {
@@ -111,16 +115,16 @@ function vector_summary(vec, range) {
     var n = Math.min(range[1] + 1, vec.length),
       on = 0,
       i = Math.max(range[0], 0),
-      o = [],
       v
-    const r = {
-      first: vec[0],
-      min: Infinity,
-      mean: 0,
-      sum: 0,
-      max: -Infinity,
-      last: vec[n - 1],
-    }
+    const o = [],
+      r = {
+        first: vec[0],
+        min: Infinity,
+        mean: 0,
+        sum: 0,
+        max: -Infinity,
+        last: vec[n - 1],
+      }
     for (; i < n; i++) {
       v = vec[i]
       o.push(v)
@@ -140,16 +144,14 @@ function vector_summary(vec, range) {
 
 function passes_filter(entity, time_range, filter, variables) {
   const s = {}
-  for (var i = filter.filter_by.length, c, r; i--; ) {
-    c = variables[filter.filter_by[i]].code
+  for (var i = filter.filter_by.length; i--; ) {
+    const f = filter.filter_by[i]
+    const c = variables[f].code
     if (!Object.hasOwn(entity.data, c)) return false
-    r = Object.hasOwn(variables[filter.filter_by[i]].info, entity.group)
-      ? variables[filter.filter_by[i]].info[entity.group].time_range
-      : variables[filter.filter_by[i]].time_range
-    s[filter.filter_by[i]] = vector_summary(entity.data[c], [
-      time_range[0] - r[0],
-      Math.max(time_range[1] - r[0], time_range[1] - r[1]),
-    ])
+    const r = Object.hasOwn(variables[f].info, entity.group)
+      ? variables[f].info[entity.group].time_range
+      : variables[f].time_range
+    s[f] = vector_summary(entity.data[c], [time_range[0] - r[0], Math.max(time_range[1] - r[0], time_range[1] - r[1])])
   }
   for (i = filter.conditions.length; i--; ) {
     if (!filter.conditions[i].check(s[filter.conditions[i].name])) return false
@@ -211,62 +213,42 @@ const patterns = {
     tall: function (entity, time_range, feats, vars, sep) {
       const op = [],
         time = this.meta.times[entity.group].value
-      var tr = '',
-        yn = 0,
-        y = 0,
-        vc,
-        i = 0,
-        r = '',
-        n = vars.length,
-        f,
-        range,
-        v
-      for (f in feats)
-        if (Object.hasOwn(feats, f)) {
-          tr += '"' + entity.features[feats[f]] + '"' + sep
-        }
-      for (; i < n; i++) {
-        vc = entity.variables[vars[i]].code
-        if (Object.hasOwn(entity.data, vc)) {
-          range = this.meta.variables[entity.group][vars[i]].time_range
-          r = ''
-          for (yn = time_range[1] + 1, y = time_range[0]; y < yn; y++) {
+      var tr = ''
+      Object.keys(feats).forEach(f => {
+        tr += '"' + entity.features[feats[f]] + '"' + sep
+      })
+      vars.forEach(k => {
+        const vc = entity.variables[k].code
+        if (vc in entity.data) {
+          const range = this.meta.variables[entity.group][k].time_range
+          var r = ''
+          for (var yn = time_range[1] + 1, y = time_range[0]; y < yn; y++) {
             if (y >= range[0] && y <= range[1]) {
-              v = 'number' === typeof entity.data[vc] ? entity.data[vc] : entity.data[vc][y]
-              if (!isNaN(v)) {
-                r += (r ? '\n' : '') + tr + time[y] + sep + '"' + vars[i] + '"' + sep + v
+              const value = 'number' === typeof entity.data[vc] ? entity.data[vc] : entity.data[vc][y]
+              if (!isNaN(value)) {
+                r += (r ? '\n' : '') + tr + time[y] + sep + '"' + k + '"' + sep + value
               }
             }
           }
           if (r) op.push(r)
         }
-      }
+      })
       return op.join('\n')
     },
     mixed: function (entity, time_range, feats, vars, sep) {
       const op = [],
         time = this.meta.times[entity.group].value
-      var tr = '',
-        yn = 0,
-        y = 0,
-        vc,
-        i = 0,
-        r = '',
-        n = vars.length,
-        f,
-        trange,
-        v
-      for (f in feats)
-        if (Object.hasOwn(feats, f)) {
-          tr += '"' + entity.features[feats[f]] + '"' + sep
-        }
-      for (yn = time_range[1] + 1, y = time_range[0]; y < yn; y++) {
-        r = tr + time[y]
-        for (i = 0; i < n; i++) {
-          vc = entity.variables[vars[i]].code
-          if (Object.hasOwn(entity.data, vc)) {
-            trange = this.meta.variables[entity.group][vars[i]].time_range
-            v =
+      var tr = ''
+      Object.keys(feats).forEach(f => {
+        tr += '"' + entity.features[feats[f]] + '"' + sep
+      })
+      for (var yn = time_range[1] + 1, y = time_range[0]; y < yn; y++) {
+        var r = tr + time[y]
+        vars.forEach(k => {
+          const vc = entity.variables[k].code
+          if (vc in entity.data) {
+            const trange = this.meta.variables[entity.group][k].time_range
+            const value =
               y < trange[0] || y > trange[1]
                 ? NaN
                 : trange[0] === trange[1]
@@ -274,36 +256,26 @@ const patterns = {
                   ? entity.data[vc]
                   : NaN
                 : entity.data[vc][y - trange[0]]
-            r += sep + (isNaN(v) ? 'NA' : v)
+            r += sep + (isNaN(value) ? 'NA' : value)
           } else r += sep + 'NA'
-        }
+        })
         op.push(r)
       }
       return op.join('\n')
     },
     wide: function (entity, time_range, feats, vars, sep) {
-      var yn = this.meta.overall.value.length,
-        y = 0,
-        vc,
-        i = 0,
-        r = '',
-        n = vars.length,
-        f,
-        trange,
-        range,
-        v
-      for (f in feats)
-        if (Object.hasOwn(feats, f)) {
-          r += (r ? sep : '') + '"' + entity.features[feats[f]] + '"'
-        }
-      for (i = 0; i < n; i++) {
-        vc = entity.variables[vars[i]].code
-        range = this.meta.ranges[vars[i]]
-        trange = this.meta.variables[entity.group][vars[i]].time_range
-        for (yn = time_range[1] + 1, y = time_range[0]; y < yn; y++) {
+      var r = ''
+      Object.keys(feats).forEach(f => {
+        r += (r ? sep : '') + '"' + entity.features[feats[f]] + '"'
+      })
+      vars.forEach(k => {
+        const vc = entity.variables[k].code
+        const range = this.meta.ranges[k]
+        const trange = this.meta.variables[entity.group][k].time_range
+        for (var yn = time_range[1] + 1, y = time_range[0]; y < yn; y++) {
           if (y >= range[0] && y <= range[1]) {
-            if (Object.hasOwn(entity.data, vc)) {
-              v =
+            if (vc in entity.data) {
+              const value =
                 y < trange[0] || y > trange[1]
                   ? NaN
                   : trange[0] === trange[1]
@@ -313,11 +285,11 @@ const patterns = {
                   : y < trange[0] || y > trange[1]
                   ? NaN
                   : entity.data[vc][y - trange[0]]
-              r += sep + (isNaN(v) ? 'NA' : v)
+              r += sep + (isNaN(value) ? 'NA' : value)
             } else r += sep + 'NA'
           }
         }
-      }
+      })
       return r
     },
   },
@@ -459,7 +431,6 @@ DataHandler.prototype = {
   ingest_data: function (d, name) {
     this.sets[name] = d
     this.loaded[name] = true
-    var k, t, i
     if (!Object.hasOwn(this.info, name)) this.info[name] = {schema: {fields: []}, ids: []}
     if (Object.hasOwn(d, '_meta')) {
       this.meta.times[name] = d._meta.time
@@ -478,14 +449,12 @@ DataHandler.prototype = {
         this.meta.overall.range[0] = this.meta.times[name].range[0]
       if (this.meta.times[name].range[1] > this.meta.overall.range[1])
         this.meta.overall.range[1] = this.meta.times[name].range[1]
-      for (i = this.meta.times[name].value.length; i--; ) {
-        if (-1 === this.meta.overall.value.indexOf(this.meta.times[name].value[i])) {
-          this.meta.overall.value.push(this.meta.times[name].value[i])
-          this.meta.overall.value.sort()
-        }
-      }
+      this.meta.times[name].value.forEach(v => {
+        if (-1 === this.meta.overall.value.indexOf(v)) this.meta.overall.value.push(v)
+      })
+      this.meta.overall.value.sort()
       this.meta.variables[name] = d._meta.variables || {}
-      for (k in this.meta.variables[name]) {
+      Object.keys(this.meta.variables[name]).forEach(k => {
         if (!Object.hasOwn(this.variables, k)) {
           this.variables[k] = {
             datasets: [name],
@@ -504,7 +473,8 @@ DataHandler.prototype = {
         }
         this.variables[k].name = k
         this.variables[k].code = this.meta.variables[name][k].code
-        this.variables[k].time_range[name] = t = this.meta.variables[name][k].time_range
+        const t = this.meta.variables[name][k].time_range
+        this.variables[k].time_range[name] = t
         this.variable_codes[this.variables[k].code] = this.variables[k]
         if (-1 !== t[0]) {
           if (Object.hasOwn(this.meta.ranges, k)) {
@@ -514,7 +484,7 @@ DataHandler.prototype = {
             this.meta.ranges[k] = [t[0], t[1]]
           }
         }
-      }
+      })
     }
     if (
       this.in_browser &&
@@ -523,7 +493,7 @@ DataHandler.prototype = {
     ) {
       this.load_id_maps()
     } else {
-      for (k in this.loaded) if (Object.hasOwn(this.loaded, k) && !this.loaded[k]) return void 0
+      for (const k in this.loaded) if (Object.hasOwn(this.loaded, k) && !this.loaded[k]) return void 0
       this.load_id_maps()
     }
   },
@@ -548,93 +518,85 @@ DataHandler.prototype = {
   ingest_map: function (m, url, field) {
     this.data_maps[url].resource = m
     this.data_maps[url].retrieved = true
-    for (var k, i = this.data_maps[url].queue.length; i--; ) {
-      k = this.data_maps[url].queue[i]
-      if (Object.hasOwn(this.info, k) && this.info[k].schema.fields.length > field) {
+    this.data_maps[url].queue.forEach(k => {
+      if (this.info[k].schema.fields.length > field) {
         this.info[k].schema.fields[field].ids = this.data_maps[k] = Object.hasOwn(this.data_maps[url].resource, k)
           ? this.data_maps[url].resource[k]
           : this.data_maps[url].resource
         this.map_entities(k)
       }
-    }
+    })
     this.hooks.data_load && this.hooks.data_load()
   },
   load_id_maps: async function () {
-    for (var si = this.settings.metadata.datasets.length, ids, i, f, k, has_map; si--; ) {
-      k = this.settings.metadata.datasets[si]
-      if (Object.hasOwn(this.sets, k)) {
-        for (ids = this.info[k].ids, i = ids.length, has_map = false; i--; )
-          if (Object.hasOwn(ids[i], 'map')) {
-            has_map = true
-            if (Object.hasOwn(this.data_maps, ids[i].map)) {
-              if (this.data_maps[ids[i].map].retrieved) {
-                this.info[k].schema.fields[i].ids = this.data_maps[k] = Object.hasOwn(
-                  this.data_maps[ids[i].map].resource,
-                  k
-                )
-                  ? this.data_maps[ids[i].map].resource[k]
-                  : this.data_maps[ids[i].map].resource
-                this.map_entities(k)
-              } else {
-                if (-1 === this.data_maps[ids[i].map].queue.indexOf(k)) this.data_maps[ids[i].map].queue.push(k)
-              }
-            } else if ('string' !== typeof ids[i].map || ids[i].map_content) {
-              if (ids[i].map_content) {
-                this.data_maps[ids[i].map] = {queue: [], resource: JSON.parse(ids[i].map_content), retrieved: true}
-                this.info[k].schema.fields[i].ids = this.data_maps[k] = Object.hasOwn(
-                  this.data_maps[ids[i].map].resource,
-                  k
-                )
-                  ? this.data_maps[ids[i].map].resource[k]
-                  : this.data_maps[ids[i].map].resource
-              } else {
-                this.data_maps[k] = ids[i].map
-              }
+    this.settings.metadata.datasets.forEach(k => {
+      var has_map = false
+      this.info[k].ids.forEach((id, i) => {
+        if ('map' in id) {
+          has_map = true
+          const map = id.map
+          if (map in this.data_maps) {
+            if (this.data_maps[map].retrieved) {
+              this.info[k].schema.fields[i].ids = this.data_maps[k] =
+                k in this.data_maps[map].resource ? this.data_maps[map].resource[k] : this.data_maps[map].resource
               this.map_entities(k)
             } else {
-              this.data_maps[ids[i].map] = {queue: [k], resource: {}, retrieved: false}
-              if ('undefined' !== typeof window) {
-                f = new window.XMLHttpRequest()
-                f.onreadystatechange = function (url, fi) {
-                  if (4 === f.readyState) {
-                    if (200 === f.status) {
-                      this.ingest_map(JSON.parse(f.responseText), url, fi)
-                    } else {
-                      throw new Error('load_id_maps failed: ' + f.responseText)
-                    }
+              if (-1 === this.data_maps[map].queue.indexOf(k)) this.data_maps[map].queue.push(k)
+            }
+          } else if ('string' !== typeof map || id.map_content) {
+            if (id.map_content) {
+              this.data_maps[map] = {queue: [], resource: JSON.parse(id.map_content), retrieved: true}
+              this.info[k].schema.fields[i].ids = this.data_maps[k] =
+                k in this.data_maps[map].resource ? this.data_maps[map].resource[k] : this.data_maps[map].resource
+            } else {
+              this.data_maps[k] = map
+            }
+            this.map_entities(k)
+          } else {
+            this.data_maps[map] = {queue: [k], resource: {}, retrieved: false}
+            if ('undefined' !== typeof window) {
+              const f = new window.XMLHttpRequest()
+              f.onreadystatechange = function (url, fi) {
+                if (4 === f.readyState) {
+                  if (200 === f.status) {
+                    this.ingest_map(JSON.parse(f.responseText), url, fi)
+                  } else {
+                    throw new Error('load_id_maps failed: ' + f.responseText)
                   }
-                }.bind(this, ids[i].map, i)
-                f.open('GET', ids[i].map, true)
-                f.send()
-              } else {
-                const fi = i
-                require('https')
-                  .get(ids[fi].map, r => {
-                    const c = []
-                    r.on('data', d => {
-                      c.push(d)
-                    })
-                    r.on('end', () => {
-                      this.ingest_map(JSON.parse(c.join('')), r.req.protocol + '//' + r.req.host + r.req.path, fi)
-                    })
+                }
+              }.bind(this, map, i)
+              f.open('GET', map, true)
+              f.send()
+            } else {
+              const fi = i
+              require('https')
+                .get(ids[fi].map, r => {
+                  const c = []
+                  r.on('data', d => {
+                    c.push(d)
                   })
-                  .end()
-              }
+                  r.on('end', () => {
+                    this.ingest_map(JSON.parse(c.join('')), r.req.protocol + '//' + r.req.host + r.req.path, fi)
+                  })
+                })
+                .end()
             }
           }
-        if (!has_map) {
-          this.data_maps[k] = {}
-          this.map_entities(k)
         }
+      })
+      if (!has_map) {
+        this.data_maps[k] = {}
+        this.map_entities(k)
       }
-    }
+    })
   },
   init_summary: async function (v, d) {
-    Object.keys(this.in_browser ? site.dataviews : {default_view: true}).forEach(view => {
-      if (!this.inited_summary[d + '_' + v]) {
-        this.inited_summary[d + '_' + v] = true
+    if (!this.inited_summary[d + v]) {
+      await this.data_processed[d]
+      Object.keys(this.in_browser ? site.dataviews : {default_view: true}).forEach(view => {
         const vi = this.variables[v]
-        if (!Object.hasOwn(vi, view)) vi[view] = {order: {}, selected_order: {}, selected_summaries: {}, summaries: {}}
+        if (!Object.hasOwn(vi, view))
+          vi[view] = {order: {}, selected_order: {}, selected_summaries: {}, summaries: {}, state: {}}
         if (!Object.hasOwn(vi.time_range, d)) {
           vi.time_range[d] = [0, this.meta.times[d].n - 1]
         }
@@ -781,160 +743,164 @@ DataHandler.prototype = {
           Object.seal(m.selected_summaries[d])
           Object.seal(m.summaries[d])
         }
-      }
-    })
+      })
+      this.inited_summary[d + v] = true
+    }
   },
-  calculate_summary: function (measure, view, full) {
+  calculate_summary: async function (measure, view, full) {
     const v = this.settings.dataviews[view]
     if (v.valid) {
-      if (!Object.hasOwn(this.variables[measure], view))
-        this.variables[measure][view] = JSON.parse(JSON.stringify(this.variables[measure][this.defaults.dataview]))
-      const s = v.selection[this.settings.settings.summary_selection],
-        a = v.selection.all,
-        dataset = v.get.dataset(),
-        m = this.variables[measure][view],
-        mo = m.order[dataset],
-        mso = m.selected_order[dataset],
-        mss = m.selected_summaries[dataset],
-        ms = m.summaries[dataset],
-        ny = this.variables[measure].time_range[dataset][2],
-        order = this.variables[measure].info[dataset].order,
-        levels = this.variables[measure].levels_ids,
-        subset = v.n_selected[this.settings.summary_selection] !== v.n_selected.dataset
-      for (let y = ny; y--; ) {
-        mo[y] = subset ? [] : order[y]
-        mso[y] = subset ? [] : order[y]
-        mss.missing[y] = 0
-        mss.n[y] = 0
-        ms.missing[y] = 0
-        ms.n[y] = 0
-        if (levels) {
-          ms.mode[y] = ''
-          for (k in levels) if (Object.hasOwn(levels, k)) m.table[k][y] = 0
-        } else {
-          ms.sum[y] = 0
-          ms.mean[y] = 0
-          ms.max[y] = -Infinity
-          ms.min[y] = Infinity
-          ms.break_mean[y] = -1
-          ms.break_median[y] = -1
-        }
-      }
-      order.forEach((o, y) => {
-        let rank = v.n_selected[this.settings.settings.summary_selection]
-        for (let i = o.length; i--; ) {
-          const k = o[i][0],
-            value = o[i][1]
-          if (k in s) {
-            const en = s[k][view]
-            if (!y) {
-              if (!Object.hasOwn(en.summary, measure)) en.summary[measure] = {n: 0, overall: ms, order: mo}
-              en.summary[measure].n = 0
-            }
-            en.subset_rank[measure][y] = --rank
-            if (full && subset) {
-              mo[y].splice(0, 0, o[i])
-              if (Object.hasOwn(a, k)) {
-                mso[y].splice(0, 0, o[i])
-                if (levels ? Object.hasOwn(levels, value) : !isNaN(value)) {
-                  mss.n[y]++
-                } else mss.missing[y]++
-              }
-            }
-            if (levels ? Object.hasOwn(levels, value) : !isNaN(value)) {
-              en.summary[measure].n++
-              ms.n[y]++
-              if (levels) {
-                m.table[value][y]++
-              } else {
-                ms.sum[y] += value
-                if (value > ms.max[y]) ms.max[y] = value
-                if (value < ms.min[y]) ms.min[y] = value
-              }
-            } else ms.missing[y]++
+      const dataset = v.get.dataset()
+      if (!this.inited_summary[dataset + measure]) await this.init_summary(measure, dataset)
+      const variable = this.variables[measure],
+        m = variable[view]
+      if (!v.parsed.state || m.state[dataset] !== v.parsed.state) {
+        m.state[dataset] = v.parsed.state
+        const s = v.selection[this.settings.settings.summary_selection],
+          a = v.selection.all,
+          mo = m.order[dataset],
+          mso = m.selected_order[dataset],
+          mss = m.selected_summaries[dataset],
+          ms = m.summaries[dataset],
+          ny = variable.time_range[dataset][2],
+          order = variable.info[dataset].order,
+          levels = variable.levels_ids,
+          subset = v.n_selected[this.settings.summary_selection] !== v.n_selected.dataset
+        for (let y = ny; y--; ) {
+          mo[y] = subset ? [] : order[y]
+          mso[y] = subset ? [] : order[y]
+          mss.missing[y] = 0
+          mss.n[y] = 0
+          ms.missing[y] = 0
+          ms.n[y] = 0
+          if (levels) {
+            ms.mode[y] = ''
+            for (k in levels) if (Object.hasOwn(levels, k)) m.table[k][y] = 0
+          } else {
+            ms.sum[y] = 0
+            ms.mean[y] = 0
+            ms.max[y] = -Infinity
+            ms.min[y] = Infinity
+            ms.break_mean[y] = -1
+            ms.break_median[y] = -1
           }
         }
-      })
-      if (full) {
-        mo.forEach((o, y) => {
-          if (levels) {
-            if (ms.n[y]) {
-              l = 0
-              Object.keys(m.table).forEach(k => {
-                if (m.table[k][y] > m.table[this.variables[measure].levels[l]][y]) l = levels[k]
-              })
-              ms.mode[y] = this.variables[measure].levels[l]
-            } else ms.mode[y] = NaN
-          } else {
-            if (ms.n[y]) {
-              ms.mean[y] = ms.sum[y] / ms.n[y]
-              if (!isFinite(ms.min[y])) ms.min[y] = ms.mean[y]
-              if (!isFinite(ms.max[y])) ms.max[y] = ms.mean[y]
-              ms.range[y] = ms.max[y] - ms.min[y]
-              if (1 === ms.n[y]) {
-                ms.q3[y] = ms.median[y] = ms.q1[y] = null == o[0][1] ? ms.mean[y] : o[0][1]
-              } else {
-                ms.median[y] = quantile(0.5, ms.n[y], ms.missing[y], o)
-                ms.q3[y] = quantile(0.75, ms.n[y], ms.missing[y], o)
-                ms.q1[y] = quantile(0.25, ms.n[y], ms.missing[y], o)
+        order.forEach((o, y) => {
+          let rank = v.n_selected[this.settings.settings.summary_selection]
+          for (let i = o.length; i--; ) {
+            const k = o[i][0],
+              value = o[i][1]
+            if (k in s) {
+              const en = s[k][view]
+              if (!y) {
+                if (!Object.hasOwn(en.summary, measure)) en.summary[measure] = {n: 0, overall: ms, order: mo}
+                en.summary[measure].n = 0
               }
-              const n = o.length
-              for (let i = ms.missing[y], bmd = false, bme = false; i < n; i++) {
-                if (!bmd && o[i][1] > ms.median[y]) {
-                  ms.break_median[y] = i - 1
-                  bmd = true
+              en.subset_rank[measure][y] = --rank
+              if (full && subset) {
+                mo[y].splice(0, 0, o[i])
+                if (Object.hasOwn(a, k)) {
+                  mso[y].splice(0, 0, o[i])
+                  if (levels ? Object.hasOwn(levels, value) : !isNaN(value)) {
+                    mss.n[y]++
+                  } else mss.missing[y]++
                 }
-                if (!bme && o[i][1] > ms.mean[y]) {
-                  ms.break_mean[y] = i - 1
-                  bme = true
+              }
+              if (levels ? Object.hasOwn(levels, value) : !isNaN(value)) {
+                en.summary[measure].n++
+                ms.n[y]++
+                if (levels) {
+                  m.table[value][y]++
+                } else {
+                  ms.sum[y] += value
+                  if (value > ms.max[y]) ms.max[y] = value
+                  if (value < ms.min[y]) ms.min[y] = value
                 }
-                if (bmd && bme) break
-              }
-            } else {
-              ms.max[y] = 0
-              ms.q3[y] = 0
-              ms.median[y] = 0
-              ms.q1[y] = 0
-              ms.min[y] = 0
-            }
-            if (ms.n[y]) {
-              ms.norm_median[y] = ms.range[y] ? (ms.median[y] - ms.min[y]) / ms.range[y] : ms.median[y]
-              if (-1 !== ms.break_median[y]) {
-                ms.lower_median_min[y] = ms.norm_median[y] - (o[ms.missing[y]][1] - ms.min[y]) / ms.range[y]
-                ms.lower_median_range[y] =
-                  ms.norm_median[y] - ((o[ms.break_median[y]][1] - ms.min[y]) / ms.range[y] - ms.lower_median_min[y])
-                ms.upper_median_min[y] = ms.norm_median[y] - (o[ms.break_median[y]][1] - ms.min[y]) / ms.range[y]
-                ms.upper_median_range[y] =
-                  (o[o.length - 1][1] - ms.min[y]) / ms.range[y] - ms.norm_median[y] - ms.upper_median_min[y]
-              }
-              ms.norm_mean[y] = ms.range[y] ? (ms.mean[y] - ms.min[y]) / ms.range[y] : ms.mean[y]
-              if (-1 !== ms.break_mean[y]) {
-                ms.lower_mean_min[y] = ms.norm_mean[y] - (o[ms.missing[y]][1] - ms.min[y]) / ms.range[y]
-                ms.lower_mean_range[y] =
-                  ms.norm_mean[y] - ((o[ms.break_mean[y]][1] - ms.min[y]) / ms.range[y] - ms.lower_mean_min[y])
-                ms.upper_mean_min[y] = ms.norm_mean[y] - (o[ms.break_mean[y]][1] - ms.min[y]) / ms.range[y]
-                ms.upper_mean_range[y] =
-                  (o[o.length - 1][1] - ms.min[y]) / ms.range[y] - ms.norm_mean[y] - ms.upper_mean_min[y]
-              }
+              } else ms.missing[y]++
             }
           }
         })
-      } else {
-        for (let y = 0; y < ny; y++) {
-          if (ms.n[y]) {
+        if (full) {
+          mo.forEach((o, y) => {
             if (levels) {
-              q1 = 0
-              m.table.forEach(k => {
-                if (m.table[k][y] > m.table[this.variables[measure].levels[q1]][y]) q1 = levels[k]
-              })
-              ms.mode[y] = this.variables[measure].levels[q1]
-            } else ms.mean[y] = ms.sum[y] / ms.n[y]
-          } else {
-            ms[levels ? 'mode' : 'mean'][y] = NaN
+              if (ms.n[y]) {
+                l = 0
+                Object.keys(m.table).forEach(k => {
+                  if (m.table[k][y] > m.table[variable.levels[l]][y]) l = levels[k]
+                })
+                ms.mode[y] = variable.levels[l]
+              } else ms.mode[y] = NaN
+            } else {
+              if (ms.n[y]) {
+                ms.mean[y] = ms.sum[y] / ms.n[y]
+                if (!isFinite(ms.min[y])) ms.min[y] = ms.mean[y]
+                if (!isFinite(ms.max[y])) ms.max[y] = ms.mean[y]
+                ms.range[y] = ms.max[y] - ms.min[y]
+                if (1 === ms.n[y]) {
+                  ms.q3[y] = ms.median[y] = ms.q1[y] = null == o[0][1] ? ms.mean[y] : o[0][1]
+                } else {
+                  ms.median[y] = quantile(0.5, ms.n[y], ms.missing[y], o)
+                  ms.q3[y] = quantile(0.75, ms.n[y], ms.missing[y], o)
+                  ms.q1[y] = quantile(0.25, ms.n[y], ms.missing[y], o)
+                }
+                const n = o.length
+                for (let i = ms.missing[y], bmd = false, bme = false; i < n; i++) {
+                  if (!bmd && o[i][1] > ms.median[y]) {
+                    ms.break_median[y] = i - 1
+                    bmd = true
+                  }
+                  if (!bme && o[i][1] > ms.mean[y]) {
+                    ms.break_mean[y] = i - 1
+                    bme = true
+                  }
+                  if (bmd && bme) break
+                }
+              } else {
+                ms.max[y] = 0
+                ms.q3[y] = 0
+                ms.median[y] = 0
+                ms.q1[y] = 0
+                ms.min[y] = 0
+              }
+              if (ms.n[y]) {
+                ms.norm_median[y] = ms.range[y] ? (ms.median[y] - ms.min[y]) / ms.range[y] : ms.median[y]
+                if (-1 !== ms.break_median[y]) {
+                  ms.lower_median_min[y] = ms.norm_median[y] - (o[ms.missing[y]][1] - ms.min[y]) / ms.range[y]
+                  ms.lower_median_range[y] =
+                    ms.norm_median[y] - ((o[ms.break_median[y]][1] - ms.min[y]) / ms.range[y] - ms.lower_median_min[y])
+                  ms.upper_median_min[y] = ms.norm_median[y] - (o[ms.break_median[y]][1] - ms.min[y]) / ms.range[y]
+                  ms.upper_median_range[y] =
+                    (o[o.length - 1][1] - ms.min[y]) / ms.range[y] - ms.norm_median[y] - ms.upper_median_min[y]
+                }
+                ms.norm_mean[y] = ms.range[y] ? (ms.mean[y] - ms.min[y]) / ms.range[y] : ms.mean[y]
+                if (-1 !== ms.break_mean[y]) {
+                  ms.lower_mean_min[y] = ms.norm_mean[y] - (o[ms.missing[y]][1] - ms.min[y]) / ms.range[y]
+                  ms.lower_mean_range[y] =
+                    ms.norm_mean[y] - ((o[ms.break_mean[y]][1] - ms.min[y]) / ms.range[y] - ms.lower_mean_min[y])
+                  ms.upper_mean_min[y] = ms.norm_mean[y] - (o[ms.break_mean[y]][1] - ms.min[y]) / ms.range[y]
+                  ms.upper_mean_range[y] =
+                    (o[o.length - 1][1] - ms.min[y]) / ms.range[y] - ms.norm_mean[y] - ms.upper_mean_min[y]
+                }
+              }
+            }
+          })
+        } else {
+          for (let y = 0; y < ny; y++) {
+            if (ms.n[y]) {
+              if (levels) {
+                q1 = 0
+                m.table.forEach(k => {
+                  if (m.table[k][y] > m.table[variable.levels[q1]][y]) q1 = levels[k]
+                })
+                ms.mode[y] = variable.levels[q1]
+              } else ms.mean[y] = ms.sum[y] / ms.n[y]
+            } else {
+              ms[levels ? 'mode' : 'mean'][y] = NaN
+            }
           }
         }
+        ms.filled = true
       }
-      ms.filled = true
     }
   },
   map_variables: function () {
@@ -944,7 +910,7 @@ DataHandler.prototype = {
       m.id_vars = m.ids.map(id => id.variable)
       m.schema.fields.forEach(v => {
         const vn = v.name
-        if (Object.hasOwn(this.variables, vn)) {
+        if (vn in this.variables) {
           const ve = this.variables[vn]
           ve.datasets.push(k)
           ve.info[k] = v
@@ -968,10 +934,8 @@ DataHandler.prototype = {
             ve.levels = []
             ve.levels_ids = {}
             v.table.forEach(l => {
-              if (Object.hasOwn(v.table, l)) {
-                ve.levels_ids[l] = ve.levels.length
-                ve.levels.push(l)
-              }
+              ve.levels_ids[l] = ve.levels.length
+              ve.levels.push(l)
             })
           }
           ve.meta = ve.info[k].info
@@ -989,7 +953,7 @@ DataHandler.prototype = {
           if (!Object.hasOwn(this.variable_info, vn)) this.variable_info[vn] = ve.meta
         }
       })
-      if (this.in_browser && Object.hasOwn(m, '_references')) {
+      if (this.in_browser && '_references' in m) {
         if (!Object.hasOwn(this.variable_info, '_references')) this.variable_info._references = {}
         Object.keys(m._references).forEach(t => {
           if (!Object.hasOwn(this.references, t)) this.references[t] = make_variable_reference(m._references[t])
@@ -1002,30 +966,22 @@ DataHandler.prototype = {
     })
   },
   map_entities: async function (g) {
-    var id,
-      f,
-      k,
-      overwrite = false
     if (Object.hasOwn(this.sets, g) && !this.inited[g]) {
-      for (id in this.sets[g]) {
-        if ('_meta' !== id && Object.hasOwn(this.sets[g], id)) {
-          overwrite = this.data_maps[g][id]
-          f = overwrite || {id: id, name: id}
+      Object.keys(this.sets[g]).forEach(id => {
+        if ('_meta' !== id) {
+          const overwrite = this.data_maps[g][id]
+          const f = overwrite || {id: id, name: id}
           f.id = id
-          if (Object.hasOwn(this.entities, id)) {
+          if (id in this.entities) {
             this.entities[id].group = g
             this.entities[id].data = this.sets[g][id]
             this.entities[id].variables = this.variables
             if (!Object.hasOwn(this.entities[id], 'features')) this.entities[id].features = {}
-            for (k in f)
-              if (Object.hasOwn(f, k)) {
-                if (
-                  'id' === k ||
-                  (Object.hasOwn(f, k) && (overwrite || !Object.hasOwn(this.entities[id].features, k)))
-                ) {
-                  this.entities[id].features[k] = f[k]
-                }
+            Object.keys(f).forEach(k => {
+              if ('id' === k || overwrite || !Object.hasOwn(this.entities[id].features, k)) {
+                this.entities[id].features[k] = f[k]
               }
+            })
           } else {
             this.entities[id] = {
               group: g,
@@ -1039,8 +995,9 @@ DataHandler.prototype = {
               this.entities[id][v] = {summary: {}, rank: {}, subset_rank: {}}
             }
           })
-          for (k in f)
-            if (Object.hasOwn(f, k) && !Object.hasOwn(this.features, k)) this.features[k] = this.format_label(k)
+          Object.keys(f).forEach(k => {
+            if (!Object.hasOwn(this.features, k)) this.features[k] = this.format_label(k)
+          })
           this.entities[id].time = this.meta.times[g]
           this.entities[id].get_value = this.retrievers[this.meta.times[g].is_single ? 'single' : 'multi'].bind(
             this.entities[id]
@@ -1049,22 +1006,23 @@ DataHandler.prototype = {
             f.county = id.substring(0, 5)
           }
         }
-      }
+      })
       this.inited[g] = true
-      this.init_summary(this.meta.times[g].name, g).then(() => {
+      this.data_promise[g]()
+      setTimeout(() => {
         if (!this.inited.first) {
           this.hooks.init && this.hooks.init()
           this.inited.first = true
         }
-        for (id in this.data_queue[g])
+        for (const id in this.data_queue[g])
           if (Object.hasOwn(this.data_queue[g], id)) {
             this.data_queue[g][id]()
             delete this.data_queue[g][id]
           }
         this.hooks.onload && this.hooks.onload()
-      })
+      }, 0)
     }
-    for (k in this.info) if (Object.hasOwn(this.info, k) && !this.inited[k]) return void 0
+    for (const k in this.info) if (k in this.info && !this.inited[k]) return void 0
     this.all_data_ready()
   },
   parse_query: function (q) {
