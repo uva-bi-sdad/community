@@ -1,19 +1,6 @@
 void (function () {
   const community = function (window, document, site) {
     'use strict'
-    if (!Object.hasOwn) {
-      Object.defineProperty(Object, 'hasOwn', {
-        value: function (object, property) {
-          if (object == null) {
-            throw new TypeError('Cannot convert undefined or null to object')
-          }
-          return Object.prototype.hasOwnProperty.call(Object(object), property)
-        },
-        configurable: true,
-        enumerable: false,
-        writable: true,
-      })
-    }
     const palettes = {
         // discrete palettes from https://colorbrewer2.org
         rdylbu7: {
@@ -228,7 +215,7 @@ void (function () {
               if (site.map)
                 Object.keys(site.map).forEach(k => {
                   const u = site.map[k].u
-                  if (u && Object.hasOwn(u.tiles, theme)) {
+                  if (u && theme in u.tiles) {
                     Object.keys(u.tiles).forEach(l => {
                       if (theme !== l) u.tiles[l].removeFrom(u.map)
                     })
@@ -262,49 +249,56 @@ void (function () {
             storage.setItem(u.setting, site.settings[u.setting])
           }
         },
-        options: function (u, c) {
-          const d = u.dataset
-              ? valueOf(u.dataset)
-              : u.view
-              ? _u[u.view].get.dataset()
-              : valueOf(c.dataset) || defaults.dataset,
+        options: function (u) {
+          const no_view = !u.view || !site.dataviews[u.view].selection,
+            d = valueOf(u.dataset),
             va = valueOf(u.variable),
             k = d + (va ? va : '')
-          if (!Object.hasOwn(u, 'option_sets')) u.option_sets = {}
-          u.e.innerHTML = ''
-          if (c && k in u.option_sets) {
-            var ns = 0
-            u.values = u.option_sets[k].values
-            u.display = u.option_sets[k].display
-            if (u.view && ('ID' === u.variable || 'ids' === u.options_source)) {
-              const v = site.dataviews[u.view].selection[u.subset]
-              u.option_sets[k].options.forEach(si => {
-                u.e.appendChild(si)
-                if (si.value in v) {
-                  si.classList.remove('hidden')
-                  ns++
-                } else {
-                  si.classList.add('hidden')
-                }
-              })
-            } else {
-              u.option_sets[k].options.forEach(si => {
-                u.e.appendChild(si)
-                ns++
-              })
-            }
-            u.e[ns ? 'removeAttribute' : 'setAttribute']('disabled', true)
-          } else {
+          if (!(k in u.option_sets)) {
             if (patterns.variable.test(u.options_source)) {
-              const dd = c.value()
-              if (dd) fill_variables_options(u, dd, u.option_sets)
+              fill_variables_options(u, d, u.option_sets)
             } else if (patterns.levels.test(u.options_source)) {
               fill_levels_options(u, d, va, u.option_sets)
             } else if (patterns.ids.test(u.options_source)) {
               fill_ids_options(u, d, u.option_sets)
             }
           }
-          u.set(u.value())
+          if (k in u.option_sets) {
+            const fresh = k !== u.current_set && (u.sensitive || !u.current_set)
+            if (fresh) {
+              u.e.innerHTML = ''
+              u.values = u.option_sets[k].values
+              u.display = u.option_sets[k].display
+              u.options = u.option_sets[k].options
+            }
+            var ns = 0
+            if ('ID' === u.variable || 'ids' === u.options_source) {
+              const v = no_view ? {} : site.dataviews[u.view].selection[u.subset]
+              u.options.forEach(si => {
+                if (fresh) u.e.appendChild(si)
+                if (no_view || si.value in v) {
+                  si.classList.remove('hidden')
+                  ns++
+                } else {
+                  si.classList.add('hidden')
+                }
+              })
+            } else if (fresh) {
+              u.options.forEach(si => {
+                si.classList.remove('hidden')
+                u.e.appendChild(si)
+                ns++
+              })
+            } else ns++
+            u.e[ns ? 'removeAttribute' : 'setAttribute']('disabled', true)
+            u.current_set = k
+            if (fresh) {
+              u.e.selectedIndex = -1
+              u.source = ''
+            }
+            fresh ? (u.id in site.url_options ? u.set(site.url_options[u.id]) : u.reset()) : u.set(u.value())
+            if (u.filter) u.filter()
+          }
         },
         min: async function (u, c) {
           var cv = c.value(),
@@ -314,7 +308,7 @@ void (function () {
           if (patterns.minmax.test(cv)) cv = c.parsed.min
           if (v && v.y) {
             variable = valueOf(v.y)
-            if (Object.hasOwn(site.data.variables, variable)) {
+            if (variable in site.data.variables) {
               if (!v.time_range.time.length) await conditionals.time_range(v, u, true)
               cv = Math.max(v.time_range.time[0], parseFloat(cv))
             }
@@ -335,7 +329,7 @@ void (function () {
           if (patterns.minmax.test(cv)) cv = c.parsed.max
           if (v && v.y) {
             variable = valueOf(v.y)
-            if (Object.hasOwn(site.data.variables, variable)) {
+            if (variable in site.data.variables) {
               if (!v.time_range.time.length) await conditionals.time_range(v, u, true)
               cv = Math.min(v.time_range.time[1], parseFloat(cv))
             }
@@ -401,7 +395,7 @@ void (function () {
                   f.selection.children[id] = site.data.entities[id]
                   f.n_selected.children++
                 }
-                if (c.features && c.dataset) {
+                if (c.variables && c.features && c.dataset) {
                   f.selection.filtered[id] = site.data.entities[id]
                   f.n_selected.filtered++
                 }
@@ -427,15 +421,17 @@ void (function () {
             time = site.data.meta.times[d],
             c = _c[u.id + '_filter']
           if (!site.data.inited[d]) return void 0
-          for (var f, v = {}, pass, i = time.n; i--; ) {
+          for (let i = time.n; i--; ) {
+            let pass = false
             if (i >= u.time_range.index[0] && i <= u.time_range.index[1]) {
-              for (f = u.time_filters.length, pass = false; f--; ) {
-                if (!Object.hasOwn(v, u.time_filters[f].value))
-                  v[u.time_filters[f].value] = valueOf(u.time_filters[f].value)
-                pass = DataHandler.prototype.checks[u.time_filters[f].type](time.value[i], v[u.time_filters[f].value])
+              for (let f = u.time_filters.length; f--; ) {
+                const v = {},
+                  tf = u.time_filters[f]
+                if (!(tf.value in v)) v[tf.value] = valueOf(tf.value)
+                pass = DataHandler.prototype.checks[tf.type](time.value[i], v[tf.value])
                 if (!pass) break
               }
-            } else pass = false
+            }
             u.times[i] = pass
             if (pass) {
               if (u.time_range.filtered[0] > time.value[i]) u.time_range.filtered[0] = time.value[i]
@@ -450,7 +446,7 @@ void (function () {
             c.forEach(ci => {
               if ('update' === ci.type) {
                 _u[ci.id].update()
-              } else if (Object.hasOwn(conditionals, ci.type)) {
+              } else if (ci.type in conditionals) {
                 conditionals[ci.type](_u[ci.id], u)
               }
             })
@@ -459,7 +455,7 @@ void (function () {
           const v = c && c.value(),
             d = u.get.dataset(),
             tv = u.time ? valueOf(u.time) : defaults.time,
-            t = Object.hasOwn(site.data.variables, tv) ? site.data.variables[tv].info[d].min : '',
+            t = tv in site.data.variables ? site.data.variables[tv].info[d].min : '',
             s = _c[u.id + '_time'],
             variable = v in site.data.variables ? v : valueOf(u.y)
           if (!site.data.inited[d]) return void 0
@@ -480,12 +476,12 @@ void (function () {
                 const su = _u[si.id]
                 const value = su.value()
                 if ('min' === si.type) {
-                  if (isFinite(u.time_range.time[0]) && parseFloat(su.e.min) !== u.time_range.time[0]) {
+                  if (reset || (isFinite(u.time_range.time[0]) && parseFloat(su.e.min) !== u.time_range.time[0])) {
                     su.e.min = u.time_range.time[0]
                     if (reset || !meta.retain_state || u.time_range.time[0] > value) su.set(u.time_range.time[0])
                   }
                 } else if ('max' === si.type) {
-                  if (isFinite(u.time_range.time[1]) && parseFloat(su.e.max) !== u.time_range.time[1]) {
+                  if (reset || (isFinite(u.time_range.time[1]) && parseFloat(su.e.max) !== u.time_range.time[1])) {
                     su.e.max = u.time_range.time[1]
                     if (reset || !meta.retain_state || u.time_range.time[1] < value || value < u.time_range.time[0])
                       su.set(u.time_range.time[1])
@@ -519,14 +515,14 @@ void (function () {
                         d = v && v.parsed.dataset
                       Object.keys(s.query).forEach(k => (f[k] = valueOf(s.query[k])))
                       if (v) {
-                        if (!Object.hasOwn(f, 'include') && v.y) f.include = valueOf(v.y)
-                        if (!Object.hasOwn(f, 'id') && v.ids) f.id = valueOf(v.ids)
+                        if (!('include' in f) && v.y) f.include = valueOf(v.y)
+                        if (!('id' in f) && v.ids) f.id = valueOf(v.ids)
                       }
                       if ('copy' === this.target || this.api) {
                         var q = []
-                        if (Object.hasOwn(f, 'include')) q.push('include=' + f.include)
-                        if (Object.hasOwn(f, 'dataset')) q.push('dataset=' + f.dataset)
-                        if (Object.hasOwn(f, 'id')) q.push('id=' + f.id)
+                        if ('include' in f) q.push('include=' + f.include)
+                        if ('dataset' in f) q.push('dataset=' + f.dataset)
+                        if ('id' in f) q.push('id=' + f.id)
                         if (v) {
                           if (!f.time_range)
                             q.push(
@@ -537,7 +533,7 @@ void (function () {
                             )
                           if (v.features)
                             Object.keys(v.features).forEach(k => {
-                              if (!Object.hasOwn(f, k)) {
+                              if (!(k in f)) {
                                 f[k] = valueOf(v.features[k])
                                 if (Array.isArray(f[k])) f[k] = f[k].join(',')
                                 q.push(k + '=' + f[k])
@@ -575,7 +571,7 @@ void (function () {
                           )
                         }
                       } else {
-                        if (v && Object.hasOwn(v, 'selection')) {
+                        if (v && 'selection' in v) {
                           if (!f.time_range)
                             f.time_range =
                               site.data.meta.times[d].value[v.time_range.filtered_index[0]] +
@@ -599,14 +595,14 @@ void (function () {
                 : 'reset_storage' === o.target
                 ? clear_storage
                 : function () {
-                    if (Object.hasOwn(_u, this.target)) _u[this.target].reset()
+                    if (this.target in _u) _u[this.target].reset()
                   }.bind(o)
             )
           },
         },
         buttongroup: {
           retrieve: function () {
-            for (var i = this.options.length; i--; )
+            for (let i = this.options.length; i--; )
               if (this.options[i].checked) {
                 this.set(i)
                 break
@@ -616,9 +612,10 @@ void (function () {
             this.previous = this.value()
             this.current_index = 'string' === typeof v ? this.values.indexOf(v) : v
             if (-1 !== this.current_index) {
-              this.source = Object.hasOwn(_u, this.values[this.current_index])
-                ? _u[this.values[this.current_index]]
-                : this.values[this.current_index]
+              this.source =
+                this.values[this.current_index] in _u
+                  ? _u[this.values[this.current_index]]
+                  : this.values[this.current_index]
               this.options[this.current_index].checked = true
             } else this.source = undefined
             request_queue(this.id)
@@ -644,7 +641,7 @@ void (function () {
         },
         radio: {
           retrieve: function () {
-            for (var i = this.options.length; i--; ) {
+            for (let i = this.options.length; i--; ) {
               if (this.options[i].checked) {
                 this.set(i)
                 break
@@ -654,9 +651,10 @@ void (function () {
           setter: function (v) {
             this.current_index = 'string' === typeof v ? this.values.indexOf(v) : v
             if (-1 !== this.current_index) {
-              this.source = Object.hasOwn(_u, this.values[this.current_index])
-                ? _u[this.values[this.current_index]]
-                : this.values[this.current_index]
+              this.source =
+                this.values[this.current_index] in _u
+                  ? _u[this.values[this.current_index]]
+                  : this.values[this.current_index]
               this.options[this.current_index].checked = true
             } else this.source = undefined
             request_queue(this.id)
@@ -685,24 +683,25 @@ void (function () {
           retrieve: function () {
             this.source = []
             this.current_index = []
-            for (var i = this.options.length; i--; ) {
-              if (this.options[i].checked) {
+            this.options.forEach(o => {
+              if (o.checked) {
                 this.source.push(this.values[i])
                 this.current_index.push(i)
               }
-            }
+            })
             request_queue(this.id)
           },
           setter: function (v) {
             if ('object' === typeof v) {
               this.source = []
               this.current_index = []
-              for (var i = this.values.length; i--; )
-                if (-1 !== v.indexOf(this.values[i])) {
-                  this.source.push(this.values[i])
+              this.values.forEach((v, i) => {
+                if (-1 !== v.indexOf(v)) {
+                  this.source.push(v)
                   this.current_index.push(i)
                   this.options[i].checked = true
                 } else this.options[i].checked = false
+              })
             } else {
               if ('string' === typeof v) {
                 return this.set(v.split(','))
@@ -783,6 +782,9 @@ void (function () {
             if ('string' === typeof v) v = parseFloat(v)
             if (isFinite(v) && v !== this.source) {
               this.previous = parseFloat(this.e.value)
+              if (!isFinite(this.parsed.min) && v < this.parsed.min) {
+                v = this.parsed.min
+              } else if (!isFinite(this.parsed.max) && v > this.parsed.max) v = this.parsed.max
               this.e.value = this.source = v
               this.current_index = v - this.parsed.min
               if ('range' === this.e.type) {
@@ -797,24 +799,23 @@ void (function () {
         },
         text: {
           init: function (o) {
-            if (site.text && Object.hasOwn(site.text, o.id)) {
+            if (site.text && o.id in site.text) {
               o.text = site.text[o.id].text
               o.condition = site.text[o.id].condition || []
               o.depends = {}
-              for (var n = o.text.length, i = 0, tn, t, k; i < n; i++) {
-                if (Object.hasOwn(o.text[i], 'text')) {
-                  init_text(o, o.text[i])
-                  o.e.appendChild(o.text[i].parts)
+              o.text.forEach(oi => {
+                if ('text' in oi) {
+                  init_text(o, oi)
+                  o.e.appendChild(oi.parts)
                 } else {
                   o.e.appendChild(document.createElement('span'))
-                  for (tn = o.text[i].length, t = 0; t < tn; t++) {
-                    init_text(o, o.text[i][t])
-                  }
+                  oi.forEach(t => init_text(o, t))
                 }
-              }
-              for (i = o.condition.length; i--; )
-                if (Object.hasOwn(_u, o.condition[i].id)) add_dependency(o.condition[i].id, {type: 'display', id: o.id})
-              for (k in o.depends) if (Object.hasOwn(_u, k)) add_dependency(k, {type: 'update', id: o.id})
+              })
+              o.condition.forEach(c => {
+                if (c.id in _u) add_dependency(c.id, {type: 'display', id: o.id})
+              })
+              Object.keys(o.depends).forEach(k => add_dependency(k, {type: 'update', id: o.id}))
               o.update = elements.text.update.bind(o)
             }
             o.update()
@@ -823,12 +824,11 @@ void (function () {
             Object.keys(this.reference_options).forEach(k => (this.options[k] = valueOf(this.reference_options[k])))
             Object.keys(this.depends).forEach(k => {
               this.depends[k] = valueOf(k)
-              if (Object.hasOwn(site.data.entities, this.depends[k]))
+              if (this.depends[k] in site.data.entities)
                 this.depends[k] = site.data.entities[this.depends[k]].features.name
             })
-            var pass = true
             this.text.forEach((o, i) => {
-              pass = true
+              var pass = true
               if (o.length) {
                 for (let t = o.length; t--; ) {
                   if ('condition' in o[t]) {
@@ -861,19 +861,17 @@ void (function () {
                         k = ki.text
                     })
                   }
-                  if (Object.hasOwn(this.depends, k)) {
+                  if (k in this.depends) {
                     o.parts.children[i].innerText = this.depends[k]
-                  } else if (Object.hasOwn(o.button, k)) {
-                    for (var s = '', bt = o.button[k].text.length; bt--; ) {
-                      s =
-                        (Object.hasOwn(this.depends, o.button[k].text[bt])
-                          ? this.depends[o.button[k].text[bt]]
-                          : o.button[k].text[bt]) + s
-                    }
+                  } else if (k in o.button) {
+                    var s = ''
+                    o.button[k].text.forEach(b => {
+                      s = (b in this.depends ? this.depends[b] : b) + s
+                    })
                     o.parts.children[i].innerText = s
                   } else o.parts.children[i].innerText = k
                 })
-                if (o.length) {
+                if (this.text[i].length) {
                   this.e.children[i].innerHTML = ''
                   this.e.children[i].appendChild(o.parts)
                 } else o.parts.classList.remove('hidden')
@@ -886,11 +884,11 @@ void (function () {
             this.set(this.e.selectedIndex)
           },
           setter: function (v) {
-            if ('string' === typeof v) v = this.values.indexOf(v)
-            if ('undefined' === typeof v) v = -1
-            if (v !== this.e.selectedIndex || this.values[v] !== this.source) {
-              this.e.selectedIndex = v
-              this.source = this.values[v]
+            if ('number' === typeof v) v = this.options[v] ? this.options[v].value : v
+            if (!v in this.values && v in this.display) v = this.options[this.display[v]].value
+            if (v !== this.source) {
+              this.e.selectedIndex = v in this.values ? this.values[v] : -1
+              this.source = v
               request_queue(this.id)
             }
           },
@@ -898,26 +896,24 @@ void (function () {
             this.set(e.target.selectedIndex)
           },
           adder: function (value, display, meta) {
-            var e = document.createElement('option')
+            const e = document.createElement('option')
             e.value = value
             e.innerText = display
             if (meta && meta.info) {
               e.title = meta.info.description || meta.info.short_description
             }
-            this.e.appendChild(e)
             return e
           },
         },
         plotly: {
           init: function (o) {
-            if (Object.hasOwn(site.plotly, o.id)) {
-              var i, p, k, pl, es, en, ei
+            if (o.id in site.plotly) {
               o.x = o.e.getAttribute('x')
               o.y = o.e.getAttribute('y')
               o.color = o.e.getAttribute('color')
               o.time = o.e.getAttribute('color-time')
               o.click = o.e.getAttribute('click')
-              if (Object.hasOwn(_u, o.click)) o.clickto = _u[o.click]
+              if (o.click in _u) o.clickto = _u[o.click]
               o.parsed = {}
               o.traces = {}
               o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0
@@ -952,48 +948,50 @@ void (function () {
                   Plotly.deleteTraces(this.e, this.e.data.length - 1)
               }
               if (o.options) site.plotly[o.id].u = o
-              for (i = site.plotly[o.id].data.length; i--; ) {
-                p = site.plotly[o.id].data[i]
-                for (k in p)
-                  if (Object.hasOwn(p, k) && patterns.period.test(k)) {
-                    for (es = k.split('.'), en = es.length, ei = 0, pl = false; ei < en; ei++) {
-                      pl = pl ? (pl[es[ei]] = ei === en - 1 ? p[k] : {}) : (p[es[ei]] = {})
-                    }
+              site.plotly[o.id].data.forEach((p, i) => {
+                Object.keys(p).forEach(k => {
+                  if (patterns.period.test(k)) {
+                    const es = k.split('.'),
+                      n = es.length - 1
+                    var pl = null
+                    es.forEach((e, ei) => {
+                      pl = pl ? (pl[e] = ei === n ? p[k] : {}) : (p[e] = {})
+                    })
                   }
-                if (!Object.hasOwn(p, 'textfont')) p.textfont = {}
-                if (!Object.hasOwn(p.textfont, 'color')) p.textfont.color = defaults.background_highlight
-                if (!Object.hasOwn(p, 'line')) p.line = {}
-                if (!Object.hasOwn(p.line, 'color')) p.line.color = defaults.background_highlight
-                if (!Object.hasOwn(p, 'marker')) p.marker = {}
+                })
+                if (!('textfont' in p)) p.textfont = {}
+                if (!('color' in p.textfont)) p.textfont.color = defaults.background_highlight
+                if (!('line' in p)) p.line = {}
+                if (!('color' in p.line)) p.line.color = defaults.background_highlight
+                if (!('marker' in p)) p.marker = {}
                 p.marker.size = 8
-                if (!Object.hasOwn(p.marker, 'color')) p.marker.color = defaults.background_highlight
-                if (!Object.hasOwn(p.marker, 'line')) p.marker.line = {}
-                if (!Object.hasOwn(p.marker.line, 'color')) p.marker.line.color = defaults.background_highlight
-                if (!Object.hasOwn(p, 'text')) p.text = []
-                if (!Object.hasOwn(p, 'x')) p.x = []
+                if (!('color' in p.marker)) p.marker.color = defaults.background_highlight
+                if (!('line' in p.marker)) p.marker.line = {}
+                if (!('color' in p.marker.line)) p.marker.line.color = defaults.background_highlight
+                if (!('text' in p)) p.text = []
+                if (!('x' in p)) p.x = []
                 if ('box' === p.type) {
                   p.hoverinfo = 'none'
-                } else if (!Object.hasOwn(p, 'y')) p.y = []
-                o.traces[site.plotly[o.id].data[i].type] = JSON.stringify(p)
+                } else if (!('y' in p)) p.y = []
+                o.traces[p.type] = JSON.stringify(p)
                 if (!i) {
                   o.base_trace = p.type
-                  if (Object.hasOwn(_u, o.base_trace)) add_dependency(o.base_trace, {type: 'update', id: o.id})
+                  if (o.base_trace in _u) add_dependency(o.base_trace, {type: 'update', id: o.id})
                 }
-              }
-              if (!Object.hasOwn(site.data.variables, o.x)) {
+              })
+              if (!(o.x in site.data.variables)) {
                 add_dependency(o.x, {type: 'update', id: o.id})
               }
-              if (!Object.hasOwn(site.data.variables, o.y)) {
+              if (!(o.y in site.data.variables)) {
                 add_dependency(o.y, {type: 'update', id: o.id})
               }
-              if (Object.hasOwn(_u, o.time)) {
+              if (o.time in _u) {
                 add_dependency(o.time, {type: 'update', id: o.id})
               }
               if (o.view) {
                 _c[o.view].push({type: 'update', id: o.id})
                 _c[o.view + '_filter'].push({type: 'update', id: o.id})
-                if (Object.hasOwn(_u, _u[o.view].time_agg))
-                  add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
+                if (_u[o.view].time_agg in _u) add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
               } else o.view = defaults.dataview
               queue_init_plotly.bind(o)()
             }
@@ -1027,7 +1025,7 @@ void (function () {
                   s = v.selection && v.selection.all,
                   d = v.get.dataset(),
                   y = _u[this.time || v.time_agg]
-                if (site.data.inited[d] && s && v.state) {
+                if (site.data.inited[d] && s && v.time_range.filtered.length) {
                   this.parsed.base_trace = valueOf(this.base_trace)
                   this.parsed.x = valueOf(this.x)
                   this.parsed.y = valueOf(this.y)
@@ -1040,21 +1038,22 @@ void (function () {
                   this.parsed.view = v
                   this.parsed.dataset = d
                   this.parsed.palette = valueOf(v.palette) || site.settings.palette
-                  if (!Object.hasOwn(palettes, this.parsed.palette)) this.parsed.palette = defaults.palette
+                  if (!(this.parsed.palette in palettes)) this.parsed.palette = defaults.palette
                   this.parsed.time = (y ? y.value() - site.data.meta.times[d].range[0] : 0) - varcol.time_range[d][0]
                   this.parsed.summary = varcol[this.view].summaries[d]
                   const summary = vary[this.view].summaries[d],
-                    subset = this.parsed.summary.n[this.parsed.time] !== v.n_selected.dataset,
+                    missing = this.parsed.summary.missing[this.parsed.time],
+                    n = this.parsed.summary.n[this.parsed.time],
+                    subset = n !== v.n_selected.dataset,
                     rank = subset ? 'subset_rank' : 'rank',
                     order = subset
                       ? varcol[this.view].order[d][this.parsed.time]
-                      : varcol.info[d].order[this.parsed.time]
+                      : varcol.info[d].order[this.parsed.time],
+                    traces = []
                   var i = this.parsed.summary.missing[this.parsed.time],
                     k,
                     b,
-                    n = v.n_selected[site.settings.summary_selection],
                     fn = order ? order.length : 0,
-                    traces = [],
                     lim = site.settings.trace_limit || 0,
                     jump,
                     state =
@@ -1076,15 +1075,10 @@ void (function () {
                   for (; i < fn; i++) {
                     if (order[i][0] in s) {
                       k = order[i][0]
+                      const e = s[k]
                       state += k
                       traces.push(
-                        make_data_entry(
-                          this,
-                          s[k],
-                          s[k][this.view][rank][this.parsed.color][this.parsed.time] -
-                            this.parsed.summary.missing[this.parsed.time],
-                          n
-                        )
+                        make_data_entry(this, e, e[this.view][rank][this.parsed.color][this.parsed.time] - missing, n)
                       )
                       if (lim && !--jump) break
                     }
@@ -1093,44 +1087,41 @@ void (function () {
                     for (jump = i, i = fn - 1; i > jump; i--) {
                       if (order[i][0] in s) {
                         k = order[i][0]
+                        const e = s[k]
                         state += k
                         traces.push(
-                          make_data_entry(
-                            this,
-                            s[k],
-                            s[k][this.view][rank][this.parsed.color][this.parsed.time] -
-                              this.parsed.summary.missing[this.parsed.time],
-                            n
-                          )
+                          make_data_entry(this, e, e[this.view][rank][this.parsed.color][this.parsed.time] - missing, n)
                         )
                         if (!--lim) break
                       }
                     }
                   }
                   state += traces.length && traces[0].type
-                  if (site.settings.boxplots && Object.hasOwn(this.traces, 'box') && s[k]) {
+                  if (site.settings.boxplots && 'box' in this.traces && s[k]) {
                     state += 'box' + site.settings.iqr_box
-                    traces.push((b = JSON.parse(this.traces.box)))
+                    b = JSON.parse(this.traces.box)
+                    traces.push(b)
                     b.line.color = defaults.border
                     b.median = summary.median
                     b.q3 = summary.q3
                     b.q1 = summary.q1
                     if (site.settings.iqr_box) {
-                      for (b.upperfence = [], b.lowerfence = [], i = b.q1.length; i--; ) {
-                        n = (b.q3[i] - b.q1[i]) * 1.5
-                        b.q3[i] = Math.max(b.median[i], b.q3[i])
+                      b.upperfence = []
+                      b.lowerfence = []
+                      b.q1.forEach((q1, i) => {
+                        if (isNaN(b.median[i])) b.median[i] = 0
+                        const n = (b.q3[i] - q1) * 1.5,
+                          med = b.median[i]
+                        b.q3[i] = isNaN(b.q3[i]) ? med : Math.max(med, b.q3[i])
                         b.upperfence[i] = b.q3[i] + n
-                        b.q1[i] = Math.min(b.median[i], b.q1[i])
-                        b.lowerfence[i] = b.q1[i] - n
-                      }
+                        b.q1[i] = isNaN(b.q1[i]) ? med : Math.min(med, q1)
+                        b.lowerfence[i] = q1 - n
+                      })
                     } else {
                       b.upperfence = summary.max
                       b.lowerfence = summary.min
                     }
-                    b.x = []
-                    for (i = b.q1.length; i--; ) {
-                      b.x[i] = s[k].get_value(this.parsed.x, i + this.parsed.y_range[0])
-                    }
+                    b.x = b.q1.map((_, i) => s[k].get_value(this.parsed.x, i + this.parsed.y_range[0]))
                   }
                   if (state !== this.state) {
                     if ('boolean' !== typeof this.e.layout.yaxis.title)
@@ -1144,15 +1135,15 @@ void (function () {
                     this.e.layout.yaxis.autorange = false
                     this.e.layout.yaxis.range = [Infinity, -Infinity]
                     if (!b) b = {upperfence: summary.max, lowerfence: summary.min}
-                    for (let i = 0, n = summary.min.length; i < n; i++) {
-                      lim = Math.min(b.lowerfence[i], summary.min[i])
-                      if (this.e.layout.yaxis.range[0] > lim) this.e.layout.yaxis.range[0] = lim
-                      lim = Math.max(b.upperfence[i], summary.max[i])
-                      if (this.e.layout.yaxis.range[1] < lim) this.e.layout.yaxis.range[1] = lim
-                    }
-                    lim = (this.e.layout.yaxis.range[1] - this.e.layout.yaxis.range[0]) / 10
-                    this.e.layout.yaxis.range[0] -= lim
-                    this.e.layout.yaxis.range[1] += lim
+                    summary.min.forEach((min, i) => {
+                      const l = Math.min(b.lowerfence[i], min),
+                        u = Math.max(b.upperfence[i], summary.max[i])
+                      if (this.e.layout.yaxis.range[0] > l) this.e.layout.yaxis.range[0] = l
+                      if (this.e.layout.yaxis.range[1] < u) this.e.layout.yaxis.range[1] = u
+                    })
+                    const r = (this.e.layout.yaxis.range[1] - this.e.layout.yaxis.range[0]) / 10
+                    this.e.layout.yaxis.range[0] -= r
+                    this.e.layout.yaxis.range[1] += r
                     if (site.data.variables[this.parsed.x].is_time) {
                       if (this.e.layout.xaxis.autorange) {
                         this.e.layout.xaxis.autorange = false
@@ -1178,7 +1169,7 @@ void (function () {
             o.color = o.e.getAttribute('color')
             o.time = o.e.getAttribute('color-time')
             o.click = o.e.getAttribute('click')
-            if (o.click && Object.hasOwn(_u, o.click)) o.clickto = _u[o.click]
+            if (o.click && o.click in _u) o.clickto = _u[o.click]
             o.parsed = {}
             o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0
             o.show = function (e) {
@@ -1216,12 +1207,11 @@ void (function () {
             }
             if (o.view) {
               add_dependency(o.view, {type: 'update', id: o.id})
-              if (Object.hasOwn(_u, _u[o.view].time_agg))
-                add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
+              if (_u[o.view].time_agg in _u) add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
               if (_u[o.view].y) add_dependency(_u[o.view].y, {type: 'update', id: o.id})
             } else o.view = defaults.dataview
             _c[o.view].push({type: 'update', id: o.id})
-            if (Object.hasOwn(_u, o.color)) add_dependency(o.color, {type: 'update', id: o.id})
+            if (o.color in _u) add_dependency(o.color, {type: 'update', id: o.id})
             if (o.time) add_dependency(o.time, {type: 'update', id: o.id})
             if (!o.e.style.height) o.e.style.height = o.options.height ? o.options.height : '400px'
             queue_init_map.bind(o)()
@@ -1252,9 +1242,9 @@ void (function () {
                   d = view.get.dataset(),
                   time = valueOf(view.time_agg),
                   match_time = site.map[this.id].has_time ? site.map[this.id].match_time(time) : time,
-                  has_time = Object.hasOwn(site.data.inited, d + match_time + this.id),
+                  has_time = d + match_time + this.id in site.data.inited,
                   mapId = has_time ? d + match_time : d
-                if (site.map._queue && Object.hasOwn(site.map._queue, mapId) && !site.data.inited[mapId + this.id]) {
+                if (site.map._queue && mapId in site.map._queue && !site.data.inited[mapId + this.id]) {
                   return retrieve_layer(this, site.map._queue[mapId], () => this.update(void 0, void 0, true))
                 }
                 if (!view.valid && site.data.inited[d]) {
@@ -1272,7 +1262,7 @@ void (function () {
                   s = view.selection[site.settings.background_shapes && this.options.background_shapes ? 'ids' : 'all'],
                   bgc = defaults.border,
                   c = valueOf(this.color || view.y)
-                if (site.settings.map_overlay && Object.hasOwn(site.map[this.id].triggers, c)) {
+                if (site.settings.map_overlay && c in site.map[this.id].triggers) {
                   show_overlay(this, site.map[this.id].triggers[c], site.data.meta.overall.value[view.parsed.time_agg])
                 } else {
                   this.overlay_control.remove()
@@ -1282,12 +1272,12 @@ void (function () {
                   const ys = this.time
                     ? _u[this.time]
                     : view.time_agg
-                    ? Object.hasOwn(_u, view.time_agg)
+                    ? view.time_agg in _u
                       ? _u[view.time_agg]
                       : parseInt(view.time_agg)
                     : 0
                   this.parsed.palette = valueOf(view.palette) || site.settings.palette
-                  if (!Object.hasOwn(palettes, this.parsed.palette)) this.parsed.palette = defaults.palette
+                  if (!(this.parsed.palette in palettes)) this.parsed.palette = defaults.palette
                   const varc = await get_variable(c, this.view)
                   this.parsed.time =
                     (ys.parsed ? ys.value() - site.data.meta.times[d].range[0] : 0) - varc.time_range[d][0]
@@ -1303,10 +1293,12 @@ void (function () {
                     this.displaying.clearLayers()
                     this.fresh_shapes = true
                     this.vstate = false
+                    var n = 0
                     Object.keys(s).forEach(k => {
-                      if (s[k].layer && s[k].layer[this.id]) {
-                        const fg = Object.hasOwn(a, k),
-                          cl = s[k].layer[this.id].has_time ? s[k].layer[this.id][match_time] : s[k].layer[this.id]
+                      const skl = s[k].layer
+                      if (skl && skl[this.id]) {
+                        const fg = k in a,
+                          cl = skl[this.id].has_time ? skl[this.id][match_time] : skl[this.id]
                         if (cl && (fg || this.options.background_shapes === site.data.entities[k].group)) {
                           n++
                           cl.options.interactive = fg
@@ -1345,33 +1337,33 @@ void (function () {
                     this.cstate = k
                     if (site.map[this.id]) {
                       const ls = this.displaying._layers
-                      const n = view.n_selected[site.settings.summary_selection]
+                      const n = this.parsed.summary.n[this.parsed.time]
+                      const missing = this.parsed.summary.missing[this.parsed.time]
                       Object.keys(ls).forEach(id => {
-                        const k = ls[id].entity.features.id,
-                          fg =
-                            Object.hasOwn(a, k) && Object.hasOwn(a[k][this.view][subset], c)
-                              ? pal(
-                                  a[k].get_value(c, this.parsed.time),
-                                  this.parsed.palette,
-                                  this.parsed.summary,
-                                  this.parsed.time,
-                                  a[k][this.view][subset][c][this.parsed.time] -
-                                    this.parsed.summary.missing[this.parsed.time],
-                                  n
-                                )
-                              : defaults.missing
-                        if (d === ls[id].entity.group) {
-                          ls[id].setStyle({
+                        const lsi = ls[id]
+                        if (d === lsi.entity.group) {
+                          const e = a[lsi.entity.features.id]
+                          lsi.setStyle({
                             fillOpacity: 0.7,
                             color: defaults.border,
-                            fillColor: fg,
+                            fillColor:
+                              e && c in e[this.view][subset]
+                                ? pal(
+                                    e.get_value(c, this.parsed.time),
+                                    this.parsed.palette,
+                                    this.parsed.summary,
+                                    this.parsed.time,
+                                    e[this.view][subset][c][this.parsed.time] - missing,
+                                    n
+                                  )
+                                : defaults.missing,
                             weight: site.settings.polygon_outline,
                           })
                         }
                       })
                     } else {
-                      if (!Object.hasOwn(site.map, '_waiting')) site.map._waiting = {}
-                      if (!Object.hasOwn(site.map._waiting, d)) site.map._waiting[d] = []
+                      if (!('_waiting' in site.map)) site.map._waiting = {}
+                      if (!(d in site.map._waiting)) site.map._waiting[d] = []
                       if (-1 === site.map._waiting[d].indexOf(this.id)) site.map._waiting[d].push(this.id)
                       if (-1 === site.map._waiting[d].indexOf(this.view)) site.map._waiting[d].push(this.view)
                     }
@@ -1445,24 +1437,24 @@ void (function () {
                 get: function (entity, caller) {
                   if (this.ref) {
                     if (entity)
-                      if (Object.hasOwn(this.parsed, 'features')) {
+                      if ('features' in this.parsed) {
                         return entity.features[this.parsed.features]
-                      } else if (Object.hasOwn(this.parsed, 'data')) {
+                      } else if ('data' in this.parsed) {
                         if ('value' === this.text) {
                           this.parsed.data = valueOf(o.options.variable || caller.color || caller.y || _u[o.view].y)
-                        } else if (Object.hasOwn(_u, this.text)) this.parsed.data = valueOf(this.text)
+                        } else if (this.text in _u) this.parsed.data = valueOf(this.text)
                         const info = site.data.variable_info[this.parsed.data],
                           v = site.data.format_value(
                             entity.get_value(this.parsed.data, this.parent.time),
                             info && info.type ? patterns.int_types.test(info.type) : true
                           )
-                        return 'unknown' !== v && Object.hasOwn(value_types, info.type) ? value_types[info.type](v) : v
+                        return 'unknown' !== v && info.type in value_types ? value_types[info.type](v) : v
                       }
-                    if (Object.hasOwn(this.parsed, 'data')) {
+                    if ('data' in this.parsed) {
                       return site.data.meta.times[this.parent.dataset].value[this.parent.time_agg]
                     } else if (
-                      Object.hasOwn(this.parsed, 'variables') &&
-                      (this.value_source || Object.hasOwn(site.data.variable_info, this.parent.v))
+                      'variables' in this.parsed &&
+                      (this.value_source || this.parent.v in site.data.variable_info)
                     ) {
                       return site.data.variable_info[valueOf(this.value_source || this.parent.v)][this.parsed.variables]
                     }
@@ -1483,10 +1475,7 @@ void (function () {
             }
             if (o.options.title) {
               o.parts.title = parse_part(o, o.options.title)
-              if (
-                Object.hasOwn(o.parts.title.parsed, 'variables') &&
-                patterns.measure_name.test(o.parts.title.parsed.variables)
-              ) {
+              if ('variables' in o.parts.title.parsed && patterns.measure_name.test(o.parts.title.parsed.variables)) {
                 o.parts.title.base = document.createElement('button')
                 o.parts.title.base.type = 'button'
                 o.parts.title.base.setAttribute('data-bs-toggle', 'modal')
@@ -1537,7 +1526,7 @@ void (function () {
                 if (p.name) {
                   if (
                     o.options.variable_info &&
-                    Object.hasOwn(p.name.parsed, 'variables') &&
+                    'variables' in p.name.parsed &&
                     patterns.measure_name.test(p.name.parsed.variables)
                   ) {
                     p.base.appendChild(document.createElement('button'))
@@ -1571,7 +1560,7 @@ void (function () {
             const y = _u[v.time_agg]
             this.v = valueOf(this.options.variable || (caller && (caller.color || caller.y)) || v.y)
             this.dataset = v.get.dataset()
-            if (y && !Object.hasOwn(site.data.meta.times, this.dataset)) return
+            if (y && !(this.dataset in site.data.meta.times)) return
             this.time_agg = y ? y.value() - site.data.meta.times[this.dataset].range[0] : 0
             const time_range = this.v && site.data.variables[this.v].time_range[this.dataset]
             this.time = time_range ? this.time_agg - time_range[0] : 0
@@ -1579,7 +1568,7 @@ void (function () {
               this.processed = true
               if (this.view) {
                 add_dependency(this.view, {type: 'update', id: this.id})
-                if (Object.hasOwn(_u, v.y)) add_dependency(v.y, {type: 'update', id: this.id})
+                if (v.y in _u) add_dependency(v.y, {type: 'update', id: this.id})
                 if (y) add_dependency(v.time_agg, {type: 'update', id: this.id})
               } else this.view = defaults.dataview
               if (this.parts.body)
@@ -1621,11 +1610,10 @@ void (function () {
                   this.queue = setTimeout(() => this.update(void 0, void 0, true), 50)
               } else {
                 // base information
-                const k = v.get.ids()
-                if (v.ids && k && '-1' !== k) {
+                entity = site.data.entities[v.get.ids()]
+                if (entity) {
                   // when showing a selected region
                   this.selection = true
-                  entity = site.data.entities[k]
                   if (this.parts.title) {
                     if (this.parts.title.value_source) p.title.value_source = p.value.text
                     this.parts.title.base.classList.remove('hidden')
@@ -1652,7 +1640,7 @@ void (function () {
                 if (this.parts.body) {
                   if (!this.options.subto) this.parts.body.base.classList.remove('hidden')
                   this.parts.body.rows.forEach(p => {
-                    if (Object.hasOwn(p.value.parsed, 'variables') && !Object.hasOwn(this.depends, v.y)) {
+                    if ('variables' in p.value.parsed && !(v.y in this.depends)) {
                       this.depends[v.y] = true
                       add_dependency(v.y, {type: 'update', id: this.id})
                     }
@@ -1666,7 +1654,7 @@ void (function () {
                     if (p.value.ref) {
                       const e = p.value.get(entity, caller)
                       if ('object' === typeof e) {
-                        if ('sources' === p.value.parsed.variables) {
+                        if (Array.isArray(e) && 'sources' === p.value.parsed.variables) {
                           p.base.innerHTML = ''
                           p.base.appendChild(document.createElement('table'))
                           p.base.lastElementChild.className = 'source-table'
@@ -1700,7 +1688,6 @@ void (function () {
         },
         datatable: {
           init: function (o) {
-            var k, n, i, c, t
             o.e.appendChild(document.createElement('tHead'))
             o.e.appendChild(document.createElement('tBody'))
             o.click = o.e.getAttribute('click')
@@ -1725,24 +1712,27 @@ void (function () {
             o.e.addEventListener('mouseover', elements.datatable.mouseover.bind(o))
             o.e.addEventListener('mouseout', elements.datatable.mouseout.bind(o))
             if (o.click) {
-              if (Object.hasOwn(_u, o.click)) o.clickto = _u[o.click]
+              if (o.click in _u) o.clickto = _u[o.click]
               o.e.addEventListener('click', elements.datatable.click.bind(o))
             }
             o.show = function (e) {
-              if (e.features && Object.hasOwn(this.rows, e.features.id)) {
+              if (e.features && e.features.id in this.rows) {
                 const row = this.rows[e.features.id].node()
                 if (row) {
                   row.style.backgroundColor = defaults.background_highlight
-                  if (site.settings.table_autoscroll)
+                  if (site.settings.table_autoscroll) {
+                    const h = this.e.parentElement.getBoundingClientRect().height,
+                      top = row.getBoundingClientRect().y - this.e.getBoundingClientRect().y
                     this.e.parentElement.scroll({
-                      top: row.getBoundingClientRect().y - this.e.getBoundingClientRect().y,
+                      top: h > this.e.scrollHeight - top ? this.e.parentElement.scrollHeight : top,
                       behavior: site.settings.table_scroll_behavior || 'smooth',
                     })
+                  }
                 }
               }
             }
             o.revert = function (e) {
-              if (e.features && Object.hasOwn(this.rows, e.features.id)) {
+              if (e.features && e.features.id in this.rows) {
                 const row = this.rows[e.features.id].node()
                 if (row) row.style.backgroundColor = 'inherit'
               }
@@ -1750,7 +1740,7 @@ void (function () {
             o.options.variable_source = o.options.variables
             if (o.options.variables) {
               if ('string' === typeof o.options.variables) {
-                if (Object.hasOwn(_u, o.options.variables)) {
+                if (o.options.variables in _u) {
                   add_dependency(o.options.variables, {type: 'update', id: o.id})
                   o.options.variables = valueOf(o.options.variables)
                   o.options.single_variable = 'string' === typeof o.options.variables
@@ -1764,7 +1754,9 @@ void (function () {
               o.options.variables.length &&
               'string' === o.options.variables[0]
             ) {
-              for (i = o.options.variables.length; i--; ) o.options.variables[i] = {name: o.options.variables[i]}
+              o.options.variables = o.options.variables.map(v => {
+                name: v
+              })
             }
             if (o.options.single_variable) {
               const c = o.options.variables,
@@ -1797,7 +1789,7 @@ void (function () {
               for (let i = o.options.variables.length; i--; ) {
                 if ('string' === typeof o.options.variables[i]) o.options.variables[i] = {name: o.options.variables[i]}
                 const c = o.options.variables[i]
-                if (!c.source) c.source = Object.hasOwn(site.data.variables, c.name) ? 'data' : 'features'
+                if (!c.source) c.source = c.name in site.data.variables ? 'data' : 'features'
                 o.header.push(
                   'features' === c.source
                     ? {
@@ -1808,15 +1800,14 @@ void (function () {
                         title: c.title || site.data.format_label(c.name),
                         render: async function (d, type, row) {
                           if ('data' === this.c.source) {
-                            if (Object.hasOwn(site.data.variables, this.c.name)) {
+                            if (this.c.name in site.data.variables) {
                               const i =
                                 row.time -
                                 (await get_variable(this.c.name, this.view).time_range[this.o.parsed.dataset][0])
                               return i < 0 ? NaN : row.entity.get_value(this.c.name, i)
                             } else return NaN
                           } else
-                            return Object.hasOwn(row.entity, this.c.source) &&
-                              Object.hasOwn(row.entity[this.c.source], this.c.name)
+                            return this.c.source in row.entity && this.c.name in row.entity[this.c.source]
                               ? row.entity[this.c.source][this.c.name]
                               : NaN
                         }.bind({o, c}),
@@ -1852,7 +1843,7 @@ void (function () {
               o.header.push({
                 title: 'Variable',
                 data: function (row) {
-                  return Object.hasOwn(row.entity.variables, row.variable)
+                  return row.variable in row.entity.variables
                     ? row.entity.variables[row.variable].meta.short_name
                     : row.variable
                 },
@@ -1902,8 +1893,9 @@ void (function () {
                       reset = true,
                       redraw = true,
                       varstate = '' + this.parsed.dataset + v.get.ids() + v.get.features() + site.settings.digits
-                    for (k in this.reference_options)
-                      if (Object.hasOwn(this.reference_options, k)) this.options[k] = valueOf(this.reference_options[k])
+                    Object.keys(this.reference_options).forEach(
+                      k => (this.options[k] = valueOf(this.reference_options[k]))
+                    )
                     if (this.options.single_variable) {
                       const time = valueOf(v.time_agg),
                         variable = await get_variable(vn, this.view)
@@ -1920,7 +1912,7 @@ void (function () {
                         $(this.e).empty()
                         this.header = [{title: 'Name', data: 'entity.features.name'}]
                         if (-1 !== this.parsed.time_range[0]) {
-                          for (n = this.parsed.time_range[2]; n--; ) {
+                          for (let n = this.parsed.time_range[2]; n--; ) {
                             this.header[n + 1] = {
                               dataset: d,
                               variable: vn,
@@ -1940,7 +1932,8 @@ void (function () {
                         this.options.columns = this.header
                         this.table = $(this.e).DataTable(this.options)
                       }
-                      for (n = this.header.length, i = 1; i < n; i++) {
+                      const n = this.header.length
+                      for (let i = 1; i < n; i++) {
                         this.table.column(i).visible(v.times[i - 1 + this.parsed.time_range[0]], false)
                         if (v.times[i - 1 + this.parsed.time_range[0]]) reset = false
                       }
@@ -1949,7 +1942,7 @@ void (function () {
                     if (this.options.wide) {
                       Object.keys(v.selection.all).forEach(k => {
                         if (vn) {
-                          if (Object.hasOwn(v.selection.all[k][this.view].summary, vn)) {
+                          if (vn in v.selection.all[k][this.view].summary) {
                             this.rows[k] = this.table.row.add({
                               dataset: d,
                               variable: vn,
@@ -1973,10 +1966,11 @@ void (function () {
                       Object.keys(this.filters).forEach(f => {
                         this.current_filter[c] = valueOf(f)
                       })
-                      for (va = [], i = this.options.variables.length; i--; ) {
+                      const va = []
+                      for (let i = this.options.variables.length; i--; ) {
                         vn = this.options.variables[i].name || this.options.variables[i]
                         pass = false
-                        if (Object.hasOwn(site.data.variables, vn) && 'meta' in variable) {
+                        if (vn in site.data.variables && 'meta' in variable) {
                           if (this.options.filters) {
                             for (c in this.current_filter)
                               if (c in variable.meta) {
@@ -1992,16 +1986,19 @@ void (function () {
                             int: patterns.int_types.test(site.data.variable_info[vn].type),
                             time_range: variable.time_range[d],
                             renderer: function (o, s) {
-                              for (var r = this.time_range, n = r[1], ci = r[0]; ci <= n; ci++) {
-                                o.rows[s.features.id] = o.table.row.add({
+                              const k = s.features.id,
+                                r = this.time_range,
+                                n = r[1]
+                              for (let i = r[0]; i <= n; i++) {
+                                o.rows[k] = o.table.row.add({
                                   offset: this.time_range[0],
-                                  time: ci - this.time_range[0],
+                                  time: i - this.time_range[0],
                                   dataset: d,
                                   variable: this.variable,
                                   entity: s,
                                   int: this.int,
                                 })
-                                o.rowIds[o.rows[k].selector.rows] = s.features.id
+                                o.rowIds[o.rows[k].selector.rows] = k
                               }
                             },
                           })
@@ -2009,28 +2006,25 @@ void (function () {
                       }
                       if (varstate === this.varstate) return void 0
                       this.varstate = varstate
-                      for (k in v.selection.all)
-                        if (Object.hasOwn(v.selection.all, k)) {
-                          if (this.options.single_variable) {
-                            if (
-                              Object.hasOwn(v.selection.all[k][v].summary, vn) &&
-                              Object.hasOwn(v.selection.all[k].data, variable.code)
-                            ) {
-                              this.rows[k] = this.table.row.add({
-                                offset: this.parsed.time_range[0],
-                                dataset: d,
-                                variable: vn,
-                                entity: v.selection.all[k],
-                                int: patterns.int_types.test(site.data.variable_info[vn].type),
-                              })
-                              this.rowIds[this.rows[k].selector.rows] = k
-                            }
-                          } else {
-                            for (i = va.length; i--; )
-                              if (Object.hasOwn(v.selection.all[k].data, site.data.variables[va[i].variable].code))
-                                va[i].renderer(this, v.selection.all[k])
+                      Object.keys(v.selection.all).forEach(k => {
+                        const e = v.selection.all[k]
+                        if (this.options.single_variable) {
+                          if (vn in e[v].summary && variable.code in e.data) {
+                            this.rows[k] = this.table.row.add({
+                              offset: this.parsed.time_range[0],
+                              dataset: d,
+                              variable: vn,
+                              entity: e,
+                              int: patterns.int_types.test(site.data.variable_info[vn].type),
+                            })
+                            this.rowIds[this.rows[k].selector.rows] = k
                           }
+                        } else {
+                          va.forEach(v => {
+                            if (site.data.variables[v.variable].code in e.data) v.renderer(this, e)
+                          })
                         }
+                      })
                     }
                   }
                   redraw ? this.table.draw() : this.table.columns.adjust().draw(false)
@@ -2039,7 +2033,7 @@ void (function () {
             }
           },
           mouseover: function (e) {
-            if (e.target._DT_CellIndex && Object.hasOwn(this.rowIds, e.target._DT_CellIndex.row)) {
+            if (e.target._DT_CellIndex && e.target._DT_CellIndex.row in this.rowIds) {
               const id = this.rowIds[e.target._DT_CellIndex.row],
                 row = this.rows[id].node()
               if (row) row.style.backgroundColor = defaults.background_highlight
@@ -2049,7 +2043,7 @@ void (function () {
             }
           },
           mouseout: function (e) {
-            if (e.target._DT_CellIndex && Object.hasOwn(this.rowIds, e.target._DT_CellIndex.row)) {
+            if (e.target._DT_CellIndex && e.target._DT_CellIndex.row in this.rowIds) {
               const id = this.rowIds[e.target._DT_CellIndex.row],
                 row = this.rows[id].node()
               if (row) row.style.backgroundColor = 'inherit'
@@ -2059,7 +2053,7 @@ void (function () {
             }
           },
           click: function (e) {
-            if (this.clickto && e.target._DT_CellIndex && Object.hasOwn(this.rowIds, e.target._DT_CellIndex.row)) {
+            if (this.clickto && e.target._DT_CellIndex && e.target._DT_CellIndex.row in this.rowIds) {
               const id = this.rowIds[e.target._DT_CellIndex.row]
               if (id in site.data.entities) this.clickto.set(id)
             }
@@ -2075,10 +2069,10 @@ void (function () {
                 o.palette = _u[o.view].palette
                 if (_u[o.view].palette in _u) add_dependency(_u[o.view].palette, {type: 'update', id: o.id})
               } else {
-                o.palette = Object.hasOwn(_u, 'settings.palette') ? 'settings.palette' : site.settings.palette
+                o.palette = 'settings.palette' in _u ? 'settings.palette' : site.settings.palette
               }
             }
-            o.parsed = {summary: {}, order: [], selection: {}, selected_summary: {}, time: 0, color: ''}
+            o.parsed = {summary: {}, order: [], selection: {}, time: 0, color: ''}
             o.parts = {
               ticks: o.e.getElementsByClassName('legend-ticks')[0],
               scale: o.e.getElementsByClassName('legend-scale')[0],
@@ -2091,7 +2085,7 @@ void (function () {
             o.e.addEventListener('mouseout', elements.legend.mouseout.bind(o))
             o.e.addEventListener('click', elements.legend.click.bind(o))
             o.click = o.e.getAttribute('click')
-            if (Object.hasOwn(_u, o.click)) o.clickto = _u[o.click]
+            if (o.click in _u) o.clickto = _u[o.click]
             o.ticks = {
               center: o.parts.summary.appendChild(document.createElement('div')),
               min: o.parts.summary.appendChild(document.createElement('div')),
@@ -2128,9 +2122,10 @@ void (function () {
                   string = summary && 'levels' in summary,
                   min = summary && !string ? summary.min[c.parsed.time] : 0,
                   range = summary ? (string ? summary.levels.length - min : summary.range[c.parsed.time]) : 1,
-                  subset = summary.n[c.parsed.time] === view.n_selected.dataset ? 'rank' : 'subset_rank',
+                  n = summary.n[c.parsed.time],
+                  subset = n === view.n_selected.dataset ? 'rank' : 'subset_rank',
+                  es = site.data.entities[e.features.id][this.view],
                   value = e.get_value(c.parsed.color, c.parsed.time),
-                  n = view.n_selected[site.settings.summary_selection],
                   p =
                     ((string ? value in summary.level_ids : 'number' === typeof value)
                       ? site.settings.color_by_order
@@ -2149,13 +2144,8 @@ void (function () {
                     (p > 96 || p < 4) && e.features.name.length > 13
                       ? e.features.name.substring(0, 12) + '…'
                       : e.features.name
-                } else if (
-                  site.settings.color_by_order &&
-                  Object.hasOwn(site.data.entities[e.features.id][this.view][subset], c.parsed.color)
-                ) {
-                  var i =
-                      site.data.entities[e.features.id][this.view][subset][c.parsed.color][c.parsed.time] -
-                      summary.missing[c.parsed.time],
+                } else if (site.settings.color_by_order && c.parsed.color in es[subset]) {
+                  const i = es[subset][c.parsed.color][c.parsed.time],
                     po = (i / (n - 1)) * 100
                   this.ticks.entity.firstElementChild.firstElementChild.innerText =
                     i > -1 && (po > 96 || po < 4) && e.features.name.length > 13
@@ -2193,8 +2183,7 @@ void (function () {
                 pn = ep in palettes ? ep : site.settings.palette in palettes ? site.settings.palette : defaults.palette,
                 p = palettes[pn].colors
               this.parsed.summary = summary
-              this.parsed.selected_summary = var_info[this.view].selected_summaries[d]
-              this.parsed.order = var_info[this.view].selected_order[d][y]
+              this.parsed.order = var_info[this.view].order[d][y]
               this.parsed.time = y
               this.parsed.color = variable
               if (summary && y < summary.n.length) {
@@ -2319,22 +2308,23 @@ void (function () {
               p = (Math.max(s.x, Math.min(s.x + s.width, e.clientX)) - s.x) / s.width
             var entity = false
             if (site.settings.color_by_order) {
-              entity =
-                site.data.entities[
-                  this.parsed.order[
-                    Math.max(
-                      this.parsed.selected_summary.missing[this.parsed.time],
-                      Math.min(this.parsed.order.length - 1, Math.floor((this.parsed.order.length - 1) * p))
-                    )
-                  ][0]
-                ]
+              if (this.parsed.order && this.parsed.order.length)
+                entity =
+                  site.data.entities[
+                    this.parsed.order[
+                      Math.max(
+                        this.parsed.summary.missing[this.parsed.time],
+                        Math.min(this.parsed.order.length - 1, Math.floor((this.parsed.order.length - 1) * p))
+                      )
+                    ][0]
+                  ]
             } else {
               const min = this.parsed.summary.min[this.parsed.time],
                 max = this.parsed.summary.max[this.parsed.time],
                 tv = min + p * (max - min)
               var i, n
               if (this.parsed.order && this.parsed.order.length) {
-                n = this.parsed.selected_summary.missing[this.parsed.time]
+                n = this.parsed.summary.missing[this.parsed.time]
                 if (n < this.parsed.order.length) {
                   if (1 === this.parsed.order.length || !p) {
                     entity = site.data.entities[this.parsed.order[n][0]]
@@ -2483,7 +2473,7 @@ void (function () {
       const centered = 'none' !== site.settings.color_scale_center && !site.settings.color_by_order,
         fixed = 'discrete' === palettes[which].type,
         colors = palettes[which].colors,
-        string = Object.hasOwn(summary, 'levels'),
+        string = 'levels' in summary,
         min = !string ? summary.min[index] : 0,
         range = string ? summary.levels.length - min : summary.range[index],
         center_source =
@@ -2518,7 +2508,7 @@ void (function () {
         if (upper) v = 1 - v
         if (!centered) v *= 2
       }
-      return (string ? Object.hasOwn(summary.level_ids, value) : 'number' === typeof value)
+      return (string ? value in summary.level_ids : 'number' === typeof value)
         ? fixed
           ? colors[
               Math.max(
@@ -2548,7 +2538,7 @@ void (function () {
     }
 
     function init_text(o, text) {
-      if (!Object.hasOwn(text, 'button')) text.button = {}
+      if (!('button' in text)) text.button = {}
       if ('string' === typeof text.text) text.text = [text.text]
       text.parts = document.createElement('span')
       text.text.forEach(k => {
@@ -2566,124 +2556,129 @@ void (function () {
             text.parts.lastElementChild.addEventListener('blur', tooltip_clear)
           } else {
             text.parts.lastElementChild.className = 'btn btn-link'
-            if (_u[p.target] && 'function' === typeof _u[p.target][p.type]) {
+            const u = _u[p.target]
+            if (u && 'function' === typeof u[p.type]) {
               text.parts.lastElementChild.setAttribute('aria-label', p.text.join(''))
-              text.parts.lastElementChild.addEventListener('click', _u[p.target][p.type])
+              text.parts.lastElementChild.addEventListener('click', u[p.type])
             }
           }
         } else {
           text.parts.appendChild(document.createElement('span'))
         }
       })
-      if (Object.hasOwn(text, 'condition')) {
-        for (var i = text.condition.length; i--; )
-          if (text.condition[i].id) {
-            if ('default' === text.condition[i].id) {
-              text.condition[i].check = function () {
+      if ('condition' in text) {
+        for (let i = text.condition.length; i--; ) {
+          const c = text.condition[i]
+          if (c.id) {
+            if ('default' === c.id) {
+              c.check = function () {
                 return true
               }
             } else {
-              o.depends[text.condition[i].id] = ''
-              text.condition[i].check = function () {
+              o.depends[c.id] = ''
+              c.check = function () {
                 return (
                   'default' === this.id ||
                   DataHandler.prototype.checks[this.type](valueOf(this.id), valueOf(this.value))
                 )
-              }.bind(text.condition[i])
+              }.bind(c)
             }
           }
+        }
       }
     }
 
     function fill_ids_options(u, d, out) {
-      if (!Object.hasOwn(site.data.sets, d)) {
+      if (!(d in site.data.sets)) {
         site.data.data_queue[d][u.id] = function () {
           return fill_ids_options(u, d, out)
         }
         if (site.data.loaded[d]) site.data.load_id_maps()
         return
       }
-      out[d] = {options: [], values: [], display: []}
-      u.values = out[d].values
-      u.display = out[d].display
-      const s = out[d].options
+      out[d] = {options: [], values: {}, display: {}}
+      const current = u.values,
+        s = out[d].options,
+        values = out[d].values,
+        disp = out[d].display
+      var ck = !u.sensitive && !!u.current_set,
+        n = 0
       Object.keys(site.data.entities).forEach(k => {
         if (d === site.data.entities[k].group) {
+          if (ck && !(k in current)) {
+            u.sensitive = true
+            ck = false
+          }
           s.push(u.add(k, site.data.entities[k].features.name))
-          u.values.push(k)
-          u.display.push(site.data.entities[k].features.name)
+          values[k] = n
+          disp[site.data.entities[k].features.name] = n++
         }
       })
-      u.id in site.url_options ? u.set(site.url_options[u.id]) : u.reset()
     }
 
     function fill_variables_options(u, d, out) {
-      var s, i, m, n, l
-      out[d] = {options: [], values: [], display: []}
-      s = out[d].options
-      u.values = out[d].values
-      u.display = out[d].display
-      for (m = site.metadata.info[d].schema.fields, n = m.length, i = 0; i < n; i++) {
-        l = site.data.format_label(m[i].name)
-        s[i] = u.add(i, l, m[i])
-        u.values.push(m[i].name)
-        u.display.push(l)
-      }
-      u.id in site.url_options ? u.set(site.url_options[u.id]) : u.reset()
+      out[d] = {options: [], values: {}, display: {}}
+      const current = u.values,
+        s = out[d].options,
+        values = out[d].values,
+        disp = out[d].display
+      var ck = !u.sensitive && !!u.current_set,
+        n = 0
+      site.metadata.info[d].schema.fields.forEach(m => {
+        const v = site.data.variables[m.name]
+        if (v && !v.is_time) {
+          const l = site.data.format_label(m.name)
+          if (ck && !(k in current)) {
+            u.sensitive = true
+            ck = false
+          }
+          s.push(u.add(m.name, l, m))
+          values[m.name] = n
+          disp[l] = n++
+        }
+      })
     }
 
     function fill_levels_options(u, d, v, out) {
       const m = site.data.variables[v].info[d],
-        t = 'string' === m.type ? 'levels' : 'ids'
-      var l = m[t],
-        k,
-        i,
-        n,
-        s
+        t = 'string' === m.type ? 'levels' : 'ids',
+        l = m[t]
       if (l) {
-        k = d + v
-        if (Object.hasOwn(out, k)) {
-          u.values = out[k].values
-          u.display = out[k].display
-          for (s = out[k].options, n = s.length, i = 0; i < n; i++) {
-            if (s[i].length) {
-              u.e.appendChild(s[i][0])
-              u.e.appendChild(s[i][1])
-            } else u.e.appendChild(s[i])
+        const k = d + v
+        out[k] = {options: [], values: {}, display: {}}
+        const current = u.values,
+          s = out[k].options,
+          values = out[k].values,
+          disp = out[k].display
+        var ck = !u.sensitive && !!u.current_set,
+          n = 0
+        Object.keys(l).forEach(k => {
+          const lk = l[k]
+          if (ck && !(k in current)) {
+            u.sensitive = true
+            ck = false
           }
-        } else {
-          out[k] = {options: [], values: [], display: []}
-          s = out[k].options
-          u.values = out[k].values
-          u.display = out[k].display
-          i = 0
-          for (k in l)
-            if (Object.hasOwn(l, k)) {
-              s[i++] = u.add(l[k].id, l[k].name)
-              u.values.push(l[k].id)
-              u.display.push(l[k].name)
-            }
-        }
+          s.push(u.add(lk.id, lk.name))
+          values[lk.id] = n
+          disp[lk.name] = n++
+        })
       } else if ('ids' === t) {
         site.data.data_queue[d][u.id] = function () {
           return fill_levels_options(u, d, v, out)
         }
         if (site.data.loaded[d]) site.data.load_id_maps()
       }
-      u.id in site.url_options ? u.set(site.url_options[u.id]) : u.reset()
     }
 
     function sort_tree_children(a, b) {
-      return !Object.hasOwn(tree, a.id) || !Object.hasOwn(tree, b.id)
-        ? -Infinity
-        : tree[a.id]._n.children - tree[b.id]._n.children
+      return !(a.id in tree) || !(b.id in tree) ? -Infinity : tree[a.id]._n.children - tree[b.id]._n.children
     }
 
     function add_dependency(id, o) {
-      if (!Object.hasOwn(_c, id)) _c[id] = []
+      if (!(id in _c)) _c[id] = []
       _c[id].push(o)
-      if (!Object.hasOwn(tree, id)) tree[id] = {_n: {children: 0, parents: 0}, children: {}, parents: {}}
-      if (!Object.hasOwn(tree, o.id)) tree[o.id] = {_n: {children: 0, parents: 0}, children: {}, parents: {}}
+      if (!(id in tree)) tree[id] = {_n: {children: 0, parents: 0}, children: {}, parents: {}}
+      if (!(o.id in tree)) tree[o.id] = {_n: {children: 0, parents: 0}, children: {}, parents: {}}
       tree[id].children[o.id] = tree[o.id]
       tree[id]._n.children++
       tree[o.id].parents[id] = tree[id]
@@ -2693,14 +2688,14 @@ void (function () {
     }
 
     function add_subs(id, o) {
-      if (!Object.hasOwn(subs, id)) subs[id] = []
+      if (!(id in subs)) subs[id] = []
       subs[id].push(o)
     }
 
     function update_subs(id, fun, e) {
-      if (Object.hasOwn(subs, id)) {
+      if (id in subs) {
         for (var i = subs[id].length; i--; ) {
-          if (Object.hasOwn(subs[id][i], fun)) subs[id][i][fun](e, _u[id])
+          if (fun in subs[id][i]) subs[id][i][fun](e, _u[id])
         }
       }
     }
@@ -2709,12 +2704,12 @@ void (function () {
       if (u.dark_theme !== site.settings.theme_dark) {
         u.dark_theme = site.settings.theme_dark
         const s = getComputedStyle(document.body)
-        if (!Object.hasOwn(u, 'style')) {
+        if (!('style' in u)) {
           u.style = u.options.layout
-          if (!Object.hasOwn(u.style, 'font')) u.style.font = {}
-          if (!Object.hasOwn(u.style, 'modebar')) u.style.modebar = {}
-          if (!Object.hasOwn(u.style.xaxis, 'font')) u.style.xaxis.font = {}
-          if (!Object.hasOwn(u.style.yaxis, 'font')) u.style.yaxis.font = {}
+          if (!('font' in u.style)) u.style.font = {}
+          if (!('modebar' in u.style)) u.style.modebar = {}
+          if (!('font' in u.style.xaxis)) u.style.xaxis.font = {}
+          if (!('font' in u.style.yaxis)) u.style.yaxis.font = {}
         }
         u.style.paper_bgcolor = s.backgroundColor
         u.style.plot_bgcolor = s.backgroundColor
@@ -2730,15 +2725,11 @@ void (function () {
     }
 
     function make_data_entry(u, e, rank, total, name, color) {
-      if (e.data && Object.hasOwn(site.data.variables, u.parsed.x)) {
+      if (e.data && u.parsed.x in site.data.variables) {
         const x = site.data.retrievers.vector({variable: u.parsed.x, entity: e}),
-          y = site.data.retrievers.vector({variable: u.parsed.y, entity: e})
-        for (
-          var i = site.data.variables[u.parsed.x].time_range[u.parsed.dataset][2],
-            t = JSON.parse(u.traces[u.base_trace]);
-          i--;
-
-        ) {
+          y = site.data.retrievers.vector({variable: u.parsed.y, entity: e}),
+          t = JSON.parse(u.traces[u.base_trace])
+        for (let i = site.data.variables[u.parsed.x].time_range[u.parsed.dataset][2]; i--; ) {
           t.text[i] = e.features.name
           t.x[i] = u.parsed.x_range[0] <= i && i <= u.parsed.x_range[1] ? x[i - u.parsed.x_range[0]] : NaN
           t.y[i] = u.parsed.y_range[0] <= i && i <= u.parsed.y_range[1] ? y[i - u.parsed.y_range[0]] : NaN
@@ -2808,10 +2799,7 @@ void (function () {
         page.modal.info.references.classList.remove('hidden')
         if ('string' === typeof info.citations) info.citations = [info.citations]
         for (n = info.citations.length, i = 0; i < n; i++)
-          if (
-            site.data.variable_info._references &&
-            Object.hasOwn(site.data.variable_info._references, info.citations[i])
-          ) {
+          if (site.data.variable_info._references && info.citations[i] in site.data.variable_info._references) {
             page.modal.info.references.lastElementChild.appendChild(
               site.data.variable_info._references[info.citations[i]].element
             )
@@ -2831,7 +2819,7 @@ void (function () {
               : 'unknown'
             s = s.replace(
               m[0],
-              'unknown' !== v && Object.hasOwn(value_types, site.data.variable_info[e.v].type)
+              'unknown' !== v && site.data.variable_info[e.v].type in value_types
                 ? value_types[site.data.variable_info[e.v].type](v)
                 : v
             )
@@ -2869,17 +2857,16 @@ void (function () {
     }
 
     // prepare embedded view
-    if (Object.hasOwn(site.url_options, 'embedded') || Object.hasOwn(site.url_options, 'hide_navbar')) {
-      if (!Object.hasOwn(site.url_options, 'hide_logo')) site.url_options.hide_logo = true
-      if (!Object.hasOwn(site.url_options, 'hide_title')) site.url_options.hide_title = true
-      if (!Object.hasOwn(site.url_options, 'hide_navcontent')) site.url_options.hide_navcontent = true
-      if (!Object.hasOwn(site.url_options, 'hide_panels')) site.url_options.hide_panels = true
-      if (Object.hasOwn(site.url_options, 'embedded') && !Object.hasOwn(site.url_options, 'close_menus'))
-        site.url_options.close_menus = true
+    if ('embedded' in site.url_options || 'hide_navbar' in site.url_options) {
+      if (!('hide_logo' in site.url_options)) site.url_options.hide_logo = true
+      if (!('hide_title' in site.url_options)) site.url_options.hide_title = true
+      if (!('hide_navcontent' in site.url_options)) site.url_options.hide_navcontent = true
+      if (!('hide_panels' in site.url_options)) site.url_options.hide_panels = true
+      if ('embedded' in site.url_options && !('close_menus' in site.url_options)) site.url_options.close_menus = true
     }
     e = document.getElementsByClassName('navbar')[0]
     if (e) {
-      if (Object.hasOwn(site.url_options, 'navcolor')) {
+      if ('navcolor' in site.url_options) {
         if ('' === site.url_options.navcolor) site.url_options.navcolor = window.location.hash
         e.style.backgroundColor = site.url_options.navcolor.replace('%23', '#')
       }
@@ -2907,9 +2894,9 @@ void (function () {
     }
 
     // check for stored settings
-    for (k in site.settings)
-      if (Object.hasOwn(storage, k)) {
-        c = storage.getItem(k)
+    for (const k in site.settings)
+      if (k in storage) {
+        let c = storage.getItem(k)
         if (patterns.bool.test(c)) {
           c = 'true' === c
         } else if (patterns.number.test(c)) c = parseFloat(c)
@@ -2918,24 +2905,27 @@ void (function () {
 
     // preprocess polynomial palettes
     function poly_channel(ch, pos, coefs) {
-      for (var v = coefs[0][ch] + pos * coefs[1][ch], i = 2, n = coefs.length; i < n; i++) {
+      const n = coefs.length
+      for (var v = coefs[0][ch] + pos * coefs[1][ch], i = 2; i < n; i++) {
         v += Math.pow(pos, i) * coefs[i][ch]
       }
       return Math.max(0, Math.min(255, v))
     }
-    for (k in palettes)
-      if (palettes[k] && 'continuous-polynomial' === palettes[k].type) {
-        c = palettes[k].colors
-        palettes[k].type = 'discrete'
-        palettes[k].colors = []
-        i = 0
-        for (var n = 255, v; i < n; i++) {
-          v = i / n
-          palettes[k].colors.push(
+    Object.keys(palettes).forEach(k => {
+      const n = 255,
+        p = palettes[k]
+      if ('continuous-polynomial' === p.type) {
+        const c = p.colors
+        p.type = 'discrete'
+        p.colors = []
+        for (let i = 0; i < n; i++) {
+          const v = i / n
+          p.colors.push(
             'rgb(' + poly_channel(0, v, c) + ', ' + poly_channel(1, v, c) + ', ' + poly_channel(2, v, c) + ')'
           )
         }
       }
+    })
 
     window.onload = function () {
       page.navbar = document.getElementsByClassName('navbar')[0]
@@ -3180,7 +3170,7 @@ void (function () {
       // initialize inputs
       if (site.dataviews) {
         for (const k in site.dataviews)
-          if (Object.hasOwn(site.dataviews, k)) {
+          if (k in site.dataviews) {
             defaults.dataview = k
             break
           }
@@ -3212,7 +3202,7 @@ void (function () {
           data: [],
           input: true,
         }
-        o.settings = Object.hasOwn(site, o.type) && Object.hasOwn(site[o.type], o.id) ? site[o.type][o.id] : {}
+        o.settings = o.type in site && o.id in site[o.type] ? site[o.type][o.id] : {}
         o.wrapper = o.e.parentElement.classList.contains('wrapper')
           ? o.e.parentElement
           : o.e.parentElement.parentElement
@@ -3220,7 +3210,7 @@ void (function () {
           if (o.note) o.wrapper.classList.add('has-note')
           o.wrapper.setAttribute('of', o.id)
           ;['div', 'label', 'fieldset', 'legend', 'input', 'button'].forEach(type => {
-            const c = [...o.wrapper.getElementsByTagName('div')]
+            const c = [...o.wrapper.getElementsByTagName(type)]
             if (c.length) c.forEach(ci => ci.setAttribute('of', o.id))
           })
         }
@@ -3232,11 +3222,11 @@ void (function () {
             p.addEventListener('blur', tooltip_clear)
           }
         }
-        if ('-1' !== o.default && patterns.number.test(o.default)) o.default = Number(o.default)
-        if (Object.hasOwn(elements, o.type)) {
+        if (patterns.number.test(o.default)) o.default = Number(o.default)
+        if (o.type in elements) {
           const p = elements[o.type]
           if (p.init) p.init(o)
-          o.options = o.type === 'select' ? o.e.children : o.e.getElementsByTagName('input')
+          o.options = [...(o.type === 'select' ? o.e.children : o.e.getElementsByTagName('input'))]
           if (p.setter) {
             o.set = p.setter.bind(o)
             o.reset = function () {
@@ -3265,9 +3255,10 @@ void (function () {
             states: v.states,
             update: function () {
               this.source = void 0
-              for (var p, r, c, i = this.states.length; i--; ) {
-                for (c = this.states[i].condition.length, p = true; c--; ) {
-                  r = this.states[i].condition[c]
+              for (var p, i = this.states.length; i--; ) {
+                p = true
+                for (let c = this.states[i].condition.length; c--; ) {
+                  const r = this.states[i].condition[c]
                   if (DataHandler.prototype.checks[r.type](valueOf(r.id), valueOf(r.value))) {
                     if (r.any) {
                       p = true
@@ -3284,8 +3275,8 @@ void (function () {
               if (this.source !== this.previous) {
                 this.previous = this.source
                 request_queue(this.id)
-              } else if (Object.hasOwn(_u, this.source)) {
-                r = _u[this.source].value()
+              } else if (this.source in _u) {
+                const r = _u[this.source].value()
                 if (r !== this.previous) {
                   this.previous = r
                   request_queue(this.id)
@@ -3299,9 +3290,10 @@ void (function () {
               if (-1 !== this.values.indexOf(v)) {
                 this.previous = this.source
                 this.source = v
-              } else {
-                if (Object.hasOwn(_u, this.source) && -1 !== _u[this.source].values.indexOf(v)) {
-                  _u[this.source].set(v)
+              } else if (this.source) {
+                const c = _u[this.source]
+                if ('select' === c.type ? v in c.values || v in c.display : -1 !== c.values.indexOf(v)) {
+                  c.set(v)
                 }
               }
               request_queue(this.id)
@@ -3312,7 +3304,7 @@ void (function () {
           _u[k].states.forEach(si => {
             _u[k].values.push(si.value)
             si.condition.forEach(c => {
-              if (!Object.hasOwn(p, c.id)) {
+              if (!(c.id in p)) {
                 p[c.id] = {type: 'update', id: k}
               }
             })
@@ -3330,13 +3322,13 @@ void (function () {
             if (e.length) r.effects.display.u = _u[e[0].id]
           }
           r.condition.forEach(c => {
-            if (Object.hasOwn(DataHandler.prototype.checks, c.type)) {
+            if (c.type in DataHandler.prototype.checks) {
               c.check = function () {
                 return DataHandler.prototype.checks[this.type](valueOf(this.id), valueOf(this.value))
               }.bind(c)
-              if (Object.hasOwn(_u, c.id)) {
+              if (c.id in _u) {
                 add_dependency(c.id, {type: 'rule', id: c.id, condition: c, rule: i})
-                if (!Object.hasOwn(rule_conditions, c.id)) rule_conditions[c.id] = {}
+                if (!(c.id in rule_conditions)) rule_conditions[c.id] = {}
                 rule_conditions[c.id][i] = r
               }
               if (c.check()) {
@@ -3436,34 +3428,83 @@ void (function () {
       keys._u.forEach(async k => {
         if (_u[k].type in elements) {
           const o = _u[k]
-          // resolve options
-          if (o.options_source) {
-            if (patterns.palette.test(o.options_source)) {
-              Object.keys(palettes).forEach(v => o.add(v, palettes[v].name))
-              o.options = o.e.getElementsByTagName(o.type === 'select' ? 'option' : 'input')
-              o.reset()
-            } else if (patterns.datasets.test(o.options_source)) {
-              site.metadata.datasets.forEach(d => o.add(i, d, site.data.format_label(d)))
-              o.options = o.e.getElementsByTagName(o.type === 'select' ? 'option' : 'input')
-            } else {
-              o.option_sets = {}
-              const v = valueOf(o.dataset) || defaults.dataset
-              if (Object.hasOwn(site.metadata.info, v)) {
-                if (patterns.ids.test(o.options_source)) {
-                  fill_ids_options(o, v, o.option_sets)
-                } else if (patterns.variable.test(o.options_source)) {
-                  fill_variables_options(o, v, o.option_sets)
-                } else if (patterns.levels.test(o.options_source) && Object.hasOwn(site.data.variables, o.variable)) {
-                  fill_levels_options(o, v, o.variable, o.option_sets)
+          if ('select' === o.type) {
+            // resolve options
+            if (o.options_source) {
+              if (patterns.palette.test(o.options_source)) {
+                Object.keys(palettes).forEach(v => o.e.appendChild(o.add(v, palettes[v].name)))
+                o.options = o.e.getElementsByTagName('option')
+                if (-1 === o.default) o.default = defaults.palette
+              } else if (patterns.datasets.test(o.options_source)) {
+                site.metadata.datasets.forEach(d => o.e.appendChild(o.add(i, d, site.data.format_label(d))))
+                o.options = o.e.getElementsByTagName('option')
+              } else {
+                o.sensitive = false
+                o.option_sets = {
+                  values: {},
+                  displays: {},
+                  options: [],
+                }
+                if (o.depends) add_dependency(o.depends, {type: 'options', id: o.id})
+                if (o.dataset in _u) add_dependency(o.dataset, {type: 'options', id: o.id})
+                if (o.view) add_dependency(o.view, {type: 'options', id: o.id})
+                const v = valueOf(o.dataset) || defaults.dataset
+                if (v in site.metadata.info) {
+                  if (!o.dataset) o.dataset = v
+                  conditionals.options(o)
                 }
               }
-              if (o.depends) add_dependency(o.depends, {type: 'options', id: o.id})
-              if (Object.hasOwn(_u, o.dataset)) add_dependency(o.dataset, {type: 'options', id: o.id})
-              if (o.view) add_dependency(o.view, {type: 'options', id: o.id})
             }
-          }
-          // retrieve option values
-          if ('number' === o.type) {
+            if (Array.isArray(o.values)) {
+              o.values = {}
+              o.display = {}
+              o.options = [...o.options]
+              o.options.forEach((e, i) => {
+                o.values[e.value] = i
+                o.display[e.value] = i
+              })
+              if (!(o.default in o.values) && !(o.default in _u)) {
+                o.default = Number(o.default)
+                if (isNaN(o.default)) o.default = -1
+              }
+              o.source = ''
+              o.id in site.url_options ? o.set(site.url_options[o.id]) : o.reset()
+            }
+            o.subset = o.e.getAttribute('subset') || 'all'
+            if (o.type in site && o.id in site[o.type]) {
+              o.filters = site[o.type][o.id]
+              o.current_filter = {}
+              Object.keys(o.filters).forEach(f => {
+                add_dependency(o.filters[f], {type: 'filter', id: o.id})
+              })
+              o.filter = function () {
+                Object.keys(this.filters).forEach(f => {
+                  this.current_filter[f] = valueOf(this.filters[f])
+                })
+                var first
+                Object.keys(this.values).forEach((v, i) => {
+                  var pass = false
+                  if (v in site.data.variables && 'meta' in site.data.variables[v]) {
+                    for (const k in this.current_filter)
+                      if (k in site.data.variables[v].meta) {
+                        pass = site.data.variables[v].meta[k] === this.current_filter[k]
+                        if (!pass) break
+                      }
+                  }
+                  if (pass && !first) first = v
+                  this.options[i].classList[pass ? 'remove' : 'add']('hidden')
+                })
+                this.current_index = this.values[this.value()]
+                if (
+                  first &&
+                  (-1 === this.current_index || this.options[this.current_index].classList.contains('hidden'))
+                ) {
+                  this.set(first)
+                }
+              }.bind(o)
+            }
+          } else if ('number' === o.type) {
+            // retrieve option values
             o.min = o.e.getAttribute('min')
             o.min_ref = parseFloat(o.min)
             o.max = o.e.getAttribute('max')
@@ -3501,14 +3542,12 @@ void (function () {
                   : parseFloat(max)
                 : this.min_ref
               if (this.ref && variable in site.data.variables) {
-                this.range[0] =
-                  this.e.min =
-                  v =
-                    isNaN(this.min_ref) ? Math.max(view.time_range.time[0], this.parsed.min) : this.min_ref
-                this.range[1] =
-                  this.e.max =
-                  v =
-                    isNaN(this.max_ref) ? Math.min(view.time_range.time[1], this.parsed.max) : this.max_ref
+                this.range[0] = this.e.min = isNaN(this.min_ref)
+                  ? Math.max(view.time_range.time[0], this.parsed.min)
+                  : this.min_ref
+                this.range[1] = this.e.max = isNaN(this.max_ref)
+                  ? Math.min(view.time_range.time[1], this.parsed.max)
+                  : this.max_ref
                 if (!this.depends[view.y]) {
                   this.depends[view.y] = true
                   add_dependency(view.y, {type: 'update', id: this.id})
@@ -3523,15 +3562,15 @@ void (function () {
               }
             }.bind(o)
             if (o.view) add_dependency(o.view, {type: 'update', id: o.id})
-            if (!Object.hasOwn(site.data.variables, o.max)) {
-              if (Object.hasOwn(_u, o.max)) {
+            if (!(o.max in site.data.variables)) {
+              if (o.max in _u) {
                 add_dependency(o.max, {type: 'max', id: o.id})
               } else o.e.max = parseFloat(o.max)
             } else if (o.view) {
               add_dependency(o.view + '_time', {type: 'max', id: o.id})
             }
-            if (!Object.hasOwn(site.data.variables, o.min)) {
-              if (Object.hasOwn(_u, o.min)) {
+            if (!(o.min in site.data.variables)) {
+              if (o.min in _u) {
                 add_dependency(o.min, {type: 'min', id: o.id})
               } else o.e.min = parseFloat(o.min)
             } else if (o.view) {
@@ -3550,7 +3589,7 @@ void (function () {
                     ? function () {
                         if (this.range) this.set(valueOf(this.range[0]))
                       }.bind(o)
-                    : Object.hasOwn(_u, this.default)
+                    : this.default in _u
                     ? function () {
                         this.set(valueOf(this.default))
                       }.bind(o)
@@ -3558,91 +3597,51 @@ void (function () {
             }
             if (o.variable) {
               const d = -1 === site.metadata.datasets.indexOf(o.dataset) ? defaults.dataset : o.dataset
-              if (Object.hasOwn(_u, o.variable)) {
+              if (o.variable in _u) {
                 add_dependency(o.variable, {type: 'update', id: o.id})
-              } else if (Object.hasOwn(site.data.variables, o.variable)) {
+              } else if (o.variable in site.data.variables) {
                 o.e.min = o.min = o.parsed.min = o.range[0] = site.data.variables[o.variable].info[d].min
                 o.e.max = o.max = o.parsed.max = o.range[1] = site.data.variables[o.variable].info[d].max
               }
             }
-          } else {
-            if (!o.values.length)
-              for (i = o.options.length; i--; ) {
-                o.values[i] = o.options[i].value
-                o.display[i] = site.data.format_label(o.options[i].innerText.trim() || o.values[i])
-              }
-            if ('checkbox' === o.type) {
-              o.source = []
-              o.current_index = []
-              o.default = o.default.split(',')
-              if (o.options.length)
-                for (i = o.options.length; i--; ) {
-                  o.values[i] = o.options[i].value
-                }
-            } else if (o.values.length && !Object.hasOwn(_u, o.default) && -1 === o.values.indexOf(o.default)) {
+          } else if ('checkbox' === o.type) {
+            o.source = []
+            o.current_index = []
+            o.default = o.default.split(',')
+          }
+          if (Array.isArray(o.values)) {
+            if (!o.values.length) o.values = o.options.map(o => o.value)
+            if (o.values.length && !Object.hasOwn(_u, o.default) && -1 === o.values.indexOf(o.default)) {
               o.default = parseInt(o.default)
               o.default = o.values.length > o.default ? o.values[o.default] : ''
             }
           }
+
           // add listeners
           if ('select' === o.type || 'number' === o.type) {
-            o.subset = o.e.getAttribute('subset') || 'all'
-            o.e.addEventListener('input', o.listen)
+            o.e.addEventListener('change', o.listen)
             if (
               o.e.parentElement.lastElementChild &&
               o.e.parentElement.lastElementChild.classList.contains('select-reset')
             ) {
               o.e.parentElement.lastElementChild.addEventListener('click', o.reset)
             }
-            if (o.type in site && o.id in site[o.type]) {
-              o.filters = site[o.type][o.id]
-              o.current_filter = {}
-              Object.keys(o.filters).forEach(f => {
-                add_dependency(o.filters[f], {type: 'filter', id: o.id})
-              })
-              o.filter = function () {
-                Object.keys(this.filters).forEach(f => {
-                  this.current_filter[f] = valueOf(this.filters[f])
-                })
-                var last
-                this.values.forEach((v, i) => {
-                  var pass = false
-                  if (Object.hasOwn(site.data.variables, v) && 'meta' in site.data.variables[v]) {
-                    for (const k in this.current_filter)
-                      if (Object.hasOwn(site.data.variables[v].meta, k)) {
-                        pass = site.data.variables[v].meta[k] === this.current_filter[k]
-                        if (!pass) break
-                      }
-                  }
-                  if (pass) last = v
-                  this.options[i].classList[pass ? 'remove' : 'add']('hidden')
-                })
-                this.current_index = this.values.indexOf(this.value())
-                if (
-                  last &&
-                  (-1 === this.current_index || this.options[this.current_index].classList.contains('hidden'))
-                ) {
-                  this.set(last)
-                }
-              }.bind(o)
-            }
           } else if ('switch' === o.type) {
             if ('boolean' !== typeof o.default) o.default = o.e.checked
             o.e.addEventListener('change', o.listen)
           } else {
-            for (i = o.options.length; i--; ) o.options[i].addEventListener('click', o.listen)
+            o.options.forEach(oi => oi.addEventListener('click', o.listen))
           }
           // initialize settings inputs
           if (patterns.settings.test(o.id)) {
             o.setting = o.id.replace(patterns.settings, '')
-            if (null == o.default && Object.hasOwn(site.settings, o.setting)) o.default = site.settings[o.setting]
+            if (null == o.default && o.setting in site.settings) o.default = site.settings[o.setting]
             add_dependency(o.id, {type: 'setting', id: o.id})
           }
-          v = site.url_options[o.id] || storage.getItem(o.id.replace(patterns.settings, ''))
           if (!o.view) o.view = defaults.dataview
+          const v = site.url_options[o.id] || storage.getItem(o.id.replace(patterns.settings, ''))
           if (v) {
-            if (patterns.bool.test(v)) v = 'true' === v
-            o.set(v)
+            o.set(patterns.bool.test(v) ? 'true' === v : v)
           } else o.reset && o.reset()
         }
       })
@@ -3710,12 +3709,11 @@ void (function () {
         e.reparse()
       })
       // initialize outputs
-      for (c = document.getElementsByClassName('auto-output'), i = c.length, n = 0; i--; ) {
-        e = c[i]
+      ;[...document.getElementsByClassName('auto-output')].forEach((e, i) => {
         const o = {
           type: e.getAttribute('auto-type'),
           view: e.getAttribute('data-view') || defaults.dataview,
-          id: e.id || 'out' + n++,
+          id: e.id || 'out' + i,
           note: e.getAttribute('aria-description') || '',
           reference_options: {},
           e: e,
@@ -3735,18 +3733,18 @@ void (function () {
         }
         _u[o.id] = o
         if (o.view) {
-          if (!Object.hasOwn(_c, o.view)) _c[o.view] = []
-          if (!Object.hasOwn(_c, o.view + '_filter')) _c[o.view + '_filter'] = []
+          if (!(o.view in _c)) _c[o.view] = []
+          if (!(o.view + '_filter' in _c)) _c[o.view + '_filter'] = []
         }
-        if (Object.hasOwn(elements, o.type) && Object.hasOwn(elements[o.type], 'init')) {
-          if (!o.view || Object.hasOwn(site.data.inited, _u[o.view].parsed.dataset)) {
+        if (o.type in elements && 'init' in elements[o.type]) {
+          if (!o.view || _u[o.view].parsed.dataset in site.data.inited) {
             elements[o.type].init(o)
           } else {
             site.data.data_queue[_u[o.view].parsed.dataset][o.id] = elements[o.type].init.bind(null, o)
             if (site.data.loaded[_u[o.view].parsed.dataset]) site.data.load_id_maps()
           }
         }
-      }
+      })
 
       // make filter popup
       e = page.modal.filter
@@ -3758,24 +3756,22 @@ void (function () {
 
       function add_filter_condition(event) {
         if ('A' === event.target.tagName) {
-          const e = document.createElement('div')
-          var ee, f
           if (!site.data.filter) site.data.filter = new Map()
-          e.setAttribute('index', site.data.filter.size)
-          site.data.filter.set(
-            site.data.filter.size,
-            (f = {
+          const e = document.createElement('div'),
+            f = {
               e,
               index: site.data.filter.size,
               variable: event.target.value,
               component: 'selected',
               operator: '>=',
               value: '',
-            })
-          )
+            }
+          e.setAttribute('index', site.data.filter.size)
+          site.data.filter.set(site.data.filter.size, f)
           e.className = 'row'
           e.appendChild(document.createElement('div'))
           e.lastElementChild.className = 'col'
+          var ee
           e.lastElementChild.appendChild((ee = document.createElement('p')))
           ee.className = 'cell-text'
           ee.innerText = event.target.innerText
@@ -3790,8 +3786,7 @@ void (function () {
             f.component = e.target.selectedOptions[0].value
             conditionals.dataview()
           })
-          var options = ['selected']
-          options.forEach(k => {
+          ;['selected'].forEach(k => {
             ee.appendChild(document.createElement('option'))
             ee.lastElementChild.component = ee.lastElementChild.innerText = k
             conditionals.dataview()
@@ -3807,8 +3802,7 @@ void (function () {
             f.operator = e.target.selectedOptions[0].value
             conditionals.dataview()
           })
-          options = ['>=', '<=']
-          options.forEach(k => {
+          ;['>=', '<='].forEach(k => {
             ee.appendChild(document.createElement('option'))
             ee.lastElementChild.value = ee.lastElementChild.innerText = k
             conditionals.dataview()
@@ -3904,7 +3898,7 @@ void (function () {
     }
 
     function valueOf(v) {
-      v = 'string' === typeof v && Object.hasOwn(_u, v) ? _u[v] : v
+      if (v in _u) v = _u[v]
       if (v && v.value) v = valueOf(v.value())
       return v
     }
@@ -3940,7 +3934,7 @@ void (function () {
     }
 
     async function retrieve_layer(u, source, callback) {
-      if (Object.hasOwn(site.map._raw, source.url)) {
+      if (source.url in site.map._raw) {
         process_layer(source, u)
         site.map._queue[source.name + (source.time ? source.time : '')].retrieved = true
         callback && callback()
@@ -3963,7 +3957,7 @@ void (function () {
 
     function process_layer(source, u) {
       var p, f, id
-      const has_time = Object.hasOwn(source, 'time'),
+      const has_time = 'time' in source,
         layerId = source.name + (has_time ? source.time : '')
       site.map[u.id]._layers[layerId] = L.geoJSON(JSON.parse(site.map._raw[source.url]), {
         onEachFeature: add_layer_listeners.bind(u),
@@ -3974,24 +3968,24 @@ void (function () {
         l.source = source
         p = l.feature.properties
         id = p[source.id_property]
-        if (!Object.hasOwn(site.data.entities, id) && patterns.leading_zeros.test(id))
+        if (!(id in site.data.entities) && patterns.leading_zeros.test(id))
           id = p[source.id_property] = id.replace(patterns.leading_zeros, '')
-        if (Object.hasOwn(site.data.entities, id)) {
-          if (!Object.hasOwn(site.data.entities[id], 'layer')) site.data.entities[id].layer = {}
+        if (id in site.data.entities) {
+          if (!('layer' in site.data.entities[id])) site.data.entities[id].layer = {}
         } else {
           site.data.entities[id] = {layer: {}, features: {id: id}}
         }
         if (has_time) {
-          if (!Object.hasOwn(site.data.entities[id].layer, u.id)) site.data.entities[id].layer[u.id] = {has_time: true}
+          if (!(u.id in site.data.entities[id].layer)) site.data.entities[id].layer[u.id] = {has_time: true}
           site.data.entities[id].layer[u.id][source.time] = l
         } else site.data.entities[id].layer[u.id] = l
         l.entity = site.data.entities[id]
         if (site.data.entities[id].features)
           for (f in p)
-            if (Object.hasOwn(p, f) && !Object.hasOwn(site.data.entities[id].features, f)) {
+            if (f in p && !(f in site.data.entities[id].features)) {
               if (
                 'name' === f.toLowerCase() &&
-                (!Object.hasOwn(site.data.entities[id].features, 'name') ||
+                (!('name' in site.data.entities[id].features) ||
                   site.data.entities[id].features.id === site.data.entities[id].features.name)
               ) {
                 site.data.entities[id].features[f.toLowerCase()] = p[f]
@@ -4001,14 +3995,14 @@ void (function () {
             }
       })
       if (site.map._waiting && site.map._waiting[source.name]) {
-        for (var i = site.map._waiting[source.name].length; i--; ) {
+        for (let i = site.map._waiting[source.name].length; i--; ) {
           request_queue(site.map._waiting[source.name][i])
         }
       }
     }
 
     function show_overlay(u, o, time) {
-      var i,
+      var i = 0,
         source = 'string' === typeof o.source ? o.source : ''
       if (!source && undefined !== time && o.source) {
         for (i = o.source.length; i--; ) {
@@ -4019,8 +4013,8 @@ void (function () {
         }
       }
       if (source) {
-        if (Object.hasOwn(site.map._raw, source)) {
-          if (!Object.hasOwn(site.map[u.id]._layers, source)) {
+        if (source in site.map._raw) {
+          if (!(source in site.map[u.id]._layers)) {
             site.map[u.id]._layers[source] = L.geoJSON(JSON.parse(site.map._raw[source]), {
               pointToLayer: (point, coords) => {
                 return L.circleMarker(coords)
@@ -4042,7 +4036,7 @@ void (function () {
           u.overlay.clearLayers()
           site.map[u.id]._layers[source].eachLayer(l => {
             if (o.filter) {
-              for (var i = o.filter.length; i--; ) {
+              for (let i = o.filter.length; i--; ) {
                 if (!o.filter[i].check(l.feature.properties[o.filter[i].feature], o.filter[i].value)) return
               }
             }
@@ -4061,7 +4055,6 @@ void (function () {
     }
 
     function compile_dataview(v) {
-      var i
       v.times = []
       if (v.time_filters) {
         v.time_filters = [
@@ -4070,53 +4063,48 @@ void (function () {
         ]
         add_dependency(v.id + '_time', {type: 'min', id: 'filter.time_min'})
         add_dependency(v.id + '_time', {type: 'max', id: 'filter.time_max'})
-        for (i = v.time_filters.length; i--; )
-          if (Object.hasOwn(_u, v.time_filters[i].value)) {
-            add_dependency(v.time_filters[i].value, {type: 'time_filters', id: v.id})
+        v.time_filters.forEach(f => {
+          if (f.value in _u) {
+            add_dependency(f.value, {type: 'time_filters', id: v.id})
           }
+        })
       }
       v.selection = {ids: {}, features: {}, variables: [], dataset: {}, filtered: {}, all: {}}
       v.n_selected = {ids: 0, features: 0, variables: 0, dataset: 0, filtered: 0, all: 0}
       v.get = {
         dataset: function () {
           return (
-            valueOf(
-              'string' === typeof v.dataset && Object.hasOwn(_u, v.dataset) ? _u[v.dataset].value() : v.dataset
-            ) || defaults.dataset
+            valueOf('string' === typeof v.dataset && v.dataset in _u ? _u[v.dataset].value() : v.dataset) ||
+            defaults.dataset
           )
         },
         ids: function () {
-          return valueOf('string' === typeof v.ids && Object.hasOwn(_u, v.ids) ? _u[v.ids].value() : v.ids)
+          return valueOf('string' === typeof v.ids && v.ids in _u ? _u[v.ids].value() : v.ids)
         },
         features: function () {
-          var s = '',
-            k
-          if (v.features)
-            for (k in v.features)
-              if (Object.hasOwn(v.features, k)) {
-                s += k + valueOf(v.features[k])
-              }
+          var s = ''
+          v.features &&
+            Object.keys(v.features).forEach(k => {
+              s += k + valueOf(v.features[k])
+            })
           return s
         },
         variables: function () {
           if (v.variables || (site.data.filter && site.data.filter.size)) {
             if (!v.parsed.variable_values.length) v.reparse()
-            for (var s = '', i = v.parsed.variable_values.length; i--; )
-              s +=
-                v.parsed.variable_values[i].name +
-                v.parsed.variable_values[i].operator +
-                v.parsed.variable_values[i].value
+            var s = ''
+            v.parsed.variable_values.forEach(vi => {
+              s += vi.name + vi.operator + vi.value
+            })
             return s
           } else return ''
         },
         time_filters: function () {
           var s = ''
-          if (v.time_filters && v.time_filters.length) {
-            for (i = v.time_filters.length; i--; )
-              s += Object.hasOwn(_u, v.time_filters[i].value)
-                ? valueOf(v.time_filters[i].value)
-                : v.time_filters[i].value
-          }
+          v.time_filters &&
+            v.time_filters.forEach(f => {
+              s += f.value in _u ? valueOf(f.value) : f.value
+            })
           return s
         },
       }
@@ -4141,14 +4129,15 @@ void (function () {
         this.parsed.dataset = this.get.dataset()
         this.parsed.ids = this.get.ids()
         this.parsed.time_filters = this.get.time_filters()
-        this.parsed.time_agg = Object.hasOwn(site.data.meta.times, this.parsed.dataset)
-          ? valueOf(this.time_agg) - site.data.meta.times[this.parsed.dataset].range[0]
-          : 0
+        this.parsed.time_agg =
+          this.parsed.dataset in site.data.meta.times
+            ? valueOf(this.time_agg) - site.data.meta.times[this.parsed.dataset].range[0]
+            : 0
         if (
           'string' === typeof this.ids &&
-          Object.hasOwn(_u, this.ids) &&
-          (('virtual' === _u[this.ids].type && Object.hasOwn(_u, _u[this.ids].source)) ||
-            (Object.hasOwn(_u[this.ids], 'depends') && Object.hasOwn(_u, _u[this.ids].depends)))
+          this.ids in _u &&
+          (('virtual' === _u[this.ids].type && _u[this.ids].source in _u) ||
+            ('depends' in _u[this.ids] && _u[this.ids].depends in _u))
         ) {
           this.parsed.id_source =
             'virtual' === _u[this.ids].type
@@ -4158,7 +4147,7 @@ void (function () {
         if (this.features) {
           this.parsed.feature_values = {}
           for (var k in this.features)
-            if (Object.hasOwn(this.features, k)) {
+            if (k in this.features) {
               this.parsed.feature_values[k] = {value: valueOf(this.features[k])}
               this.parsed.feature_values[k].operator =
                 'string' === typeof this.parsed.feature_values[k].value ? 'equals' : 'includes'
@@ -4196,9 +4185,9 @@ void (function () {
           return this.parsed.dataset === e.group
         }.bind(v),
         ids: ('string' === typeof v.ids &&
-        Object.hasOwn(_u, v.ids) &&
-        (('virtual' === _u[v.ids].type && Object.hasOwn(_u, _u[v.ids].source)) ||
-          (Object.hasOwn(_u[v.ids], 'depends') && Object.hasOwn(_u, _u[v.ids].depends)))
+        v.ids in _u &&
+        (('virtual' === _u[v.ids].type && _u[v.ids].source in _u) ||
+          ('depends' in _u[v.ids] && _u[v.ids].depends in _u))
           ? 'virtual' === _u[v.ids].type
             ? function (e) {
                 return (
@@ -4208,7 +4197,7 @@ void (function () {
                     e.features[
                       !this.parsed.id_source ||
                       e.group === this.parsed.id_source ||
-                      !Object.hasOwn(e.features, this.parsed.id_source)
+                      !(this.parsed.id_source in e.features)
                         ? 'id'
                         : this.parsed.id_source
                     ]
@@ -4220,9 +4209,7 @@ void (function () {
                   e.features &&
                   this.ids_check(
                     this.parsed.ids,
-                    Object.hasOwn(e.features, this.parsed.id_source)
-                      ? valueOf(e.features[this.parsed.id_source])
-                      : e.features.id
+                    this.parsed.id_source in e.features ? valueOf(e.features[this.parsed.id_source]) : e.features.id
                   )
                 )
               }
@@ -4236,7 +4223,7 @@ void (function () {
               v,
               pass = true
             for (k in this.parsed.feature_values) {
-              if (Object.hasOwn(this.parsed.feature_values, k)) {
+              if (k in this.parsed.feature_values) {
                 v = this.parsed.feature_values[k]
                 pass = DataHandler.prototype.checks[v.operator](v.value, valueOf(e.features[k]))
                 if (!pass) break
@@ -4245,13 +4232,13 @@ void (function () {
             return pass
           } else return true
         }.bind(v),
-        variables: async function (e) {
+        variables: function (e) {
           if (e.data) {
             for (var i = this.parsed.variable_values.length, pass = true, v, ev; i--; ) {
               v = this.parsed.variable_values[i]
               ev = e.get_value(
                 v.name,
-                this.parsed.time_agg - (await get_variable(v.name, this.view).time_range[this.parsed.dataset][0])
+                this.parsed.time_agg - site.data.variables[v.name].info[this.parsed.dataset].time_range[0]
               )
               pass = isNaN(ev) || v.value_type !== typeof ev || DataHandler.prototype.checks[v.operator](ev, v.value)
               if (!pass) break
@@ -4296,10 +4283,7 @@ void (function () {
         page.modal.info.references.classList.remove('hidden')
         if ('string' === typeof info.citations) info.citations = [info.citations]
         for (n = info.citations.length, i = 0; i < n; i++)
-          if (
-            site.data.variable_info._references &&
-            Object.hasOwn(site.data.variable_info._references, info.citations[i])
-          ) {
+          if (site.data.variable_info._references && info.citations[i] in site.data.variable_info._references) {
             page.modal.info.references.lastElementChild.appendChild(
               site.data.variable_info._references[info.citations[i]].element
             )
@@ -4392,29 +4376,29 @@ void (function () {
             }
           })
           r.forEach(ri => {
-            const n = ri.condition.length
             var pass = false
+            const n = ri.condition.length
             for (let i = 0; i < n; i++) {
-              pass = ri.condition[i].check()
-              if (ri.condition[i].any ? pass : !pass) break
+              const ck = ri.condition[i]
+              pass = ck.check()
+              if (ck.any ? pass : !pass) break
             }
             Object.keys(ri.effects).forEach(k => {
               const e = ri.effects[k]
               if (pass) {
                 if (k === 'display') {
                   e.e.classList.remove('hidden')
-                } else if (Object.hasOwn(_u, k)) {
+                } else if (k in _u) {
                   _u[k].set(valueOf(e))
                 }
               } else if (k === 'display') {
                 e.e.classList.add('hidden')
                 if (e.u) e.u.reset()
-                const ch = e.e.getElementsByClassName('auto-input')
-                for (let i = ch.length; i--; ) {
-                  if (Object.hasOwn(_u, ch[i].id)) _u[ch[i].id].reset()
-                }
-              } else if (Object.hasOwn(ri, 'default')) {
-                if (Object.hasOwn(_u, k)) {
+                ;[...e.e.getElementsByClassName('auto-input')].forEach(c => {
+                  if (c.id in _u) _u[c.id].reset()
+                })
+              } else if ('default' in ri) {
+                if (k in _u) {
                   _u[k].set(valueOf(ri.default))
                 }
               }
@@ -4483,7 +4467,7 @@ void (function () {
                       return time + ''
                     }
                   : time => {
-                      return String(time).substring(0, 3) + '0'
+                      return Number(time) > 2019 ? '2020' : '2010'
                     }
             }
             var k = shape.name
@@ -4499,12 +4483,12 @@ void (function () {
               retrieve_layer(this, shape)
           })
           site.map[this.id].triggers = {}
-          if (site.map[this.id].overlays)
+          if (Array.isArray(site.map[this.id].overlays))
             site.map[this.id].overlays.forEach(l => {
               if ('string' === typeof l.source) l.source = [{url: l.source}]
               const source = l.source
               source.forEach(s => {
-                s.retrieved = Object.hasOwn(site.map._raw, s.url)
+                s.retrieved = s.url in site.map._raw
                 site.map._queue[s.url] = s
               })
               site.map[this.id].triggers[l.variable] = {source}
@@ -4526,7 +4510,7 @@ void (function () {
 
     function queue_init_datatable() {
       const showing = this.deferred || !this.tab || this.tab.classList.contains('show')
-      if (showing && window.jQuery && window.DataTable && Object.hasOwn(site.dataviews[this.view], 'get')) {
+      if (showing && window.jQuery && window.DataTable && 'get' in site.dataviews[this.view]) {
         this.options.columns = this.header
         this.table = $(this.e).DataTable(this.options)
         this.update()
