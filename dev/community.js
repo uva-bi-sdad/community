@@ -507,111 +507,109 @@ void (function () {
             if ('filter' === o.target) {
               o.e.setAttribute('data-bs-toggle', 'modal')
               o.e.setAttribute('data-bs-target', '#filter_display')
-            }
-            o.e.addEventListener(
-              'click',
-              o.settings.effects
-                ? 'filter' === o.target
-                  ? toggle_filter
-                  : 'export' === o.target || 'copy' === o.target
-                  ? function () {
-                      const f = {},
-                        s = this.settings,
-                        v = _u[s.dataview],
-                        d = v && v.parsed.dataset
-                      Object.keys(s.query).forEach(k => (f[k] = valueOf(s.query[k])))
-                      if (v) {
-                        if (!('include' in f) && v.y) f.include = valueOf(v.y)
-                        if (!('id' in f) && v.ids) f.id = valueOf(v.ids)
-                      }
-                      if ('copy' === this.target || this.api) {
-                        var q = []
-                        if ('include' in f) q.push('include=' + f.include)
-                        if ('dataset' in f) q.push('dataset=' + f.dataset)
-                        if ('id' in f) q.push('id=' + f.id)
+            } else
+              o.e.addEventListener(
+                'click',
+                o.settings.effects
+                  ? 'export' === o.target || 'copy' === o.target
+                    ? function () {
+                        const f = {},
+                          s = this.settings,
+                          v = _u[s.dataview],
+                          d = v && v.parsed.dataset
+                        Object.keys(s.query).forEach(k => (f[k] = valueOf(s.query[k])))
                         if (v) {
-                          if (!f.time_range)
-                            q.push(
-                              'time_range=' +
+                          if (!('include' in f) && v.y) f.include = valueOf(v.y)
+                          if (!('id' in f) && v.ids) f.id = valueOf(v.ids)
+                        }
+                        if ('copy' === this.target || this.api) {
+                          var q = []
+                          if ('include' in f) q.push('include=' + f.include)
+                          if ('dataset' in f) q.push('dataset=' + f.dataset)
+                          if ('id' in f) q.push('id=' + f.id)
+                          if (v) {
+                            if (!f.time_range)
+                              q.push(
+                                'time_range=' +
+                                  site.data.meta.times[d].value[v.time_range.filtered_index[0]] +
+                                  ',' +
+                                  site.data.meta.times[d].value[v.time_range.filtered_index[1]]
+                              )
+                            if (v.features)
+                              Object.keys(v.features).forEach(k => {
+                                if (!(k in f)) {
+                                  f[k] = valueOf(v.features[k])
+                                  if (Array.isArray(f[k])) f[k] = f[k].join(',')
+                                  q.push(k + '=' + f[k])
+                                }
+                              })
+                            if (site.data.filter)
+                              site.data.filter.forEach(f => {
+                                const value = Number(f.value)
+                                if (!isNaN(value))
+                                  q.push(
+                                    f.variable +
+                                      '[' +
+                                      site.data.meta.overall.value[v.parsed.time_agg] +
+                                      ']' +
+                                      f.operator +
+                                      value
+                                  )
+                              })
+                          }
+                          const k = s.endpoint + (q.length ? '?' + q.join('&') : '')
+                          if (this.api) {
+                            window.location.href = k
+                          } else {
+                            navigator.clipboard.writeText(k).then(
+                              () => {
+                                if ('Copied!' !== o.e.innerText) {
+                                  o.text = o.e.innerText
+                                  o.e.innerText = 'Copied!'
+                                  setTimeout(function () {
+                                    o.e.innerText = o.text
+                                  }, 500)
+                                }
+                              },
+                              e => {
+                                if (e !== o.e.innerText) {
+                                  o.text = o.e.innerText
+                                  o.e.innerText = e
+                                  setTimeout(function () {
+                                    o.e.innerText = o.text
+                                  }, 1500)
+                                }
+                              }
+                            )
+                          }
+                        } else {
+                          if (v && 'selection' in v) {
+                            if (!f.time_range)
+                              f.time_range =
                                 site.data.meta.times[d].value[v.time_range.filtered_index[0]] +
                                 ',' +
                                 site.data.meta.times[d].value[v.time_range.filtered_index[1]]
-                            )
-                          if (v.features)
-                            Object.keys(v.features).forEach(k => {
-                              if (!(k in f)) {
-                                f[k] = valueOf(v.features[k])
-                                if (Array.isArray(f[k])) f[k] = f[k].join(',')
-                                q.push(k + '=' + f[k])
-                              }
-                            })
-                          if (site.data.filter)
-                            site.data.filter.forEach(f => {
-                              const value = Number(f.value)
-                              if (!isNaN(value))
-                                q.push(
-                                  f.variable +
-                                    '[' +
-                                    site.data.meta.overall.value[v.parsed.time_agg] +
-                                    ']' +
-                                    f.operator +
-                                    value
-                                )
-                            })
+                            site.data.export(f, v.selection.all, true)
+                          } else site.data.export(f, site.data.entities, true)
                         }
-                        const k = s.endpoint + (q.length ? '?' + q.join('&') : '')
-                        if (this.api) {
-                          window.location.href = k
-                        } else {
-                          navigator.clipboard.writeText(k).then(
-                            () => {
-                              if ('Copied!' !== o.e.innerText) {
-                                o.text = o.e.innerText
-                                o.e.innerText = 'Copied!'
-                                setTimeout(function () {
-                                  o.e.innerText = o.text
-                                }, 500)
-                              }
-                            },
-                            e => {
-                              if (e !== o.e.innerText) {
-                                o.text = o.e.innerText
-                                o.e.innerText = e
-                                setTimeout(function () {
-                                  o.e.innerText = o.text
-                                }, 1500)
-                              }
-                            }
-                          )
-                        }
-                      } else {
-                        if (v && 'selection' in v) {
-                          if (!f.time_range)
-                            f.time_range =
-                              site.data.meta.times[d].value[v.time_range.filtered_index[0]] +
-                              ',' +
-                              site.data.meta.times[d].value[v.time_range.filtered_index[1]]
-                          site.data.export(f, v.selection.all, true)
-                        } else site.data.export(f, site.data.entities, true)
-                      }
-                    }.bind(o)
+                      }.bind(o)
+                    : function () {
+                        Object.keys(this.settings.effects).forEach(k => {
+                          this.settings.effects[k] === '' || -1 == this.settings.effects[k]
+                            ? _u[k].reset()
+                            : _u[k].set(this.settings.effects[k])
+                        })
+                      }.bind(o)
+                  : 'refresh' === o.target
+                  ? global_update
+                  : 'reset_selection' === o.target
+                  ? global_reset
+                  : 'reset_storage' === o.target
+                  ? clear_storage
                   : function () {
-                      Object.keys(this.settings.effects).forEach(k => {
-                        this.settings.effects[k] === '' || -1 == this.settings.effects[k]
-                          ? _u[k].reset()
-                          : _u[k].set(this.settings.effects[k])
-                      })
+                      if (this.target in _u) _u[this.target].reset()
                     }.bind(o)
-                : 'refresh' === o.target
-                ? global_update
-                : 'reset_selection' === o.target
-                ? global_reset
-                : 'reset_storage' === o.target
-                ? clear_storage
-                : function () {
-                    if (this.target in _u) _u[this.target].reset()
-                  }.bind(o)
-            )
+              )
           },
         },
         buttongroup: {
@@ -2765,6 +2763,40 @@ void (function () {
       }
     }
 
+    function make_variable_reference(c) {
+      const e = document.createElement('li'),
+        n = c.author.length
+      var s = '',
+        j = 1 === n ? '' : 2 === n ? ' & ' : ', & '
+      for (let i = n; i--; ) {
+        const a = c.author[i]
+        s = (i ? j : '') + a.family + (a.given ? ', ' + a.given.substring(0, 1) + '.' : '') + s
+        j = ', '
+      }
+      e.innerHTML =
+        s +
+        ' (' +
+        c.year +
+        '). ' +
+        c.title +
+        '.' +
+        (c.journal
+          ? ' <em>' + c.journal + (c.volume ? ', ' + c.volume : '') + '</em>' + (c.page ? ', ' + c.page : '') + '.'
+          : '') +
+        (c.version ? ' Version ' + c.version + '.' : '') +
+        (c.doi || c.url
+          ? (c.doi ? ' doi: ' : ' url: ') +
+            (c.doi || c.url
+              ? '<a rel="noreferrer" target="_blank" href="' +
+                (c.doi ? 'https://doi.org/' + c.doi : c.url) +
+                '">' +
+                (c.doi || c.url.replace(patterns.http, '')) +
+                '</a>'
+              : '')
+          : '')
+      return e
+    }
+
     function make_variable_source(s) {
       var e = document.createElement('tr')
       if (s.name) {
@@ -2790,7 +2822,6 @@ void (function () {
     function show_variable_info() {
       const v = _u[this.view],
         info = site.data.variable_info[valueOf(this.v || v.y)]
-      var n, i
       page.modal.info.header.firstElementChild.innerText = info.short_name
       page.modal.info.title.innerText = info.long_name
       page.modal.info.description.innerText = info.long_description || info.description || info.short_description || ''
@@ -2799,20 +2830,34 @@ void (function () {
       if (info.sources && info.sources.length) {
         page.modal.info.sources.lastElementChild.lastElementChild.innerHTML = ''
         page.modal.info.sources.classList.remove('hidden')
-        for (n = info.sources.length, i = 0; i < n; i++) {
-          page.modal.info.sources.lastElementChild.lastElementChild.appendChild(make_variable_source(info.sources[i]))
-        }
+        info.sources.forEach(s => {
+          page.modal.info.sources.lastElementChild.lastElementChild.appendChild(make_variable_source(s))
+        })
       } else page.modal.info.sources.classList.add('hidden')
       if (info.citations && info.citations.length) {
         page.modal.info.references.lastElementChild.innerHTML = ''
         page.modal.info.references.classList.remove('hidden')
         if ('string' === typeof info.citations) info.citations = [info.citations]
-        for (n = info.citations.length, i = 0; i < n; i++)
-          if (site.data.variable_info._references && info.citations[i] in site.data.variable_info._references) {
-            page.modal.info.references.lastElementChild.appendChild(
-              site.data.variable_info._references[info.citations[i]].element
-            )
-          }
+        if (!('_references' in site.data.variable_info)) {
+          const r = {}
+          site.data.variable_info._references = r
+          Object.keys(site.data.info).forEach(d => {
+            const m = site.data.info[d]
+            if ('_references' in m) {
+              Object.keys(m._references).forEach(t => {
+                if (!(t in r))
+                  r[t] = {
+                    reference: m._references[t],
+                    element: make_variable_reference(m._references[t]),
+                  }
+              })
+            }
+          })
+        }
+        const r = site.data.variable_info._references
+        info.citations.forEach(c => {
+          if (c in r) page.modal.info.references.lastElementChild.appendChild(r[c].element)
+        })
       } else page.modal.info.references.classList.add('hidden')
     }
 
@@ -4296,35 +4341,6 @@ void (function () {
     function clear_storage() {
       if (window.localStorage) window.localStorage.clear()
       window.location.reload()
-    }
-
-    function toggle_filter() {
-      const v = _u[this.view],
-        info = site.data.variable_info[valueOf(this.v || v.y)]
-      var n, i
-      page.modal.info.header.firstElementChild.innerText = info.short_name
-      page.modal.info.title.innerText = info.long_name
-      page.modal.info.description.innerText = info.long_description || info.description || info.short_description || ''
-      page.modal.info.name.lastElementChild.innerText = info.measure || ''
-      page.modal.info.type.lastElementChild.innerText = info.type || ''
-      if (info.sources && info.sources.length) {
-        page.modal.info.sources.lastElementChild.lastElementChild.innerHTML = ''
-        page.modal.info.sources.classList.remove('hidden')
-        for (n = info.sources.length, i = 0; i < n; i++) {
-          page.modal.info.sources.lastElementChild.lastElementChild.appendChild(make_variable_source(info.sources[i]))
-        }
-      } else page.modal.info.sources.classList.add('hidden')
-      if (info.citations && info.citations.length && 'string' !== typeof info.citations) {
-        page.modal.info.references.lastElementChild.innerHTML = ''
-        page.modal.info.references.classList.remove('hidden')
-        if ('string' === typeof info.citations) info.citations = [info.citations]
-        for (n = info.citations.length, i = 0; i < n; i++)
-          if (site.data.variable_info._references && info.citations[i] in site.data.variable_info._references) {
-            page.modal.info.references.lastElementChild.appendChild(
-              site.data.variable_info._references[info.citations[i]].element
-            )
-          }
-      } else page.modal.info.references.classList.add('hidden')
     }
 
     async function get_variable(variable, view) {

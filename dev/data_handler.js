@@ -64,38 +64,6 @@ function quantile(p, n, o, x, l1) {
   return l1 ? x[i] * ap + x[b] * bp : x[i][1] * ap + x[b][1] * bp
 }
 
-function make_variable_reference(c) {
-  const e = document.createElement('li')
-  var s = '',
-    j = 1 === c.author.length ? '' : 2 === c.author.length ? ' & ' : ', & '
-  c.author.forEach((a, i) => {
-    s = (i ? j : '') + a.family + (a.given ? ', ' + a.given.substring(0, 1) + '.' : '') + s
-    j = ', '
-  })
-  e.innerHTML =
-    s +
-    ' (' +
-    c.year +
-    '). ' +
-    c.title +
-    '.' +
-    (c.journal
-      ? ' <em>' + c.journal + (c.volume ? ', ' + c.volume : '') + '</em>' + (c.page ? ', ' + c.page : '') + '.'
-      : '') +
-    (c.version ? ' Version ' + c.version + '.' : '') +
-    (c.doi || c.url
-      ? (c.doi ? ' doi: ' : ' url: ') +
-        (c.doi || c.url
-          ? '<a rel="noreferrer" target="_blank" href="' +
-            (c.doi ? 'https://doi.org/' + c.doi : c.url) +
-            '">' +
-            (c.doi || c.url.replace(patterns.http, '')) +
-            '</a>'
-          : '')
-      : '')
-  return e
-}
-
 function vector_summary(vec, range) {
   if ('object' === typeof vec) {
     const n = Math.min(range[1] + 1, vec.length),
@@ -963,16 +931,6 @@ DataHandler.prototype = {
           if (!(vn in this.variable_info)) this.variable_info[vn] = ve.meta
         }
       })
-      if (this.in_browser && '_references' in m) {
-        if (!('_references' in this.variable_info)) this.variable_info._references = {}
-        Object.keys(m._references).forEach(t => {
-          if (!(t in this.references)) this.references[t] = make_variable_reference(m._references[t])
-          this.variable_info._references[t] = {
-            reference: m._references[t],
-            element: this.references[t],
-          }
-        })
-      }
     })
   },
   map_entities: async function (g) {
