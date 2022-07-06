@@ -2838,6 +2838,10 @@ void (function () {
         page.modal.info.references.lastElementChild.innerHTML = ''
         page.modal.info.references.classList.remove('hidden')
         if ('string' === typeof info.citations) info.citations = [info.citations]
+        if ('references' in site.data) {
+          delete site.data.variable_info._references
+          delete site.data.references
+        }
         if (!('_references' in site.data.variable_info)) {
           const r = {}
           site.data.variable_info._references = r
