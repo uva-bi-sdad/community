@@ -3364,7 +3364,6 @@ void (function () {
         site.data = new DataHandler(site, defaults, site.data, {
           init: init,
           onload: function () {
-            // content_resize()
             setTimeout(drop_load_screen, 150)
             delete this.onload
           },
@@ -3394,7 +3393,7 @@ void (function () {
         (page.top_menu && 'open' === page.top_menu.state
           ? page.top_menu.getBoundingClientRect().height
           : page.content_bounds.top +
-            (page.bottom_menu ||
+            ((!page.top_menu && !page.left_menu && !page.right_menu) ||
             (page.right_menu && 'open' === page.right_menu.state) ||
             (page.left_menu && 'open' === page.left_menu.state)
               ? 0
@@ -3431,8 +3430,6 @@ void (function () {
     }
 
     function init() {
-      defaults.dataset = site.metadata.datasets[0]
-
       // initialize inputs
       keys._u.forEach(async k => {
         if (_u[k].type in elements) {
