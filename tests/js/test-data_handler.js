@@ -11,7 +11,7 @@ var assert = require('assert'),
         X2: 4,
       },
       _meta: {
-        time: {name: 'time', value: [0, 1]},
+        time: {name: 'time', value: [2010, 2011]},
         variables: {
           variable_name1: {code: 'X1', time_range: [0, 1]},
           variable_name2: {code: 'X2', time_range: [1, 1]},
@@ -28,7 +28,7 @@ var assert = require('assert'),
         X2: 40,
       },
       _meta: {
-        time: {name: 'time', value: [0, 1]},
+        time: {name: 'time', value: [2010, 2011]},
         variables: {
           variable_name1: {code: 'X1', time_range: [0, 1]},
           variable_name2: {code: 'X2', time_range: [1, 1]},
@@ -53,27 +53,27 @@ describe('when exporting data...', async function () {
     assert.strictEqual(
       res.body,
       'ID,Name,time,variable_name1,variable_name2\n' +
-        '"id1a","id1a",0,1,NA\n' +
-        '"id1a","id1a",1,2,5\n' +
-        '"id2a","id2a",0,2,NA\n' +
-        '"id2a","id2a",1,3,4\n' +
-        '"id1b","id1b",0,10,NA\n' +
-        '"id1b","id1b",1,20,50\n' +
-        '"id2b","id2b",0,20,NA\n' +
-        '"id2b","id2b",1,30,40'
+        '"id1a","id1a",2010,1,NA\n' +
+        '"id1a","id1a",2011,2,5\n' +
+        '"id2a","id2a",2010,2,NA\n' +
+        '"id2a","id2a",2011,3,4\n' +
+        '"id1b","id1b",2010,10,NA\n' +
+        '"id1b","id1b",2011,20,50\n' +
+        '"id2b","id2b",2010,20,NA\n' +
+        '"id2b","id2b",2011,30,40'
     )
   })
   it('variable selection works', async function () {
     const target =
         'ID,Name,time,variable_name1\n' +
-        '"id1a","id1a",0,1\n' +
-        '"id1a","id1a",1,2\n' +
-        '"id2a","id2a",0,2\n' +
-        '"id2a","id2a",1,3\n' +
-        '"id1b","id1b",0,10\n' +
-        '"id1b","id1b",1,20\n' +
-        '"id2b","id2b",0,20\n' +
-        '"id2b","id2b",1,30',
+        '"id1a","id1a",2010,1\n' +
+        '"id1a","id1a",2011,2\n' +
+        '"id2a","id2a",2010,2\n' +
+        '"id2a","id2a",2011,3\n' +
+        '"id1b","id1b",2010,10\n' +
+        '"id1b","id1b",2011,20\n' +
+        '"id2b","id2b",2010,20\n' +
+        '"id2b","id2b",2011,30',
       res1 = await data.export({include: ['variable_name1']}),
       res2 = await data.export({exclude: ['variable_name2']})
     assert.strictEqual(res1.body, target)
@@ -85,18 +85,18 @@ describe('when exporting data...', async function () {
     assert.strictEqual(
       res.body,
       'ID\tName\ttime\tvariable\tvalue\n' +
-        '"id1a"\t"id1a"\t0\t"variable_name1"\t1\n' +
-        '"id1a"\t"id1a"\t1\t"variable_name1"\t2\n' +
-        '"id1a"\t"id1a"\t1\t"variable_name2"\t5\n' +
-        '"id2a"\t"id2a"\t0\t"variable_name1"\t2\n' +
-        '"id2a"\t"id2a"\t1\t"variable_name1"\t3\n' +
-        '"id2a"\t"id2a"\t1\t"variable_name2"\t4\n' +
-        '"id1b"\t"id1b"\t0\t"variable_name1"\t10\n' +
-        '"id1b"\t"id1b"\t1\t"variable_name1"\t20\n' +
-        '"id1b"\t"id1b"\t1\t"variable_name2"\t50\n' +
-        '"id2b"\t"id2b"\t0\t"variable_name1"\t20\n' +
-        '"id2b"\t"id2b"\t1\t"variable_name1"\t30\n' +
-        '"id2b"\t"id2b"\t1\t"variable_name2"\t40'
+        '"id1a"\t"id1a"\t2010\t"variable_name1"\t1\n' +
+        '"id1a"\t"id1a"\t2011\t"variable_name1"\t2\n' +
+        '"id1a"\t"id1a"\t2011\t"variable_name2"\t5\n' +
+        '"id2a"\t"id2a"\t2010\t"variable_name1"\t2\n' +
+        '"id2a"\t"id2a"\t2011\t"variable_name1"\t3\n' +
+        '"id2a"\t"id2a"\t2011\t"variable_name2"\t4\n' +
+        '"id1b"\t"id1b"\t2010\t"variable_name1"\t10\n' +
+        '"id1b"\t"id1b"\t2011\t"variable_name1"\t20\n' +
+        '"id1b"\t"id1b"\t2011\t"variable_name2"\t50\n' +
+        '"id2b"\t"id2b"\t2010\t"variable_name1"\t20\n' +
+        '"id2b"\t"id2b"\t2011\t"variable_name1"\t30\n' +
+        '"id2b"\t"id2b"\t2011\t"variable_name2"\t40'
     )
   })
   it('variable filtering works', async function () {
@@ -104,10 +104,21 @@ describe('when exporting data...', async function () {
     assert.strictEqual(
       res.body,
       'ID,Name,time,variable_name1,variable_name2\n' +
-        '"id1b","id1b",0,10,NA\n' +
-        '"id1b","id1b",1,20,50\n' +
-        '"id2b","id2b",0,20,NA\n' +
-        '"id2b","id2b",1,30,40'
+        '"id1b","id1b",2010,10,NA\n' +
+        '"id1b","id1b",2011,20,50\n' +
+        '"id2b","id2b",2010,20,NA\n' +
+        '"id2b","id2b",2011,30,40'
+    )
+  })
+  it('variable filtering with a time component works ', async function () {
+    const res = await data.export('variable_name2[2011]<10')
+    assert.strictEqual(
+      res.body,
+      'ID,Name,time,variable_name1,variable_name2\n' +
+        '"id1a","id1a",2010,1,NA\n' +
+        '"id1a","id1a",2011,2,5\n' +
+        '"id2a","id2a",2010,2,NA\n' +
+        '"id2a","id2a",2011,3,4'
     )
   })
   it('dataset filtering works', async function () {
@@ -115,10 +126,10 @@ describe('when exporting data...', async function () {
     assert.strictEqual(
       res.body,
       'ID,Name,time,variable_name1,variable_name2\n' +
-        '"id1b","id1b",0,10,NA\n' +
-        '"id1b","id1b",1,20,50\n' +
-        '"id2b","id2b",0,20,NA\n' +
-        '"id2b","id2b",1,30,40'
+        '"id1b","id1b",2010,10,NA\n' +
+        '"id1b","id1b",2011,20,50\n' +
+        '"id2b","id2b",2010,20,NA\n' +
+        '"id2b","id2b",2011,30,40'
     )
   })
   it('feature filtering works', async function () {
@@ -126,39 +137,39 @@ describe('when exporting data...', async function () {
     assert.strictEqual(
       res.body,
       'ID,Name,time,variable_name1,variable_name2\n' +
-        '"id1b","id1b",0,10,NA\n' +
-        '"id1b","id1b",1,20,50\n' +
-        '"id2b","id2b",0,20,NA\n' +
-        '"id2b","id2b",1,30,40'
+        '"id1b","id1b",2010,10,NA\n' +
+        '"id1b","id1b",2011,20,50\n' +
+        '"id2b","id2b",2010,20,NA\n' +
+        '"id2b","id2b",2011,30,40'
     )
   })
   it('time filtering with tall format works', async function () {
-    var res = await data.export('table_format=tall&time_range=0')
+    var res = await data.export('table_format=tall&time_range=2010')
     assert.strictEqual(
       res.body,
       'ID,Name,time,variable,value\n' +
-        '"id1a","id1a",0,"variable_name1",1\n' +
-        '"id2a","id2a",0,"variable_name1",2\n' +
-        '"id1b","id1b",0,"variable_name1",10\n' +
-        '"id2b","id2b",0,"variable_name1",20'
+        '"id1a","id1a",2010,"variable_name1",1\n' +
+        '"id2a","id2a",2010,"variable_name1",2\n' +
+        '"id1b","id1b",2010,"variable_name1",10\n' +
+        '"id2b","id2b",2010,"variable_name1",20'
     )
   })
   it('time filtering with mixed format works', async function () {
-    var res = await data.export('time_range=0')
+    var res = await data.export('time_range=2010')
     assert.strictEqual(
       res.body,
       'ID,Name,time,variable_name1,variable_name2\n' +
-        '"id1a","id1a",0,1,NA\n' +
-        '"id2a","id2a",0,2,NA\n' +
-        '"id1b","id1b",0,10,NA\n' +
-        '"id2b","id2b",0,20,NA'
+        '"id1a","id1a",2010,1,NA\n' +
+        '"id2a","id2a",2010,2,NA\n' +
+        '"id1b","id1b",2010,10,NA\n' +
+        '"id2b","id2b",2010,20,NA'
     )
   })
   it('time filtering with wide format works', async function () {
-    var res = await data.export('table_format=wide&time_range=1')
+    var res = await data.export('table_format=wide&time_range=2011')
     assert.strictEqual(
       res.body,
-      'ID,Name,variable_name1_1,variable_name2_1\n' +
+      'ID,Name,variable_name1_2011,variable_name2_2011\n' +
         '"id1a","id1a",2,5\n' +
         '"id2a","id2a",3,4\n' +
         '"id1b","id1b",20,50\n' +

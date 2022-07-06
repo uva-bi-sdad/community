@@ -455,7 +455,7 @@ void (function () {
           const v = c && c.value(),
             d = u.get.dataset(),
             tv = u.time ? valueOf(u.time) : defaults.time,
-            t = tv in site.data.variables ? site.data.variables[tv].info[d].min : '',
+            t = tv in site.data.variables ? site.data.variables[tv].info[d].min : 1,
             s = _c[u.id + '_time'],
             variable = v in site.data.variables ? v : valueOf(u.y)
           if (!site.data.inited[d]) return void 0
@@ -490,6 +490,12 @@ void (function () {
               })
               conditionals.time_filters(u)
             }
+          } else {
+            u.time_range.dataset = d
+            u.time_range.index[0] = 0
+            u.time_range.time[0] = u.time_range.filtered[0] = 1
+            u.time_range.index[1] = 0
+            u.time_range.time[1] = u.time_range.filtered[1] = 1
           }
         },
       },
@@ -541,8 +547,16 @@ void (function () {
                             })
                           if (site.data.filter)
                             site.data.filter.forEach(f => {
-                              const v = Number(f.value)
-                              if (!isNaN(v)) q.push(f.variable + f.operator + v)
+                              const value = Number(f.value)
+                              if (!isNaN(value))
+                                q.push(
+                                  f.variable +
+                                    '[' +
+                                    site.data.meta.overall.value[v.parsed.time_agg] +
+                                    ']' +
+                                    f.operator +
+                                    value
+                                )
                             })
                         }
                         const k = s.endpoint + (q.length ? '?' + q.join('&') : '')
@@ -1764,7 +1778,7 @@ void (function () {
               o.header.push({title: 'Name', data: 'entity.features.name'})
               if (time.is_single) o.variable_header = true
               const t = site.data.variables[k].time_range[o.parsed.dataset]
-              for (let n = t[2]; n--; ) {
+              for (let n = t[1] - t[0] + 1; n--; ) {
                 o.header[n + 1] = {
                   title: o.variable_header ? c.title || site.data.format_label(k) : time.value[n + t[0]] + '',
                   data: site.data.retrievers.vector,
@@ -1883,16 +1897,9 @@ void (function () {
                   this.rows = {}
                   this.rowIds = {}
                   this.table.clear()
+                  let redraw = true
                   if (v.selection) {
                     this.state = state
-                    var k,
-                      c,
-                      i,
-                      n,
-                      va,
-                      reset = true,
-                      redraw = true,
-                      varstate = '' + this.parsed.dataset + v.get.ids() + v.get.features() + site.settings.digits
                     Object.keys(this.reference_options).forEach(
                       k => (this.options[k] = valueOf(this.reference_options[k]))
                     )
@@ -1917,7 +1924,7 @@ void (function () {
                               dataset: d,
                               variable: vn,
                               title: this.variable_header
-                                ? this.options.variables.title || site.data.format_label(k)
+                                ? this.options.variables.title || site.data.format_label(vn)
                                 : site.data.meta.times[d].value[n + this.parsed.time_range[0]] + '',
                               data: site.data.retrievers.vector,
                               render: site.data.retrievers.row_time.bind({
@@ -1933,6 +1940,7 @@ void (function () {
                         this.table = $(this.e).DataTable(this.options)
                       }
                       const n = this.header.length
+                      let reset
                       for (let i = 1; i < n; i++) {
                         this.table.column(i).visible(v.times[i - 1 + this.parsed.time_range[0]], false)
                         if (v.times[i - 1 + this.parsed.time_range[0]]) reset = false
@@ -1967,12 +1975,13 @@ void (function () {
                         this.current_filter[c] = valueOf(f)
                       })
                       const va = []
+                      let varstate = '' + this.parsed.dataset + v.get.ids() + v.get.features() + site.settings.digits
                       for (let i = this.options.variables.length; i--; ) {
                         vn = this.options.variables[i].name || this.options.variables[i]
                         pass = false
                         if (vn in site.data.variables && 'meta' in variable) {
                           if (this.options.filters) {
-                            for (c in this.current_filter)
+                            for (const c in this.current_filter)
                               if (c in variable.meta) {
                                 pass = variable.meta[c] === this.current_filter[c]
                                 if (!pass) break
@@ -3385,9 +3394,9 @@ void (function () {
         (page.top_menu && 'open' === page.top_menu.state
           ? page.top_menu.getBoundingClientRect().height
           : page.content_bounds.top +
-            (!page.top_menu ||
-            page.bottom_menu ||
-            (page.right_menu && ('open' === page.right_menu.state || 'open' === page.left_menu.state))
+            (page.bottom_menu ||
+            (page.right_menu && 'open' === page.right_menu.state) ||
+            (page.left_menu && 'open' === page.left_menu.state)
               ? 0
               : 40)) + 'px'
       page.content.style.right =
@@ -3728,7 +3737,7 @@ void (function () {
           })
           if ('subto' in o.options) {
             if ('string' === typeof o.options.subto) o.options.subto = [o.options.subto]
-            o.options.subto.forEach(v => add_subs(v, o))
+            if (Array.isArray(o.options.subto)) o.options.subto.forEach(v => add_subs(v, o))
           }
         }
         _u[o.id] = o
@@ -4234,13 +4243,14 @@ void (function () {
         }.bind(v),
         variables: function (e) {
           if (e.data) {
-            for (var i = this.parsed.variable_values.length, pass = true, v, ev; i--; ) {
-              v = this.parsed.variable_values[i]
-              ev = e.get_value(
-                v.name,
-                this.parsed.time_agg - site.data.variables[v.name].info[this.parsed.dataset].time_range[0]
-              )
-              pass = isNaN(ev) || v.value_type !== typeof ev || DataHandler.prototype.checks[v.operator](ev, v.value)
+            var pass
+            for (let i = this.parsed.variable_values.length; i--; ) {
+              const v = this.parsed.variable_values[i],
+                ev = e.get_value(
+                  v.name,
+                  this.parsed.time_agg - site.data.variables[v.name].info[this.parsed.dataset].time_range[0]
+                )
+              pass = isNaN(ev) || DataHandler.prototype.checks[v.operator](ev, v.value)
               if (!pass) break
             }
             return pass

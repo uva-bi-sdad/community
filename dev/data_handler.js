@@ -127,16 +127,26 @@ function vector_summary(vec, range) {
 }
 
 function passes_filter(entity, time_range, filter, variables) {
-  const s = {}
+  const s = {},
+    adjs = {}
   for (let i = filter.filter_by.length; i--; ) {
     const f = filter.filter_by[i]
     const c = variables[f].code
     if (!(c in entity.data)) return false
-    const r = entity.group in variables[f].info ? variables[f].info[entity.group].time_range : variables[f].time_range
+    const r =
+      entity.group in variables[f].info
+        ? variables[f].info[entity.group].time_range
+        : variables[f].time_range[entity.group]
+    if (!r) return false
+    adjs[f] = r[0]
     s[f] = vector_summary(entity.data[c], [time_range[0] - r[0], Math.max(time_range[1] - r[0], time_range[1] - r[1])])
   }
   for (let i = filter.conditions.length; i--; ) {
-    if (!filter.conditions[i].check(s[filter.conditions[i].name])) return false
+    const co = filter.conditions[i]
+    if (
+      !(co.time_component ? co.check(entity.data[variables[co.name].code], adjs[co.name] || 0) : co.check(s[co.name]))
+    )
+      return false
   }
   return true
 }
@@ -208,7 +218,7 @@ const patterns = {
             const yn = time_range[1] + 1
             for (let y = time_range[0]; y < yn; y++) {
               if (y >= range[0] && y <= range[1]) {
-                const value = 'number' === typeof entity.data[vc] ? entity.data[vc] : entity.data[vc][y]
+                const value = 'number' === typeof entity.data[vc] ? entity.data[vc] : entity.data[vc][y - range[0]]
                 if (!isNaN(value)) {
                   r += (r ? '\n' : '') + tr + time[y] + sep + '"' + k + '"' + sep + value
                 }
@@ -413,7 +423,9 @@ DataHandler.prototype = {
     }
   },
   format_label: function (l) {
-    return l in this.variables && this.variables[l].meta && this.variables[l].meta.short_name
+    return 'string' !== typeof l
+      ? ''
+      : l in this.variables && this.variables[l].meta && this.variables[l].meta.short_name
       ? this.variables[l].meta.short_name
       : l.replace(patterns.seps, ' ').replace(patterns.word_start, function (w) {
           return w.toUpperCase()
@@ -559,15 +571,14 @@ DataHandler.prototype = {
               f.open('GET', map, true)
               f.send()
             } else {
-              const fi = i
               require('https')
-                .get(ids[fi].map, r => {
+                .get(id.map, r => {
                   const c = []
                   r.on('data', d => {
                     c.push(d)
                   })
                   r.on('end', () => {
-                    this.ingest_map(JSON.parse(c.join('')), r.req.protocol + '//' + r.req.host + r.req.path, fi)
+                    this.ingest_map(JSON.parse(c.join('')), r.req.protocol + '//' + r.req.host + r.req.path, i)
                   })
                 })
                 .end()
@@ -583,7 +594,7 @@ DataHandler.prototype = {
   },
   init_summary: function (v, d) {
     if (!this.inited_summary[d + v]) {
-      Object.keys(this.in_browser ? site.dataviews : {default_view: true}).forEach(view => {
+      ;(this.in_browser ? Object.keys(site.dataviews) : ['default_view']).forEach(view => {
         const vi = this.variables[v]
         if (!(view in vi)) vi[view] = {order: {}, selected_order: {}, selected_summaries: {}, summaries: {}, state: {}}
         if (!(d in vi.time_range)) {
@@ -984,12 +995,6 @@ DataHandler.prototype = {
             this.entities[id].data = si
             this.entities[id].variables = this.variables
             if (!('features' in this.entities[id])) this.entities[id].features = {}
-            Object.keys(f).forEach(k => {
-              if (!(k in this.features)) this.features[k] = this.format_label(k)
-              if ('id' === k || overwrite || !(k in this.entities[id].features)) {
-                this.entities[id].features[k] = f[k]
-              }
-            })
           } else {
             this.entities[id] = {
               group: g,
@@ -998,6 +1003,12 @@ DataHandler.prototype = {
               features: f,
             }
           }
+          Object.keys(f).forEach(k => {
+            if (!(k in this.features)) this.features[k] = this.format_label(k)
+            if ('id' === k || overwrite || !(k in this.entities[id].features)) {
+              this.entities[id].features[k] = f[k]
+            }
+          })
           const e = this.entities[id]
           views.forEach(v => {
             if (!(v in e)) {
@@ -1015,10 +1026,11 @@ DataHandler.prototype = {
           this.hooks.init && this.hooks.init()
           this.inited.first = true
         }
-        Object.keys(this.data_queue[g]).forEach(id => {
-          this.data_queue[g][id]()
-          delete this.data_queue[g][id]
-        })
+        g in this.data_queue &&
+          Object.keys(this.data_queue[g]).forEach(id => {
+            this.data_queue[g][id]()
+            delete this.data_queue[g][id]
+          })
         this.hooks.onload && this.hooks.onload()
       }, 0)
     }
@@ -1036,76 +1048,99 @@ DataHandler.prototype = {
         q[a[0]] = a.length > 1 ? a[1] : ''
       })
     }
-    Object.keys(q).forEach(k => {
-      if ('include' === k || 'exclude' === k || k in f) {
-        f[k] = q[k]
-      } else {
-        const a = []
-        if (patterns.single_operator.test(k)) {
-          a = k.replace(patterns.single_operator, '$1=$2').split('=')
-          if (a.length > 1) {
-            k = a[0]
-            q[k] = a[1]
+    q &&
+      Object.keys(q).forEach(k => {
+        if ('include' === k || 'exclude' === k || k in f) {
+          f[k] = q[k]
+        } else {
+          let a = []
+          if (patterns.single_operator.test(k)) {
+            a = k.replace(patterns.single_operator, '$1=$2').split('=')
+            if (a.length > 1) {
+              k = a[0]
+              q[k] = a[1]
+            }
+          }
+          const aq = patterns.component.exec(k),
+            tf = {
+              name: k.replace(patterns.greater, '>').replace(patterns.less, '<'),
+              component: 'mean',
+              operator: '=',
+              value: patterns.number.test(q[k]) ? Number(q[k]) : q[k],
+            }
+          if ('object' === typeof q[k]) {
+            if ('component' in q[k]) tf.component = q[k].component
+            if ('operator' in q[k]) tf.operator = q[k].operator
+            if ('value' in q[k]) tf.value = q[k].value
+          }
+          k = tf.name
+          if (aq) {
+            if (-1 !== export_options.filter_components.indexOf(aq[2])) {
+              tf.component = aq[2]
+              tf.name = aq[1]
+            } else if (patterns.number.test(aq[2])) {
+              const time = Number(aq[2])
+              const i = time > 0 && time < this.meta.overall.value.length ? time : this.meta.overall.value.indexOf(time)
+              if (-1 !== i) {
+                tf.time_component = true
+                tf.component = i
+                tf.name = aq[1]
+              }
+            }
+          }
+          if (patterns.operator_start.test(k) && k[k.length - 1] in this.checks) {
+            tf.operator = k[k.length - 1]
+            if (('<' === tf.operator || '>' === tf.operator) && !a.length) tf.operator += '='
+            if (k === tf.name) tf.name = k.substring(0, k.length - 1)
+          }
+          if (undefined === tf.value || '-1' == tf.value) return
+          if (('=' === tf.operator || '!' === tf.operator) && patterns.comma.test(tf.value)) {
+            tf.value = tf.value.split(',')
+            tf.operator = '=' === tf.operator ? 'includes' : 'excludes'
+          }
+          if ('time_range' === tf.name) {
+            if ('object' === typeof tf.value) {
+              f.time_range = [
+                this.meta.overall.value.indexOf(Number(tf.value[0])),
+                this.meta.overall.value.indexOf(Number(tf.value[1])),
+              ]
+            } else {
+              const i = this.meta.overall.value.indexOf(Number(tf.value))
+              f.time_range =
+                '=' === tf.operator ? [i, i] : '>' === tf.operator ? [i, this.meta.overall.value.length - 1] : [0, i]
+            }
+            if (-1 === f.time_range[0]) f.time_range[0] = 0
+            if (-1 === f.time_range[1])
+              f.time_range[1] = this.meta.overall.value.length ? this.meta.overall.value.length - 1 : 0
+          } else if ('dataset' === tf.name) {
+            f.dataset = tf
+          } else if (tf.name in this.features) {
+            if ('id' === tf.name) {
+              tf.value = Array.isArray(tf.value) ? tf.value : String(tf.value).split(',')
+            }
+            tf.check = group_checks[tf.operator].bind(tf.value)
+            f.feature_conditions.push(tf)
+          } else if (tf.name in this.variables) {
+            tf.check = (
+              tf.time_component
+                ? function (d, adj) {
+                    const multi = 'number' !== typeof d,
+                      i = this.condition.component - adj
+                    return multi
+                      ? this.check(d[i], this.condition.value)
+                      : !i
+                      ? this.check(d, this.condition.value)
+                      : false
+                  }
+                : function (s) {
+                    return this.check(s[this.condition.component], this.condition.value)
+                  }
+            ).bind({check: this.checks[tf.operator], condition: tf})
+            if (-1 === f.variables.filter_by.indexOf(tf.name)) f.variables.filter_by.push(tf.name)
+            f.variables.conditions.push(tf)
           }
         }
-        const aq = patterns.component.exec(k),
-          tf = {
-            name: k.replace(patterns.greater, '>').replace(patterns.less, '<'),
-            component: 'mean',
-            operator: '=',
-            value: patterns.number.test(q[k]) ? Number(q[k]) : q[k],
-          }
-        if ('object' === typeof q[k]) {
-          if ('component' in q[k]) tf.component = q[k].component
-          if ('operator' in q[k]) tf.operator = q[k].operator
-          if ('value' in q[k]) tf.value = q[k].value
-        }
-        k = tf.name
-        if (aq && -1 !== export_options.filter_components.indexOf(aq[2])) {
-          tf.component = aq[2]
-          tf.name = aq[1]
-        }
-        if (patterns.operator_start.test(k) && k[k.length - 1] in this.checks) {
-          tf.operator = k[k.length - 1]
-          if (('<' === tf.operator || '>' === tf.operator) && !a.length) tf.operator += '='
-          if (k === tf.name) tf.name = k.substring(0, k.length - 1)
-        }
-        if (undefined === tf.value || '-1' == tf.value) return
-        if (('=' === tf.operator || '!' === tf.operator) && patterns.comma.test(tf.value)) {
-          tf.value = tf.value.split(',')
-          tf.operator = '=' === tf.operator ? 'includes' : 'excludes'
-        }
-        if ('time_range' === tf.name) {
-          if ('object' === typeof tf.value) {
-            f.time_range = [
-              this.meta.overall.value.indexOf(Number(tf.value[0])),
-              this.meta.overall.value.indexOf(Number(tf.value[1])),
-            ]
-          } else {
-            const i = this.meta.overall.value.indexOf(Number(tf.value))
-            f.time_range =
-              '=' === tf.operator ? [i, i] : '>' === tf.operator ? [i, this.meta.overall.value.length - 1] : [0, i]
-          }
-          if (-1 === f.time_range[0]) f.time_range[0] = 0
-          if (-1 === f.time_range[1])
-            f.time_range[1] = this.meta.overall.value.length ? this.meta.overall.value.length - 1 : 0
-        } else if ('dataset' === tf.name) {
-          f.dataset = tf
-        } else if (tf.name in this.features) {
-          if ('id' === tf.name) {
-            tf.value = Array.isArray(tf.value) ? tf.value : String(tf.value).split(',')
-          }
-          tf.check = group_checks[tf.operator].bind(tf.value)
-          f.feature_conditions.push(tf)
-        } else if (tf.name in this.variables) {
-          tf.check = function (s) {
-            return this.check(s[this.condition.component], this.condition.value)
-          }.bind({check: this.checks[tf.operator], condition: tf})
-          if (-1 === f.variables.filter_by.indexOf(tf.name)) f.variables.filter_by.push(tf.name)
-          f.variables.conditions.push(tf)
-        }
-      }
-    })
+      })
     if (!('time_range' in f))
       f.time_range = [0, this.meta.overall.value.length ? this.meta.overall.value.length - 1 : 0]
     return f
