@@ -3185,7 +3185,7 @@ void (function () {
           }
       } else {
         site.dataviews = {}
-        site.dataviews[defaults.dataview] = {dataset: defaults.dataset}
+        site.dataviews[defaults.dataview] = {}
       }
       ;[...document.getElementsByClassName('auto-input')].forEach(e => {
         const o = {
@@ -3199,7 +3199,7 @@ void (function () {
           options_source: e.getAttribute('auto-options'),
           depends: e.getAttribute('depends'),
           variable: e.getAttribute('variable'),
-          dataset: e.getAttribute('dataset') || defaults.dataset,
+          dataset: e.getAttribute('dataset'),
           view: e.getAttribute('data-view'),
           id: e.id || e.options_source || 'ui' + n++,
           note: e.getAttribute('aria-description') || '',
@@ -3359,6 +3359,35 @@ void (function () {
 
       if (!site.metadata.datasets) drop_load_screen()
 
+      if (!site.dataviews[defaults.dataview].dataset) {
+        if (1 === site.metadata.datasets.length) {
+          defaults.dataset = site.metadata.datasets[0]
+        } else {
+          const info = site.metadata.info
+          for (let i = keys._u.length; i--; ) {
+            const u = _u[keys._u[i]]
+            if (u.dataset in info) {
+              defaults.dataset = u.dataset
+              break
+            } else if (u.default in info) {
+              defaults.dataset = u.default
+              break
+            } else if ('select' === u.type && u.options[u.default] && u.options[u.default].value in info) {
+              defaults.dataset = u.options[u.default].value
+              break
+            } else if (Array.isArray(u.values) && u.values[u.default] && u.values[u.default] in info) {
+              defaults.dataset = u.values[u.default]
+              break
+            }
+          }
+          if (!defaults.dataset) defaults.dataset = site.metadata.datasets[site.metadata.datasets.length - 1]
+        }
+        keys._u.forEach(k => {
+          const u = _u[k]
+          if (!u.dataset) u.dataset = defaults.dataset
+        })
+        site.dataviews[defaults.dataview].dataset = defaults.dataset
+      }
       if ('undefined' !== typeof DataHandler) {
         defaults.dataset = valueOf(site.dataviews[defaults.dataview].dataset)
         site.data = new DataHandler(site, defaults, site.data, {
