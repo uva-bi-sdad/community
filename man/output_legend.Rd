@@ -4,13 +4,18 @@
 \alias{output_legend}
 \title{Adds a legend to a website}
 \usage{
-output_legend(palette = "", dataview = NULL, id = NULL, click = NULL,
-  subto = NULL, class = "", show_na = TRUE)
+output_legend(palette = "", variable = NULL, dataview = NULL,
+  id = NULL, click = NULL, subto = NULL, class = "", show_na = TRUE)
 }
 \arguments{
-\item{palette}{Name of an included color palette (from
-\href{https://colorbrewer2.org}{colorbrewer}); one of \code{"rdylbu7"} (default), \code{"orrd7"}, \code{"gnbu7"},
-\code{"brbg7"}, \code{"puor7"}, \code{"prgn6"}, \code{"reds5"}, \code{"greens5"}, \code{"greys4"}, \code{"paired4"}.}
+\item{palette}{Name of an included color palette, or palette selection input;
+for discrete scales, one of \code{"rdylbu7"}, \code{"orrd7"}, \code{"gnbu7"},
+\code{"brbg7"}, \code{"puor7"}, \code{"prgn6"}, \code{"reds5"}, \code{"greens5"}, \code{"greys4"}, \code{"paired4"} (from
+\href{https://colorbrewer2.org}{colorbrewer}); for continuous scales, one of \code{"grey"}, \code{"brown"}, \code{"purple"},
+\code{"prgn"}, \code{"puor"}, \code{"rbbu"}, \code{"prgn"}, \code{"vik"} (default), or \code{"lajolla"}.}
+
+\item{variable}{Name of a variable or ID of a variable selector to display values of. Defaults to
+the \code{y} variable of \code{dataview} if one is specified.}
 
 \item{dataview}{The ID of an \code{\link{input_dataview}} component.}
 

@@ -1387,7 +1387,6 @@ void (function () {
         },
         info: {
           init: function (o) {
-            o.view = o.options.dataview || defaults.dataview
             o.depends = {}
             o.has_default = o.options.default && (o.options.default.title || o.options.default.body)
             add_subs(o.view, o)
@@ -1455,6 +1454,7 @@ void (function () {
                         if ('value' === this.text) {
                           this.parsed.data = valueOf(o.options.variable || caller.color || caller.y || _u[o.view].y)
                         } else if (this.text in _u) this.parsed.data = valueOf(this.text)
+                        if (!(this.parsed.data in site.data.variables)) return this.parsed.data
                         const info = site.data.variable_info[this.parsed.data],
                           v = site.data.format_value(
                             entity.get_value(this.parsed.data, this.parent.time),
@@ -1568,7 +1568,7 @@ void (function () {
             o.update()
           },
           update: function (entity, caller, pass) {
-            const v = site.dataviews[this.view || defaults.dataview]
+            const v = site.dataviews[this.view]
             const y = _u[v.time_agg]
             this.v = valueOf(this.options.variable || (caller && (caller.color || caller.y)) || v.y)
             this.dataset = v.get.dataset()
@@ -1578,11 +1578,12 @@ void (function () {
             this.time = time_range ? this.time_agg - time_range[0] : 0
             if (!this.processed) {
               this.processed = true
-              if (this.view) {
+              if (!this.options.floating) {
                 add_dependency(this.view, {type: 'update', id: this.id})
                 if (v.y in _u) add_dependency(v.y, {type: 'update', id: this.id})
                 if (y) add_dependency(v.time_agg, {type: 'update', id: this.id})
-              } else this.view = defaults.dataview
+                if (this.options.variable in _u) add_dependency(this.options.variable, {type: 'update', id: this.id})
+              }
               if (this.parts.body)
                 this.parts.body.rows.forEach(p => {
                   if (!p.value.ref && p.value.text in _u && 'variables' in p.name.parsed) {
@@ -2069,14 +2070,24 @@ void (function () {
         legend: {
           init: function (o) {
             add_dependency(o.view, {type: 'update', id: o.id})
-            if (_u[o.view].y) add_dependency(_u[o.view].y, {type: 'update', id: o.id})
-            if (_u[o.view].time_agg in _u) add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
+            const view = _u[o.view]
+            if (view.time_agg in _u) add_dependency(view.time_agg, {type: 'update', id: o.id})
             if (!o.palette) {
-              if (_u[o.view].palette) {
-                o.palette = _u[o.view].palette
-                if (_u[o.view].palette in _u) add_dependency(_u[o.view].palette, {type: 'update', id: o.id})
+              if (view.palette) {
+                o.palette = view.palette
+                if (view.palette in _u) add_dependency(view.palette, {type: 'update', id: o.id})
               } else {
                 o.palette = 'settings.palette' in _u ? 'settings.palette' : site.settings.palette
+              }
+            }
+            o.variable = o.e.getAttribute('variable')
+            if (o.variable) {
+              if (o.variable in _u) add_dependency(o.variable, {type: 'update', id: o.id})
+            } else if (view.y in _u) add_dependency(view.y, {type: 'update', id: o.id})
+            if (o.palette in _u) {
+              const palette = _u[o.palette]
+              if (palette.e) {
+                palette.e.addEventListener('change', o.update)
               }
             }
             o.parsed = {summary: {}, order: [], selection: {}, time: 0, color: ''}
@@ -2170,15 +2181,11 @@ void (function () {
             o.revert = function () {
               this.ticks.entity.firstElementChild.classList.add('hidden')
             }
-            add_dependency(o.view, {type: 'update', id: o.id})
-            if (_u[o.palette] && _u[o.palette].e) {
-              _u[o.palette].e.addEventListener('change', o.update)
-            }
             o.update()
           },
           update: async function () {
             const view = _u[this.view],
-              variable = valueOf(view.y),
+              variable = valueOf(this.variable || view.y),
               d = view.get.dataset(),
               var_info = await get_variable(variable, this.view)
             if (view.valid && var_info && this.view in var_info) {
@@ -2422,6 +2429,12 @@ void (function () {
         'internet speed': function (v) {
           return v + ' MB/s'
         },
+        'per 10k': function (v) {
+          return v + ' per 10k'
+        },
+        'per 100k': function (v) {
+          return v + ' per 100k'
+        },
       },
       storage = window.localStorage || {
         setItem: function () {},
@@ -2446,8 +2459,6 @@ void (function () {
         border_highlight_true: '#ffffff',
         border_highlight_false: '#000000',
         missing: '#00000000',
-        polygon_outline: 1.5,
-        circle_radius: 20,
       },
       summary_levels = {dataset: 'Overall', filtered: 'Filtered', all: 'Selection'},
       meta = {
@@ -4009,14 +4020,6 @@ void (function () {
       }
     }
 
-    function add_layer_listeners(feature, layer) {
-      layer.on({
-        mouseover: elements.map.mouseover.bind(this),
-        mouseout: elements.map.mouseout.bind(this),
-        click: elements.map.click.bind(this),
-      })
-    }
-
     async function retrieve_layer(u, source, callback) {
       if (source.url in site.map._raw) {
         process_layer(source, u)
@@ -4024,60 +4027,64 @@ void (function () {
         callback && callback()
       } else {
         const f = new window.XMLHttpRequest()
-        f.onreadystatechange = function (u) {
+        f.onreadystatechange = () => {
           if (4 === f.readyState && 200 === f.status) {
             site.map._raw[source.url] = f.responseText
             if (source.name) {
-              site.map._queue[source.name + (source.time ? source.time : '')].retrieved = true
-              process_layer(this, u)
+              site.map._queue[source.name + (source.time || '')].retrieved = true
             }
             callback && callback()
           }
-        }.bind(source, u)
+        }
         f.open('GET', source.url, true)
         f.send()
       }
     }
 
     function process_layer(source, u) {
-      var p, f, id
+      var p, id
       const has_time = 'time' in source,
         layerId = source.name + (has_time ? source.time : '')
       site.map[u.id]._layers[layerId] = L.geoJSON(JSON.parse(site.map._raw[source.url]), {
-        onEachFeature: add_layer_listeners.bind(u),
+        onEachFeature: (f, l) => {
+          l.on({
+            mouseover: elements.map.mouseover.bind(u),
+            mouseout: elements.map.mouseout.bind(u),
+            click: elements.map.click.bind(u),
+          })
+          l.setStyle({weight: 0, fillOpacity: 0})
+          l.source = source
+          p = l.feature.properties
+          id = p[source.id_property]
+          if (!(id in site.data.entities) && patterns.leading_zeros.test(id))
+            id = p[source.id_property] = id.replace(patterns.leading_zeros, '')
+          if (id in site.data.entities) {
+            if (!('layer' in site.data.entities[id])) site.data.entities[id].layer = {}
+          } else {
+            site.data.entities[id] = {layer: {}, features: {id: id}}
+          }
+          if (has_time) {
+            if (!(u.id in site.data.entities[id].layer)) site.data.entities[id].layer[u.id] = {has_time: true}
+            site.data.entities[id].layer[u.id][source.time] = l
+          } else site.data.entities[id].layer[u.id] = l
+          l.entity = site.data.entities[id]
+          if (site.data.entities[id].features)
+            Object.keys(p).forEach(f => {
+              if (!(f in site.data.entities[id].features)) {
+                if (
+                  'name' === f.toLowerCase() &&
+                  (!('name' in site.data.entities[id].features) ||
+                    site.data.entities[id].features.id === site.data.entities[id].features.name)
+                ) {
+                  site.data.entities[id].features[f.toLowerCase()] = p[f]
+                } else {
+                  site.data.entities[id].features[f] = p[f]
+                }
+              }
+            })
+        },
       })
       site.data.inited[layerId + u.id] = true
-      site.map[u.id]._layers[layerId].eachLayer(l => {
-        l.setStyle({weight: 0, fillOpacity: 0})
-        l.source = source
-        p = l.feature.properties
-        id = p[source.id_property]
-        if (!(id in site.data.entities) && patterns.leading_zeros.test(id))
-          id = p[source.id_property] = id.replace(patterns.leading_zeros, '')
-        if (id in site.data.entities) {
-          if (!('layer' in site.data.entities[id])) site.data.entities[id].layer = {}
-        } else {
-          site.data.entities[id] = {layer: {}, features: {id: id}}
-        }
-        if (has_time) {
-          if (!(u.id in site.data.entities[id].layer)) site.data.entities[id].layer[u.id] = {has_time: true}
-          site.data.entities[id].layer[u.id][source.time] = l
-        } else site.data.entities[id].layer[u.id] = l
-        l.entity = site.data.entities[id]
-        if (site.data.entities[id].features)
-          for (f in p)
-            if (f in p && !(f in site.data.entities[id].features)) {
-              if (
-                'name' === f.toLowerCase() &&
-                (!('name' in site.data.entities[id].features) ||
-                  site.data.entities[id].features.id === site.data.entities[id].features.name)
-              ) {
-                site.data.entities[id].features[f.toLowerCase()] = p[f]
-              } else {
-                site.data.entities[id].features[f] = p[f]
-              }
-            }
-      })
       if (site.map._waiting && site.map._waiting[source.name]) {
         for (let i = site.map._waiting[source.name].length; i--; ) {
           request_queue(site.map._waiting[source.name][i])
@@ -4088,9 +4095,10 @@ void (function () {
     function show_overlay(u, o, time) {
       var i = 0,
         source = 'string' === typeof o.source ? o.source : ''
-      if (!source && undefined !== time && o.source) {
+      if (!source && o.source) {
         for (i = o.source.length; i--; ) {
           if (time === o.source[i].time) {
+            if (o.source[i].name) delete o.source[i].name
             source = o.source[i].url
             break
           }
@@ -4118,14 +4126,16 @@ void (function () {
             })
           }
           u.overlay.clearLayers()
+          var n = 0
           site.map[u.id]._layers[source].eachLayer(l => {
             if (o.filter) {
               for (let i = o.filter.length; i--; ) {
                 if (!o.filter[i].check(l.feature.properties[o.filter[i].feature], o.filter[i].value)) return
               }
             }
-            l.setRadius(site.settings.circle_radius || defaults.circle_radius).setStyle({
-              weight: site.settings.polygon_outline || defaults.polygon_outline,
+            n++
+            l.setRadius(site.settings.circle_radius).setStyle({
+              weight: site.settings.polygon_outline,
               color: 'white',
               opacity: 0.5,
               fillOpacity: 0.5,
@@ -4133,7 +4143,7 @@ void (function () {
             })
             l.addTo(u.overlay)
           })
-          u.overlay_control.addTo(u.map)
+          if (n) u.overlay_control.addTo(u.map)
         } else return retrieve_layer(u, o.source[i], show_overlay.bind(null, u, o, time))
       }
     }

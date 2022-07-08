@@ -409,6 +409,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         }
         for (v in m$overlays) {
           for (s in v$source) {
+            if (!is.list(s)) s <- list(url = s)
             if (!is.null(s$url) && file.exists(s$url) && !s$url %in% names(settings$map[["_raw"]])) {
               settings$map[["_raw"]][[s$url]] <- paste(readLines(s$url), collapse = "")
             }

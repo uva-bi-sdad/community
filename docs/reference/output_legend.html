@@ -63,16 +63,23 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">output_legend</span><span class="op">(</span>palette <span class="op">=</span> <span class="st">""</span>, dataview <span class="op">=</span> <span class="cn">NULL</span>, id <span class="op">=</span> <span class="cn">NULL</span>, click <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  subto <span class="op">=</span> <span class="cn">NULL</span>, class <span class="op">=</span> <span class="st">""</span>, show_na <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">output_legend</span><span class="op">(</span>palette <span class="op">=</span> <span class="st">""</span>, variable <span class="op">=</span> <span class="cn">NULL</span>, dataview <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  id <span class="op">=</span> <span class="cn">NULL</span>, click <span class="op">=</span> <span class="cn">NULL</span>, subto <span class="op">=</span> <span class="cn">NULL</span>, class <span class="op">=</span> <span class="st">""</span>, show_na <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>palette</dt>
-<dd><p>Name of an included color palette (from
-<a href="https://colorbrewer2.org" class="external-link">colorbrewer</a>); one of <code>"rdylbu7"</code> (default), <code>"orrd7"</code>, <code>"gnbu7"</code>,
-<code>"brbg7"</code>, <code>"puor7"</code>, <code>"prgn6"</code>, <code>"reds5"</code>, <code>"greens5"</code>, <code>"greys4"</code>, <code>"paired4"</code>.</p></dd>
+<dd><p>Name of an included color palette, or palette selection input;
+for discrete scales, one of <code>"rdylbu7"</code>, <code>"orrd7"</code>, <code>"gnbu7"</code>,
+<code>"brbg7"</code>, <code>"puor7"</code>, <code>"prgn6"</code>, <code>"reds5"</code>, <code>"greens5"</code>, <code>"greys4"</code>, <code>"paired4"</code> (from
+<a href="https://colorbrewer2.org" class="external-link">colorbrewer</a>); for continuous scales, one of <code>"grey"</code>, <code>"brown"</code>, <code>"purple"</code>,
+<code>"prgn"</code>, <code>"puor"</code>, <code>"rbbu"</code>, <code>"prgn"</code>, <code>"vik"</code> (default), or <code>"lajolla"</code>.</p></dd>
+
+
+<dt>variable</dt>
+<dd><p>Name of a variable or ID of a variable selector to display values of. Defaults to
+the <code>y</code> variable of <code>dataview</code> if one is specified.</p></dd>
 
 
 <dt>dataview</dt>
