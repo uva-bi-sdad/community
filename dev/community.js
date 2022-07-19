@@ -3082,16 +3082,18 @@ void (function () {
       //   });
       // </script>
       // Convert this into a toggle
-      ;[...document.getElementsByClassName("menu-scale")].forEach((item) => {
+      ;[...document.getElementsByClassName("menu-scale-trigger")].forEach((item) => {
         item.addEventListener("click", function(event){
           if (page.wrap.classList.contains("menu-scale-on")){
+            //event.target.style.width = "100%";
             page.wrap.style.width = "100%";
             page.wrap.classList.remove("menu-scale-on");
           }else{
-            event.target.parent.style.width = "30vw";
+            document.getElementsByClassName('menu-scale-target')[0].style.width = "30vw";
             page.wrap.style.width = "70vw";
             page.wrap.classList.add("menu-scale-on");
           }
+          //setTimeout(trigger_resize, 300)
         })
       })
 

@@ -64,7 +64,7 @@ page_navbar <- function(..., title = "", logo = "", breakpoint = "md", logo.heig
         if (is.null(submenus[[i]]$name)) submenus[[i]]$name <- "Menu"
         r <- c(r, paste0(
           '<li class="nav-item">',
-          '<button class="btn btn-link" type="button" data-bs-toggle="offcanvas" data-bs-target="#',
+          '<button class="btn btn-link menu-scale-trigger" type="button" data-bs-toggle="offcanvas" data-bs-target="#',
           id, '" aria-controls="', id, '">', submenus[[i]]$name, "</button>",
           "</li>"
         ))
@@ -74,7 +74,7 @@ page_navbar <- function(..., title = "", logo = "", breakpoint = "md", logo.heig
             '<div tabindex="-1" id="', id, '" aria-labelledby="', id, '_label" class="offcanvas offcanvas-',
             if (is.null(submenus[[i]]$placement)) "end" else submenus[[i]]$placement,
             if (!is.null(submenus[[i]]$class)) paste("", submenus[[i]]$class),
-            if (!is.null(submenus[[i]]$scale)) " menu-scale",
+            if (!is.null(submenus[[i]]$scale)) " menu-scale-target",
             if (!is.null(submenus[[i]]$backdrop)) c('" data-bs-backdrop="', submenus[[i]]$backdrop),
             '">'
           ), collapse = ""),
@@ -84,7 +84,10 @@ page_navbar <- function(..., title = "", logo = "", breakpoint = "md", logo.heig
             submenus[[i]][if (is.null(submenus[[i]]$title)) "name" else "title"],
             "</h5>"
           ),
-          '<button class="btn-close text-reset" type="button" data-bs-dismiss="offcanvas" title="Close"></button>',
+          paste(c(
+            '<button class="btn-close text-reset ',
+            if (!is.null(submenus[[i]]$scale)) " menu-scale-trigger", #Add a trigger on the close
+            '" type="button" data-bs-dismiss="offcanvas" title="Close"></button>'), collapse = ""),
           "</div>",
           '<div class="offcanvas-body">',
           unlist(lapply(submenus[[i]]$items[-1], eval, parts), use.names = FALSE),
