@@ -3088,7 +3088,7 @@ void (function () {
             page.wrap.style.width = "100%";
             page.wrap.classList.remove("menu-scale-on");
           }else{
-            event.target.style.width = "30vw";
+            event.target.parent.style.width = "30vw";
             page.wrap.style.width = "70vw";
             page.wrap.classList.add("menu-scale-on");
           }
