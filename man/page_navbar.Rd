@@ -8,15 +8,15 @@ page_navbar(..., title = "", logo = "", breakpoint = "md",
   logo.height = "24px", logo.width = "24px")
 }
 \arguments{
-\item{...}{Content to add to the navbar. Can be lists specifying submenus and their items.}
+\item{...}{Content to add to the navbar. Can be lists specifying submenus and their items.
+Each list can have entries for \code{"name"} (the navbar button text), \code{"title"} (the menu title),
+\code{"id"} (the ID of the menu element), \code{"class"} (class of the menu element),
+\code{"placement"} (start, top, end, or bottom), \code{"backdrop"} (logical), \code{"scale"} (logical, TRUE = Do not overlay the menu over the site_wrap), and \code{items}
+(a list of menu items).}
 
 \item{title}{A title to appear in the header.}
 
-\item{logo}{URL of an image to appear in the header.
-Each list can have entries for \code{"name"} (the navbar button text), \code{"title"} (the menu title),
-\code{"id"} (the ID of the menu element), \code{"class"} (class of the menu element),
-\code{"placement"} (start, top, end, or bottom), \code{"backdrop"} (logical), and \code{items}
-(a list of menu items).}
+\item{logo}{URL of an image to appear in the header.}
 
 \item{breakpoint}{Bootstrap breakpoint code specifying the width at which the menu collapses;
 default is \code{"md"}.}

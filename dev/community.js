@@ -2997,6 +2997,7 @@ void (function () {
     })
 
     window.onload = function () {
+      page.wrap = document.getElementById("site_wrap")
       page.navbar = document.getElementsByClassName('navbar')[0]
       page.navbar = page.navbar ? page.navbar.getBoundingClientRect() : {height: 0}
       page.content = document.getElementsByClassName('content')[0]
@@ -3057,6 +3058,42 @@ void (function () {
         },
       }
       page.load_screen = document.getElementById('load_screen')
+
+      // Setting up the menu-scale functionality
+      //If a button is clicked, and the target of that button contains a menu-scale class
+      // alert("document ready!");
+      // <script>
+      //   $(document).ready(function() {
+      //     //If a button is clicked, and the target of that button contains a menu-scale class
+      //     // alert("document ready!");
+      //     $(".btn").click(function() {
+      //       var target = $(this).attr("data-bs-target");
+      //       if ($(target).hasClass("menu-scale")) {
+      //         // scale the widths so that they line up with each other
+      //         $(target).css("width", "30vw");
+      //         $("#site_wrap").css("width", "70vw");
+      //         // alert("Changing on button open");
+      //       }
+      //     });
+      //     $(".btn-close").click(function() {
+      //       $("#site_wrap").css("width", "100%");
+      //       // alert("Changing on button close");
+      //     });
+      //   });
+      // </script>
+      // Convert this into a toggle
+      ;[...document.getElementsByClassName("menu-scale")].forEach((item) => {
+        item.addEventListener("click", function(event){
+          if (page.wrap.classList.contains("menu-scale-on")){
+            page.wrap.style.width = "100%";
+            page.wrap.classList.remove("menu-scale-on");
+          }else{
+            event.target.style.width = "30vw";
+            page.wrap.style.width = "70vw";
+            page.wrap.classList.add("menu-scale-on");
+          }
+        })
+      })
 
       // make variable info popup
       e = page.modal.info.e

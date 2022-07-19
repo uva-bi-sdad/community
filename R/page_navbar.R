@@ -3,12 +3,12 @@
 #' Adds a bar at the top of the page, potentially with a title and logo image.
 #'
 #' @param ... Content to add to the navbar. Can be lists specifying submenus and their items.
+#'Each list can have entries for \code{"name"} (the navbar button text), \code{"title"} (the menu title),
+#' \code{"id"} (the ID of the menu element), \code{"class"} (class of the menu element),
+#' \code{"placement"} (start, top, end, or bottom), \code{"backdrop"} (logical), \code{"scale"} (logical, TRUE = Do not overlay the menu over the site_wrap), and \code{items}
+#' (a list of menu items).
 #' @param title A title to appear in the header.
 #' @param logo URL of an image to appear in the header.
-#' Each list can have entries for \code{"name"} (the navbar button text), \code{"title"} (the menu title),
-#' \code{"id"} (the ID of the menu element), \code{"class"} (class of the menu element),
-#' \code{"placement"} (start, top, end, or bottom), \code{"backdrop"} (logical), and \code{items}
-#' (a list of menu items).
 #' @param breakpoint Bootstrap breakpoint code specifying the width at which the menu collapses;
 #' default is \code{"md"}.
 #' @param logo.height Character or number setting the height of the logo.
@@ -74,6 +74,7 @@ page_navbar <- function(..., title = "", logo = "", breakpoint = "md", logo.heig
             '<div tabindex="-1" id="', id, '" aria-labelledby="', id, '_label" class="offcanvas offcanvas-',
             if (is.null(submenus[[i]]$placement)) "end" else submenus[[i]]$placement,
             if (!is.null(submenus[[i]]$class)) paste("", submenus[[i]]$class),
+            if (!is.null(submenus[[i]]$scale)) " menu-scale",
             if (!is.null(submenus[[i]]$backdrop)) c('" data-bs-backdrop="', submenus[[i]]$backdrop),
             '">'
           ), collapse = ""),
