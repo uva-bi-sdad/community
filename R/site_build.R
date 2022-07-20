@@ -40,6 +40,8 @@
 #' @seealso To initialize a site project, use \code{\link{init_site}}.
 #' @export
 
+web_community_js <- "https://raw.githubusercontent.com/yaoeh/dspg22_community/main/dev/community.js"
+
 site_build <- function(dir, file = "site.R", name = "index.html", variables = NULL,
                        options = list(), bundle_data = FALSE, open_after = FALSE, aggregate = TRUE, sparse_time = TRUE,
                        force = FALSE, version = "v1", parent = NULL, include_api = TRUE, endpoint = NULL, serve = FALSE,
@@ -323,7 +325,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     if (stable) {
       list(
         base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.v1.min.css"),
-        base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.v1.min.js")
+        base = list(type = "script", src = web_community_js)
       )
     } else if (version == "local") {
       list(
@@ -333,7 +335,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     } else {
       list(
         base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.min.css"),
-        base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js")
+        base = list(type = "script", src = web_community_js)
       )
     },
     c(
