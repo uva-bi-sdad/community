@@ -163,7 +163,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
           if (cn %in% names(varinf)) r$info <- varinf[[cn]]
           r$time_range <- which(unname(tapply(v, times, function(v) any(!is.na(v))))) - 1
           r$time_range <- if (length(r$time_range)) r$time_range[c(1, length(r$time_range))] else c(-1, -1)
-          if (all(invalid)) {
+          if (!is.character(v) && all(invalid)) {
             r$type <- "unknown"
             r$missing <- length(v)
           } else if (is.numeric(v)) {
@@ -175,7 +175,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
             r$max <- round(max(v, na.rm = TRUE), 6)
           } else {
             r$type <- "string"
-            v <- as.factor(as.character(v))
+            if (!is.factor(v)) v <- as.factor(as.character(v))
             r$missing <- sum(is.na(v) | is.nan(v) | grepl("^[\\s.-]$", v))
             r$table <- structure(as.list(tabulate(v)), names = levels(v))
           }

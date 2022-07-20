@@ -576,8 +576,10 @@ DataHandler.prototype = {
           const da = this.sets[d]
           const n = this.info[d].entity_count
           const at = !n || n > 65535 ? Uint32Array : n > 255 ? Uint16Array : Uint8Array
-          if ('order' in vi.info[d]) {
-            o = vi.info[d].order
+          const info = vi.info[d]
+          const is_string = 'string' === info.type
+          if ('order' in info) {
+            o = info.order
             Object.keys(da).forEach(k => {
               if (!(k in this.entities)) {
                 this.entities[k] = {}
@@ -587,7 +589,7 @@ DataHandler.prototype = {
               this.entities[k][view].subset_rank[v] = new at(ny)
             })
           } else {
-            vi.info[d].order = o = []
+            info.order = o = []
             for (let y = ny; y--; ) {
               o.push([])
             }
@@ -596,13 +598,17 @@ DataHandler.prototype = {
               if ('_meta' !== k && c in dak) {
                 const ev = dak[c]
                 if (1 === ny) {
-                  if ('number' !== typeof ev) {
+                  if (is_string && ev in vi.levels_ids) {
+                    o[0].push([k, vi.levels_ids[ev]])
+                  } else if ('number' !== typeof ev) {
                     dak[c] = NaN
                     o[0].push([k, NaN])
                   } else o[0].push([k, ev])
                 } else {
                   for (let y = ny; y--; ) {
-                    if ('number' !== typeof ev[y]) ev[y] = NaN
+                    if (is_string && ev[y] in vi.levels_ids) {
+                      ev[y] = vi.levels_ids[ev[y]]
+                    } else if ('number' !== typeof ev[y]) ev[y] = NaN
                     o[y].push([k, ev[y]])
                   }
                   Object.freeze(ev)
@@ -636,7 +642,7 @@ DataHandler.prototype = {
           m.selected_summaries[d] = {n: [], missing: []}
           if ('string' === vi.info[d].type) {
             m.table = {}
-            Object.keys(vi.levels_ids).forEach(l => {
+            vi.levels.forEach(l => {
               m.table[l] = []
               for (let y = ny; y--; ) m.table[l].push(0)
             })
@@ -738,7 +744,8 @@ DataHandler.prototype = {
         ms = m.summaries[dataset],
         ny = variable.time_range[dataset][2],
         order = variable.info[dataset].order,
-        levels = variable.levels_ids,
+        levels = variable.levels,
+        levels_ids = variable.levels_ids,
         subset = v.n_selected[this.settings.settings.summary_selection] !== v.n_selected.dataset
       for (let y = ny; y--; ) {
         mo[y] = subset ? [] : order[y]
@@ -749,7 +756,7 @@ DataHandler.prototype = {
         ms.n[y] = 0
         if (levels) {
           ms.mode[y] = ''
-          Object.keys(levels).forEach(k => (m.table[k][y] = 0))
+          levels.forEach(k => (m.table[k][y] = 0))
         } else {
           ms.sum[y] = 0
           ms.mean[y] = 0
@@ -768,7 +775,7 @@ DataHandler.prototype = {
             value = oi[1]
           if (k in s) {
             const en = s[k][view],
-              present = levels ? value in levels : !isNaN(value)
+              present = !isNaN(value)
             if (!y) {
               if (!(measure in en.summary)) en.summary[measure] = {n: 0, overall: ms, order: mo}
               en.summary[measure].n = 0
@@ -787,7 +794,7 @@ DataHandler.prototype = {
               en.summary[measure].n++
               ms.n[y]++
               if (levels) {
-                m.table[value][y]++
+                m.table[levels[value]][y]++
               } else {
                 ms.sum[y] += value
                 if (value > ms.max[y]) ms.max[y] = value
@@ -801,11 +808,11 @@ DataHandler.prototype = {
         mo.forEach((o, y) => {
           if (levels) {
             if (ms.n[y]) {
-              l = 0
+              let l = 0
               Object.keys(m.table).forEach(k => {
-                if (m.table[k][y] > m.table[variable.levels[l]][y]) l = levels[k]
+                if (m.table[k][y] > m.table[levels[l]][y]) l = levels_ids[k]
               })
-              ms.mode[y] = variable.levels[l]
+              ms.mode[y] = levels[l]
             } else ms.mode[y] = NaN
           } else {
             if (ms.n[y]) {
@@ -867,9 +874,9 @@ DataHandler.prototype = {
             if (levels) {
               q1 = 0
               m.table.forEach(k => {
-                if (m.table[k][y] > m.table[variable.levels[q1]][y]) q1 = levels[k]
+                if (m.table[k][y] > m.table[levels[q1]][y]) q1 = levels_ids[k]
               })
-              ms.mode[y] = variable.levels[q1]
+              ms.mode[y] = levels[q1]
             } else ms.mean[y] = ms.sum[y] / ms.n[y]
           } else {
             ms[levels ? 'mode' : 'mean'][y] = NaN
@@ -893,7 +900,9 @@ DataHandler.prototype = {
           ve.datasets.push(k)
           ve.info[k] = v
           if ('string' === v.type) {
-            v.table.forEach(l => {
+            ve.levels = []
+            ve.levels_ids = {}
+            ;(v.info.levels || Object.keys(v.table)).forEach(l => {
               if (!(l in ve.levels_ids)) {
                 ve.levels_ids[l] = ve.levels.length
                 ve.levels.push(l)
@@ -911,7 +920,7 @@ DataHandler.prototype = {
           if ('string' === v.type) {
             ve.levels = []
             ve.levels_ids = {}
-            v.table.forEach(l => {
+            ;(v.info.levels || Object.keys(v.table)).forEach(l => {
               ve.levels_ids[l] = ve.levels.length
               ve.levels.push(l)
             })

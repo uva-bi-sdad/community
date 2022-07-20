@@ -213,9 +213,9 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
         measure_info <- if (length(measure_info) == 1 && file.exists(measure_info)) read_json(measure_info) else as.list(measure_info)
       }
       for (r in unique(files$repo)) {
-        rf <- list.files(paste0(commons, "/repos/", sub("^.+/", "", r)), "^measure_info\\.json$", full.names = TRUE, recursive = TRUE)
+        rf <- list.files(paste0(commons, "/repos/", sub("^.+/", "", r)), "^measure_info[^.]*\\.json$", full.names = TRUE, recursive = TRUE)
         if (length(rf)) {
-          ri <- read_json(rf[[1]])
+          ri <- unlist(lapply(rf, read_json), recursive = FALSE)
           nri <- names(ri)
           es <- nri[grepl("^_", nri) & !nri %in% view$variables]
           if (length(es)) {

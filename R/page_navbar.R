@@ -3,12 +3,12 @@
 #' Adds a bar at the top of the page, potentially with a title and logo image.
 #'
 #' @param ... Content to add to the navbar. Can be lists specifying submenus and their items.
-#' @param title A title to appear in the header.
-#' @param logo URL of an image to appear in the header.
 #' Each list can have entries for \code{"name"} (the navbar button text), \code{"title"} (the menu title),
 #' \code{"id"} (the ID of the menu element), \code{"class"} (class of the menu element),
 #' \code{"placement"} (start, top, end, or bottom), \code{"backdrop"} (logical), and \code{items}
 #' (a list of menu items).
+#' @param title A title to appear in the header.
+#' @param logo URL of an image to appear in the header.
 #' @param breakpoint Bootstrap breakpoint code specifying the width at which the menu collapses;
 #' default is \code{"md"}.
 #' @param logo.height Character or number setting the height of the logo.
