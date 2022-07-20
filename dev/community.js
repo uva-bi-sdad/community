@@ -2269,7 +2269,12 @@ void (function () {
                       '))'
                   }
                 }
-                if (site.settings.color_by_order) {
+                if (var_info.levels) {
+                  this.ticks.center.classList.remove('hidden')
+                  this.ticks.min.firstElementChild.firstElementChild.innerText = var_info.levels[0]
+                  this.ticks.max.firstElementChild.firstElementChild.innerText =
+                    var_info.levels[var_info.levels.length - 1]
+                } else if (site.settings.color_by_order) {
                   this.ticks.center.classList.add('hidden')
                   this.ticks.min.firstElementChild.firstElementChild.innerText =
                     '# ' + (summary.n[y] ? summary.n[y] : 0)

@@ -11,7 +11,8 @@ site_build(dir, file = "site.R", name = "index.html", variables = NULL,
   parent = NULL, include_api = TRUE, endpoint = NULL, serve = FALSE,
   host = "127.0.0.1", port = 3000)
 
-site_start_server(dir, host = "127.0.0.1", port = 3000, open_after = TRUE)
+site_start_server(dir, host = "127.0.0.1", port = 3000,
+  open_after = TRUE)
 }
 \arguments{
 \item{dir}{Path to the site project directory.}

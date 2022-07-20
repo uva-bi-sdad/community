@@ -15,7 +15,7 @@ Depends: R (>= 3.5)
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE, old_usage = TRUE)
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.1
 Suggests: 
     rmarkdown,
     knitr,

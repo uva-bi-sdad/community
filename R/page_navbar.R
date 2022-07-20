@@ -3,7 +3,11 @@
 #' Adds a bar at the top of the page, potentially with a title and logo image.
 #'
 #' @param ... Content to add to the navbar. Can be lists specifying submenus and their items.
+<<<<<<< HEAD
 #'Each list can have entries for \code{"name"} (the navbar button text), \code{"title"} (the menu title),
+=======
+#' Each list can have entries for \code{"name"} (the navbar button text), \code{"title"} (the menu title),
+>>>>>>> 32cfdd53e87d0042569e36996a09e462241a0e78
 #' \code{"id"} (the ID of the menu element), \code{"class"} (class of the menu element),
 #' \code{"placement"} (start, top, end, or bottom), \code{"backdrop"} (logical), \code{"scale"} (logical, TRUE = Do not overlay the menu over the site_wrap), and \code{items}
 #' (a list of menu items).

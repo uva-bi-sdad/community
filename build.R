@@ -7,15 +7,17 @@ pkgdown::build_site()
 # move web resource to dist
 update_stable <- FALSE
 for (f in list.files("dev", "min\\.[cjs]+$", full.names = TRUE)) {
-  file.copy(f, paste0('docs/dist/', sub('^.*\\.', '', f), "/", sub("-min", ".min", basename(f), fixed = TRUE)), TRUE)
-  if (grepl("^dev/(?:com|data_)", f) && update_stable) file.copy(
-    f, paste0('docs/dist/', sub('^.*\\.', '', f), "/", sub(".", ".v1.", sub("-min", ".min", basename(f), fixed = TRUE), fixed = TRUE)), TRUE
-  )
+  file.copy(f, paste0("docs/dist/", sub("^.*\\.", "", f), "/", sub("-min", ".min", basename(f), fixed = TRUE)), TRUE)
+  if (grepl("^dev/(?:com|data_)", f) && update_stable) {
+    file.copy(
+      f, paste0("docs/dist/", sub("^.*\\.", "", f), "/", sub(".", ".v1.", sub("-min", ".min", basename(f), fixed = TRUE), fixed = TRUE)), TRUE
+    )
+  }
   file.remove(f)
 }
 
 ## update cache script information
-cache_scripts = list(
+cache_scripts <- list(
   data_handler = list(
     dev = list(
       source = "https://uva-bi-sdad.github.io/community/dist/js/data_handler.min.js",
