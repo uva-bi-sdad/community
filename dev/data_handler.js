@@ -902,7 +902,7 @@ DataHandler.prototype = {
           if ('string' === v.type) {
             ve.levels = []
             ve.levels_ids = {}
-            ;(v.info.levels || Object.keys(v.table)).forEach(l => {
+            ;((v.info && v.info.levels) || Object.keys(v.table)).forEach(l => {
               if (!(l in ve.levels_ids)) {
                 ve.levels_ids[l] = ve.levels.length
                 ve.levels.push(l)

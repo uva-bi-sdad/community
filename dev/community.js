@@ -2434,12 +2434,6 @@ void (function () {
         'internet speed': function (v) {
           return v + ' MB/s'
         },
-        'per 10k': function (v) {
-          return v + ' per 10k'
-        },
-        'per 100k': function (v) {
-          return v + ' per 100k'
-        },
       },
       storage = window.localStorage || {
         setItem: function () {},
