@@ -4,11 +4,15 @@
 \alias{init_repository}
 \title{Create a Data Repository}
 \usage{
-init_repository(dir, init_data = TRUE, init_site = TRUE, init_git = TRUE,
-  overwrite = FALSE, quiet = !interactive())
+init_repository(dir, datasets = "set_1", init_data = TRUE,
+  init_site = TRUE, init_git = TRUE, overwrite = FALSE,
+  quiet = !interactive())
 }
 \arguments{
 \item{dir}{Directory in which to create the repository's structure. Will be created if it does not exist.}
+
+\item{datasets}{A character vector of dataset names; for each of these, a subdirectory in
+\code{code} and \code{data} will be made.}
 
 \item{init_data}{Logical; if \code{FALSE}, will not run \code{\link{init_data}} on the repository.}
 

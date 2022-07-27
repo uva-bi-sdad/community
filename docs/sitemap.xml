@@ -4,6 +4,12 @@
     <loc>/404.html</loc>
   </url>
   <url>
+    <loc>/LICENSE-text.html</loc>
+  </url>
+  <url>
+    <loc>/LICENSE.html</loc>
+  </url>
+  <url>
     <loc>/articles/anti-patterns.html</loc>
   </url>
   <url>
@@ -34,12 +40,6 @@
     <loc>/index.html</loc>
   </url>
   <url>
-    <loc>/LICENSE-text.html</loc>
-  </url>
-  <url>
-    <loc>/LICENSE.html</loc>
-  </url>
-  <url>
     <loc>/reference/add_data.html</loc>
   </url>
   <url>
@@ -50,6 +50,12 @@
   </url>
   <url>
     <loc>/reference/community-package.html</loc>
+  </url>
+  <url>
+    <loc>/reference/data_add.html</loc>
+  </url>
+  <url>
+    <loc>/reference/data_reformat_sdad.html</loc>
   </url>
   <url>
     <loc>/reference/datacommons_find_variables.html</loc>
@@ -65,12 +71,6 @@
   </url>
   <url>
     <loc>/reference/datacommons_view.html</loc>
-  </url>
-  <url>
-    <loc>/reference/data_add.html</loc>
-  </url>
-  <url>
-    <loc>/reference/data_reformat_sdad.html</loc>
   </url>
   <url>
     <loc>/reference/download_census_shapes.html</loc>

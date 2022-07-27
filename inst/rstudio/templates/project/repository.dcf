@@ -2,6 +2,11 @@ Binding: init_repository
 Title: Community Data Repository
 OpenFiles: README.md
 
+Parameter: datasets
+Widget: TextInput
+Label: Datasets
+Default: set_1
+
 Parameter: init_data
 Widget: CheckboxInput
 Label: Initialize Data

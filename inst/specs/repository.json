@@ -5,10 +5,8 @@
   "files": [
     "README.md",
     ".gitignore",
-    "src",
-    "src/retrieve.R",
+    "code",
     "docs",
-    "data",
-    "data/distribution/measure_info.json"
+    "data"
   ]
 }

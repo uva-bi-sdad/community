@@ -1,9 +1,9 @@
-pandoc: 2.17.1.1
+pandoc: '2.18'
 pkgdown: 2.0.6
 pkgdown_sha: ~
 articles:
   anti-patterns: anti-patterns.html
   casestudy-arrests: casestudy-arrests.html
   quickstart-site: quickstart-site.html
-last_built: 2022-07-22T18:26Z
+last_built: 2022-07-27T16:49Z
 
