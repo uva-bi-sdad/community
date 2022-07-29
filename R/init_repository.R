@@ -59,8 +59,8 @@ init_repository <- function(dir, datasets = "set_1", init_data = TRUE, init_site
       "*.Rproj",
       "node_modules",
       "package-lock.json",
-      "docs/dist",
-      "data/original"
+      "dist",
+      "original"
     ), paths[2])
   }
   if (init_site) {
