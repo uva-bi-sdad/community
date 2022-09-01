@@ -5,8 +5,6 @@
   "files": [
     "README.md",
     ".gitignore",
-    "code",
-    "docs",
-    "data"
+    "docs"
   ]
 }

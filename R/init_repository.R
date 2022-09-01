@@ -4,8 +4,8 @@
 #' Create a repository for a dataset, which may include data documentation and/or a data site.
 #'
 #' @param dir Directory in which to create the repository's structure. Will be created if it does not exist.
-#' @param datasets A character vector of dataset names; for each of these, a subdirectory in
-#' \code{code} and \code{data} will be made.
+#' @param datasets A character vector of dataset names; for each of these, a subdirectory will be made
+#' containing \code{code} and \code{data} directories.
 #' @param init_data Logical; if \code{FALSE}, will not run \code{\link{init_data}} on the repository.
 #' @param init_site Logical; if \code{FALSE}, will not run \code{\link{init_site}} on the repository.
 #' @param init_git Logical; if \code{FALSE}, will not run \code{git init} on the repository.
@@ -19,27 +19,25 @@
 #' @return Path to the created repository directory.
 #' @export
 
-init_repository <- function(dir, datasets = "set_1", init_data = TRUE, init_site = TRUE, init_git = TRUE,
+init_repository <- function(dir, datasets = "dataset", init_data = TRUE, init_site = TRUE, init_git = TRUE,
                             overwrite = FALSE, quiet = !interactive()) {
   if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = ".")')
   check <- check_template("repository", dir = dir)
-  datasets_inited <- file.exists(paste0(dir, "/data/", datasets))
+  datasets_inited <- file.exists(paste0(dir, "/", datasets, "/data"))
   if (!quiet && check$exists && all(datasets_inited) && !overwrite) {
     cli_bullets(c(`!` = "repository files already exist", i = "add {.code overwrite = TRUE} to overwrite them"))
   }
   dir <- normalizePath(paste0(dir, "/", check$spec$dir), "/", FALSE)
   dir.create(dir, FALSE, TRUE)
   dir.create(paste0(dir, "/docs"), FALSE)
-  dir.create(paste0(dir, "/data"), FALSE)
-  dir.create(paste0(dir, "/code"), FALSE)
   paths <- paste0(dir, "/", c("README.md", ".gitignore", "build.R", "site.R"))
   if (!file.exists(paths[1])) {
     writeLines(c(
       "<template: Describe the repository>",
       "\n# Structure",
       "This is a community data repository, created with the `community::init_repository()` function.",
-      "1. `code/{set}/ingest.R` should download and prepare data from a public source, and output files to `data/{set}/distribution`.",
-      "2. `data/{set}/distribution/measure_info.json` should contain metadata for each of the measures in the distribution data file(s).",
+      "1. `{set}/code/ingest.R` should download and prepare data from a public source, and output files to `{set}/data/distribution`.",
+      "2. `{set}/data/distribution/measure_info.json` should contain metadata for each of the measures in the distribution data file(s).",
       if (init_site) {
         paste(
           "3. `build.R` will convert the distribution data to site-ready versions,",
@@ -81,9 +79,9 @@ init_repository <- function(dir, datasets = "set_1", init_data = TRUE, init_site
   if (is.character(datasets) && any(!datasets_inited)) {
     for (i in seq_along(datasets)) {
       dataset <- datasets[i]
-      dirs <- paste0(dir, c("/code/", "/data/"), dataset)
+      dirs <- paste0(dir, "/", dataset, c("/code", "/data"))
       if (!any(file.exists(dirs))) {
-        dir.create(dirs[[1]], FALSE)
+        dir.create(dirs[[1]], FALSE, TRUE)
         ingest_file <- paste0(dirs[[1]], "/ingest.R")
         if (!file.exists(ingest_file)) {
           writeLines(

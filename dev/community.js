@@ -2134,7 +2134,7 @@ void (function () {
             o.ticks.min.className = 'legend-tick-end min'
             o.ticks.center.style.left = '50%'
             o.show = function (e, c) {
-              if (e && 'parsed' in c) {
+              if (e && 'parsed' in c && e.features.name) {
                 const view = _u[this.view],
                   summary = c.parsed.summary,
                   string = summary && 'levels' in summary,

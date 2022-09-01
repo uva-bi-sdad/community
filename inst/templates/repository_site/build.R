@@ -1,16 +1,22 @@
 library(community)
 library(jsonlite)
 
-datasets <- paste0(list.dirs("data", recursive = FALSE), "/distribution")
-data_reformat_sdad(list.files(datasets, "\\.csv\\.xz$", full.names = TRUE), "docs/data")
+datasets <- paste0(list.dirs("."), "/data/distribution")
+datasets <- datasets[dir.exists(datasets)]
+data_reformat_sdad(list.files(datasets, "\\.csv", full.names = TRUE), "docs/data")
 info <- lapply(list.files(datasets, "measure_info.*\\.json", full.names = TRUE), read_json)
 agg_info <- list()
-for (m in info) for (e in names(m)) {
-  agg_info[[e]] <- if (e %in% names(agg_info)) c(agg_info[[e]], m[[e]]) else m[[e]]
+for (m in info) {
+  for (e in names(m)) {
+    agg_info[[e]] <- if (e %in% names(agg_info)) c(agg_info[[e]], m[[e]]) else m[[e]]
+  }
 }
-if (length(agg_info)) write_json(
-  agg_info, "docs/data/measure_info.json", auto_unbox = TRUE, pretty = TRUE
-)
+if (length(agg_info)) {
+  write_json(
+    agg_info, "docs/data/measure_info.json",
+    auto_unbox = TRUE, pretty = TRUE
+  )
+}
 
 files <- c("block_group", "tract", "county")
 files <- structure(paste0(files, ".csv.xz"), names = files)

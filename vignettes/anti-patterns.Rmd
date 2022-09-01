@@ -1,10 +1,10 @@
 ---
-title: "Notes against [anti-patterns](https://en.wikipedia.org/wiki/Anti-pattern) in Site.R"
+title: "Notes against anti-patterns in Site.R"
 author: "by Alan Wang on July 22, 2022"
 
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Notes against [anti-patterns](https://en.wikipedia.org/wiki/Anti-pattern) in Site.R}
+  %\VignetteIndexEntry{Notes against anti-patterns in Site.R}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

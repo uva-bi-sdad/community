@@ -250,10 +250,10 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   if (!is.null(out)) {
     if (get_coverage && read_existing) {
       variables <- sort(if (length(variables)) variables else unique(unlist(lapply(sets, colnames), use.names = FALSE)))
+      allcounts <- structure(numeric(length(variables)), names = variables)
       write.csv(vapply(sets, function(d) {
-        allcounts <- structure(numeric(length(variables)), names = variables)
         counts <- colSums(!is.na(d))
-        counts <- counts[variables %in% names(counts)]
+        counts <- counts[names(counts) %in% variables]
         allcounts[names(counts)] <- counts
         allcounts
       }, numeric(length(variables))), paste0(out, "/coverage.csv"))

@@ -10,7 +10,7 @@ page_section(
     page_section(
       wraps = "col", sizes = c(NA, 1),
       input_select("Variable", options = "variables", default = 1, id = "selected_variable"),
-      input_number("Time", variable = "time", id = "selected_time")
+      input_number("Time", default = "max", variable = "time", id = "selected_time")
     ),
     output_legend(id = "main_legend", subto = c("main_map", "main_plot")),
     output_info(
