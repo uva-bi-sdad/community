@@ -27,6 +27,9 @@
 #' @param prefer_repo Logical; if \code{TRUE}, will prefer repository files over those from distributions
 #' (such as Dataverse).
 #' @param refresh_map Logical; if \code{TRUE}, overwrites any existing map files.
+#' @param use_manifest Logical; if \code{FALSE}, will not search for manifest files in each repository to
+#' extract measure information from. These should have \code{data} entries with object arrays containing a
+#' \code{measure_info} entry (e.g., \code{'{"data: [{"measure_info": [{...}]}]"}'}).
 #' @param overwrite Logical; if \code{TRUE}, reformatted files in \code{output}.
 #' @param verbose Logical; if \code{FALSE}, will not show status messages.
 #' @examples
@@ -43,7 +46,7 @@
 datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL, ids = NULL,
                              files = NULL, run_after = NULL, run_before = NULL, measure_info = list(),
                              remote = NULL, url = NULL, children = list(), execute = TRUE, prefer_repo = FALSE,
-                             refresh_map = FALSE, overwrite = FALSE, verbose = TRUE) {
+                             refresh_map = FALSE, use_manifest = TRUE, overwrite = FALSE, verbose = TRUE) {
   if (missing(commons)) cli_abort('{.arg commons} must be speficied (e.g., commons = ".")')
   if (missing(name)) {
     name <- list.files(paste0(commons, "/views"))[1]
@@ -139,6 +142,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
   }
   if (length(view$variables)) view$variables <- as.character(view$variables)
   if (length(view$ids)) view$ids <- as.character(view$ids)
+  if (!is.null(view$output) && !dir.exists(view$output)) init_site(view$output, view$name, quiet = TRUE)
   view$output <- paste0(sub("/docs(?:/data)?", "", if (is.null(view$output)) view_dir else view$output), "/docs/data")
   if (write_view) write_json(view, paths[1], pretty = TRUE, auto_unbox = TRUE)
   if (execute) {
@@ -150,7 +154,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       source(local = source_env, exprs = src)
     }
     if (verbose) cli_alert_info("checking for file maps")
-    map <- datacommons_map_files(commons, overwrite = refresh_map, verbose = verbose)
+    map <- datacommons_map_files(commons, use_manifest = use_manifest, overwrite = refresh_map, verbose = verbose)
     files <- map$variables[
       (if (length(view$files)) grepl(view$files, map$variables$file) else TRUE) &
         (if (length(view$variables)) (map$variables$full_name %in% view$variables | map$variables$variable %in% view$variables) else TRUE) &
@@ -164,6 +168,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
         }), ,
       drop = FALSE
     ]
+    manifest <- NULL
     if (nrow(files)) {
       cfs <- paste0("/", files$file)
       files <- files[order(
@@ -194,6 +199,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       manifest <- lapply(split(files, files$repo), function(r) {
         hr <- repo_manifest[[r$repo[[1]]]]
         files <- paste0(commons, "/", unique(r$file))
+        names(files) <- basename(files)
         list(
           repository = r$repo[[1]],
           files = lapply(files, function(f) {
@@ -213,9 +219,30 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
         measure_info <- if (length(measure_info) == 1 && file.exists(measure_info)) read_json(measure_info) else as.list(measure_info)
       }
       for (r in unique(files$repo)) {
-        rf <- list.files(paste0(commons, "/repos/", sub("^.+/", "", r)), "^measure_info[^.]*\\.json$", full.names = TRUE, recursive = TRUE)
-        if (length(rf)) {
-          ri <- unlist(lapply(rf, read_json), recursive = FALSE)
+        ri <- NULL
+        if (use_manifest) {
+          manifest_file <- paste0(commons, "/repos/", sub("^.+/", "", r), "/manifest.json")
+          if (file.exists(manifest_file)) {
+            ri <- lapply(read_json(manifest_file)$data, function(e) {
+              m <- e$measure_info
+              if (is.list(m[[1]])) {
+                names(m) <- vapply(m, "[[", "", "full_name")
+              } else if (is.list(m)) {
+                m <- list(m)
+                names(m) <- m[[1]]$full_name
+              }
+              m
+            })
+          }
+        }
+        if (is.null(ri)) {
+          ri <- lapply(list.files(
+            paste0(commons, "/repos/", sub("^.+/", "", r)), "^measure_info[^.]*\\.json$",
+            full.names = TRUE, recursive = TRUE
+          ), read_json)
+        }
+        if (length(ri)) {
+          ri <- unlist(ri, recursive = FALSE)
           nri <- names(ri)
           es <- nri[grepl("^_", nri) & !nri %in% view$variables]
           if (length(es)) {

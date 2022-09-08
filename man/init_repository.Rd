@@ -4,9 +4,8 @@
 \alias{init_repository}
 \title{Create a Data Repository}
 \usage{
-init_repository(dir, datasets = "dataset", init_data = TRUE,
-  init_site = TRUE, init_git = TRUE, overwrite = FALSE,
-  quiet = !interactive())
+init_repository(dir, datasets = NULL, init_data = TRUE, init_site = TRUE,
+  init_git = TRUE, overwrite = FALSE, quiet = !interactive())
 }
 \arguments{
 \item{dir}{Directory in which to create the repository's structure. Will be created if it does not exist.}

@@ -19,7 +19,7 @@
 #' @return Path to the created repository directory.
 #' @export
 
-init_repository <- function(dir, datasets = "dataset", init_data = TRUE, init_site = TRUE, init_git = TRUE,
+init_repository <- function(dir, datasets = NULL, init_data = TRUE, init_site = TRUE, init_git = TRUE,
                             overwrite = FALSE, quiet = !interactive()) {
   if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = ".")')
   check <- check_template("repository", dir = dir)

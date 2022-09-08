@@ -11,6 +11,9 @@
 #' @param reset_repos Logical; if \code{TRUE}, will fetch and hard reset the repositories to remove any local changes.
 #' @param rescan_only Logical; if \code{TRUE}, will only read the files that are already in place, without checking for
 #' updates from the remote repository.
+#' @param use_manifest Logical; if \code{FALSE}, will search for files rather than using a \code{manifest.json} file in each
+#' repository. Each manifest should contain an object with a \code{data} entry containing an object array with \code{path}
+#' entries (e.g., \code{'{"data": [{"path": "path/from/repos/repo_name/data.csv"}]}'}).
 #' @param verbose Logical; if \code{FALSE}, will not show updated repositories.
 #' @examples
 #' \dontrun{
@@ -21,7 +24,7 @@
 #' @export
 
 datacommons_refresh <- function(dir, clone_method = "http", include_distributions = TRUE, refresh_distributions = FALSE,
-                                only_new = FALSE, reset_repos = FALSE, rescan_only = FALSE, verbose = TRUE) {
+                                only_new = FALSE, reset_repos = FALSE, rescan_only = FALSE, use_manifest = TRUE, verbose = TRUE) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., as ".")')
   if (Sys.which("git") == "") {
     cli_abort(c(
@@ -73,7 +76,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
   for (i in seq_along(repos)) {
     r <- repos[[i]]
     rn <- sub("^.*/", "", r)
-    cr <- paste0(repo_dir, rn)
+    cr <- paste0(repo_dir, rn, "/")
     if (!rescan_only) {
       change_dir <- dir.exists(rn)
       if (verbose) cli_alert_info(paste(if (change_dir) "pulling" else "cloning", rn))
@@ -99,16 +102,23 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
         }
       } else if (!length(list.files(rn))) system2("rm", c("-rf", rn))
     }
-    files <- list.files(
-      paste0(cr, "/data"), "\\.(?:csv|tsv|txt|dat|rda|rdata)(?:\\.[gbx]z2?)?$",
-      full.names = TRUE, recursive = TRUE, ignore.case = TRUE
-    )
+    files <- NULL
+    if (use_manifest && file.exists(paste0(cr, "manifest.json"))) {
+      files <- paste0(cr, read_json(paste0(cr, "manifest.json"), simplifyVector = TRUE)$data$path)
+      files <- files[file.exists(files)]
+    }
+    if (!length(files)) {
+      files <- list.files(
+        cr, "\\.(?:csv|tsv|txt|dat|rda|rdata)(?:\\.[gbx]z2?)?$",
+        full.names = TRUE, recursive = TRUE, ignore.case = TRUE
+      )
+    }
     for (f in files) {
       repo_manifest[[r]]$files[[basename(f)]] <- list(
-        location = sub("^.+/data(/[^/]+/)?.*$", "data\\1", f),
+        location = dirname(sub(cr, "", f, fixed = TRUE)),
         date = format(file.mtime(f), "%Y-%m-%dT%H:%M:%SZ"),
         size = file.size(f),
-        sha = system2("git", c("hash-object", f), stdout = TRUE),
+        sha = system2("git", c("hash-object", shQuote(f)), stdout = TRUE),
         md5 = md5sum(f)[[1]]
       )
     }
@@ -187,11 +197,13 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
       cli_alert_success("all data repositories are up to date")
     }
   }
-  su <- names(repo_manifest) %in% repos
-  if (any(su)) {
-    write_json(repo_manifest[su], manifest_file, pretty = TRUE, auto_unbox = TRUE)
-  } else {
-    cli_warn("no repos were found in the existing repo manifest")
+  if (length(repo_manifest)) {
+    su <- names(repo_manifest) %in% repos
+    if (any(su)) {
+      write_json(repo_manifest[su], manifest_file, pretty = TRUE, auto_unbox = TRUE)
+    } else {
+      cli_warn("no repos were found in the existing repo manifest")
+    }
   }
   init_datacommons(dir, refresh_after = FALSE, verbose = FALSE)
   invisible(repos[updated | dist_updated])

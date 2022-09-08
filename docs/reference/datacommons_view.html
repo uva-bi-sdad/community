@@ -70,7 +70,7 @@
 <span>  ids <span class="op">=</span> <span class="cn">NULL</span>, files <span class="op">=</span> <span class="cn">NULL</span>, run_after <span class="op">=</span> <span class="cn">NULL</span>, run_before <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  measure_info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, remote <span class="op">=</span> <span class="cn">NULL</span>, url <span class="op">=</span> <span class="cn">NULL</span>, children <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  execute <span class="op">=</span> <span class="cn">TRUE</span>, prefer_repo <span class="op">=</span> <span class="cn">FALSE</span>, refresh_map <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<span>  use_manifest <span class="op">=</span> <span class="cn">TRUE</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -146,6 +146,12 @@ and <code>url</code> (link to the served site), which will otherwise be derived 
 
 <dt>refresh_map</dt>
 <dd><p>Logical; if <code>TRUE</code>, overwrites any existing map files.</p></dd>
+
+
+<dt>use_manifest</dt>
+<dd><p>Logical; if <code>FALSE</code>, will not search for manifest files in each repository to
+extract measure information from. These should have <code>data</code> entries with object arrays containing a
+<code>measure_info</code> entry (e.g., <code>'{"data: [{"measure_info": [{...}]}]"}'</code>).</p></dd>
 
 
 <dt>overwrite</dt>

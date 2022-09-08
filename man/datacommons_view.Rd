@@ -8,7 +8,7 @@ datacommons_view(commons, name, output = NULL, ..., variables = NULL,
   ids = NULL, files = NULL, run_after = NULL, run_before = NULL,
   measure_info = list(), remote = NULL, url = NULL, children = list(),
   execute = TRUE, prefer_repo = FALSE, refresh_map = FALSE,
-  overwrite = FALSE, verbose = TRUE)
+  use_manifest = TRUE, overwrite = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{commons}{Path to the data commons project.}
@@ -51,6 +51,10 @@ and \code{url} (link to the served site), which will otherwise be derived from \
 (such as Dataverse).}
 
 \item{refresh_map}{Logical; if \code{TRUE}, overwrites any existing map files.}
+
+\item{use_manifest}{Logical; if \code{FALSE}, will not search for manifest files in each repository to
+extract measure information from. These should have \code{data} entries with object arrays containing a
+\code{measure_info} entry (e.g., \code{'{"data: [{"measure_info": [{...}]}]"}'}).}
 
 \item{overwrite}{Logical; if \code{TRUE}, reformatted files in \code{output}.}
 

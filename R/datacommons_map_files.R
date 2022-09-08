@@ -104,7 +104,7 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
               sub("^.*[\\\\/]", "", gsub("^.*\\d{4}(?:q\\d)?_|\\.\\w{3,4}(?:\\.[gbx]z2?)?$|\\..*$", "", basename(f))), ":", vars
             )),
             repo = r,
-            file = sub(paste0(dir, "/"), "", f, fixed = TRUE)
+            file = sub(dir, "", f, fixed = TRUE)
           )
           manifest[[r]][[hash]]$variables <- vars
         } else {
