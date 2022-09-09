@@ -30,4 +30,14 @@ test_that("view works", {
   expect_true(length(read_json(
     paste0(dir_view, "/docs/data/manifest.json")
   )[["uva-bi-sdad/sdc.health"]]$files) != 0)
+  datacommons_view(
+    dir, "view", dir_view,
+    variables = variables[1:5], ids = paste0("5100", c(1, 3, 5)), verbose = FALSE
+  )
+  expect_identical(unlist(read_json(paste0(dir, "/views/view/view.json"))$variables), variables[1:5])
+  datacommons_view(
+    dir, "view2", dir_view,
+    variables = variables, ids = paste0("5100", c(1, 3, 5, 7)), verbose = FALSE
+  )
+  expect_true(file.exists(paste0(dir, "/views/view2/view.json")))
 })

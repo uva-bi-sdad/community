@@ -62,3 +62,15 @@ test_that("continuous-divergent works", {
     ))
   )
 })
+
+test_that("polynomial works", {
+  json <- capture.output(
+    pal <- util_make_palette(rep(c("red", "green", "blue"), each = 10), polynomial = TRUE)
+  )
+  unlink("Rplots.pdf")
+  expect_identical(json[1], "{")
+  expect_identical(
+    round(pal$colors[, 1], 4),
+    c(254.12, -259.1603, 9324.1158, -64523.4285, 147834.6691, -140833.7305, 48205.6705)
+  )
+})

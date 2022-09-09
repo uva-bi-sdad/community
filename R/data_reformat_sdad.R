@@ -109,7 +109,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     a <- common[!common %in% vars]
     if (!length(a)) cli_abort("could not figure out which column might contain values")
     if (length(a) > 1) {
-      a <- a[which(vapply(a, function(col) is.numeric(d[[col]])))]
+      a <- a[which(vapply(a, function(col) is.numeric(d[[col]]), TRUE))]
       if (!length(a)) {
         cli_abort(c(
           "no potential value columns were numeric",
@@ -230,11 +230,13 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
           matrix(NA, n, length(present_vars), dimnames = list(times, present_vars))
         )
         for (v in present_vars) {
-          su <- ed[[value_name]] == v
-          su[su] <- !is.na(ed[[value]][su])
-          if (sum(su)) {
-            vals <- ed[su]
-            r[as.character(vals[[time]]), v] <- vals[[value]]
+          if (all(c(value_name, value) %in% names(ed))) {
+            su <- ed[[value_name]] == v
+            su[su] <- !is.na(ed[[value]][su])
+            if (sum(su)) {
+              vals <- ed[su]
+              r[as.character(vals[[time]]), v] <- vals[[value]]
+            }
           }
         }
         rownames(r) <- NULL

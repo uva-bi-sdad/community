@@ -106,11 +106,11 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       write_view <- TRUE
     }
     if (!is.null(variables) && !identical(view$variables, variables)) {
-      view$variables <- unique(c(view$variables, variables))
+      view$variables <- variables
       write_view <- TRUE
     }
     if (!is.null(ids) && !identical(view$ids, ids)) {
-      view$ids <- unique(c(view$ids, ids))
+      view$ids <- ids
       write_view <- TRUE
     }
     if (!is.null(ids) && !identical(view$files, files)) {
@@ -124,7 +124,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
     if (verbose && write_view) cli_alert_info("updating existing {.file view.json}")
   }
   if (!is.null(view$remote) && is.null(view$url)) {
-    remote_parts <- strsplit(sub("^(?:http?://)?(?:www\\.)?github\\.com/", "", view$remote), "/")[[1]]
+    remote_parts <- strsplit(sub("^(?:https?://)?(?:www\\.)?github\\.com/", "", view$remote), "/")[[1]]
     view$url <- paste0("https://", remote_parts[1], ".github.io/", remote_parts[2])
   }
   if (length(view$children)) {
@@ -134,7 +134,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
         ch$name <- sub("^.*/", "", ch$remote)
       }
       if (is.null(ch$url)) {
-        remote_parts <- strsplit(sub("^(?:http?://)?(?:www\\.)?github\\.com/", "", ch$remote), "/")[[1]]
+        remote_parts <- strsplit(sub("^(?:https?://)?(?:www\\.)?github\\.com/", "", ch$remote), "/")[[1]]
         ch$url <- paste0("https://", remote_parts[1], ".github.io/", remote_parts[2])
       }
       ch
