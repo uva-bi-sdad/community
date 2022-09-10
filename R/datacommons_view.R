@@ -223,7 +223,8 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
         if (use_manifest) {
           manifest_file <- paste0(commons, "/repos/", sub("^.+/", "", r), "/manifest.json")
           if (file.exists(manifest_file)) {
-            ri <- lapply(read_json(manifest_file)$data, function(e) {
+            rmanifest <- read_json(manifest_file)
+            ri <- lapply(rmanifest$data, function(e) {
               m <- e$measure_info
               if (is.list(m[[1]])) {
                 names(m) <- vapply(m, "[[", "", "full_name")
@@ -233,6 +234,9 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
               }
               m
             })
+            if (!is.null(rmanifest[["_references"]])) {
+              ri <- c(ri, list(rmanifest["_references"]))
+            }
           }
         }
         if (is.null(ri)) {
