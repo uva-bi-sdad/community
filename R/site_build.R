@@ -391,6 +391,36 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   )
   src <- parse(text = gsub("community::site_build", "site_build", readLines(page, warn = FALSE), fixed = TRUE))
   source(local = parts, exprs = src)
+  libdir <- paste0(dir, "/docs/lib/")
+  for (d in parts$dependencies) {
+    if (is.character(d$import_url)) {
+      if (!grepl("^lib/", d$src)) d$src <- paste0("lib/", d$src)
+      expath <- paste0(dir, "/docs/", regmatches(d$src, regexec("lib/[^/]+", d$src))[[1]])
+      source_file <- paste0(expath, "/source.txt")
+      source <- if (file.exists(source_file)) readLines(source_file)[1] else ""
+      if (source != d$import_url) {
+        temp <- paste0(libdir, basename(d$import_url))
+        unlink(expath, TRUE)
+        download.file(d$import_url, temp)
+        if (grepl("(?:tar|gz)$", temp)) {
+          untar(temp, exdir = expath)
+        } else {
+          unzip(temp, exdir = expath)
+        }
+        pkgdir <- paste0(expath, "/package")
+        if (dir.exists(pkgdir)) {
+          file.copy(
+            list.files(pkgdir, full.names = TRUE, recursive = TRUE),
+            expath,
+            recursive = TRUE
+          )
+          unlink(pkgdir, TRUE)
+        }
+        writeLines(d$import_url, source_file)
+        unlink(temp)
+      }
+    }
+  }
   for (e in c(
     "rules", "variables", "dataviews", "info", "text", "select", "button", "datatable", "table", "plotly", "echarts",
     "map", "legend", "credits", "credit_output"

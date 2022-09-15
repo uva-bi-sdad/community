@@ -38,6 +38,7 @@ devtools::check()
 
 # generate coverage reports
 if (!dir.exists("../test_site")) {
+  library(community)
   init_site("test_site", dir = "../test_site")
   source("../test_site/build.R")
   site_build("../test_site")

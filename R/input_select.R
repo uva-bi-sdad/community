@@ -59,7 +59,20 @@ input_select <- function(label, options, default = -1, display = options, id = l
       if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
       ">"
     ),
-    if (length(options) > 1 || !options %in% c("datasets", "variables", "ids", "palettes")) {
+    if (is.list(options)) {
+      i <- 0
+      if (is.null(names(options))) names(options) <- seq_along(options)
+      unlist(lapply(names(options), function(g) {
+        group <- paste0('<optgroup label="', g, '">')
+        for (gi in seq_along(options[[g]])) {
+          i <<- i + 1
+          group <- c(group, paste0(
+            '<option value="', options[[g]][[gi]], '"', if (i == default) "selected", ">", display[[g]][[gi]], "</option>"
+          ))
+        }
+        c(group, "</optgroup>")
+      }), use.names = FALSE)
+    } else if (length(options) > 1 || !options %in% c("datasets", "variables", "ids", "palettes")) {
       unlist(lapply(seq_along(options), function(i) {
         paste0('<option value="', options[i], '"', if (i == default) "selected", ">", display[i], "</option>")
       }), use.names = FALSE)
@@ -79,7 +92,7 @@ input_select <- function(label, options, default = -1, display = options, id = l
   if (as.row) r <- to_input_row(r)
   caller <- parent.frame()
   if (!is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts") {
-    if (!is.null(filters)) caller$select[[id]] <- as.list(filters)
+    if (!is.null(filters)) caller$select[[id]]$filters <- as.list(filters)
     caller$content <- c(caller$content, r)
   }
   r

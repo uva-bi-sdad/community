@@ -10,5 +10,6 @@
   },
   "prettier.arrowParens": "avoid",
   "prettier.bracketSpacing": false,
-  "javascript.suggest.autoImports": false
+  "javascript.suggest.autoImports": false,
+  "r.lsp.promptToInstall": false
 }

@@ -246,7 +246,7 @@ void (function () {
             } else {
               global_update()
             }
-            storage.setItem(u.setting, site.settings[u.setting])
+            storage.set(u.setting, site.settings[u.setting])
           }
         },
         options: function (u) {
@@ -2435,10 +2435,22 @@ void (function () {
           return v + ' MB/s'
         },
       },
-      storage = window.localStorage || {
-        setItem: function () {},
-        getItem: function () {},
-        removeItem: function () {},
+      storage = {
+        name: window.location.pathname || 'default',
+        perm: window.localStorage || {
+          setItem: function () {},
+          getItem: function () {},
+          removeItem: function () {},
+        },
+        set: function (opt, value) {
+          const s = JSON.parse(this.perm.getItem(this.name)) || {}
+          s[opt] = value
+          this.perm.setItem(this.name, JSON.stringify(s))
+        },
+        get: function (opt) {
+          const s = JSON.parse(this.perm.getItem(this.name))
+          return s ? (opt ? s[opt] : s) : undefined
+        },
       },
       page = {
         load_screen: document.getElementById('load_screen'),
@@ -2470,10 +2482,7 @@ void (function () {
       _c = {},
       tree = {}
 
-    document.body.className =
-      (window.localStorage && 'true' === window.localStorage.getItem('theme_dark')) || site.settings.theme_dark
-        ? 'dark-theme'
-        : 'light-theme'
+    document.body.className = storage.get('theme_dark') || site.settings.theme_dark ? 'dark-theme' : 'light-theme'
     if (page.content) {
       var i = page.menus.length,
         h = page.navbar ? page.navbar.getBoundingClientRect().height : 0
@@ -2893,7 +2902,10 @@ void (function () {
             )
             patterns.mustache.lastIndex = 0
           } else if (entity) {
-            if (patterns.features.test(m[1])) {
+            if ('region_name' === m[1]) {
+              s = s.replace(m[0], entity.features.name)
+              patterns.mustache.lastIndex = 0
+            } else if (patterns.features.test(m[1])) {
               s = s.replace(m[0], entity.features[m[1].replace(patterns.features, '')])
               patterns.mustache.lastIndex = 0
             } else if (patterns.variables.test(m[1])) {
@@ -2918,9 +2930,9 @@ void (function () {
       for (i = e.length; i--; ) {
         c = e[i].split('=')
         if (c.length < 2) c.push('true')
-        c[1] = patterns.bool.test(c[1]) ? 'true' === c[1] : c[1].replace(patterns.url_spaces, ' ')
+        c[1] = patterns.bool.test(c[1]) ? !!c[1] || 'true' === c[1] : c[1].replace(patterns.url_spaces, ' ')
         site.url_options[c[0]] = c[1]
-        if (patterns.settings.test(c[0])) storage.setItem(c[0].replace(patterns.settings, ''), c[1])
+        if (patterns.settings.test(c[0])) storage.set(c[0].replace(patterns.settings, ''), c[1])
       }
     }
 
@@ -2962,13 +2974,16 @@ void (function () {
     }
 
     // check for stored settings
-    for (const k in site.settings)
-      if (k in storage) {
-        let c = storage.getItem(k)
-        if (patterns.bool.test(c)) {
-          c = 'true' === c
-        } else if (patterns.number.test(c)) c = parseFloat(c)
-        site.settings[k] = c
+    storage.copy = storage.get()
+    if (storage.copy)
+      for (const k in site.settings) {
+        if (k in storage.copy) {
+          let c = storage.copy[k]
+          if (patterns.bool.test(c)) {
+            c = !!c || 'true' === c
+          } else if (patterns.number.test(c)) c = parseFloat(c)
+          site.settings[k] = c
+        }
       }
 
     // preprocess polynomial palettes
@@ -3566,36 +3581,39 @@ void (function () {
             }
             o.subset = o.e.getAttribute('subset') || 'all'
             if (o.type in site && o.id in site[o.type]) {
-              o.filters = site[o.type][o.id]
-              o.current_filter = {}
-              Object.keys(o.filters).forEach(f => {
-                add_dependency(o.filters[f], {type: 'filter', id: o.id})
-              })
-              o.filter = function () {
-                Object.keys(this.filters).forEach(f => {
-                  this.current_filter[f] = valueOf(this.filters[f])
+              o.settings = site[o.type][o.id]
+              if (o.settings.filters) {
+                o.filters = o.settings.filters
+                o.current_filter = {}
+                Object.keys(o.filters).forEach(f => {
+                  add_dependency(o.filters[f], {type: 'filter', id: o.id})
                 })
-                var first
-                Object.keys(this.values).forEach((v, i) => {
-                  var pass = false
-                  if (v in site.data.variables && 'meta' in site.data.variables[v]) {
-                    for (const k in this.current_filter)
-                      if (k in site.data.variables[v].meta) {
-                        pass = site.data.variables[v].meta[k] === this.current_filter[k]
-                        if (!pass) break
-                      }
+                o.filter = function () {
+                  Object.keys(this.filters).forEach(f => {
+                    this.current_filter[f] = valueOf(this.filters[f])
+                  })
+                  var first
+                  Object.keys(this.values).forEach((v, i) => {
+                    var pass = false
+                    if (v in site.data.variables && 'meta' in site.data.variables[v]) {
+                      for (const k in this.current_filter)
+                        if (k in site.data.variables[v].meta) {
+                          pass = site.data.variables[v].meta[k] === this.current_filter[k]
+                          if (!pass) break
+                        }
+                    }
+                    if (pass && !first) first = v
+                    this.options[i].classList[pass ? 'remove' : 'add']('hidden')
+                  })
+                  this.current_index = this.values[this.value()]
+                  if (
+                    first &&
+                    (-1 === this.current_index || this.options[this.current_index].classList.contains('hidden'))
+                  ) {
+                    this.set(first)
                   }
-                  if (pass && !first) first = v
-                  this.options[i].classList[pass ? 'remove' : 'add']('hidden')
-                })
-                this.current_index = this.values[this.value()]
-                if (
-                  first &&
-                  (-1 === this.current_index || this.options[this.current_index].classList.contains('hidden'))
-                ) {
-                  this.set(first)
-                }
-              }.bind(o)
+                }.bind(o)
+              }
             }
           } else if ('number' === o.type) {
             // retrieve option values
@@ -3705,7 +3723,7 @@ void (function () {
           }
           if (Array.isArray(o.values)) {
             if (!o.values.length) o.values = o.options.map(o => o.value)
-            if (o.values.length && !Object.hasOwn(_u, o.default) && -1 === o.values.indexOf(o.default)) {
+            if (o.values.length && !(o.default in _u) && -1 === o.values.indexOf(o.default)) {
               o.default = parseInt(o.default)
               o.default = o.values.length > o.default ? o.values[o.default] : ''
             }
@@ -3733,9 +3751,9 @@ void (function () {
             add_dependency(o.id, {type: 'setting', id: o.id})
           }
           if (!o.view) o.view = defaults.dataview
-          const v = site.url_options[o.id] || storage.getItem(o.id.replace(patterns.settings, ''))
+          const v = site.url_options[o.id] || storage.get(o.id.replace(patterns.settings, ''))
           if (v) {
-            o.set(patterns.bool.test(v) ? 'true' === v : v)
+            o.set(patterns.bool.test(v) ? !!v || 'true' === v : v)
           } else o.reset && o.reset()
         }
       })
@@ -4352,7 +4370,7 @@ void (function () {
     }
 
     function clear_storage() {
-      if (window.localStorage) window.localStorage.clear()
+      if (window.localStorage) storage.perm.removeItem(storage.name)
       window.location.reload()
     }
 
