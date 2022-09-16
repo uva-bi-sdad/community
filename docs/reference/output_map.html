@@ -69,9 +69,10 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">output_map</span><span class="op">(</span>shapes <span class="op">=</span> <span class="cn">NULL</span>, overlays <span class="op">=</span> <span class="cn">NULL</span>, color <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  color_time <span class="op">=</span> <span class="cn">NULL</span>, dataview <span class="op">=</span> <span class="cn">NULL</span>, id <span class="op">=</span> <span class="cn">NULL</span>, click <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  subto <span class="op">=</span> <span class="cn">NULL</span>, background_shapes <span class="op">=</span> <span class="cn">NULL</span>, options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  tiles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>url <span class="op">=</span> <span class="st">"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"</span>,</span>
-<span>  options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>maxZoom <span class="op">=</span> <span class="fl">19</span><span class="op">)</span><span class="op">)</span>, attribution <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"OpenStreetMap"</span>,</span>
-<span>  url <span class="op">=</span> <span class="st">"https://www.openstreetmap.org/copyright"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>  overlays_from_measures <span class="op">=</span> <span class="cn">TRUE</span>, tiles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>url <span class="op">=</span></span>
+<span>  <span class="st">"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"</span>, options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>maxZoom</span>
+<span>  <span class="op">=</span> <span class="fl">19</span><span class="op">)</span><span class="op">)</span>, attribution <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"OpenStreetMap"</span>, url <span class="op">=</span></span>
+<span>  <span class="st">"https://www.openstreetmap.org/copyright"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -91,7 +92,7 @@ entry to specify how to match the year; either <code>"decade"</code> (default) o
 <dt>overlays</dt>
 <dd><p>additional layers to add to the map, based on the selected variable; a list or list of
 lists with entries at least for <code>variable</code> (name of the variable associated with the layer) and
-<code>source</code> (path to the layer file, or a list with entries including entries for <code>url</code> and
+<code>source</code> (path to the layer file, or a list with entries including <code>url</code> and
 <code>time</code>). Entries can also include a <code>filter</code> entry, with a list or list of lists of conditions,
 including entries for <code>feature</code> (name of the feature on which to condition entity inclusion),
 <code>operator</code>, and <code>value</code>.</p></dd>
@@ -129,6 +130,11 @@ selected dataset. Useful to show lower-level regions within higher-level regions
 <dt>options</dt>
 <dd><p>A list of configuration options, potentially extracted from a saved leaflet object (see
 <a href="https://leafletjs.com/reference-1.7.1.html#map-example" class="external-link">Leaflet documentation</a>).</p></dd>
+
+
+<dt>overlays_from_measures</dt>
+<dd><p>Logical; if <code>TRUE</code>, will look for overlay information in
+measurement information.</p></dd>
 
 
 <dt>tiles</dt>

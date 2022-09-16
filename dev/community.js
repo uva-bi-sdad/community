@@ -198,6 +198,7 @@ void (function () {
         embed_setting: /^(?:hide_|navcolor|close_menus)/,
         median: /^med/i,
         location_string: /^[^?]*/,
+        time_ref: /\{time\}/g,
       },
       tooltip_icon_rule =
         'button.has-note::after,.button-wrapper.has-note button::before,.has-note legend::before,.has-note label::before,.wrapper.has-note > div > label::before{display:none}',
@@ -1226,6 +1227,31 @@ void (function () {
             if (o.color in _u) add_dependency(o.color, {type: 'update', id: o.id})
             if (o.time) add_dependency(o.time, {type: 'update', id: o.id})
             if (!o.e.style.height) o.e.style.height = o.options.height ? o.options.height : '400px'
+            if (o.options.overlays_from_measures && site.data.variable_info) {
+              if (!site.map[o.id].overlays) site.map[o.id].overlays = []
+              const overlays = site.map[o.id].overlays
+              Object.keys(site.data.variable_info).forEach(variable => {
+                const info = site.data.variable_info[variable]
+                if (info.layer && info.layer.source) {
+                  if ('string' === typeof info.layer.source && patterns.time_ref.test(info.layer.source)) {
+                    const temp = info.layer.source
+                    info.layer.source = []
+                    for (
+                      let range = site.data.meta.ranges[variable], y = range[0], max = range[1], time;
+                      y < max;
+                      y++
+                    ) {
+                      time = site.data.meta.overall.value[y]
+                      info.layer.source.push({url: temp.replace(patterns.time_ref, time), time: time})
+                    }
+                  }
+                  patterns.time_ref.lastIndex = 0
+                  const layer = {variable: variable, source: info.layer.source}
+                  if (info.layer.filter) layer.filter = info.layer.filter
+                  overlays.push(layer)
+                }
+              })
+            }
             queue_init_map.bind(o)()
           },
           mouseover: function (e) {
@@ -2471,7 +2497,7 @@ void (function () {
         border_highlight_false: '#000000',
         missing: '#00000000',
       },
-      summary_levels = {dataset: 'Overall', filtered: 'Filtered', all: 'Selection'},
+      summary_levels = {dataset: 'Overall', filtered: 'Filtered', children: 'Unfiltered selection', all: 'Selection'},
       meta = {
         retain_state: true,
       },

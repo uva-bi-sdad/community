@@ -13,7 +13,7 @@
 #' entry to specify how to match the year; either \code{"decade"} (default) or \code{"exact"}.
 #' @param overlays additional layers to add to the map, based on the selected variable; a list or list of
 #' lists with entries at least for \code{variable} (name of the variable associated with the layer) and
-#' \code{source} (path to the layer file, or a list with entries including entries for \code{url} and
+#' \code{source} (path to the layer file, or a list with entries including \code{url} and
 #' \code{time}). Entries can also include a \code{filter} entry, with a list or list of lists of conditions,
 #' including entries for \code{feature} (name of the feature on which to condition entity inclusion),
 #' \code{operator}, and \code{value}.
@@ -27,6 +27,8 @@
 #' selected dataset. Useful to show lower-level regions within higher-level regions.
 #' @param options A list of configuration options, potentially extracted from a saved leaflet object (see
 #' \href{https://leafletjs.com/reference-1.7.1.html#map-example}{Leaflet documentation}).
+#' @param overlays_from_measures Logical; if \code{TRUE}, will look for overlay information in
+#' measurement information.
 #' @param tiles A list or list of lists containing provider information (see
 #' \href{https://leaflet-extras.github.io/leaflet-providers/preview/}{leaflet providers}; e.g.,
 #' \code{list(}\code{url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}, \code{options = list(maxZoom = 19))}).
@@ -39,7 +41,7 @@
 
 output_map <- function(shapes = NULL, overlays = NULL, color = NULL, color_time = NULL, dataview = NULL,
                        id = NULL, click = NULL, subto = NULL, background_shapes = NULL,
-                       options = list(), tiles = list(
+                       options = list(), overlays_from_measures = TRUE, tiles = list(
                          url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                          options = list(maxZoom = 19)
                        ), attribution = list(
@@ -60,6 +62,7 @@ output_map <- function(shapes = NULL, overlays = NULL, color = NULL, color_time 
       src = "https://unpkg.com/leaflet@1.8.0/dist/leaflet.js",
       hash = "sha384-4Dmmo81xejNChaqLOci80VhUcuEAD5pXpCtqtizmdgWEzdETh3zrJvzOhU4T79cN"
     )
+    options$overlays_from_measures <- overlays_from_measures
     options$subto <- if (!is.null(subto) && length(subto) == 1) list(subto) else subto
     if (is.null(options[["center"]])) options$center <- c(40, -95)
     if (is.null(options[["zoom"]])) options$zoom <- 4

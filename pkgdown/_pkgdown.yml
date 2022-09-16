@@ -21,6 +21,7 @@ reference:
   contents:
   - starts_with("init_")
   - data_add
+  - data_measure_info
 
 - title: Checks
   desc: check_ functions use some criteria to assess a resource (e.g., to validate its structure).
