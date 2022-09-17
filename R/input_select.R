@@ -11,6 +11,8 @@
 #' @param id Unique ID of the element to be created.
 #' @param ... Additional attributes to set on the select element.
 #' @param note Text to display as a tooltip for the input.
+#' @param group_feature Name of a measure or entity feature to use as a source of option grouping,
+#' if \code{options} is \code{"variables"} or \code{"ids"}.
 #' @param variable The name of a variable from which to get levels (overwritten by \code{depends}).
 #' @param dataset The name of an included dataset, where \code{variable} should be looked for; only applies when
 #' there are multiple datasets with the same variable name.
@@ -37,8 +39,9 @@
 #' @export
 
 input_select <- function(label, options, default = -1, display = options, id = label, ...,
-                         note = NULL, variable = NULL, dataset = NULL, depends = NULL, dataview = NULL, subset = "all",
-                         filters = NULL, reset_button = FALSE, button_class = NULL, as.row = FALSE, floating_label = TRUE) {
+                         note = NULL, group_feature = NULL, variable = NULL, dataset = NULL, depends = NULL,
+                         dataview = NULL, subset = "all", filters = NULL, reset_button = FALSE, button_class = NULL,
+                         as.row = FALSE, floating_label = TRUE) {
   id <- gsub("\\s", "", id)
   a <- list(...)
   if (as.row) floating_label <- FALSE
@@ -92,6 +95,7 @@ input_select <- function(label, options, default = -1, display = options, id = l
   if (as.row) r <- to_input_row(r)
   caller <- parent.frame()
   if (!is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts") {
+    if (!is.null(group_feature)) caller$select[[id]]$group <- group_feature
     if (!is.null(filters)) caller$select[[id]]$filters <- as.list(filters)
     caller$content <- c(caller$content, r)
   }

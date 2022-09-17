@@ -276,7 +276,7 @@ void (function () {
             if ('ID' === u.variable || 'ids' === u.options_source) {
               const v = no_view ? {} : site.dataviews[u.view].selection[u.subset]
               u.options.forEach(si => {
-                if (fresh) u.e.appendChild(si)
+                if (fresh && !u.groups) u.e.appendChild(si)
                 if (no_view || si.value in v) {
                   si.classList.remove('hidden')
                   ns++
@@ -287,10 +287,11 @@ void (function () {
             } else if (fresh) {
               u.options.forEach(si => {
                 si.classList.remove('hidden')
-                u.e.appendChild(si)
+                if (!u.groups) u.e.appendChild(si)
                 ns++
               })
             } else ns++
+            if (fresh && u.groups) u.groups.e.forEach(e => u.e.appendChild(e))
             u.e[ns ? 'removeAttribute' : 'setAttribute']('disabled', true)
             u.current_set = k
             if (fresh) {
@@ -1803,17 +1804,18 @@ void (function () {
               o.header.push({title: 'Name', data: 'entity.features.name'})
               if (time.is_single) o.variable_header = true
               const t = site.data.variables[k].time_range[o.parsed.dataset]
-              for (let n = t[1] - t[0] + 1; n--; ) {
-                o.header[n + 1] = {
-                  title: o.variable_header ? c.title || site.data.format_label(k) : time.value[n + t[0]] + '',
-                  data: site.data.retrievers.vector,
-                  render: site.data.retrievers.row_time.bind({
-                    i: n,
-                    o: t[0],
-                    format_value: site.data.format_value.bind(site.data),
-                  }),
+              if (t)
+                for (let n = t[1] - t[0] + 1; n--; ) {
+                  o.header[n + 1] = {
+                    title: o.variable_header ? c.title || site.data.format_label(k) : time.value[n + t[0]] + '',
+                    data: site.data.retrievers.vector,
+                    render: site.data.retrievers.row_time.bind({
+                      i: n,
+                      o: t[0],
+                      format_value: site.data.format_value.bind(site.data),
+                    }),
+                  }
                 }
-              }
               o.options.order = [[o.header.length - 1, 'dsc']]
             } else if (o.options.wide) {
               if (o.features) {
@@ -2655,15 +2657,28 @@ void (function () {
         disp = out[d].display
       var ck = !u.sensitive && !!u.current_set,
         n = 0
+      if (u.settings.group) {
+        u.groups = {e: [], by_name: {}}
+      }
       Object.keys(site.data.entities).forEach(k => {
-        if (d === site.data.entities[k].group) {
+        const e = site.data.entities[k]
+        if (d === e.group) {
           if (ck && !(k in current)) {
             u.sensitive = true
             ck = false
           }
-          s.push(u.add(k, site.data.entities[k].features.name))
+          s.push(u.add(k, e.features.name))
+          if (u.groups) {
+            const group = e.features[u.settings.group] || ''
+            if (!(group in u.groups.by_name)) {
+              u.groups.by_name[group] = document.createElement('optgroup')
+              u.groups.by_name[group].label = group
+              u.groups.e.push(u.groups.by_name[group])
+            }
+            u.groups.by_name[group].appendChild(s[s.length - 1])
+          }
           values[k] = n
-          disp[site.data.entities[k].features.name] = n++
+          disp[e.features.name] = n++
         }
       })
     }
@@ -2676,6 +2691,9 @@ void (function () {
         disp = out[d].display
       var ck = !u.sensitive && !!u.current_set,
         n = 0
+      if (u.settings.group) {
+        u.groups = {e: [], by_name: {}}
+      }
       site.metadata.info[d].schema.fields.forEach(m => {
         const v = site.data.variables[m.name]
         if (v && !v.is_time) {
@@ -2685,6 +2703,15 @@ void (function () {
             ck = false
           }
           s.push(u.add(m.name, l, m))
+          if (u.groups) {
+            const group = m.info[u.settings.group] || ''
+            if (!(group in u.groups.by_name)) {
+              u.groups.by_name[group] = document.createElement('optgroup')
+              u.groups.by_name[group].label = group
+              u.groups.e.push(u.groups.by_name[group])
+            }
+            u.groups.by_name[group].appendChild(s[s.length - 1])
+          }
           values[m.name] = n
           disp[l] = n++
         }
@@ -3335,7 +3362,7 @@ void (function () {
         if (o.type in elements) {
           const p = elements[o.type]
           if (p.init) p.init(o)
-          o.options = [...(o.type === 'select' ? o.e.children : o.e.getElementsByTagName('input'))]
+          o.options = [...o.e.getElementsByTagName(o.type === 'select' ? 'option' : 'input')]
           if (p.setter) {
             o.set = p.setter.bind(o)
             o.reset = function () {

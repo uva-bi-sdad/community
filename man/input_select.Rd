@@ -5,10 +5,10 @@
 \title{Add a select input to a website}
 \usage{
 input_select(label, options, default = -1, display = options, id = label,
-  ..., note = NULL, variable = NULL, dataset = NULL, depends = NULL,
-  dataview = NULL, subset = "all", filters = NULL,
-  reset_button = FALSE, button_class = NULL, as.row = FALSE,
-  floating_label = TRUE)
+  ..., note = NULL, group_feature = NULL, variable = NULL,
+  dataset = NULL, depends = NULL, dataview = NULL, subset = "all",
+  filters = NULL, reset_button = FALSE, button_class = NULL,
+  as.row = FALSE, floating_label = TRUE)
 }
 \arguments{
 \item{label}{Label of the input for the user.}
@@ -26,6 +26,9 @@ color palettes.}
 \item{...}{Additional attributes to set on the select element.}
 
 \item{note}{Text to display as a tooltip for the input.}
+
+\item{group_feature}{Name of a measure or entity feature to use as a source of option grouping,
+if \code{options} is \code{"variables"} or \code{"ids"}.}
 
 \item{variable}{The name of a variable from which to get levels (overwritten by \code{depends}).}
 
