@@ -1428,6 +1428,7 @@ void (function () {
                 }
               })
             }
+            o.summary_components = ['missing', 'min', 'q1', 'mean', 'median', 'q3', 'max']
             o.show = function (e, u) {
               this.update(e, u)
               this.showing = true
@@ -1503,7 +1504,20 @@ void (function () {
               }
               if ('value' === t) {
                 p.parsed.data = o.options.variable
-              } else if (patterns.features.test(t)) {
+              } else if ('summary' === t) {
+                o.options.show_summary = true
+                const t = document.createElement('table')
+                p.parsed.summary = t
+                t.appendChild(document.createElement('tr'))
+                t.appendChild(document.createElement('tr'))
+                ;['NAs', 'Min', 'Q1', 'Mean', 'Median', 'Q3', 'Max'].forEach(h => {
+                  t.firstElementChild.appendChild(document.createElement('th'))
+                  t.firstElementChild.lastElementChild.innerText = h
+                  t.lastElementChild.appendChild(document.createElement('td'))
+                  t.lastElementChild.lastElementChild.innerText = 'NA'
+                })
+              }
+              if (patterns.features.test(t)) {
                 p.parsed.features = t.replace(patterns.features, '')
               } else if (patterns.data.test(t)) {
                 p.parsed.data = t.replace(patterns.data, '')
@@ -1581,10 +1595,14 @@ void (function () {
                 if (p.value) {
                   p.base.appendChild(document.createElement('div'))
                   p.temp.appendChild(document.createElement('div'))
-                  p.temp.lastElementChild.className = p.base.lastElementChild.className =
-                    'info-body-row-value' + ('statement' === p.value.parsed.variables ? ' statement' : '')
-                  if (!p.value.ref)
-                    p.temp.lastElementChild.innerText = p.base.lastElementChild.innerText = p.value.get()
+                  if ('summary' in p.value.parsed) {
+                    p.base.lastElementChild.appendChild(p.value.parsed.summary)
+                  } else {
+                    p.temp.lastElementChild.className = p.base.lastElementChild.className =
+                      'info-body-row-value' + ('statement' === p.value.parsed.variables ? ' statement' : '')
+                    if (!p.value.ref)
+                      p.temp.lastElementChild.innerText = p.base.lastElementChild.innerText = p.value.get()
+                  }
                 }
               })
               o.e.style.minHeight = h + 'px'
@@ -1594,7 +1612,7 @@ void (function () {
             }
             o.update()
           },
-          update: function (entity, caller, pass) {
+          update: async function (entity, caller, pass) {
             const v = site.dataviews[this.view]
             const y = _u[v.time_agg]
             this.v = valueOf(this.options.variable || (caller && (caller.color || caller.y)) || v.y)
@@ -1603,6 +1621,10 @@ void (function () {
             this.time_agg = y ? y.value() - site.data.meta.times[this.dataset].range[0] : 0
             const time_range = this.v && site.data.variables[this.v].time_range[this.dataset]
             this.time = time_range ? this.time_agg - time_range[0] : 0
+            if (this.options.show_summary) {
+              this.var = this.v && (await get_variable(this.v, this.view))
+              this.summary = this.var[this.view].summaries[this.dataset]
+            }
             if (!this.processed) {
               this.processed = true
               if (!this.options.floating) {
@@ -1680,7 +1702,13 @@ void (function () {
                 if (this.parts.body) {
                   if (!this.options.subto) this.parts.body.base.classList.remove('hidden')
                   this.parts.body.rows.forEach(p => {
-                    if ('variables' in p.value.parsed && !(v.y in this.depends)) {
+                    if ('summary' in p.value.parsed) {
+                      const e = p.value.parsed.summary.lastElementChild.children
+                      this.summary_components.forEach((c, i) => {
+                        e[i].innerText = site.data.format_value(this.summary[c][this.time], 0 === i)
+                      })
+                    }
+                    if (('variables' in p.value.parsed || 'summary' in p.value.parsed) && !(v.y in this.depends)) {
                       this.depends[v.y] = true
                       add_dependency(v.y, {type: 'update', id: this.id})
                     }
@@ -2120,9 +2148,9 @@ void (function () {
             }
             o.parsed = {summary: {}, order: [], selection: {}, time: 0, color: ''}
             o.parts = {
-              ticks: o.e.getElementsByClassName('legend-ticks')[0],
-              scale: o.e.getElementsByClassName('legend-scale')[0],
-              summary: o.e.getElementsByClassName('legend-summary')[0],
+              ticks: o.e.querySelector('.legend-ticks'),
+              scale: o.e.querySelector('.legend-scale'),
+              summary: o.e.querySelector('.legend-summary'),
             }
             o.parts.ticks.setAttribute('of', o.id)
             o.parts.scale.setAttribute('of', o.id)
@@ -2483,8 +2511,8 @@ void (function () {
       page = {
         load_screen: document.getElementById('load_screen'),
         wrap: document.getElementById('site_wrap'),
-        navbar: document.getElementsByClassName('navbar')[0],
-        content: document.getElementsByClassName('content')[0],
+        navbar: document.querySelector('.navbar'),
+        content: document.querySelector('.content'),
         menus: document.getElementsByClassName('menu-wrapper'),
         panels: document.getElementsByClassName('panel'),
       },
@@ -2667,7 +2695,6 @@ void (function () {
             u.sensitive = true
             ck = false
           }
-          s.push(u.add(k, e.features.name))
           if (u.groups) {
             const group = e.features[u.settings.group] || ''
             if (!(group in u.groups.by_name)) {
@@ -2675,12 +2702,24 @@ void (function () {
               u.groups.by_name[group].label = group
               u.groups.e.push(u.groups.by_name[group])
             }
-            u.groups.by_name[group].appendChild(s[s.length - 1])
+            u.groups.by_name[group].appendChild(u.add(k, e.features.name))
+          } else {
+            s.push(u.add(k, e.features.name))
+            values[k] = n
+            disp[e.features.name] = n++
           }
-          values[k] = n
-          disp[e.features.name] = n++
         }
       })
+      if (u.settings.group) {
+        n = 0
+        Object.keys(u.groups.by_name).forEach(g => {
+          u.groups.by_name[g].querySelectorAll('option').forEach(c => {
+            s.push(c)
+            values[c.value] = n
+            disp[c.innerText] = n++
+          })
+        })
+      }
     }
 
     function fill_variables_options(u, d, out) {
@@ -2702,7 +2741,6 @@ void (function () {
             u.sensitive = true
             ck = false
           }
-          s.push(u.add(m.name, l, m))
           if (u.groups) {
             const group = m.info[u.settings.group] || ''
             if (!(group in u.groups.by_name)) {
@@ -2710,12 +2748,24 @@ void (function () {
               u.groups.by_name[group].label = group
               u.groups.e.push(u.groups.by_name[group])
             }
-            u.groups.by_name[group].appendChild(s[s.length - 1])
+            u.groups.by_name[group].appendChild(u.add(m.name, l, m))
+          } else {
+            s.push(u.add(m.name, l, m))
+            values[m.name] = n
+            disp[l] = n++
           }
-          values[m.name] = n
-          disp[l] = n++
         }
       })
+      if (u.settings.group) {
+        n = 0
+        Object.keys(u.groups.by_name).forEach(g => {
+          u.groups.by_name[g].querySelectorAll('option').forEach(c => {
+            s.push(c)
+            values[c.value] = n
+            disp[c.innerText] = n++
+          })
+        })
+      }
     }
 
     function fill_levels_options(u, d, v, out) {
@@ -2997,7 +3047,7 @@ void (function () {
       if (!('hide_panels' in site.url_options)) site.url_options.hide_panels = true
       if ('embedded' in site.url_options && !('close_menus' in site.url_options)) site.url_options.close_menus = true
     }
-    e = document.getElementsByClassName('navbar')[0]
+    e = document.querySelector('.navbar')
     if (e) {
       if ('navcolor' in site.url_options) {
         if ('' === site.url_options.navcolor) site.url_options.navcolor = window.location.hash
@@ -3006,7 +3056,7 @@ void (function () {
       if (site.url_options.hide_logo && site.url_options.hide_title && site.url_options.hide_navcontent) {
         e.classList.add('hidden')
       } else {
-        e = document.getElementsByClassName('navbar-brand')[0]
+        e = document.querySelector('.navbar-brand')
         if (e) {
           if (site.url_options.hide_logo && 'IMG' === e.firstElementChild.tagName)
             e.firstElementChild.classList.add('hidden')
@@ -3014,8 +3064,8 @@ void (function () {
             e.lastElementChild.classList.add('hidden')
         }
         if (site.url_options.hide_navcontent) {
-          document.getElementsByClassName('navbar-toggler')[0].classList.add('hidden')
-          e = document.getElementsByClassName('navbar-nav')[0]
+          document.querySelector('.navbar-toggler').classList.add('hidden')
+          e = document.querySelector('.navbar-nav')
           if (e) e.classList.add('hidden')
         }
       }
@@ -3064,11 +3114,11 @@ void (function () {
     })
 
     window.onload = function () {
-      page.navbar = document.getElementsByClassName('navbar')[0]
+      page.navbar = document.querySelector('.navbar')
       page.navbar = page.navbar ? page.navbar.getBoundingClientRect() : {height: 0}
-      page.content = document.getElementsByClassName('content')[0]
-      page.menus = [...document.getElementsByClassName('menu-wrapper')]
-      page.panels = [...document.getElementsByClassName('panel')]
+      page.content = document.querySelector('.content')
+      page.menus = document.querySelectorAll('.menu-wrapper')
+      page.panels = document.querySelectorAll('.panel')
       page.content_bounds = {
         top: page.navbar.height,
         right: 0,
@@ -3314,7 +3364,7 @@ void (function () {
         site.dataviews = {}
         site.dataviews[defaults.dataview] = {}
       }
-      ;[...document.getElementsByClassName('auto-input')].forEach(e => {
+      document.querySelectorAll('.auto-input').forEach(e => {
         const o = {
           type: e.getAttribute('auto-type'),
           source: void 0,
@@ -3346,13 +3396,13 @@ void (function () {
           if (o.note) o.wrapper.classList.add('has-note')
           o.wrapper.setAttribute('of', o.id)
           ;['div', 'label', 'fieldset', 'legend', 'input', 'button'].forEach(type => {
-            const c = [...o.wrapper.getElementsByTagName(type)]
+            const c = o.wrapper.querySelectorAll(type)
             if (c.length) c.forEach(ci => ci.setAttribute('of', o.id))
           })
         }
         if (o.note) {
           o.wrapper.addEventListener('mouseover', tooltip_trigger.bind(o))
-          const p = 'DIV' !== o.e.tagName ? o.e : o.e.getElementsByTagName('input')[0]
+          const p = 'DIV' !== o.e.tagName ? o.e : o.e.querySelector('input')
           if (p) {
             p.addEventListener('focus', tooltip_trigger.bind(o))
             p.addEventListener('blur', tooltip_clear)
@@ -3362,7 +3412,7 @@ void (function () {
         if (o.type in elements) {
           const p = elements[o.type]
           if (p.init) p.init(o)
-          o.options = [...o.e.getElementsByTagName(o.type === 'select' ? 'option' : 'input')]
+          o.options = o.e.querySelectorAll(o.type === 'select' ? 'option' : 'input')
           if (p.setter) {
             o.set = p.setter.bind(o)
             o.reset = function () {
@@ -3595,11 +3645,11 @@ void (function () {
             if (o.options_source) {
               if (patterns.palette.test(o.options_source)) {
                 Object.keys(palettes).forEach(v => o.e.appendChild(o.add(v, palettes[v].name)))
-                o.options = o.e.getElementsByTagName('option')
+                o.options = o.e.querySelectorAll('option')
                 if (-1 === o.default) o.default = defaults.palette
               } else if (patterns.datasets.test(o.options_source)) {
                 site.metadata.datasets.forEach(d => o.e.appendChild(o.add(i, d, site.data.format_label(d))))
-                o.options = o.e.getElementsByTagName('option')
+                o.options = o.e.querySelectorAll('option')
               } else {
                 o.sensitive = false
                 o.option_sets = {
@@ -3620,7 +3670,6 @@ void (function () {
             if (Array.isArray(o.values)) {
               o.values = {}
               o.display = {}
-              o.options = [...o.options]
               o.options.forEach((e, i) => {
                 o.values[e.value] = i
                 o.display[e.value] = i
@@ -3775,7 +3824,10 @@ void (function () {
             o.default = o.default.split(',')
           }
           if (Array.isArray(o.values)) {
-            if (!o.values.length) o.values = o.options.map(o => o.value)
+            if (!o.values.length) {
+              o.values = []
+              if (o.options.length) o.options.forEach(e => o.values.push(e.value))
+            }
             if (o.values.length && !(o.default in _u) && -1 === o.values.indexOf(o.default)) {
               o.default = parseInt(o.default)
               o.default = o.values.length > o.default ? o.values[o.default] : ''
@@ -3874,7 +3926,7 @@ void (function () {
         e.reparse()
       })
       // initialize outputs
-      ;[...document.getElementsByClassName('auto-output')].forEach((e, i) => {
+      document.querySelectorAll('.auto-output').forEach((e, i) => {
         const o = {
           type: e.getAttribute('auto-type'),
           view: e.getAttribute('data-view') || defaults.dataview,
@@ -4530,7 +4582,7 @@ void (function () {
               } else if (k === 'display') {
                 e.e.classList.add('hidden')
                 if (e.u) e.u.reset()
-                ;[...e.e.getElementsByClassName('auto-input')].forEach(c => {
+                e.e.querySelectorAll('.auto-input').forEach(c => {
                   if (c.id in _u) _u[c.id].reset()
                 })
               } else if ('default' in ri) {
