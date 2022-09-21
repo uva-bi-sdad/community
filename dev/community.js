@@ -1507,6 +1507,7 @@ void (function () {
               } else if ('summary' === t) {
                 o.options.show_summary = true
                 const t = document.createElement('table')
+                t.className = 'info-summary'
                 p.parsed.summary = t
                 t.appendChild(document.createElement('tr'))
                 t.appendChild(document.createElement('tr'))

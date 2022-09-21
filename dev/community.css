@@ -385,7 +385,14 @@ button.dropdown-toggle {
   padding: 0.05em 0;
   font-size: max(1vw, 12px);
 }
-
+.info-body .info-summary {
+  text-align: center;
+  margin: 0.5em 0;
+}
+.info-summary th,
+.info-summary td {
+  padding: 0 0.2em;
+}
 .info-title {
   font-size: 1.7em;
   margin: 0;

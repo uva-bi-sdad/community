@@ -61,13 +61,13 @@ output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dat
   if (building) {
     caller$dependencies$plotly <- list(
       type = "script",
-      src = "https://cdn.plot.ly/plotly-2.12.1.min.js",
-      hash = "sha384-2ANk5s7BiXtH+SPhi1dFRGPDBhIumQAukpE3+etiUKSa8AEHcrOqZGQ09XrhRmYt"
+      src = "https://cdn.plot.ly/plotly-2.14.0.min.js",
+      hash = "sha384-BTJil2JHn2SXWB8JH7Bq1bnFLO6b/O7LF5eS1yEgiKH4Ha0QoTxU1RIRqnUWnxnu"
     )
     caller$credits$plotly <- list(
       name = "Plotly",
       url = "https://plotly.com/javascript/getting-started",
-      version = "2.12.1"
+      version = "2.14.0"
     )
     if (plotly) caller$plotly[[id]] <- options else caller$echarts[[id]] <- options
     caller$content <- c(caller$content, r)
