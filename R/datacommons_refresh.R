@@ -116,7 +116,6 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
     for (f in files) {
       repo_manifest[[r]]$files[[basename(f)]] <- list(
         location = dirname(sub(cr, "", f, fixed = TRUE)),
-        date = format(file.mtime(f), "%Y-%m-%dT%H:%M:%SZ"),
         size = file.size(f),
         sha = system2("git", c("hash-object", shQuote(f)), stdout = TRUE),
         md5 = md5sum(f)[[1]]
@@ -170,7 +169,6 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
             if (file.exists(existing)) {
               repo_manifest[[r]]$distributions$dataverse$files[[basename(existing)]] <- list(
                 id = f$dataFile$id,
-                date = paste0(f$dataFile$creationDate, "T00:00:00Z"),
                 size = file.size(existing),
                 md5 = md5sum(existing)[[1]]
               )

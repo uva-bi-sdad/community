@@ -254,7 +254,8 @@ void (function () {
           const no_view = !u.view || !site.dataviews[u.view].selection,
             d = valueOf(u.dataset),
             va = valueOf(u.variable),
-            k = d + (va ? va : '')
+            k = d + (va ? va : ''),
+            combobox = 'combobox' === u.type
           if (!(k in u.option_sets)) {
             if (patterns.variable.test(u.options_source)) {
               fill_variables_options(u, d, u.option_sets)
@@ -265,9 +266,10 @@ void (function () {
             }
           }
           if (k in u.option_sets) {
-            const fresh = k !== u.current_set && (u.sensitive || !u.current_set)
+            const fresh = k !== u.current_set && (u.sensitive || !u.current_set),
+              c = u[combobox ? 'listbox' : 'e']
             if (fresh) {
-              u.e.innerHTML = ''
+              c.innerHTML = ''
               u.values = u.option_sets[k].values
               u.display = u.option_sets[k].display
               u.options = u.option_sets[k].options
@@ -276,7 +278,7 @@ void (function () {
             if ('ID' === u.variable || 'ids' === u.options_source) {
               const v = no_view ? {} : site.dataviews[u.view].selection[u.subset]
               u.options.forEach(si => {
-                if (fresh && !u.groups) u.e.appendChild(si)
+                if (fresh && !u.groups) c.appendChild(si)
                 if (no_view || si.value in v) {
                   si.classList.remove('hidden')
                   ns++
@@ -287,16 +289,20 @@ void (function () {
             } else if (fresh) {
               u.options.forEach(si => {
                 si.classList.remove('hidden')
-                if (!u.groups) u.e.appendChild(si)
+                if (!u.groups) c.appendChild(si)
                 ns++
               })
             } else ns++
-            if (fresh && u.groups) u.groups.e.forEach(e => u.e.appendChild(e))
+            if (fresh && u.groups) u.groups.e.forEach(e => c.appendChild(e))
             u.e[ns ? 'removeAttribute' : 'setAttribute']('disabled', true)
             u.current_set = k
             if (fresh) {
-              u.e.selectedIndex = -1
-              u.source = ''
+              if (combobox) {
+                u.source = []
+              } else {
+                u.e.selectedIndex = -1
+                u.source = ''
+              }
             }
             fresh ? (u.id in site.url_options ? u.set(site.url_options[u.id]) : u.reset()) : u.set(u.value())
             if (u.filter) u.filter()
@@ -915,6 +921,205 @@ void (function () {
             e.innerText = display
             if (meta && meta.info) {
               e.title = meta.info.description || meta.info.short_description
+            }
+            return e
+          },
+        },
+        combobox: {
+          init: function (o) {
+            o.hover_index = -1
+            o.cleared_selection = ''
+            o.expanded = false
+            o.listbox = o.e.parentElement.children[1]
+            o.container = document.createElement('div')
+            o.container.className = 'combobox-options-container combobox-component'
+            o.container.style.display = 'none'
+            document.body.appendChild(o.container)
+            o.container.appendChild(o.listbox)
+            o.selection = o.e.firstElementChild
+            o.input = o.e.lastElementChild
+            o.value = function () {
+              return this.source
+                ? this.settings.multi
+                  ? this.source
+                  : this.source.length
+                  ? this.source[0]
+                  : ''
+                : valueOf(this.default)
+            }.bind(o)
+            o.input.addEventListener(
+              'focus',
+              function () {
+                this.e.classList.add('focused')
+                if (!this.expanded) this.toggle({target: this.input})
+              }.bind(o)
+            )
+            o.input.addEventListener(
+              'blur',
+              function () {
+                this.e.classList.remove('focused')
+              }.bind(o)
+            )
+            o.listbox.addEventListener('click', o.set)
+            o.close = function (e) {
+              if (this.expanded && (!e || !e.target.classList || !e.target.classList.contains('combobox-component'))) {
+                if (this.selection.innerText === '') this.selection.innerText = this.cleared_selection
+                this.e.setAttribute('aria-expanded', false)
+                this.expanded = false
+                this.container.style.display = 'none'
+                window.removeEventListener('click', o.close)
+              }
+            }.bind(o)
+            window.addEventListener('resize', o.close)
+            o.toggle = function (e) {
+              if (this.expanded) {
+                if (e.target !== this.input) this.close()
+              } else {
+                this.container.style.display = ''
+                if (!this.settings.multi) {
+                  if ('' !== this.selection.innerText) this.cleared_selection = this.selection.innerText
+                  if (this.cleared_selection in this.display)
+                    this.highlight({target: this.options[this.display[this.cleared_selection]]})
+                  this.selection.innerText = ''
+                }
+                window.addEventListener('click', this.close)
+                this.e.setAttribute('aria-expanded', true)
+                const s = this.e.getBoundingClientRect()
+                if (!e || e.target !== this.input) setTimeout(() => this.input.focus(), 0)
+                this.container.style.top = s.y + s.height + 'px'
+                this.container.style.left = s.x + 'px'
+                this.container.style.maxWidth = s.width + 'px'
+                this.expanded = true
+              }
+            }.bind(o)
+            o.e.addEventListener('mousedown', o.toggle)
+            o.highlight = function (e) {
+              if (!e || !e.target || e.target.value in this.values) {
+                if (e && e.target && e.target.value) {
+                  this.hover_index = this.values[e.target.value]
+                } else if (-1 === this.hover_index) {
+                  this.hover_index = this.values[this.source[0]]
+                }
+                if (-1 !== this.hover_index && !this.options[this.hover_index].classList.contains('highlighted')) {
+                  const previous = this.listbox.querySelector('.highlighted')
+                  if (previous) previous.classList.remove('highlighted')
+                  this.options[this.hover_index].classList.add('highlighted')
+                  this.e.setAttribute('aria-activedescendant', this.options[this.hover_index].id)
+                  const port = this.container.getBoundingClientRect(),
+                    item = this.options[this.hover_index].getBoundingClientRect()
+                  if (port.top > item.top) {
+                    this.container.scrollTo(0, this.container.scrollTop + item.top - port.top)
+                  } else if (port.bottom < item.bottom) {
+                    this.container.scrollTo(0, this.container.scrollTop + item.bottom - port.bottom)
+                  }
+                }
+              }
+            }.bind(o)
+            o.listbox.addEventListener('mouseover', o.highlight)
+            o.filter_reset = function () {
+              this.listbox.querySelectorAll('.filter-hidden').forEach(o => o.classList.remove('filter-hidden'))
+            }.bind(o)
+            if (o.settings.search)
+              o.input.addEventListener(
+                'keyup',
+                function (e) {
+                  const q = this.input.value
+                  if ('' === q) {
+                    this.filter_reset()
+                  } else {
+                    this.options.forEach(o =>
+                      o.classList[o.innerText.toLowerCase().includes(q) ? 'remove' : 'add']('filter-hidden')
+                    )
+                  }
+                }.bind(o)
+              )
+            o.input.addEventListener(
+              'keydown',
+              function (e) {
+                if ('Tab' === e.code) {
+                  this.close()
+                } else if ('Enter' === e.code || 'NumpadEnter' === e.code) {
+                  if (!this.expanded) return this.toggle({target: this.input})
+                  this.set(e)
+                } else if ('ArrowUp' === e.code || 'ArrowDown' === e.code) {
+                  e.preventDefault()
+                  if ('ArrowUp' === e.code) {
+                    this.hover_index = Math.max(0, this.hover_index - 1)
+                  } else if ('ArrowDown' === e.code) {
+                    this.hover_index = Math.min(this.options.length - 1, this.hover_index + 1)
+                  }
+                  if (this.expanded) {
+                    this.highlight()
+                  } else {
+                    this.set(this.hover_index)
+                  }
+                }
+              }.bind(o)
+            )
+          },
+          retrieve: function () {
+            this.source = []
+            this.options.forEach(o => {
+              if (o.classList.contains('selected')) this.source.push(this.values[i])
+            })
+            request_queue(this.id)
+          },
+          setter: function (v, toggle) {
+            let update = false
+            if (v.target) {
+              v = this.hover_index
+              toggle = this.settings.multi
+            }
+            if ('object' === typeof v) {
+              if (this.options.multi) {
+                this.listbox.querySelectorAll('selected').forEach(e => e.classList.remove('selected'))
+                this.source = v
+                return request_queue(this.id)
+              } else v = v[0]
+            }
+            if ('number' === typeof v && v > -1 && v < this.options.length) {
+              v = this.options[v].value
+            }
+            if ('string' === v && v in this.display) v = this.options[this.display[v]].value
+            var i = this.source.indexOf(v)
+            if (-1 === i) {
+              update = true
+              if (this.settings.multi) {
+                this.source.push(v)
+              } else this.source[0] = v
+              if (v in this.values) this.options[this.values[v]].classList.add('selected')
+            } else if (toggle) {
+              update = true
+              this.source.splice(i, 1)
+              if (v in this.values) this.options[this.values[v]].classList.remove('selected')
+            }
+            if (!this.settings.multi) {
+              this.input.focus()
+              this.close()
+              this.input.value = ''
+              this.filter_reset()
+            }
+            this.selection.innerText = this.source.length
+              ? this.settings.multi
+                ? this.source.length + ' of ' + this.options.length + ' selected'
+                : this.source[0] in this.values
+                ? this.options[this.values[this.source[0]]].firstChild.textContent
+                : this.source[0]
+              : ''
+            if (update) request_queue(this.id)
+          },
+          adder: function (value, display, meta) {
+            const e = document.createElement('div')
+            e.role = 'option'
+            e.setAttribute('aria-selected', false)
+            e.tabindex = '0'
+            e.className = 'combobox-option combobox-component'
+            e.value = value
+            e.innerText = display
+            if (meta && meta.info) {
+              e.appendChild(document.createElement('p'))
+              e.lastElementChild.className = 'combobox-option-description combobox-component'
+              e.lastElementChild.innerText = meta.info.description || meta.info.short_description
             }
             return e
           },
@@ -2683,7 +2888,8 @@ void (function () {
       const current = u.values,
         s = out[d].options,
         values = out[d].values,
-        disp = out[d].display
+        disp = out[d].display,
+        combobox = 'combobox' === u.type
       var ck = !u.sensitive && !!u.current_set,
         n = 0
       if (u.settings.group) {
@@ -2699,9 +2905,21 @@ void (function () {
           if (u.groups) {
             const group = e.features[u.settings.group] || ''
             if (!(group in u.groups.by_name)) {
-              u.groups.by_name[group] = document.createElement('optgroup')
-              u.groups.by_name[group].label = group
-              u.groups.e.push(u.groups.by_name[group])
+              if (combobox) {
+                const e = document.createElement('div')
+                e.className = 'combobox-group combobox-component'
+                e.role = 'group'
+                e.setAttribute('aria-labelledby', u.id + '_' + group)
+                e.appendChild(document.createElement('label'))
+                e.firstElementChild.innerText = group
+                e.firstElementChild.id = u.id + '_' + group
+                e.firstElementChild.className = 'combobox-group-label combobox-component'
+              } else {
+                const e = document.createElement('optgroup')
+                e.label = group
+              }
+              u.groups.by_name[group] = e
+              u.groups.e.push(e)
             }
             u.groups.by_name[group].appendChild(u.add(k, e.features.name))
           } else {
@@ -2728,7 +2946,8 @@ void (function () {
       const current = u.values,
         s = out[d].options,
         values = out[d].values,
-        disp = out[d].display
+        disp = out[d].display,
+        combobox = 'combobox' === u.type
       var ck = !u.sensitive && !!u.current_set,
         n = 0
       if (u.settings.group) {
@@ -2745,13 +2964,25 @@ void (function () {
           if (u.groups) {
             const group = m.info[u.settings.group] || ''
             if (!(group in u.groups.by_name)) {
-              u.groups.by_name[group] = document.createElement('optgroup')
-              u.groups.by_name[group].label = group
-              u.groups.e.push(u.groups.by_name[group])
+              const e = document.createElement(combobox ? 'div' : 'optgroup')
+              if (combobox) {
+                e.className = 'combobox-group combobox-component'
+                e.role = 'group'
+                e.setAttribute('aria-labelledby', u.id + '_' + group)
+                e.appendChild(document.createElement('label'))
+                e.firstElementChild.innerText = group
+                e.firstElementChild.id = u.id + '_' + group
+                e.firstElementChild.className = 'combobox-group-label combobox-component'
+              } else {
+                e.label = group
+              }
+              u.groups.by_name[group] = e
+              u.groups.e.push(e)
             }
             u.groups.by_name[group].appendChild(u.add(m.name, l, m))
           } else {
             s.push(u.add(m.name, l, m))
+            s[n].id = u.id + '-option' + n
             values[m.name] = n
             disp[l] = n++
           }
@@ -2760,10 +2991,11 @@ void (function () {
       if (u.settings.group) {
         n = 0
         Object.keys(u.groups.by_name).forEach(g => {
-          u.groups.by_name[g].querySelectorAll('option').forEach(c => {
+          u.groups.by_name[g].querySelectorAll(combobox ? '.combobox-option' : 'option').forEach(c => {
             s.push(c)
+            s[n].id = u.id + '-option' + n
             values[c.value] = n
-            disp[c.innerText] = n++
+            disp[(c.firstChild && c.firstChild.textContent) || c.innerText] = n++
           })
         })
       }
@@ -3412,8 +3644,6 @@ void (function () {
         if (patterns.number.test(o.default)) o.default = Number(o.default)
         if (o.type in elements) {
           const p = elements[o.type]
-          if (p.init) p.init(o)
-          o.options = o.e.querySelectorAll(o.type === 'select' ? 'option' : 'input')
           if (p.setter) {
             o.set = p.setter.bind(o)
             o.reset = function () {
@@ -3423,6 +3653,10 @@ void (function () {
           if (p.retrieve) o.get = p.retrieve.bind(o)
           if (p.adder) o.add = p.adder.bind(o)
           if (p.listener) o.listen = p.listener.bind(o)
+          if (p.init) p.init(o)
+          o.options = o.e.querySelectorAll(
+            'select' === o.type ? 'option' : 'combobox' === o.type ? '.combobox-option' : 'input'
+          )
           _u[o.id] = o
         }
       })
@@ -3640,17 +3874,18 @@ void (function () {
       // initialize inputs
       keys._u.forEach(async k => {
         if (_u[k].type in elements) {
-          const o = _u[k]
-          if ('select' === o.type) {
+          const o = _u[k],
+            combobox = 'combobox' === o.type
+          if (combobox || 'select' === o.type) {
             // resolve options
             if (o.options_source) {
               if (patterns.palette.test(o.options_source)) {
                 Object.keys(palettes).forEach(v => o.e.appendChild(o.add(v, palettes[v].name)))
-                o.options = o.e.querySelectorAll('option')
+                o.options = o.e.querySelectorAll(combobox ? '.combobox-option' : 'option')
                 if (-1 === o.default) o.default = defaults.palette
               } else if (patterns.datasets.test(o.options_source)) {
                 site.metadata.datasets.forEach(d => o.e.appendChild(o.add(i, d, site.data.format_label(d))))
-                o.options = o.e.querySelectorAll('option')
+                o.options = o.e.querySelectorAll(combobox ? '.combobox-option' : 'option')
               } else {
                 o.sensitive = false
                 o.option_sets = {
@@ -3836,7 +4071,7 @@ void (function () {
           }
 
           // add listeners
-          if ('select' === o.type || 'number' === o.type) {
+          if (combobox || 'select' === o.type || 'number' === o.type) {
             o.e.addEventListener('change', o.listen)
             if (
               o.e.parentElement.lastElementChild &&
@@ -3847,7 +4082,7 @@ void (function () {
           } else if ('switch' === o.type) {
             if ('boolean' !== typeof o.default) o.default = o.e.checked
             o.e.addEventListener('change', o.listen)
-          } else {
+          } else if (o.listen) {
             o.options.forEach(oi => oi.addEventListener('click', o.listen))
           }
           // initialize settings inputs
@@ -4043,7 +4278,7 @@ void (function () {
           ee.className = 'btn btn-close'
           ee.type = 'button'
           ee.addEventListener(
-            'click',
+            'mouseup',
             function () {
               this.e.parentElement.removeChild(this.e)
               site.data.filter.delete(this.index)
