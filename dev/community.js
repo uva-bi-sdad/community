@@ -934,7 +934,7 @@ void (function () {
             o.container = document.createElement('div')
             o.container.className = 'combobox-options-container combobox-component'
             o.container.style.display = 'none'
-            document.body.appendChild(o.container)
+            page.overlay.appendChild(o.container)
             o.container.appendChild(o.listbox)
             o.selection = o.e.firstElementChild
             o.input = o.e.lastElementChild
@@ -970,11 +970,20 @@ void (function () {
                 window.removeEventListener('click', o.close)
               }
             }.bind(o)
-            window.addEventListener('resize', o.close)
+            o.resize = function () {
+              const s = this.e.getBoundingClientRect()
+              this.container.style.top = s.y + s.height + 'px'
+              this.container.style.left = s.x + 'px'
+              this.container.style.width = s.width + 'px'
+            }.bind(o)
+            window.addEventListener('resize', o.resize)
             o.toggle = function (e) {
               if (this.expanded) {
                 if (e.target !== this.input) this.close()
               } else {
+                Object.keys(site.combobox).forEach(id => {
+                  if (id !== this.id) _u[id].close()
+                })
                 this.container.style.display = ''
                 if (!this.settings.multi) {
                   if ('' !== this.selection.innerText) this.cleared_selection = this.selection.innerText
@@ -984,11 +993,8 @@ void (function () {
                 }
                 window.addEventListener('click', this.close)
                 this.e.setAttribute('aria-expanded', true)
-                const s = this.e.getBoundingClientRect()
                 if (!e || e.target !== this.input) setTimeout(() => this.input.focus(), 0)
-                this.container.style.top = s.y + s.height + 'px'
-                this.container.style.left = s.x + 'px'
-                this.container.style.maxWidth = s.width + 'px'
+                this.resize()
                 this.expanded = true
               }
             }.bind(o)
@@ -1017,6 +1023,7 @@ void (function () {
             }.bind(o)
             o.listbox.addEventListener('mouseover', o.highlight)
             o.filter_reset = function () {
+              this.filter_index = []
               this.listbox.querySelectorAll('.filter-hidden').forEach(o => o.classList.remove('filter-hidden'))
             }.bind(o)
             if (o.settings.search)
@@ -1027,52 +1034,85 @@ void (function () {
                   if ('' === q) {
                     this.filter_reset()
                   } else {
-                    this.options.forEach(o =>
-                      o.classList[o.innerText.toLowerCase().includes(q) ? 'remove' : 'add']('filter-hidden')
-                    )
+                    this.filter_index = []
+                    this.options.forEach((o, i) => {
+                      if (o.innerText.toLowerCase().includes(q)) {
+                        o.classList.remove('filter-hidden')
+                        this.filter_index.push(i)
+                      } else {
+                        o.classList.add('filter-hidden')
+                      }
+                    })
                   }
                 }.bind(o)
               )
             o.input.addEventListener(
               'keydown',
               function (e) {
-                if ('Tab' === e.code) {
-                  this.close()
-                } else if ('Enter' === e.code || 'NumpadEnter' === e.code) {
-                  if (!this.expanded) return this.toggle({target: this.input})
-                  this.set(e)
-                } else if ('ArrowUp' === e.code || 'ArrowDown' === e.code) {
-                  e.preventDefault()
-                  if ('ArrowUp' === e.code) {
-                    this.hover_index = Math.max(0, this.hover_index - 1)
-                  } else if ('ArrowDown' === e.code) {
-                    this.hover_index = Math.min(this.options.length - 1, this.hover_index + 1)
+                const action = keymap[e.code]
+                if (action) {
+                  if ('close' === action) {
+                    this.close()
+                  } else if ('select' === action) {
+                    if (!this.expanded) return this.toggle({target: this.input})
+                    this.set(e)
+                  } else if ('move' === action) {
+                    e.preventDefault()
+                    if ('ArrowUp' === e.code) {
+                      if (this.filter_index.length) {
+                        this.hover_index = this.filter_index.indexOf(this.hover_index) - 1
+                        this.hover_index = this.filter_index[0 > this.hover_index ? 0 : this.hover_index]
+                      } else {
+                        this.hover_index = Math.max(0, this.hover_index - 1)
+                      }
+                    } else if ('ArrowDown' === e.code) {
+                      if (this.filter_index.length) {
+                        this.hover_index = this.filter_index.indexOf(this.hover_index) + 1
+                        this.hover_index =
+                          this.filter_index[
+                            this.filter_index.length - 1 < this.hover_index
+                              ? this.filter_index.length - 1
+                              : this.hover_index
+                          ]
+                      } else {
+                        this.hover_index = Math.min(this.options.length - 1, this.hover_index + 1)
+                      }
+                    } else if ('Home' === e.code) {
+                      this.hover_index = 0
+                    } else if ('End' === e.code) {
+                      this.hover_index = this.options.length - 1
+                    }
+                    if (this.expanded) {
+                      this.highlight()
+                    } else {
+                      this.set(this.hover_index)
+                    }
                   }
-                  if (this.expanded) {
-                    this.highlight()
-                  } else {
-                    this.set(this.hover_index)
-                  }
+                } else if (!this.expanded) {
+                  this.toggle({target: this.input})
                 }
               }.bind(o)
             )
           },
           retrieve: function () {
             this.source = []
-            this.options.forEach(o => {
-              if (o.classList.contains('selected')) this.source.push(this.values[i])
-            })
+            this.listbox.querySelectorAll('.selected').forEach(o => this.source.push(o.value))
             request_queue(this.id)
           },
           setter: function (v, toggle) {
             let update = false
             if (v.target) {
               v = this.hover_index
+              if (
+                -1 !== v &&
+                (this.options[v].classList.contains('hidden') || this.options[v].classList.contains('filter-hidden'))
+              )
+                v = -1
               toggle = this.settings.multi
             }
             if ('object' === typeof v) {
               if (this.options.multi) {
-                this.listbox.querySelectorAll('selected').forEach(e => e.classList.remove('selected'))
+                this.listbox.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'))
                 this.source = v
                 return request_queue(this.id)
               } else v = v[0]
@@ -1081,19 +1121,26 @@ void (function () {
               v = this.options[v].value
             }
             if ('string' === v && v in this.display) v = this.options[this.display[v]].value
+            if (!Array.isArray(this.source)) this.source = []
             var i = this.source.indexOf(v)
             if (-1 === i) {
               update = true
               if (this.settings.multi) {
                 this.source.push(v)
               } else this.source[0] = v
-              if (v in this.values) this.options[this.values[v]].classList.add('selected')
+              if (v in this.values) {
+                if (!this.settings.multi) {
+                  const selected = this.listbox.querySelector('.selected')
+                  if (selected) selected.classList.remove('selected')
+                }
+                this.options[this.values[v]].classList.add('selected')
+              }
             } else if (toggle) {
               update = true
               this.source.splice(i, 1)
               if (v in this.values) this.options[this.values[v]].classList.remove('selected')
             }
-            if (!this.settings.multi) {
+            if (!this.settings.multi && this.expanded) {
               this.input.focus()
               this.close()
               this.input.value = ''
@@ -1104,6 +1151,8 @@ void (function () {
                 ? this.source.length + ' of ' + this.options.length + ' selected'
                 : this.source[0] in this.values
                 ? this.options[this.values[this.source[0]]].firstChild.textContent
+                : this.settings.strict || -1 === this.source[0]
+                ? ''
                 : this.source[0]
               : ''
             if (update) request_queue(this.id)
@@ -2714,11 +2763,23 @@ void (function () {
           return s ? (opt ? s[opt] : s) : undefined
         },
       },
+      keymap = {
+        Enter: 'select',
+        NumpadEnter: 'select',
+        Space: 'select',
+        ArrowUp: 'move',
+        Home: 'move',
+        ArrowDown: 'move',
+        End: 'move',
+        Escape: 'close',
+        Tab: 'close',
+      },
       page = {
         load_screen: document.getElementById('load_screen'),
         wrap: document.getElementById('site_wrap'),
         navbar: document.querySelector('.navbar'),
         content: document.querySelector('.content'),
+        overlay: document.createElement('div'),
         menus: document.getElementsByClassName('menu-wrapper'),
         panels: document.getElementsByClassName('panel'),
       },
@@ -2744,6 +2805,8 @@ void (function () {
       _c = {},
       tree = {}
 
+    page.overlay.className = 'content-overlay'
+    document.body.appendChild(page.overlay)
     document.body.className = storage.get('theme_dark') || site.settings.theme_dark ? 'dark-theme' : 'light-theme'
     if (page.content) {
       var i = page.menus.length,
