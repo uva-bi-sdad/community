@@ -1111,13 +1111,15 @@ void (function () {
           },
           setter: function (v, toggle) {
             let update = false
+            var i = -1
             if (v.target) {
-              v = this.hover_index
+              i = this.hover_index
               if (
-                -1 !== v &&
-                (this.options[v].classList.contains('hidden') || this.options[v].classList.contains('filter-hidden'))
+                -1 !== i &&
+                (this.options[i].classList.contains('hidden') || this.options[i].classList.contains('filter-hidden'))
               )
-                v = -1
+                i = -1
+              v = -1 === i ? v.target.innerText : i
               toggle = this.settings.multi
             }
             if ('object' === typeof v) {
@@ -1132,7 +1134,8 @@ void (function () {
             }
             if ('string' === v && v in this.display) v = this.options[this.display[v]].value
             if (!Array.isArray(this.source)) this.source = []
-            var i = this.source.indexOf(v)
+            if (this.settings.strict && !(v in this.values)) v = this.default
+            i = this.source.indexOf(v)
             if (-1 === i) {
               update = true
               if (this.settings.multi) {
@@ -2776,7 +2779,6 @@ void (function () {
       keymap = {
         Enter: 'select',
         NumpadEnter: 'select',
-        Space: 'select',
         ArrowUp: 'move',
         Home: 'move',
         ArrowDown: 'move',
