@@ -6,10 +6,10 @@
 \usage{
 input_combobox(label, options, default = -1, display = options,
   id = label, ..., strict = TRUE, search = TRUE, multi = FALSE,
-  note = NULL, group_feature = NULL, variable = NULL, dataset = NULL,
-  depends = NULL, dataview = NULL, subset = "all", filters = NULL,
-  reset_button = FALSE, button_class = NULL, as.row = FALSE,
-  floating_label = TRUE)
+  clearable = FALSE, note = NULL, group_feature = NULL,
+  variable = NULL, dataset = NULL, depends = NULL, dataview = NULL,
+  subset = "all", filters = NULL, reset_button = FALSE,
+  button_class = NULL, as.row = FALSE, floating_label = TRUE)
 }
 \arguments{
 \item{label}{Label of the input for the user.}
@@ -32,6 +32,8 @@ option set.}
 \item{search}{Logical; if \code{FALSE}, does not dynamically filter the option set on user input.}
 
 \item{multi}{Logical; if \code{TRUE}, allows multiple options to be selected.}
+
+\item{clearable}{Logical; if \code{TRUE}, adds a button to clear the selection.}
 
 \item{note}{Text to display as a tooltip for the input.}
 

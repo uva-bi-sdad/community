@@ -15,6 +15,7 @@
 #' option set.
 #' @param search Logical; if \code{FALSE}, does not dynamically filter the option set on user input.
 #' @param multi Logical; if \code{TRUE}, allows multiple options to be selected.
+#' @param clearable Logical; if \code{TRUE}, adds a button to clear the selection.
 #' @param note Text to display as a tooltip for the input.
 #' @param group_feature Name of a measure or entity feature to use as a source of option grouping,
 #' if \code{options} is \code{"variables"} or \code{"ids"}.
@@ -46,20 +47,21 @@
 #' @export
 
 input_combobox <- function(label, options, default = -1, display = options, id = label, ...,
-                           strict = TRUE, search = TRUE, multi = FALSE, note = NULL, group_feature = NULL,
-                           variable = NULL, dataset = NULL, depends = NULL, dataview = NULL, subset = "all",
-                           filters = NULL, reset_button = FALSE, button_class = NULL, as.row = FALSE,
-                           floating_label = TRUE) {
+                           strict = TRUE, search = TRUE, multi = FALSE, clearable = FALSE, note = NULL,
+                           group_feature = NULL, variable = NULL, dataset = NULL, depends = NULL,
+                           dataview = NULL, subset = "all", filters = NULL, reset_button = FALSE,
+                           button_class = NULL, as.row = FALSE, floating_label = TRUE) {
   id <- gsub("\\s", "", id)
   a <- list(...)
   if (as.row) floating_label <- FALSE
   r <- c(
     '<div class="wrapper combobox-wrapper">',
-    if (!floating_label) paste0('<label for="', id, '">', label, "</label>"),
-    paste0('<div class="input-group', if (floating_label) " form-floating", '">'),
+    if (!floating_label) paste0('<label id="', id, '-label">', label, "</label>"),
+    paste0('<div class="', if (reset_button) "input-group", if (floating_label) " form-floating", '">'),
     paste0(
       '<div role="combobox" class="auto-input form-select combobox combobox-component" auto-type="combobox"',
-      ' aria-haspopup="listbox" aria-expanded="false" aria-controls="', id, '-listbox" id="', id, '" ',
+      ' aria-haspopup="listbox" aria-expanded="false" aria-labelledby="', id,
+      '-label" aria-controls="', id, '-listbox" id="', id, '" ',
       if (is.character(options) && length(options) == 1) paste0('auto-options="', options, '"'),
       if (!is.null(default)) paste0(' default="', default, '"'),
       if (!is.null(note)) paste0(' aria-description="', note, '"'),
@@ -70,7 +72,10 @@ input_combobox <- function(label, options, default = -1, display = options, id =
       if (!is.null(variable)) paste0(' variable="', variable, '"'),
       if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
       '><div class="combobox-selection combobox-component"></div>',
-      '<input class="combobox-input combobox-component" type="text" id="', id, '-input"></div>'
+      '<input class="combobox-input combobox-component" type="text" aria-labelledby="', id,
+      '-label" id="', id, '-input">',
+      if (clearable) '<button type="button" class="btn-close" title="clear selection"></button>',
+      "</div>"
     ),
     paste0(
       '<div class="combobox-options combobox-component', if (multi) " multi", '" role="listbox"',

@@ -170,7 +170,7 @@ void (function () {
         },
       },
       patterns = {
-        seps: /[\s._-]/g,
+        seps: /[\s,/._-]+/g,
         period: /\./,
         all_periods: /\./g,
         word_start: /\b(\w)/g,
@@ -937,7 +937,16 @@ void (function () {
             page.overlay.appendChild(o.container)
             o.container.appendChild(o.listbox)
             o.selection = o.e.firstElementChild
-            o.input = o.e.lastElementChild
+            o.input = o.e.children[1]
+            if (3 === o.e.childElementCount) {
+              o.e.lastElementChild.addEventListener(
+                'click',
+                function () {
+                  this.set(-1)
+                  this.input.focus()
+                }.bind(o)
+              )
+            }
             o.value = function () {
               return this.source
                 ? this.settings.multi
@@ -951,7 +960,6 @@ void (function () {
               'focus',
               function () {
                 this.e.classList.add('focused')
-                if (!this.expanded) this.toggle({target: this.input})
               }.bind(o)
             )
             o.input.addEventListener(
@@ -978,24 +986,26 @@ void (function () {
             }.bind(o)
             window.addEventListener('resize', o.resize)
             o.toggle = function (e) {
-              if (this.expanded) {
-                if (e.target !== this.input) this.close()
-              } else {
-                Object.keys(site.combobox).forEach(id => {
-                  if (id !== this.id) _u[id].close()
-                })
-                this.container.style.display = ''
-                if (!this.settings.multi) {
-                  if ('' !== this.selection.innerText) this.cleared_selection = this.selection.innerText
-                  if (this.cleared_selection in this.display)
-                    this.highlight({target: this.options[this.display[this.cleared_selection]]})
-                  this.selection.innerText = ''
+              if (!e.button && 'BUTTON' !== e.target.tagName) {
+                if (this.expanded) {
+                  if (e.target !== this.input) this.close()
+                } else {
+                  Object.keys(site.combobox).forEach(id => {
+                    if (id !== this.id) _u[id].close()
+                  })
+                  this.container.style.display = ''
+                  if (!this.settings.multi) {
+                    if ('' !== this.selection.innerText) this.cleared_selection = this.selection.innerText
+                    if (this.cleared_selection in this.display)
+                      this.highlight({target: this.options[this.display[this.cleared_selection]]})
+                    this.selection.innerText = ''
+                  }
+                  window.addEventListener('click', this.close)
+                  this.e.setAttribute('aria-expanded', true)
+                  if (!e || e.target !== this.input) setTimeout(() => this.input.focus(), 0)
+                  this.resize()
+                  this.expanded = true
                 }
-                window.addEventListener('click', this.close)
-                this.e.setAttribute('aria-expanded', true)
-                if (!e || e.target !== this.input) setTimeout(() => this.input.focus(), 0)
-                this.resize()
-                this.expanded = true
               }
             }.bind(o)
             o.e.addEventListener('mousedown', o.toggle)
@@ -2969,13 +2979,14 @@ void (function () {
             const group = e.features[u.settings.group] || ''
             if (!(group in u.groups.by_name)) {
               if (combobox) {
-                const e = document.createElement('div')
+                const e = document.createElement('div'),
+                  id = u.id + '_' + group.replace(patterns.seps, '-')
                 e.className = 'combobox-group combobox-component'
                 e.role = 'group'
-                e.setAttribute('aria-labelledby', u.id + '_' + group)
+                e.setAttribute('aria-labelledby', id)
                 e.appendChild(document.createElement('label'))
                 e.firstElementChild.innerText = group
-                e.firstElementChild.id = u.id + '_' + group
+                e.firstElementChild.id = id
                 e.firstElementChild.className = 'combobox-group-label combobox-component'
               } else {
                 const e = document.createElement('optgroup')
@@ -3029,12 +3040,13 @@ void (function () {
             if (!(group in u.groups.by_name)) {
               const e = document.createElement(combobox ? 'div' : 'optgroup')
               if (combobox) {
+                const id = u.id + '_' + group.replace(patterns.seps, '-')
                 e.className = 'combobox-group combobox-component'
                 e.role = 'group'
-                e.setAttribute('aria-labelledby', u.id + '_' + group)
+                e.setAttribute('aria-labelledby', id)
                 e.appendChild(document.createElement('label'))
                 e.firstElementChild.innerText = group
-                e.firstElementChild.id = u.id + '_' + group
+                e.firstElementChild.id = id
                 e.firstElementChild.className = 'combobox-group-label combobox-component'
               } else {
                 e.label = group
@@ -3505,12 +3517,12 @@ void (function () {
       e.body.lastElementChild.className = 'info-feature-table'
 
       e.body.lastElementChild.appendChild((e.name = document.createElement('tr')))
-      e.name.appendChild(document.createElement('td'))
+      e.name.appendChild(document.createElement('th'))
       e.name.firstElementChild.innerText = 'Name'
       e.name.appendChild(document.createElement('td'))
 
       e.body.lastElementChild.appendChild((e.type = document.createElement('tr')))
-      e.type.appendChild(document.createElement('td'))
+      e.type.appendChild(document.createElement('th'))
       e.type.firstElementChild.innerText = 'Type'
       e.type.appendChild(document.createElement('td'))
 
@@ -3776,7 +3788,11 @@ void (function () {
                 this.source = v
               } else if (this.source) {
                 const c = _u[this.source]
-                if ('select' === c.type ? v in c.values || v in c.display : -1 !== c.values.indexOf(v)) {
+                if (
+                  'select' === c.type || 'combobox' === c.type
+                    ? v in c.values || v in c.display
+                    : -1 !== c.values.indexOf(v)
+                ) {
                   c.set(v)
                 }
               }
@@ -4172,6 +4188,7 @@ void (function () {
             return (
               '' +
               this.parsed.dataset +
+              site.data.inited[this.parsed.dataset] +
               this.parsed.ids +
               this.parsed.features +
               this.parsed.variables +
@@ -4382,30 +4399,6 @@ void (function () {
           c.lastElementChild.appendChild(e)
         }
       })
-
-      // ee.appendChild(document.createElement('div'))
-      // ee.lastElementChild.className = 'col'
-      // ee.lastElementChild.appendChild((c = document.createElement('div')))
-      // c.className = 'dropdown'
-      // c.appendChild(document.createElement('button'))
-      // c.lastElementChild.type = 'button'
-      // c.lastElementChild.id = 'filter_feature_dropdown'
-      // c.lastElementChild.className = 'btn dropdown-toggle'
-      // c.lastElementChild.setAttribute('data-bs-toggle', 'dropdown')
-      // c.lastElementChild.setAttribute('aria-expanded', false)
-      // c.lastElementChild.innerText = 'Add Feature Condition'
-      // c.appendChild(document.createElement('ul'))
-      // c.lastElementChild.addEventListener('click', add_filter_condition.bind(e))
-      // c.lastElementChild.className = 'dropdown-menu'
-      // c.lastElementChild.setAttribute('aria-labelledby', 'filter_feature_dropdown')
-      // Object.keys(site.data.features).forEach(k => {
-      //   const e = document.createElement('li')
-      //   e.appendChild(document.createElement('a'))
-      //   e.lastElementChild.className = 'dropdown-item'
-      //   e.lastElementChild.href = '#'
-      //   e.lastElementChild.innerText = k
-      //   c.lastElementChild.appendChild(e)
-      // })
 
       e.variable_filters.appendChild(document.createElement('div'))
       e.variable_filters.lastElementChild.className = 'row'

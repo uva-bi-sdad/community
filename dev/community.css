@@ -193,20 +193,29 @@ div.filter-hidden {
   cursor: pointer;
   display: flex;
 }
-.combobox-selection,
-.combobox-input {
-  padding: 0.3em 0.3em 0.3em 0;
-}
 .combobox-input,
 .combobox-selection {
-  background-color: var(--background-input);
+  padding: 0.3em 0.3em 0.3em 0;
+  background-color: transparent;
   border: none;
-  display: inline-flex;
-  max-width: 84%;
+  display: inline;
   white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-x: clip;
+}
+input.combobox-input {
+  min-width: 10px;
+  max-width: 10%;
+  overflow-x: visible;
 }
 .combobox-input:focus {
   outline: none;
+}
+.combobox .btn-close {
+  position: absolute;
+  right: 3em;
+  top: 1.4em;
+  font-size: 0.8em;
 }
 .combobox-options-container {
   position: absolute;
@@ -584,9 +593,6 @@ button.has-note::after {
 .source-table td:first-of-type,
 .source-table th:first-of-type {
   text-align: left;
-}
-.info-feature-table td:first-of-type {
-  font-weight: bold;
 }
 .reference-list {
   padding: 0;
