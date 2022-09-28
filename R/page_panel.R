@@ -39,7 +39,7 @@ page_panel <- function(title = "Side Panel", ..., position = "left", wraps = NA,
   conditions <- rep_len(conditions, n)
   ids <- paste0("panel", parts$uid, seq_len(n))
   r <- c(
-    paste0('<div class="card panel panel-', position, '">'),
+    paste0('<div class="card panel panel-', position, '" id="panel', parts$uid, '">'),
     paste0('<div class="card-header">', paste(title, collapse = ""), "</div>"),
     '<div class="card-body">',
     unlist(lapply(seq_len(n), function(i) {
@@ -57,6 +57,10 @@ page_panel <- function(title = "Side Panel", ..., position = "left", wraps = NA,
       )
     }), use.names = FALSE),
     "</div>",
+    paste0(
+      '<button type="button" title="toggle panel" aria-controls="panel', parts$uid,
+      '" aria-expanded="true" class="btn panel-toggle">&Verbar;</button>'
+    ),
     "</div>"
   )
   if (building) {

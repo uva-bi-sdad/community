@@ -3615,6 +3615,28 @@ void (function () {
         page.panels.forEach(p => {
           page.content_bounds[p.classList.contains('panel-left') ? 'left' : 'right'] = p.getBoundingClientRect().width
           p.style.marginTop = page.content_bounds.top + 'px'
+          p.lastElementChild.addEventListener(
+            'click',
+            function () {
+              const side = p.classList.contains('panel-left') ? 'left' : 'right',
+                w = p.getBoundingClientRect().width,
+                bw = p.lastElementChild.getBoundingClientRect().width
+              if ('true' === p.lastElementChild.getAttribute('aria-expanded')) {
+                page.content_bounds[side] = bw
+                if (page.top_menu) page.top_menu.style[side] = bw + 'px'
+                if (page.bottom_menu) page.bottom_menu.style[side] = bw + 'px'
+                p.style[side] = -w + bw + 'px'
+                p.lastElementChild.setAttribute('aria-expanded', 'false')
+              } else {
+                page.content_bounds[side] = w
+                if (page.top_menu) page.top_menu.style[side] = w + 'px'
+                if (page.bottom_menu) page.bottom_menu.style[side] = w + 'px'
+                p.style[side] = '0px'
+                p.lastElementChild.setAttribute('aria-expanded', 'true')
+              }
+              trigger_resize()
+            }.bind(p)
+          )
         })
       page.menus.length &&
         page.menus.forEach(m => {
