@@ -952,6 +952,7 @@ void (function () {
               o.e.lastElementChild.addEventListener(
                 'click',
                 function () {
+                  this.cleared_selection = ''
                   this.set(-1)
                   this.input.focus()
                 }.bind(o)
@@ -4289,6 +4290,7 @@ void (function () {
         }
         if (o.note) o.e.addEventListener('mouseover', tooltip_trigger.bind(o))
         o.options = o.type in site ? site[o.type][o.id] : void 0
+        if (o.options && o.options.dataview) o.view = o.options.dataview
         if (o.type in elements && 'update' in elements[o.type]) o.update = elements[o.type].update.bind(o)
         if (o.options) {
           if ('options' in o.options) o.options = o.options.options

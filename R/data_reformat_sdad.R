@@ -74,6 +74,10 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       error = function(e) NULL
     )
     if (is.null(d)) cli_abort("failed to read in file {.file {f}}")
+    if (!nrow(d)) {
+      if (verbose) cli_warn("file has no observations: {.file {f}}")
+      next
+    }
     if (check_ids) {
       if (id %in% colnames(d)) {
         su <- grepl("^[0-9]+$", d[[id]])
@@ -81,8 +85,12 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
           d[[id]][su] <- trimws(format(as.numeric(d[[id]][su]), scientific = FALSE))
         }
         d <- d[d[[id]] %in% ids]
-        if (!nrow(d)) next
+        if (!nrow(d)) {
+          if (verbose) cli_warn("file has none of the requested IDs: {.file {f}}")
+          next
+        }
       } else {
+        if (verbose) cli_warn("file has no ID column: {.file {f}}")
         next
       }
     }

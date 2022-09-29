@@ -1,6 +1,6 @@
 Package: community
 Title: Community Analysis Framework
-Version: 0.0.1.103
+Version: 0.0.1.104
 Authors@R: c(
     person("Biocomplexity Institute", role = c("aut", "cph")),
     person("Micah", "Iserman", role = "cre", email = "micah.iserman@gmail.com")

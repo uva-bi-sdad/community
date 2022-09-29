@@ -31,6 +31,7 @@ output_info <- function(title = NULL, body = NULL, row_style = "table", default 
   r <- paste0(
     '<div class="auto-output text-display',
     if (floating) ' floating"' else '"',
+    if (!is.null(dataview)) c(' data-view="', dataview, '"'),
     ' auto-type="info" id="', id, '"></div>'
   )
   row_style <- rep_len(row_style, length(body))
