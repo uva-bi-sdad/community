@@ -57,7 +57,7 @@ input_combobox <- function(label, options, default = -1, display = options, id =
   r <- c(
     '<div class="wrapper combobox-wrapper">',
     if (!floating_label) paste0('<label id="', id, '-label">', label, "</label>"),
-    paste0('<div class="', if (reset_button) "input-group", if (floating_label) " form-floating", '">'),
+    paste0('<div class="', paste(if (reset_button) "input-group", if (floating_label) "form-floating"), '">'),
     paste0(
       '<div role="combobox" class="auto-input form-select combobox combobox-component" auto-type="combobox"',
       ' aria-haspopup="listbox" aria-expanded="false" aria-labelledby="', id,
@@ -71,9 +71,9 @@ input_combobox <- function(label, options, default = -1, display = options, id =
       if (!is.null(dataset)) paste0(' dataset="', dataset, '"'),
       if (!is.null(variable)) paste0(' variable="', variable, '"'),
       if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
-      '><div class="combobox-selection combobox-component"></div>',
+      '><div class="combobox-selection combobox-component"><span class="combobox-component"></span>',
       '<input class="combobox-input combobox-component" type="text" aria-labelledby="', id,
-      '-label" id="', id, '-input">',
+      '-label" id="', id, '-input"></div>',
       if (clearable) '<button type="button" class="btn-close" title="clear selection"></button>',
       "</div>"
     ),

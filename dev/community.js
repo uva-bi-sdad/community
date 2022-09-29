@@ -643,7 +643,7 @@ void (function () {
           listener: function (e) {
             this.set(e.target.value)
           },
-          adder: function (i, value, display) {
+          adder: function (i, value, display, noadd) {
             var e = [document.createElement('input'), document.createElement('label')]
             e[0].className = 'btn-check'
             e[0].type = 'radio'
@@ -652,11 +652,13 @@ void (function () {
             e[0].value = value
             e[0].id = this.e.id + '_option' + i
             e[1].className = 'btn btn-primary'
-            e[1].innerText = display
+            e[1].innerText = display || site.data.format_label(value)
             e[1].setAttribute('for', e[0].id)
-            this.e.appendChild(e[0])
-            this.e.appendChild(e[1])
-            return e
+            if (!noadd) {
+              this.e.appendChild(e[0])
+              this.e.appendChild(e[1])
+            }
+            return e[0]
           },
         },
         radio: {
@@ -682,21 +684,24 @@ void (function () {
           listener: function (e) {
             this.set(e.target.value)
           },
-          adder: function (value, display) {
-            var e = document.createElement('div')
-            this.e.appendChild(e)
-            e.className = 'form-check'
+          adder: function (value, display, noadd) {
+            const e = document.createElement('div'),
+              s = 'TRUE' === this.e.getAttribute('switch')
+            e.className = 'form-check' + (s ? ' form-switch' : '')
             e.appendChild(document.createElement('input'))
             e.appendChild(document.createElement('label'))
-            e.firstElementChild.class = 'form-check-input'
+            e.firstElementChild.autocomplete = 'off'
+            e.firstElementChild.className = 'form-check-input'
+            if (s) e.firstElementChild.role = 'switch'
             e.firstElementChild.type = 'radio'
             e.firstElementChild.name = this.e.id + '_options'
             e.firstElementChild.id = this.e.id + '_option' + this.e.childElementCount
             e.firstElementChild.value = value
-            e.lastElementChild.innerText = display
+            e.lastElementChild.innerText = display || site.data.format_label(value)
             e.lastElementChild.className = 'form-check-label'
             e.lastElementChild.setAttribute('for', e.firstElementChild.id)
-            return this.e
+            if (!noadd) this.e.appendChild(e)
+            return e.firstElementChild
           },
         },
         checkbox: {
@@ -744,21 +749,24 @@ void (function () {
             }
             request_queue(this.id)
           },
-          adder: function (value, display) {
-            var e = document.createElement('div')
-            this.e.appendChild(e)
-            e.className = 'form-check'
+          adder: function (value, display, noadd) {
+            var e = document.createElement('div'),
+              s = 'TRUE' === this.e.getAttribute('switch')
+            e.className = 'form-check' + (s ? ' form-switch' : '')
             e.appendChild(document.createElement('input'))
             e.appendChild(document.createElement('label'))
-            e.firstElementChild.class = 'form-check-input'
+            e.firstElementChild.autocomplete = 'off'
+            e.firstElementChild.className = 'form-check-input'
+            if (s) e.firstElementChild.role = 'switch'
             e.firstElementChild.type = 'checkbox'
             e.firstElementChild.name = this.e.id + '_options'
             e.firstElementChild.id = this.e.id + '_option' + this.e.childElementCount
             e.firstElementChild.value = value
-            e.lastElementChild.innerText = display
+            e.lastElementChild.innerText = display || site.data.format_label(value)
             e.lastElementChild.className = 'form-check-label'
             e.lastElementChild.setAttribute('for', e.firstElementChild.id)
-            return this.e
+            if (!noadd) this.e.appendChild(e)
+            return e.firstElementChild
           },
         },
         switch: {
@@ -904,8 +912,9 @@ void (function () {
             this.set(this.e.selectedIndex)
           },
           setter: function (v) {
+            if ('string' === typeof v && !(v in this.values) && patterns.number.test(v)) v = Number(v)
             if ('number' === typeof v) v = this.options[v] ? this.options[v].value : v
-            if (!v in this.values && v in this.display) v = this.options[this.display[v]].value
+            if (!(v in this.values) && v in this.display) v = this.options[this.display[v]].value
             if (v !== this.source) {
               this.e.selectedIndex = v in this.values ? this.values[v] : -1
               this.source = v
@@ -915,13 +924,14 @@ void (function () {
           listener: function (e) {
             this.set(e.target.selectedIndex)
           },
-          adder: function (value, display, meta) {
+          adder: function (value, display, meta, noadd) {
             const e = document.createElement('option')
             e.value = value
-            e.innerText = display
+            e.innerText = display || site.data.format_label(value)
             if (meta && meta.info) {
               e.title = meta.info.description || meta.info.short_description
             }
+            if (!noadd) this.e.appendChild(e)
             return e
           },
         },
@@ -936,9 +946,9 @@ void (function () {
             o.container.style.display = 'none'
             page.overlay.appendChild(o.container)
             o.container.appendChild(o.listbox)
-            o.selection = o.e.firstElementChild
-            o.input = o.e.children[1]
-            if (3 === o.e.childElementCount) {
+            o.selection = o.e.firstElementChild.firstElementChild
+            o.input = o.e.firstElementChild.lastElementChild
+            if (2 === o.e.childElementCount) {
               o.e.lastElementChild.addEventListener(
                 'click',
                 function () {
@@ -1129,6 +1139,8 @@ void (function () {
                 return request_queue(this.id)
               } else v = v[0]
             }
+            if (this.settings.strict && 'string' === typeof v && !(v in this.values) && patterns.number.test(v))
+              v = Number(v)
             if ('number' === typeof v && v > -1 && v < this.options.length) {
               v = this.options[v].value
             }
@@ -1170,19 +1182,20 @@ void (function () {
               : ''
             if (update) request_queue(this.id)
           },
-          adder: function (value, display, meta) {
+          adder: function (value, display, meta, noadd) {
             const e = document.createElement('div')
             e.role = 'option'
             e.setAttribute('aria-selected', false)
             e.tabindex = '0'
             e.className = 'combobox-option combobox-component'
             e.value = value
-            e.innerText = display
+            e.innerText = display || site.data.format_label(value)
             if (meta && meta.info) {
               e.appendChild(document.createElement('p'))
               e.lastElementChild.className = 'combobox-option-description combobox-component'
-              e.lastElementChild.innerText = meta.info.description || meta.info.short_description
+              e.lastElementChild.innerText = meta.info.description || meta.info.short_description || ''
             }
+            if (!noadd) this.e.appendChild(e)
             return e
           },
         },
@@ -2997,9 +3010,9 @@ void (function () {
               u.groups.by_name[group] = e
               u.groups.e.push(e)
             }
-            u.groups.by_name[group].appendChild(u.add(k, e.features.name))
+            u.groups.by_name[group].appendChild(u.add(k, e.features.name, true))
           } else {
-            s.push(u.add(k, e.features.name))
+            s.push(u.add(k, e.features.name, true))
             values[k] = n
             disp[e.features.name] = n++
           }
@@ -3056,9 +3069,9 @@ void (function () {
               u.groups.by_name[group] = e
               u.groups.e.push(e)
             }
-            u.groups.by_name[group].appendChild(u.add(m.name, l, m))
+            u.groups.by_name[group].appendChild(u.add(m.name, l, m, true))
           } else {
-            s.push(u.add(m.name, l, m))
+            s.push(u.add(m.name, l, m, true))
             s[n].id = u.id + '-option' + n
             values[m.name] = n
             disp[l] = n++
@@ -3097,7 +3110,7 @@ void (function () {
             u.sensitive = true
             ck = false
           }
-          s.push(u.add(lk.id, lk.name))
+          s.push(u.add(lk.id, lk.name, true))
           values[lk.id] = n
           disp[lk.name] = n++
         })
@@ -3905,6 +3918,7 @@ void (function () {
       }
       if ('undefined' !== typeof DataHandler) {
         defaults.dataset = valueOf(site.dataviews[defaults.dataview].dataset)
+        if ('number' === typeof defaults.dataset) defaults.dataset = site.metadata.datasets[defaults.dataset]
         site.data = new DataHandler(site, defaults, site.data, {
           init: init,
           onload: function () {
@@ -3979,33 +3993,31 @@ void (function () {
         if (_u[k].type in elements) {
           const o = _u[k],
             combobox = 'combobox' === o.type
+          if (o.options_source) {
+            if (patterns.palette.test(o.options_source)) {
+              o.options = []
+              Object.keys(palettes).forEach(v => o.options.push(o.add(v, palettes[v].name)))
+              if (-1 === o.default) o.default = defaults.palette
+            } else if (patterns.datasets.test(o.options_source)) {
+              o.options = []
+              site.metadata.datasets.forEach(d => o.options.push(o.add(d)))
+            } else {
+              o.sensitive = false
+              o.option_sets = {
+                values: {},
+                displays: {},
+                options: [],
+              }
+              if (o.depends) add_dependency(o.depends, {type: 'options', id: o.id})
+              if (o.dataset in _u) add_dependency(o.dataset, {type: 'options', id: o.id})
+              if (o.view) add_dependency(o.view, {type: 'options', id: o.id})
+              const v = valueOf(o.dataset) || defaults.dataset
+              if (!o.dataset) o.dataset = v
+              if (v in site.metadata.info) conditionals.options(o)
+            }
+          }
           if (combobox || 'select' === o.type) {
             // resolve options
-            if (o.options_source) {
-              if (patterns.palette.test(o.options_source)) {
-                Object.keys(palettes).forEach(v => o.e.appendChild(o.add(v, palettes[v].name)))
-                o.options = o.e.querySelectorAll(combobox ? '.combobox-option' : 'option')
-                if (-1 === o.default) o.default = defaults.palette
-              } else if (patterns.datasets.test(o.options_source)) {
-                site.metadata.datasets.forEach(d => o.e.appendChild(o.add(i, d, site.data.format_label(d))))
-                o.options = o.e.querySelectorAll(combobox ? '.combobox-option' : 'option')
-              } else {
-                o.sensitive = false
-                o.option_sets = {
-                  values: {},
-                  displays: {},
-                  options: [],
-                }
-                if (o.depends) add_dependency(o.depends, {type: 'options', id: o.id})
-                if (o.dataset in _u) add_dependency(o.dataset, {type: 'options', id: o.id})
-                if (o.view) add_dependency(o.view, {type: 'options', id: o.id})
-                const v = valueOf(o.dataset) || defaults.dataset
-                if (v in site.metadata.info) {
-                  if (!o.dataset) o.dataset = v
-                  conditionals.options(o)
-                }
-              }
-            }
             if (Array.isArray(o.values)) {
               o.values = {}
               o.display = {}

@@ -1,4 +1,7 @@
-input_dataview(id = "default_view", y = "selected_variable", time_agg = "selected_time")
+input_dataview(
+  id = "default_view", y = "selected_variable",
+  time_agg = "selected_time", dataset = "selected_dataset"
+)
 
 page_section(
   wraps = "col", sizes = c(4, NA),
@@ -7,10 +10,15 @@ page_section(
     output_info(title = "variables.short_name"),
     input_button("Download", "export", query = list(include = "selected_variable"), class = "btn-full"),
     output_info(body = "variables.sources"),
+    input_select("Layer", options = "datasets", default = 0, id = "selected_dataset"),
     page_section(
       wraps = "col", sizes = c(NA, 1),
-      input_select("Variable", options = "variables", default = 1, id = "selected_variable"),
-      input_number("Time", default = "max", variable = "time", id = "selected_time")
+      input_combobox(
+        "Variable", options = "variables", default = 0, depends = "selected_dataset", id = "selected_variable"
+      ),
+      input_number(
+        "Time", min = "filter.time_min", max = "filter.time_max", default = "max", id = "selected_time"
+      )
     ),
     output_legend(id = "main_legend", subto = c("main_map", "main_plot")),
     output_info(
@@ -30,15 +38,15 @@ page_section(
   ),
   page_section(
     {
-      files <- c("block_group", "tract", "county")
-      files <- structure(paste0(files, ".csv.xz"), names = files)
-      if (file.exists("docs/map.geojson")) {
+      files <- sub(".csv.xz", "", list.files("docs/data/", "\\.csv\\.xz"), fixed = TRUE)
+      maps <- paste0("docs/", files, ".geojson")
+      maps <- maps[file.exists(maps)]
+      if (length(maps)) {
         output_map(
-          list(
+          lapply(maps, function(d) list(
             name = names(files[which(file.exists(paste0("docs/data/", files)))[1]]),
-            url = "docs/map.geojson",
-            id_property = "geoid"
-          ),
+            url = "docs/map.geojson"
+          )),
           id = "main_map",
           subto = c("main_plot", "main_legend"),
           options = list(

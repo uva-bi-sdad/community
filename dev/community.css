@@ -193,17 +193,22 @@ div.filter-hidden {
   cursor: pointer;
   display: flex;
 }
-.combobox-input,
 .combobox-selection {
+  position: absolute;
+  left: 13px;
+  right: 13px;
   padding: 0.3em 0.3em 0.3em 0;
   background-color: transparent;
-  border: none;
-  display: inline;
+  display: flex;
   white-space: nowrap;
-  text-overflow: ellipsis;
+}
+.combobox-selection span {
   overflow-x: clip;
+  text-overflow: ellipsis;
 }
 input.combobox-input {
+  background-color: transparent;
+  border: none;
   min-width: 10px;
   max-width: 10%;
   overflow-x: visible;

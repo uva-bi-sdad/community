@@ -8,7 +8,7 @@
 site_build(dir, file = "site.R", name = "index.html", variables = NULL,
   options = list(), bundle_data = FALSE, open_after = FALSE,
   aggregate = TRUE, sparse_time = TRUE, force = FALSE, version = "v1",
-  parent = NULL, include_api = TRUE, endpoint = NULL, serve = FALSE,
+  parent = NULL, include_api = FALSE, endpoint = NULL, serve = FALSE,
   host = "127.0.0.1", port = 3000)
 
 site_start_server(dir, host = "127.0.0.1", port = 3000,
@@ -47,7 +47,7 @@ processed version.}
 
 \item{parent}{Directory path or repository URL of a data site from which to use data, rather than using local data.}
 
-\item{include_api}{Logical; if \code{FALSE}, will not write the \code{docs/functions/api.js} file.}
+\item{include_api}{Logical; if \code{TRUE}, will write the \code{docs/functions/api.js} file.}
 
 \item{endpoint}{URL of the served API.}
 

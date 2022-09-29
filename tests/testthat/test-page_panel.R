@@ -7,13 +7,16 @@ test_that("structure is intact", {
   children <- xml_child(html)
   expect_true(xml_length(children) == 1)
   children <- xml_child(children)
-  expect_true(xml_length(children) == 2)
+  expect_true(xml_length(children) == 3)
   children <- xml_child(xml_child(xml_child(xml_child(children, 2))))
   expect_true(xml_length(children) == 3)
 })
 
 test_that("build environment is added to", {
-  content <- page_panel("title", input_select("menu item", c("a", "b", "c")))
+  content <- gsub(
+    '"panel"', '"panel0"', page_panel("title", input_select("menu item", c("a", "b", "c"))),
+    fixed = TRUE
+  )
   parts <- make_build_environment()
   eval(expression(
     page_panel("title", input_select("menu item", c("a", "b", "c")))

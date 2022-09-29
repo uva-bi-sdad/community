@@ -6,6 +6,8 @@
 #' @param title Title of the site.
 #' @param with_data Logical; if \code{FALSE}, a data sub-directory and package will not be created.
 #' @param node_project Logical; if \code{TRUE}, includes files used to run the site from a Node.js server.
+#' @param include_api Logical; if \code{TRUE}, will make a \code{netlify.toml} config file to specify the
+#' function directory for the API function, if included by \code{\link{site_build}}.
 #' @param overwrite Logical; if \code{TRUE}, will overwrite existing site files in \code{dir}.
 #' @param quiet Logical; if \code{TRUE}, suppresses messages and does not navigate to the file when finished.
 #' @examples
@@ -16,7 +18,8 @@
 #' @return Path to the created site directory.
 #' @export
 
-init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE, overwrite = FALSE, quiet = !interactive()) {
+init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE, include_api = FALSE,
+                      overwrite = FALSE, quiet = !interactive()) {
   if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = ".")')
   check <- check_template("site", dir = dir)
   if (!quiet && check$exists && !overwrite) {
@@ -127,7 +130,7 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
     ), paths[6])
   }
   if (!file.exists(paths[7]) && !any(grepl("\\.Rproj$", list.files(dir)))) writeLines("Version: 1.0\n", paths[7])
-  if (!file.exists(paths[8])) {
+  if (include_api && !file.exists(paths[8])) {
     writeLines(c(
       "[build]",
       "  publish = 'docs'",

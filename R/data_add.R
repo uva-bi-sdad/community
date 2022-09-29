@@ -189,11 +189,10 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
     }
     res
   }
-  metas <- vector("list", length(path))
-  if (!is.null(names(meta))) {
-    metas[[1]] <- meta
+  metas <- if (!is.null(names(meta))) {
+    if (!is.null(names(path)) && all(names(path) %in% names(meta))) meta[names(path)] else rep(list(meta), length(path))
   } else {
-    for (i in seq_along(meta)) metas[[i]] <- meta[[i]]
+    meta[seq_along(path)]
   }
   metadata <- lapply(seq_along(path), collect_metadata)
   if (write) {

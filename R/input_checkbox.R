@@ -54,6 +54,7 @@ input_checkbox <- function(label, options, default = "all", display = options, i
       if (!is.null(note)) paste0(' aria-description="', note, '"'),
       if (!is.null(dataset)) paste0(' dataset="', dataset, '"'),
       if (!is.null(variable)) paste0(' variable="', variable, '"'),
+      if (!is.null(as.switch)) paste0(' switch="', as.switch, '"'),
       if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
       ">"
     ),

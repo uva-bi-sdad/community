@@ -5,7 +5,7 @@
 \title{Create a website}
 \usage{
 init_site(dir, title = "app", with_data = TRUE, node_project = FALSE,
-  overwrite = FALSE, quiet = !interactive())
+  include_api = FALSE, overwrite = FALSE, quiet = !interactive())
 }
 \arguments{
 \item{dir}{Directory in which to create the site's structure. Will be created if it does not exist.}
@@ -15,6 +15,9 @@ init_site(dir, title = "app", with_data = TRUE, node_project = FALSE,
 \item{with_data}{Logical; if \code{FALSE}, a data sub-directory and package will not be created.}
 
 \item{node_project}{Logical; if \code{TRUE}, includes files used to run the site from a Node.js server.}
+
+\item{include_api}{Logical; if \code{TRUE}, will make a \code{netlify.toml} config file to specify the
+function directory for the API function, if included by \code{\link{site_build}}.}
 
 \item{overwrite}{Logical; if \code{TRUE}, will overwrite existing site files in \code{dir}.}
 

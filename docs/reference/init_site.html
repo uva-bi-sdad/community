@@ -67,7 +67,7 @@
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">init_site</span><span class="op">(</span><span class="va">dir</span>, title <span class="op">=</span> <span class="st">"app"</span>, with_data <span class="op">=</span> <span class="cn">TRUE</span>, node_project <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>, quiet <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>  include_api <span class="op">=</span> <span class="cn">FALSE</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>, quiet <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -86,6 +86,11 @@
 
 <dt>node_project</dt>
 <dd><p>Logical; if <code>TRUE</code>, includes files used to run the site from a Node.js server.</p></dd>
+
+
+<dt>include_api</dt>
+<dd><p>Logical; if <code>TRUE</code>, will make a <code>netlify.toml</code> config file to specify the
+function directory for the API function, if included by <code><a href="site_build.html">site_build</a></code>.</p></dd>
 
 
 <dt>overwrite</dt>
