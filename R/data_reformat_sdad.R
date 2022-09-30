@@ -172,8 +172,10 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   present_vars <- unique(data[[value_name]])
   if (check_variables) {
     present_vars <- variables[variables %in% present_vars]
-    variables <- variables[!variables %in% present_vars]
-    if (verbose && length(variables)) cli_warn("requested variable{?s} not found in datasets: {.val {variables}}")
+    if (verbose) {
+      absent_variables <- variables[!variables %in% present_vars]
+      if (length(absent_variables)) cli_warn("requested variable{?s} not found in datasets: {.val {absent_variables}}")
+    }
   }
   times <- sort(unique(data[[time]]))
   if (!is.null(out) && (is.list(entity_info) || is.character(entity_info))) {

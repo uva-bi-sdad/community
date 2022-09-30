@@ -180,8 +180,8 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
         if (nrow(fs) == 1) {
           fs$file
         } else {
-          ccfs <- paste0("/", fs$file)
-          ifm <- vapply(map$ids[view$ids], function(im) ccfs %in% im$files, logical(length(ccfs)))
+          ccfs <- sub("^/", "", fs$file)
+          ifm <- vapply(map$ids[view$ids], function(im) ccfs %in% sub("^/", "", im$files), logical(length(ccfs)))
           is <- colSums(ifm) != 0
           sel <- NULL
           for (i in seq_along(ccfs)) {
