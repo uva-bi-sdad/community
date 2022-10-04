@@ -123,9 +123,25 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
     }
     if (verbose && write_view) cli_alert_info("updating existing {.file view.json}")
   }
-  if (!is.null(view$remote) && is.null(view$url)) {
+  if (length(view$remote)) {
     remote_parts <- strsplit(sub("^(?:https?://)?(?:www\\.)?github\\.com/", "", view$remote), "/")[[1]]
-    view$url <- paste0("https://", remote_parts[1], ".github.io/", remote_parts[2])
+    if (is.null(view$url)) view$url <- paste0("https://", remote_parts[1], ".github.io/", remote_parts[2])
+    if (!is.null(view$output)) {
+      outbase <- sub("/docs(?:/data)?", "", view$output)
+      if (!dir.exists(outbase)) {
+        outbase <- dirname(outbase)
+        dir.create(outbase, FALSE, TRUE)
+        wdir <- getwd()
+        setwd(outbase)
+        if (verbose) cli_alert_info(paste0("cloning remote view: {.url https://github.com/", view$remote, "}"))
+        overwrite <- TRUE
+        tryCatch(
+          system2("git", c("clone", paste0("https://github.com/", view$remote, ".git")), stdout = TRUE),
+          error = function(e) warning("remote clone failed: ", e$message)
+        )
+        setwd(wdir)
+      }
+    }
   }
   if (length(view$children)) {
     if (!is.null(names(view$children))) view$children <- list(view$children)
@@ -227,7 +243,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
             ri <- lapply(rmanifest$data, function(e) {
               m <- e$measure_info
               if (is.list(m[[1]])) {
-                names(m) <- vapply(m, "[[", "", "full_name")
+                names(m) <- vapply(m, function(e) if (is.null(e$full_name)) "" else e$full_name, "")
               } else if (is.list(m)) {
                 m <- list(m)
                 names(m) <- m[[1]]$full_name
@@ -258,7 +274,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
               }
             }
           }
-          ri <- ri[nri %in% view$variables & !nri %in% names(measure_info)]
+          ri <- ri[(if (length(view$variables)) nri %in% view$variables else TRUE) & !nri %in% names(measure_info)]
           if (length(ri)) measure_info[names(ri)] <- ri
         }
       }

@@ -104,8 +104,11 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
     }
     files <- NULL
     if (use_manifest && file.exists(paste0(cr, "manifest.json"))) {
-      files <- paste0(cr, read_json(paste0(cr, "manifest.json"), simplifyVector = TRUE)$data$path)
-      files <- files[file.exists(files)]
+      files <- read_json(paste0(cr, "manifest.json"), simplifyVector = TRUE)$data$path
+      if (length(files)) {
+        files <- paste0(cr, files)
+        files <- files[file.exists(files)]
+      }
     }
     if (!length(files)) {
       files <- list.files(

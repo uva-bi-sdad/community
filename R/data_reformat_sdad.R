@@ -51,7 +51,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   }
   if (any(!file.exists(files))) {
     files <- files[!file.exists(files)]
-    cli_abort("file{? does/s do} not exist: {.file {files}}")
+    cli_abort("file{? does/s do} not exist: {files}")
   }
   vars <- c(value, value_name, id, time, dataset, value_info, entity_info)
   spec <- c(
@@ -73,9 +73,9 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       if (grepl("[gbx]z2?$", f)) as.data.table(read.csv(gzfile(f))) else fread(f),
       error = function(e) NULL
     )
-    if (is.null(d)) cli_abort("failed to read in file {.file {f}}")
+    if (is.null(d)) cli_abort("failed to read in file {f}")
     if (!nrow(d)) {
-      if (verbose) cli_warn("file has no observations: {.file {f}}")
+      if (verbose) cli_warn("file has no observations: {f}")
       next
     }
     if (check_ids) {
@@ -86,19 +86,19 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
         }
         d <- d[d[[id]] %in% ids]
         if (!nrow(d)) {
-          if (verbose) cli_warn("file has none of the requested IDs: {.file {f}}")
+          if (verbose) cli_warn("file has none of the requested IDs: {f}")
           next
         }
       } else {
-        if (verbose) cli_warn("file has no ID column: {.file {f}}")
+        if (verbose) cli_warn("file has no ID column: {f}")
         next
       }
     }
     if (any(su <- !vars %in% colnames(d))) {
-      if (all(su)) cli_abort("no variables found in file {.file {f}}")
+      if (all(su)) cli_abort("no variables found in file {f}")
       if (any(!spec[su])) {
         cli_abort(
-          "table from {.file {f}} does not have {?a column name/column names} {.var {vars[su][!spec[su]]}}"
+          "table from {f} does not have {?a column name/column names} {.var {vars[su][!spec[su]]}}"
         )
       }
       vars <- vars[!su]

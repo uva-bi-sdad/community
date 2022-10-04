@@ -53,9 +53,11 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
     if (length(rmanifest_files)) {
       all_files <- unlist(lapply(rmanifest_files, function(f) {
         m <- read_json(f, simplifyVector = TRUE)
-        files <- m$data[grepl(search_pattern, m$data$path), "path"]
-        if (length(files)) {
-          paste0(dirname(f), "/", files)
+        if (length(m$data)) {
+          files <- m$data[grepl(search_pattern, m$data$path), "path"]
+          if (length(files)) {
+            paste0(dirname(f), "/", files)
+          }
         }
       }), FALSE, FALSE)
     }
@@ -73,7 +75,7 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
   }
   i <- 1
   map <- idmap <- list()
-  noread <- novars <- noids <- NULL
+  noread <- novars <- noids <- empty <- NULL
   repos <- commons$repositories
   manifest <- list()
   if (verbose) {
@@ -93,29 +95,41 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
     for (f in files) {
       d <- tryCatch(reader(if (grepl("[gbx]z2?$", f)) gzfile(f) else f, 1), error = function(e) NULL)
       if (!is.null(d)) {
-        hash <- md5sum(f)[[1]]
-        manifest[[r]][[hash]]$name <- basename(f)
-        manifest[[r]][[hash]]$providers <- c(manifest[[r]][[hash]]$provider, if (grepl("repos/", f, fixed = TRUE)) "github" else "dataverse")
-        if (!is.character(variable_location) || variable_location %in% colnames(d)) {
-          vars <- unique(if (is.function(variable_location)) variable_location(d) else d[, variable_location, drop = TRUE])
-          map[[f]] <- data.frame(
-            variable = vars,
-            full_name = sub("^:", "", paste0(
-              sub("^.*[\\\\/]", "", gsub("^.*\\d{4}(?:q\\d)?_|\\.\\w{3,4}(?:\\.[gbx]z2?)?$|\\..*$", "", basename(f))), ":", vars
-            )),
-            repo = r,
-            file = sub(dir, "", f, fixed = TRUE)
-          )
-          manifest[[r]][[hash]]$variables <- vars
+        if (nrow(d)) {
+          hash <- md5sum(f)[[1]]
+          manifest[[r]][[hash]]$name <- basename(f)
+          manifest[[r]][[hash]]$providers <- c(manifest[[r]][[hash]]$provider, if (grepl("repos/", f, fixed = TRUE)) "github" else "dataverse")
+          if (!is.character(variable_location) || variable_location %in% colnames(d)) {
+            vars <- unique(if (is.function(variable_location)) variable_location(d) else d[, variable_location, drop = TRUE])
+            if (length(vars)) {
+              map[[f]] <- data.frame(
+                variable = vars,
+                full_name = sub("^:", "", paste0(
+                  sub("^.*[\\\\/]", "", gsub("^.*\\d{4}(?:q\\d)?_|\\.\\w{3,4}(?:\\.[gbx]z2?)?$|\\..*$", "", basename(f))), ":", vars
+                )),
+                repo = r,
+                file = sub(dir, "", f, fixed = TRUE)
+              )
+              manifest[[r]][[hash]]$variables <- vars
+            } else {
+              novars <- c(novars, f)
+            }
+          } else {
+            novars <- c(novars, f)
+          }
+          if (!is.character(id_location) || id_location %in% colnames(d)) {
+            ids <- trimws(format(unique(if (is.function(id_location)) id_location(d) else d[, id_location, drop = TRUE]), scientific = FALSE))
+            if (length(ids)) {
+              idmap[[f]] <- data.frame(id = ids, repo = r, file = sub(dir, "", f, fixed = TRUE))
+              manifest[[r]][[hash]]$ids <- ids
+            } else {
+              noids <- c(noids, f)
+            }
+          } else {
+            noids <- c(noids, f)
+          }
         } else {
-          novars <- c(novars, f)
-        }
-        if (!is.character(id_location) || id_location %in% colnames(d)) {
-          ids <- trimws(format(unique(if (is.function(id_location)) id_location(d) else d[, id_location, drop = TRUE]), scientific = FALSE))
-          idmap[[f]] <- data.frame(id = ids, repo = r, file = sub(dir, "", f, fixed = TRUE))
-          manifest[[r]][[hash]]$ids <- ids
-        } else {
-          noids <- c(noids, f)
+          empty <- c(empty, f)
         }
       } else {
         noread <- c(noread, f)
@@ -126,9 +140,10 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
   map <- do.call(rbind, unname(map))
   idmap <- do.call(rbind, unname(idmap))
   if (verbose) {
-    if (length(noread)) cli_warn("file{?s} could not be read in: {.file {noread}}")
-    if (length(novars)) cli_warn("{.arg {variable_location}} was not in {?some files'/a file's} column names: {.file {novars}}")
-    if (length(noids)) cli_warn("{.arg {id_location}} was not in {?some files'/a file's} column names: {.file {noids}}")
+    if (length(noread)) cli_warn("file{?s} could not be read in: {noread}")
+    if (length(empty)) cli_warn("{?files have/file had} no rows: {empty}")
+    if (length(novars)) cli_warn("{.arg {variable_location}} was not in {?some files'/a file's} column names: {novars}")
+    if (length(noids)) cli_warn("{.arg {id_location}} was not in {?some files'/a file's} column names: {noids}")
   }
   dir.create(paste0(dir, "manifest"), FALSE)
   write_json(manifest, paste0(dir, "manifest/files.json"), pretty = TRUE, auto_unbox = TRUE)
