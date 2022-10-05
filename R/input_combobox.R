@@ -29,6 +29,7 @@
 #' @param subset Determines the subset of options shown if \code{options} is \code{"ids"}; mainly \code{"all"}
 #' (default) to apply all filters, including the current selection, or \code{"full_filter"} to apply all
 #' feature and variable filters, but not the current selection.
+#' @param selection_subset Subset to use when a selection is made; defaults to \code{"full_filter"}.
 #' @param filters A list with names of \code{meta} entries (from \code{variable} entry in \code{\link{data_add}}'s
 #' \code{meta} list), and values of target values for those entries, or the IDs of value selectors.
 #' @param reset_button If specified, adds a button after the input element that will revert the selection
@@ -49,8 +50,8 @@
 input_combobox <- function(label, options, default = -1, display = options, id = label, ...,
                            strict = TRUE, search = TRUE, multi = FALSE, clearable = FALSE, note = NULL,
                            group_feature = NULL, variable = NULL, dataset = NULL, depends = NULL,
-                           dataview = NULL, subset = "all", filters = NULL, reset_button = FALSE,
-                           button_class = NULL, as.row = FALSE, floating_label = TRUE) {
+                           dataview = NULL, subset = "all", selection_subset = "full_filter", filters = NULL,
+                           reset_button = FALSE, button_class = NULL, as.row = FALSE, floating_label = TRUE) {
   id <- gsub("\\s", "", id)
   a <- list(...)
   if (as.row) floating_label <- FALSE
@@ -67,13 +68,14 @@ input_combobox <- function(label, options, default = -1, display = options, id =
       if (!is.null(note)) paste0(' aria-description="', note, '"'),
       if (!is.null(dataview)) paste0(' data-view="', dataview, '"'),
       if (!is.null(subset)) paste0(' subset="', subset, '"'),
+      if (!is.null(selection_subset)) paste0(' selection-subset="', selection_subset, '"'),
       if (!is.null(depends)) paste0(' depends="', depends, '"'),
       if (!is.null(dataset)) paste0(' dataset="', dataset, '"'),
       if (!is.null(variable)) paste0(' variable="', variable, '"'),
       if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
       '><div class="combobox-selection combobox-component"><span class="combobox-component"></span>',
       '<input class="combobox-input combobox-component" type="text" aria-labelledby="', id,
-      '-label" id="', id, '-input"></div>',
+      '-label" id="', id, '-input" autocomplete="false"></div>',
       if (clearable) '<button type="button" class="btn-close" title="clear selection"></button>',
       "</div>"
     ),
@@ -109,7 +111,7 @@ input_combobox <- function(label, options, default = -1, display = options, id =
     if (floating_label) paste0('<label id="', id, '-label">', label, "</label>"),
     if (!missing(reset_button)) {
       paste(c(
-        '<button type="button" class="btn', if (!is.null(button_class)) paste("", button_class), ' select-reset">',
+        '<button type="button" class="btn btn-link', if (!is.null(button_class)) paste("", button_class), ' select-reset">',
         if (is.character(reset_button)) reset_button else "Reset",
         "</button>"
       ), collapse = "")

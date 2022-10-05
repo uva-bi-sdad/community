@@ -94,9 +94,6 @@ table.dataTable thead td,
 .combobox-options-container {
   border-bottom: 1px solid var(--background-border);
 }
-label {
-  color: var(--body-text);
-}
 input {
   color: var(--body-text);
 }
@@ -161,8 +158,9 @@ button:hover {
   margin: 1em 0 0.2em 0;
 }
 label {
+  color: var(--body-text);
   white-space: nowrap;
-  z-index: 3;
+  z-index: 5;
   width: 100%;
   -webkit-user-select: none;
   -khtml-user-select: none;
@@ -531,6 +529,9 @@ button.dropdown-toggle {
   height: 0.8em;
   width: 0.8em;
 }
+.select-reset {
+  text-decoration: none;
+}
 button.has-note::after,
 .button-wrapper.has-note button::before,
 .has-note label::before,
@@ -870,10 +871,11 @@ table.dataTable.compact tbody td {
   color: var(--link);
   padding: 0 0.2em;
 }
-
+.number-input-row .text-wrapper {
+  width: 100%;
+}
 .number-input-row {
   display: flex;
-  text-align: center;
   padding: 4px 0;
 }
 .number-input-row label {
@@ -881,7 +883,6 @@ table.dataTable.compact tbody td {
 }
 .number-input-row button {
   background-color: inherit;
-  width: 90px;
 }
 .number-input-row input,
 .number-input-row button {
@@ -912,7 +913,9 @@ table.dataTable.compact tbody td {
   border-color: var(--highlight);
 }
 .btn:hover,
-.btn:focus {
+.btn:focus,
+.number-input-row button:focus {
+  color: var(--highlight-text);
   background: var(--highlight) !important;
 }
 .dataTables_wrapper .dataTables_paginate .paginate_button {

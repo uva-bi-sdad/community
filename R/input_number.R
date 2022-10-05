@@ -28,10 +28,10 @@ input_number <- function(label, id = label, ..., default = NULL, variable = NULL
                          type = "number", class = NULL, note = NULL, dataview = NULL, floating_label = TRUE, buttons = FALSE) {
   id <- gsub("\\s", "", id)
   r <- c(
-    paste0('<div class="wrapper text-wrapper', if (floating_label) " form-floating", if (buttons) " number-input-row", '">'),
+    if (buttons) '<div class="wrapper number-input-row"><button role="button" label="decrease value" class="btn number-down">&lt;</button>',
+    paste0('<div class="wrapper text-wrapper', if (floating_label) " form-floating", '">'),
     if (!floating_label) paste0('<label for="', id, '">', label, "</label>"),
     paste0(c(
-      if (buttons) '<button role="button" label="decrease value" class="btn number-down">&lt;</button>',
       '<input type="', type, '"',
       ' id="', id, '"',
       if (!is.null(default)) paste0(' default="', default, '"'),
@@ -43,10 +43,10 @@ input_number <- function(label, id = label, ..., default = NULL, variable = NULL
       if (!is.null(dataview)) paste0(' data-view="', dataview, '"'),
       unlist(list(...)),
       ' class="form-control auto-input', if (!is.null(class)) paste("", class), '" auto-type="number">',
-      if (floating_label) paste0('<label for="', id, '">', label, "</label>"),
-      if (buttons) '<button role="button" label="increase value" class="btn number-down">&gt;</button>'
+      if (floating_label) paste0('<label for="', id, '">', label, "</label>")
     ), collapse = ""),
-    "</div>"
+    "</div>",
+    if (buttons) '<button role="button" label="increase value" class="btn number-up">&gt;</button></div>'
   )
   caller <- parent.frame()
   if (!is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts") {

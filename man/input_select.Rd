@@ -7,8 +7,8 @@
 input_select(label, options, default = -1, display = options, id = label,
   ..., note = NULL, group_feature = NULL, variable = NULL,
   dataset = NULL, depends = NULL, dataview = NULL, subset = "all",
-  filters = NULL, reset_button = FALSE, button_class = NULL,
-  as.row = FALSE, floating_label = TRUE)
+  selection_subset = "full_filter", filters = NULL, reset_button = FALSE,
+  button_class = NULL, as.row = FALSE, floating_label = TRUE)
 }
 \arguments{
 \item{label}{Label of the input for the user.}
@@ -44,6 +44,8 @@ specify dataset if none is specified here.}
 \item{subset}{Determines the subset of options shown if \code{options} is \code{"ids"}; mainly \code{"all"}
 (default) to apply all filters, including the current selection, or \code{"full_filter"} to apply all
 feature and variable filters, but not the current selection.}
+
+\item{selection_subset}{Subset to use when a selection is made; defaults to \code{"full_filter"}.}
 
 \item{filters}{A list with names of \code{meta} entries (from \code{variable} entry in \code{\link{data_add}}'s
 \code{meta} list), and values of target values for those entries, or the IDs of value selectors.}

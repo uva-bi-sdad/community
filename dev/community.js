@@ -276,7 +276,9 @@ void (function () {
             }
             var ns = 0
             if ('ID' === u.variable || 'ids' === u.options_source) {
-              const v = no_view ? {} : site.dataviews[u.view].selection[u.subset]
+              const v = no_view
+                ? {}
+                : site.dataviews[u.view].selection[-1 === u.value() ? u.subset : u.selection_subset]
               u.options.forEach(si => {
                 if (fresh && !u.groups) c.appendChild(si)
                 if (no_view || si.value in v) {
@@ -787,14 +789,15 @@ void (function () {
         },
         number: {
           init: function (o) {
-            if (o.e.previousElementSibling && o.e.previousElementSibling.classList.contains('number-down')) {
-              o.e.previousElementSibling.addEventListener(
+            const w = o.e.parentElement.parentElement
+            if (w && w.firstElementChild.classList.contains('number-down')) {
+              w.firstElementChild.addEventListener(
                 'click',
                 function () {
                   this.set(Math.max(this.parsed.min, this.value() - 1))
                 }.bind(o)
               )
-              o.e.parentElement.lastElementChild.addEventListener(
+              w.lastElementChild.addEventListener(
                 'click',
                 function () {
                   this.set(Math.min(this.parsed.max, this.value() + 1))
@@ -3741,7 +3744,7 @@ void (function () {
         if (o.wrapper) {
           if (o.note) o.wrapper.classList.add('has-note')
           o.wrapper.setAttribute('of', o.id)
-          ;['div', 'label', 'fieldset', 'legend', 'input', 'button'].forEach(type => {
+          ;['div', 'span', 'label', 'fieldset', 'legend', 'input', 'button'].forEach(type => {
             const c = o.wrapper.querySelectorAll(type)
             if (c.length) c.forEach(ci => ci.setAttribute('of', o.id))
           })
@@ -4034,6 +4037,7 @@ void (function () {
               o.id in site.url_options ? o.set(site.url_options[o.id]) : o.reset()
             }
             o.subset = o.e.getAttribute('subset') || 'all'
+            o.selection_subset = o.e.getAttribute('selection-subset') || o.subset
             if (o.type in site && o.id in site[o.type]) {
               o.settings = site[o.type][o.id]
               if (o.settings.filters) {

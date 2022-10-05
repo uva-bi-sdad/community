@@ -72,8 +72,9 @@ allowing for multiple selection, dynamic filtering, and custom entries.</p>
 <span>  id <span class="op">=</span> <span class="va">label</span>, <span class="va">...</span>, strict <span class="op">=</span> <span class="cn">TRUE</span>, search <span class="op">=</span> <span class="cn">TRUE</span>, multi <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  clearable <span class="op">=</span> <span class="cn">FALSE</span>, note <span class="op">=</span> <span class="cn">NULL</span>, group_feature <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  variable <span class="op">=</span> <span class="cn">NULL</span>, dataset <span class="op">=</span> <span class="cn">NULL</span>, depends <span class="op">=</span> <span class="cn">NULL</span>, dataview <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  subset <span class="op">=</span> <span class="st">"all"</span>, filters <span class="op">=</span> <span class="cn">NULL</span>, reset_button <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  button_class <span class="op">=</span> <span class="cn">NULL</span>, as.row <span class="op">=</span> <span class="cn">FALSE</span>, floating_label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<span>  subset <span class="op">=</span> <span class="st">"all"</span>, selection_subset <span class="op">=</span> <span class="st">"full_filter"</span>, filters <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  reset_button <span class="op">=</span> <span class="cn">FALSE</span>, button_class <span class="op">=</span> <span class="cn">NULL</span>, as.row <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  floating_label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -153,6 +154,10 @@ specify dataset if none is specified here.</p></dd>
 <dd><p>Determines the subset of options shown if <code>options</code> is <code>"ids"</code>; mainly <code>"all"</code>
 (default) to apply all filters, including the current selection, or <code>"full_filter"</code> to apply all
 feature and variable filters, but not the current selection.</p></dd>
+
+
+<dt>selection_subset</dt>
+<dd><p>Subset to use when a selection is made; defaults to <code>"full_filter"</code>.</p></dd>
 
 
 <dt>filters</dt>
