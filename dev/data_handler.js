@@ -1,4 +1,34 @@
-'use strict'
+String.prototype.slugify = function (separator = '-') {
+  return this.toString()
+    .normalize('NFD') // split an accented letter in the base letter and the acent
+    .replace(/[\u0300-\u036f]/g, '') // remove all previously split accents
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]/g, '') // remove all chars not letters, numbers and spaces (to be replaced)
+    .replace(/\s+/g, separator)
+}
+String.prototype.hashCode = function () {
+  var hash = 0,
+    i,
+    chr
+  if (this.length === 0) return hash
+  for (i = 0; i < this.length; i++) {
+    chr = this.charCodeAt(i)
+    hash = (hash << 5) - hash + chr
+    hash |= 0 // Convert to 32bit integer
+  }
+  return String(hash)
+}
+String.prototype.truncate =
+  String.prototype.truncate ||
+  function (n, useWordBoundary) {
+    if (this.length <= n) {
+      return this
+    }
+    const subString = this.slice(0, n - 1) // the original check
+    return (useWordBoundary ? subString.slice(0, subString.lastIndexOf(' ')) : subString) + '&hellip;'
+  }
+;('use strict')
 function DataHandler(settings, defaults, data, hooks) {
   this.hooks = hooks || {}
   this.defaults = defaults || {dataview: 'default_view', time: 'time'}
@@ -1168,6 +1198,7 @@ DataHandler.prototype = {
         }
       })
     } else rows[0] += sep + 'time' + sep + ('mixed' === query.table_format ? vars : ['variable', 'value']).join(sep)
+    //console.log(rows[0]);
     Object.keys(entities).forEach(k => {
       const e = entities[k]
       if (
@@ -1177,6 +1208,9 @@ DataHandler.prototype = {
       ) {
         const r = rw(e, query.time_range, feats, vars, sep)
         if (r) rows.push(r)
+        // console.log(r) // "51830","Williamsburg City","urban",2015,91.0601
+        // console.log(query.variables) // {filter_by: Array(0), conditions: Array(0)}
+        // console.log(feats) // geoid: 'id', name: 'name', region_type: 'type'
       }
     })
     res.headers['Content-Type'] = 'text/' + (',' === sep ? 'csv' : 'plain') + '; charset=utf-8'
@@ -1186,7 +1220,15 @@ DataHandler.prototype = {
       document.body.appendChild(e)
       e.rel = 'noreferrer'
       e.target = '_blank'
-      e.download = 'data_export.' + query.file_format
+      // 0th row is the data headers, and the first 4 are always [geoid,name,region_type,time]. However, the number of columns is variable based on filter, or download all, etc., so we extract everything after the first four elements
+      var download_data_filename = rows[0].split(',').slice(4).join(' ')
+
+      // If the file name is longer than an abitrary length (75 characters), set it to below the windows file name (256) limit by hashing the resulting bundle of columns
+      if (download_data_filename.length > 75) {
+        download_data_filename = 'sdad_data_bundle_' + download_data_filename.hashCode().slugify('_')
+        download_data_filename = download_data_filename.substring(0, 256)
+      }
+      e.download = download_data_filename + query.file_format
       e.href = URL.createObjectURL(new Blob([res.body], {type: res.headers['Content-Type']}))
       setTimeout(function () {
         e.dispatchEvent(new MouseEvent('click'))
