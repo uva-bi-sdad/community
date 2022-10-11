@@ -1,11 +1,11 @@
+'use strict'
 String.prototype.slugify = function (separator = '-') {
   return this.toString()
     .normalize('NFD') // split an accented letter in the base letter and the acent
     .replace(/[\u0300-\u036f]/g, '') // remove all previously split accents
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9]/g, '') // remove all chars not letters, numbers and spaces (to be replaced)
-    .replace(/\s+/g, separator)
+    .replace(/[^0-9a-zA-Z]+/g, separator) // convert all white spaces to the separator
 }
 String.prototype.hashCode = function () {
   var hash = 0,
@@ -28,7 +28,6 @@ String.prototype.truncate =
     const subString = this.slice(0, n - 1) // the original check
     return (useWordBoundary ? subString.slice(0, subString.lastIndexOf(' ')) : subString) + '&hellip;'
   }
-;('use strict')
 function DataHandler(settings, defaults, data, hooks) {
   this.hooks = hooks || {}
   this.defaults = defaults || {dataview: 'default_view', time: 'time'}
@@ -1215,19 +1214,21 @@ DataHandler.prototype = {
     })
     res.headers['Content-Type'] = 'text/' + (',' === sep ? 'csv' : 'plain') + '; charset=utf-8'
     res.body = rows.join('\n')
+
+    // Creating data file name
+    var download_data_filename = vars.join(' ')
+    //console.log(vars) //apparently better to get it from the "vars array, rather than extracting them from the header, since they aren't included in the tall format"
+    // If the file name is longer than an abitrary length (75 characters), set it to below the windows file name (256) limit by hashing the resulting bundle of columns
+    if (download_data_filename.length > 75) {
+      download_data_filename = 'sdad_data_bundle_' + download_data_filename.hashCode()
+      download_data_filename = download_data_filename.substring(0, 256)
+    }
+    download_data_filename = download_data_filename.slugify('_')
     if (in_browser) {
       const e = document.createElement('a')
       document.body.appendChild(e)
       e.rel = 'noreferrer'
       e.target = '_blank'
-      // 0th row is the data headers, and the first 4 are always [geoid,name,region_type,time]. However, the number of columns is variable based on filter, or download all, etc., so we extract everything after the first four elements
-      var download_data_filename = rows[0].split(',').slice(4).join(' ')
-
-      // If the file name is longer than an abitrary length (75 characters), set it to below the windows file name (256) limit by hashing the resulting bundle of columns
-      if (download_data_filename.length > 75) {
-        download_data_filename = 'sdad_data_bundle_' + download_data_filename.hashCode().slugify('_')
-        download_data_filename = download_data_filename.substring(0, 256)
-      }
       e.download = download_data_filename + query.file_format
       e.href = URL.createObjectURL(new Blob([res.body], {type: res.headers['Content-Type']}))
       setTimeout(function () {
@@ -1237,7 +1238,7 @@ DataHandler.prototype = {
       }, 0)
     } else {
       res.statusCode = 200
-      res.headers['Content-Disposition'] = 'attachment; filename=data_export.' + query.file_format
+      res.headers['Content-Disposition'] = 'attachment; filename=' + download_data_filename + '.' + query.file_format
       return res
     }
   },
