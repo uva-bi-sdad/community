@@ -646,20 +646,23 @@ button.has-note::after {
   background-color: inherit;
   border: none;
   font-size: 1.5em;
+  color: var(--body-text);
 }
 .panel-left {
   left: 0;
-  padding: 0 20px 0 0;
+  padding: 0 17px 0 0;
 }
 .panel-left .panel-toggle {
   right: 0;
+  border-left: 1px solid var(--bs-card-border-color);
 }
 .panel-right {
   right: 0;
-  padding: 0 0 0 20px;
+  padding: 0 0 0 17px;
 }
 .panel-right .panel-toggle {
   left: 0;
+  border-right: 1px solid var(--bs-card-border-color);
 }
 .panel .card-header {
   text-align: center;
@@ -949,6 +952,7 @@ input[type='range']::-webkit-slider-thumb {
   border-radius: 5px;
   background: var(--highlight);
   cursor: pointer;
+  appearance: none;
   -webkit-appearance: none;
   margin-top: -11px;
 }
