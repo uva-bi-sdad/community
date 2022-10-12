@@ -4553,7 +4553,7 @@ void (function () {
         source = 'string' === typeof o.source ? o.source : ''
       if (!source && o.source) {
         for (i = o.source.length; i--; ) {
-          if (time === o.source[i].time) {
+          if (!o.source[i].time || time === o.source[i].time) {
             if (o.source[i].name) delete o.source[i].name
             source = o.source[i].url
             break
