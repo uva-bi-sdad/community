@@ -1217,7 +1217,7 @@ DataHandler.prototype = {
 
     // Creating data file name
     var download_data_filename = vars.join(' ')
-    //console.log(vars) //apparently better to get it from the "vars array, rather than extracting them from the header, since they aren't included in the tall format"
+    // console.log(vars) //apparently better to get it from the "vars array, rather than extracting them from the header, since they aren't included in the tall format"
     // If the file name is longer than an abitrary length (75 characters), set it to below the windows file name (256) limit by hashing the resulting bundle of columns
     if (download_data_filename.length > 75) {
       download_data_filename = 'sdad_data_bundle_' + download_data_filename.hashCode()
