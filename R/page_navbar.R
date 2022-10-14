@@ -5,7 +5,8 @@
 #' @param ... Content to add to the navbar. Can be lists specifying submenus and their items.
 #' Each list can have entries for \code{"name"} (the navbar button text), \code{"title"} (the menu title),
 #' \code{"id"} (the ID of the menu element), \code{"class"} (class of the menu element),
-#' \code{"placement"} (start, top, end, or bottom), \code{"backdrop"} (logical), and \code{items}
+#' \code{"placement"} (start, top, end, or bottom), \code{"backdrop"} (logical, where \code{FALSE}
+#' disables the backdrop and makes the menu shift main content), and \code{items}
 #' (a list of menu items).
 #' @param title A title to appear in the header.
 #' @param logo URL of an image to appear in the header.
@@ -68,6 +69,7 @@ page_navbar <- function(..., title = "", logo = "", breakpoint = "md", logo.heig
           id, '" aria-controls="', id, '">', submenus[[i]]$name, "</button>",
           "</li>"
         ))
+        has_foot <- !is.null(submenus[[i]]$foot)
         menus <- c(
           menus,
           paste(c(
@@ -85,9 +87,16 @@ page_navbar <- function(..., title = "", logo = "", breakpoint = "md", logo.heig
           ),
           '<button class="btn-close text-reset" type="button" data-bs-dismiss="offcanvas" title="Close"></button>',
           "</div>",
-          '<div class="offcanvas-body">',
+          paste0('<div class="offcanvas-body"', if (has_foot) ' style="bottom: 46px"', ">"),
           unlist(lapply(submenus[[i]]$items[-1], eval, parts), use.names = FALSE),
           "</div>",
+          if (has_foot) {
+            c(
+              '<div class="offcanvas-footer">',
+              unlist(lapply(submenus[[i]]$foot[-1], eval, parts), use.names = FALSE),
+              "</div>"
+            )
+          },
           "</div>"
         )
       } else {

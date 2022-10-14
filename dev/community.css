@@ -30,21 +30,24 @@
   --warning: #a11320;
   --na: #7e7e7e;
 }
-
+.offcanvas {
+  --bs-offcanvas-width: 300px;
+}
 body,
 html,
 .modal-content,
 table.dataTable tbody tr,
 .offcanvas,
-.leaflet-tooltip {
+.leaflet-tooltip,
+.card {
   background-color: var(--background);
   border-color: var(--background-border);
   color: var(--body-text);
 }
-#site_wrap {
-  position: fixed;
-  height: 100%;
-  width: 100%;
+.card-header {
+  font-weight: bold;
+  font-size: 1.1em;
+  background-color: var(--background-highlight);
 }
 .form-check-input,
 .form-check-input > label,
@@ -190,11 +193,14 @@ div.filter-hidden {
 .combobox {
   cursor: pointer;
   display: flex;
+  position: relative;
+  overflow: hidden;
+}
+.form-select.combobox {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 .combobox-selection {
-  position: absolute;
-  left: 13px;
-  right: 13px;
   padding: 0.3em 0.3em 0.3em 0;
   background-color: transparent;
   display: flex;
@@ -208,7 +214,6 @@ input.combobox-input {
   background-color: transparent;
   border: none;
   min-width: 10px;
-  max-width: 10%;
   overflow-x: visible;
 }
 .combobox-input:focus {
@@ -275,7 +280,7 @@ input.combobox-input {
   opacity: 0.6;
 }
 .navbar {
-  position: fixed;
+  position: absolute;
   width: 100%;
   z-index: 100;
   min-height: 55px;
@@ -314,6 +319,10 @@ input.combobox-input {
 div[class^='col-'] {
   min-width: 100px;
 }
+.content-overlay {
+  position: absolute;
+  z-index: 1080;
+}
 .content > .col > .row,
 .content > .row {
   min-height: 300px;
@@ -324,13 +333,6 @@ div[class^='col-'] {
 }
 p.compact {
   margin: 0;
-}
-.footer {
-  display: block;
-  width: 92%;
-  position: absolute;
-  bottom: 16px;
-  z-index: 400;
 }
 button.btn-danger {
   background-color: var(--warning);
@@ -348,13 +350,18 @@ button.btn-danger {
 .btn-full {
   width: 100%;
 }
+#site_wrap {
+  overflow: hidden;
+}
 .menu,
+.menu-toggle,
 .menu-wrapper,
-.panel {
+.panel,
+#site_wrap {
   transition: top 400ms, right 400ms, bottom 400ms, left 400ms;
 }
 .menu-wrapper {
-  position: fixed;
+  position: absolute;
   overflow: visible;
   z-index: 90;
 }
@@ -365,7 +372,7 @@ button.btn-danger {
   overflow-x: auto;
 }
 .menu-toggle {
-  position: fixed;
+  position: absolute;
   background-color: var(--background-highlight);
   border: none;
   font-size: 1.7em;
@@ -493,10 +500,10 @@ button.dropdown-toggle {
 }
 .floating,
 .tooltip {
-  position: fixed;
+  position: absolute;
   background-color: var(--background);
   border-radius: 10px;
-  z-index: 1080;
+  z-index: 1079;
   border: 2px solid var(--background-border);
   padding: 0.5em;
   opacity: 1;
@@ -577,8 +584,20 @@ button.has-note::after {
   background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='%23000' viewBox='0 0 16 16'><path d='M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z'/><path d='m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z'/></svg>");
 }
 .offcanvas-body {
-  padding: 1rem 1rem 4.5rem 1rem;
   overflow-x: hidden;
+  position: absolute;
+  top: 62px;
+  width: 100%;
+}
+.offcanvas-footer {
+  position: absolute;
+  height: 46px;
+  width: 100%;
+  bottom: 0;
+  padding: 4px var(--bs-offcanvas-padding-x);
+}
+.offcanvas-footer button {
+  width: 100%;
 }
 .menu-compact .offcanvas-body {
   font-size: 0.95em;
@@ -600,6 +619,19 @@ button.has-note::after {
 .source-table td:first-of-type,
 .source-table th:first-of-type {
   text-align: left;
+}
+.sources-cards .card {
+  margin: 0 0 0.3em 0;
+}
+.sources-cards .card-body {
+  font-size: 0.9em;
+  padding: 0.5rem 1rem;
+}
+.sources-cards p {
+  margin: 0;
+}
+.sources-cards p span:first-child {
+  opacity: 0.7;
 }
 .reference-list {
   padding: 0;
@@ -629,10 +661,10 @@ button.has-note::after {
   width: 3.5em;
 }
 .panel {
-  position: fixed;
+  position: absolute;
   top: 0;
   bottom: 0;
-  width: 210px;
+  width: 220px;
   max-width: 100%;
   border-radius: 0;
   background-color: var(--background-highlight);
@@ -808,8 +840,8 @@ table.dataTable.compact tbody th,
 table.dataTable.compact tbody td {
   padding: 0 17px 0 0;
 }
-.dataTable td,
-.dataTable th {
+table.dataTable tbody td,
+table.dataTable thead th {
   text-align: right;
   white-space: nowrap;
 }

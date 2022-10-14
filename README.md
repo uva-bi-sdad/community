@@ -3,28 +3,6 @@
 An R package bringing together a range of methods as part of a framework for
 collecting, documenting, analyzing, and presenting community data (relating to people in places or groups).
 
-## Framework
-
-The package will hope to offer tools to help manage data, derive measurements from them, and present them for analysis:
-
-### Data Ingestion
-
-- Cleaning and standardization methods
-- Measures of quality
-- Documentation standards
-
-### Measurement Pipelines
-
-- Preprocess pipelines
-- Unification of measurement variants
-- Standardized output
-
-### Presentation
-
-- Metadata-based site builders
-- Static report generators
-- Dynamic report templates and standards
-
 ## Installation
 
 Download R from [r-project.org](https://www.r-project.org/), then install the package from an R console:

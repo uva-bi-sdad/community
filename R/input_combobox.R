@@ -58,7 +58,9 @@ input_combobox <- function(label, options, default = -1, display = options, id =
   r <- c(
     '<div class="wrapper combobox-wrapper">',
     if (!floating_label) paste0('<label id="', id, '-label">', label, "</label>"),
-    paste0('<div class="', paste(if (reset_button) "input-group", if (floating_label) "form-floating"), '">'),
+    paste0('<div class="', paste(c(
+      if (reset_button) "input-group", if (floating_label) "form-floating"
+    ), collapse = " "), '">'),
     paste0(
       '<div role="combobox" class="auto-input form-select combobox combobox-component" auto-type="combobox"',
       ' aria-haspopup="listbox" aria-expanded="false" aria-labelledby="', id,

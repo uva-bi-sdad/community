@@ -536,7 +536,7 @@ void (function () {
                           var q = []
                           if ('include' in f) q.push('include=' + f.include)
                           if ('dataset' in f) q.push('dataset=' + f.dataset)
-                          if ('id' in f) q.push('id=' + f.id)
+                          if ('id' in f && -1 != f.id) q.push('id=' + f.id)
                           if (v) {
                             if (!f.time_range)
                               q.push(
@@ -939,6 +939,77 @@ void (function () {
           },
         },
         combobox: {
+          create: function (label, options) {
+            const id = 'created_combobox_' + ++page.elementCount,
+              e = document.createElement('div')
+            let c = document.createElement('div')
+            e.className = 'wrapper combobox-wrapper'
+            e.appendChild(c)
+            c.id = id
+            c.setAttribute('auto-type', 'combobox')
+            c.className = 'auto-input form-select combobox combobox-component'
+            c.role = 'combobox'
+            c.setAttribute('aria-haspopup', 'listbox')
+            c.setAttribute('aria-expanded', 'false')
+            c.setAttribute('aria-labelledby', id + '-label')
+            c.setAttribute('aria-controls', id + '-listbox')
+            c.appendChild((c = document.createElement('div')))
+            c.className = 'combobox-selection combobox-component'
+            c.appendChild(document.createElement('span'))
+            c.lastElementChild.className = 'combobox-component'
+            c.appendChild((c = document.createElement('input')))
+            c.className = 'combobox-input combobox-component'
+            c.type = 'text'
+            c.setAttribute('aria-labelledby', id + '-label')
+            c.id = id + '-input'
+            c.autocomplete = 'false'
+            e.appendChild((c = document.createElement('div')))
+            c.className = 'combobox-options combobox-component'
+            c.role = 'listbox'
+            c.tabindex = '-1'
+            c.id = id + '-listbox'
+            e.appendChild((c = document.createElement('label')))
+            c.id = id + '-label'
+            c.innerText = label
+            elements.init_input(e.firstElementChild)
+            const u = _u[id]
+            var n = 0
+            u.options = []
+            if (Array.isArray(options)) {
+              options.forEach(o => {
+                const l = site.data.format_label(o)
+                u.display[l] = n
+                u.values[o] = n++
+                u.options.push(u.add(o, l))
+              })
+            } else {
+              u.groups = {e: [], by_name: {}}
+              Object.keys(options).forEach(k => {
+                const g = options[k]
+                const e = document.createElement('div'),
+                  id = u.id + '_group_' + k.replace(patterns.seps, '-')
+                e.className = 'combobox-group combobox-component'
+                e.role = 'group'
+                e.setAttribute('aria-labelledby', id)
+                e.appendChild(document.createElement('label'))
+                e.firstElementChild.innerText = k
+                e.firstElementChild.id = id
+                e.firstElementChild.className = 'combobox-group-label combobox-component'
+                u.groups.by_name[k] = e
+                u.groups.e.push(e)
+                g.forEach(o => u.groups.by_name[k].appendChild(u.add(o, o, true)))
+                u.listbox.appendChild(e)
+              })
+              Object.keys(u.groups.by_name).forEach(g => {
+                u.groups.by_name[g].querySelectorAll('.combobox-option').forEach(c => {
+                  u.options.push(c)
+                  u.values[c.value] = n
+                  u.display[c.innerText] = n++
+                })
+              })
+            }
+            return u
+          },
           init: function (o) {
             o.hover_index = -1
             o.cleared_selection = ''
@@ -985,7 +1056,8 @@ void (function () {
             o.listbox.addEventListener('click', o.set)
             o.close = function (e) {
               if (this.expanded && (!e || !e.target.classList || !e.target.classList.contains('combobox-component'))) {
-                if (this.selection.innerText === '') this.selection.innerText = this.cleared_selection
+                if ('' === this.selection.innerText) this.selection.innerText = this.cleared_selection
+                if ('' !== this.input.value) setTimeout(this.set, 0)
                 this.e.setAttribute('aria-expanded', false)
                 this.expanded = false
                 this.container.style.display = 'none'
@@ -1004,9 +1076,10 @@ void (function () {
                 if (this.expanded) {
                   if (e.target !== this.input) this.close()
                 } else {
-                  Object.keys(site.combobox).forEach(id => {
-                    if (id !== this.id) _u[id].close()
-                  })
+                  if (site.combobox)
+                    Object.keys(site.combobox).forEach(id => {
+                      if (id !== this.id) _u[id].close()
+                    })
                   this.container.style.display = ''
                   if (!this.settings.multi) {
                     if ('' !== this.selection.innerText) this.cleared_selection = this.selection.innerText
@@ -1027,9 +1100,10 @@ void (function () {
               if (!e || !e.target || e.target.value in this.values) {
                 if (e && e.target && e.target.value) {
                   this.hover_index = this.values[e.target.value]
-                } else if (-1 === this.hover_index) {
+                } else if (-1 === this.hover_index && this.source) {
                   this.hover_index = this.values[this.source[0]]
                 }
+                if ('undefined' === typeof this.hover_index) this.hover_index = -1
                 if (-1 !== this.hover_index && !this.options[this.hover_index].classList.contains('highlighted')) {
                   const previous = this.listbox.querySelector('.highlighted')
                   if (previous) previous.classList.remove('highlighted')
@@ -1046,7 +1120,14 @@ void (function () {
               }
             }.bind(o)
             o.listbox.addEventListener('mouseover', o.highlight)
+            o.clear_highlight = function () {
+              if (-1 !== this.hover_index) {
+                this.options[this.hover_index].classList.remove('highlighted')
+                this.hover_index = -1
+              }
+            }.bind(o)
             o.filter_reset = function () {
+              this.input.value = ''
               this.filter_index = []
               this.listbox.querySelectorAll('.filter-hidden').forEach(o => o.classList.remove('filter-hidden'))
             }.bind(o)
@@ -1083,14 +1164,14 @@ void (function () {
                   } else if ('move' === action) {
                     e.preventDefault()
                     if ('ArrowUp' === e.code) {
-                      if (this.filter_index.length) {
+                      if (this.filter_index && this.filter_index.length) {
                         this.hover_index = this.filter_index.indexOf(this.hover_index) - 1
                         this.hover_index = this.filter_index[0 > this.hover_index ? 0 : this.hover_index]
                       } else {
                         this.hover_index = Math.max(0, this.hover_index - 1)
                       }
                     } else if ('ArrowDown' === e.code) {
-                      if (this.filter_index.length) {
+                      if (this.filter_index && this.filter_index.length) {
                         this.hover_index = this.filter_index.indexOf(this.hover_index) + 1
                         this.hover_index =
                           this.filter_index[
@@ -1114,6 +1195,8 @@ void (function () {
                   }
                 } else if (!this.expanded) {
                   this.toggle({target: this.input})
+                } else {
+                  this.clear_highlight()
                 }
               }.bind(o)
             )
@@ -1124,6 +1207,8 @@ void (function () {
             request_queue(this.id)
           },
           setter: function (v, toggle) {
+            if (!v) v = this.input.value
+            if (v.target && 'LABEL' === v.target.tagName) return void 0
             let update = false
             var i = -1
             if (v.target) {
@@ -1133,9 +1218,10 @@ void (function () {
                 (this.options[i].classList.contains('hidden') || this.options[i].classList.contains('filter-hidden'))
               )
                 i = -1
-              v = -1 === i ? v.target.innerText : i
+              v = -1 === i ? v.target.innerText || v.target.value : i
               toggle = this.settings.multi
             }
+            this.filter_reset()
             if ('object' === typeof v) {
               if (this.options.multi) {
                 this.listbox.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'))
@@ -1172,7 +1258,6 @@ void (function () {
             if (!this.settings.multi && this.expanded) {
               this.input.focus()
               this.close()
-              this.input.value = ''
               this.filter_reset()
             }
             this.selection.innerText = this.source.length
@@ -1184,9 +1269,10 @@ void (function () {
                 ? ''
                 : this.source[0]
               : ''
+            if (this.onchange) this.onchange()
             if (update) request_queue(this.id)
           },
-          adder: function (value, display, meta, noadd) {
+          adder: function (value, display, noadd, meta) {
             const e = document.createElement('div')
             e.role = 'option'
             e.setAttribute('aria-selected', false)
@@ -1199,7 +1285,7 @@ void (function () {
               e.lastElementChild.className = 'combobox-option-description combobox-component'
               e.lastElementChild.innerText = meta.info.description || meta.info.short_description || ''
             }
-            if (!noadd) this.e.appendChild(e)
+            if (!noadd) this.listbox.appendChild(e)
             return e
           },
         },
@@ -1712,7 +1798,6 @@ void (function () {
                 }
               })
             }
-            o.summary_components = ['missing', 'min', 'q1', 'mean', 'median', 'q3', 'max']
             o.show = function (e, u) {
               this.update(e, u)
               this.showing = true
@@ -1989,7 +2074,7 @@ void (function () {
                   this.parts.body.rows.forEach(p => {
                     if ('summary' in p.value.parsed) {
                       const e = p.value.parsed.summary.lastElementChild.children
-                      this.summary_components.forEach((c, i) => {
+                      filter_components.summary.forEach((c, i) => {
                         e[i].innerText = site.data.format_value(this.summary[c][this.time], 0 === i)
                       })
                     }
@@ -2025,7 +2110,7 @@ void (function () {
                             'Accessed'
                           p.base.firstElementChild.appendChild(document.createElement('tbody'))
                           e.forEach(ei => {
-                            p.base.firstElementChild.lastElementChild.appendChild(make_variable_source(ei))
+                            p.base.firstElementChild.lastElementChild.appendChild(make_variable_source(ei, true))
                           })
                         }
                       } else {
@@ -2758,6 +2843,106 @@ void (function () {
             })
           },
         },
+        init_input: function (e) {
+          const o = {
+            type: e.getAttribute('auto-type'),
+            source: void 0,
+            value: function () {
+              const v = valueOf(this.source)
+              return 'undefined' === typeof v ? valueOf(this.default) : v
+            },
+            default: e.getAttribute('default'),
+            options_source: e.getAttribute('auto-options'),
+            depends: e.getAttribute('depends'),
+            variable: e.getAttribute('variable'),
+            dataset: e.getAttribute('dataset'),
+            view: e.getAttribute('data-view'),
+            id: e.id || e.options_source || 'ui' + page.elementCount++,
+            note: e.getAttribute('aria-description') || '',
+            current_index: -1,
+            previous: '',
+            e: e,
+            values: [],
+            display: [],
+            data: [],
+            input: true,
+          }
+          o.settings = o.type in site && o.id in site[o.type] ? site[o.type][o.id] : {}
+          o.wrapper = o.e.parentElement.classList.contains('wrapper')
+            ? o.e.parentElement
+            : o.e.parentElement.parentElement
+          if (o.wrapper) {
+            if (o.note) o.wrapper.classList.add('has-note')
+            o.wrapper.setAttribute('of', o.id)
+            ;['div', 'span', 'label', 'fieldset', 'legend', 'input', 'button'].forEach(type => {
+              const c = o.wrapper.querySelectorAll(type)
+              if (c.length) c.forEach(ci => ci.setAttribute('of', o.id))
+            })
+          }
+          if (o.note) {
+            o.wrapper.addEventListener('mouseover', tooltip_trigger.bind(o))
+            const p = 'DIV' !== o.e.tagName ? o.e : o.e.querySelector('input')
+            if (p) {
+              p.addEventListener('focus', tooltip_trigger.bind(o))
+              p.addEventListener('blur', tooltip_clear)
+            }
+          }
+          if (patterns.number.test(o.default)) o.default = Number(o.default)
+          if (o.type in elements) {
+            const p = elements[o.type]
+            if (p.setter) {
+              o.set = p.setter.bind(o)
+              o.reset = function () {
+                this.set(valueOf(this.default))
+              }.bind(o)
+            }
+            if (p.retrieve) o.get = p.retrieve.bind(o)
+            if (p.adder) o.add = p.adder.bind(o)
+            if (p.listener) o.listen = p.listener.bind(o)
+            if (p.init) p.init(o)
+            o.options = o.e.querySelectorAll(
+              'select' === o.type ? 'option' : 'combobox' === o.type ? '.combobox-option' : 'input'
+            )
+            _u[o.id] = o
+          }
+        },
+        init_output: function (e, i) {
+          const o = {
+            type: e.getAttribute('auto-type'),
+            view: e.getAttribute('data-view') || defaults.dataview,
+            id: e.id || 'out' + i,
+            note: e.getAttribute('aria-description') || '',
+            reference_options: {},
+            e: e,
+          }
+          if (o.note) o.e.addEventListener('mouseover', tooltip_trigger.bind(o))
+          o.options = o.type in site ? site[o.type][o.id] : void 0
+          if (o.options && o.options.dataview) o.view = o.options.dataview
+          if (o.type in elements && 'update' in elements[o.type]) o.update = elements[o.type].update.bind(o)
+          if (o.options) {
+            if ('options' in o.options) o.options = o.options.options
+            Object.keys(o.options).forEach(k => {
+              if (o.options[k] in _u) o.reference_options[k] = o.options[k]
+            })
+            if ('subto' in o.options) {
+              if ('string' === typeof o.options.subto) o.options.subto = [o.options.subto]
+              if (Array.isArray(o.options.subto)) o.options.subto.forEach(v => add_subs(v, o))
+            }
+          }
+          _u[o.id] = o
+          if (o.view) {
+            if (!(o.view in _c)) _c[o.view] = []
+            if (!(o.view + '_filter' in _c)) _c[o.view + '_filter'] = []
+          }
+          if (o.type in elements && 'init' in elements[o.type]) {
+            if (!o.view || _u[o.view].parsed.dataset in site.data.inited) {
+              elements[o.type].init(o)
+            } else {
+              site.data.data_queue[_u[o.view].parsed.dataset][o.id] = elements[o.type].init.bind(null, o)
+              if (site.data.loaded[_u[o.view].parsed.dataset]) site.data.load_id_maps()
+            }
+          }
+        },
       },
       value_types = {
         percent: function (v) {
@@ -2803,6 +2988,24 @@ void (function () {
         Escape: 'close',
         Tab: 'close',
       },
+      filter_components = {
+        Time: ['first', 'selected', 'last'],
+        summary: ['missing', 'min', 'q1', 'mean', 'median', 'q3', 'max'],
+      },
+      filter_funs = {
+        number: function (e, v) {
+          return e.get_value(v.name, this - v.range[0])
+        },
+        first: function (e, v) {
+          return e.get_value(v.name, 0)
+        },
+        selected: function (e, v, p) {
+          return e.get_value(v.name, p.time_agg - v.range[0])
+        },
+        last: function (e, v) {
+          return e.get_value(v.name, v.range[1] - v.range[0])
+        },
+      },
       page = {
         load_screen: document.getElementById('load_screen'),
         wrap: document.getElementById('site_wrap'),
@@ -2811,6 +3014,7 @@ void (function () {
         overlay: document.createElement('div'),
         menus: document.getElementsByClassName('menu-wrapper'),
         panels: document.getElementsByClassName('panel'),
+        elementCount: 0,
       },
       queue = {_timeout: 0},
       defaults = {
@@ -2988,14 +3192,14 @@ void (function () {
         u.groups = {e: [], by_name: {}}
       }
       Object.keys(site.data.entities).forEach(k => {
-        const e = site.data.entities[k]
-        if (d === e.group) {
+        const entity = site.data.entities[k]
+        if (d === entity.group) {
           if (ck && !(k in current)) {
             u.sensitive = true
             ck = false
           }
           if (u.groups) {
-            const group = e.features[u.settings.group] || ''
+            const group = entity.features[u.settings.group] || ''
             if (!(group in u.groups.by_name)) {
               if (combobox) {
                 const e = document.createElement('div'),
@@ -3014,18 +3218,18 @@ void (function () {
               u.groups.by_name[group] = e
               u.groups.e.push(e)
             }
-            u.groups.by_name[group].appendChild(u.add(k, e.features.name, true))
+            u.groups.by_name[group].appendChild(u.add(k, entity.features.name, true))
           } else {
-            s.push(u.add(k, e.features.name, true))
+            s.push(u.add(k, entity.features.name))
             values[k] = n
-            disp[e.features.name] = n++
+            disp[entity.features.name] = n++
           }
         }
       })
       if (u.settings.group) {
         n = 0
         Object.keys(u.groups.by_name).forEach(g => {
-          u.groups.by_name[g].querySelectorAll('option').forEach(c => {
+          u.groups.by_name[g].querySelectorAll(combobox ? '.combobox-option' : 'option').forEach(c => {
             s.push(c)
             values[c.value] = n
             disp[c.innerText] = n++
@@ -3073,9 +3277,9 @@ void (function () {
               u.groups.by_name[group] = e
               u.groups.e.push(e)
             }
-            u.groups.by_name[group].appendChild(u.add(m.name, l, m, true))
+            u.groups.by_name[group].appendChild(u.add(m.name, l, true, m))
           } else {
-            s.push(u.add(m.name, l, m, true))
+            s.push(u.add(m.name, l, true, m))
             s[n].id = u.id + '-option' + n
             values[m.name] = n
             disp[l] = n++
@@ -3246,24 +3450,66 @@ void (function () {
       return e
     }
 
-    function make_variable_source(s) {
-      var e = document.createElement('tr')
-      if (s.name) {
-        e.appendChild(document.createElement('td'))
-        if (s.url) {
-          e.firstElementChild.appendChild(document.createElement('a'))
-          e.firstElementChild.firstElementChild.target = '_blank'
-          e.firstElementChild.firstElementChild.rel = 'noreferrer'
-          e.firstElementChild.firstElementChild.href = s.url
-        } else {
-          e.firstElementChild.appendChild(document.createElement('span'))
+    function make_variable_source(s, table) {
+      const e = document.createElement(table ? 'tr' : 'div')
+      let ee
+      if (table) {
+        if (s.name) {
+          e.appendChild((ee = document.createElement('td')))
+          if (s.url) {
+            ee.appendChild((ee = document.createElement('a')))
+            ee.target = '_blank'
+            ee.rel = 'noreferrer'
+            ee.href = s.url
+          } else {
+            ee.appendChild(document.createElement('span'))
+          }
+          e.firstElementChild.firstElementChild.innerText = s.name
         }
-        e.firstElementChild.firstElementChild.innerText = s.name
-      }
-      if (s.date_accessed) {
-        e.appendChild(document.createElement('td'))
-        e.lastElementChild.appendChild(document.createElement('span'))
-        e.lastElementChild.firstElementChild.innerText = s.date_accessed
+        if (s.date_accessed) {
+          e.appendChild((ee = document.createElement('td')))
+          ee.appendChild(document.createElement('span'))
+          ee.firstElementChild.innerText = s.date_accessed
+        }
+      } else {
+        e.className = 'card'
+        if (s.name) {
+          e.appendChild((ee = document.createElement('div')))
+          ee.className = 'card-header'
+          if (s.url) {
+            ee.appendChild((ee = document.createElement('a')))
+            ee.target = '_blank'
+            ee.rel = 'noreferrer'
+            ee.href = s.url
+          } else {
+            ee.appendChild(document.createElement('span'))
+          }
+          e.firstElementChild.firstElementChild.innerText = s.name
+        }
+        e.appendChild(document.createElement('div'))
+        e.lastElementChild.className = 'card-body'
+        if (s.location) {
+          e.lastElementChild.appendChild((ee = document.createElement('p')))
+          ee.appendChild(document.createElement('span'))
+          ee.lastElementChild.innerText = 'Location: '
+          ee.appendChild(document.createElement('span'))
+          if (s.location_url) {
+            ee.lastElementChild.appendChild((ee = document.createElement('a')))
+            ee.target = '_blank'
+            ee.rel = 'noreferrer'
+            ee.href = s.location_url
+            ee.innerText = s.location
+          } else {
+            ee.lastElementChild.innerText = s.location
+          }
+        }
+        if (s.date_accessed) {
+          e.lastElementChild.appendChild((ee = document.createElement('p')))
+          ee.appendChild(document.createElement('span'))
+          ee.lastElementChild.innerText = 'Date Accessed: '
+          ee.appendChild(document.createElement('span'))
+          ee.lastElementChild.innerText = s.date_accessed
+        }
       }
       return e
     }
@@ -3277,10 +3523,10 @@ void (function () {
       page.modal.info.name.lastElementChild.innerText = info.measure || ''
       page.modal.info.type.lastElementChild.innerText = info.type || ''
       if (info.sources && info.sources.length) {
-        page.modal.info.sources.lastElementChild.lastElementChild.innerHTML = ''
+        page.modal.info.sources.lastElementChild.innerHTML = ''
         page.modal.info.sources.classList.remove('hidden')
         info.sources.forEach(s => {
-          page.modal.info.sources.lastElementChild.lastElementChild.appendChild(make_variable_source(s))
+          page.modal.info.sources.lastElementChild.appendChild(make_variable_source(s))
         })
       } else page.modal.info.sources.classList.add('hidden')
       if (info.citations && info.citations.length) {
@@ -3374,8 +3620,23 @@ void (function () {
       if (!('hide_panels' in site.url_options)) site.url_options.hide_panels = true
       if ('embedded' in site.url_options && !('close_menus' in site.url_options)) site.url_options.close_menus = true
     }
-    e = document.querySelector('.navbar')
+    e = page.navbar
     if (e) {
+      e.querySelectorAll('button').forEach(b => {
+        const panel = document.querySelector(b.getAttribute('data-bs-target'))
+        if (panel && 'false' === panel.getAttribute('data-bs-backdrop')) {
+          panel.addEventListener('show.bs.offcanvas', function () {
+            page.content_bounds.outer_right = panel.getBoundingClientRect().width
+            content_resize(void 0, true)
+            setTimeout(trigger_resize, 200)
+          })
+          panel.addEventListener('hide.bs.offcanvas', function () {
+            page.content_bounds.outer_right = 0
+            content_resize(void 0, true)
+            setTimeout(trigger_resize, 200)
+          })
+        }
+      })
       if ('navcolor' in site.url_options) {
         if ('' === site.url_options.navcolor) site.url_options.navcolor = window.location.hash
         e.style.backgroundColor = site.url_options.navcolor.replace('%23', '#')
@@ -3451,13 +3712,14 @@ void (function () {
         right: 0,
         bottom: 0,
         left: 0,
+        outer_right: 0,
       }
       page.script_style = document.head.appendChild(document.createElement('style'))
       if (site.settings.hide_tooltips) page.script_style.sheet.insertRule(tooltip_icon_rule, 0)
       page.menu_toggler = {
         hide: function () {
           this.classList.add('hidden')
-          trigger_resize()
+          content_resize()
         },
         toggle: function (type) {
           clearTimeout(page.menu_toggler.timeout)
@@ -3468,6 +3730,7 @@ void (function () {
             page.content.style[type] =
               this.parentElement.getBoundingClientRect()['left' === type || 'right' === type ? 'width' : 'height'] +
               'px'
+            if ('top' === type || 'bottom' === type) this.style[type] = page.content_bounds[type] + 'px'
             setTimeout(trigger_resize, 300)
           } else {
             this.parentElement.state = 'closed'
@@ -3475,12 +3738,10 @@ void (function () {
               this.parentElement.style[type] = -this.parentElement.getBoundingClientRect().width + 'px'
               page.content.style[type] = page.content_bounds[type] + 'px'
             } else {
-              page.content.style[type] =
-                page.content_bounds[type] + ('top' === type ? page.content_bounds.top : 0) + 'px'
-              this.parentElement.style[type] =
-                -this.parentElement.getBoundingClientRect().height +
-                ('top' === type ? page.content_bounds.top : 0) +
-                'px'
+              const b = this.parentElement.getBoundingClientRect()
+              page.content.style[type] = page.content_bounds[type] + ('top' === type ? 40 : 0) + 'px'
+              this.parentElement.style[type] = -b.height + ('top' === type ? page.content_bounds.top : 0) + 'px'
+              if ('top' === type || 'bottom' === type) this.style[type] = b.height + 'px'
             }
             page.menu_toggler.timeout = setTimeout(
               page.menu_toggler.hide.bind(this.parentElement.firstElementChild),
@@ -3546,15 +3807,11 @@ void (function () {
       e.type.appendChild(document.createElement('td'))
 
       e.body.appendChild((e.sources = document.createElement('div')))
-      e.sources.appendChild((e = document.createElement('table')))
-      e.className = 'source-table'
-      e.appendChild(document.createElement('thead'))
-      e.firstElementChild.appendChild(document.createElement('tr'))
-      e.firstElementChild.firstElementChild.appendChild(document.createElement('th'))
-      e.firstElementChild.firstElementChild.appendChild(document.createElement('th'))
-      e.firstElementChild.firstElementChild.firstElementChild.innerText = 'Source'
-      e.firstElementChild.firstElementChild.lastElementChild.innerText = 'Accessed'
-      e.appendChild(document.createElement('tbody'))
+      e.sources.appendChild(document.createElement('p'))
+      e.sources.lastElementChild.innerText = 'Sources'
+      e.sources.lastElementChild.className = 'h3'
+      e.sources.appendChild(document.createElement('div'))
+      e.sources.lastElementChild.className = 'sources-cards'
 
       e = page.modal.info
       e.body.appendChild((e.references = document.createElement('div')))
@@ -3630,13 +3887,13 @@ void (function () {
 
       page.panels.length &&
         page.panels.forEach(p => {
-          page.content_bounds[p.classList.contains('panel-left') ? 'left' : 'right'] = p.getBoundingClientRect().width
+          const side = p.classList.contains('panel-left') ? 'left' : 'right'
+          page.content_bounds[side] = p.getBoundingClientRect().width
           p.style.marginTop = page.content_bounds.top + 'px'
           p.lastElementChild.addEventListener(
             'click',
             function () {
-              const side = p.classList.contains('panel-left') ? 'left' : 'right',
-                w = p.getBoundingClientRect().width,
+              const w = p.getBoundingClientRect().width,
                 bw = p.lastElementChild.getBoundingClientRect().width
               if ('true' === p.lastElementChild.getAttribute('aria-expanded')) {
                 page.content_bounds[side] = bw
@@ -3651,25 +3908,27 @@ void (function () {
                 p.style[side] = '0px'
                 p.lastElementChild.setAttribute('aria-expanded', 'true')
               }
-              trigger_resize()
+              content_resize()
+              setTimeout(trigger_resize, 200)
             }.bind(p)
           )
         })
       page.menus.length &&
         page.menus.forEach(m => {
+          const has_toggler = m.lastElementChild.tagName === 'BUTTON'
           m.state = m.getAttribute('state')
           if (m.classList.contains('menu-top')) {
             page.top_menu = m
             page.top_menu.style.left = page.content_bounds.left + 'px'
             page.top_menu.style.right = page.content_bounds.right + 'px'
-            if (m.lastElementChild.tagName === 'BUTTON') {
+            if (has_toggler) {
               m.lastElementChild.addEventListener('click', page.menu_toggler.toggle.bind(m.lastElementChild, 'top'))
               m.lastElementChild.style.top = page.content_bounds.top + 'px'
             }
           } else if (m.classList.contains('menu-right')) {
             page.right_menu = m
             page.right_menu.style.right = page.content_bounds.right + 'px'
-            if (m.lastElementChild.tagName === 'BUTTON') {
+            if (has_toggler) {
               m.lastElementChild.addEventListener('click', page.menu_toggler.toggle.bind(m.lastElementChild, 'right'))
               m.lastElementChild.style.top = page.content_bounds.top + 'px'
             }
@@ -3678,13 +3937,13 @@ void (function () {
             page.content_bounds.bottom = 40
             page.bottom_menu.style.left = page.content_bounds.left + 'px'
             page.bottom_menu.style.right = page.content_bounds.right + 'px'
-            if (m.lastElementChild.tagName === 'BUTTON') {
+            if (has_toggler) {
               m.lastElementChild.addEventListener('click', page.menu_toggler.toggle.bind(m.lastElementChild, 'bottom'))
             }
           } else if (m.classList.contains('menu-left')) {
             page.left_menu = m
             page.left_menu.style.left = page.content_bounds.left + 'px'
-            if (m.lastElementChild.tagName === 'BUTTON') {
+            if (has_toggler) {
               m.lastElementChild.addEventListener('click', page.menu_toggler.toggle.bind(m.lastElementChild, 'left'))
               m.lastElementChild.style.top = page.content_bounds.top + 'px'
             }
@@ -3699,8 +3958,8 @@ void (function () {
       }
       page.tooltip.e.className = 'tooltip hidden'
       page.tooltip.e.appendChild(document.createElement('p'))
-      page.wrap.appendChild(page.tooltip.e)
-      page.wrap.addEventListener('mouseover', tooltip_clear)
+      document.body.appendChild(page.tooltip.e)
+      document.body.addEventListener('mouseover', tooltip_clear)
 
       // initialize inputs
       if (site.dataviews) {
@@ -3713,69 +3972,7 @@ void (function () {
         site.dataviews = {}
         site.dataviews[defaults.dataview] = {}
       }
-      document.querySelectorAll('.auto-input').forEach(e => {
-        const o = {
-          type: e.getAttribute('auto-type'),
-          source: void 0,
-          value: function () {
-            const v = valueOf(this.source)
-            return 'undefined' === typeof v ? valueOf(this.default) : v
-          },
-          default: e.getAttribute('default'),
-          options_source: e.getAttribute('auto-options'),
-          depends: e.getAttribute('depends'),
-          variable: e.getAttribute('variable'),
-          dataset: e.getAttribute('dataset'),
-          view: e.getAttribute('data-view'),
-          id: e.id || e.options_source || 'ui' + n++,
-          note: e.getAttribute('aria-description') || '',
-          current_index: -1,
-          previous: '',
-          e: e,
-          values: [],
-          display: [],
-          data: [],
-          input: true,
-        }
-        o.settings = o.type in site && o.id in site[o.type] ? site[o.type][o.id] : {}
-        o.wrapper = o.e.parentElement.classList.contains('wrapper')
-          ? o.e.parentElement
-          : o.e.parentElement.parentElement
-        if (o.wrapper) {
-          if (o.note) o.wrapper.classList.add('has-note')
-          o.wrapper.setAttribute('of', o.id)
-          ;['div', 'span', 'label', 'fieldset', 'legend', 'input', 'button'].forEach(type => {
-            const c = o.wrapper.querySelectorAll(type)
-            if (c.length) c.forEach(ci => ci.setAttribute('of', o.id))
-          })
-        }
-        if (o.note) {
-          o.wrapper.addEventListener('mouseover', tooltip_trigger.bind(o))
-          const p = 'DIV' !== o.e.tagName ? o.e : o.e.querySelector('input')
-          if (p) {
-            p.addEventListener('focus', tooltip_trigger.bind(o))
-            p.addEventListener('blur', tooltip_clear)
-          }
-        }
-        if (patterns.number.test(o.default)) o.default = Number(o.default)
-        if (o.type in elements) {
-          const p = elements[o.type]
-          if (p.setter) {
-            o.set = p.setter.bind(o)
-            o.reset = function () {
-              this.set(valueOf(this.default))
-            }.bind(o)
-          }
-          if (p.retrieve) o.get = p.retrieve.bind(o)
-          if (p.adder) o.add = p.adder.bind(o)
-          if (p.listener) o.listen = p.listener.bind(o)
-          if (p.init) p.init(o)
-          o.options = o.e.querySelectorAll(
-            'select' === o.type ? 'option' : 'combobox' === o.type ? '.combobox-option' : 'input'
-          )
-          _u[o.id] = o
-        }
-      })
+      document.querySelectorAll('.auto-input').forEach(elements.init_input)
 
       // initialize variables
       if (site.variables && site.variables.length) {
@@ -3926,7 +4123,8 @@ void (function () {
         site.data = new DataHandler(site, defaults, site.data, {
           init: init,
           onload: function () {
-            setTimeout(drop_load_screen, 150)
+            if (site.data.inited) clearTimeout(site.data.inited.load_screen)
+            setTimeout(drop_load_screen, 600)
             delete this.onload
           },
           data_load: function () {
@@ -3950,29 +4148,32 @@ void (function () {
       page.load_screen.style.display = 'none'
     }
 
-    function content_resize() {
-      page.content.style.top =
-        (page.top_menu && 'open' === page.top_menu.state
-          ? page.top_menu.getBoundingClientRect().height
-          : page.content_bounds.top +
-            ((!page.top_menu && !page.left_menu && !page.right_menu) ||
-            (page.right_menu && 'open' === page.right_menu.state) ||
-            (page.left_menu && 'open' === page.left_menu.state)
-              ? 0
-              : 40)) + 'px'
-      page.content.style.right =
-        page.content_bounds.right +
+    function content_resize(e, full) {
+      const f = page[full ? 'wrap' : 'content']
+      if (!full) {
+        f.style.top =
+          (page.top_menu && 'open' === page.top_menu.state
+            ? page.top_menu.getBoundingClientRect().height
+            : page.content_bounds.top +
+              ((!page.top_menu && !page.left_menu && !page.right_menu) ||
+              (page.right_menu && 'open' === page.right_menu.state) ||
+              (page.left_menu && 'open' === page.left_menu.state)
+                ? 0
+                : 40)) + 'px'
+        f.style.bottom =
+          page.content_bounds.bottom +
+          (!page.bottom_menu || 'closed' === page.bottom_menu.state
+            ? 0
+            : page.bottom_menu.getBoundingClientRect().height) +
+          'px'
+        f.style.left =
+          page.content_bounds.left +
+          (!page.left_menu || 'closed' === page.left_menu.state ? 0 : page.left_menu.getBoundingClientRect().width) +
+          'px'
+      }
+      f.style.right =
+        page.content_bounds[full ? 'outer_right' : 'right'] +
         (!page.right_menu || 'closed' === page.right_menu.state ? 0 : page.right_menu.getBoundingClientRect().width) +
-        'px'
-      page.content.style.bottom =
-        page.content_bounds.bottom +
-        (!page.bottom_menu || 'closed' === page.bottom_menu.state
-          ? 0
-          : page.bottom_menu.getBoundingClientRect().height) +
-        'px'
-      page.content.style.left =
-        page.content_bounds.left +
-        (!page.left_menu || 'closed' === page.left_menu.state ? 0 : page.left_menu.getBoundingClientRect().width) +
         'px'
     }
 
@@ -4283,43 +4484,7 @@ void (function () {
         e.reparse()
       })
       // initialize outputs
-      document.querySelectorAll('.auto-output').forEach((e, i) => {
-        const o = {
-          type: e.getAttribute('auto-type'),
-          view: e.getAttribute('data-view') || defaults.dataview,
-          id: e.id || 'out' + i,
-          note: e.getAttribute('aria-description') || '',
-          reference_options: {},
-          e: e,
-        }
-        if (o.note) o.e.addEventListener('mouseover', tooltip_trigger.bind(o))
-        o.options = o.type in site ? site[o.type][o.id] : void 0
-        if (o.options && o.options.dataview) o.view = o.options.dataview
-        if (o.type in elements && 'update' in elements[o.type]) o.update = elements[o.type].update.bind(o)
-        if (o.options) {
-          if ('options' in o.options) o.options = o.options.options
-          Object.keys(o.options).forEach(k => {
-            if (o.options[k] in _u) o.reference_options[k] = o.options[k]
-          })
-          if ('subto' in o.options) {
-            if ('string' === typeof o.options.subto) o.options.subto = [o.options.subto]
-            if (Array.isArray(o.options.subto)) o.options.subto.forEach(v => add_subs(v, o))
-          }
-        }
-        _u[o.id] = o
-        if (o.view) {
-          if (!(o.view in _c)) _c[o.view] = []
-          if (!(o.view + '_filter' in _c)) _c[o.view + '_filter'] = []
-        }
-        if (o.type in elements && 'init' in elements[o.type]) {
-          if (!o.view || _u[o.view].parsed.dataset in site.data.inited) {
-            elements[o.type].init(o)
-          } else {
-            site.data.data_queue[_u[o.view].parsed.dataset][o.id] = elements[o.type].init.bind(null, o)
-            if (site.data.loaded[_u[o.view].parsed.dataset]) site.data.load_id_maps()
-          }
-        }
-      })
+      document.querySelectorAll('.auto-output').forEach(elements.init_output)
 
       // make filter popup
       e = page.modal.filter
@@ -4332,7 +4497,7 @@ void (function () {
       function add_filter_condition(event) {
         if ('A' === event.target.tagName) {
           if (!site.data.filter) site.data.filter = new Map()
-          const e = document.createElement('div'),
+          const e = document.createElement('tr'),
             f = {
               e,
               index: site.data.filter.size,
@@ -4340,36 +4505,30 @@ void (function () {
               component: 'selected',
               operator: '>=',
               value: '',
-            }
+            },
+            range = site.data.variables[event.target.value].time_range[_u[defaults.dataview].get.dataset()],
+            times = site.data.meta.overall.value
           e.setAttribute('index', site.data.filter.size)
           site.data.filter.set(site.data.filter.size, f)
-          e.className = 'row'
-          e.appendChild(document.createElement('div'))
-          e.lastElementChild.className = 'col'
+          e.appendChild(document.createElement('td'))
           var ee
           e.lastElementChild.appendChild((ee = document.createElement('p')))
           ee.className = 'cell-text'
-          ee.innerText = event.target.innerText
+          ee.innerText = event.target.innerText + ' (' + times[range[0]] + '-' + times[range[1]] + ')'
 
-          e.appendChild(document.createElement('div'))
-          e.lastElementChild.style.maxWidth = '140px'
-          e.lastElementChild.className = 'col'
-          e.lastElementChild.appendChild((ee = document.createElement('select')))
-          ee.className = 'form-select'
-          ee.default = '0'
-          ee.addEventListener('change', e => {
-            f.component = e.target.selectedOptions[0].value
+          e.appendChild(document.createElement('td'))
+          const comp_select = elements.combobox.create('component', filter_components.Time)
+          comp_select.default = 1
+          comp_select.set(1)
+          comp_select.settings.strict = false
+          e.lastElementChild.appendChild(comp_select.e.parentElement)
+          comp_select.e.parentElement.removeChild(comp_select.e.parentElement.lastElementChild)
+          comp_select.onchange = function () {
+            f.component = this.value()
             conditionals.dataview()
-          })
-          ;['selected'].forEach(k => {
-            ee.appendChild(document.createElement('option'))
-            ee.lastElementChild.component = ee.lastElementChild.innerText = k
-            conditionals.dataview()
-          })
+          }.bind(comp_select)
 
-          e.appendChild(document.createElement('div'))
-          e.lastElementChild.style.maxWidth = '95px'
-          e.lastElementChild.className = 'col'
+          e.appendChild(document.createElement('td'))
           e.lastElementChild.appendChild((ee = document.createElement('select')))
           ee.className = 'form-select'
           ee.default = '0'
@@ -4377,14 +4536,13 @@ void (function () {
             f.operator = e.target.selectedOptions[0].value
             conditionals.dataview()
           })
-          ;['>=', '<='].forEach(k => {
+          ;['>', '=', '!=', '<'].forEach(k => {
             ee.appendChild(document.createElement('option'))
             ee.lastElementChild.value = ee.lastElementChild.innerText = k
             conditionals.dataview()
           })
 
-          e.appendChild(document.createElement('div'))
-          e.lastElementChild.className = 'col-2'
+          e.appendChild(document.createElement('td'))
           e.lastElementChild.appendChild((ee = document.createElement('input')))
           ee.className = 'form-control'
           ee.type = 'number'
@@ -4393,25 +4551,25 @@ void (function () {
             conditionals.dataview()
           })
 
-          e.appendChild(document.createElement('div'))
-          e.lastElementChild.style.maxWidth = '36px'
-          e.lastElementChild.className = 'col'
+          e.appendChild(document.createElement('td'))
           e.lastElementChild.appendChild((ee = document.createElement('button')))
           ee.className = 'btn btn-close'
           ee.type = 'button'
           ee.addEventListener(
             'mouseup',
             function () {
+              delete _u[this.e.children[1].firstElementChild.firstElementChild.id]
               this.e.parentElement.removeChild(this.e)
               site.data.filter.delete(this.index)
               conditionals.dataview()
             }.bind(f)
           )
 
-          page.modal.filter.variable_filters.lastElementChild.appendChild(e)
+          page.modal.filter.variable_filters.lastElementChild.lastElementChild.appendChild(e)
         }
       }
 
+      // variable filter dropdown
       e.variable_filters.appendChild((ee = document.createElement('div')))
       ee.className = 'row'
 
@@ -4431,7 +4589,7 @@ void (function () {
       c.lastElementChild.className = 'dropdown-menu'
       c.lastElementChild.setAttribute('aria-labelledby', 'filter_variable_dropdown')
       Object.keys(site.data.variables).forEach(k => {
-        if ('time' !== k) {
+        if (!site.data.variables[k].is_time) {
           const e = document.createElement('li')
           e.appendChild(document.createElement('a'))
           e.lastElementChild.className = 'dropdown-item'
@@ -4442,8 +4600,30 @@ void (function () {
         }
       })
 
-      e.variable_filters.appendChild(document.createElement('div'))
-      e.variable_filters.lastElementChild.className = 'row'
+      // variable filters
+      e.variable_filters.appendChild((ee = document.createElement('table')))
+      ee.appendChild((ee = document.createElement('thead')))
+      e.variable_filters.lastElementChild.appendChild(document.createElement('tbody'))
+      ee = ee.appendChild((ee = document.createElement('tr')))
+      ;['Variable', 'Component', 'Operator', 'Value'].forEach(h => {
+        ee.appendChild(document.createElement('th'))
+        if ('Component' === h) {
+          const l = {
+            wrapper: document.createElement('label'),
+            id: 'filter_component_header',
+            note: 'Component refers to which single value to filter on for each entity; select a dynamic time reference, or enter a time.',
+          }
+          ee.lastElementChild.appendChild(l.wrapper)
+          ee.lastElementChild.className = 'has-note'
+          l.wrapper.innerText = h
+          l.wrapper.id = l.id
+          l.wrapper.setAttribute('of', l.id)
+          l.wrapper.setAttribute('aria-description', l.note)
+          ee.lastElementChild.addEventListener('mouseover', tooltip_trigger.bind(l))
+        } else {
+          ee.lastElementChild.innerText = h
+        }
+      })
 
       keys._u = Object.keys(_u)
     }
@@ -4459,11 +4639,10 @@ void (function () {
       page.tooltip.showing = this.id
       page.tooltip.e.firstElementChild.innerText = this.note
       page.tooltip.e.classList.remove('hidden')
-      const s = page.wrap.getBoundingClientRect(),
-        p = this.wrapper.getBoundingClientRect(),
+      const p = this.wrapper.getBoundingClientRect(),
         t = page.tooltip.e.getBoundingClientRect()
       page.tooltip.e.style.left = Math.max(0, Math.min(p.x, p.x + p.width / 2 - t.width / 2)) + 'px'
-      page.tooltip.e.style.top = p.y + (p.y < s.height / 2 ? p.height + 5 : -t.height - 5) + 'px'
+      page.tooltip.e.style.top = p.y + (p.y < t.height ? p.height + 5 : -t.height - 5) + 'px'
     }
 
     function tooltip_clear(e) {
@@ -4603,7 +4782,22 @@ void (function () {
         } else return retrieve_layer(u, o.source[i], show_overlay.bind(null, u, o, time))
       }
     }
-
+    function component_fun(c) {
+      if ('string' === typeof c && patterns.number.test(c)) {
+        c = site.data.meta.overall.value.indexOf(Number(c))
+        if (-1 === c)
+          return function () {
+            return NaN
+          }
+      }
+      return 'number' === typeof c
+        ? filter_funs.number.bind(c)
+        : c in filter_funs
+        ? filter_funs[c]
+        : function () {
+            return NaN
+          }
+    }
     function compile_dataview(v) {
       v.times = []
       if (v.time_filters) {
@@ -4644,7 +4838,7 @@ void (function () {
             if (!v.parsed.variable_values.length) v.reparse()
             var s = ''
             v.parsed.variable_values.forEach(vi => {
-              s += vi.name + vi.operator + vi.value
+              s += vi.name + vi.operator + vi.component + vi.value
             })
             return s
           } else return ''
@@ -4707,14 +4901,15 @@ void (function () {
         this.parsed.variable_values = []
         if (site.data.filter && site.data.filter.size)
           site.data.filter.forEach(f => {
-            const v = Number(f.value)
-            if (!isNaN(v))
-              this.parsed.variable_values.push({
-                name: f.variable,
-                operator: f.operator,
-                value: v,
-                value_type: 'number',
-              })
+            this.parsed.variable_values.push({
+              name: f.variable,
+              range: site.data.variables[f.variable].info[this.parsed.dataset].time_range,
+              operator: f.operator,
+              value: f.value ? Number(f.value) : NaN,
+              value_type: 'number',
+              component: f.component,
+              comp_fun: component_fun(f.component),
+            })
           })
         if (this.variables || this.parsed.variable_values.length) {
           if (this.variables)
@@ -4784,15 +4979,14 @@ void (function () {
         }.bind(v),
         variables: function (e) {
           if (e.data) {
-            var pass
+            let pass = true
             for (let i = this.parsed.variable_values.length; i--; ) {
-              const v = this.parsed.variable_values[i],
-                ev = e.get_value(
-                  v.name,
-                  this.parsed.time_agg - site.data.variables[v.name].info[this.parsed.dataset].time_range[0]
-                )
-              pass = isNaN(ev) || DataHandler.prototype.checks[v.operator](ev, v.value)
-              if (!pass) break
+              const v = this.parsed.variable_values[i]
+              if (!isNaN(v.value)) {
+                const ev = v.comp_fun(e, v, this.parsed)
+                pass = !isNaN(ev) && DataHandler.prototype.checks[v.operator](ev, v.value)
+                if (!pass) break
+              }
             }
             return pass
           } else return true
@@ -4853,7 +5047,7 @@ void (function () {
           queue[k] = false
         }
       })
-      const k = get_options_url()
+      let k = get_options_url()
       if (site.data.inited.first && k !== site.state) {
         site.state = k
         Object.keys(site.url_options).forEach(s => {

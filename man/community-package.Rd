@@ -6,7 +6,7 @@
 \alias{community-package}
 \title{community: Community Analysis Framework}
 \description{
-Offers a framework and toolset for the analysis of communities. Helps (1a) assess, clean, and unify diverse data sources relating to a community, or (1b) simulate a community, then (2) calculate a range of measures of that community, and (3) present and disseminate final data.
+A toolset and web framework to help manage and present data.
 }
 \seealso{
 Useful links:
@@ -19,9 +19,10 @@ Useful links:
 \author{
 \strong{Maintainer}: Micah Iserman \email{micah.iserman@gmail.com}
 
-Authors:
+Other contributors:
 \itemize{
-  \item Biocomplexity Institute [copyright holder]
+  \item Biocomplexity Institute [copyright holder, funder]
+  \item Alan Wang [contributor]
 }
 
 }
