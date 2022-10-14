@@ -252,7 +252,12 @@ function DataCommons(definition, manifest, views) {
           f.uid = uid
           if (!Object.hasOwn(this.files, uid)) {
             this.counts.files++
-            this.files[uid] = {content: f, local: {}, remote: {}, display: document.createElement('div')}
+            this.files[uid] = {
+              content: f,
+              local: {},
+              remote: {},
+              display: document.createElement('div'),
+            }
             f.prefix = f.name.replace(file_prefix, '')
             if (f.variables) {
               if ('string' === typeof f.variables) f.variables = [f.variables]
@@ -260,7 +265,10 @@ function DataCommons(definition, manifest, views) {
                 p = f.prefix + ':' + f.variables[i]
                 if (!Object.hasOwn(this.variables, p)) {
                   this.counts.variables++
-                  this.variables[p] = {display: document.createElement('div'), files: []}
+                  this.variables[p] = {
+                    display: document.createElement('div'),
+                    files: [],
+                  }
                   this.variables[p].display.className = 'variable'
                 }
                 this.variables[p].files.push(this.files[uid])
@@ -270,7 +278,10 @@ function DataCommons(definition, manifest, views) {
               for (i = f.ids.length; i--; ) {
                 if (!Object.hasOwn(this.ids, f.ids[i])) {
                   this.counts.ids++
-                  this.ids[f.ids[i]] = {display: document.createElement('div'), files: []}
+                  this.ids[f.ids[i]] = {
+                    display: document.createElement('div'),
+                    files: [],
+                  }
                   this.ids[f.ids[i]].display.className = 'id'
                 }
                 this.ids[f.ids[i]].files.push(this.files[uid])
@@ -323,12 +334,18 @@ function DataCommons(definition, manifest, views) {
 DataCommons.prototype = {
   constructor: DataCommons,
   requester: new Worker('request.js'),
-  rates: {github: {resources: {core: {remaining: 0, reset: -Infinity}}}},
+  rates: {
+    github: {resources: {core: {remaining: 0, reset: -Infinity}}},
+  },
   queues: {
     distributions: [],
   },
   format: {
-    date: Intl.DateTimeFormat('en-us', {month: '2-digit', day: '2-digit', year: '2-digit'}).format,
+    date: Intl.DateTimeFormat('en-us', {
+      month: '2-digit',
+      day: '2-digit',
+      year: '2-digit',
+    }).format,
     time: Intl.DateTimeFormat('en-us', {hour: 'numeric', minute: 'numeric'}).format,
     size: function (b) {
       return b < 1e6 ? b / 1e3 + ' KB' : b < 1e9 ? b / 1e6 + ' MB' : b / 1e9 + ' GB'
@@ -807,7 +824,12 @@ DataCommons.prototype = {
   request_provider: function (repo, provider) {
     const api = this.get_provider_link(provider, repo, true)
     if (api) {
-      this.queues.distributions.push({type: 'provider', repo: repo, provider: provider, url: api})
+      this.queues.distributions.push({
+        type: 'provider',
+        repo: repo,
+        provider: provider,
+        url: api,
+      })
       this.prompt_dist_requester()
     }
   },
