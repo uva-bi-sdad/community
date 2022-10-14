@@ -1397,7 +1397,7 @@ DataHandler.prototype = {
       document.body.appendChild(e);
       e.rel = "noreferrer";
       e.target = "_blank";
-      e.download = download_data_filename + query.file_format;
+      e.download = download_data_filename + "." + query.file_format;
       e.href = URL.createObjectURL(
         new Blob([res.body], { type: res.headers["Content-Type"] })
       );
