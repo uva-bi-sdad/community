@@ -1,4 +1,25 @@
 'use strict'
+String.prototype.slugify = function (separator = '-') {
+  return this.toString()
+    .normalize('NFD') // split an accented letter in the base letter and the acent
+    .replace(/[\u0300-\u036f]/g, '') // remove all previously split accents
+    .toLowerCase()
+    .trim()
+    .replace(/[^0-9a-zA-Z]+/g, separator) // convert all white spaces to the separator
+}
+String.prototype.hashCode = function () {
+  var hash = 0,
+    i,
+    chr
+  if (this.length === 0) return hash
+  for (i = 0; i < this.length; i++) {
+    chr = this.charCodeAt(i)
+    hash = (hash << 5) - hash + chr
+    hash |= 0 // Convert to 32bit integer
+  }
+  return String(hash)
+}
+
 function DataHandler(settings, defaults, data, hooks) {
   this.hooks = hooks || {}
   this.defaults = defaults || {dataview: 'default_view', time: 'time'}
@@ -516,7 +537,11 @@ DataHandler.prototype = {
             }
           } else if ('string' !== typeof map || id.map_content) {
             if (id.map_content) {
-              this.data_maps[map] = {queue: [], resource: JSON.parse(id.map_content), retrieved: true}
+              this.data_maps[map] = {
+                queue: [],
+                resource: JSON.parse(id.map_content),
+                retrieved: true,
+              }
               this.info[k].schema.fields[i].ids = this.data_maps[k] =
                 k in this.data_maps[map].resource ? this.data_maps[map].resource[k] : this.data_maps[map].resource
             } else {
@@ -524,7 +549,11 @@ DataHandler.prototype = {
             }
             this.map_entities(k)
           } else {
-            this.data_maps[map] = {queue: [k], resource: {}, retrieved: false}
+            this.data_maps[map] = {
+              queue: [k],
+              resource: {},
+              retrieved: false,
+            }
             if ('undefined' !== typeof window) {
               const f = new window.XMLHttpRequest()
               f.onreadystatechange = function (url, fi) {
@@ -564,7 +593,14 @@ DataHandler.prototype = {
     if (!this.inited_summary[d + v]) {
       ;(this.in_browser ? Object.keys(site.dataviews) : ['default_view']).forEach(view => {
         const vi = this.variables[v]
-        if (!(view in vi)) vi[view] = {order: {}, selected_order: {}, selected_summaries: {}, summaries: {}, state: {}}
+        if (!(view in vi))
+          vi[view] = {
+            order: {},
+            selected_order: {},
+            selected_summaries: {},
+            summaries: {},
+            state: {},
+          }
         if (!(d in vi.time_range)) {
           vi.time_range[d] = [0, this.meta.times[d].n - 1]
         }
@@ -584,7 +620,12 @@ DataHandler.prototype = {
               if (!(k in this.entities)) {
                 this.entities[k] = {}
               }
-              if (!(view in this.entities[k])) this.entities[k][view] = {summary: {}, rank: {}, subset_rank: {}}
+              if (!(view in this.entities[k]))
+                this.entities[k][view] = {
+                  summary: {},
+                  rank: {},
+                  subset_rank: {},
+                }
               this.entities[k][view].rank[v] = new at(ny)
               this.entities[k][view].subset_rank[v] = new at(ny)
             })
@@ -616,7 +657,12 @@ DataHandler.prototype = {
                 if (!(k in this.entities)) {
                   this.entities[k] = {}
                 }
-                if (!(view in this.entities[k])) this.entities[k][view] = {summary: {}, rank: {}, subset_rank: {}}
+                if (!(view in this.entities[k]))
+                  this.entities[k][view] = {
+                    summary: {},
+                    rank: {},
+                    subset_rank: {},
+                  }
                 const eview = this.entities[k][view]
                 if (!(v in eview.rank)) {
                   eview.rank[v] = new at(ny)
@@ -1118,7 +1164,11 @@ DataHandler.prototype = {
     entities = entities || this.entities
     if (-1 === export_options.file_format.indexOf(query.file_format)) query.file_format = export_defaults.file_format
     if (!(query.table_format in row_writers)) query.table_format = export_defaults.table_format
-    const res = {statusCode: 400, headers: {'Content-Type': 'text/plain; charset=utf-8'}, body: 'Invalid Request'},
+    const res = {
+        statusCode: 400,
+        headers: {'Content-Type': 'text/plain; charset=utf-8'},
+        body: 'Invalid Request',
+      },
       inc =
         query.include && query.include.length
           ? 'string' === typeof query.include
@@ -1168,6 +1218,7 @@ DataHandler.prototype = {
         }
       })
     } else rows[0] += sep + 'time' + sep + ('mixed' === query.table_format ? vars : ['variable', 'value']).join(sep)
+    //console.log(rows[0]);
     Object.keys(entities).forEach(k => {
       const e = entities[k]
       if (
@@ -1177,16 +1228,29 @@ DataHandler.prototype = {
       ) {
         const r = rw(e, query.time_range, feats, vars, sep)
         if (r) rows.push(r)
+        // console.log(r) // "51830","Williamsburg City","urban",2015,91.0601
+        // console.log(query.variables) // {filter_by: Array(0), conditions: Array(0)}
+        // console.log(feats) // geoid: 'id', name: 'name', region_type: 'type'
       }
     })
     res.headers['Content-Type'] = 'text/' + (',' === sep ? 'csv' : 'plain') + '; charset=utf-8'
     res.body = rows.join('\n')
+
+    // Creating data file name
+    var download_data_filename = vars.join(' ')
+    //console.log(vars) //apparently better to get it from the "vars array, rather than extracting them from the header, since they aren't included in the tall format"
+    // If the file name is longer than an abitrary length (75 characters), set it to below the windows file name (256) limit by hashing the resulting bundle of columns
+    if (download_data_filename.length > 75) {
+      download_data_filename = 'data_bundle_' + download_data_filename.hashCode()
+      download_data_filename = download_data_filename.substring(0, 256)
+    }
+    download_data_filename = download_data_filename.slugify('_')
     if (in_browser) {
       const e = document.createElement('a')
       document.body.appendChild(e)
       e.rel = 'noreferrer'
       e.target = '_blank'
-      e.download = 'data_export.' + query.file_format
+      e.download = download_data_filename + '.' + query.file_format
       e.href = URL.createObjectURL(new Blob([res.body], {type: res.headers['Content-Type']}))
       setTimeout(function () {
         e.dispatchEvent(new MouseEvent('click'))
@@ -1195,7 +1259,7 @@ DataHandler.prototype = {
       }, 0)
     } else {
       res.statusCode = 200
-      res.headers['Content-Disposition'] = 'attachment; filename=data_export.' + query.file_format
+      res.headers['Content-Disposition'] = 'attachment; filename=' + download_data_filename + '.' + query.file_format
       return res
     }
   },
