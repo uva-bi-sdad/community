@@ -374,6 +374,10 @@ void (function () {
               f.selection.filtered = {}
               f.selection.full_filter = {}
               f.selection.all = {}
+              _u._base_filter.c.forEach(f => {
+                f.passed = 0
+                f.failed = 0
+              })
               Object.keys(site.data.entities).forEach(id => {
                 const c = f.check(site.data.entities[id])
                 c.all = 0
@@ -517,6 +521,12 @@ void (function () {
             if ('filter' === o.target) {
               o.e.setAttribute('data-bs-toggle', 'modal')
               o.e.setAttribute('data-bs-target', '#filter_display')
+              o.notification = document.createElement('span')
+              o.notification.className = 'filter-notification hidden'
+              o.e.parentElement.appendChild(o.notification)
+              add_dependency('_base_filter', {type: 'update', id: o.id})
+              o.update = elements.button.update.bind(o)
+              if (site.data) o.update()
             } else
               o.e.addEventListener(
                 'click',
@@ -553,19 +563,7 @@ void (function () {
                                   q.push(k + '=' + f[k])
                                 }
                               })
-                            if (site.data.filter)
-                              site.data.filter.forEach(f => {
-                                const value = Number(f.value)
-                                if (!isNaN(value))
-                                  q.push(
-                                    f.variable +
-                                      '[' +
-                                      site.data.meta.overall.value[v.parsed.time_agg] +
-                                      ']' +
-                                      f.operator +
-                                      value
-                                  )
-                              })
+                            if (_u._base_filter.c.size) _u._base_filter.value(q, v.parsed.time_agg)
                           }
                           const k = s.endpoint + (q.length ? '?' + q.join('&') : '')
                           if (this.api) {
@@ -600,7 +598,7 @@ void (function () {
                                 ',' +
                                 site.data.meta.times[d].value[v.time_range.filtered_index[1]]
                             site.data.export(f, v.selection.all, true)
-                          } else site.data.export(f, site.data.entities, true)
+                          } else site.data.export(f, site.data.entities, true, true)
                         }
                       }.bind(o)
                     : function () {
@@ -620,6 +618,16 @@ void (function () {
                       if (this.target in _u) _u[this.target].reset()
                     }.bind(o)
               )
+          },
+          update: function () {
+            let n = 0
+            _u._base_filter.c.forEach(f => (n += f.active))
+            if (n) {
+              this.notification.innerText = n
+              this.notification.classList.remove('hidden')
+            } else {
+              this.notification.classList.add('hidden')
+            }
           },
         },
         buttongroup: {
@@ -1135,7 +1143,7 @@ void (function () {
               o.input.addEventListener(
                 'keyup',
                 function (e) {
-                  const q = this.input.value
+                  const q = this.input.value.toLowerCase()
                   if ('' === q) {
                     this.filter_reset()
                   } else {
@@ -1373,8 +1381,8 @@ void (function () {
                 add_dependency(o.time, {type: 'update', id: o.id})
               }
               if (o.view) {
-                _c[o.view].push({type: 'update', id: o.id})
-                _c[o.view + '_filter'].push({type: 'update', id: o.id})
+                add_dependency(o.view, {type: 'update', id: o.id})
+                add_dependency(o.view + '_filter', {type: 'update', id: o.id})
                 if (_u[o.view].time_agg in _u) add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
               } else o.view = defaults.dataview
               queue_init_plotly.bind(o)()
@@ -1589,14 +1597,14 @@ void (function () {
                 }
               }
             }
+            const dep = {type: 'update', id: o.id}
             if (o.view) {
-              add_dependency(o.view, {type: 'update', id: o.id})
-              if (_u[o.view].time_agg in _u) add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
-              if (_u[o.view].y) add_dependency(_u[o.view].y, {type: 'update', id: o.id})
+              if (_u[o.view].time_agg in _u) add_dependency(_u[o.view].time_agg, dep)
+              if (_u[o.view].y) add_dependency(_u[o.view].y, dep)
             } else o.view = defaults.dataview
-            _c[o.view].push({type: 'update', id: o.id})
-            if (o.color in _u) add_dependency(o.color, {type: 'update', id: o.id})
-            if (o.time) add_dependency(o.time, {type: 'update', id: o.id})
+            add_dependency(o.view, dep)
+            if (o.color in _u) add_dependency(o.color, dep)
+            if (o.time) add_dependency(o.time, dep)
             if (!o.e.style.height) o.e.style.height = o.options.height ? o.options.height : '400px'
             if (o.options.overlays_from_measures && site.data.variable_info) {
               if (!site.map[o.id].overlays) site.map[o.id].overlays = []
@@ -1875,17 +1883,22 @@ void (function () {
                 p.parsed.data = o.options.variable
               } else if ('summary' === t) {
                 o.options.show_summary = true
-                const t = document.createElement('table')
-                t.className = 'info-summary'
-                p.parsed.summary = t
-                t.appendChild(document.createElement('tr'))
-                t.appendChild(document.createElement('tr'))
+                o.e.classList.add('info-summary-wrapper')
+                const e = document.createElement('table')
+                e.className = 'info-summary'
+                p.parsed.summary = e
+                e.appendChild(document.createElement('tr'))
+                e.appendChild(document.createElement('tr'))
                 ;['NAs', 'Min', 'Q1', 'Mean', 'Median', 'Q3', 'Max'].forEach(h => {
-                  t.firstElementChild.appendChild(document.createElement('th'))
-                  t.firstElementChild.lastElementChild.innerText = h
-                  t.lastElementChild.appendChild(document.createElement('td'))
-                  t.lastElementChild.lastElementChild.innerText = 'NA'
+                  e.firstElementChild.appendChild(document.createElement('th'))
+                  e.firstElementChild.lastElementChild.innerText = h
+                  e.lastElementChild.appendChild(document.createElement('td'))
+                  e.lastElementChild.lastElementChild.innerText = 'NA'
                 })
+              } else if ('filter' === t) {
+                const e = document.createElement('table')
+                e.className = 'info-filter'
+                p.parsed.filter = e
               }
               if (patterns.features.test(t)) {
                 p.parsed.features = t.replace(patterns.features, '')
@@ -1905,6 +1918,7 @@ void (function () {
                 o.parts.title.base.setAttribute('data-bs-target', '#variable_info_display')
                 o.parts.title.base.addEventListener('click', show_variable_info.bind(o))
               } else o.parts.title.base = document.createElement('p')
+              o.parts.title.base.appendChild(document.createElement('span'))
               o.parts.title.temp = document.createElement('p')
               o.parts.title.default = document.createElement('p')
               o.parts.title.temp.className =
@@ -1915,7 +1929,7 @@ void (function () {
                 o.e.appendChild(o.parts.title.default)
                 o.parts.title.default.innerText = o.options.default.title
               }
-              if (!o.parts.title.ref) o.parts.title.base.innerText = o.parts.title.get()
+              if (!o.parts.title.ref) o.parts.title.base.firstElementChild.innerText = o.parts.title.get()
               o.e.appendChild(o.parts.title.base)
               o.e.appendChild(o.parts.title.temp)
               o.parts.title.base.classList.add('hidden')
@@ -1967,6 +1981,8 @@ void (function () {
                   p.temp.appendChild(document.createElement('div'))
                   if ('summary' in p.value.parsed) {
                     p.base.lastElementChild.appendChild(p.value.parsed.summary)
+                  } else if ('filter' in p.value.parsed) {
+                    p.base.lastElementChild.appendChild(p.value.parsed.filter)
                   } else {
                     p.temp.lastElementChild.className = p.base.lastElementChild.className =
                       'info-body-row-value' + ('statement' === p.value.parsed.variables ? ' statement' : '')
@@ -2067,7 +2083,7 @@ void (function () {
                   }
                 }
                 if (this.parts.title) {
-                  this.parts.title.base.innerText = this.parts.title.get(entity, caller)
+                  this.parts.title.base.firstElementChild.innerText = this.parts.title.get(entity, caller)
                 }
                 if (this.parts.body) {
                   if (!this.options.subto) this.parts.body.base.classList.remove('hidden')
@@ -2077,10 +2093,57 @@ void (function () {
                       filter_components.summary.forEach((c, i) => {
                         e[i].innerText = site.data.format_value(this.summary[c][this.time], 0 === i)
                       })
+                    } else if ('filter' in p.value.parsed) {
+                      const e = p.value.parsed.filter
+                      let n = 0
+                      e.innerHTML = ''
+                      _u._base_filter.c.forEach(f => {
+                        const checked = f.passed + f.failed
+                        if (f.active && checked) {
+                          const result = f.passed + '/' + checked
+                          f.e.children[1].lastElementChild.innerText = result
+                          n++
+                          const s = document.createElement('tr'),
+                            info = site.data.variable_info[f.variable]
+                          s.className = 'filter-display'
+                          let ss = document.createElement('td')
+                          s.appendChild(ss)
+                          ss.appendChild(document.createElement('span'))
+                          ss.lastElementChild.className = 'syntax-variable'
+                          ss.lastElementChild.title = f.variable
+                          ss.lastElementChild.innerText = info.short_name
+                          ss.appendChild(document.createElement('span'))
+                          ss.lastElementChild.innerText = ' ('
+                          ss.appendChild(document.createElement('span'))
+                          ss.lastElementChild.className = 'syntax-component'
+                          ss.lastElementChild.innerText = f.component
+                          ss.appendChild(document.createElement('span'))
+                          ss.lastElementChild.innerText = ')'
+                          ss = document.createElement('td')
+                          s.appendChild(ss)
+                          ss.appendChild(document.createElement('span'))
+                          ss.lastElementChild.className = 'syntax-operator'
+                          ss.lastElementChild.innerText = f.operator
+                          ss = document.createElement('td')
+                          s.appendChild(ss)
+                          ss.appendChild(document.createElement('span'))
+                          ss.lastElementChild.className = 'syntax-value'
+                          ss.lastElementChild.innerText = f.value
+                          ss = document.createElement('td')
+                          s.appendChild(ss)
+                          ss.appendChild(document.createElement('span'))
+                          ss.lastElementChild.innerText = '(' + result + ')'
+                          e.appendChild(s)
+                        }
+                      })
+                      this.e.style.display = n ? '' : 'none'
                     }
                     if (('variables' in p.value.parsed || 'summary' in p.value.parsed) && !(v.y in this.depends)) {
                       this.depends[v.y] = true
                       add_dependency(v.y, {type: 'update', id: this.id})
+                    } else if ('filter' in p.value.parsed && !('_base_filter' in this.depends)) {
+                      this.depends._base_filter = true
+                      add_dependency('_base_filter', {type: 'update', id: this.id})
                     }
                     if (p.name.ref) {
                       if (p.name.value_source) p.name.value_source = p.value.text
@@ -2300,8 +2363,8 @@ void (function () {
               })
             }
             if (o.view) {
-              _c[o.view].push({type: 'update', id: o.id})
-              _c[o.view + '_filter'].push({type: 'update', id: o.id})
+              add_dependency(o.view, {type: 'update', id: o.id})
+              add_dependency(o.view + '_filter', {type: 'update', id: o.id})
             } else o.view = defaults.dataview
             queue_init_datatable.bind(o)()
           },
@@ -2930,10 +2993,6 @@ void (function () {
             }
           }
           _u[o.id] = o
-          if (o.view) {
-            if (!(o.view in _c)) _c[o.view] = []
-            if (!(o.view + '_filter' in _c)) _c[o.view + '_filter'] = []
-          }
           if (o.type in elements && 'init' in elements[o.type]) {
             if (!o.view || _u[o.view].parsed.dataset in site.data.inited) {
               elements[o.type].init(o)
@@ -3034,7 +3093,28 @@ void (function () {
       subs = {},
       rule_conditions = {},
       keys = {},
-      _u = {},
+      _u = {
+        _base_filter: {
+          id: '_base_filter',
+          c: new Map(),
+          value: function (q, agg) {
+            const as_state = !q
+            if (as_state) q = []
+            _u._base_filter.c.forEach(f => {
+              const value = Number(f.value),
+                component =
+                  'selected' === f.component
+                    ? site.data.meta.overall.value[agg]
+                    : f.time_component
+                    ? site.data.meta.overall.value[f.component]
+                    : f.component
+              if (!isNaN(value))
+                q.push(f.variable + '[' + component + ']' + f.operator + value + (as_state ? f.active : ''))
+            })
+            return q.join('&')
+          },
+        },
+      },
       _c = {},
       tree = {}
 
@@ -3336,14 +3416,17 @@ void (function () {
 
     function add_dependency(id, o) {
       if (!(id in _c)) _c[id] = []
-      _c[id].push(o)
+      if (!o.uid) o.uid = JSON.stringify(o)
+      const c = _c[id]
+      for (let i = c.length; i--; ) if (o.uid === c[i].uid) return void 0
+      c.push(o)
       if (!(id in tree)) tree[id] = {_n: {children: 0, parents: 0}, children: {}, parents: {}}
       if (!(o.id in tree)) tree[o.id] = {_n: {children: 0, parents: 0}, children: {}, parents: {}}
       tree[id].children[o.id] = tree[o.id]
       tree[id]._n.children++
       tree[o.id].parents[id] = tree[id]
       tree[o.id]._n.parents++
-      _c[id].sort(sort_tree_children)
+      c.sort(sort_tree_children)
       request_queue(id)
     }
 
@@ -4132,7 +4215,6 @@ void (function () {
           },
         })
         site.data.retrievers.vector = site.data.retrievers.vector.bind(site.data)
-        if (site.query) site.parsed_query = site.data.parse_query(site.query)
       }
 
       if (page.load_screen && site.data.inited) {
@@ -4189,6 +4271,7 @@ void (function () {
           if ('' !== v && null != v && '-1' != v) s += (s ? '&' : '?') + k + '=' + v
         }
       })
+      if (site.data && _u._base_filter.c.size) s += '&' + _u._base_filter.value([])
       return window.location.protocol + '//' + window.location.host + window.location.pathname + s
     }
 
@@ -4449,6 +4532,7 @@ void (function () {
         }
         e.time_range = {dataset: '', variable: '', index: [], time: [], filtered: []}
         add_dependency(k, {type: 'time_range', id: k})
+        add_dependency('_base_filter', {type: 'dataview', id: k})
         if (e.x in _u) {
           add_dependency(e.x, {type: 'time_range', id: k})
         }
@@ -4488,80 +4572,141 @@ void (function () {
 
       // make filter popup
       e = page.modal.filter
-
+      e.body.className = 'filter-dialog'
       e.body.appendChild((e.variable_filters = document.createElement('div')))
       e.variable_filters.appendChild(document.createElement('p'))
       e.variable_filters.lastElementChild.className = 'h6 text-muted'
       e.variable_filters.lastElementChild.innerText = 'Variable Conditions'
 
-      function add_filter_condition(event) {
+      function add_filter_condition(event, presets) {
         if ('A' === event.target.tagName) {
-          if (!site.data.filter) site.data.filter = new Map()
+          presets = presets || {}
           const e = document.createElement('tr'),
             f = {
               e,
-              index: site.data.filter.size,
+              index: _u._base_filter.c.size,
               variable: event.target.value,
-              component: 'selected',
-              operator: '>=',
-              value: '',
+              component: presets.component || 'last',
+              operator: presets.operator || '>=',
+              value: presets.value || '',
+              active: true,
+              id: 'vf' + _u._base_filter.c.size,
+              passed: 0,
+              failed: 0,
             },
             range = site.data.variables[event.target.value].time_range[_u[defaults.dataview].get.dataset()],
             times = site.data.meta.overall.value
-          e.setAttribute('index', site.data.filter.size)
-          site.data.filter.set(site.data.filter.size, f)
-          e.appendChild(document.createElement('td'))
+          e.setAttribute('index', _u._base_filter.c.size)
+          _u._base_filter.c.set(_u._base_filter.c.size, f)
+          if (presets.time_component) f.component = String(times[f.component])
+
           var ee
+          // variable name
+          e.appendChild(document.createElement('td'))
           e.lastElementChild.appendChild((ee = document.createElement('p')))
           ee.className = 'cell-text'
           ee.innerText = event.target.innerText + ' (' + times[range[0]] + '-' + times[range[1]] + ')'
 
+          // filter result
           e.appendChild(document.createElement('td'))
+          e.lastElementChild.appendChild((ee = document.createElement('p')))
+          ee.className = 'cell-text'
+          ee.innerText = '0/0'
+
+          // active switch
+          e.appendChild(document.createElement('td'))
+          e.lastElementChild.appendChild((ee = document.createElement('label')))
+          ee.innerText = 'Active'
+          ee.className = 'filter-label'
+          ee.id = f.id + '_switch'
+          e.lastElementChild.appendChild((ee = document.createElement('div')))
+          ee.className = 'form-check form-switch filter-form-input'
+          ee.appendChild((ee = document.createElement('input')))
+          ee.className = 'form-check-input'
+          ee.type = 'checkbox'
+          ee.role = 'switch'
+          ee.setAttribute('aria-labelledby', f.id + '_switch')
+          ee.checked = true
+          ee.addEventListener(
+            'change',
+            function () {
+              f.active = !f.active
+              request_queue('_base_filter')
+            }.bind(f)
+          )
+
+          // component combobox
+          e.appendChild(document.createElement('td'))
+          e.lastElementChild.appendChild((ee = document.createElement('label')))
+          ee.innerText = 'Component'
+          ee.className = 'filter-label'
+          ee.id = f.id + '_component'
           const comp_select = elements.combobox.create('component', filter_components.Time)
-          comp_select.default = 1
-          comp_select.set(1)
+          comp_select.default = f.component
+          comp_select.set(f.component)
           comp_select.settings.strict = false
           e.lastElementChild.appendChild(comp_select.e.parentElement)
           comp_select.e.parentElement.removeChild(comp_select.e.parentElement.lastElementChild)
+          comp_select.e.parentElement.classList.add('filter-form-input')
+          comp_select.e.setAttribute('aria-labelledby', f.id + '_component')
           comp_select.onchange = function () {
             f.component = this.value()
-            conditionals.dataview()
+            request_queue('_base_filter')
           }.bind(comp_select)
 
+          // operator select
           e.appendChild(document.createElement('td'))
+          e.lastElementChild.appendChild((ee = document.createElement('label')))
+          ee.innerText = 'Operator'
+          ee.className = 'filter-label'
+          ee.id = f.id + '_operator'
           e.lastElementChild.appendChild((ee = document.createElement('select')))
-          ee.className = 'form-select'
-          ee.default = '0'
+          ee.className = 'form-select filter-form-input'
+          ee.setAttribute('aria-labelledby', f.id + '_value')
           ee.addEventListener('change', e => {
             f.operator = e.target.selectedOptions[0].value
-            conditionals.dataview()
+            request_queue('_base_filter')
           })
-          ;['>', '=', '!=', '<'].forEach(k => {
+          ;['>=', '=', '!=', '<='].forEach(k => {
             ee.appendChild(document.createElement('option'))
             ee.lastElementChild.value = ee.lastElementChild.innerText = k
-            conditionals.dataview()
+            if (k === f.operator) ee.lastElementChild.selected = true
           })
 
+          // value input
           e.appendChild(document.createElement('td'))
+          e.lastElementChild.appendChild((ee = document.createElement('label')))
+          ee.innerText = 'Value'
+          ee.className = 'filter-label'
+          ee.id = f.id + '_value'
           e.lastElementChild.appendChild((ee = document.createElement('input')))
-          ee.className = 'form-control'
+          ee.className = 'form-control filter-form-input'
           ee.type = 'number'
+          ee.value = f.value
           ee.addEventListener('change', e => {
             f.value = e.target.value
-            conditionals.dataview()
+            request_queue('_base_filter')
           })
 
+          // remove button
           e.appendChild(document.createElement('td'))
+          e.lastElementChild.appendChild((ee = document.createElement('label')))
+          ee.innerText = 'Remove'
+          ee.className = 'filter-label'
+          ee.id = f.id + '_remove'
           e.lastElementChild.appendChild((ee = document.createElement('button')))
-          ee.className = 'btn btn-close'
+          ee.className = 'btn btn-close filter-form-input'
           ee.type = 'button'
+          ee.setAttribute('aria-labelledby', f.id + '_remove')
           ee.addEventListener(
             'mouseup',
-            function () {
-              delete _u[this.e.children[1].firstElementChild.firstElementChild.id]
-              this.e.parentElement.removeChild(this.e)
-              site.data.filter.delete(this.index)
-              conditionals.dataview()
+            function (e) {
+              if (1 === e.which) {
+                delete _u[f.id]
+                this.e.parentElement.removeChild(this.e)
+                _u._base_filter.c.delete(this.index)
+                request_queue('_base_filter')
+              }
             }.bind(f)
           )
 
@@ -4600,19 +4745,29 @@ void (function () {
         }
       })
 
-      // variable filters
+      // variable filter table
       e.variable_filters.appendChild((ee = document.createElement('table')))
+      ee.className = 'table'
       ee.appendChild((ee = document.createElement('thead')))
+      ee.className = 'filter-header'
       e.variable_filters.lastElementChild.appendChild(document.createElement('tbody'))
+      e.variable_filters.lastElementChild.lastElementChild.className = 'filter-body'
       ee = ee.appendChild((ee = document.createElement('tr')))
-      ;['Variable', 'Component', 'Operator', 'Value'].forEach(h => {
+      ;['Variable', 'Result', 'Active', 'Component', 'Operator', 'Value', 'Remove'].forEach(h => {
         ee.appendChild(document.createElement('th'))
-        if ('Component' === h) {
-          const l = {
-            wrapper: document.createElement('label'),
-            id: 'filter_component_header',
-            note: 'Component refers to which single value to filter on for each entity; select a dynamic time reference, or enter a time.',
-          }
+        if ('Component' === h || 'Result' === h) {
+          const l =
+            'Component' === h
+              ? {
+                  wrapper: document.createElement('label'),
+                  id: 'filter_component_header',
+                  note: 'Component refers to which single value to filter on for each entity; select a dynamic time reference, or enter a time.',
+                }
+              : {
+                  wrapper: document.createElement('label'),
+                  id: 'filter_result_header',
+                  note: 'Passing / total entities acress datasets.',
+                }
           ee.lastElementChild.appendChild(l.wrapper)
           ee.lastElementChild.className = 'has-note'
           l.wrapper.innerText = h
@@ -4626,6 +4781,15 @@ void (function () {
       })
 
       keys._u = Object.keys(_u)
+      if (site.query) {
+        site.parsed_query = site.data.parse_query(site.query)
+        if (site.parsed_query.variables.conditions.length) {
+          site.parsed_query.variables.conditions.forEach(f => {
+            const info = site.data.variable_info[f.name]
+            if (info) add_filter_condition({target: {tagName: 'A', value: f.name, innerText: info.short_name}}, f)
+          })
+        }
+      }
     }
 
     function valueOf(v) {
@@ -4834,11 +4998,11 @@ void (function () {
           return s
         },
         variables: function () {
-          if (v.variables || (site.data.filter && site.data.filter.size)) {
+          if (v.variables || _u._base_filter.c.size) {
             if (!v.parsed.variable_values.length) v.reparse()
             var s = ''
             v.parsed.variable_values.forEach(vi => {
-              s += vi.name + vi.operator + vi.component + vi.value
+              s += vi.name + vi.operator + vi.component + vi.value + vi.active
             })
             return s
           } else return ''
@@ -4899,15 +5063,17 @@ void (function () {
           this.parsed.features = this.get.features()
         } else this.parsed.features = ''
         this.parsed.variable_values = []
-        if (site.data.filter && site.data.filter.size)
-          site.data.filter.forEach(f => {
+        if (_u._base_filter.c.size)
+          _u._base_filter.c.forEach(f => {
             this.parsed.variable_values.push({
+              filter: f,
               name: f.variable,
               range: site.data.variables[f.variable].info[this.parsed.dataset].time_range,
               operator: f.operator,
               value: f.value ? Number(f.value) : NaN,
               value_type: 'number',
               component: f.component,
+              active: f.active,
               comp_fun: component_fun(f.component),
             })
           })
@@ -4982,10 +5148,13 @@ void (function () {
             let pass = true
             for (let i = this.parsed.variable_values.length; i--; ) {
               const v = this.parsed.variable_values[i]
-              if (!isNaN(v.value)) {
-                const ev = v.comp_fun(e, v, this.parsed)
-                pass = !isNaN(ev) && DataHandler.prototype.checks[v.operator](ev, v.value)
-                if (!pass) break
+              if (v.active && !isNaN(v.value)) {
+                const ev = v.comp_fun(e, v, this.parsed),
+                  ck = !isNaN(ev) && DataHandler.prototype.checks[v.operator](ev, v.value)
+                v.filter[ck ? 'passed' : 'failed']++
+                if (pass && !ck) pass = false
+              } else {
+                v.filter.failed++
               }
             }
             return pass
@@ -4996,7 +5165,7 @@ void (function () {
         return {
           ids: !this.ids || this.checks.ids(e),
           features: !this.features || this.checks.features(e),
-          variables: (!this.variables && (!site.data.filter || !site.data.filter.size)) || this.checks.variables(e),
+          variables: (!this.variables && !_u._base_filter.c.size) || this.checks.variables(e),
           dataset: !this.dataset || this.checks.dataset(e),
         }
       }.bind(v)
@@ -5081,7 +5250,7 @@ void (function () {
           d.forEach(di => {
             if ('rule' === di.type) {
               if (-1 === r.indexOf(di.rule)) {
-                r.push(site.rules[di.rule])
+                r.push(di.rule)
               }
             } else {
               if ('function' === typeof _u[di.id][di.type]) {
@@ -5091,9 +5260,10 @@ void (function () {
               }
             }
           })
-          r.forEach(ri => {
+          r.forEach(i => {
             var pass = false
-            const n = ri.condition.length
+            const ri = site.rules[i],
+              n = ri.condition.length
             for (let i = 0; i < n; i++) {
               const ck = ri.condition[i]
               pass = ck.check()

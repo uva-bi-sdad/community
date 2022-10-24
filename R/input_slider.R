@@ -33,8 +33,7 @@ input_slider <- function(label, id = label, ..., min = 0, max = 1, step = 1, def
       " step=", step, " min=", min, " max=", max,
       if (!is.null(depends)) {
         paste0(' depends="', depends, '"')
-      } else
-      if (!is.null(dataset)) paste0('dataset="', dataset, '"'),
+      } else if (!is.null(dataset)) paste0('dataset="', dataset, '"'),
       if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
       if (!is.null(note)) paste0(' aria-description="', note, '"'),
       ">"

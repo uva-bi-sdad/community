@@ -741,7 +741,6 @@ void (function () {
       })
       const variable = this.variables[measure],
         m = variable[view]
-      if (!v.state) v.state = v.value()
       if (m.state[dataset] !== v.state) {
         const s = v.selection[this.settings.settings.summary_selection],
           a = v.selection.all,
@@ -1066,7 +1065,7 @@ void (function () {
             }
             if (patterns.operator_start.test(k) && k[k.length - 1] in this.checks) {
               tf.operator = k[k.length - 1]
-              if (('<' === tf.operator || '>' === tf.operator) && !a.length) tf.operator += '='
+              if (!a.length) tf.operator += '='
               if (k === tf.name) tf.name = k.substring(0, k.length - 1)
             }
             if (undefined === tf.value || '-1' == tf.value) return
@@ -1121,7 +1120,7 @@ void (function () {
         f.time_range = [0, this.meta.overall.value.length ? this.meta.overall.value.length - 1 : 0]
       return f
     },
-    export: async function (query, entities, in_browser) {
+    export: async function (query, entities, in_browser, all_data) {
       if (!in_browser) await this.data_ready
       query = this.parse_query(query)
       entities = entities || this.entities
@@ -1197,7 +1196,7 @@ void (function () {
       const times = this.meta.overall.value,
         filename =
           'export_' +
-          (in_browser && first_entity
+          (in_browser && !all_data && first_entity
             ? entities[first_entity].group + '_'
             : query.dataset
             ? query.dataset.value + '_'
