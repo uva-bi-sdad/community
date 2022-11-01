@@ -84,6 +84,10 @@ npm test
 ```
 
 [2022-11-01] To locally load and test the community package
+
+- make a link between community and community_example/docs/dist (e.g., in R on Windows, Sys.junction("../community", "../community_example/docs/dist"))
+- load the community package in R
+
 ```R
 > library(devtools)
 Loading required package: usethis
@@ -103,3 +107,11 @@ Loading required package: usethis
 * DONE (community)
 > library(community)
 ```
+
+- run 
+  ```R
+  site_build("../community_example", version = "local", serve = TRUE)
+  ``` 
+  which will serve the site locally, running on the scripts in community/dev
+
+
