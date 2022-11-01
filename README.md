@@ -119,9 +119,9 @@ library(community)
 ```
 
 - run 
-  ```R
-  site_build("../community_example", version = "local", serve = TRUE)
-  ``` 
-  which will serve the site locally, running on the scripts in community/dev
+```R
+site_build("../community_example", version = "local", serve = TRUE)
+``` 
+which will serve the site locally, running on the scripts in community/dev
 
 
