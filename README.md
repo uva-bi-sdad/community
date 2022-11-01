@@ -82,3 +82,24 @@ and run the tests, which will also rebuild the html report in the created `cover
 ```bash
 npm test
 ```
+
+[2022-11-01] To locally load and test the community package
+```R
+> library(devtools)
+Loading required package: usethis
+> install.packages(".",repos=NULL, type="source")
+* installing *source* package ‘community’ ...
+** using staged installation
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (community)
+> library(community)
+```
