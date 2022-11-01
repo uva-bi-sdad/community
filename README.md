@@ -89,9 +89,16 @@ npm test
 - load the community package in R
 
 ```R
-> library(devtools)
+library(devtools)
+```
+```R
 Loading required package: usethis
-> install.packages(".",repos=NULL, type="source")
+```
+
+```R
+install.packages(".",repos=NULL, type="source")
+```
+```R
 * installing *source* package ‘community’ ...
 ** using staged installation
 ** R
@@ -105,7 +112,10 @@ Loading required package: usethis
 ** testing if installed package can be loaded from final location
 ** testing if installed package keeps a record of temporary installation path
 * DONE (community)
-> library(community)
+```
+
+```R
+library(community)
 ```
 
 - run 
