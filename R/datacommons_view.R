@@ -242,11 +242,13 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
             rmanifest <- read_json(manifest_file)
             ri <- lapply(rmanifest$data, function(e) {
               m <- e$measure_info
-              if (is.list(m[[1]])) {
-                names(m) <- vapply(m, function(e) if (is.null(e$full_name)) "" else e$full_name, "")
-              } else if (is.list(m)) {
-                m <- list(m)
-                names(m) <- m[[1]]$full_name
+              if (length(m)) {
+                if (is.list(m[[1]])) {
+                  names(m) <- vapply(m, function(e) if (is.null(e$full_name)) "" else e$full_name, "")
+                } else if (is.list(m)) {
+                  m <- list(m)
+                  names(m) <- m[[1]]$full_name
+                }
               }
               m
             })

@@ -54,13 +54,13 @@ output_map <- function(shapes = NULL, overlays = NULL, color = NULL, color_time 
   if (building) {
     caller$dependencies$leaflet_style <- list(
       type = "stylesheet",
-      src = "https://unpkg.com/leaflet@1.8.0/dist/leaflet.css",
-      hash = "sha384-Nh5DPXalR9stszhRpPoPEIgr5F2M4xe7DWJ7iqTp8FtJz0cvNdO/NvY2yjUSLfIS"
+      src = "https://unpkg.com/leaflet@1.9.2/dist/leaflet.css",
+      hash = "sha384-kxXhFDZB0L84bBV/apPOb8zGC+fsQ1dBPpKXPUXc1zRymi4BaueVyC27iDDPdssp"
     )
     caller$dependencies$leaflet <- list(
       type = "script",
-      src = "https://unpkg.com/leaflet@1.8.0/dist/leaflet.js",
-      hash = "sha384-4Dmmo81xejNChaqLOci80VhUcuEAD5pXpCtqtizmdgWEzdETh3zrJvzOhU4T79cN"
+      src = "https://unpkg.com/leaflet@1.9.2/dist/leaflet.js",
+      hash = "sha384-zrFQ4BIvCMUhUb6NKv9N6+lGhC7+M9l7lyLfVaa/dqQtK4PLTS6LZNvAyPJvls7U"
     )
     options$overlays_from_measures <- overlays_from_measures
     options$subto <- if (!is.null(subto) && length(subto) == 1) list(subto) else subto
@@ -100,7 +100,7 @@ output_map <- function(shapes = NULL, overlays = NULL, color = NULL, color_time 
     caller$credits$leaflet <- list(
       name = "Leaflet",
       url = "https://leafletjs.com",
-      version = "1.8.0",
+      version = "1.9.2",
       description = "A JS library for interactive maps"
     )
     if (!missing(attribution) || missing(tiles)) {

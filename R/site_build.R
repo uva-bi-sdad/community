@@ -363,13 +363,13 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         custom = list(type = "script", src = "script.js"),
         bootstrap_style = list(
           type = "stylesheet",
-          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css",
-          hash = "sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT"
+          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css",
+          hash = "sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi"
         ),
         bootstrap = list(
           type = "script",
-          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js",
-          hash = "sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8"
+          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js",
+          hash = "sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3"
         )
       )
     )
@@ -377,7 +377,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   parts$credits$bootstrap <- list(
     name = "Bootstrap",
     url = "https://getbootstrap.com",
-    version = "5.2.1"
+    version = "5.2.2"
   )
   parts$credits$colorbrewer <- list(
     name = "ColorBrewer",
@@ -500,7 +500,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     unlist(parts$head[!duplicated(names(parts$head))], use.names = FALSE),
     "</head>",
     "<body>",
-    '<div id="site_wrap" style="visibility: hidden; position: fixed; height: 100%; width: 100%">',
+    '<div id="site_wrap" style="visibility: hidden; position: absolute; height: 100%; left: 0; right: 0">',
     if (!is.null(parts$header)) parts$header,
     if (!is.null(parts$body)) parts$body,
     '<div class="content container-fluid">',

@@ -1,14 +1,13 @@
 Package: community
 Title: Community Analysis Framework
-Version: 0.0.1.104
+Version: 0.0.1.105
 Authors@R: c(
-    person("Biocomplexity Institute", role = c("aut", "cph")),
-    person("Micah", "Iserman", role = "cre", email = "micah.iserman@gmail.com")
+    person("Biocomplexity Institute", role = c("cph", "fnd")),
+    person("Micah", "Iserman", role = c("aut", "cre"), email = "micah.iserman@gmail.com"),
+    person("Alan", "Wang", role = "ctb")
   )
 Imports: cli, data.table, jsonlite, rstudioapi, stats, stringi, lingmatch, httpuv
-Description: Offers a framework and toolset for the analysis of communities. Helps (1a) assess, clean, and unify
-  diverse data sources relating to a community, or (1b) simulate a community, then (2) calculate a range of measures
-  of that community, and (3) present and disseminate final data.
+Description: A toolset and web framework to help manage and present data.
 URL: https://github.com/uva-bi-sdad/community
 BugReports: https://github.com/uva-bi-sdad/community/issues
 Depends: R (>= 3.5)
@@ -22,4 +21,3 @@ Suggests:
     testthat (>= 3.0.0),
     xml2
 Config/testthat/edition: 3
-VignetteBuilder: knitr

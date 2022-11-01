@@ -49,7 +49,9 @@ input_select <- function(label, options, default = -1, display = options, id = l
   r <- c(
     '<div class="wrapper select-wrapper">',
     if (!floating_label) paste0('<label for="', id, '">', label, "</label>"),
-    paste0('<div class="', paste(if (reset_button) "input-group", if (floating_label) "form-floating"), '">'),
+    paste0('<div class="', paste(c(
+      if (reset_button) "input-group", if (floating_label) "form-floating"
+    ), collapse = " "), '">'),
     paste0(
       '<select class="auto-input form-select" auto-type="select" id="', id, '" ',
       if (is.character(options) && length(options) == 1) paste0('auto-options="', options, '"'),

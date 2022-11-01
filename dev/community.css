@@ -13,6 +13,10 @@
   --lowlight-text: #acacac;
   --warning: #dc3545;
   --na: #7e7e7e;
+  --syntax-var: #aca2ef;
+  --syntax-value: #8eb767;
+  --syntax-component: #8cade2;
+  --syntax-operator: #c79dd2;
 }
 .light-theme {
   --background: #ffffff;
@@ -27,24 +31,32 @@
   --highlight-secondary-text: #000000;
   --lowlight: #e9ecef;
   --lowlight-text: #575757;
-  --warning: #a11320;
+  --warning: #b50212;
   --na: #7e7e7e;
+  --syntax-var: #5649b3;
+  --syntax-value: #316500;
+  --syntax-component: #004ecb;
+  --syntax-operator: #8c23a8;
 }
-
+.offcanvas {
+  --bs-offcanvas-width: 300px;
+}
 body,
 html,
 .modal-content,
 table.dataTable tbody tr,
 .offcanvas,
-.leaflet-tooltip {
+.leaflet-tooltip,
+.card,
+.table {
   background-color: var(--background);
   border-color: var(--background-border);
   color: var(--body-text);
 }
-#site_wrap {
-  position: fixed;
-  height: 100%;
-  width: 100%;
+.card-header {
+  font-weight: bold;
+  font-size: 1.1em;
+  background-color: var(--background-highlight);
 }
 .form-check-input,
 .form-check-input > label,
@@ -150,6 +162,9 @@ body::-webkit-scrollbar-track,
   display: block;
   margin: 0;
 }
+button {
+  padding: 0;
+}
 button:hover {
   opacity: 0.7;
 }
@@ -190,15 +205,19 @@ div.filter-hidden {
 .combobox {
   cursor: pointer;
   display: flex;
+  position: relative;
+  overflow: hidden;
+}
+.form-select.combobox {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 .combobox-selection {
-  position: absolute;
-  left: 13px;
-  right: 13px;
   padding: 0.3em 0.3em 0.3em 0;
   background-color: transparent;
   display: flex;
   white-space: nowrap;
+  align-items: center;
 }
 .combobox-selection span {
   overflow-x: clip;
@@ -208,7 +227,6 @@ input.combobox-input {
   background-color: transparent;
   border: none;
   min-width: 10px;
-  max-width: 10%;
   overflow-x: visible;
 }
 .combobox-input:focus {
@@ -275,7 +293,7 @@ input.combobox-input {
   opacity: 0.6;
 }
 .navbar {
-  position: fixed;
+  position: absolute;
   width: 100%;
   z-index: 100;
   min-height: 55px;
@@ -306,13 +324,17 @@ input.combobox-input {
   padding-left: calc(var(--bs-gutter-x) * 0.5);
 }
 .row > div[class^='col']:first-child {
-  padding-left: 0;
+  padding: 1px;
 }
 .col {
   height: 100%;
 }
 div[class^='col-'] {
   min-width: 100px;
+}
+.content-overlay {
+  position: absolute;
+  z-index: 1080;
 }
 .content > .col > .row,
 .content > .row {
@@ -324,13 +346,6 @@ div[class^='col-'] {
 }
 p.compact {
   margin: 0;
-}
-.footer {
-  display: block;
-  width: 92%;
-  position: absolute;
-  bottom: 16px;
-  z-index: 400;
 }
 button.btn-danger {
   background-color: var(--warning);
@@ -348,13 +363,18 @@ button.btn-danger {
 .btn-full {
   width: 100%;
 }
+#site_wrap {
+  overflow: hidden;
+}
 .menu,
+.menu-toggle,
 .menu-wrapper,
-.panel {
+.panel,
+#site_wrap {
   transition: top 400ms, right 400ms, bottom 400ms, left 400ms;
 }
 .menu-wrapper {
-  position: fixed;
+  position: absolute;
   overflow: visible;
   z-index: 90;
 }
@@ -365,7 +385,7 @@ button.btn-danger {
   overflow-x: auto;
 }
 .menu-toggle {
-  position: fixed;
+  position: absolute;
   background-color: var(--background-highlight);
   border: none;
   font-size: 1.7em;
@@ -462,6 +482,9 @@ button.dropdown-toggle {
 }
 .info-body-row-table .info-body-row-value.statement {
   text-align: left;
+  max-height: 50px;
+  display: block;
+  font-size: clamp(0.65rem, -0.5rem + 2vw, 1rem);
 }
 .info-body-row-stack {
   text-align: center;
@@ -470,13 +493,13 @@ button.dropdown-toggle {
   border-radius: 10px;
   font-size: 1.08em;
 }
-.info-body-row-table .info-body-row-name {
-  padding: 0 0.5em 0 0;
-}
 .info-body-row-stack .info-body-row-name {
   font-weight: bold;
-  padding: 0.05em 0;
-  font-size: max(1vw, 12px);
+  padding: 0 0 0.05em 0.3em;
+  font-size: clamp(0.7rem, -0.5rem + 2vw, 1rem);
+}
+.info-summary-wrapper {
+  overflow-x: auto;
 }
 .info-body .info-summary {
   text-align: center;
@@ -487,16 +510,24 @@ button.dropdown-toggle {
   padding: 0 0.2em;
 }
 .info-title {
-  font-size: 1.7em;
+  font-size: clamp(1.3rem, -0.5rem + 2vw, 1.7rem);
   margin: 0;
   font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+.info-title span,
+.info-body-row-stack .info-body-row-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .floating,
 .tooltip {
-  position: fixed;
+  position: absolute;
   background-color: var(--background);
   border-radius: 10px;
-  z-index: 1080;
+  z-index: 1079;
   border: 2px solid var(--background-border);
   padding: 0.5em;
   opacity: 1;
@@ -577,8 +608,24 @@ button.has-note::after {
   background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='%23000' viewBox='0 0 16 16'><path d='M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z'/><path d='m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z'/></svg>");
 }
 .offcanvas-body {
-  padding: 1rem 1rem 4.5rem 1rem;
   overflow-x: hidden;
+  position: absolute;
+  top: 62px;
+  width: 100%;
+}
+.offcanvas-footer {
+  position: absolute;
+  height: 46px;
+  width: 100%;
+  bottom: 0;
+  padding: 4px var(--bs-offcanvas-padding-x);
+}
+.offcanvas-footer button,
+.popup-button {
+  width: 100%;
+}
+.offcanvas.offcanvas-end {
+  border-left-color: var(--background-border);
 }
 .menu-compact .offcanvas-body {
   font-size: 0.95em;
@@ -601,6 +648,19 @@ button.has-note::after {
 .source-table th:first-of-type {
   text-align: left;
 }
+.sources-cards .card {
+  margin: 0 0 0.3em 0;
+}
+.sources-cards .card-body {
+  font-size: 0.9em;
+  padding: 0.5rem 1rem;
+}
+.sources-cards p {
+  margin: 0;
+}
+.sources-cards p span:first-child {
+  opacity: 0.7;
+}
 .reference-list {
   padding: 0;
 }
@@ -610,7 +670,6 @@ button.has-note::after {
   text-indent: -1.5em;
 }
 .cell-text {
-  padding: 0.4em;
   margin: 0;
 }
 
@@ -624,15 +683,16 @@ button.has-note::after {
 .switch-wrapper .form-switch label {
   padding: 0.5em 0 0 0;
 }
-.switch-wrapper .form-switch .form-check-input {
+.switch-wrapper .form-switch .form-check-input,
+.filter-dialog .form-check-input {
   padding: 0.9em;
   width: 3.5em;
 }
 .panel {
-  position: fixed;
+  position: absolute;
   top: 0;
   bottom: 0;
-  width: 210px;
+  width: 220px;
   max-width: 100%;
   border-radius: 0;
   background-color: var(--background-highlight);
@@ -808,8 +868,8 @@ table.dataTable.compact tbody th,
 table.dataTable.compact tbody td {
   padding: 0 17px 0 0;
 }
-.dataTable td,
-.dataTable th {
+table.dataTable tbody td,
+table.dataTable thead th {
   text-align: right;
   white-space: nowrap;
 }
@@ -1005,8 +1065,96 @@ input[type='range']::-ms-thumb {
   display: none;
 }
 
+.info-body table.info-filter {
+  width: auto;
+  margin: 0 0.5em;
+  font-size: 0.9em;
+}
+.filter-display td:first-of-type {
+  text-align: right;
+}
+.filter-display td:nth-child(2) {
+  text-align: center;
+  width: 2em;
+}
+.filter-display td {
+  vertical-align: top;
+}
+.filter-display {
+  color: var(--lowlight-text);
+}
+.syntax-variable {
+  color: var(--syntax-var);
+}
+.syntax-value {
+  color: var(--syntax-value);
+}
+.syntax-component {
+  color: var(--syntax-component);
+}
+.syntax-operator {
+  color: var(--syntax-operator);
+}
+
+.filter-notification {
+  position: absolute;
+  margin: -0.5em 0 0 -1.5em;
+  font-size: 0.75em;
+  background-color: var(--warning);
+  border-radius: 25px;
+  padding: 0 0.5em;
+}
+.filter-dialog {
+  padding: 1em;
+}
+.filter-dialog .table {
+  margin: 0;
+}
+.filter-dialog .btn-close {
+  padding: 0.7em;
+}
+.filter-body td {
+  align-items: center;
+}
+.filter-label {
+  visibility: hidden;
+  position: absolute;
+}
+@media screen and (max-width: 700px) {
+  .filter-dialog .cell-text {
+    font-size: 1.5em;
+    font-weight: bold;
+  }
+  .filter-dialog .filter-header {
+    display: none;
+  }
+  .filter-dialog table td {
+    display: flex;
+    margin: 0 1em;
+    border: none;
+    padding: 0 0 0.2em 0;
+  }
+  .filter-dialog table td:first-of-type {
+    margin: 0;
+  }
+  .filter-dialog .filter-body .filter-form-input {
+    max-width: 150px;
+  }
+  .filter-label {
+    visibility: visible;
+    position: relative;
+  }
+}
+
+@media screen and (max-width: 750px) {
+  .d-flex {
+    flex-flow: column;
+  }
+}
+
 @media screen and (max-width: 600px) {
   .content .row > div {
+    position: relative;
     width: 100%;
   }
   .menu {

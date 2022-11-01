@@ -49,7 +49,7 @@ describe('when the data handler is initialized...', function () {
 describe('when exporting data...', async function () {
   it('the default works', async function () {
     const res = await data.export()
-    assert.strictEqual(res.headers['Content-Disposition'], 'attachment; filename=data_export.csv')
+    assert.strictEqual(res.headers['Content-Disposition'], 'attachment; filename=export_2010-2011_2-variables_8x5.csv')
     assert.strictEqual(
       res.body,
       'ID,Name,time,variable_name1,variable_name2\n' +
@@ -81,7 +81,7 @@ describe('when exporting data...', async function () {
   })
   it('tall table and tsv file formats work', async function () {
     const res = await data.export({table_format: 'tall', file_format: 'tsv'})
-    assert.strictEqual(res.headers['Content-Disposition'], 'attachment; filename=data_export.tsv')
+    assert.strictEqual(res.headers['Content-Disposition'], 'attachment; filename=export_2010-2011_2-variables_12x5.tsv')
     assert.strictEqual(
       res.body,
       'ID\tName\ttime\tvariable\tvalue\n' +
