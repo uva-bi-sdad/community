@@ -836,8 +836,8 @@ void (function () {
               if ('range' === this.e.type) {
                 this.e.nextElementSibling.firstElementChild.innerText = this.e.value
               }              
-              var max_indicator = this.e.parentNode.parentNode.querySelector('.max_indicator')
-              var min_indicator = this.e.parentNode.parentNode.querySelector('.min_indicator')
+              var max_indicator = this.e.parentNode.parentNode.querySelector('#max_indicator')
+              var min_indicator = this.e.parentNode.parentNode.querySelector('#min_indicator')
               if (max_indicator){
                 max_indicator.innerHTML = this.parsed.max;
               }
