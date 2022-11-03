@@ -1,3 +1,10 @@
+function limitNumberWithinRange(num, min, max){
+  const MIN = min || 1;
+  const MAX = max || 20;
+  const parsed = parseInt(num)
+  return Math.min(Math.max(parsed, MIN), MAX)
+}
+
 void (function () {
   const community = function (window, document, site) {
     'use strict'
@@ -828,12 +835,20 @@ void (function () {
               this.current_index = v - this.parsed.min
               if ('range' === this.e.type) {
                 this.e.nextElementSibling.firstElementChild.innerText = this.e.value
+              }              
+              var max_indicator = this.e.parentNode.parentNode.querySelector('.max_indicator')
+              var min_indicator = this.e.parentNode.parentNode.querySelector('.min_indicator')
+              if (max_indicator){
+                max_indicator.innerHTML = this.parsed.max;
+              }
+              if (min_indicator){
+                min_indicator.innerHTML = this.parsed.min;
               }
               request_queue(this.id)
             }
           },
           listener: function (e) {
-            this.set(e.target.value)
+            this.set(this.e.value)
           },
         },
         text: {
