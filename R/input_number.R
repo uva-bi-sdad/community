@@ -27,10 +27,9 @@
 #' @export
 
 input_number <- function(label, id = label, ..., default = NULL, variable = NULL, min = NULL, max = NULL, step = NULL,
-                         type = "number", class = NULL, note = NULL, dataview = NULL, floating_label = TRUE, buttons = FALSE, min_max_indicator=FALSE) {
+                         type = "number", class = NULL, note = NULL, dataview = NULL, floating_label = TRUE, buttons = FALSE, min_max_indicator = FALSE) {
   id <- gsub("\\s", "", id)
   r <- c(
-    
     if (buttons) '<div class="wrapper number-input-row align-items-center">',
     if (min_max_indicator) paste0('<div id="min_indicator" class="text-muted small"></div>'),
     if (buttons) '<button role="button" label="decrease value" class="btn number-down">&lt;</button>',
@@ -53,7 +52,7 @@ input_number <- function(label, id = label, ..., default = NULL, variable = NULL
     "</div>",
     if (buttons) '<button role="button" label="increase value" class="btn number-up">&gt;</button>',
     if (min_max_indicator) paste0('<div id="max_indicator" class="text-muted small"></div>'),
-    if (buttons) '</div>'
+    if (buttons) "</div>"
   )
   caller <- parent.frame()
   if (!is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts") {
