@@ -330,6 +330,9 @@ void (function () {
           } else if ('number' === typeof uv && isFinite(uv) && uv < cv) {
             u.set(cv)
           }
+          if (u.min_indicator){
+            u.min_indicator.innerText = cv;
+          }  
         },
         max: async function (u, c) {
           var cv = c.value(),
@@ -350,7 +353,10 @@ void (function () {
             u.reset()
           } else if ('number' === typeof uv && isFinite(uv) && uv > cv) {
             u.set(cv)
-          }
+          }        
+          if (u.max_indicator){
+            u.max_indicator.innerText = cv;
+          }  
         },
         dataview: function (f) {
           f = f || _u[defaults.dataview]
@@ -797,15 +803,18 @@ void (function () {
         },
         number: {
           init: function (o) {
-            const w = o.e.parentElement.parentElement
-            if (w && w.firstElementChild.classList.contains('number-down')) {
-              w.firstElementChild.addEventListener(
+            const up = o.e.parentElement.parentElement.querySelector('.number-up')
+            const down = o.e.parentElement.parentElement.querySelector('.number-down')
+            if (down!= null) {
+              down.addEventListener(
                 'click',
                 function () {
                   this.set(Math.max(this.parsed.min, this.value() - 1))
                 }.bind(o)
               )
-              w.lastElementChild.addEventListener(
+            }
+            if (up!= null){
+              up.addEventListener(
                 'click',
                 function () {
                   this.set(Math.min(this.parsed.max, this.value() + 1))
@@ -821,19 +830,22 @@ void (function () {
             if ('string' === typeof v) v = parseFloat(v)
             if (isFinite(v) && v !== this.source) {
               this.previous = parseFloat(this.e.value)
-              if (!isFinite(this.parsed.min) && v < this.parsed.min) {
+              if (isFinite(this.parsed.min) && v < this.parsed.min) {
                 v = this.parsed.min
-              } else if (!isFinite(this.parsed.max) && v > this.parsed.max) v = this.parsed.max
+              } else if (isFinite(this.parsed.max) && v > this.parsed.max) {
+                v = this.parsed.max      
+              }
+
               this.e.value = this.source = v
               this.current_index = v - this.parsed.min
               if ('range' === this.e.type) {
                 this.e.nextElementSibling.firstElementChild.innerText = this.e.value
-              }
+              }       
               request_queue(this.id)
             }
           },
           listener: function (e) {
-            this.set(e.target.value)
+            this.set(this.e.value)
           },
         },
         text: {
@@ -4363,6 +4375,8 @@ void (function () {
             o.min_ref = parseFloat(o.min)
             o.max = o.e.getAttribute('max')
             o.max_ref = parseFloat(o.max)
+            o.min_indicator = o.e.parentNode.parentNode.querySelector('.input_number-min_indicator') // assuming that the indicator is always placed above the input of the number
+            o.max_indicator = o.e.parentNode.parentNode.querySelector('.input_number-max_indicator') // assuming that the indicator is always placed above the input of the number
             o.ref = isNaN(o.min_ref) || isNaN(o.max_ref)
             o.range = [o.min_ref, o.max_ref]
             o.step = parseFloat(o.e.step) || 1
