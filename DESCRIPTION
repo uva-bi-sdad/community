@@ -1,6 +1,6 @@
 Package: community
 Title: Community Analysis Framework
-Version: 0.0.1.105
+Version: 0.0.1.106
 Authors@R: c(
     person("Biocomplexity Institute", role = c("cph", "fnd")),
     person("Micah", "Iserman", role = c("aut", "cre"), email = "micah.iserman@gmail.com"),
@@ -14,7 +14,7 @@ Depends: R (>= 3.5)
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE, old_usage = TRUE)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.2
 Suggests: 
     rmarkdown,
     knitr,

@@ -31,6 +31,22 @@ parse_rule <- function(condition) {
   })
 }
 
+process_conditions <- function(conditions, ids, caller) {
+  for (i in seq_along(conditions)) {
+    if (conditions[i] != "") {
+      display <- TRUE
+      if (grepl("^[dl][^:]*:", conditions[i], TRUE)) {
+        if (grepl("^l", conditions[i], TRUE)) display <- FALSE
+        conditions[i] <- sub("^[dl][^:]*:\\s*", "", conditions[i], TRUE)
+      }
+      caller$rules <- c(caller$rules, list(list(
+        condition = parse_rule(conditions[i]),
+        effects = if (display) list(display = ids[i]) else list(lock = ids[i])
+      )))
+    }
+  }
+}
+
 to_input_row <- function(e) {
   c(
     '<div class="col">', e[2], "</div>",

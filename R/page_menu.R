@@ -15,6 +15,7 @@
 #' @param breakpoints Bootstrap breakpoint of each wrapper; one of \code{""} (extra small), \code{"sm"},
 #' @param conditions A character for each element representing the conditions in which that should be showing
 #' (e.g., \code{c("", "input_a == a", "")}); \code{""} means the element's display is not conditional.
+#' Adding \code{"lock: "} before the condition will disable inputs rather than hide the element.
 #' @examples
 #' \dontrun{
 #' page_menu(
@@ -82,16 +83,7 @@ page_menu <- function(..., position = "right", width = "300px", height = NULL, c
     caller$body <- c(caller$body, r)
     for (n in names(parts)) if (n != "content") caller[[n]] <- c(caller[[n]], parts[[n]])
     caller$uid <- parts$uid
-    if (any(conditions != "")) {
-      ids <- ids[conditions != ""]
-      conditions <- conditions[conditions != ""]
-      for (i in seq_along(conditions)) {
-        caller$rules <- c(caller$rules, list(list(
-          condition = parse_rule(conditions[i]),
-          effects = list(display = ids[i])
-        )))
-      }
-    }
+    process_conditions(conditions, ids, caller)
   }
   r
 }

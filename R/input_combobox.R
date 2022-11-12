@@ -26,9 +26,10 @@
 #' and \code{variable}, depending on this type of input \code{depends} points to.
 #' @param dataview The ID of an \code{\link{input_dataview}}, used to filter the set of options, and potentially
 #' specify dataset if none is specified here.
-#' @param subset Determines the subset of options shown if \code{options} is \code{"ids"}; mainly \code{"all"}
+#' @param subset Determines the subset of options shown if \code{options} is \code{"ids"}; mainly \code{"filtered"}
 #' (default) to apply all filters, including the current selection, or \code{"full_filter"} to apply all
-#' feature and variable filters, but not the current selection.
+#' feature and variable filters, but not the current selection. \code{"siblings"} is a special case given a selection,
+#' which will show other IDs with the same parent.
 #' @param selection_subset Subset to use when a selection is made; defaults to \code{"full_filter"}.
 #' @param filters A list with names of \code{meta} entries (from \code{variable} entry in \code{\link{data_add}}'s
 #' \code{meta} list), and values of target values for those entries, or the IDs of value selectors.
@@ -50,7 +51,7 @@
 input_combobox <- function(label, options, default = -1, display = options, id = label, ...,
                            strict = TRUE, search = TRUE, multi = FALSE, clearable = FALSE, note = NULL,
                            group_feature = NULL, variable = NULL, dataset = NULL, depends = NULL,
-                           dataview = NULL, subset = "all", selection_subset = "full_filter", filters = NULL,
+                           dataview = NULL, subset = "filtered", selection_subset = "full_filter", filters = NULL,
                            reset_button = FALSE, button_class = NULL, as.row = FALSE, floating_label = TRUE) {
   id <- gsub("\\s", "", id)
   a <- list(...)

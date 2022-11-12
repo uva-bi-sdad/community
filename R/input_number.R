@@ -17,8 +17,7 @@
 #' @param dataview ID of a \code{\link{input_dataview}}, to use as a source of variables.
 #' @param floating_label Logical; if \code{FALSE}, labels are separate from their input elements.
 #' @param buttons Logical; if \code{TRUE}, adds increment and decrement buttons to the sides of the input.
-#' @param min_max_indicator Logical; if \code{TRUE}, add min and max indicators around the input fields, and constrains the input
-#'
+#' @param show_range Logical; if \code{TRUE}, adds min and max indicators around the input field.
 #' @examples
 #' \dontrun{
 #' input_text("entered_text", "Enter Text:")
@@ -27,11 +26,12 @@
 #' @export
 
 input_number <- function(label, id = label, ..., default = NULL, variable = NULL, min = NULL, max = NULL, step = NULL,
-                         type = "number", class = NULL, note = NULL, dataview = NULL, floating_label = TRUE, buttons = FALSE, min_max_indicator = FALSE) {
+                         type = "number", class = NULL, note = NULL, dataview = NULL, floating_label = TRUE,
+                         buttons = FALSE, show_range = FALSE) {
   id <- gsub("\\s", "", id)
   r <- c(
-    if (buttons || min_max_indicator) '<div class="wrapper number-input-row align-items-center">',
-    if (min_max_indicator) paste0('<div class="text-muted small input_number-min_indicator text-end"></div>'),
+    if (buttons || show_range) '<div class="wrapper number-input-row">',
+    if (show_range) paste0('<div class="text-muted small indicator-min"><span>', min, "</span></div>"),
     if (buttons) '<button role="button" label="decrease value" class="btn number-down">&lt;</button>',
     paste0('<div class="wrapper text-wrapper', if (floating_label) " form-floating", '">'),
     if (!floating_label) paste0('<label for="', id, '">', label, "</label>"),
@@ -51,8 +51,8 @@ input_number <- function(label, id = label, ..., default = NULL, variable = NULL
     ), collapse = ""),
     "</div>",
     if (buttons) '<button role="button" label="increase value" class="btn number-up">&gt;</button>',
-    if (min_max_indicator) paste0('<div class="text-muted small input_number-max_indicator text-start"></div>'),
-    if (buttons || min_max_indicator) "</div>"
+    if (show_range) paste0('<div class="text-muted small indicator-max"><span>', max, "</span></div>"),
+    if (buttons || show_range) "</div>"
   )
   caller <- parent.frame()
   if (!is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts") {

@@ -7,6 +7,7 @@
 #' in that condition (e.g., \code{list("input_a == 1" = 1)}).
 #' These can also be specified separately with an \code{\link{input_rule}}.
 #' @param default The value to set if no condition is \code{TRUE}.
+#' @param display A list mapping cases names to display names (e.g., \code{list(value = "Value")}).
 #' @examples
 #' \dontrun{
 #' input_select("input_a", c("a", "b", "c"))
@@ -17,7 +18,7 @@
 #' @return A version of the resulting variable object.
 #' @export
 
-input_variable <- function(id, cases, default = "") {
+input_variable <- function(id, cases, default = "", display = list()) {
   r <- list(
     id = id,
     states = lapply(seq_along(cases), function(i) {
@@ -26,7 +27,8 @@ input_variable <- function(id, cases, default = "") {
         value = cases[[i]]
       )
     }),
-    default = default
+    default = default,
+    display = display
   )
   caller <- parent.frame()
   if (!is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts") {

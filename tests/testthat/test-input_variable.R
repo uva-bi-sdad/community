@@ -17,7 +17,8 @@ test_that("parse cases properly", {
           value = 1
         )
       ),
-      default = ""
+      default = "",
+      display = list()
     ),
     input_variable("variable", list(
       "!a || b" = 0,

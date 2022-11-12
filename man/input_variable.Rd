@@ -4,7 +4,7 @@
 \alias{input_variable}
 \title{Add an internal variable to a website}
 \usage{
-input_variable(id, cases, default = "")
+input_variable(id, cases, default = "", display = list())
 }
 \arguments{
 \item{id}{Name of the variable, which can be referred to by other inputs of outputs.}
@@ -14,6 +14,8 @@ in that condition (e.g., \code{list("input_a == 1" = 1)}).
 These can also be specified separately with an \code{\link{input_rule}}.}
 
 \item{default}{The value to set if no condition is \code{TRUE}.}
+
+\item{display}{A list mapping cases names to display names (e.g., \code{list(value = "Value")}).}
 }
 \value{
 A version of the resulting variable object.

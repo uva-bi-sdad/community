@@ -13,10 +13,18 @@ test_that("structure is intact", {
 })
 
 test_that("build environment is added to", {
-  content <- page_menu(input_select("menu item", c("a", "b", "c")))
+  content <- sub(
+    "menu1", "menu01",
+    page_menu(input_select("menu item", c("a", "b", "c")), conditions = "lock: input"),
+    fixed = TRUE
+  )
   parts <- make_build_environment()
   eval(expression(
-    page_menu(input_select("menu item", c("a", "b", "c")))
+    page_menu(input_select("menu item", c("a", "b", "c")), conditions = "lock: input")
   ), parts)
   expect_identical(parts$body, content)
+  expect_identical(parts$rules, list(list(
+    condition = list(list(id = "input", type = "", value = "", any = FALSE)),
+    effects = list(lock = "menu01")
+  )))
 })

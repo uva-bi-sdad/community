@@ -276,9 +276,26 @@ void (function () {
             }
             var ns = 0
             if ('ID' === u.variable || 'ids' === u.options_source) {
-              const v = no_view
-                ? {}
-                : site.dataviews[u.view].selection[-1 === u.value() ? u.subset : u.selection_subset]
+              const value = u.value()
+              let selection = -1 === value || '' === value ? u.subset : u.selection_subset,
+                v = {}
+              if (!no_view) {
+                if (selection in _u) selection = valueOf(selection)
+                if ('siblings' === selection) {
+                  const rel = site.data.entity_tree && site.data.entity_tree[value]
+                  if (rel) {
+                    const parents = Object.keys(rel.parents)
+                    if (parents.length) {
+                      v = {}
+                      parents.forEach(id => {
+                        v = {...v, ...site.data.entity_tree[id].children}
+                      })
+                    }
+                  }
+                } else {
+                  v = site.dataviews[u.view].selection[selection]
+                }
+              }
               u.options.forEach(si => {
                 if (fresh && !u.groups) c.appendChild(si)
                 if (no_view || si.value in v) {
@@ -296,7 +313,7 @@ void (function () {
               })
             } else ns++
             if (fresh && u.groups) u.groups.e.forEach(e => c.appendChild(e))
-            u.e[ns ? 'removeAttribute' : 'setAttribute']('disabled', true)
+            toggle_input(u, ns)
             u.current_set = k
             if (fresh) {
               if (combobox) {
@@ -330,9 +347,7 @@ void (function () {
           } else if ('number' === typeof uv && isFinite(uv) && uv < cv) {
             u.set(cv)
           }
-          if (u.min_indicator){
-            u.min_indicator.innerText = cv;
-          }  
+          if (u.min_indicator) u.min_indicator.firstElementChild.innerText = cv
         },
         max: async function (u, c) {
           var cv = c.value(),
@@ -353,19 +368,16 @@ void (function () {
             u.reset()
           } else if ('number' === typeof uv && isFinite(uv) && uv > cv) {
             u.set(cv)
-          }        
-          if (u.max_indicator){
-            u.max_indicator.innerText = cv;
-          }  
+          }
+          if (u.max_indicator) u.max_indicator.firstElementChild.innerText = cv
         },
         dataview: function (f) {
           f = f || _u[defaults.dataview]
           const state = f.value()
-          if (state !== f.state) {
+          if (state !== f.state && _u._entity_filter.registered[f.parsed.dataset]) {
             if (site.data.inited[f.parsed.dataset]) {
               f.valid = true
               f.n_selected.ids = 0
-              f.n_selected.children = 0
               f.n_selected.features = 0
               f.n_selected.variables = 0
               f.n_selected.dataset = 0
@@ -373,7 +385,6 @@ void (function () {
               f.n_selected.full_filter = 0
               f.n_selected.all = 0
               f.selection.ids = {}
-              f.selection.children = {}
               f.selection.features = {}
               f.selection.variables = {}
               f.selection.dataset = {}
@@ -384,43 +395,40 @@ void (function () {
                 f.passed = 0
                 f.failed = 0
               })
-              Object.keys(site.data.entities).forEach(id => {
-                const c = f.check(site.data.entities[id])
+              _u._entity_filter.entities.forEach(e => {
+                const c = f.check(e),
+                  id = e.features.id
                 c.all = 0
                 if (c.ids) {
-                  f.selection.ids[id] = site.data.entities[id]
+                  f.selection.ids[id] = e
                   f.n_selected.ids++
                   c.all++
                 }
                 if (c.features) {
-                  f.selection.features[id] = site.data.entities[id]
+                  f.selection.features[id] = e
                   f.n_selected.features++
                   c.all++
                 }
                 if (c.variables) {
-                  f.selection.variables[id] = site.data.entities[id]
+                  f.selection.variables[id] = e
                   f.n_selected.variables++
                   c.all++
                 }
                 if (c.dataset) {
-                  f.selection.dataset[id] = site.data.entities[id]
+                  f.selection.dataset[id] = e
                   f.n_selected.dataset++
                   c.all++
                 }
                 if (c.features && c.variables) {
-                  f.selection.full_filter[id] = site.data.entities[id]
+                  f.selection.full_filter[id] = e
                   f.n_selected.full_filter++
                 }
-                if (c.dataset && c.ids) {
-                  f.selection.children[id] = site.data.entities[id]
-                  f.n_selected.children++
-                }
-                if (c.variables && c.features && c.dataset) {
-                  f.selection.filtered[id] = site.data.entities[id]
+                if (c.variables && c.features && c.ids) {
+                  f.selection.filtered[id] = e
                   f.n_selected.filtered++
                 }
                 if (4 === c.all) {
-                  f.selection.all[id] = site.data.entities[id]
+                  f.selection.all[id] = e
                   f.n_selected.all++
                 }
               })
@@ -493,18 +501,21 @@ void (function () {
             }
             if (!passive && s) {
               s.forEach(si => {
-                const su = _u[si.id]
-                const value = su.value()
+                const su = _u[si.id],
+                  value = su.value()
                 if ('min' === si.type) {
                   if (reset || (isFinite(u.time_range.time[0]) && parseFloat(su.e.min) !== u.time_range.time[0])) {
                     su.e.min = u.time_range.time[0]
-                    if (reset || !meta.retain_state || u.time_range.time[0] > value) su.set(u.time_range.time[0])
+                    if (reset || !meta.retain_state || u.time_range.time[0] > value) {
+                      su.set(u.time_range.time[0])
+                    }
                   }
                 } else if ('max' === si.type) {
                   if (reset || (isFinite(u.time_range.time[1]) && parseFloat(su.e.max) !== u.time_range.time[1])) {
                     su.e.max = u.time_range.time[1]
-                    if (reset || !meta.retain_state || u.time_range.time[1] < value || value < u.time_range.time[0])
+                    if (reset || !meta.retain_state || u.time_range.time[1] < value || value < u.time_range.time[0]) {
                       su.set(u.time_range.time[1])
+                    }
                   }
                 }
               })
@@ -516,6 +527,34 @@ void (function () {
             u.time_range.time[0] = u.time_range.filtered[0] = 1
             u.time_range.index[1] = 0
             u.time_range.time[1] = u.time_range.filtered[1] = 1
+          }
+        },
+        id_filter: function () {
+          const ids = {}
+          _u._entity_filter.selected = []
+          _u._entity_filter.select_ids = ids
+          if (site.metadata.datasets) {
+            site.metadata.datasets.forEach(d => {
+              if (d in page.modal.filter.entity_inputs) {
+                const s = page.modal.filter.entity_inputs[d].value(),
+                  cs = []
+                if (s && s.length) {
+                  s.forEach(id => {
+                    const e = site.data.entities[id]
+                    if (e) {
+                      cs.push(id)
+                      _u._entity_filter.selected.push(id)
+                      ids[id] = true
+                      if (e.relations) {
+                        Object.keys(e.relations.parents).forEach(k => (ids[k] = true))
+                        Object.keys(e.relations.children).forEach(k => (ids[k] = true))
+                      }
+                    }
+                  })
+                  page.modal.filter.entity_inputs[d].source = cs
+                }
+              }
+            })
           }
         },
       },
@@ -531,6 +570,7 @@ void (function () {
               o.notification.className = 'filter-notification hidden'
               o.e.parentElement.appendChild(o.notification)
               add_dependency('_base_filter', {type: 'update', id: o.id})
+              add_dependency('_entity_filter', {type: 'update', id: o.id})
               o.update = elements.button.update.bind(o)
               if (site.data) o.update()
             } else
@@ -552,7 +592,12 @@ void (function () {
                           var q = []
                           if ('include' in f) q.push('include=' + f.include)
                           if ('dataset' in f) q.push('dataset=' + f.dataset)
-                          if ('id' in f && -1 != f.id) q.push('id=' + f.id)
+                          if ('id' in f && '' !== f.id && -1 != f.id) {
+                            q.push('id=' + f.id)
+                          } else {
+                            const selection = Object.keys(_u._entity_filter.select_ids)
+                            if (selection.length) q.push('id=' + selection.join(','))
+                          }
                           if (v) {
                             if (!f.time_range)
                               q.push(
@@ -626,7 +671,7 @@ void (function () {
               )
           },
           update: function () {
-            let n = 0
+            let n = Number(0 !== _u._entity_filter.selected.length)
             _u._base_filter.c.forEach(f => (n += f.active))
             if (n) {
               this.notification.innerText = n
@@ -797,15 +842,15 @@ void (function () {
               request_queue(this.id)
             }
           },
-          listener: function (e) {
-            this.set(e.target.checked)
+          listener: function () {
+            this.set(this.e.checked)
           },
         },
         number: {
           init: function (o) {
             const up = o.e.parentElement.parentElement.querySelector('.number-up')
             const down = o.e.parentElement.parentElement.querySelector('.number-down')
-            if (down!= null) {
+            if (down) {
               down.addEventListener(
                 'click',
                 function () {
@@ -813,7 +858,7 @@ void (function () {
                 }.bind(o)
               )
             }
-            if (up!= null){
+            if (up) {
               up.addEventListener(
                 'click',
                 function () {
@@ -825,27 +870,28 @@ void (function () {
           retrieve: function () {
             this.set(this.e.value)
           },
-          setter: function (v) {
+          setter: function (v, check) {
             if (!v) v = null
             if ('string' === typeof v) v = parseFloat(v)
             if (isFinite(v) && v !== this.source) {
               this.previous = parseFloat(this.e.value)
-              if (isFinite(this.parsed.min) && v < this.parsed.min) {
-                v = this.parsed.min
-              } else if (isFinite(this.parsed.max) && v > this.parsed.max) {
-                v = this.parsed.max      
+              if (check) {
+                if (isFinite(this.parsed.min) && v < this.parsed.min) {
+                  v = this.parsed.min
+                } else if (isFinite(this.parsed.max) && v > this.parsed.max) {
+                  v = this.parsed.max
+                }
               }
-
               this.e.value = this.source = v
               this.current_index = v - this.parsed.min
               if ('range' === this.e.type) {
                 this.e.nextElementSibling.firstElementChild.innerText = this.e.value
-              }       
+              }
               request_queue(this.id)
             }
           },
           listener: function (e) {
-            this.set(this.e.value)
+            this.set(this.e.value, true)
           },
         },
         text: {
@@ -853,7 +899,7 @@ void (function () {
             if (site.text && o.id in site.text) {
               o.text = site.text[o.id].text
               o.condition = site.text[o.id].condition || []
-              o.depends = {}
+              o.depends = new Map()
               o.text.forEach(oi => {
                 if ('text' in oi) {
                   init_text(o, oi)
@@ -866,20 +912,28 @@ void (function () {
               o.condition.forEach(c => {
                 if (c.id in _u) add_dependency(c.id, {type: 'display', id: o.id})
               })
-              Object.keys(o.depends).forEach(k => add_dependency(k, {type: 'update', id: o.id}))
+              o.depends.forEach(d => add_dependency(d.id, {type: 'update', id: o.id}))
               o.update = elements.text.update.bind(o)
             }
             o.update()
           },
           update: function () {
             Object.keys(this.reference_options).forEach(k => (this.options[k] = valueOf(this.reference_options[k])))
-            Object.keys(this.depends).forEach(k => {
-              this.depends[k] = valueOf(k)
-              if (this.depends[k] in site.data.entities)
-                this.depends[k] = site.data.entities[this.depends[k]].features.name
+            this.depends.forEach(d => {
+              d.parsed = valueOf(d.id)
+              if (d.u) {
+                if (d.u.options) {
+                  d.parsed = d.u.options['combobox' === d.u.type ? d.u.values[d.parsed] : d.u.current_index].innerText
+                } else {
+                  d.parsed =
+                    d.u.display && d.parsed in d.u.display ? d.u.display[d.parsed] : site.data.format_label(d.parsed)
+                }
+              } else if (d.parsed in site.data.entities) {
+                d.parsed = site.data.entities[d.parsed].features.name
+              }
             })
             this.text.forEach((o, i) => {
-              var pass = true
+              let pass = true
               if (o.length) {
                 for (let t = o.length; t--; ) {
                   if ('condition' in o[t]) {
@@ -912,12 +966,12 @@ void (function () {
                         k = ki.text
                     })
                   }
-                  if (k in this.depends) {
-                    o.parts.children[i].innerText = this.depends[k]
+                  if (this.depends.has(k)) {
+                    o.parts.children[i].innerText = this.depends.get(k).parsed
                   } else if (k in o.button) {
-                    var s = ''
+                    let s = ''
                     o.button[k].text.forEach(b => {
-                      s = (b in this.depends ? this.depends[b] : b) + s
+                      s = (this.depends.has(b) ? this.depends.get(b).parsed : b) + s
                     })
                     o.parts.children[i].innerText = s
                   } else o.parts.children[i].innerText = k
@@ -959,10 +1013,14 @@ void (function () {
           },
         },
         combobox: {
-          create: function (label, options) {
-            const id = 'created_combobox_' + ++page.elementCount,
-              e = document.createElement('div')
+          create: function (label, options, settings, id) {
+            id = id || 'created_combobox_' + ++page.elementCount
+            const e = document.createElement('div')
             let c = document.createElement('div')
+            if (settings) {
+              if (!site.combobox) site.combobox = {}
+              site.combobox[id] = settings
+            }
             e.className = 'wrapper combobox-wrapper'
             e.appendChild(c)
             c.id = id
@@ -983,6 +1041,12 @@ void (function () {
             c.setAttribute('aria-labelledby', id + '-label')
             c.id = id + '-input'
             c.autocomplete = 'false'
+            if (settings && settings.clearable) {
+              e.firstElementChild.appendChild((c = document.createElement('button')))
+              c.type = 'button'
+              c.className = 'btn-close'
+              c.title = 'clear selection'
+            }
             e.appendChild((c = document.createElement('div')))
             c.className = 'combobox-options combobox-component'
             c.role = 'listbox'
@@ -995,39 +1059,40 @@ void (function () {
             const u = _u[id]
             var n = 0
             u.options = []
-            if (Array.isArray(options)) {
-              options.forEach(o => {
-                const l = site.data.format_label(o)
-                u.display[l] = n
-                u.values[o] = n++
-                u.options.push(u.add(o, l))
-              })
-            } else {
-              u.groups = {e: [], by_name: {}}
-              Object.keys(options).forEach(k => {
-                const g = options[k]
-                const e = document.createElement('div'),
-                  id = u.id + '_group_' + k.replace(patterns.seps, '-')
-                e.className = 'combobox-group combobox-component'
-                e.role = 'group'
-                e.setAttribute('aria-labelledby', id)
-                e.appendChild(document.createElement('label'))
-                e.firstElementChild.innerText = k
-                e.firstElementChild.id = id
-                e.firstElementChild.className = 'combobox-group-label combobox-component'
-                u.groups.by_name[k] = e
-                u.groups.e.push(e)
-                g.forEach(o => u.groups.by_name[k].appendChild(u.add(o, o, true)))
-                u.listbox.appendChild(e)
-              })
-              Object.keys(u.groups.by_name).forEach(g => {
-                u.groups.by_name[g].querySelectorAll('.combobox-option').forEach(c => {
-                  u.options.push(c)
-                  u.values[c.value] = n
-                  u.display[c.innerText] = n++
+            if (options)
+              if (Array.isArray(options)) {
+                options.forEach(o => {
+                  const l = site.data.format_label(o)
+                  u.display[l] = n
+                  u.values[o] = n++
+                  u.options.push(u.add(o, l))
                 })
-              })
-            }
+              } else {
+                u.groups = {e: [], by_name: {}}
+                Object.keys(options).forEach(k => {
+                  const g = options[k]
+                  const e = document.createElement('div'),
+                    id = u.id + '_group_' + k.replace(patterns.seps, '-')
+                  e.className = 'combobox-group combobox-component'
+                  e.role = 'group'
+                  e.setAttribute('aria-labelledby', id)
+                  e.appendChild(document.createElement('label'))
+                  e.firstElementChild.innerText = k
+                  e.firstElementChild.id = id
+                  e.firstElementChild.className = 'combobox-group-label combobox-component'
+                  u.groups.by_name[k] = e
+                  u.groups.e.push(e)
+                  g.forEach(o => u.groups.by_name[k].appendChild(u.add(o, o, true)))
+                  u.listbox.appendChild(e)
+                })
+                Object.keys(u.groups.by_name).forEach(g => {
+                  u.groups.by_name[g].querySelectorAll('.combobox-option').forEach(c => {
+                    u.options.push(c)
+                    u.values[c.value] = n
+                    u.display[c.innerText] = n++
+                  })
+                })
+              }
             return u
           },
           init: function (o) {
@@ -1041,14 +1106,16 @@ void (function () {
             page.overlay.appendChild(o.container)
             o.container.appendChild(o.listbox)
             o.selection = o.e.firstElementChild.firstElementChild
-            o.input = o.e.firstElementChild.lastElementChild
+            o.input_element = o.e.firstElementChild.lastElementChild
             if (2 === o.e.childElementCount) {
               o.e.lastElementChild.addEventListener(
                 'click',
                 function () {
-                  this.cleared_selection = ''
-                  this.set(-1)
-                  this.input.focus()
+                  if (!this.e.classList.contains('locked')) {
+                    this.cleared_selection = ''
+                    this.set([])
+                    this.input_element.focus()
+                  }
                 }.bind(o)
               )
             }
@@ -1061,13 +1128,13 @@ void (function () {
                   : ''
                 : valueOf(this.default)
             }.bind(o)
-            o.input.addEventListener(
+            o.input_element.addEventListener(
               'focus',
               function () {
                 this.e.classList.add('focused')
               }.bind(o)
             )
-            o.input.addEventListener(
+            o.input_element.addEventListener(
               'blur',
               function () {
                 this.e.classList.remove('focused')
@@ -1077,7 +1144,7 @@ void (function () {
             o.close = function (e) {
               if (this.expanded && (!e || !e.target.classList || !e.target.classList.contains('combobox-component'))) {
                 if ('' === this.selection.innerText) this.selection.innerText = this.cleared_selection
-                if ('' !== this.input.value) setTimeout(this.set, 0)
+                if ('' !== this.input_element.value) setTimeout(this.set, 0)
                 this.e.setAttribute('aria-expanded', false)
                 this.expanded = false
                 this.container.style.display = 'none'
@@ -1092,9 +1159,9 @@ void (function () {
             }.bind(o)
             window.addEventListener('resize', o.resize)
             o.toggle = function (e) {
-              if (!e.button && 'BUTTON' !== e.target.tagName) {
+              if (!e.button && !this.e.classList.contains('disabled') && 'BUTTON' !== e.target.tagName) {
                 if (this.expanded) {
-                  if (e.target !== this.input) this.close()
+                  if (e.target !== this.input_element) this.close()
                 } else {
                   if (site.combobox)
                     Object.keys(site.combobox).forEach(id => {
@@ -1109,7 +1176,7 @@ void (function () {
                   }
                   window.addEventListener('click', this.close)
                   this.e.setAttribute('aria-expanded', true)
-                  if (!e || e.target !== this.input) setTimeout(() => this.input.focus(), 0)
+                  if (!e || e.target !== this.input_element) setTimeout(() => this.input_element.focus(), 0)
                   this.resize()
                   this.expanded = true
                 }
@@ -1147,15 +1214,15 @@ void (function () {
               }
             }.bind(o)
             o.filter_reset = function () {
-              this.input.value = ''
+              this.input_element.value = ''
               this.filter_index = []
               this.listbox.querySelectorAll('.filter-hidden').forEach(o => o.classList.remove('filter-hidden'))
             }.bind(o)
             if (o.settings.search)
-              o.input.addEventListener(
+              o.input_element.addEventListener(
                 'keyup',
                 function (e) {
-                  const q = this.input.value.toLowerCase()
+                  const q = this.input_element.value.toLowerCase()
                   if ('' === q) {
                     this.filter_reset()
                   } else {
@@ -1171,7 +1238,7 @@ void (function () {
                   }
                 }.bind(o)
               )
-            o.input.addEventListener(
+            o.input_element.addEventListener(
               'keydown',
               function (e) {
                 const action = keymap[e.code]
@@ -1179,7 +1246,7 @@ void (function () {
                   if ('close' === action) {
                     this.close()
                   } else if ('select' === action) {
-                    if (!this.expanded) return this.toggle({target: this.input})
+                    if (!this.expanded) return this.toggle({target: this.input_element})
                     this.set(e)
                   } else if ('move' === action) {
                     e.preventDefault()
@@ -1214,7 +1281,7 @@ void (function () {
                     }
                   }
                 } else if (!this.expanded) {
-                  this.toggle({target: this.input})
+                  this.toggle({target: this.input_element})
                 } else {
                   this.clear_highlight()
                 }
@@ -1227,7 +1294,7 @@ void (function () {
             request_queue(this.id)
           },
           setter: function (v, toggle) {
-            if (!v) v = this.input.value
+            if (!v) v = this.input_element.value
             if (v.target && 'LABEL' === v.target.tagName) return void 0
             let update = false
             var i = -1
@@ -1243,40 +1310,50 @@ void (function () {
             }
             this.filter_reset()
             if ('object' === typeof v) {
-              if (this.options.multi) {
+              if (this.settings.multi) {
                 this.listbox.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'))
-                this.source = v
-                return request_queue(this.id)
+                this.source = -1 === v ? [] : v
+                v.forEach(vv => {
+                  if (vv in this.values) this.options[this.values[vv]].classList.add('selected')
+                })
               } else v = v[0]
             }
-            if (this.settings.strict && 'string' === typeof v && !(v in this.values) && patterns.number.test(v))
-              v = Number(v)
-            if ('number' === typeof v && v > -1 && v < this.options.length) {
-              v = this.options[v].value
-            }
-            if ('string' === v && v in this.display) v = this.options[this.display[v]].value
             if (!Array.isArray(this.source)) this.source = []
-            if (this.settings.strict && !(v in this.values)) v = this.default
-            i = this.source.indexOf(v)
-            if (-1 === i) {
+            if ('object' === typeof v && this.settings.multi) {
               update = true
-              if (this.settings.multi) {
-                this.source.push(v)
-              } else this.source[0] = v
-              if (v in this.values) {
-                if (!this.settings.multi) {
-                  const selected = this.listbox.querySelector('.selected')
-                  if (selected) selected.classList.remove('selected')
-                }
-                this.options[this.values[v]].classList.add('selected')
+            } else {
+              if (this.settings.strict && 'string' === typeof v && !(v in this.values) && patterns.number.test(v))
+                v = Number(v)
+              if ('number' === typeof v && v > -1 && v < this.options.length) {
+                v = this.options[v].value
               }
-            } else if (toggle) {
-              update = true
-              this.source.splice(i, 1)
-              if (v in this.values) this.options[this.values[v]].classList.remove('selected')
+              if ('string' === v && v in this.display) v = this.options[this.display[v]].value
+              if (this.settings.strict && !(v in this.values)) v = this.default
+              i = this.source.indexOf(v)
+              if (-1 === i) {
+                update = true
+                if (-1 === v || '' === v) {
+                  this.source = []
+                } else {
+                  if (this.settings.multi) {
+                    this.source.push(v)
+                  } else this.source[0] = v
+                }
+                if (v in this.values) {
+                  if (!this.settings.multi) {
+                    const selected = this.listbox.querySelector('.selected')
+                    if (selected) selected.classList.remove('selected')
+                  }
+                  this.options[this.values[v]].classList.add('selected')
+                }
+              } else if (toggle) {
+                update = true
+                this.source.splice(i, 1)
+                if (v in this.values) this.options[this.values[v]].classList.remove('selected')
+              }
             }
             if (!this.settings.multi && this.expanded) {
-              this.input.focus()
+              this.input_element.focus()
               this.close()
               this.filter_reset()
             }
@@ -1454,7 +1531,7 @@ void (function () {
                       ? varcol[this.view].order[d][this.parsed.time]
                       : varcol.info[d].order[this.parsed.time],
                     traces = []
-                  var i = this.parsed.summary.missing[this.parsed.time],
+                  let i = this.parsed.summary.missing[this.parsed.time],
                     k,
                     b,
                     fn = order ? order.length : 0,
@@ -2070,7 +2147,7 @@ void (function () {
                   this.queue = setTimeout(() => this.update(void 0, void 0, true), 50)
               } else {
                 // base information
-                entity = site.data.entities[v.get.ids()]
+                entity = site.data.entities[v.get.ids(true)]
                 if (entity) {
                   // when showing a selected region
                   this.selection = true
@@ -2109,6 +2186,33 @@ void (function () {
                       const e = p.value.parsed.filter
                       let n = 0
                       e.innerHTML = ''
+                      if (_u._entity_filter.selected.length) {
+                        n++
+                        const s = document.createElement('tr')
+                        s.className = 'filter-display'
+                        let ss = document.createElement('td')
+                        s.appendChild(ss)
+                        ss.appendChild(document.createElement('span'))
+                        ss.lastElementChild.className = 'syntax-variable'
+                        ss.lastElementChild.innerText = 'Select Entities'
+                        ss = document.createElement('td')
+                        s.appendChild(ss)
+                        ss.appendChild(document.createElement('span'))
+                        ss.lastElementChild.className = 'syntax-operator'
+                        ss.lastElementChild.innerText = ':'
+                        ss = document.createElement('td')
+                        s.appendChild(ss)
+                        ss.setAttribute('colspan', 2)
+                        ss.appendChild(document.createElement('span'))
+                        ss.lastElementChild.className = 'syntax-value'
+                        let ids = ''
+                        _u._entity_filter.selected.forEach(id => {
+                          const entity = site.data.entities[id]
+                          ids += (ids ? ', ' : '') + (entity && entity.features ? entity.features.name : id)
+                        })
+                        ss.lastElementChild.innerText = ids
+                        e.appendChild(s)
+                      }
                       _u._base_filter.c.forEach(f => {
                         const checked = f.passed + f.failed
                         if (f.active && checked) {
@@ -2475,7 +2579,8 @@ void (function () {
                         this.current_filter[c] = valueOf(f)
                       })
                       const va = []
-                      let varstate = '' + this.parsed.dataset + v.get.ids() + v.get.features() + site.settings.digits
+                      let varstate =
+                        '' + this.parsed.dataset + v.get.ids(true) + v.get.features() + site.settings.digits
                       for (let i = this.options.variables.length; i--; ) {
                         vn = this.options.variables[i].name || this.options.variables[i]
                         pass = false
@@ -3106,6 +3211,16 @@ void (function () {
       rule_conditions = {},
       keys = {},
       _u = {
+        _entity_filter: {
+          id: '_entity_filter',
+          registered: {},
+          entities: new Map(),
+          selected: [],
+          select_ids: {},
+          value: function (q, agg) {
+            return Object.keys(this.select_ids).join(',')
+          },
+        },
         _base_filter: {
           id: '_base_filter',
           c: new Map(),
@@ -3241,6 +3356,7 @@ void (function () {
         } else {
           text.parts.appendChild(document.createElement('span'))
         }
+        if (k in _u) o.depends.set(k, {id: k, u: _u[k], parsed: ''})
       })
       if ('condition' in text) {
         for (let i = text.condition.length; i--; ) {
@@ -3251,7 +3367,7 @@ void (function () {
                 return true
               }
             } else {
-              o.depends[c.id] = ''
+              o.depends.set(c.id, c)
               c.check = function () {
                 return (
                   'default' === this.id ||
@@ -3264,10 +3380,10 @@ void (function () {
       }
     }
 
-    function fill_ids_options(u, d, out) {
+    function fill_ids_options(u, d, out, onend) {
       if (!(d in site.data.sets)) {
         site.data.data_queue[d][u.id] = function () {
-          return fill_ids_options(u, d, out)
+          return fill_ids_options(u, d, out, onend)
         }
         if (site.data.loaded[d]) site.data.load_id_maps()
         return
@@ -3328,6 +3444,7 @@ void (function () {
           })
         })
       }
+      onend && onend()
     }
 
     function fill_variables_options(u, d, out) {
@@ -3422,6 +3539,18 @@ void (function () {
       }
     }
 
+    function toggle_input(u, enable) {
+      if (enable && !u.e.classList.contains('locked')) {
+        u.e.removeAttribute('disabled')
+        u.e.classList.remove('disabled')
+        if (u.input_element) u.input_element.removeAttribute('disabled')
+      } else {
+        u.e.setAttribute('disabled', true)
+        u.e.classList.add('disabled')
+        if (u.input_element) u.input_element.setAttribute('disabled', true)
+      }
+    }
+
     function sort_tree_children(a, b) {
       return !(a.id in tree) || !(b.id in tree) ? -Infinity : tree[a.id]._n.children - tree[b.id]._n.children
     }
@@ -3483,11 +3612,14 @@ void (function () {
       if (e.data && u.parsed.x in site.data.variables) {
         const x = site.data.retrievers.vector({variable: u.parsed.x, entity: e}),
           y = site.data.retrievers.vector({variable: u.parsed.y, entity: e}),
-          t = JSON.parse(u.traces[u.base_trace])
-        for (let i = site.data.variables[u.parsed.x].time_range[u.parsed.dataset][2]; i--; ) {
-          t.text[i] = e.features.name
-          t.x[i] = u.parsed.x_range[0] <= i && i <= u.parsed.x_range[1] ? x[i - u.parsed.x_range[0]] : NaN
-          t.y[i] = u.parsed.y_range[0] <= i && i <= u.parsed.y_range[1] ? y[i - u.parsed.y_range[0]] : NaN
+          t = JSON.parse(u.traces[u.base_trace]),
+          yr = site.data.variables[u.parsed.y].time_range[u.parsed.dataset],
+          xr = site.data.variables[u.parsed.x].time_range[u.parsed.dataset],
+          n = Math.min(yr[1], xr[1]) + 1
+        for (let i = Math.max(yr[0], xr[0]); i < n; i++) {
+          t.text.push(e.features.name)
+          t.x.push(u.parsed.x_range[0] <= i && i <= u.parsed.x_range[1] ? x[i - u.parsed.x_range[0]] : NaN)
+          t.y.push(u.parsed.y_range[0] <= i && i <= u.parsed.y_range[1] ? y[i - u.parsed.y_range[0]] : NaN)
         }
         t.type = u.parsed.base_trace
         t.color =
@@ -4072,77 +4204,80 @@ void (function () {
       // initialize variables
       if (site.variables && site.variables.length) {
         site.variables.forEach(v => {
-          const k = v.id
-          _u[k] = {
-            id: k,
-            type: 'virtual',
-            source: v.default,
-            previous: void 0,
-            default: v.default,
-            current_index: -1,
-            values: [],
-            states: v.states,
-            update: function () {
-              this.source = void 0
-              for (var p, i = this.states.length; i--; ) {
-                p = true
-                for (let c = this.states[i].condition.length; c--; ) {
-                  const r = this.states[i].condition[c]
-                  if (DataHandler.prototype.checks[r.type](valueOf(r.id), valueOf(r.value))) {
-                    if (r.any) {
-                      p = true
-                      break
-                    }
-                  } else p = false
+          const k = v.id,
+            u = {
+              id: k,
+              type: 'virtual',
+              source: v.default,
+              previous: void 0,
+              default: v.default,
+              display: v.display,
+              current_index: -1,
+              values: [],
+              states: v.states,
+              update: function () {
+                this.source = void 0
+                for (var p, i = this.states.length; i--; ) {
+                  p = true
+                  for (let c = this.states[i].condition.length; c--; ) {
+                    const r = this.states[i].condition[c]
+                    if (DataHandler.prototype.checks[r.type](valueOf(r.id), valueOf(r.value))) {
+                      if (r.any) {
+                        p = true
+                        break
+                      }
+                    } else p = false
+                  }
+                  if (p) {
+                    this.source = this.states[i].value
+                    break
+                  }
                 }
-                if (p) {
-                  this.source = this.states[i].value
-                  break
-                }
-              }
-              if (!this.source) this.source = this.default
-              if (this.source !== this.previous) {
-                this.previous = this.source
-                request_queue(this.id)
-              } else if (this.source in _u) {
-                const r = _u[this.source].value()
-                if (r !== this.previous) {
-                  this.previous = r
+                if (!this.source) this.source = this.default
+                if (this.source !== this.previous) {
+                  this.previous = this.source
                   request_queue(this.id)
+                } else if (this.source in _u) {
+                  const r = _u[this.source].value()
+                  if (r !== this.previous) {
+                    this.previous = r
+                    request_queue(this.id)
+                  }
                 }
-              }
-            },
-            value: function () {
-              return valueOf(this.source)
-            },
-            set: function (v) {
-              if (-1 !== this.values.indexOf(v)) {
-                this.previous = this.source
-                this.source = v
-              } else if (this.source) {
-                const c = _u[this.source]
-                if (
-                  'select' === c.type || 'combobox' === c.type
-                    ? v in c.values || v in c.display
-                    : -1 !== c.values.indexOf(v)
-                ) {
-                  c.set(v)
+              },
+              value: function () {
+                return valueOf(this.source)
+              },
+              set: function (v) {
+                if (-1 !== this.values.indexOf(v)) {
+                  this.previous = this.source
+                  this.source = v
+                } else if (this.source) {
+                  const c = _u[this.source]
+                  if (
+                    'select' === c.type || 'combobox' === c.type
+                      ? v in c.values || v in c.display
+                      : -1 !== c.values.indexOf(v)
+                  ) {
+                    c.set(v)
+                  }
                 }
-              }
-              request_queue(this.id)
-            },
-          }
-          if (_u[k].source) _u[k].values.push(_u[k].source)
+                request_queue(this.id)
+              },
+            }
+          _u[k] = u
+          if (u.source) u.values.push(u.source)
           const p = {}
-          _u[k].states.forEach(si => {
-            _u[k].values.push(si.value)
+          u.states.forEach(si => {
+            u.values.push(si.value)
             si.condition.forEach(c => {
-              if (!(c.id in p)) {
-                p[c.id] = {type: 'update', id: k}
-              }
+              p[c.id] = {type: 'update', id: k}
+              add_dependency(c.id, {type: 'update', id: k})
             })
           })
-          Object.keys(p).forEach(k => add_dependency(k, p[k]))
+          u.values.forEach(id => {
+            if (id in _u) add_dependency(id, {type: 'update', id: k})
+          })
         })
       }
 
@@ -4151,8 +4286,13 @@ void (function () {
         site.rules.forEach((r, i) => {
           if ('display' in r.effects) {
             r.effects.display = {e: document.getElementById(r.effects.display)}
-            e = r.effects.display.e.getElementsByClassName('auto-input')
-            if (e.length) r.effects.display.u = _u[e[0].id]
+            e = r.effects.display.e.querySelector('.auto-input')
+            if (e) r.effects.display.u = _u[e.id]
+          }
+          if ('lock' in r.effects) {
+            const us = new Map()
+            document.querySelectorAll('#' + r.effects.lock + ' .auto-input').forEach(e => us.set(e.id, _u[e.id]))
+            r.effects.lock = us
           }
           r.condition.forEach(c => {
             if (c.type in DataHandler.prototype.checks) {
@@ -4279,7 +4419,8 @@ void (function () {
       var s = ''
       keys._u.forEach(k => {
         if (_u[k].input && !patterns.settings.test(k)) {
-          const v = _u[k].value()
+          let v = _u[k].value()
+          if (Array.isArray(v)) v = v.join(',')
           if ('' !== v && null != v && '-1' != v) s += (s ? '&' : '?') + k + '=' + v
         }
       })
@@ -4321,9 +4462,14 @@ void (function () {
             if (Array.isArray(o.values)) {
               o.values = {}
               o.display = {}
+              let new_display = true
+              o.options.forEach(e => {
+                if (new_display) new_display = e.value === e.innerText
+              })
               o.options.forEach((e, i) => {
                 o.values[e.value] = i
-                o.display[e.value] = i
+                if (new_display) e.innerText = site.data.format_label(e.value)
+                o.display[e.innerText] = i
               })
               if (!(o.default in o.values) && !(o.default in _u)) {
                 o.default = Number(o.default)
@@ -4373,10 +4519,10 @@ void (function () {
             // retrieve option values
             o.min = o.e.getAttribute('min')
             o.min_ref = parseFloat(o.min)
+            o.min_indicator = o.e.parentElement.parentElement.querySelector('.indicator-min')
             o.max = o.e.getAttribute('max')
             o.max_ref = parseFloat(o.max)
-            o.min_indicator = o.e.parentNode.parentNode.querySelector('.input_number-min_indicator') // assuming that the indicator is always placed above the input of the number
-            o.max_indicator = o.e.parentNode.parentNode.querySelector('.input_number-max_indicator') // assuming that the indicator is always placed above the input of the number
+            o.max_indicator = o.e.parentElement.parentElement.querySelector('.indicator-max')
             o.ref = isNaN(o.min_ref) || isNaN(o.max_ref)
             o.range = [o.min_ref, o.max_ref]
             o.step = parseFloat(o.e.step) || 1
@@ -4527,8 +4673,10 @@ void (function () {
             return (
               '' +
               this.parsed.dataset +
+              _u._entity_filter.entities.size +
               site.data.inited[this.parsed.dataset] +
-              this.parsed.ids +
+              this.parsed.id_source +
+              Object.keys(this.parsed.ids) +
               this.parsed.features +
               this.parsed.variables +
               site.settings.summary_selection
@@ -4547,12 +4695,9 @@ void (function () {
         e.time_range = {dataset: '', variable: '', index: [], time: [], filtered: []}
         add_dependency(k, {type: 'time_range', id: k})
         add_dependency('_base_filter', {type: 'dataview', id: k})
-        if (e.x in _u) {
-          add_dependency(e.x, {type: 'time_range', id: k})
-        }
-        if (e.y in _u) {
-          add_dependency(e.y, {type: 'time_range', id: k})
-        }
+        add_dependency('_entity_filter', {type: 'dataview', id: k})
+        if (e.x in _u) add_dependency(e.x, {type: 'time_range', id: k})
+        if (e.y in _u) add_dependency(e.y, {type: 'time_range', id: k})
         if (e.features)
           Object.keys(e.features).forEach(f => {
             if ('string' === typeof e.features[f] && e.features[f] in _u) {
@@ -4587,6 +4732,51 @@ void (function () {
       // make filter popup
       e = page.modal.filter
       e.body.className = 'filter-dialog'
+
+      // // entity filter
+      e.body.appendChild((e.entity_filters = document.createElement('div')))
+      e.entity_filters.appendChild(document.createElement('p'))
+      e.entity_filters.lastElementChild.className = 'h6 text-muted'
+      e.entity_filters.lastElementChild.innerText = 'Select Entities'
+      e.entity_filters.appendChild(document.createElement('div'))
+      e.entity_filters.lastElementChild.className = 'row'
+      e.entity_inputs = {}
+      Object.keys(site.data.data_queue)
+        .reverse()
+        .forEach(d => {
+          const u = elements.combobox.create(d, void 0, {search: true, multi: true, clearable: true}, 'filter.' + d)
+          e.entity_inputs[d] = u
+          e.entity_filters.lastElementChild.appendChild(document.createElement('div'))
+          e.entity_filters.lastElementChild.lastElementChild.className = 'col-sm'
+          e.entity_filters.lastElementChild.lastElementChild.appendChild(u.e.parentElement)
+          u.e.parentElement.classList.add('form-floating')
+          u.listbox.classList.add('multi')
+          u.option_sets = {}
+          u.dataset = d
+          u.onchange = function () {
+            conditionals.id_filter()
+            request_queue('_entity_filter')
+          }.bind(u)
+          fill_ids_options(
+            u,
+            d,
+            u.option_sets,
+            function () {
+              this.values = this.option_sets[this.dataset].values
+              this.display = this.option_sets[this.dataset].display
+              this.options = this.option_sets[this.dataset].options
+              toggle_input(u, !!u.options.length)
+              Object.keys(this.values).forEach(id => {
+                _u._entity_filter.entities.set(id, site.data.entities[id])
+              })
+              _u._entity_filter.registered[d] = true
+              this.set(u.id in site.url_options ? site.url_options[u.id].split(',') : -1)
+            }.bind(u)
+          )
+          toggle_input(u, !!u.options.length)
+        })
+
+      // // variable filter
       e.body.appendChild((e.variable_filters = document.createElement('div')))
       e.variable_filters.appendChild(document.createElement('p'))
       e.variable_filters.lastElementChild.className = 'h6 text-muted'
@@ -4658,7 +4848,6 @@ void (function () {
           const comp_select = elements.combobox.create('component', filter_components.Time)
           comp_select.default = f.component
           comp_select.set(f.component)
-          comp_select.settings.strict = false
           e.lastElementChild.appendChild(comp_select.e.parentElement)
           comp_select.e.parentElement.removeChild(comp_select.e.parentElement.lastElementChild)
           comp_select.e.parentElement.classList.add('filter-form-input')
@@ -4716,14 +4905,13 @@ void (function () {
             'mouseup',
             function (e) {
               if (1 === e.which) {
-                delete _u[f.id]
                 this.e.parentElement.removeChild(this.e)
                 _u._base_filter.c.delete(this.index)
                 request_queue('_base_filter')
               }
             }.bind(f)
           )
-
+          request_queue('_base_filter')
           page.modal.filter.variable_filters.lastElementChild.lastElementChild.appendChild(e)
         }
       }
@@ -4780,7 +4968,7 @@ void (function () {
               : {
                   wrapper: document.createElement('label'),
                   id: 'filter_result_header',
-                  note: 'Passing / total entities acress datasets.',
+                  note: 'Passing / total entities across loaded datasets.',
                 }
           ee.lastElementChild.appendChild(l.wrapper)
           ee.lastElementChild.className = 'has-note'
@@ -4991,8 +5179,8 @@ void (function () {
           }
         })
       }
-      v.selection = {ids: {}, features: {}, variables: [], dataset: {}, filtered: {}, all: {}}
-      v.n_selected = {ids: 0, features: 0, variables: 0, dataset: 0, filtered: 0, all: 0}
+      v.selection = {ids: {}, features: {}, variables: [], dataset: {}, filtered: {}, full_filter: {}, all: {}}
+      v.n_selected = {ids: 0, features: 0, variables: 0, dataset: 0, filtered: 0, full_filter: 0, all: 0}
       v.get = {
         dataset: function () {
           return (
@@ -5000,8 +5188,19 @@ void (function () {
             defaults.dataset
           )
         },
-        ids: function () {
-          return valueOf('string' === typeof v.ids && v.ids in _u ? _u[v.ids].value() : v.ids)
+        ids: function (single) {
+          const id = valueOf('string' === typeof v.ids && v.ids in _u ? _u[v.ids].value() : v.ids)
+          if ('' !== id && -1 != id) {
+            if (single) return id
+            const ids = {},
+              e = site.data.entities[id]
+            ids[id] = true
+            if (e && e.relations) Object.keys(e.relations.children).forEach(k => (ids[k] = true))
+            return ids
+          } else if (!single && _u._entity_filter.selected.length) {
+            return _u._entity_filter.select_ids
+          }
+          return false
         },
         features: function () {
           var s = ''
@@ -5030,12 +5229,9 @@ void (function () {
           return s
         },
       }
-      v.ids_check =
-        'object' === typeof v.get.ids()
-          ? DataHandler.prototype.checks.includes
-          : function (a, b) {
-              return !a || -1 == a || a === b || (b && a.length > 2 && a === String(b).substring(0, a.length))
-            }
+      v.ids_check = function (a, b) {
+        return !a || b in a
+      }
       v.parsed = {
         dataset: '',
         ids: '',
@@ -5109,39 +5305,9 @@ void (function () {
         dataset: function (e) {
           return this.parsed.dataset === e.group
         }.bind(v),
-        ids: ('string' === typeof v.ids &&
-        v.ids in _u &&
-        (('virtual' === _u[v.ids].type && _u[v.ids].source in _u) ||
-          ('depends' in _u[v.ids] && _u[v.ids].depends in _u))
-          ? 'virtual' === _u[v.ids].type
-            ? function (e) {
-                return (
-                  e.features &&
-                  this.ids_check(
-                    this.parsed.ids,
-                    e.features[
-                      !this.parsed.id_source ||
-                      e.group === this.parsed.id_source ||
-                      !(this.parsed.id_source in e.features)
-                        ? 'id'
-                        : this.parsed.id_source
-                    ]
-                  )
-                )
-              }
-            : function (e) {
-                return (
-                  e.features &&
-                  this.ids_check(
-                    this.parsed.ids,
-                    this.parsed.id_source in e.features ? valueOf(e.features[this.parsed.id_source]) : e.features.id
-                  )
-                )
-              }
-          : function (e) {
-              return e.features && this.ids_check(this.parsed.ids, e.features.id)
-            }
-        ).bind(v),
+        ids: function (e) {
+          return e.features && this.ids_check(this.parsed.ids, e.features.id)
+        }.bind(v),
         features: function (e) {
           if (e.features) {
             var k,
@@ -5286,16 +5452,26 @@ void (function () {
             Object.keys(ri.effects).forEach(k => {
               const e = ri.effects[k]
               if (pass) {
-                if (k === 'display') {
+                if ('display' === k) {
                   e.e.classList.remove('hidden')
+                } else if ('lock' === k) {
+                  e.forEach(u => {
+                    u.e.disabled = false
+                    u.e.classList.remove('disabled', 'locked')
+                  })
                 } else if (k in _u) {
                   _u[k].set(valueOf(e))
                 }
-              } else if (k === 'display') {
+              } else if ('display' === k) {
                 e.e.classList.add('hidden')
                 if (e.u) e.u.reset()
                 e.e.querySelectorAll('.auto-input').forEach(c => {
                   if (c.id in _u) _u[c.id].reset()
+                })
+              } else if ('lock' === k) {
+                e.forEach(u => {
+                  u.e.disabled = true
+                  u.e.classList.add('disabled', 'locked')
                 })
               } else if ('default' in ri) {
                 if (k in _u) {

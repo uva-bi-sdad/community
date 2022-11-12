@@ -11,6 +11,7 @@ void (function () {
     this.variable_info = {}
     this.references = {}
     this.entities = {}
+    this.entity_tree = {}
     this.meta = {
       times: {},
       variables: {},
@@ -953,36 +954,60 @@ void (function () {
       if (g in this.sets && !this.inited[g]) {
         const s = this.sets[g],
           time = this.meta.times[g],
-          retriever = this.retrievers[time.is_single ? 'single' : 'multi']
+          retriever = this.retrievers[time.is_single ? 'single' : 'multi'],
+          datasets = Object.keys(this.sets),
+          infos = this.settings.metadata.info
         Object.keys(s).forEach(id => {
-          const si = s[id]
+          const si = s[id],
+            l = id.length
           if ('_meta' !== id) {
             const overwrite = this.data_maps[g][id]
             const f = overwrite || {id: id, name: id}
             f.id = id
-            if ('district' in f && id.length > 4) {
-              f.county = id.substring(0, 5)
-            }
+            const e =
+              id in this.entities
+                ? this.entities[id]
+                : {
+                    group: g,
+                    data: si,
+                    variables: this.variables,
+                    features: f,
+                  }
             if (id in this.entities) {
-              this.entities[id].group = g
-              this.entities[id].data = si
-              this.entities[id].variables = this.variables
-              if (!('features' in this.entities[id])) this.entities[id].features = {}
+              e.group = g
+              e.data = si
+              e.variables = this.variables
+              if (!('features' in e)) e.features = {}
             } else {
-              this.entities[id] = {
-                group: g,
-                data: si,
-                variables: this.variables,
-                features: f,
-              }
+              this.entities[id] = e
             }
+            if (!(id in this.entity_tree)) this.entity_tree[id] = {parents: {}, children: {}}
+            const rel = this.entity_tree[id]
+            e.relations = rel
             Object.keys(f).forEach(k => {
               if (!(k in this.features)) this.features[k] = this.format_label(k)
-              if ('id' === k || overwrite || !(k in this.entities[id].features)) {
-                this.entities[id].features[k] = f[k]
+              if ('id' === k || overwrite || !(k in e.features)) {
+                e.features[k] = f[k]
+              }
+              if (-1 !== this.settings.metadata.datasets.indexOf(k)) {
+                if (!(f[k] in this.entity_tree)) this.entity_tree[f[k]] = {parents: {}, children: {}}
+                this.entity_tree[f[k]].children[id] = rel
+                rel.parents[f[k]] = this.entity_tree[f[k]]
               }
             })
-            const e = this.entities[id]
+            if (infos) {
+              datasets.forEach(d => {
+                const p = infos[d].id_length
+                if (p && p < l) {
+                  const sl = id.substring(0, p)
+                  if (sl in this.sets[d]) {
+                    if (!(sl in this.entity_tree)) this.entity_tree[sl] = {parents: {}, children: {}}
+                    this.entity_tree[sl].children[id] = rel
+                    rel.parents[sl] = this.entity_tree[sl]
+                  }
+                }
+              })
+            }
             views.forEach(v => {
               if (!(v in e)) {
                 e[v] = {summary: {}, rank: {}, subset_rank: {}}
@@ -1004,7 +1029,7 @@ void (function () {
               this.data_queue[g][id]()
               delete this.data_queue[g][id]
             })
-          this.hooks.onload && this.hooks.onload()
+          this.hooks.onload && this.hooks.onload(g)
         }, 0)
       }
       for (const k in this.info)

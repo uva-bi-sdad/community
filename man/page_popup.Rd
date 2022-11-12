@@ -26,7 +26,8 @@ page_popup(text = "Popup", ..., title = text, footer = NULL,
 \code{"md"}, \code{"lg"}, \code{"xl"}, or \code{"xxl"}.}
 
 \item{conditions}{A character for each element representing the conditions in which that should be showing
-(e.g., \code{c("", "input_a == a", "")}); \code{""} means the element's display is not conditional.}
+(e.g., \code{c("", "input_a == a", "")}); \code{""} means the element's display is not conditional.
+Adding \code{"lock: "} before the condition will disable inputs rather than hide the element.}
 
 \item{id}{Unique ID of the section.}
 }

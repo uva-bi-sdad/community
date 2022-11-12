@@ -7,7 +7,7 @@
 input_number(label, id = label, ..., default = NULL, variable = NULL,
   min = NULL, max = NULL, step = NULL, type = "number", class = NULL,
   note = NULL, dataview = NULL, floating_label = TRUE, buttons = FALSE,
-  min_max_indicator = FALSE)
+  show_range = FALSE)
 }
 \arguments{
 \item{label}{Label of the input for the user.}
@@ -39,7 +39,7 @@ to default to the current minimum or maximum value.}
 
 \item{buttons}{Logical; if \code{TRUE}, adds increment and decrement buttons to the sides of the input.}
 
-\item{min_max_indicator}{Logical; if \code{TRUE}, add min and max indicators around the input fields, and constrains the input}
+\item{show_range}{Logical; if \code{TRUE}, adds min and max indicators around the input field.}
 }
 \value{
 A character vector of the contents to be added.

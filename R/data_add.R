@@ -148,6 +148,12 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       filename = name,
       source = unpack_meta("source"),
       ids = ids,
+      id_length = if (length(idvars)) {
+        id_lengths <- nchar(as.character(data[[idvars[1]]]))
+        if (all(id_lengths == id_lengths[1])) id_lengths[1] else 0
+      } else {
+        0
+      },
       time = timevar,
       profile = "data-resource",
       created = as.character(info$mtime),

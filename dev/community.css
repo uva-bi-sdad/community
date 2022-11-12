@@ -147,9 +147,11 @@ body::-webkit-scrollbar-track,
 .text-muted {
   color: var(--lowlight-text) !important;
 }
-.form-select:disabled {
+.form-select:disabled,
+.combobox.disabled {
   background-color: var(--lowlight);
   color: var(--lowlight-text);
+  cursor: default;
 }
 .na {
   background-color: #00000000;
@@ -218,6 +220,7 @@ div.filter-hidden {
   display: flex;
   white-space: nowrap;
   align-items: center;
+  /* max-width: 100%; */
 }
 .combobox-selection span {
   overflow-x: clip;
@@ -266,8 +269,8 @@ input.combobox-input {
   left: 4px;
   margin: 0.3em 0.5em;
   content: '';
-  border-right: 2px solid var(--highlight-text);
-  border-bottom: 2px solid var(--highlight-text);
+  border-right: 2px solid var(--body-text);
+  border-bottom: 2px solid var(--body-text);
   height: 12px;
   width: 8px;
   transform: rotate(35deg);
@@ -320,11 +323,11 @@ input.combobox-input {
   margin-right: 0;
   margin-left: 0;
 }
-.row > div[class^='col'] {
-  padding-left: calc(var(--bs-gutter-x) * 0.5);
+.content .row {
+  padding: 0;
 }
-.row > div[class^='col']:first-child {
-  padding: 1px;
+.row > * {
+  padding: 0.1rem 0.2rem;
 }
 .col {
   height: 100%;
@@ -937,9 +940,13 @@ table.dataTable thead th {
 .number-input-row .text-wrapper {
   width: 100%;
 }
-.number-input-row {
+.number-input-row,
+.number-input-row div {
   display: flex;
-  padding: 4px 0;
+}
+.number-input-row span {
+  padding: 0 0.2em;
+  align-self: center;
 }
 .number-input-row label {
   margin: 0 0 0 5%;
@@ -958,7 +965,7 @@ table.dataTable thead th {
   color: var(--body-text);
 }
 .container-xsm {
-  max-width: 250px;
+  max-width: 300px;
   margin: auto;
 }
 

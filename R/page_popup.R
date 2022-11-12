@@ -13,6 +13,7 @@
 #' \code{"md"}, \code{"lg"}, \code{"xl"}, or \code{"xxl"}.
 #' @param conditions A character for each element representing the conditions in which that should be showing
 #' (e.g., \code{c("", "input_a == a", "")}); \code{""} means the element's display is not conditional.
+#' Adding \code{"lock: "} before the condition will disable inputs rather than hide the element.
 #' @param id Unique ID of the section.
 #' @details See the \href{https://getbootstrap.com/docs/5.1/layout/grid}{Bootstrap grid documentation}.
 #' @examples
@@ -83,16 +84,7 @@ page_popup <- function(text = "Popup", ..., title = text, footer = NULL, wraps =
   if (building) {
     caller$body <- c(caller$body, r)
     for (n in names(parts)) if (n != "content" && n != "uid") caller[[n]] <- c(caller[[n]], parts[[n]])
-    if (any(conditions != "")) {
-      ids <- ids[conditions != ""]
-      conditions <- conditions[conditions != ""]
-      for (i in seq_along(conditions)) {
-        caller$rules <- c(caller$rules, list(list(
-          condition = parse_rule(conditions[i]),
-          effects = list(display = ids[i])
-        )))
-      }
-    }
+    process_conditions(conditions, ids, caller)
     caller$uid <- parts$uid + 1
   }
   r

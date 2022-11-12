@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">community</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1.105</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1.106</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,7 +58,7 @@
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">input_select</span><span class="op">(</span><span class="va">label</span>, <span class="va">options</span>, default <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, display <span class="op">=</span> <span class="va">options</span>, id <span class="op">=</span> <span class="va">label</span>,</span>
 <span>  <span class="va">...</span>, note <span class="op">=</span> <span class="cn">NULL</span>, group_feature <span class="op">=</span> <span class="cn">NULL</span>, variable <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  dataset <span class="op">=</span> <span class="cn">NULL</span>, depends <span class="op">=</span> <span class="cn">NULL</span>, dataview <span class="op">=</span> <span class="cn">NULL</span>, subset <span class="op">=</span> <span class="st">"all"</span>,</span>
+<span>  dataset <span class="op">=</span> <span class="cn">NULL</span>, depends <span class="op">=</span> <span class="cn">NULL</span>, dataview <span class="op">=</span> <span class="cn">NULL</span>, subset <span class="op">=</span> <span class="st">"filtered"</span>,</span>
 <span>  selection_subset <span class="op">=</span> <span class="st">"full_filter"</span>, filters <span class="op">=</span> <span class="cn">NULL</span>, reset_button <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  button_class <span class="op">=</span> <span class="cn">NULL</span>, as.row <span class="op">=</span> <span class="cn">FALSE</span>, floating_label <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -120,9 +120,10 @@ specify dataset if none is specified here.</p></dd>
 
 
 <dt>subset</dt>
-<dd><p>Determines the subset of options shown if <code>options</code> is <code>"ids"</code>; mainly <code>"all"</code>
+<dd><p>Determines the subset of options shown if <code>options</code> is <code>"ids"</code>; mainly <code>"filtered"</code>
 (default) to apply all filters, including the current selection, or <code>"full_filter"</code> to apply all
-feature and variable filters, but not the current selection.</p></dd>
+feature and variable filters, but not the current selection. <code>"siblings"</code> is a special case given a selection,
+which will show other IDs with the same parent.</p></dd>
 
 
 <dt>selection_subset</dt>

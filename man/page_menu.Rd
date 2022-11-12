@@ -30,7 +30,8 @@ elements of the menu will not be wrapped in row or column elements.}
 \item{breakpoints}{Bootstrap breakpoint of each wrapper; one of \code{""} (extra small), \code{"sm"},}
 
 \item{conditions}{A character for each element representing the conditions in which that should be showing
-(e.g., \code{c("", "input_a == a", "")}); \code{""} means the element's display is not conditional.}
+(e.g., \code{c("", "input_a == a", "")}); \code{""} means the element's display is not conditional.
+Adding \code{"lock: "} before the condition will disable inputs rather than hide the element.}
 }
 \value{
 A character vector of the content to be added.
