@@ -595,8 +595,7 @@ void (function () {
                           if ('id' in f && '' !== f.id && -1 != f.id) {
                             q.push('id=' + f.id)
                           } else {
-                            const selection = Object.keys(_u._entity_filter.select_ids)
-                            if (selection.length) q.push('id=' + selection.join(','))
+                            if (_u._entity_filter.selected.length) q.push('id=' + _u._entity_filter.selected.join(','))
                           }
                           if (v) {
                             if (!f.time_range)
