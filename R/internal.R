@@ -92,3 +92,10 @@ head_import <- function(d, dir = ".") {
     ), collapse = "")
   }
 }
+
+make_full_name <- function(filename, variable) {
+  sub("^:", "", paste0(sub(
+    "^.*[\\\\/]", "",
+    gsub("^.*\\d{4}(?:q\\d)?_|\\.\\w{3,4}(?:\\.[gbx]z2?)?$|\\..*$", "", basename(filename))
+  ), ":", variable))
+}

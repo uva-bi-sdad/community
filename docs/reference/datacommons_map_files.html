@@ -105,7 +105,8 @@ These should have <code>data</code> entries with object arrays containing a <cod
     
 
 <p>An invisible <code>list</code>, including a <code>data.frame</code> of the mapped variables, with <code>variable</code> (variable name),
-<code>repo</code> (the repository containing the file), <code>full_name</code> (variable name with a prefix from the file's name),
+<code>repo</code> (the repository containing the file), <code>dir_name</code> (variable name with a prefix from the parent directories),
+<code>full_name</code> (variable name with a prefix from the last part of the file's name, after a year or year range),
 and <code>file</code> (path to the file) columns, and a <code>list</code> of the mapped IDs, with an entry for each ID,
 each of which with entries for <code>repos</code> (repositories in which the ID appears) and <code>files</code> (files in which the ID appears).</p>
     </div>

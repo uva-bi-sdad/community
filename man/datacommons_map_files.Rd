@@ -32,7 +32,8 @@ These should have \code{data} entries with object arrays containing a \code{path
 }
 \value{
 An invisible \code{list}, including a \code{data.frame} of the mapped variables, with \code{variable} (variable name),
-\code{repo} (the repository containing the file), \code{full_name} (variable name with a prefix from the file's name),
+\code{repo} (the repository containing the file), \code{dir_name} (variable name with a prefix from the parent directories),
+\code{full_name} (variable name with a prefix from the last part of the file's name, after a year or year range),
 and \code{file} (path to the file) columns, and a \code{list} of the mapped IDs, with an entry for each ID,
 each of which with entries for \code{repos} (repositories in which the ID appears) and \code{files} (files in which the ID appears).
 }

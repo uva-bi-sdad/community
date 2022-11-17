@@ -106,10 +106,8 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     }
     names <- c(names, list(colnames(d)))
     set(d, NULL, "file", f)
-    d[[value_name]] <- sub("^:", "", paste0(
-      sub("^.*[\\\\/]", "", gsub("^.*\\d{4}(?:q\\d)?_|\\.\\w{3,4}(?:\\.[gbx]z2?)?$", "", f)), ":", d[[value_name]]
-    ))
     data <- c(data, list(d))
+    names(data)[length(data)] <- f
   }
   if (verbose) cli_progress_done()
   common <- Reduce(intersect, names)
@@ -133,10 +131,19 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     check_variables <- TRUE
     variables <- unique(as.character(variables))
   }
-  data <- do.call(rbind, lapply(data, function(d) {
+  data <- do.call(rbind, lapply(names(data), function(f) {
+    d <- data[[f]]
     d <- d[, vars, with = FALSE]
     d <- d[rowSums(vapply(d, is.na, logical(nrow(d)))) == 0, ]
     if (check_variables) {
+      ovars <- unique(d[[value_name]])
+      su <- !ovars %in% variables
+      if (any(su)) {
+        names(ovars) <- ovars
+        ovars[] <- make_full_name(f, ovars)
+        su <- su & ovars %in% variables
+        for (i in which(su)) d[[value_name]][d[[value_name]] == names(ovars)[i]] <- ovars[i]
+      }
       d <- d[d[[value_name]] %in% variables]
     }
     d

@@ -20,7 +20,8 @@
 #' map <- datacommons_map_files(".")
 #' }
 #' @return An invisible \code{list}, including a \code{data.frame} of the mapped variables, with \code{variable} (variable name),
-#' \code{repo} (the repository containing the file), \code{full_name} (variable name with a prefix from the file's name),
+#' \code{repo} (the repository containing the file), \code{dir_name} (variable name with a prefix from the parent directories),
+#' \code{full_name} (variable name with a prefix from the last part of the file's name, after a year or year range),
 #' and \code{file} (path to the file) columns, and a \code{list} of the mapped IDs, with an entry for each ID,
 #' each of which with entries for \code{repos} (repositories in which the ID appears) and \code{files} (files in which the ID appears).
 #' @export
@@ -104,9 +105,8 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
             if (length(vars)) {
               map[[f]] <- data.frame(
                 variable = vars,
-                full_name = sub("^:", "", paste0(
-                  sub("^.*[\\\\/]", "", gsub("^.*\\d{4}(?:q\\d)?_|\\.\\w{3,4}(?:\\.[gbx]z2?)?$|\\..*$", "", basename(f))), ":", vars
-                )),
+                dir_name = paste0(gsub(paste0(dir, "|cache/|repos/|data/|distribution/"), "", paste0(dirname(f), "/")), vars),
+                full_name = make_full_name(f, vars),
                 repo = r,
                 file = sub(dir, "", f, fixed = TRUE)
               )

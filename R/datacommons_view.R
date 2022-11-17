@@ -173,7 +173,11 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
     map <- datacommons_map_files(commons, use_manifest = use_manifest, overwrite = refresh_map, verbose = verbose)
     files <- map$variables[
       (if (length(view$files)) grepl(view$files, map$variables$file) else TRUE) &
-        (if (length(view$variables)) (map$variables$full_name %in% view$variables | map$variables$variable %in% view$variables) else TRUE) &
+        (if (length(view$variables)) {
+          map$variables$full_name %in% view$variables | map$variables$dir_name %in% view$variables | map$variables$variable %in% view$variables
+        } else {
+          TRUE
+        }) &
         (if (length(view$ids)) {
           map$variables$file %in% sub("^/", "", unique(unlist(
             lapply(map$ids[view$ids %in% names(map$ids)], "[[", "files"),
@@ -191,8 +195,8 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
         grepl(if (prefer_repo) "cache/" else "repos/", files$file) -
           Reduce("+", lapply(view$ids, function(id) cfs %in% map$ids[[id]]$file))
       ), ]
-      files <- files[!duplicated(paste(files$full_name, basename(files$file))), , drop = FALSE]
-      sel_files <- unique(unlist(lapply(split(files, files$full_name), function(fs) {
+      files <- files[!duplicated(paste(files$dir_name, basename(files$file))), , drop = FALSE]
+      sel_files <- unique(unlist(lapply(split(files, files$dir_name), function(fs) {
         if (nrow(fs) == 1) {
           fs$file
         } else {
@@ -275,6 +279,21 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
                 if (any(su)) measure_info[[e]] <- c(measure_info[[e]], ri[[e]][su])
               }
             }
+          }
+          if (length(view$variables) && any(!nri %in% view$variables)) {
+            base_vars <- sub("^[^:/]+[:/]", "", view$variables)
+            for (i in seq_along(nri)) {
+              n <- nri[i]
+              if (n %in% base_vars) {
+                names(ri)[i] <- view$variables[which(base_vars == n)[1]]
+              } else {
+                n <- sub("^[^:]+:", "", nri[i])
+                if (n %in% view$variables) {
+                  names(ri)[i] <- n
+                }
+              }
+            }
+            nri <- names(ri)
           }
           ri <- ri[(if (length(view$variables)) nri %in% view$variables else TRUE) & !nri %in% names(measure_info)]
           if (length(ri)) measure_info[names(ri)] <- ri
