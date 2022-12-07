@@ -133,6 +133,8 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
     }
     timevar <- unlist(unpack_meta("time"))
     times <- if (is.null(timevar)) rep(1, nrow(data)) else data[[timevar]]
+    varinf_full <- names(varinf)
+    varinf_suf <- sub("^[^:]+:", "", varinf_full)
     res <- list(
       bytes = as.integer(info$size),
       encoding = stri_enc_detect(f)[[1]][1, 1],
@@ -165,7 +167,11 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
           v <- data[[cn]]
           invalid <- !is.finite(v)
           r <- list(name = cn, duplicates = sum(duplicated(v)))
-          if (cn %in% names(varinf)) r$info <- varinf[[cn]]
+          if (cn %in% varinf_full) {
+            r$info <- varinf[[cn]]
+          } else if (cn %in% varinf_suf) {
+            r$info <- varinf[[which(varinf_suf == cn)]]
+          }
           r$time_range <- which(unname(tapply(v, times, function(v) any(!is.na(v))))) - 1
           r$time_range <- if (length(r$time_range)) r$time_range[c(1, length(r$time_range))] else c(-1, -1)
           if (!is.character(v) && all(invalid)) {

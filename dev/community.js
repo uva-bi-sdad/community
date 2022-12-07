@@ -378,6 +378,7 @@ void (function () {
             if (site.data.inited[f.parsed.dataset]) {
               f.valid = true
               f.n_selected.ids = 0
+              f.n_selected.children = 0
               f.n_selected.features = 0
               f.n_selected.variables = 0
               f.n_selected.dataset = 0
@@ -385,6 +386,7 @@ void (function () {
               f.n_selected.full_filter = 0
               f.n_selected.all = 0
               f.selection.ids = {}
+              f.selection.children = {}
               f.selection.features = {}
               f.selection.variables = {}
               f.selection.dataset = {}
@@ -418,6 +420,10 @@ void (function () {
                   f.selection.dataset[id] = e
                   f.n_selected.dataset++
                   c.all++
+                }
+                if (c.dataset && c.ids) {
+                  f.selection.children[id] = e
+                  f.n_selected.children++
                 }
                 if (c.features && c.variables) {
                   f.selection.full_filter[id] = e
