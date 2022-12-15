@@ -6,18 +6,19 @@
 \usage{
 input_combobox(label, options, default = -1, display = options,
   id = label, ..., strict = TRUE, search = TRUE, multi = FALSE,
-  clearable = FALSE, note = NULL, group_feature = NULL,
-  variable = NULL, dataset = NULL, depends = NULL, dataview = NULL,
-  subset = "filtered", selection_subset = "full_filter", filters = NULL,
-  reset_button = FALSE, button_class = NULL, as.row = FALSE,
-  floating_label = TRUE)
+  accordion = FALSE, clearable = FALSE, note = NULL,
+  group_feature = NULL, variable = NULL, dataset = NULL,
+  depends = NULL, dataview = NULL, subset = "filtered",
+  selection_subset = "full_filter", filters = NULL, reset_button = FALSE,
+  button_class = NULL, as.row = FALSE, floating_label = TRUE)
 }
 \arguments{
 \item{label}{Label of the input for the user.}
 
 \item{options}{A vector of options, the name of a variable from which to pull levels, or \code{"datasets"},
 \code{"variables"}, \code{"ids"}, or \code{"palettes"} to select names of datasets, variables, entity ids, or
-color palettes.}
+color palettes. If there is a map with overlay layers with properties, can also be \code{"overlay_properties"},
+to select between properties.}
 
 \item{default}{Which of the options to default to; either its index or value.}
 
@@ -33,6 +34,8 @@ option set.}
 \item{search}{Logical; if \code{FALSE}, does not dynamically filter the option set on user input.}
 
 \item{multi}{Logical; if \code{TRUE}, allows multiple options to be selected.}
+
+\item{accordion}{Logical; if \code{TRUE}, option groups will be collapsible.}
 
 \item{clearable}{Logical; if \code{TRUE}, adds a button to clear the selection.}
 

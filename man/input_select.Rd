@@ -15,7 +15,8 @@ input_select(label, options, default = -1, display = options, id = label,
 
 \item{options}{A vector of options, the name of a variable from which to pull levels, or \code{"datasets"},
 \code{"variables"}, \code{"ids"}, or \code{"palettes"} to select names of datasets, variables, entity ids, or
-color palettes.}
+color palettes. If there is a map with overlay layers with properties, can also be \code{"overlay_properties"},
+to select between properties.}
 
 \item{default}{Which of the options to default to; either its index or value.}
 

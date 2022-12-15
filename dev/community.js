@@ -179,6 +179,7 @@ void (function () {
         filter: /^filter\./,
         data: /^data\./,
         variables: /^variables\./,
+        properties: /prop/,
         palette: /^pal/,
         datasets: /^dat/,
         variable: /^var/,
@@ -268,63 +269,69 @@ void (function () {
           if (k in u.option_sets) {
             const fresh = k !== u.current_set && (u.sensitive || !u.current_set),
               c = u[combobox ? 'listbox' : 'e']
-            if (fresh) {
-              c.innerHTML = ''
-              u.values = u.option_sets[k].values
-              u.display = u.option_sets[k].display
-              u.options = u.option_sets[k].options
-            }
-            var ns = 0
-            if ('ID' === u.variable || 'ids' === u.options_source) {
-              const value = u.value()
-              let selection = -1 === value || '' === value ? u.subset : u.selection_subset,
-                v = {}
-              if (!no_view) {
-                if (selection in _u) selection = valueOf(selection)
-                if ('siblings' === selection) {
-                  const rel = site.data.entity_tree && site.data.entity_tree[value]
-                  if (rel) {
-                    const parents = Object.keys(rel.parents)
-                    if (parents.length) {
-                      v = {}
-                      parents.forEach(id => {
-                        v = {...v, ...site.data.entity_tree[id].children}
-                      })
+            if (fresh || u.filter) {
+              if (fresh) {
+                c.innerHTML = ''
+                u.values = u.option_sets[k].values
+                u.display = u.option_sets[k].display
+                u.options = u.option_sets[k].options
+              }
+              var ns = 0
+              if ('ID' === u.variable || 'ids' === u.options_source) {
+                const value = u.value()
+                let selection = -1 === value || '' === value ? u.subset : u.selection_subset,
+                  v = {}
+                if (!no_view) {
+                  if (selection in _u) selection = valueOf(selection)
+                  if ('siblings' === selection) {
+                    const rel = site.data.entity_tree && site.data.entity_tree[value]
+                    if (rel) {
+                      const parents = Object.keys(rel.parents)
+                      if (parents.length) {
+                        v = {}
+                        parents.forEach(id => {
+                          v = {...v, ...site.data.entity_tree[id].children}
+                        })
+                      }
                     }
+                  } else {
+                    v = site.dataviews[u.view].selection[selection]
                   }
-                } else {
-                  v = site.dataviews[u.view].selection[selection]
                 }
-              }
-              u.options.forEach(si => {
-                if (fresh && !u.groups) c.appendChild(si)
-                if (no_view || si.value in v) {
+                u.options.forEach(si => {
+                  if (fresh && !u.groups) c.appendChild(si)
+                  if (no_view || si.value in v) {
+                    si.classList.remove('hidden')
+                    ns++
+                  } else {
+                    si.classList.add('hidden')
+                  }
+                })
+              } else if (fresh) {
+                u.options.forEach(si => {
                   si.classList.remove('hidden')
+                  if (!u.groups) c.appendChild(si)
                   ns++
+                })
+              } else ns++
+              if (fresh && u.groups) u.groups.e.forEach(e => c.appendChild(e))
+              toggle_input(u, ns)
+              u.current_set = k
+              if (fresh) {
+                if (combobox) {
+                  u.source = []
                 } else {
-                  si.classList.add('hidden')
+                  u.e.selectedIndex = -1
+                  u.source = ''
                 }
-              })
-            } else if (fresh) {
-              u.options.forEach(si => {
-                si.classList.remove('hidden')
-                if (!u.groups) c.appendChild(si)
-                ns++
-              })
-            } else ns++
-            if (fresh && u.groups) u.groups.e.forEach(e => c.appendChild(e))
-            toggle_input(u, ns)
-            u.current_set = k
-            if (fresh) {
-              if (combobox) {
-                u.source = []
-              } else {
-                u.e.selectedIndex = -1
-                u.source = ''
+                u.id in site.url_options
+                  ? u.set(site.url_options[u.id])
+                  : u.state in u.values
+                  ? u.set(u.state)
+                  : u.reset()
               }
+              if (u.filter) u.filter()
             }
-            fresh ? (u.id in site.url_options ? u.set(site.url_options[u.id]) : u.reset()) : u.set(u.value())
-            if (u.filter) u.filter()
           }
         },
         min: async function (u, c) {
@@ -899,6 +906,19 @@ void (function () {
             this.set(this.e.value, true)
           },
         },
+        intext: {
+          retrieve: function () {
+            this.set(this.e.value)
+          },
+          setter: function (v, check) {
+            this.previous = this.e.value
+            this.e.value = this.source = v
+            request_queue(this.id)
+          },
+          listener: function (e) {
+            this.set(this.e.value, true)
+          },
+        },
         text: {
           init: function (o) {
             if (site.text && o.id in site.text) {
@@ -1093,6 +1113,7 @@ void (function () {
                 Object.keys(u.groups.by_name).forEach(g => {
                   u.groups.by_name[g].querySelectorAll('.combobox-option').forEach(c => {
                     u.options.push(c)
+                    c.setAttribute('group', g)
                     u.values[c.value] = n
                     u.display[c.innerText] = n++
                   })
@@ -1158,9 +1179,9 @@ void (function () {
             }.bind(o)
             o.resize = function () {
               const s = this.e.getBoundingClientRect()
-              this.container.style.top = s.y + s.height + 'px'
               this.container.style.left = s.x + 'px'
               this.container.style.width = s.width + 'px'
+              this.container.style.top = s.y + s.height + 'px'
             }.bind(o)
             window.addEventListener('resize', o.resize)
             o.toggle = function (e) {
@@ -1170,7 +1191,10 @@ void (function () {
                 } else {
                   if (site.combobox)
                     Object.keys(site.combobox).forEach(id => {
-                      if (id !== this.id) _u[id].close()
+                      if (id !== this.id) {
+                        const ou = _u[id]
+                        ou.expanded && ou.close()
+                      }
                     })
                   this.container.style.display = ''
                   if (!this.settings.multi) {
@@ -1190,21 +1214,34 @@ void (function () {
             o.e.addEventListener('mousedown', o.toggle)
             o.highlight = function (e) {
               if (!e || !e.target || e.target.value in this.values) {
+                if (!this.groups) this.settings.accordion = false
                 if (e && e.target && e.target.value) {
                   this.hover_index = this.values[e.target.value]
                 } else if (-1 === this.hover_index && this.source) {
                   this.hover_index = this.values[this.source[0]]
                 }
                 if ('undefined' === typeof this.hover_index) this.hover_index = -1
-                if (-1 !== this.hover_index && !this.options[this.hover_index].classList.contains('highlighted')) {
+                const o = this.options[this.hover_index]
+                if (o) {
                   const previous = this.listbox.querySelector('.highlighted')
                   if (previous) previous.classList.remove('highlighted')
-                  this.options[this.hover_index].classList.add('highlighted')
-                  this.e.setAttribute('aria-activedescendant', this.options[this.hover_index].id)
+                  o.classList.add('highlighted')
+                  if (this.settings.accordion) {
+                    const c = o.parentElement.parentElement
+                    if (!c.classList.contains('show')) {
+                      c.classList.add('show')
+                      c.previousElementSibling.firstElementChild.classList.remove('collapsed')
+                      c.previousElementSibling.firstElementChild.setAttribute('aria-expanded', true)
+                    }
+                  }
+                  this.e.setAttribute('aria-activedescendant', o.id)
                   const port = this.container.getBoundingClientRect(),
-                    item = this.options[this.hover_index].getBoundingClientRect()
-                  if (port.top > item.top) {
-                    this.container.scrollTo(0, this.container.scrollTop + item.top - port.top)
+                    item = o.getBoundingClientRect()
+                  let top = port.top
+                  if (this.groups && o.getAttribute('group'))
+                    top += this.groups.by_name[o.getAttribute('group')].firstElementChild.getBoundingClientRect().height
+                  if (top > item.top) {
+                    this.container.scrollTo(0, this.container.scrollTop + item.top - top)
                   } else if (port.bottom < item.bottom) {
                     this.container.scrollTo(0, this.container.scrollTop + item.bottom - port.bottom)
                   }
@@ -1212,6 +1249,15 @@ void (function () {
               }
             }.bind(o)
             o.listbox.addEventListener('mouseover', o.highlight)
+            if (o.settings.accordion) {
+              o.listbox.addEventListener('show.bs.collapse', e => {
+                const group = o.options[o.hover_index].getAttribute('group')
+                if (group !== e.target.getAttribute('group')) {
+                  o.highlight({target: e.target.firstElementChild.firstElementChild})
+                  o.input_element.focus()
+                }
+              })
+            }
             o.clear_highlight = function () {
               if (-1 !== this.hover_index) {
                 this.options[this.hover_index].classList.remove('highlighted')
@@ -1219,30 +1265,44 @@ void (function () {
               }
             }.bind(o)
             o.filter_reset = function () {
+              if (this.groups)
+                this.groups.e.forEach(g => g.firstElementChild.firstElementChild.classList.remove('hidden'))
               this.input_element.value = ''
               this.filter_index = []
               this.listbox.querySelectorAll('.filter-hidden').forEach(o => o.classList.remove('filter-hidden'))
             }.bind(o)
-            if (o.settings.search)
-              o.input_element.addEventListener(
-                'keyup',
-                function (e) {
-                  const q = this.input_element.value.toLowerCase()
-                  if ('' === q) {
-                    this.filter_reset()
-                  } else {
-                    this.filter_index = []
-                    this.options.forEach((o, i) => {
-                      if (o.innerText.toLowerCase().includes(q)) {
-                        o.classList.remove('filter-hidden')
-                        this.filter_index.push(i)
-                      } else {
-                        o.classList.add('filter-hidden')
-                      }
-                    })
+            if (o.settings.search) {
+              o.filterer = function (e) {
+                const q = this.input_element.value.toLowerCase()
+                if ('' === q) {
+                  this.filter_reset()
+                } else {
+                  this.filter_index = []
+                  if (this.groups) {
+                    this.groups.e.forEach(g => g.firstElementChild.firstElementChild.classList.add('hidden'))
                   }
-                }.bind(o)
-              )
+                  this.options.forEach((o, i) => {
+                    if (o.innerText.toLowerCase().includes(q)) {
+                      o.classList.remove('filter-hidden')
+                      this.filter_index.push(i)
+                      const group = o.getAttribute('group')
+                      if (group) {
+                        this.groups.by_name[group].firstElementChild.firstElementChild.classList.remove('hidden')
+                        if (this.settings.accordion) {
+                          const g = this.groups.by_name[group]
+                          g.firstElementChild.nextElementSibling.classList.add('show')
+                          g.firstElementChild.firstElementChild.classList.remove('collapsed')
+                          g.firstElementChild.firstElementChild.setAttribute('aria-expanded', true)
+                        }
+                      }
+                    } else {
+                      o.classList.add('filter-hidden')
+                    }
+                  })
+                }
+              }.bind(o)
+              o.input_element.addEventListener('keyup', o.filterer)
+            }
             o.input_element.addEventListener(
               'keydown',
               function (e) {
@@ -1300,7 +1360,7 @@ void (function () {
           },
           setter: function (v, toggle) {
             if (!v) v = this.input_element.value
-            if (v.target && 'LABEL' === v.target.tagName) return void 0
+            if (v.target && (this.settings.accordion ? 'BUTTON' : 'LABEL') === v.target.tagName) return void 0
             let update = false
             var i = -1
             if (v.target) {
@@ -3403,6 +3463,10 @@ void (function () {
         n = 0
       if (u.settings.group) {
         u.groups = {e: [], by_name: {}}
+        if (combobox && u.settings.accordion) {
+          u.listbox.classList.add('accordion')
+          u.listbox.id = u.id + '-listbox'
+        }
       }
       Object.keys(site.data.entities).forEach(k => {
         const entity = site.data.entities[k]
@@ -3414,24 +3478,54 @@ void (function () {
           if (u.groups) {
             const group = entity.features[u.settings.group] || ''
             if (!(group in u.groups.by_name)) {
+              const e = document.createElement(combobox ? 'div' : 'optgroup')
               if (combobox) {
-                const e = document.createElement('div'),
-                  id = u.id + '_' + group.replace(patterns.seps, '-')
-                e.className = 'combobox-group combobox-component'
-                e.role = 'group'
-                e.setAttribute('aria-labelledby', id)
-                e.appendChild(document.createElement('label'))
-                e.firstElementChild.innerText = group
-                e.firstElementChild.id = id
-                e.firstElementChild.className = 'combobox-group-label combobox-component'
+                const id = u.id + '_' + group.replace(patterns.seps, '-')
+                let ee
+                if (u.settings.accordion) {
+                  e.setAttribute('group', group)
+                  e.className = 'combobox-group accordion-item combobox-component'
+                  e.appendChild((ee = document.createElement('div')))
+                  ee.id = id + '-label'
+                  ee.className = 'accordion-header combobox-component'
+                  ee.appendChild((ee = document.createElement('button')))
+                  ee.innerText = group
+                  ee.type = 'button'
+                  ee.className = 'accordion-button combobox-component collapsed'
+                  ee.setAttribute('data-bs-toggle', 'collapse')
+                  ee.setAttribute('data-bs-target', '#' + id)
+                  ee.setAttribute('aria-expanded', false)
+                  ee.setAttribute('aria-controls', id)
+                  e.appendChild((ee = document.createElement('div')))
+                  ee.id = id
+                  ee.className = 'combobox-component accordion-collapse collapse'
+                  ee.setAttribute('aria-labelledby', id + '-label')
+                  ee.setAttribute('data-bs-parent', '#' + u.id + '-listbox')
+                  ee.appendChild((ee = document.createElement('div')))
+                  ee.className = 'accordion-body combobox-component'
+                } else {
+                  e.className = 'combobox-group combobox-component'
+                  e.role = 'group'
+                  e.setAttribute('aria-labelledby', id)
+                  e.appendChild((ee = document.createElement('div')))
+                  ee.appendChild((ee = document.createElement('label')))
+                  ee.innerText = group
+                  ee.id = id
+                  ee.className = 'combobox-group-label combobox-component'
+                }
               } else {
-                const e = document.createElement('optgroup')
                 e.label = group
               }
               u.groups.by_name[group] = e
               u.groups.e.push(e)
             }
-            u.groups.by_name[group].appendChild(u.add(k, entity.features.name, true))
+            const o = u.add(k, entity.features.name, true)
+            o.setAttribute('group', group)
+            if (combobox && u.settings.accordion) {
+              u.groups.by_name[group].lastElementChild.lastElementChild.appendChild(o)
+            } else {
+              u.groups.by_name[group].appendChild(o)
+            }
           } else {
             s.push(u.add(k, entity.features.name))
             values[k] = n
@@ -3463,6 +3557,10 @@ void (function () {
         n = 0
       if (u.settings.group) {
         u.groups = {e: [], by_name: {}}
+        if (combobox && u.settings.accordion) {
+          u.listbox.classList.add('accordion')
+          u.listbox.id = u.id + '-listbox'
+        }
       }
       site.metadata.info[d].schema.fields.forEach(m => {
         const v = site.data.variables[m.name]
@@ -3478,20 +3576,51 @@ void (function () {
               const e = document.createElement(combobox ? 'div' : 'optgroup')
               if (combobox) {
                 const id = u.id + '_' + group.replace(patterns.seps, '-')
-                e.className = 'combobox-group combobox-component'
-                e.role = 'group'
-                e.setAttribute('aria-labelledby', id)
-                e.appendChild(document.createElement('label'))
-                e.firstElementChild.innerText = group
-                e.firstElementChild.id = id
-                e.firstElementChild.className = 'combobox-group-label combobox-component'
+                let ee
+                if (u.settings.accordion) {
+                  e.setAttribute('group', group)
+                  e.className = 'combobox-group accordion-item combobox-component'
+                  e.appendChild((ee = document.createElement('div')))
+                  ee.id = id + '-label'
+                  ee.className = 'accordion-header combobox-component'
+                  ee.appendChild((ee = document.createElement('button')))
+                  ee.innerText = group
+                  ee.type = 'button'
+                  ee.className = 'accordion-button combobox-component collapsed'
+                  ee.setAttribute('data-bs-toggle', 'collapse')
+                  ee.setAttribute('data-bs-target', '#' + id)
+                  ee.setAttribute('aria-expanded', false)
+                  ee.setAttribute('aria-controls', id)
+                  e.appendChild((ee = document.createElement('div')))
+                  ee.id = id
+                  ee.className = 'combobox-component accordion-collapse collapse'
+                  ee.setAttribute('aria-labelledby', id + '-label')
+                  ee.setAttribute('data-bs-parent', '#' + u.id + '-listbox')
+                  ee.appendChild((ee = document.createElement('div')))
+                  ee.className = 'accordion-body combobox-component'
+                } else {
+                  e.className = 'combobox-group combobox-component'
+                  e.role = 'group'
+                  e.setAttribute('aria-labelledby', id)
+                  e.appendChild((ee = document.createElement('div')))
+                  ee.appendChild((ee = document.createElement('label')))
+                  ee.innerText = group
+                  ee.id = id
+                  ee.className = 'combobox-group-label combobox-component'
+                }
               } else {
                 e.label = group
               }
               u.groups.by_name[group] = e
               u.groups.e.push(e)
             }
-            u.groups.by_name[group].appendChild(u.add(m.name, l, true, m))
+            const o = u.add(m.name, l, true, m)
+            o.setAttribute('group', group)
+            if (combobox && u.settings.accordion) {
+              u.groups.by_name[group].lastElementChild.lastElementChild.appendChild(o)
+            } else {
+              u.groups.by_name[group].appendChild(o)
+            }
           } else {
             s.push(u.add(m.name, l, true, m))
             s[n].id = u.id + '-option' + n
@@ -3511,6 +3640,32 @@ void (function () {
           })
         })
       }
+      if (!(u.default in site.data.variables)) u.default = defaults.variable
+    }
+
+    function fill_overlay_properties_options(u, source, out) {
+      out[source] = {options: [], values: {}, display: {}}
+      const current = u.values,
+        s = out[source].options,
+        values = out[source].values,
+        disp = out[source].display,
+        combobox = 'combobox' === u.type
+      var ck = !u.sensitive && !!u.current_set,
+        n = 0
+      if (u.settings.group) {
+        u.groups = {e: [], by_name: {}}
+      }
+      Object.keys(site.map._queue[source].property_summaries).forEach(v => {
+        const l = site.data.format_label(v)
+        if (ck && !(k in current)) {
+          u.sensitive = true
+          ck = false
+        }
+        s.push(u.add(v, l))
+        s[n].id = u.id + '-option' + n
+        values[v] = n
+        disp[l] = n++
+      })
     }
 
     function fill_levels_options(u, d, v, out) {
@@ -4434,6 +4589,12 @@ void (function () {
     }
 
     function init() {
+      if (site.data.variables) {
+        defaults.variable = Object.keys(site.data.variables)
+        defaults.variable = defaults.variable[defaults.variable.length - 1]
+      }
+      if (!site.map) site.map = {}
+      if (!site.map.overlay_property_selectors) site.map.overlay_property_selectors = []
       // initialize inputs
       keys._u.forEach(async k => {
         if (_u[k].type in elements) {
@@ -4449,10 +4610,9 @@ void (function () {
               site.metadata.datasets.forEach(d => o.options.push(o.add(d)))
             } else {
               o.sensitive = false
-              o.option_sets = {
-                values: {},
-                displays: {},
-                options: [],
+              o.option_sets = {}
+              if (patterns.properties.test(o.options_source)) {
+                site.map.overlay_property_selectors.push(o)
               }
               if (o.depends) add_dependency(o.depends, {type: 'options', id: o.id})
               if (o.dataset in _u) add_dependency(o.dataset, {type: 'options', id: o.id})
@@ -4640,7 +4800,7 @@ void (function () {
           }
 
           // add listeners
-          if (combobox || 'select' === o.type || 'number' === o.type) {
+          if (combobox || 'select' === o.type || 'number' === o.type || 'intext' === o.type) {
             o.e.addEventListener('change', o.listen)
             if (
               o.e.parentElement.lastElementChild &&
@@ -5113,6 +5273,10 @@ void (function () {
       if (source) {
         if (source in site.map._raw) {
           if (!(source in site.map[u.id]._layers)) {
+            const s = {}
+            if (!site.map._queue[source].processed) {
+              site.map._queue[source].property_summaries = s
+            }
             site.map[u.id]._layers[source] = L.geoJSON(JSON.parse(site.map._raw[source]), {
               pointToLayer: (point, coords) => {
                 return L.circleMarker(coords)
@@ -5120,19 +5284,39 @@ void (function () {
               onEachFeature: (feature, layer) => {
                 const e = document.createElement('table')
                 Object.keys(feature.properties).forEach(f => {
+                  const v = feature.properties[f]
+                  if ('number' === typeof v) {
+                    if (!(f in s)) s[f] = [Infinity, -Infinity]
+                    if (v < s[f][0]) s[f][0] = v
+                    if (v > s[f][1]) s[f][1] = v
+                  }
                   const r = document.createElement('tr')
                   r.appendChild(document.createElement('td'))
                   r.appendChild(document.createElement('td'))
                   r.firstElementChild.innerText = f
-                  r.lastElementChild.innerText = feature.properties[f]
+                  r.lastElementChild.innerText = v
                   e.appendChild(r)
                 })
                 layer.bindTooltip(e)
               },
             })
+            Object.keys(s).forEach(f => {
+              s[f].push(s[f][1] - s[f][0])
+              if (!s[f][2]) delete s[f]
+            })
+            site.map.overlay_property_selectors.forEach(u => {
+              if (!(source in u.option_sets)) {
+                fill_overlay_properties_options(u, source, u.option_sets)
+                u.dataset = source
+                u.variable = ''
+              }
+            })
           }
+          site.map.overlay_property_selectors.forEach(u => conditionals.options(u))
           u.overlay.clearLayers()
           var n = 0
+          const summaries = site.settings.circle_property && site.map._queue[source].property_summaries,
+            prop_summary = summaries && summaries[site.settings.circle_property]
           site.map[u.id]._layers[source].eachLayer(l => {
             if (o.filter) {
               for (let i = o.filter.length; i--; ) {
@@ -5140,7 +5324,12 @@ void (function () {
               }
             }
             n++
-            l.setRadius(site.settings.circle_radius).setStyle({
+            l.setRadius(
+              prop_summary
+                ? ((l.feature.properties[site.settings.circle_property] - prop_summary[0]) / prop_summary[2] + 0.5) *
+                    site.settings.circle_radius
+                : site.settings.circle_radius
+            ).setStyle({
               weight: site.settings.polygon_outline,
               color: 'white',
               opacity: 0.5,
@@ -5468,11 +5657,13 @@ void (function () {
                   _u[k].set(valueOf(e))
                 }
               } else if ('display' === k) {
-                e.e.classList.add('hidden')
-                if (e.u) e.u.reset()
-                e.e.querySelectorAll('.auto-input').forEach(c => {
-                  if (c.id in _u) _u[c.id].reset()
-                })
+                if (!e.e.classList.contains('hidden')) {
+                  e.e.classList.add('hidden')
+                  if (e.u) e.u.reset()
+                  e.e.querySelectorAll('.auto-input').forEach(c => {
+                    if (c.id in _u) _u[c.id].reset()
+                  })
+                }
               } else if ('lock' === k) {
                 e.forEach(u => {
                   u.e.disabled = true
@@ -5564,12 +5755,15 @@ void (function () {
               retrieve_layer(this, shape)
           })
           site.map[this.id].triggers = {}
-          if (Array.isArray(site.map[this.id].overlays))
+          site.map[this.id].overlay_summaries = {}
+          if (Array.isArray(site.map[this.id].overlays)) {
             site.map[this.id].overlays.forEach(l => {
               if ('string' === typeof l.source) l.source = [{url: l.source}]
               const source = l.source
               source.forEach(s => {
                 s.retrieved = s.url in site.map._raw
+                s.processed = false
+                s.property_summaries = {}
                 site.map._queue[s.url] = s
               })
               site.map[this.id].triggers[l.variable] = {source}
@@ -5582,6 +5776,7 @@ void (function () {
                 })
               }
             })
+          }
         }
       } else {
         this.deferred = true

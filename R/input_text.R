@@ -2,8 +2,8 @@
 #'
 #' Adds an direct text input element to a website.
 #'
-#' @param id Unique ID of the element to be created.
 #' @param label Label of the input for the user.
+#' @param id Unique ID of the element to be created.
 #' @param ... Other attributes to add to the input.
 #' @param default Default value of the input, which will appear as a placeholder.
 #' @param multiline Logical; if \code{TRUE}, create a \code{textarea} element, instead of an \code{input} element
@@ -13,12 +13,12 @@
 #' @param floating_label Logical; if \code{FALSE}, labels are separate from their input elements.
 #' @examples
 #' \dontrun{
-#' input_text("entered_text", "Enter Text:")
+#' input_text("Enter Text:", "entered_text")
 #' }
 #' @return A character vector of the contents to be added.
 #' @export
 
-input_text <- function(id, label = id, ..., default = NULL, note = NULL, multiline = FALSE, class = NULL,
+input_text <- function(label, id = label, ..., default = NULL, note = NULL, multiline = FALSE, class = NULL,
                        floating_label = TRUE) {
   id <- gsub("\\s", "", id)
   a <- list(...)
@@ -35,8 +35,8 @@ input_text <- function(id, label = id, ..., default = NULL, note = NULL, multili
         )
       },
       if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
-      ' class="form-control auto-input', if (!is.null(class)) paste("", class), '" auto-type="text">',
-      if (is.null(note)) c(' aria-description="', note, '"'),
+      if (!is.null(note)) c(' aria-description="', note, '"'),
+      ' class="form-control auto-input', if (!is.null(class)) paste("", class), '" auto-type="intext">',
       if (multiline) "</textarea>",
       if (floating_label) paste0('<label for="', id, '">', label, "</label>")
     ), collapse = ""),

@@ -6,7 +6,8 @@
 #' @param label Label of the input for the user.
 #' @param options A vector of options, the name of a variable from which to pull levels, or \code{"datasets"},
 #' \code{"variables"}, \code{"ids"}, or \code{"palettes"} to select names of datasets, variables, entity ids, or
-#' color palettes.
+#' color palettes. If there is a map with overlay layers with properties, can also be \code{"overlay_properties"},
+#' to select between properties.
 #' @param default Which of the options to default to; either its index or value.
 #' @param display A display version of the options.
 #' @param id Unique ID of the element to be created.
@@ -15,6 +16,7 @@
 #' option set.
 #' @param search Logical; if \code{FALSE}, does not dynamically filter the option set on user input.
 #' @param multi Logical; if \code{TRUE}, allows multiple options to be selected.
+#' @param accordion Logical; if \code{TRUE}, option groups will be collapsible.
 #' @param clearable Logical; if \code{TRUE}, adds a button to clear the selection.
 #' @param note Text to display as a tooltip for the input.
 #' @param group_feature Name of a measure or entity feature to use as a source of option grouping,
@@ -49,8 +51,8 @@
 #' @export
 
 input_combobox <- function(label, options, default = -1, display = options, id = label, ...,
-                           strict = TRUE, search = TRUE, multi = FALSE, clearable = FALSE, note = NULL,
-                           group_feature = NULL, variable = NULL, dataset = NULL, depends = NULL,
+                           strict = TRUE, search = TRUE, multi = FALSE, accordion = FALSE, clearable = FALSE,
+                           note = NULL, group_feature = NULL, variable = NULL, dataset = NULL, depends = NULL,
                            dataview = NULL, subset = "filtered", selection_subset = "full_filter", filters = NULL,
                            reset_button = FALSE, button_class = NULL, as.row = FALSE, floating_label = TRUE) {
   id <- gsub("\\s", "", id)
@@ -89,6 +91,7 @@ input_combobox <- function(label, options, default = -1, display = options, id =
     if (is.list(options)) {
       i <- 0
       if (is.null(names(options))) names(options) <- seq_along(options)
+      if (missing(accordion)) accordion <- TRUE
       unlist(lapply(names(options), function(g) {
         group <- paste0('<div class="combobox-option-group combobox-component" label="', g, '">')
         for (gi in seq_along(options[[g]])) {
@@ -122,12 +125,14 @@ input_combobox <- function(label, options, default = -1, display = options, id =
     "</div>",
     "</div>"
   )
+  if (missing(accordion) && !is.null(group_feature)) accordion <- TRUE
   if (as.row) r <- to_input_row(r)
   caller <- parent.frame()
   if (!is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts") {
     if (!is.null(strict)) caller$combobox[[id]]$strict <- strict
     if (!is.null(search)) caller$combobox[[id]]$search <- search
     if (!is.null(multi)) caller$combobox[[id]]$multi <- multi
+    if (!is.null(accordion)) caller$combobox[[id]]$accordion <- accordion && (is.list(options) || !is.null(group_feature))
     if (!is.null(group_feature)) caller$combobox[[id]]$group <- group_feature
     if (!is.null(filters)) caller$combobox[[id]]$filters <- as.list(filters)
     caller$content <- c(caller$content, r)

@@ -48,7 +48,9 @@ table.dataTable tbody tr,
 .offcanvas,
 .leaflet-tooltip,
 .card,
-.table {
+.table,
+.accordion-button,
+.accordion-button:not(.collapsed) {
   background-color: var(--background);
   border-color: var(--background-border);
   color: var(--body-text);
@@ -115,7 +117,8 @@ input {
 body::-webkit-scrollbar-track,
 .dataTables_wrapper .dataTables_length select,
 .combobox-options,
-.dropdown-menu {
+.dropdown-menu,
+.accordion-item {
   background-color: var(--background-input);
   border-color: var(--background-border);
   color: var(--body-text);
@@ -275,11 +278,23 @@ input.combobox-input {
   width: 8px;
   transform: rotate(35deg);
 }
+.accordion-header,
 .combobox-group-label {
+  position: sticky;
+  top: 0;
+}
+.combobox-group-label,
+.accordion-button,
+.accordion-button:not(.collapsed) {
   font-size: 1.2em;
   font-weight: bold;
   padding: 0.5em 0.3em;
   background-color: var(--background-highlight);
+  box-shadow: none;
+}
+.dark-theme .accordion-button::after {
+  background-color: var(--highlight);
+  border-radius: 5px;
 }
 .combobox-option {
   padding: 0.3em 0.8em;
@@ -294,6 +309,9 @@ input.combobox-input {
   margin: 0;
   font-size: 0.75em;
   opacity: 0.6;
+}
+.combobox-options .accordion-body {
+  padding: 0;
 }
 .navbar {
   position: absolute;

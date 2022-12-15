@@ -4,13 +4,13 @@
 \alias{input_text}
 \title{Add a text input to a website}
 \usage{
-input_text(id, label = id, ..., default = NULL, note = NULL,
+input_text(label, id = label, ..., default = NULL, note = NULL,
   multiline = FALSE, class = NULL, floating_label = TRUE)
 }
 \arguments{
-\item{id}{Unique ID of the element to be created.}
-
 \item{label}{Label of the input for the user.}
+
+\item{id}{Unique ID of the element to be created.}
 
 \item{...}{Other attributes to add to the input.}
 
@@ -33,6 +33,6 @@ Adds an direct text input element to a website.
 }
 \examples{
 \dontrun{
-input_text("entered_text", "Enter Text:")
+input_text("Enter Text:", "entered_text")
 }
 }
