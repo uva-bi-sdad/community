@@ -1453,6 +1453,7 @@ void (function () {
         },
         plotly: {
           init: function (o) {
+            o.previous_span = 1
             if (o.id in site.plotly) {
               o.x = o.e.getAttribute('x')
               o.y = o.e.getAttribute('y')
@@ -1475,6 +1476,7 @@ void (function () {
                 )
               }
               o.show = function (e) {
+                o.revert()
                 var trace = make_data_entry(
                   this,
                   e,
@@ -1544,17 +1546,13 @@ void (function () {
           },
           mouseover: function (d) {
             if (d.points && 1 === d.points.length && this.e.data[d.points[0].fullData.index]) {
-              this.e.data[d.points[0].fullData.index].line.width = 4
-              // this.e.data[d.points[0].fullData.index].marker.size = 12
-              Plotly.react(this.e, this.e.data, this.e.layout)
+              Plotly.restyle(this.e, {'line.width': 5, 'marker.size': 12}, d.points[0].fullData.index)
               update_subs(this.id, 'show', site.data.entities[d.points[0].data.id])
             }
           },
           mouseout: function (d) {
             if (d.points && 1 === d.points.length && this.e.data[d.points[0].fullData.index]) {
-              this.e.data[d.points[0].fullData.index].line.width = 2
-              // this.e.data[d.points[0].fullData.index].marker.size = 8
-              Plotly.react(this.e, this.e.data, this.e.layout)
+              Plotly.restyle(this.e, {'line.width': 2, 'marker.size': 8}, d.points[0].fullData.index)
               update_subs(this.id, 'revert', site.data.entities[d.points[0].data.id])
             }
           },
@@ -1701,8 +1699,17 @@ void (function () {
                         this.e.layout.xaxis.range[1] = v.time_range.filtered[1] + 0.5
                       }
                     }
-                    Plotly.react(this.e, traces, this.e.layout)
+                    if (b.lowerfence.length < this.previous_span) {
+                      Plotly.newPlot(this.e, traces, this.e.layout, this.e.config)
+                      this.e
+                        .on('plotly_hover', elements.plotly.mouseover.bind(this))
+                        .on('plotly_unhover', elements.plotly.mouseout.bind(this))
+                        .on('plotly_click', elements.plotly.click.bind(this))
+                    } else {
+                      Plotly.react(this.e, traces, this.e.layout, this.e.config)
+                    }
                     setTimeout(trigger_resize, 300)
+                    this.previous_span = b.lowerfence.length
                     this.state = state
                   }
                 }
@@ -2761,7 +2768,7 @@ void (function () {
                 palette.e.addEventListener('change', o.update)
               }
             }
-            o.parsed = {summary: {}, order: [], selection: {}, time: 0, color: ''}
+            o.parsed = {summary: {}, order: [], selection: {}, time: 0, color: '', rank: false}
             o.parts = {
               ticks: o.e.querySelector('.legend-ticks'),
               scale: o.e.querySelector('.legend-scale'),
@@ -2876,8 +2883,12 @@ void (function () {
                   site.data.variable_info[variable] && site.data.variable_info[variable].type
                     ? patterns.int_types.test(site.data.variable_info[variable].type)
                     : true
-                if (pn + site.settings.color_scale_center !== this.current_palette) {
+                if (
+                  pn + site.settings.color_scale_center !== this.current_palette ||
+                  site.settings.color_by_order !== this.parsed.rank
+                ) {
                   this.current_palette = pn + site.settings.color_scale_center
+                  this.parsed.rank = site.settings.color_by_order
                   this.parts.scale.innerHTML = ''
                   if ('discrete' === palettes[pn].type) {
                     if (site.settings.color_by_order || 'none' === site.settings.color_scale_center) {
@@ -4594,7 +4605,7 @@ void (function () {
         defaults.variable = defaults.variable[defaults.variable.length - 1]
       }
       if (!site.map) site.map = {}
-      if (!site.map.overlay_property_selectors) site.map.overlay_property_selectors = []
+      if (!site.map._overlay_property_selectors) site.map._overlay_property_selectors = []
       // initialize inputs
       keys._u.forEach(async k => {
         if (_u[k].type in elements) {
@@ -4612,7 +4623,7 @@ void (function () {
               o.sensitive = false
               o.option_sets = {}
               if (patterns.properties.test(o.options_source)) {
-                site.map.overlay_property_selectors.push(o)
+                site.map._overlay_property_selectors.push(o)
               }
               if (o.depends) add_dependency(o.depends, {type: 'options', id: o.id})
               if (o.dataset in _u) add_dependency(o.dataset, {type: 'options', id: o.id})
@@ -5304,7 +5315,7 @@ void (function () {
               s[f].push(s[f][1] - s[f][0])
               if (!s[f][2]) delete s[f]
             })
-            site.map.overlay_property_selectors.forEach(u => {
+            site.map._overlay_property_selectors.forEach(u => {
               if (!(source in u.option_sets)) {
                 fill_overlay_properties_options(u, source, u.option_sets)
                 u.dataset = source
@@ -5312,7 +5323,7 @@ void (function () {
               }
             })
           }
-          site.map.overlay_property_selectors.forEach(u => conditionals.options(u))
+          site.map._overlay_property_selectors.forEach(u => conditionals.options(u))
           u.overlay.clearLayers()
           var n = 0
           const summaries = site.settings.circle_property && site.map._queue[source].property_summaries,

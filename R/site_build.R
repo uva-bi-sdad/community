@@ -377,7 +377,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   parts$credits$bootstrap <- list(
     name = "Bootstrap",
     url = "https://getbootstrap.com",
-    version = "5.2.2"
+    version = "5.2.3"
   )
   parts$credits$colorbrewer <- list(
     name = "ColorBrewer",
