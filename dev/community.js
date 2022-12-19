@@ -1569,6 +1569,7 @@ void (function () {
                   s = v.selection && v.selection.all,
                   d = v.get.dataset(),
                   y = _u[this.time || v.time_agg]
+                let missingVals = false
                 if (site.data.inited[d] && s && v.time_range.filtered.length) {
                   this.parsed.base_trace = valueOf(this.base_trace)
                   this.parsed.x = valueOf(this.x)
@@ -1585,6 +1586,10 @@ void (function () {
                   if (!(this.parsed.palette in palettes)) this.parsed.palette = defaults.palette
                   this.parsed.time = (y ? y.value() - site.data.meta.times[d].range[0] : 0) - varcol.time_range[d][0]
                   this.parsed.summary = varcol[this.view].summaries[d]
+                  if (!this.parsed.summary.n[this.parsed.time]) {
+                    this.parsed.time = 0
+                    missingVals = true
+                  }
                   const summary = vary[this.view].summaries[d],
                     missing = this.parsed.summary.missing[this.parsed.time],
                     n = this.parsed.summary.n[this.parsed.time],
@@ -1622,7 +1627,14 @@ void (function () {
                       const e = s[k]
                       state += k
                       traces.push(
-                        make_data_entry(this, e, e[this.view][rank][this.parsed.color][this.parsed.time] - missing, n)
+                        make_data_entry(
+                          this,
+                          e,
+                          e[this.view][rank][this.parsed.color][this.parsed.time] - missing,
+                          n,
+                          null,
+                          missingVals ? 'rgb(255,255,255)' : null
+                        )
                       )
                       if (lim && !--jump) break
                     }
@@ -1634,13 +1646,21 @@ void (function () {
                         const e = s[k]
                         state += k
                         traces.push(
-                          make_data_entry(this, e, e[this.view][rank][this.parsed.color][this.parsed.time] - missing, n)
+                          make_data_entry(
+                            this,
+                            e,
+                            e[this.view][rank][this.parsed.color][this.parsed.time] - missing,
+                            n,
+                            null,
+                            missingVals ? 'rgb(255,255,255)' : null
+                          )
                         )
                         if (!--lim) break
                       }
                     }
                   }
                   state += traces.length && traces[0].type
+
                   if (site.settings.boxplots && 'box' in this.traces && s[k]) {
                     state += 'box' + site.settings.iqr_box
                     b = JSON.parse(this.traces.box)
@@ -1667,6 +1687,7 @@ void (function () {
                     }
                     b.x = b.q1.map((_, i) => s[k].get_value(this.parsed.x, i + this.parsed.y_range[0]))
                   }
+                  state += missingVals
                   if (state !== this.state) {
                     if ('boolean' !== typeof this.e.layout.yaxis.title)
                       this.e.layout.yaxis.title =
