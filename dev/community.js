@@ -1633,7 +1633,7 @@ void (function () {
                           e[this.view][rank][this.parsed.color][this.parsed.time] - missing,
                           n,
                           null,
-                          missingVals ? 'rgb(255,255,255)' : null
+                          missingVals ? defaults.missing : null
                         )
                       )
                       if (lim && !--jump) break
@@ -1652,7 +1652,7 @@ void (function () {
                             e[this.view][rank][this.parsed.color][this.parsed.time] - missing,
                             n,
                             null,
-                            missingVals ? 'rgb(255,255,255)' : null
+                            missingVals ? defaults.missing : null
                           )
                         )
                         if (!--lim) break
