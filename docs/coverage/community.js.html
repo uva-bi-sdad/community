@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">6.91% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>268/3874</span>
+                <span class='fraction'>268/3875</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">2.56% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>79/3077</span>
+                <span class='fraction'>79/3079</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">7.32% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>258/3523</span>
+                <span class='fraction'>258/3524</span>
             </div>
         
             
@@ -7470,17 +7470,17 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -13239,13 +13239,13 @@
           },
           mouseover: <span class="fstat-no" title="function not covered" >fu</span>nction (d) {
 <span class="cstat-no" title="statement not covered" >            if (d.points &amp;&amp; 1 === d.points.length &amp;&amp; this.e.data[d.points[0].fullData.index]) {</span>
-<span class="cstat-no" title="statement not covered" >              Plotly.restyle(this.e, {'line.width': 5, 'marker.size': 12}, d.points[0].fullData.index)</span>
+<span class="cstat-no" title="statement not covered" >              Plotly.restyle(this.e, {'line.width': 5}, d.points[0].fullData.index)</span>
 <span class="cstat-no" title="statement not covered" >              update_subs(this.id, 'show', site.data.entities[d.points[0].data.id])</span>
             }
           },
           mouseout: <span class="fstat-no" title="function not covered" >fu</span>nction (d) {
 <span class="cstat-no" title="statement not covered" >            if (d.points &amp;&amp; 1 === d.points.length &amp;&amp; this.e.data[d.points[0].fullData.index]) {</span>
-<span class="cstat-no" title="statement not covered" >              Plotly.restyle(this.e, {'line.width': 2, 'marker.size': 8}, d.points[0].fullData.index)</span>
+<span class="cstat-no" title="statement not covered" >              Plotly.restyle(this.e, {'line.width': 2}, d.points[0].fullData.index)</span>
 <span class="cstat-no" title="statement not covered" >              update_subs(this.id, 'revert', site.data.entities[d.points[0].data.id])</span>
             }
           },
@@ -13278,16 +13278,15 @@
 <span class="cstat-no" title="statement not covered" >                  if (!(this.parsed.palette in palettes)) <span class="cstat-no" title="statement not covered" >this.parsed.palette = defaults.palette</span></span>
 <span class="cstat-no" title="statement not covered" >                  this.parsed.time = (y ? y.value() - site.data.meta.times[d].range[0] : 0) - varcol.time_range[d][0]</span>
 <span class="cstat-no" title="statement not covered" >                  this.parsed.summary = varcol[this.view].summaries[d]</span>
-                  const summary = <span class="cstat-no" title="statement not covered" >vary[this.view].summaries[d],</span>
-                    missing = <span class="cstat-no" title="statement not covered" >this.parsed.summary.missing[this.parsed.time],</span>
-                    n = <span class="cstat-no" title="statement not covered" >this.parsed.summary.n[this.parsed.time],</span>
+                  const display_time = <span class="cstat-no" title="statement not covered" >this.parsed.summary.n[this.parsed.time] ? this.parsed.time : 0,</span>
+                    summary = <span class="cstat-no" title="statement not covered" >vary[this.view].summaries[d],</span>
+                    missing = <span class="cstat-no" title="statement not covered" >this.parsed.summary.missing[display_time],</span>
+                    n = <span class="cstat-no" title="statement not covered" >this.parsed.summary.n[display_time],</span>
                     subset = <span class="cstat-no" title="statement not covered" >n !== v.n_selected.dataset,</span>
                     rank = <span class="cstat-no" title="statement not covered" >subset ? 'subset_rank' : 'rank',</span>
-                    order = <span class="cstat-no" title="statement not covered" >subset</span>
-                      ? varcol[this.view].order[d][this.parsed.time]
-                      : varcol.info[d].order[this.parsed.time],
+                    order = <span class="cstat-no" title="statement not covered" >subset ? varcol[this.view].order[d][display_time] : varcol.info[d].order[display_time],</span>
                     traces = <span class="cstat-no" title="statement not covered" >[]</span>
-                  let i = <span class="cstat-no" title="statement not covered" >this.parsed.summary.missing[this.parsed.time],</span>
+                  let i = <span class="cstat-no" title="statement not covered" >this.parsed.summary.missing[display_time],</span>
                     k,
                     b,
                     fn = <span class="cstat-no" title="statement not covered" >order ? order.length : 0,</span>
@@ -13299,6 +13298,7 @@
                       d +
                       this.parsed.x +
                       this.parsed.y +
+                      this.parsed.time +
                       this.parsed.palette +
                       this.parsed.color +
                       site.settings.summary_selection +
@@ -17512,7 +17512,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2022-12-16T17:40:49.527Z
+                at 2022-12-19T21:41:31.667Z
             </div>
         <script src="prettify.js"></script>
         <script>

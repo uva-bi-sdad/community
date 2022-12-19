@@ -4,7 +4,8 @@ Version: 0.0.1.106
 Authors@R: c(
     person("Biocomplexity Institute", role = c("cph", "fnd")),
     person("Micah", "Iserman", role = c("aut", "cre"), email = "micah.iserman@gmail.com"),
-    person("Alan", "Wang", role = "ctb")
+    person("Alan", "Wang", role = "ctb"),
+    person("Prashanth", "Wagle", role = "ctb")
   )
 Imports: cli, data.table, jsonlite, rstudioapi, stats, stringi, lingmatch, httpuv
 Description: A toolset and web framework to help manage and present data.
