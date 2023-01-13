@@ -38,10 +38,10 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, id =
   if (is.null(id)) id <- paste0("table", caller$uid)
   type <- if (datatables) "datatable" else "table"
   r <- paste(c(
-    paste0('<table class="auto-output datatables', if (is.null(class)) "" else paste("", class), '"'),
+    paste0(if (!datatables) '<div class="table-wrapper">', '<table class="auto-output datatables', if (is.null(class)) "" else paste("", class), '"'),
     if (!is.null(dataview)) paste0('data-view="', dataview, '"'),
     if (!is.null(click)) paste0('click="', click, '"'),
-    paste0('id="', id, '" auto-type="', type, '"></table>')
+    paste0('id="', id, '" auto-type="', type, '"></table>', if (!datatables) "</div>")
   ), collapse = " ")
   if (building) {
     if (!is.null(variables)) {
