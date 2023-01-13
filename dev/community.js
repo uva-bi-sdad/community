@@ -2766,6 +2766,187 @@ void (function () {
             }
           },
         },
+        table: {
+          init: function (o) {
+            o.e.appendChild(document.createElement('th'))
+            o.e.appendChild(document.createElement('tr'))
+            o.click = o.e.getAttribute('click')
+            o.features = o.options.features
+            o.parsed = {summary: {}, order: [], time: 0, color: '', dataset: _u[o.view].get.dataset()}
+            o.header = []
+            o.rows = {}
+            o.rowIds = {}
+            o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0
+            const time = site.data.meta.times[o.parsed.dataset]
+            if (o.tab) {
+              document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
+                'click',
+                function () {
+                  if (!o.e.parentElement.classList.contains('active')) {
+                    setTimeout(this.update, 155)
+                    setTimeout(trigger_resize, 155)
+                  }
+                }.bind(o)
+              )
+            }
+            o.e.addEventListener('mouseover', elements.table.mouseover.bind(o))
+            o.e.addEventListener('mouseout', elements.table.mouseout.bind(o))
+            if (o.click) {
+              if (o.click in _u) o.clickto = _u[o.click]
+              o.e.addEventListener('click', elements.table.click.bind(o))
+            }
+            o.show = function (e) {
+              if (e.features && e.features.id in this.rows) {
+                const row = this.rows[e.features.id].node()
+                if (row) {
+                  row.style.backgroundColor = defaults.background_highlight
+                  if (site.settings.table_autoscroll) {
+                    const h = this.e.parentElement.getBoundingClientRect().height,
+                      top = row.getBoundingClientRect().y - this.e.getBoundingClientRect().y
+                    this.e.parentElement.scroll({
+                      top: h > this.e.scrollHeight - top ? this.e.parentElement.scrollHeight : top,
+                      behavior: site.settings.table_scroll_behavior || 'smooth',
+                    })
+                  }
+                }
+              }
+            }
+            o.revert = function (e) {
+              if (e.features && e.features.id in this.rows) {
+                const row = this.rows[e.features.id].node()
+                if (row) row.style.backgroundColor = 'inherit'
+              }
+            }
+            o.options.variable_source = o.options.variables
+            if (o.options.variables) {
+              if ('string' === typeof o.options.variables) {
+                if (o.options.variables in _u) {
+                  add_dependency(o.options.variables, {type: 'update', id: o.id})
+                  o.options.variables = valueOf(o.options.variables)
+                  o.options.single_variable = 'string' === typeof o.options.variables
+                } else if (!o.options.single_variable) {
+                  o.options.single_variable = [{name: o.options.single_variable}]
+                }
+              }
+            } else o.options.variables = Object.keys(site.data.variables)
+            if (
+              'string' !== typeof o.options.variables &&
+              o.options.variables.length &&
+              'string' === o.options.variables[0]
+            ) {
+              o.options.variables = o.options.variables.map(v => {
+                name: v
+              })
+            }
+            if (o.options.single_variable) {
+              const c = o.options.variables,
+                k = c.name || c
+              o.header.push({title: 'Name', data: 'entity.features.name'})
+              if (time.is_single) o.variable_header = true
+              const t = site.data.variables[k].time_range[o.parsed.dataset]
+              if (t)
+                for (let n = t[1] - t[0] + 1; n--; ) {
+                  o.header[n + 1] = {
+                    title: o.variable_header ? c.title || site.data.format_label(k) : time.value[n + t[0]] + '',
+                    data: site.data.retrievers.vector,
+                    render: site.data.retrievers.row_time.bind({
+                      i: n,
+                      o: t[0],
+                      format_value: site.data.format_value.bind(site.data),
+                    }),
+                  }
+                }
+              o.options.order = [[o.header.length - 1, 'dsc']]
+            } else if (o.options.wide) {
+              if (o.features) {
+                if ('string' === typeof o.features) o.features = [{name: o.features}]
+                o.features.forEach(f => {
+                  o.header.push({
+                    title: f.title || f.name,
+                    data: 'entity.features.' + f.name.replace(patterns.all_periods, '\\.'),
+                  })
+                })
+              }
+              for (let i = o.options.variables.length; i--; ) {
+                if ('string' === typeof o.options.variables[i]) o.options.variables[i] = {name: o.options.variables[i]}
+                const c = o.options.variables[i]
+                if (!c.source) c.source = c.name in site.data.variables ? 'data' : 'features'
+                o.header.push(
+                  'features' === c.source
+                    ? {
+                        title: c.title || site.data.format_label(c.name),
+                        data: 'entity.features.' + c.name.toLowerCase().replace(patterns.all_periods, '\\.'),
+                      }
+                    : {
+                        title: c.title || site.data.format_label(c.name),
+                        render: async function (d, type, row) {
+                          if ('data' === this.c.source) {
+                            if (this.c.name in site.data.variables) {
+                              const i =
+                                row.time -
+                                (await get_variable(this.c.name, this.view).time_range[this.o.parsed.dataset][0])
+                              return i < 0 ? NaN : row.entity.get_value(this.c.name, i)
+                            } else return NaN
+                          } else
+                            return this.c.source in row.entity && this.c.name in row.entity[this.c.source]
+                              ? row.entity[this.c.source][this.c.name]
+                              : NaN
+                        }.bind({o, c}),
+                      }
+                )
+              }
+            } else {
+              o.filters = o.options.filters
+              o.current_filter = {}
+              if (!time.is_single) {
+                o.header.push({
+                  title: 'Year',
+                  data: 'entity.time.value',
+                  render: function (d, type, row) {
+                    const t = row.time + row.offset
+                    return d && t >= 0 && t < d.length
+                      ? 'number' === typeof d[t]
+                        ? site.data.format_value(d[t], true)
+                        : d[t]
+                      : NaN
+                  },
+                })
+              }
+              if (o.features) {
+                if ('string' === typeof o.features) o.features = [{name: o.features}]
+                o.features.forEach(f => {
+                  o.header.splice(0, 0, {
+                    title: f.title || f.name,
+                    data: 'entity.features.' + f.name.replace(patterns.all_periods, '\\.'),
+                  })
+                })
+              }
+              o.header.push({
+                title: 'Variable',
+                data: function (row) {
+                  return row.variable in row.entity.variables
+                    ? row.entity.variables[row.variable].meta.short_name
+                    : row.variable
+                },
+              })
+              o.header.push({
+                title: 'Value',
+                data: site.data.retrievers.vector,
+                render: function (d, type, row) {
+                  return d
+                    ? 'number' === typeof d[row.time]
+                      ? site.data.format_value(d[row.time], row.int)
+                      : d[row.time]
+                    : ''
+                },
+              })
+            }
+            if (o.view) {
+              add_dependency(o.view, {type: 'update', id: o.id})
+              add_dependency(o.view + '_filter', {type: 'update', id: o.id})
+            } else o.view = defaults.dataview
+            queue_init_table.bind(o)()
+          },
         legend: {
           init: function (o) {
             add_dependency(o.view, {type: 'update', id: o.id})
@@ -5825,6 +6006,18 @@ void (function () {
       } else {
         this.deferred = true
         setTimeout(queue_init_datatable.bind(this), showing ? 0 : 2000)
+      }
+    }
+
+    function queue_init_table() {
+      const showing = this.deferred || !this.tab || this.tab.classList.contains('show')
+      if (showing && 'get' in site.dataviews[this.view]) {
+        this.options.columns = this.header
+        this.table = this.e
+        this.update()
+      } else {
+        this.deferred = true
+        setTimeout(queue_init_table.bind(this), showing ? 0 : 2000)
       }
     }
   }
