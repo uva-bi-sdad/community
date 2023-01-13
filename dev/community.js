@@ -2398,8 +2398,8 @@ void (function () {
         },
         datatable: {
           init: function (o) {
-            o.e.appendChild(document.createElement('tHead'))
-            o.e.appendChild(document.createElement('tBody'))
+            o.e.appendChild(document.createElement('thead'))
+            o.e.appendChild(document.createElement('tbody'))
             o.click = o.e.getAttribute('click')
             o.features = o.options.features
             o.parsed = {summary: {}, order: [], time: 0, color: '', dataset: _u[o.view].get.dataset()}
