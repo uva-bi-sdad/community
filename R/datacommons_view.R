@@ -270,6 +270,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
         if (length(ri)) {
           ri <- unlist(ri, recursive = FALSE)
           nri <- names(ri)
+          if (any(nri == "")) for (mname in which(nri == "")) names(ri)[mname] <- ri[[mname]]$measure
           es <- nri[grepl("^_", nri) & !nri %in% view$variables]
           if (length(es)) {
             for (e in es) {
@@ -296,7 +297,11 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
             nri <- names(ri)
           }
           ri <- ri[(if (length(view$variables)) nri %in% view$variables else TRUE) & !nri %in% names(measure_info)]
-          if (length(ri)) measure_info[names(ri)] <- ri
+          if (length(ri)) {
+            measure_info[names(ri)] <- lapply(
+              ri, function(e) if (is.null(names(e)) && !is.null(names(e[[1]]))) e[[1]] else e
+            )
+          }
         }
       }
       if (length(measure_info)) {

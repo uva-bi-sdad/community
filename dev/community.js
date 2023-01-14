@@ -1768,7 +1768,7 @@ void (function () {
             if (o.time) add_dependency(o.time, dep)
             if (!o.e.style.height) o.e.style.height = o.options.height ? o.options.height : '400px'
             if (o.options.overlays_from_measures && site.data.variable_info) {
-              if (!site.map[o.id].overlays) site.map[o.id].overlays = []
+              if (!Array.isArray(site.map[o.id].overlays)) site.map[o.id].overlays = []
               const overlays = site.map[o.id].overlays
               Object.keys(site.data.variable_info).forEach(variable => {
                 const info = site.data.variable_info[variable]
@@ -1777,7 +1777,7 @@ void (function () {
                     const temp = info.layer.source
                     info.layer.source = []
                     for (
-                      let range = site.data.meta.ranges[variable], y = range[0], max = range[1], time;
+                      let range = site.data.meta.ranges[variable], y = range[0], max = range[1] + 1, time;
                       y < max;
                       y++
                     ) {
@@ -1787,7 +1787,8 @@ void (function () {
                   }
                   patterns.time_ref.lastIndex = 0
                   const layer = {variable: variable, source: info.layer.source}
-                  if (info.layer.filter) layer.filter = info.layer.filter
+                  if (info.layer.filter && (Array.isArray(info.layer.filter) || info.layer.filter.feature))
+                    layer.filter = info.layer.filter
                   overlays.push(layer)
                 }
               })
