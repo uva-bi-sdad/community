@@ -1227,7 +1227,6 @@ input[type='range']::-ms-thumb {
   text-align: center;
 }
 .table-wrapper table td {
-  background: #fff;
   padding: 4px 5px;
   text-align: center;
 }
