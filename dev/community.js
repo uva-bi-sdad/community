@@ -3077,12 +3077,21 @@ void (function () {
                             }
                         }
 
+                        //TODO: Can Change this to const rowIds
+                        this.rowIds = {}
+
+                        Object.keys(v.selection.all).forEach(e => {
+                          this.rowIds[v.selection.all[e].features.name] = e
+                        })
+
                         for (let county in tableData) {
                           let tr = document.createElement('tr')
                           let td = document.createElement('td')
                           td.innerText = county
 
                           tr.append(td)
+
+                          tr.dataset.geoid = this.rowIds[county]
 
                           if (Object.keys(tableData[county]).length > 0)
                             for (let t in tableData[county]) {
@@ -3168,20 +3177,36 @@ void (function () {
             }
           },
           mouseover: function (e) {
-            if (e.target._DT_CellIndex && e.target._DT_CellIndex.row in this.rowIds) {
-              const id = this.rowIds[e.target._DT_CellIndex.row],
-                row = this.rows[id].node()
-              if (row) row.style.backgroundColor = defaults.background_highlight
+            // if (e.target._DT_CellIndex && e.target._DT_CellIndex.row in this.rowIds) {
+            //   const id = this.rowIds[e.target._DT_CellIndex.row],
+            //     row = this.rows[id].node()
+            //   if (row) row.style.backgroundColor = defaults.background_highlight
+            //   if (id in site.data.entities) {
+            //     update_subs(this.id, 'show', site.data.entities[id])
+            //   }
+            // }
+
+            if (e.target.tagName == 'TD' && e.target.parentElement.tagName == 'TR') {
+              const parent = e.target.parentElement
+              parent.style['backgroundColor'] = defaults.background_highlight
+              const id = parseInt(parent.dataset.geoid)
               if (id in site.data.entities) {
                 update_subs(this.id, 'show', site.data.entities[id])
               }
             }
           },
           mouseout: function (e) {
-            if (e.target._DT_CellIndex && e.target._DT_CellIndex.row in this.rowIds) {
-              const id = this.rowIds[e.target._DT_CellIndex.row],
-                row = this.rows[id].node()
-              if (row) row.style.backgroundColor = 'inherit'
+            // if (e.target._DT_CellIndex && e.target._DT_CellIndex.row in this.rowIds) {
+            //   const id = this.rowIds[e.target._DT_CellIndex.row],
+            //     row = this.rows[id].node()
+            //   if (row) row.style.backgroundColor = 'inherit'
+            //   if (id in site.data.entities) {
+            //     update_subs(this.id, 'revert', site.data.entities[id])
+            //   }
+            // }
+            if (e.target.tagName == 'TD' && e.target.parentElement.tagName == 'TR') {
+              const parent = e.target.parentElement
+              parent.style['backgroundColor'] = 'inherit'
               if (id in site.data.entities) {
                 update_subs(this.id, 'revert', site.data.entities[id])
               }
