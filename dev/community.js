@@ -3206,6 +3206,7 @@ void (function () {
             // }
             if (e.target.tagName == 'TD' && e.target.parentElement.tagName == 'TR') {
               const parent = e.target.parentElement
+              const id = parseInt(parent.dataset.geoid)
               parent.style['backgroundColor'] = 'inherit'
               if (id in site.data.entities) {
                 update_subs(this.id, 'revert', site.data.entities[id])
