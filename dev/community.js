@@ -3215,8 +3215,9 @@ void (function () {
             }
           },
           click: function (e) {
-            if (this.clickto && e.target._DT_CellIndex && e.target._DT_CellIndex.row in this.rowIds) {
-              const id = this.rowIds[e.target._DT_CellIndex.row]
+            if (this.clickto && e.target.tagName == 'TD') {
+              const parent = e.target.parentElement
+              const id = parent.dataset.geoid
               if (id in site.data.entities) this.clickto.set(id)
             }
           },
