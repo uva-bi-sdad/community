@@ -3085,6 +3085,7 @@ void (function () {
                         })
 
                         for (let county in tableData) {
+                          if (Object.keys(tableData[county]).length > 0) {
                           let tr = document.createElement('tr')
                           let td = document.createElement('td')
                           td.innerText = county
@@ -3093,7 +3094,6 @@ void (function () {
 
                           tr.dataset.geoid = this.rowIds[county]
 
-                          if (Object.keys(tableData[county]).length > 0)
                             for (let t in tableData[county]) {
                               td = document.createElement('td')
                               td.innerText = site.data.format_value(tableData[county][t])
@@ -3101,6 +3101,7 @@ void (function () {
                             }
 
                           table.querySelector('tbody').append(tr)
+                          }
                         }
                       }
                       appendRows(this.table)
