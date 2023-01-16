@@ -3015,31 +3015,22 @@ void (function () {
 
                           let headers = this.header.map(h => h.title)
                           let thead = document.createElement('thead')
-
-                          //thead.className = 'className'
-
                           let tr = document.createElement('tr')
-
-                          // tr.className = 'className'
-
                           headers.forEach(header => {
                             const th = document.createElement('th')
-                            th.innerText = header
+                            const button = document.createElement('button')
+                            button.innerText = header
+                            button.dataset.dir = ''
+                            button.addEventListener('click', sortTable)
+                            th.append(button)
                             tr.append(th)
                           })
-
                           thead.append(tr)
-
                           table.append(thead)
-
                           let tBody = document.createElement('tbody')
-
-                          //tBody.className = 'className'
-
                           table.append(tBody)
                         }
-                        createTable(this.table)
-                        //this.table = $(this.e).DataTable(this.options)
+                        createTable(this.table, sortTable)
                       }
                       const n = this.header.length
                       let reset
@@ -3065,20 +3056,10 @@ void (function () {
                           if (t)
                             for (let n = t[1] - t[0]; n >= 0; n--) {
                               const title = time.value[n + t[0]] + ''
-
-                              //Bedford City's X26 is for health insurance, but it doesn't exist in the data
-                              // if (countyName == 'Bedford city') {
-                              //   console.log(t)
-                              //   console.log(code)
-                              //   console.log(source[key])
-                              // }
                               if (Object.keys(source[key].data).includes(code))
                                 tableData[countyName][title] = source[key].data[code][n]
                             }
                         }
-
-                        //TODO: Can Change this to const rowIds
-                        this.rowIds = {}
 
                         Object.keys(v.selection.all).forEach(e => {
                           this.rowIds[v.selection.all[e].features.name] = e
@@ -3172,21 +3153,11 @@ void (function () {
                       })
                     }
                   }
-                  //redraw ? this.table.draw() : this.table.columns.adjust().draw(false)
                 }
               }
             }
           },
           mouseover: function (e) {
-            // if (e.target._DT_CellIndex && e.target._DT_CellIndex.row in this.rowIds) {
-            //   const id = this.rowIds[e.target._DT_CellIndex.row],
-            //     row = this.rows[id].node()
-            //   if (row) row.style.backgroundColor = defaults.background_highlight
-            //   if (id in site.data.entities) {
-            //     update_subs(this.id, 'show', site.data.entities[id])
-            //   }
-            // }
-
             if (e.target.tagName == 'TD' && e.target.parentElement.tagName == 'TR') {
               const parent = e.target.parentElement
               parent.style['backgroundColor'] = defaults.background_highlight
@@ -3197,14 +3168,6 @@ void (function () {
             }
           },
           mouseout: function (e) {
-            // if (e.target._DT_CellIndex && e.target._DT_CellIndex.row in this.rowIds) {
-            //   const id = this.rowIds[e.target._DT_CellIndex.row],
-            //     row = this.rows[id].node()
-            //   if (row) row.style.backgroundColor = 'inherit'
-            //   if (id in site.data.entities) {
-            //     update_subs(this.id, 'revert', site.data.entities[id])
-            //   }
-            // }
             if (e.target.tagName == 'TD' && e.target.parentElement.tagName == 'TR') {
               const parent = e.target.parentElement
               const id = parseInt(parent.dataset.geoid)
