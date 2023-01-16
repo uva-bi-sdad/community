@@ -3041,10 +3041,10 @@ void (function () {
                       if (reset) this.state = ''
                     }
                     if (this.options.wide) {
-                      const appendRows = table => {
+                      const tableData = {}
+                      const prepareData = () => {
                         let tr = document.createElement('tr')
                         //tr.className = 'className'
-                        const tableData = {}
                         const dataset = d
                         const time = site.data.meta.times[dataset]
                         const source = v.selection.all
