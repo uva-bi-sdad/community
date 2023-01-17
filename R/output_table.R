@@ -104,13 +104,6 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, id =
         url = "https://datatables.net",
         version = "1.13.1"
       )
-    } else {
-      caller$dependencies$jquery <- list(
-        type = "script",
-        src = "https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js",
-        hash = "sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK",
-        loading = "defer"
-      )
     }
     if (datatables) caller$datatable[[id]] <- options else caller$table[[id]] <- options
     caller$content <- c(caller$content, r)

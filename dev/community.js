@@ -2986,7 +2986,7 @@ void (function () {
                       this.parsed.order = this.view in variable ? variable[this.view].order[d][this.parsed.time] : false
                       if (this.header.length < 2 || d !== this.header[1].dataset || vn !== this.header[1].variable) {
                         const destroyTable = () => {
-                          $(this.e).empty()
+                          this.e.innerHTML = ''
                         }
                         destroyTable()
                         // this.header = [{title: 'Name', data: 'entity.features.name'}]
