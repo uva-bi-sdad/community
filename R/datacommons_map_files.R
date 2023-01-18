@@ -94,37 +94,42 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
     )
     files <- files[files %in% all_files]
     for (f in files) {
-      d <- tryCatch(reader(if (grepl("[gbx]z2?$", f)) gzfile(f) else f, 1), error = function(e) NULL)
+      d <- tryCatch(
+        read_delim_arrow(gzfile(f), if (grepl(".csv", f, fixed = TRUE)) "," else "\t"),
+        error = function(e) NULL
+      )
       if (!is.null(d)) {
         if (nrow(d)) {
+          if (is.character(variable_location) && !variable_location %in% colnames(d)) {
+            novars <- c(novars, f)
+            next
+          }
+          if (is.character(id_location) && !id_location %in% colnames(d)) {
+            noids <- c(noids, f)
+            next
+          }
           hash <- md5sum(f)[[1]]
           manifest[[r]][[hash]]$name <- basename(f)
           manifest[[r]][[hash]]$providers <- c(manifest[[r]][[hash]]$provider, if (grepl("repos/", f, fixed = TRUE)) "github" else "dataverse")
-          if (!is.character(variable_location) || variable_location %in% colnames(d)) {
-            vars <- unique(if (is.function(variable_location)) variable_location(d) else d[, variable_location, drop = TRUE])
-            if (length(vars)) {
-              map[[f]] <- data.frame(
-                variable = vars,
-                dir_name = paste0(gsub(paste0(dir, "|cache/|repos/|data/|distribution/"), "", paste0(dirname(f), "/")), vars),
-                full_name = make_full_name(f, vars),
-                repo = r,
-                file = sub(dir, "", f, fixed = TRUE)
-              )
-              manifest[[r]][[hash]]$variables <- vars
-            } else {
-              novars <- c(novars, f)
-            }
+          vars <- if (is.function(variable_location)) variable_location(d) else d[[variable_location]]
+          if (length(vars)) {
+            vars <- unique(vars)
+            map[[f]] <- data.frame(
+              variable = vars,
+              dir_name = paste0(gsub(paste0(dir, "|cache/|repos/|data/|distribution/"), "", paste0(dirname(f), "/")), vars),
+              full_name = make_full_name(f, vars),
+              repo = r,
+              file = sub(dir, "", f, fixed = TRUE)
+            )
+            manifest[[r]][[hash]]$variables <- vars
           } else {
             novars <- c(novars, f)
           }
-          if (!is.character(id_location) || id_location %in% colnames(d)) {
-            ids <- trimws(format(unique(if (is.function(id_location)) id_location(d) else d[, id_location, drop = TRUE]), scientific = FALSE))
-            if (length(ids)) {
-              idmap[[f]] <- data.frame(id = ids, repo = r, file = sub(dir, "", f, fixed = TRUE))
-              manifest[[r]][[hash]]$ids <- ids
-            } else {
-              noids <- c(noids, f)
-            }
+          ids <- if (is.function(id_location)) id_location(d) else d[[id_location]]
+          if (length(ids)) {
+            ids <- gsub("^\\s+|\\s+$", "", format(unique(ids), scientific = FALSE))
+            idmap[[f]] <- data.frame(id = ids, repo = r, file = sub(dir, "", f, fixed = TRUE))
+            manifest[[r]][[hash]]$ids <- ids
           } else {
             noids <- c(noids, f)
           }

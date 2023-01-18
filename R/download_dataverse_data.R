@@ -143,10 +143,10 @@ download_dataverse_data <- function(id, outdir = tempdir(), files = NULL, versio
       fn <- sub("\\..*", "", m$label)
       json <- grepl("\\.json$", ffs[i])
       data[[fn]] <- tryCatch(
-        if (decompress || json) {
-          (if (json) read_json else fread)(ffs[i])
+        if (json) {
+          read_json(ffs[i], simplifyVector = TRUE)
         } else {
-          as.data.table(read.csv(gzfile(ffsx[i])))
+          read_delim_arrow(gzfile(ffsx[i]), if (grepl("csv", format, fixed = TRUE)) "," else "\t")
         },
         error = function(e) NULL
       )

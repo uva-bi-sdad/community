@@ -70,7 +70,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   }
   for (f in files) {
     d <- tryCatch(
-      if (grepl("[gbx]z2?$", f)) as.data.table(read.csv(gzfile(f))) else fread(f),
+      read_delim_arrow(gzfile(f), if (grepl(".csv", f, fixed = TRUE)) "," else "\t"),
       error = function(e) NULL
     )
     if (is.null(d)) cli_abort("failed to read in file {f}")
@@ -82,9 +82,10 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       if (id %in% colnames(d)) {
         su <- grepl("^[0-9]+$", d[[id]])
         if (any(su)) {
-          d[[id]][su] <- trimws(format(as.numeric(d[[id]][su]), scientific = FALSE))
+          d[[id]][su] <- gsub("^\\s+|\\s+$", "", format(as.numeric(d[[id]][su]), scientific = FALSE))
         }
-        d <- d[d[[id]] %in% ids]
+        d[[id]] <- as.character(d[[id]])
+        d <- d[d[[id]] %in% ids, ]
         if (!nrow(d)) {
           if (verbose) cli_warn("file has none of the requested IDs: {f}")
           next
@@ -105,7 +106,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       spec <- spec[!su]
     }
     names <- c(names, list(colnames(d)))
-    set(d, NULL, "file", f)
+    d$file <- f
     data <- c(data, list(d))
     names(data)[length(data)] <- f
   }
@@ -114,17 +115,15 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   if (!value %in% vars) {
     a <- common[!common %in% vars]
     if (!length(a)) cli_abort("could not figure out which column might contain values")
-    if (length(a) > 1) {
-      a <- a[which(vapply(a, function(col) is.numeric(d[[col]]), TRUE))]
-      if (!length(a)) {
-        cli_abort(c(
-          "no potential value columns were numeric",
-          i = "check variable classes, or specify {.arg value}"
-        ))
-      }
-      value <- a[1]
-      vars <- c(value, vars)
+    if (length(a) > 1) a <- a[which(vapply(a, function(col) is.numeric(d[[col]]), TRUE))]
+    if (!length(a)) {
+      cli_abort(c(
+        "no potential value columns were numeric",
+        i = "check variable classes, or specify {.arg value}"
+      ))
     }
+    value <- a[1]
+    vars <- c(value, vars)
   }
   vars <- unique(c(vars, "file"))
   if (length(variables)) {
@@ -133,7 +132,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   }
   data <- do.call(rbind, lapply(names(data), function(f) {
     d <- data[[f]]
-    d <- d[, vars, with = FALSE]
+    d <- d[, vars]
     d <- d[rowSums(vapply(d, is.na, logical(nrow(d)))) == 0, ]
     if (check_variables) {
       ovars <- unique(d[[value_name]])
@@ -144,7 +143,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
         su <- su & ovars %in% variables
         for (i in which(su)) d[[value_name]][d[[value_name]] == names(ovars)[i]] <- ovars[i]
       }
-      d <- d[d[[value_name]] %in% variables]
+      d <- d[d[[value_name]] %in% variables, ]
     }
     d
   }))
@@ -165,11 +164,11 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   data[[id]] <- as.character(data[[id]])
   if (!dataset %in% vars) {
     dataset <- "dataset"
-    data <- cbind(data, dataset = "dataset")
+    data$dataset <- dataset
   }
   if (!time %in% vars) {
     time <- "time"
-    data <- cbind(data, time = 1)
+    data$time <- 1
   }
   if (!any(value_name %in% vars)) {
     value_name <- "file"
@@ -197,7 +196,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
             msg_done = paste0("wrote entity metadata file: {.file ", entity_info_file, "}")
           )
         }
-        e <- as.data.frame(data[!duplicated(data[[id]])])
+        e <- data[!duplicated(data[[id]]), ]
         e <- e[, c(id, dataset, unlist(entity_info)), drop = FALSE]
         if (!is.null(names(entity_info))) {
           su <- which(names(entity_info) != "")
@@ -227,7 +226,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   write <- vapply(files, function(f) is.null(out) || overwrite || !file.exists(f) || max_age > file.mtime(f), TRUE)
   sets <- lapply(datasets, function(dn) {
     if (write[[dn]]) {
-      d <- if (dataset %in% vars) data[data[[dataset]] == dn] else data
+      d <- if (dataset %in% vars) data[data[[dataset]] == dn, ] else data
       dc <- list()
       ids <- unique(d[[id]])
       i <- 1
@@ -240,8 +239,8 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       for (i in seq_along(ids)) {
         if (verbose) cli_progress_update()
         e <- ids[[i]]
-        ed <- d[d[[id]] == e]
-        ed <- ed[!duplicated(do.call(paste, ed[, vars[2:4], with = FALSE]))]
+        ed <- d[d[[id]] == e, ]
+        ed <- ed[!duplicated(do.call(paste, ed[, vars[2:4]])), ]
         r <- data.frame(
           ID = rep(as.character(e), n), time = times, check.names = FALSE,
           matrix(NA, n, length(present_vars), dimnames = list(times, present_vars))
@@ -251,7 +250,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
             su <- ed[[value_name]] == v
             su[su] <- !is.na(ed[[value]][su])
             if (sum(su)) {
-              vals <- ed[su]
+              vals <- ed[su, ]
               r[as.character(vals[[time]]), v] <- vals[[value]]
             }
           }

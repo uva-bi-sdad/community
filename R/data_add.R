@@ -95,7 +95,11 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
     data <- tryCatch(
       if (format == "rds") {
         readRDS(f)
-      } else if (grepl("[gbx]z2?$", f)) as.data.table(read.csv(gzfile(f), check.names = FALSE)) else fread(f),
+      } else {
+        read_delim_arrow(
+          gzfile(f), if (grepl("csv", format, fixed = TRUE)) "," else "\t"
+        )
+      },
       error = function(e) NULL
     )
     if (is.null(data)) {

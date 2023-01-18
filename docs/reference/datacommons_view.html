@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">community</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1.106</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1.107</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,8 +59,9 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">datacommons_view</span><span class="op">(</span><span class="va">commons</span>, <span class="va">name</span>, output <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span>, variables <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  ids <span class="op">=</span> <span class="cn">NULL</span>, files <span class="op">=</span> <span class="cn">NULL</span>, run_after <span class="op">=</span> <span class="cn">NULL</span>, run_before <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  measure_info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, remote <span class="op">=</span> <span class="cn">NULL</span>, url <span class="op">=</span> <span class="cn">NULL</span>, children <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  execute <span class="op">=</span> <span class="cn">TRUE</span>, prefer_repo <span class="op">=</span> <span class="cn">FALSE</span>, refresh_map <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  use_manifest <span class="op">=</span> <span class="cn">TRUE</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<span>  execute <span class="op">=</span> <span class="cn">TRUE</span>, prefer_repo <span class="op">=</span> <span class="cn">FALSE</span>, preselect_files <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  refresh_map <span class="op">=</span> <span class="cn">FALSE</span>, use_manifest <span class="op">=</span> <span class="cn">TRUE</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -132,6 +133,11 @@ and <code>url</code> (link to the served site), which will otherwise be derived 
 <dt>prefer_repo</dt>
 <dd><p>Logical; if <code>TRUE</code>, will prefer repository files over those from distributions
 (such as Dataverse).</p></dd>
+
+
+<dt>preselect_files</dt>
+<dd><p>Logical; if <code>TRUE</code>, will select files by ID coverage before processing them,
+which can save time, but might miss data spread across multiple files.</p></dd>
 
 
 <dt>refresh_map</dt>

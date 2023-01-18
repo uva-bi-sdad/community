@@ -100,25 +100,21 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
           path <- paste0(dir, "/docs/", d$site_file)
           if (file.exists(file)) {
             if (force || (!file.exists(path) || file.mtime(file) > file.mtime(path))) {
-              data <- if (grepl("[gbx]z2?$", file)) {
-                as.data.table(read.csv(gzfile(file), check.names = FALSE))
-              } else {
-                fread(file)
-              }
+              data <- read_delim_arrow(gzfile(file), if (grepl(".csv", file, fixed = TRUE)) "," else "\t")
               time <- NULL
               if (length(d$time) && d$time[[1]] %in% colnames(data)) {
                 time <- d$time[[1]]
                 data <- data[order(data[[d$time[[1]]]]), ]
               }
               if (length(d$ids) && d$ids[[1]]$variable %in% colnames(data)) {
-                ids <- trimws(format(data[[d$ids[[1]]$variable]], scientific = FALSE))
+                ids <- gsub("^\\s+|\\s+$", "", format(data[[d$ids[[1]]$variable]], scientific = FALSE))
                 if (is.null(time) && anyDuplicated(ids)) {
                   cli_abort(paste(
                     "no time variable was specified, yet {?an id was/ids were} duplicated:",
                     "{.val {unique(ids[duplicated(ids)])}}"
                   ))
                 }
-                set(data, NULL, d$ids[[1]]$variable, NULL)
+                data <- data[, colnames(data) != d$ids[[1]]$variable, drop = FALSE]
               } else {
                 ids <- rownames(data)
               }
@@ -176,7 +172,6 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                         if (is.null(time)) {
                           aggs <- vapply(cd, function(v) if (is.numeric(v) && !all(is.na(v))) mean(v, na.rm = TRUE) else NA, 0)
                           aggs <- aggs[!is.na(aggs) & names(aggs) %in% cn & names(aggs) != "time"]
-                          sdata[[id]] <- as.data.frame(sdata[[id]])
                           aggs <- aggs[is.na(sdata[[id]][, names(aggs)])]
                           if (length(aggs)) {
                             aggregated <- TRUE
@@ -184,7 +179,6 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                           }
                         } else {
                           cd <- split(cd, cd[[time]])
-                          sdata[[id]] <- as.data.frame(sdata[[id]])
                           for (ct in names(cd)) {
                             aggs <- vapply(cd[[ct]], function(v) if (is.numeric(v) && !all(is.na(v))) mean(v, na.rm = TRUE) else NA, 0)
                             aggs <- aggs[!is.na(aggs) & names(aggs) %in% cn]
@@ -230,7 +224,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
               })
               names(var_meta) <- evars
               sdata <- lapply(sdata, function(e) {
-                e <- if (class(e)[1] == "data.table") e[, evars, with = FALSE] else e[, evars]
+                e <- e[, evars]
                 e <- as.list(e)
                 if (sparse_time) {
                   for (f in evars) {

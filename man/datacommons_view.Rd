@@ -7,8 +7,9 @@
 datacommons_view(commons, name, output = NULL, ..., variables = NULL,
   ids = NULL, files = NULL, run_after = NULL, run_before = NULL,
   measure_info = list(), remote = NULL, url = NULL, children = list(),
-  execute = TRUE, prefer_repo = FALSE, refresh_map = FALSE,
-  use_manifest = TRUE, overwrite = FALSE, verbose = TRUE)
+  execute = TRUE, prefer_repo = FALSE, preselect_files = FALSE,
+  refresh_map = FALSE, use_manifest = TRUE, overwrite = FALSE,
+  verbose = TRUE)
 }
 \arguments{
 \item{commons}{Path to the data commons project.}
@@ -49,6 +50,9 @@ and \code{url} (link to the served site), which will otherwise be derived from \
 
 \item{prefer_repo}{Logical; if \code{TRUE}, will prefer repository files over those from distributions
 (such as Dataverse).}
+
+\item{preselect_files}{Logical; if \code{TRUE}, will select files by ID coverage before processing them,
+which can save time, but might miss data spread across multiple files.}
 
 \item{refresh_map}{Logical; if \code{TRUE}, overwrites any existing map files.}
 

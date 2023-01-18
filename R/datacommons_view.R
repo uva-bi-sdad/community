@@ -26,6 +26,8 @@
 #' @param execute Logical; if \code{FALSE}, will create/update, but not run the view.
 #' @param prefer_repo Logical; if \code{TRUE}, will prefer repository files over those from distributions
 #' (such as Dataverse).
+#' @param preselect_files Logical; if \code{TRUE}, will select files by ID coverage before processing them,
+#' which can save time, but might miss data spread across multiple files.
 #' @param refresh_map Logical; if \code{TRUE}, overwrites any existing map files.
 #' @param use_manifest Logical; if \code{FALSE}, will not search for manifest files in each repository to
 #' extract measure information from. These should have \code{data} entries with object arrays containing a
@@ -46,7 +48,8 @@
 datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL, ids = NULL,
                              files = NULL, run_after = NULL, run_before = NULL, measure_info = list(),
                              remote = NULL, url = NULL, children = list(), execute = TRUE, prefer_repo = FALSE,
-                             refresh_map = FALSE, use_manifest = TRUE, overwrite = FALSE, verbose = TRUE) {
+                             preselect_files = FALSE, refresh_map = FALSE, use_manifest = TRUE, overwrite = FALSE,
+                             verbose = TRUE) {
   if (missing(commons)) cli_abort('{.arg commons} must be speficied (e.g., commons = ".")')
   if (missing(name)) {
     name <- list.files(paste0(commons, "/views"))[1]
@@ -196,24 +199,27 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
           Reduce("+", lapply(view$ids, function(id) cfs %in% map$ids[[id]]$file))
       ), ]
       files <- files[!duplicated(paste(files$dir_name, basename(files$file))), , drop = FALSE]
-      sel_files <- unique(unlist(lapply(split(files, files$dir_name), function(fs) {
-        if (nrow(fs) == 1) {
-          fs$file
-        } else {
-          ccfs <- sub("^/", "", fs$file)
-          ifm <- vapply(map$ids[view$ids], function(im) ccfs %in% sub("^/", "", im$files), logical(length(ccfs)))
-          is <- colSums(ifm) != 0
-          sel <- NULL
-          for (i in seq_along(ccfs)) {
-            if (any(is[ifm[i, ]])) {
-              sel <- c(sel, fs$file[i])
-              is[ifm[i, ]] <- FALSE
+      if (preselect_files) {
+        sel_files <- unique(unlist(lapply(split(files, files$dir_name), function(fs) {
+          if (nrow(fs) == 1) {
+            fs$file
+          } else {
+            ccfs <- sub("^/", "", fs$file)
+            ifm <- vapply(map$ids[view$ids], function(im) ccfs %in% sub("^/", "", im$files), logical(length(ccfs)))
+            is <- colSums(ifm) != 0
+            sel <- NULL
+            for (i in seq_along(ccfs)) {
+              if (any(is[ifm[i, ]])) {
+                sel <- c(sel, fs$file[i])
+                is[ifm[i, ]] <- FALSE
+              }
             }
+            sel
           }
-          sel
-        }
-      }), use.names = FALSE))
-      files <- files[files$file %in% sel_files, ]
+        }), use.names = FALSE))
+        files <- files[files$file %in% sel_files, ]
+      }
+      files <- files[order(file.mtime(paste0(commons, "/", files$file)), decreasing = TRUE), ]
       if (verbose) cli_alert_info("updating manifest: {.file {paths[2]}}")
       repo_manifest <- read_json(paste0(commons, "/manifest/repos.json"))
       manifest <- lapply(split(files, files$repo), function(r) {
@@ -238,6 +244,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       if (is.character(measure_info)) {
         measure_info <- if (length(measure_info) == 1 && file.exists(measure_info)) read_json(measure_info) else as.list(measure_info)
       }
+      base_vars <- sub("^[^:/]+[:/]", "", view$variables)
       for (r in unique(files$repo)) {
         ri <- NULL
         if (use_manifest) {
@@ -282,7 +289,6 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
             }
           }
           if (length(view$variables) && any(!nri %in% view$variables)) {
-            base_vars <- sub("^[^:/]+[:/]", "", view$variables)
             for (i in seq_along(nri)) {
               n <- nri[i]
               if (n %in% base_vars) {

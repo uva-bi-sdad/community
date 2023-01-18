@@ -5,7 +5,7 @@
 #' cli_ul cli_li cli_end col_red col_blue cli_progress_step cli_progress_update
 #' cli_progress_done cli_alert_warning
 #' @importFrom rstudioapi navigateToFile viewer
-#' @importFrom data.table fread set as.data.table
+#' @importFrom arrow read_delim_arrow
 #' @importFrom stringi stri_enc_detect
 #' @importFrom stats sd lm poly
 #' @importFrom graphics axis mtext points

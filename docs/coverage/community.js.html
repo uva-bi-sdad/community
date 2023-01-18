@@ -32,7 +32,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">2.56% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>79/3079</span>
+                <span class='fraction'>79/3082</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">7.32% </span>
+                <span class="strong">7.31% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>258/3524</span>
+                <span class='fraction'>258/3525</span>
             </div>
         
             
@@ -5877,7 +5877,8 @@
 <a name='L5812'></a><a href='#L5812'>5812</a>
 <a name='L5813'></a><a href='#L5813'>5813</a>
 <a name='L5814'></a><a href='#L5814'>5814</a>
-<a name='L5815'></a><a href='#L5815'>5815</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L5815'></a><a href='#L5815'>5815</a>
+<a name='L5816'></a><a href='#L5816'>5816</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
@@ -7664,6 +7665,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -13461,7 +13463,7 @@
 <span class="cstat-no" title="statement not covered" >            if (o.time) <span class="cstat-no" title="statement not covered" >add_dependency(o.time, dep)</span></span>
 <span class="cstat-no" title="statement not covered" >            if (!o.e.style.height) <span class="cstat-no" title="statement not covered" >o.e.style.height = o.options.height ? o.options.height : '400px'</span></span>
 <span class="cstat-no" title="statement not covered" >            if (o.options.overlays_from_measures &amp;&amp; site.data.variable_info) {</span>
-<span class="cstat-no" title="statement not covered" >              if (!site.map[o.id].overlays) <span class="cstat-no" title="statement not covered" >site.map[o.id].overlays = []</span></span>
+<span class="cstat-no" title="statement not covered" >              if (!Array.isArray(site.map[o.id].overlays)) <span class="cstat-no" title="statement not covered" >site.map[o.id].overlays = []</span></span>
               const overlays = <span class="cstat-no" title="statement not covered" >site.map[o.id].overlays</span>
 <span class="cstat-no" title="statement not covered" >              Object.keys(site.data.variable_info).forEach(<span class="fstat-no" title="function not covered" >va</span>riable =&gt; {</span>
                 const info = <span class="cstat-no" title="statement not covered" >site.data.variable_info[variable]</span>
@@ -13470,7 +13472,7 @@
                     const temp = <span class="cstat-no" title="statement not covered" >info.layer.source</span>
 <span class="cstat-no" title="statement not covered" >                    info.layer.source = []</span>
 <span class="cstat-no" title="statement not covered" >                    for (</span>
-                      let range = <span class="cstat-no" title="statement not covered" >site.data.meta.ranges[variable],</span> y = <span class="cstat-no" title="statement not covered" >range[0],</span> max = <span class="cstat-no" title="statement not covered" >range[1],</span> time;
+                      let range = <span class="cstat-no" title="statement not covered" >site.data.meta.ranges[variable],</span> y = <span class="cstat-no" title="statement not covered" >range[0],</span> max = <span class="cstat-no" title="statement not covered" >range[1] + 1,</span> time;
                       y &lt; max;
                       y++
                     ) {
@@ -13480,7 +13482,8 @@
                   }
 <span class="cstat-no" title="statement not covered" >                  patterns.time_ref.lastIndex = 0</span>
                   const layer = <span class="cstat-no" title="statement not covered" >{variable: variable, source: info.layer.source}</span>
-<span class="cstat-no" title="statement not covered" >                  if (info.layer.filter) <span class="cstat-no" title="statement not covered" >layer.filter = info.layer.filter</span></span>
+<span class="cstat-no" title="statement not covered" >                  if (info.layer.filter &amp;&amp; (Array.isArray(info.layer.filter) || info.layer.filter.feature))</span>
+<span class="cstat-no" title="statement not covered" >                    layer.filter = info.layer.filter</span>
 <span class="cstat-no" title="statement not covered" >                  overlays.push(layer)</span>
                 }
               })
@@ -17512,7 +17515,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2022-12-19T21:41:31.667Z
+                at 2023-01-18T18:13:26.928Z
             </div>
         <script src="prettify.js"></script>
         <script>
