@@ -3010,10 +3010,37 @@ void (function () {
                         // } else this.state = ''
                         this.options.order[0][0] = this.header.length - 1
                         this.options.columns = this.header
+                        //TODO: This code isn't needed for now per se, as sorting is implemented by selected year
+                        this.sortTable = e => {
+                          let tableData = this.rows
+                          const direction = e.target.dataset.dir == 'desc' ? 'asc' : 'desc'
+                          const param = e.target.innerText
+                          direction == 'asc'
+                            ? tableData.sort(function (a, b) {
+                                if (a[param] < b[param]) {
+                                  return -1
+                                }
+                                if (a[param] > b[param]) {
+                                  return 1
+                                }
+                                return 0
+                              })
+                            : tableData.sort(function (a, b) {
+                                if (b[param] < a[param]) {
+                                  return -1
+                                }
+                                if (b[param] > a[param]) {
+                                  return 1
+                                }
+                                return 0
+                              })
+
+                          this.rows = tableData
+                          appendRows(this.table)
+                        }
 
                         const createTable = table => {
                           clearTable(table)
-
                           let headers = this.header.map(h => h.title)
                           let thead = document.createElement('thead')
                           let tr = document.createElement('tr')
@@ -3022,7 +3049,6 @@ void (function () {
                             const button = document.createElement('button')
                             button.innerText = header
                             button.dataset.dir = ''
-                            button.addEventListener('click', sortTable)
                             th.append(button)
                             tr.append(th)
                           })
@@ -3031,8 +3057,9 @@ void (function () {
                           let tBody = document.createElement('tbody')
                           table.append(tBody)
                         }
-                        createTable(this.table, sortTable)
+                        createTable(this.table)
                       }
+
                       const n = this.header.length
                       let reset
                       // for (let i = 1; i < n; i++) {
@@ -3043,6 +3070,16 @@ void (function () {
                     }
                     if (this.options.wide) {
                       const tableData = {}
+                      //TODO: This is the code for sorting by columns
+                      // const attachSortEventListener = () => {
+                      //   const buttons = this.table.querySelectorAll('th')
+                      //   buttons.forEach(button => {
+                      //     button.addEventListener('click', this.sortTable)
+                      //   })
+                      // }
+
+                      // attachSortEventListener()
+
                       const prepareData = () => {
                         let tr = document.createElement('tr')
                         //tr.className = 'className'
@@ -3088,10 +3125,10 @@ void (function () {
                           tr.dataset.geoid = this.rowIds[tableData_sorted[i][0]]
 
                           for (let t in tableData_sorted[i][1]) {
-                              td = document.createElement('td')
+                            td = document.createElement('td')
                             td.innerText = site.data.format_value(tableData_sorted[i][1][t])
-                              tr.append(td)
-                            }
+                            tr.append(td)
+                          }
 
                           table.querySelector('tbody').append(tr)
                         }
