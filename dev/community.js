@@ -200,6 +200,7 @@ void (function () {
         median: /^med/i,
         location_string: /^[^?]*/,
         time_ref: /\{time\}/g,
+        pre_colon: /^[^:]*:/,
       },
       tooltip_icon_rule =
         'button.has-note::after,.button-wrapper.has-note button::before,.has-note legend::before,.has-note label::before,.wrapper.has-note > div > label::before{display:none}',
@@ -3574,6 +3575,12 @@ void (function () {
           u.listbox.id = u.id + '-listbox'
         }
       }
+      const url_set = site.url_options[u.id]
+      let ck_suffix = false
+      if (url_set && !(url_set in site.data.variables)) {
+        site.url_options[u.id] = url_set.replace(patterns.pre_colon, '')
+        if (!(site.url_options[u.id] in site.data.variables)) ck_suffix = true
+      }
       site.metadata.info[d].schema.fields.forEach(m => {
         const v = site.data.variables[m.name]
         if (v && !v.is_time) {
@@ -3638,6 +3645,10 @@ void (function () {
             s[n].id = u.id + '-option' + n
             values[m.name] = n
             disp[l] = n++
+          }
+          if (ck_suffix && url_set === m.name.replace(patterns.pre_colon, '')) {
+            site.url_options[u.id] = m.name
+            ck_suffix = false
           }
         }
       })

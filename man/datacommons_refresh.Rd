@@ -5,7 +5,7 @@
 \title{Refresh Data Commons Repositories}
 \usage{
 datacommons_refresh(dir, clone_method = "http",
-  include_distributions = TRUE, refresh_distributions = FALSE,
+  include_distributions = FALSE, refresh_distributions = FALSE,
   only_new = FALSE, reset_repos = FALSE, rescan_only = FALSE,
   use_manifest = TRUE, verbose = TRUE)
 }
@@ -14,7 +14,7 @@ datacommons_refresh(dir, clone_method = "http",
 
 \item{clone_method}{Means of cloning new repositories; either \code{"http"} (default) or \code{"ssh"}.}
 
-\item{include_distributions}{Logical; if \code{TRUE} (default), will attempt to locate and cache copies of datasets
+\item{include_distributions}{Logical; if \code{TRUE}, will attempt to locate and cache copies of datasets
 pointed to from the data repositories (so far just from Dataverse, implicitly from DOI files).}
 
 \item{refresh_distributions}{Logical; if \code{TRUE}, will download fresh copies of the distribution metadata.}

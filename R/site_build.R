@@ -175,7 +175,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                           aggs <- aggs[is.na(sdata[[id]][, names(aggs)])]
                           if (length(aggs)) {
                             aggregated <- TRUE
-                            sdata[[id]][, names(aggs)] <- aggs
+                            sdata[[id]][, names(aggs)] <- as.list(aggs)
                           }
                         } else {
                           cd <- split(cd, cd[[time]])
@@ -187,7 +187,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                               aggs <- aggs[is.na(sdata[[id]][su, names(aggs)])]
                               if (length(aggs)) {
                                 aggregated <- TRUE
-                                sdata[[id]][su, names(aggs)] <- aggs
+                                sdata[[id]][su, names(aggs)] <- as.list(aggs)
                               }
                             }
                           }

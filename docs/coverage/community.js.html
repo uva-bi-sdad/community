@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">6.91% </span>
+                <span class="strong">6.9% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>268/3875</span>
+                <span class='fraction'>268/3884</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">2.56% </span>
+                <span class="strong">2.55% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>79/3082</span>
+                <span class='fraction'>79/3092</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">7.31% </span>
+                <span class="strong">7.3% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>258/3525</span>
+                <span class='fraction'>258/3533</span>
             </div>
         
             
@@ -5878,7 +5878,18 @@
 <a name='L5813'></a><a href='#L5813'>5813</a>
 <a name='L5814'></a><a href='#L5814'>5814</a>
 <a name='L5815'></a><a href='#L5815'>5815</a>
-<a name='L5816'></a><a href='#L5816'>5816</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L5816'></a><a href='#L5816'>5816</a>
+<a name='L5817'></a><a href='#L5817'>5817</a>
+<a name='L5818'></a><a href='#L5818'>5818</a>
+<a name='L5819'></a><a href='#L5819'>5819</a>
+<a name='L5820'></a><a href='#L5820'>5820</a>
+<a name='L5821'></a><a href='#L5821'>5821</a>
+<a name='L5822'></a><a href='#L5822'>5822</a>
+<a name='L5823'></a><a href='#L5823'>5823</a>
+<a name='L5824'></a><a href='#L5824'>5824</a>
+<a name='L5825'></a><a href='#L5825'>5825</a>
+<a name='L5826'></a><a href='#L5826'>5826</a>
+<a name='L5827'></a><a href='#L5827'>5827</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
@@ -6050,6 +6061,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -9459,6 +9471,12 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -9515,6 +9533,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -11895,6 +11917,7 @@
         median: /^med/i,
         location_string: /^[^?]*/,
         time_ref: /\{time\}/g,
+        pre_colon: /^[^:]*:/,
       },
       tooltip_icon_rule =
         'button.has-note::after,.button-wrapper.has-note button::before,.has-note legend::before,.has-note label::before,.wrapper.has-note &gt; div &gt; label::before{display:none}',
@@ -15269,6 +15292,12 @@
 <span class="cstat-no" title="statement not covered" >          u.listbox.id = u.id + '-listbox'</span>
         }
       }
+      const url_set = <span class="cstat-no" title="statement not covered" >site.url_options[u.id]</span>
+      let ck_suffix = <span class="cstat-no" title="statement not covered" >false</span>
+<span class="cstat-no" title="statement not covered" >      if (url_set &amp;&amp; !(url_set in site.data.variables)) {</span>
+<span class="cstat-no" title="statement not covered" >        site.url_options[u.id] = url_set.replace(patterns.pre_colon, '')</span>
+<span class="cstat-no" title="statement not covered" >        if (!(site.url_options[u.id] in site.data.variables)) <span class="cstat-no" title="statement not covered" >ck_suffix = true</span></span>
+      }
 <span class="cstat-no" title="statement not covered" >      site.metadata.info[d].schema.fields.forEach(<span class="fstat-no" title="function not covered" >m </span>=&gt; {</span>
         const v = <span class="cstat-no" title="statement not covered" >site.data.variables[m.name]</span>
 <span class="cstat-no" title="statement not covered" >        if (v &amp;&amp; !v.is_time) {</span>
@@ -15333,6 +15362,10 @@
 <span class="cstat-no" title="statement not covered" >            s[n].id = u.id + '-option' + n</span>
 <span class="cstat-no" title="statement not covered" >            values[m.name] = n</span>
 <span class="cstat-no" title="statement not covered" >            disp[l] = n++</span>
+          }
+<span class="cstat-no" title="statement not covered" >          if (ck_suffix &amp;&amp; url_set === m.name.replace(patterns.pre_colon, '')) {</span>
+<span class="cstat-no" title="statement not covered" >            site.url_options[u.id] = m.name</span>
+<span class="cstat-no" title="statement not covered" >            ck_suffix = false</span>
           }
         }
       })
@@ -17515,7 +17548,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-01-18T18:13:26.928Z
+                at 2023-01-19T08:18:41.160Z
             </div>
         <script src="prettify.js"></script>
         <script>
