@@ -2958,7 +2958,8 @@ void (function () {
                   valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.')
                 const v = _u[this.view],
                   d = v.get.dataset(),
-                  state = d + v.value() + v.get.time_filters() + site.settings.digits + vn
+                  time = valueOf(v.time_agg),
+                  state = d + v.value() + v.get.time_filters() + site.settings.digits + vn + time
                 if (!site.data.inited[d]) return void 0
                 if (state !== this.state) {
                   this.rows = {}
