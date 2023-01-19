@@ -3061,28 +3061,38 @@ void (function () {
                             }
                         }
 
+                        for (let key in tableData) {
+                          if (Object.keys(tableData[key]).length == 0) delete tableData[key]
+                        }
+
                         Object.keys(v.selection.all).forEach(e => {
                           this.rowIds[v.selection.all[e].features.name] = e
                         })
+                      }
 
-                        for (let county in tableData) {
-                          if (Object.keys(tableData[county]).length > 0) {
+                      const appendRows = table => {
+                        prepareData()
+
+                        Object.assign(this.rows, tableData)
+
+                        let tableData_sorted = Object.entries(tableData).sort(([, a], [, b]) => -(a[time] - b[time]))
+
+                        for (var i = 0; i < tableData_sorted.length; i++) {
                           let tr = document.createElement('tr')
                           let td = document.createElement('td')
-                          td.innerText = county
+                          td.innerText = tableData_sorted[i][0]
 
                           tr.append(td)
 
-                          tr.dataset.geoid = this.rowIds[county]
+                          tr.dataset.geoid = this.rowIds[tableData_sorted[i][0]]
 
-                            for (let t in tableData[county]) {
+                          for (let t in tableData_sorted[i][1]) {
                               td = document.createElement('td')
-                              td.innerText = site.data.format_value(tableData[county][t])
+                            td.innerText = site.data.format_value(tableData_sorted[i][1][t])
                               tr.append(td)
                             }
 
                           table.querySelector('tbody').append(tr)
-                          }
                         }
                       }
                       appendRows(this.table)
