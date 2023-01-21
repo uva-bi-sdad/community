@@ -3082,8 +3082,6 @@ void (function () {
                       // attachSortEventListener()
 
                       const prepareData = () => {
-                        let tr = document.createElement('tr')
-                        //tr.className = 'className'
                         const dataset = d
                         const time = site.data.meta.times[dataset]
                         const source = v.selection.all
