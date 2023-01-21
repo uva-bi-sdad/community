@@ -3046,10 +3046,11 @@ void (function () {
                           let tr = document.createElement('tr')
                           headers.forEach(header => {
                             const th = document.createElement('th')
-                            const button = document.createElement('button')
-                            button.innerText = header
-                            button.dataset.dir = ''
-                            th.append(button)
+                            const div = document.createElement('div')
+                            div.innerText = header
+                            if (header == time) div.style['border'] = 'solid black'
+                            div.dataset.dir = ''
+                            th.append(div)
                             tr.append(th)
                           })
                           thead.append(tr)
