@@ -3124,6 +3124,7 @@ void (function () {
                           tr.append(td)
 
                           tr.dataset.geoid = this.rowIds[tableData_sorted[i][0]]
+                          tr.style['backgroundColor'] = 'inherit'
 
                           for (let t in tableData_sorted[i][1]) {
                             td = document.createElement('td')
