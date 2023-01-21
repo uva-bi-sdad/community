@@ -32,13 +32,13 @@
 #' @export
 
 output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, id = NULL, click = NULL, subto = NULL,
-                         options = NULL, features = NULL, filters = NULL, wide = TRUE, class = "compact", datatables = TRUE) {
+                         options = NULL, features = NULL, filters = NULL, wide = TRUE, class = "compact", datatables = TRUE, height = "40vh") {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   if (is.null(id)) id <- paste0("table", caller$uid)
   type <- if (datatables) "datatable" else "table"
   r <- paste(c(
-    paste0(if (!datatables) '<div class="table-wrapper">', '<table class="auto-output ', if(!datatables) "tables" else "tables" ,  if (is.null(class)) "" else paste("", class), '"'),
+    paste0(if (!datatables) paste0('<div class="table-wrapper"', ' style="height:', height, '">') , '<table class="auto-output ', if(!datatables) "tables" else "tables" ,  if (is.null(class)) "" else paste("", class), '"'),
     if (!is.null(dataview)) paste0('data-view="', dataview, '"'),
     if (!is.null(click)) paste0('click="', click, '"'),
     paste0('id="', id, '" auto-type="', type, '"></table>', if (!datatables) "</div>")
