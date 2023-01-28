@@ -936,7 +936,7 @@ void (function () {
             if (!ve.meta)
               ve.meta = {
                 full_name: vn,
-                measure: vn.split(':')[1],
+                measure: vn.split(':')[1] || vn,
                 short_name: this.format_label(vn),
                 type: 'integer',
               }

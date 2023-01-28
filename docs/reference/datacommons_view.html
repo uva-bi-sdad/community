@@ -59,8 +59,8 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">datacommons_view</span><span class="op">(</span><span class="va">commons</span>, <span class="va">name</span>, output <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span>, variables <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  ids <span class="op">=</span> <span class="cn">NULL</span>, files <span class="op">=</span> <span class="cn">NULL</span>, run_after <span class="op">=</span> <span class="cn">NULL</span>, run_before <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  measure_info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, remote <span class="op">=</span> <span class="cn">NULL</span>, url <span class="op">=</span> <span class="cn">NULL</span>, children <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  execute <span class="op">=</span> <span class="cn">TRUE</span>, prefer_repo <span class="op">=</span> <span class="cn">FALSE</span>, preselect_files <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  refresh_map <span class="op">=</span> <span class="cn">FALSE</span>, use_manifest <span class="op">=</span> <span class="cn">TRUE</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  execute <span class="op">=</span> <span class="cn">TRUE</span>, prefer_repo <span class="op">=</span> <span class="cn">TRUE</span>, preselect_files <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  refresh_map <span class="op">=</span> <span class="cn">FALSE</span>, use_manifest <span class="op">=</span> <span class="cn">FALSE</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -131,8 +131,8 @@ and <code>url</code> (link to the served site), which will otherwise be derived 
 
 
 <dt>prefer_repo</dt>
-<dd><p>Logical; if <code>TRUE</code>, will prefer repository files over those from distributions
-(such as Dataverse).</p></dd>
+<dd><p>Logical; if <code>FALSE</code>, will prefer distribution files (such as from Dataverse)
+over those in the repositories.</p></dd>
 
 
 <dt>preselect_files</dt>
@@ -145,7 +145,7 @@ which can save time, but might miss data spread across multiple files.</p></dd>
 
 
 <dt>use_manifest</dt>
-<dd><p>Logical; if <code>FALSE</code>, will not search for manifest files in each repository to
+<dd><p>Logical; if <code>TRUE</code>, will search for manifest files in each repository to
 extract measure information from. These should have <code>data</code> entries with object arrays containing a
 <code>measure_info</code> entry (e.g., <code>'{"data: [{"measure_info": [{...}]}]"}'</code>).</p></dd>
 

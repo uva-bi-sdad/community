@@ -8,7 +8,7 @@
 #' variable names (e.g., \code{colnames}).
 #' @param id_location The name of a column contain IDs in each dataset, or a function to retrieve
 #' IDs (e.g., \code{rownames}).
-#' @param use_manifest Logical; if \code{FALSE}, will not search for manifest files in each repository to use as file lists.
+#' @param use_manifest Logical; if \code{TRUE}, will search for manifest files in each repository to use as file lists.
 #' These should have \code{data} entries with object arrays containing a \code{path} entry
 #' (e.g., \code{'{"data: [{"path": "path/from/root/data.csv"}]"}'}).
 #' @param reader A function capable of handling a connection in its first argument, which returns a matrix-like object.
@@ -27,7 +27,7 @@
 #' @export
 
 datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$", variable_location = "measure",
-                                  id_location = "geoid", use_manifest = TRUE, reader = read.csv, overwrite = FALSE,
+                                  id_location = "geoid", use_manifest = FALSE, reader = read.csv, overwrite = FALSE,
                                   verbose = TRUE) {
   if (missing(dir)) cli_abort("{.arg dir} must be specified")
   dir <- paste0(normalizePath(dir, "/", FALSE), "/")

@@ -186,7 +186,7 @@ void (function () {
         levels: /^lev/,
         ids: /^ids/,
         minmax: /^m[inax]{2}$/,
-        int_types: /^(?:year|integer)$/,
+        int_types: /^(?:year|int.*)$/,
         end_punct: /[.?!]$/,
         mustache: /\{(.*?)\}/g,
         measure_name: /(?:^measure|_name)$/,
@@ -1738,7 +1738,7 @@ void (function () {
                     e.layer[this.id][time].setStyle({
                       color: defaults['border_highlight_' + site.settings.theme_dark],
                     })
-                } else {
+                } else if (e.layer[this.id].setStyle) {
                   e.layer[this.id].setStyle({
                     color: defaults['border_highlight_' + site.settings.theme_dark],
                   })

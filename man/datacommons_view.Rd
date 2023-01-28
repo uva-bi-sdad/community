@@ -7,8 +7,8 @@
 datacommons_view(commons, name, output = NULL, ..., variables = NULL,
   ids = NULL, files = NULL, run_after = NULL, run_before = NULL,
   measure_info = list(), remote = NULL, url = NULL, children = list(),
-  execute = TRUE, prefer_repo = FALSE, preselect_files = FALSE,
-  refresh_map = FALSE, use_manifest = TRUE, overwrite = FALSE,
+  execute = TRUE, prefer_repo = TRUE, preselect_files = FALSE,
+  refresh_map = FALSE, use_manifest = FALSE, overwrite = FALSE,
   verbose = TRUE)
 }
 \arguments{
@@ -48,15 +48,15 @@ and \code{url} (link to the served site), which will otherwise be derived from \
 
 \item{execute}{Logical; if \code{FALSE}, will create/update, but not run the view.}
 
-\item{prefer_repo}{Logical; if \code{TRUE}, will prefer repository files over those from distributions
-(such as Dataverse).}
+\item{prefer_repo}{Logical; if \code{FALSE}, will prefer distribution files (such as from Dataverse)
+over those in the repositories.}
 
 \item{preselect_files}{Logical; if \code{TRUE}, will select files by ID coverage before processing them,
 which can save time, but might miss data spread across multiple files.}
 
 \item{refresh_map}{Logical; if \code{TRUE}, overwrites any existing map files.}
 
-\item{use_manifest}{Logical; if \code{FALSE}, will not search for manifest files in each repository to
+\item{use_manifest}{Logical; if \code{TRUE}, will search for manifest files in each repository to
 extract measure information from. These should have \code{data} entries with object arrays containing a
 \code{measure_info} entry (e.g., \code{'{"data: [{"measure_info": [{...}]}]"}'}).}
 

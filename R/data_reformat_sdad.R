@@ -16,7 +16,7 @@
 #' @param value Name of the column containing variable values.
 #' @param value_name Name of the column containing variable names; assumed to be a single variable per file if
 #' not present.
-#' @param id Column name IDs which uniquely identify entities.
+#' @param id Column name of IDs which uniquely identify entities.
 #' @param time Column name of the variable representing time.
 #' @param dataset Column name used to separate entity scales.
 #' @param value_info A vector of column names which provide additional information about values
@@ -78,9 +78,14 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       if (verbose) cli_warn("file has no observations: {f}")
       next
     }
+    lcols <- tolower(colnames(d))
+    if (any(!vars %in% colnames(d))) {
+      l <- !colnames(d) %in% vars & lcols %in% vars
+      colnames(d)[l] <- lcols[l]
+    }
     if (check_ids) {
       if (id %in% colnames(d)) {
-        su <- grepl("^[0-9]+$", d[[id]])
+        su <- !grepl("[^0-9.e+-]", d[[id]])
         if (any(su)) {
           d[[id]][su] <- gsub("^\\s+|\\s+$", "", format(as.numeric(d[[id]][su]), scientific = FALSE))
         }

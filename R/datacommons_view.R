@@ -24,12 +24,12 @@
 #' \code{remote} entry (GitHub repository, including user name and repo name), and optionally \code{name}
 #' and \code{url} (link to the served site), which will otherwise be derived from \code{remote}.
 #' @param execute Logical; if \code{FALSE}, will create/update, but not run the view.
-#' @param prefer_repo Logical; if \code{TRUE}, will prefer repository files over those from distributions
-#' (such as Dataverse).
+#' @param prefer_repo Logical; if \code{FALSE}, will prefer distribution files (such as from Dataverse)
+#' over those in the repositories.
 #' @param preselect_files Logical; if \code{TRUE}, will select files by ID coverage before processing them,
 #' which can save time, but might miss data spread across multiple files.
 #' @param refresh_map Logical; if \code{TRUE}, overwrites any existing map files.
-#' @param use_manifest Logical; if \code{FALSE}, will not search for manifest files in each repository to
+#' @param use_manifest Logical; if \code{TRUE}, will search for manifest files in each repository to
 #' extract measure information from. These should have \code{data} entries with object arrays containing a
 #' \code{measure_info} entry (e.g., \code{'{"data: [{"measure_info": [{...}]}]"}'}).
 #' @param overwrite Logical; if \code{TRUE}, reformatted files in \code{output}.
@@ -47,8 +47,8 @@
 
 datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL, ids = NULL,
                              files = NULL, run_after = NULL, run_before = NULL, measure_info = list(),
-                             remote = NULL, url = NULL, children = list(), execute = TRUE, prefer_repo = FALSE,
-                             preselect_files = FALSE, refresh_map = FALSE, use_manifest = TRUE, overwrite = FALSE,
+                             remote = NULL, url = NULL, children = list(), execute = TRUE, prefer_repo = TRUE,
+                             preselect_files = FALSE, refresh_map = FALSE, use_manifest = FALSE, overwrite = FALSE,
                              verbose = TRUE) {
   if (missing(commons)) cli_abort('{.arg commons} must be speficied (e.g., commons = ".")')
   if (missing(name)) {
@@ -225,11 +225,11 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       manifest <- lapply(split(files, files$repo), function(r) {
         hr <- repo_manifest[[r$repo[[1]]]]
         files <- paste0(commons, "/", unique(r$file))
-        names(files) <- basename(files)
+        names(files) <- sub("^[^/]+/[^/]+/", "", unique(r$file))
         list(
           repository = r$repo[[1]],
           files = lapply(files, function(f) {
-            name <- basename(f)
+            name <- sub("^/[^/]+/[^/]+/", "", sub(commons, "", f, fixed = TRUE))
             if (grepl("repos/", f, fixed = TRUE)) {
               m <- hr$files[[name]]
               m$baseurl <- hr$url
@@ -272,7 +272,17 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
           ri <- lapply(list.files(
             paste0(commons, "/repos/", sub("^.+/", "", r)), "^measure_info[^.]*\\.json$",
             full.names = TRUE, recursive = TRUE
-          ), read_json)
+          ), function(f) {
+            m <- tryCatch(read_json(f), error = function(e) {
+              cli_alert_warning("failed to read measure info: {.file {f}}")
+              NULL
+            })
+            if (all(c("measure", "type", "short_description") %in% names(m))) {
+              m <- list(m)
+              names(m) <- m[[1]]$measure
+            }
+            m
+          })
         }
         if (length(ri)) {
           ri <- unlist(ri, recursive = FALSE)
@@ -294,7 +304,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
               if (n %in% base_vars) {
                 names(ri)[i] <- view$variables[which(base_vars == n)[1]]
               } else {
-                n <- sub("^[^:]+:", "", nri[i])
+                n <- sub("^[^:]*:", "", nri[i])
                 if (n %in% view$variables) {
                   names(ri)[i] <- n
                 }

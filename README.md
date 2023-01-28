@@ -3,6 +3,9 @@
 An R package bringing together a range of methods as part of a framework for
 collecting, documenting, analyzing, and presenting community data (relating to people in places or groups).
 
+See the [wiki](https://github.com/uva-bi-sdad/community/wiki) for more about how the package and data
+sites work.
+
 ## Installation
 
 Download R from [r-project.org](https://www.r-project.org/), then install the package from an R console:

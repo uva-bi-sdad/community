@@ -59,7 +59,7 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">datacommons_refresh</span><span class="op">(</span><span class="va">dir</span>, clone_method <span class="op">=</span> <span class="st">"http"</span>,</span>
 <span>  include_distributions <span class="op">=</span> <span class="cn">FALSE</span>, refresh_distributions <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  only_new <span class="op">=</span> <span class="cn">FALSE</span>, reset_repos <span class="op">=</span> <span class="cn">FALSE</span>, rescan_only <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  use_manifest <span class="op">=</span> <span class="cn">TRUE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<span>  use_manifest <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -95,8 +95,8 @@ updates from the remote repository.</p></dd>
 
 
 <dt>use_manifest</dt>
-<dd><p>Logical; if <code>FALSE</code>, will search for files rather than using a <code>manifest.json</code> file in each
-repository. Each manifest should contain an object with a <code>data</code> entry containing an object array with <code>path</code>
+<dd><p>Logical; if <code>TRUE</code>, will use a <code>manifest.json</code> file in each repository to identify files.
+Each manifest should contain an object with a <code>data</code> entry containing an object array with <code>path</code>
 entries (e.g., <code>'{"data": [{"path": "path/from/repos/repo_name/data.csv"}]}'</code>).</p></dd>
 
 

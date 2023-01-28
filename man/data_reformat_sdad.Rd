@@ -25,7 +25,7 @@ data_reformat_sdad(files, out = NULL, variables = NULL, ids = NULL,
 \item{value_name}{Name of the column containing variable names; assumed to be a single variable per file if
 not present.}
 
-\item{id}{Column name IDs which uniquely identify entities.}
+\item{id}{Column name of IDs which uniquely identify entities.}
 
 \item{time}{Column name of the variable representing time.}
 

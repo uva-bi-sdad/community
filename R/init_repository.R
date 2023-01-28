@@ -1,4 +1,3 @@
-
 #' Create a Data Repository
 #'
 #' Create a repository for a dataset, which may include data documentation and/or a data site.

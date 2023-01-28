@@ -11,8 +11,8 @@
 #' @param reset_repos Logical; if \code{TRUE}, will fetch and hard reset the repositories to remove any local changes.
 #' @param rescan_only Logical; if \code{TRUE}, will only read the files that are already in place, without checking for
 #' updates from the remote repository.
-#' @param use_manifest Logical; if \code{FALSE}, will search for files rather than using a \code{manifest.json} file in each
-#' repository. Each manifest should contain an object with a \code{data} entry containing an object array with \code{path}
+#' @param use_manifest Logical; if \code{TRUE}, will use a \code{manifest.json} file in each repository to identify files.
+#' Each manifest should contain an object with a \code{data} entry containing an object array with \code{path}
 #' entries (e.g., \code{'{"data": [{"path": "path/from/repos/repo_name/data.csv"}]}'}).
 #' @param verbose Logical; if \code{FALSE}, will not show updated repositories.
 #' @examples
@@ -24,7 +24,7 @@
 #' @export
 
 datacommons_refresh <- function(dir, clone_method = "http", include_distributions = FALSE, refresh_distributions = FALSE,
-                                only_new = FALSE, reset_repos = FALSE, rescan_only = FALSE, use_manifest = TRUE, verbose = TRUE) {
+                                only_new = FALSE, reset_repos = FALSE, rescan_only = FALSE, use_manifest = FALSE, verbose = TRUE) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., as ".")')
   if (Sys.which("git") == "") {
     cli_abort(c(
@@ -116,9 +116,9 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
         full.names = TRUE, recursive = TRUE, ignore.case = TRUE
       )
     }
+    files <- normalizePath(files, "/")
     for (f in files) {
-      repo_manifest[[r]]$files[[basename(f)]] <- list(
-        location = dirname(sub(cr, "", f, fixed = TRUE)),
+      repo_manifest[[r]]$files[[sub(cr, "", f, fixed = TRUE)]] <- list(
         size = file.size(f),
         sha = system2("git", c("hash-object", shQuote(f)), stdout = TRUE),
         md5 = md5sum(f)[[1]]
@@ -170,7 +170,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
               }
             }
             if (file.exists(existing)) {
-              repo_manifest[[r]]$distributions$dataverse$files[[basename(existing)]] <- list(
+              repo_manifest[[r]]$distributions$dataverse$files[[sub(cr, "", existing, fixed = TRUE)]] <- list(
                 id = f$dataFile$id,
                 size = file.size(existing),
                 md5 = md5sum(existing)[[1]]
