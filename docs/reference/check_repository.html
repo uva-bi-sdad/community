@@ -81,7 +81,7 @@
 
 
 <dt>id</dt>
-<dd><p>Column name of IDs which uniquely identify entities.</p></dd>
+<dd><p>Column name of IDs that uniquely identify entities.</p></dd>
 
 
 <dt>time</dt>
@@ -89,26 +89,28 @@
 
 
 <dt>dataset</dt>
-<dd><p>Column name used to separate data info sets (such as by region).</p></dd>
+<dd><p>Column name used to separate data into sets (such as by region).</p></dd>
 
 
 <dt>entity_info</dt>
-<dd><p>A vector containing variable names to go into making <code>entity_info.json</code>.</p></dd>
+<dd><p>A vector of variable names to go into making <code>entity_info.json</code>.</p></dd>
 
 
 <dt>attempt_repair</dt>
-<dd><p>Logical; if <code>TRUE</code>, will attempt to fix some warnings in data files.</p></dd>
+<dd><p>Logical; if <code>TRUE</code>, will attempt to fix most warnings in data files.
+Use with caution, as this will often remove rows (given <code>NA</code>s) and rewrite the file.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     
 
-<p>An invisible list of check results, which may include <strong>general</strong> file paths:</p><ul><li><p><strong><code>info</code></strong> (always): A vector paths to <code>measure_info.json</code> files found.</p></li>
-<li><p><strong><code>data</code></strong> (always): A vector paths to data files found.</p></li>
-<li><p><strong><code>not_considered</code></strong>: A vector paths to data files that do not contain the minimal
-columns, and so are considered to be different types of files.</p></li>
-</ul><p>or those relating to <strong>measure information</strong> specific issues:</p><ul><li><p><strong><code>info_malformed</code></strong>: Files that are not in the expected format (a single object with
+<p>An invisible list of check results, in the form of paths to files and/or measure name.
+These may include <strong>general</strong> entries:</p><ul><li><p><strong><code>info</code></strong> (always): All measurement information (<code>measure_info.json</code>) files found.</p></li>
+<li><p><strong><code>data</code></strong> (always): All data files found.</p></li>
+<li><p><strong><code>not_considered</code></strong>: Subset of data files that do not contain the minimal
+columns (<code>id</code>, <code>value</code>, and <code>value_type</code>), and so are not checked further.</p></li>
+</ul><p>or those relating to issues with <strong>measure information</strong> files:</p><ul><li><p><strong><code>info_malformed</code></strong>: Files that are not in the expected format (a single object with
 named entries for each measure), but can be converted automatically.</p></li>
 <li><p><strong><code>info_incomplete</code></strong>: Measure entries that are missing some of the required fields.</p></li>
 <li><p><strong><code>info_invalid</code></strong>: Files that could not be read in (probably because they do not contain valid JSON).</p></li>
@@ -140,7 +142,7 @@ It is recommended that entries not include prefixes, and that measure names be s
 </ul><p>or relating to data files with <strong>failures</strong>:</p><ul><li><p><strong><code>fail_read</code></strong>: Files that could not be read in.</p></li>
 <li><p><strong><code>fail_rows</code></strong>: Files containing no rows.</p></li>
 <li><p><strong><code>fail_time</code></strong>: Files with no <code>time</code> column.</p></li>
-<li><p><strong><code>fail_dataset</code></strong>:Files with no <code>dataset</code> column .</p></li>
+<li><p><strong><code>fail_dataset</code></strong>: Files with no <code>dataset</code> column.</p></li>
 <li><p><strong><code>fail_entity_info</code></strong>: Files with no <code>entity_info</code> columns.</p></li>
 <li><p><strong><code>fail_idlen_county</code></strong>: Files with "county" <code>dataset</code>s with corresponding IDs
 that are not consistently 5 characters long.</p></li>

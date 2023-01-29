@@ -50,7 +50,7 @@ test_that("all issues are caught", {
   data_min$Year <- 1
   data_min$Region_Type <- "county"
   data_min$Region_Name <- "a"
-  write.csv(data, paste0(dir, "/dataset/data/distribution/data_min.csv"), row.names = FALSE)
+  write.csv(data, paste0(dir, "/dataset/data/distribution/data_min.csv"))
   unlink(paste0(dir, "/dataset/data/distribution/data_", c("skip", "invalid"), ".csv"))
   res <- check_repository(dir, attempt_repair = TRUE)
   expect_identical(c("data", "info"), names(res))

@@ -6,11 +6,12 @@
 #' @param search_pattern Regular expression used to search for data files.
 #' @param value Name of the column containing variable values.
 #' @param value_name Name of the column containing variable names.
-#' @param id Column name of IDs which uniquely identify entities.
+#' @param id Column name of IDs that uniquely identify entities.
 #' @param time Column name of the variable representing time.
-#' @param dataset Column name used to separate data info sets (such as by region).
-#' @param entity_info A vector containing variable names to go into making \code{entity_info.json}.
-#' @param attempt_repair Logical; if \code{TRUE}, will attempt to fix some warnings in data files.
+#' @param dataset Column name used to separate data into sets (such as by region).
+#' @param entity_info A vector of variable names to go into making \code{entity_info.json}.
+#' @param attempt_repair Logical; if \code{TRUE}, will attempt to fix most warnings in data files.
+#' Use with caution, as this will often remove rows (given \code{NA}s) and rewrite the file.
 #' @examples
 #' \dontrun{
 #' # from a data repository
@@ -19,14 +20,15 @@
 #' # to automatically fix most warnings
 #' check_repository(attempt_repair = TRUE)
 #' }
-#' @return An invisible list of check results, which may include \strong{general} file paths:
+#' @return An invisible list of check results, in the form of paths to files and/or measure name.
+#' These may include \strong{general} entries:
 #' \itemize{
-#'   \item \strong{\code{info}} (always): A vector paths to \code{measure_info.json} files found.
-#'   \item \strong{\code{data}} (always): A vector paths to data files found.
-#'   \item \strong{\code{not_considered}}: A vector paths to data files that do not contain the minimal
-#'     columns, and so are considered to be different types of files.
+#'   \item \strong{\code{info}} (always): All measurement information (\code{measure_info.json}) files found.
+#'   \item \strong{\code{data}} (always): All data files found.
+#'   \item \strong{\code{not_considered}}: Subset of data files that do not contain the minimal
+#'     columns (\code{id}, \code{value}, and \code{value_type}), and so are not checked further.
 #' }
-#' or those relating to \strong{measure information} specific issues:
+#' or those relating to issues with \strong{measure information} files:
 #' \itemize{
 #'   \item \strong{\code{info_malformed}}: Files that are not in the expected format (a single object with
 #'     named entries for each measure), but can be converted automatically.
@@ -66,7 +68,7 @@
 #'   \item \strong{\code{fail_read}}: Files that could not be read in.
 #'   \item \strong{\code{fail_rows}}: Files containing no rows.
 #'   \item \strong{\code{fail_time}}: Files with no \code{time} column.
-#'   \item \strong{\code{fail_dataset}}:Files with no \code{dataset} column .
+#'   \item \strong{\code{fail_dataset}}: Files with no \code{dataset} column.
 #'   \item \strong{\code{fail_entity_info}}: Files with no \code{entity_info} columns.
 #'   \item \strong{\code{fail_idlen_county}}: Files with "county" \code{dataset}s with corresponding IDs
 #'     that are not consistently 5 characters long.
@@ -182,7 +184,6 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
       } else {
         if (nrow(d)) {
           d[[id]] <- as.character(d[[id]])
-          if (any(cols == "")) results$warn_blank_colnames <- c(results$warn_blank_colnames, f)
           if (!time %in% cols) results$fail_time <- c(results$fail_time, f)
           all_entity_info <- all(entity_info %in% cols)
           if (!all_entity_info) results$fail_entity_info <- c(results$fail_entity_info, f)
@@ -190,6 +191,10 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
           if (attempt_repair) {
             repairs <- NULL
             if (!grepl("\\.[bgx]z2?$", f)) repairs <- "compression"
+            if (any(cols == "")) {
+              repairs <- c(repairs, "blank colnames")
+              d <- d[, cols != ""]
+            }
             if (anyNA(d[[value]])) {
               d <- d[!is.na(d[[value]]), ]
               repairs <- c(repairs, "NAs")
@@ -253,6 +258,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
             }
           } else {
             if (!grepl("[bgx]z2?$", f)) results$warn_compressed <- c(results$warn_compressed, f)
+            if (any(cols == "")) results$warn_blank_colnames <- c(results$warn_blank_colnames, f)
             if (anyNA(d[[value]])) results$warn_value_nas <- c(results$warn_value_nas, f)
             if (any(grepl("\\de[+-]\\d", d[[id]]))) results$warn_scientific <- c(results$warn_scientific, f)
             if (anyNA(d[[id]])) results$warn_id_nas <- c(results$warn_id_nas, f)
