@@ -29,7 +29,62 @@ check_repository(dir = ".", search_pattern = "\\\\.csv(?:\\\\.[gbx]z2?)?$",
 \item{attempt_repair}{Logical; if \code{TRUE}, will attempt to fix some warnings in data files.}
 }
 \value{
-An invisible list of check results.
+An invisible list of check results, which may include \strong{general} file paths:
+\itemize{
+\item \strong{\code{info}} (always): A vector paths to \code{measure_info.json} files found.
+\item \strong{\code{data}} (always): A vector paths to data files found.
+\item \strong{\code{not_considered}}: A vector paths to data files that do not contain the minimal
+columns, and so are considered to be different types of files.
+}
+or those relating to \strong{measure information} specific issues:
+\itemize{
+\item \strong{\code{info_malformed}}: Files that are not in the expected format (a single object with
+named entries for each measure), but can be converted automatically.
+\item \strong{\code{info_incomplete}}: Measure entries that are missing some of the required fields.
+\item \strong{\code{info_invalid}}: Files that could not be read in (probably because they do not contain valid JSON).
+}
+or relating to data files with \strong{warnings}:
+\itemize{
+\item \strong{\code{warn_compressed}}: Files that do not have compression extensions
+(\code{.gz}, \code{.bz2}, or \code{.xz}).
+\item \strong{\code{warn_blank_colnames}}: Files with blank column names (often due to saving files with row names).
+\item \strong{\code{warn_value_nas}}: Files that have \code{NA}s in their \code{value} columns; \code{NA}s here
+are redundant with the tall format, and so, should be removed.
+\item \strong{\code{warn_value_name_nas}}: Files that have \code{NA}s in their \code{name} column.
+\item \strong{\code{warn_entity_info_nas}}: Files that have \code{NA}s in any of their \code{entity_info} columns.
+\item \strong{\code{warn_dataset_nas}}: Files that have \code{NA}s in their \code{dataset} column.
+\item \strong{\code{warn_time_nas}}: Files that have \code{NA}s in their \code{time} column.
+\item \strong{\code{warn_id_nas}}: Files that have \code{NA}s in their \code{id} column.
+\item \strong{\code{warn_scientific}}: Files with IDs that appear to have scientific notation (e.g., \code{1e+5});
+likely introduced when the ID column was converted from numbers to characters -- IDs should always be saved as characters.
+\item \strong{\code{warn_bg_agg}}: Files with IDs that appear to be census block group GEOIDs,
+that do not include their tract parents (i.e., IDs consisting of 12 digits, and there are no IDs consisting of
+their first 11 digits). These are automatically aggregated by \code{\link{site_build}}, but they should
+be manually aggregated.
+\item \strong{\code{warn_tr_agg}}: Files with IDs that appear to be census tract GEOIDs,
+that do not include their county parents (i.e., IDs consisting of 11 digits, and there are no IDs consisting of
+their first 5 digits). These are automatically aggregated by \code{\link{site_build}}, but they should
+be manually aggregated.
+\item \strong{\code{warn_missing_info}}: Measures in files that do not have a corresponding \code{measure_info.json}
+entry. Sometimes this happens because the entry includes a prefix that cannot be derived from the file name
+(which is the part after a year, such as \code{category} from \code{set_geo_2015_category.csv.xz}).
+It is recommended that entries not include prefixes, and that measure names be specific
+(e.g., \code{category_count} rather than \code{count} with a \code{category:count} entry).
+}
+or relating to data files with \strong{failures}:
+\itemize{
+\item \strong{\code{fail_read}}: Files that could not be read in.
+\item \strong{\code{fail_rows}}: Files containing no rows.
+\item \strong{\code{fail_time}}: Files with no \code{time} column.
+\item \strong{\code{fail_dataset}}:Files with no \code{dataset} column .
+\item \strong{\code{fail_entity_info}}: Files with no \code{entity_info} columns.
+\item \strong{\code{fail_idlen_county}}: Files with "county" \code{dataset}s with corresponding IDs
+that are not consistently 5 characters long.
+\item \strong{\code{fail_idlen_tract}}: Files with "tract" \code{dataset}s with corresponding IDs
+that are not consistently 11 characters long.
+\item \strong{\code{fail_idlen_block_group}}: Files with "block group" \code{dataset}s with corresponding IDs
+that are not consistently 12 characters long.
+}
 }
 \description{
 Performs a series of checks to see if data in a given repository can be ingested by a datacommons project.
@@ -38,5 +93,8 @@ Performs a series of checks to see if data in a given repository can be ingested
 \dontrun{
 # from a data repository
 check_repository()
+
+# to automatically fix most warnings
+check_repository(attempt_repair = TRUE)
 }
 }

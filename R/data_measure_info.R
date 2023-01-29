@@ -112,6 +112,10 @@ data_measure_info <- function(path, ..., info = list(), references = list(), str
   if (!overwrite && file.exists(path)) {
     if (verbose) cli_bullets(c(i = "updating existing file: {.path {basename(path)}}"))
     built <- read_json(path)
+    if (all(c("measure", "type") %in% names(built))) {
+      built <- list(built)
+      names(built) <- built[[1]]$measure
+    }
   }
   if (length(references)) {
     references <- c(references, built$`_references`)

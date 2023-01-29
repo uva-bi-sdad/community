@@ -104,14 +104,60 @@
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     
 
-<p>An invisible list of check results.</p>
-    </div>
+<p>An invisible list of check results, which may include <strong>general</strong> file paths:</p><ul><li><p><strong><code>info</code></strong> (always): A vector paths to <code>measure_info.json</code> files found.</p></li>
+<li><p><strong><code>data</code></strong> (always): A vector paths to data files found.</p></li>
+<li><p><strong><code>not_considered</code></strong>: A vector paths to data files that do not contain the minimal
+columns, and so are considered to be different types of files.</p></li>
+</ul><p>or those relating to <strong>measure information</strong> specific issues:</p><ul><li><p><strong><code>info_malformed</code></strong>: Files that are not in the expected format (a single object with
+named entries for each measure), but can be converted automatically.</p></li>
+<li><p><strong><code>info_incomplete</code></strong>: Measure entries that are missing some of the required fields.</p></li>
+<li><p><strong><code>info_invalid</code></strong>: Files that could not be read in (probably because they do not contain valid JSON).</p></li>
+</ul><p>or relating to data files with <strong>warnings</strong>:</p><ul><li><p><strong><code>warn_compressed</code></strong>: Files that do not have compression extensions
+(<code>.gz</code>, <code>.bz2</code>, or <code>.xz</code>).</p></li>
+<li><p><strong><code>warn_blank_colnames</code></strong>: Files with blank column names (often due to saving files with row names).</p></li>
+<li><p><strong><code>warn_value_nas</code></strong>: Files that have <code>NA</code>s in their <code>value</code> columns; <code>NA</code>s here
+are redundant with the tall format, and so, should be removed.</p></li>
+<li><p><strong><code>warn_value_name_nas</code></strong>: Files that have <code>NA</code>s in their <code>name</code> column.</p></li>
+<li><p><strong><code>warn_entity_info_nas</code></strong>: Files that have <code>NA</code>s in any of their <code>entity_info</code> columns.</p></li>
+<li><p><strong><code>warn_dataset_nas</code></strong>: Files that have <code>NA</code>s in their <code>dataset</code> column.</p></li>
+<li><p><strong><code>warn_time_nas</code></strong>: Files that have <code>NA</code>s in their <code>time</code> column.</p></li>
+<li><p><strong><code>warn_id_nas</code></strong>: Files that have <code>NA</code>s in their <code>id</code> column.</p></li>
+<li><p><strong><code>warn_scientific</code></strong>: Files with IDs that appear to have scientific notation (e.g., <code>1e+5</code>);
+likely introduced when the ID column was converted from numbers to characters -- IDs should always be saved as characters.</p></li>
+<li><p><strong><code>warn_bg_agg</code></strong>: Files with IDs that appear to be census block group GEOIDs,
+that do not include their tract parents (i.e., IDs consisting of 12 digits, and there are no IDs consisting of
+their first 11 digits). These are automatically aggregated by <code><a href="site_build.html">site_build</a></code>, but they should
+be manually aggregated.</p></li>
+<li><p><strong><code>warn_tr_agg</code></strong>: Files with IDs that appear to be census tract GEOIDs,
+that do not include their county parents (i.e., IDs consisting of 11 digits, and there are no IDs consisting of
+their first 5 digits). These are automatically aggregated by <code><a href="site_build.html">site_build</a></code>, but they should
+be manually aggregated.</p></li>
+<li><p><strong><code>warn_missing_info</code></strong>: Measures in files that do not have a corresponding <code>measure_info.json</code>
+entry. Sometimes this happens because the entry includes a prefix that cannot be derived from the file name
+(which is the part after a year, such as <code>category</code> from <code>set_geo_2015_category.csv.xz</code>).
+It is recommended that entries not include prefixes, and that measure names be specific
+(e.g., <code>category_count</code> rather than <code>count</code> with a <code>category:count</code> entry).</p></li>
+</ul><p>or relating to data files with <strong>failures</strong>:</p><ul><li><p><strong><code>fail_read</code></strong>: Files that could not be read in.</p></li>
+<li><p><strong><code>fail_rows</code></strong>: Files containing no rows.</p></li>
+<li><p><strong><code>fail_time</code></strong>: Files with no <code>time</code> column.</p></li>
+<li><p><strong><code>fail_dataset</code></strong>:Files with no <code>dataset</code> column .</p></li>
+<li><p><strong><code>fail_entity_info</code></strong>: Files with no <code>entity_info</code> columns.</p></li>
+<li><p><strong><code>fail_idlen_county</code></strong>: Files with "county" <code>dataset</code>s with corresponding IDs
+that are not consistently 5 characters long.</p></li>
+<li><p><strong><code>fail_idlen_tract</code></strong>: Files with "tract" <code>dataset</code>s with corresponding IDs
+that are not consistently 11 characters long.</p></li>
+<li><p><strong><code>fail_idlen_block_group</code></strong>: Files with "block group" <code>dataset</code>s with corresponding IDs
+that are not consistently 12 characters long.</p></li>
+</ul></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span><span class="co"># from a data repository</span></span></span>
 <span class="r-in"><span><span class="fu">check_repository</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># to automatically fix most warnings</span></span></span>
+<span class="r-in"><span><span class="fu">check_repository</span><span class="op">(</span>attempt_repair <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>
     </div>

@@ -15,18 +15,76 @@
 #' \dontrun{
 #' # from a data repository
 #' check_repository()
+#'
+#' # to automatically fix most warnings
+#' check_repository(attempt_repair = TRUE)
 #' }
-#' @return An invisible list of check results.
+#' @return An invisible list of check results, which may include \strong{general} file paths:
+#' \itemize{
+#'   \item \strong{\code{info}} (always): A vector paths to \code{measure_info.json} files found.
+#'   \item \strong{\code{data}} (always): A vector paths to data files found.
+#'   \item \strong{\code{not_considered}}: A vector paths to data files that do not contain the minimal
+#'     columns, and so are considered to be different types of files.
+#' }
+#' or those relating to \strong{measure information} specific issues:
+#' \itemize{
+#'   \item \strong{\code{info_malformed}}: Files that are not in the expected format (a single object with
+#'     named entries for each measure), but can be converted automatically.
+#'   \item \strong{\code{info_incomplete}}: Measure entries that are missing some of the required fields.
+#'   \item \strong{\code{info_invalid}}: Files that could not be read in (probably because they do not contain valid JSON).
+#' }
+#' or relating to data files with \strong{warnings}:
+#' \itemize{
+#'   \item \strong{\code{warn_compressed}}: Files that do not have compression extensions
+#'     (\code{.gz}, \code{.bz2}, or \code{.xz}).
+#'   \item \strong{\code{warn_blank_colnames}}: Files with blank column names (often due to saving files with row names).
+#'   \item \strong{\code{warn_value_nas}}: Files that have \code{NA}s in their \code{value} columns; \code{NA}s here
+#'     are redundant with the tall format, and so, should be removed.
+#'   \item \strong{\code{warn_value_name_nas}}: Files that have \code{NA}s in their \code{name} column.
+#'   \item \strong{\code{warn_entity_info_nas}}: Files that have \code{NA}s in any of their \code{entity_info} columns.
+#'   \item \strong{\code{warn_dataset_nas}}: Files that have \code{NA}s in their \code{dataset} column.
+#'   \item \strong{\code{warn_time_nas}}: Files that have \code{NA}s in their \code{time} column.
+#'   \item \strong{\code{warn_id_nas}}: Files that have \code{NA}s in their \code{id} column.
+#'   \item \strong{\code{warn_scientific}}: Files with IDs that appear to have scientific notation (e.g., \code{1e+5});
+#'     likely introduced when the ID column was converted from numbers to characters -- IDs should always be saved as characters.
+#'   \item \strong{\code{warn_bg_agg}}: Files with IDs that appear to be census block group GEOIDs,
+#'     that do not include their tract parents (i.e., IDs consisting of 12 digits, and there are no IDs consisting of
+#'     their first 11 digits). These are automatically aggregated by \code{\link{site_build}}, but they should
+#'     be manually aggregated.
+#'   \item \strong{\code{warn_tr_agg}}: Files with IDs that appear to be census tract GEOIDs,
+#'     that do not include their county parents (i.e., IDs consisting of 11 digits, and there are no IDs consisting of
+#'     their first 5 digits). These are automatically aggregated by \code{\link{site_build}}, but they should
+#'     be manually aggregated.
+#'   \item \strong{\code{warn_missing_info}}: Measures in files that do not have a corresponding \code{measure_info.json}
+#'     entry. Sometimes this happens because the entry includes a prefix that cannot be derived from the file name
+#'     (which is the part after a year, such as \code{category} from \code{set_geo_2015_category.csv.xz}).
+#'     It is recommended that entries not include prefixes, and that measure names be specific
+#'     (e.g., \code{category_count} rather than \code{count} with a \code{category:count} entry).
+#' }
+#' or relating to data files with \strong{failures}:
+#' \itemize{
+#'   \item \strong{\code{fail_read}}: Files that could not be read in.
+#'   \item \strong{\code{fail_rows}}: Files containing no rows.
+#'   \item \strong{\code{fail_time}}: Files with no \code{time} column.
+#'   \item \strong{\code{fail_dataset}}:Files with no \code{dataset} column .
+#'   \item \strong{\code{fail_entity_info}}: Files with no \code{entity_info} columns.
+#'   \item \strong{\code{fail_idlen_county}}: Files with "county" \code{dataset}s with corresponding IDs
+#'     that are not consistently 5 characters long.
+#'   \item \strong{\code{fail_idlen_tract}}: Files with "tract" \code{dataset}s with corresponding IDs
+#'     that are not consistently 11 characters long.
+#'   \item \strong{\code{fail_idlen_block_group}}: Files with "block group" \code{dataset}s with corresponding IDs
+#'     that are not consistently 12 characters long.
+#' }
 #' @export
 
 check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?$", value = "value", value_name = "measure",
                              id = "geoid", time = "year", dataset = "region_type", entity_info = c("region_type", "region_name"),
                              attempt_repair = FALSE) {
   if (!dir.exists(dir)) cli_abort("{.field {dir}} does not exist")
-  project_check <- check_template("repository")
+  project_check <- check_template("repository", dir = dir)
   if (project_check$exists) {
     if (length(project_check$incomplete)) {
-      cli_alert_warning("please replace all template content in {project_check$incomplete}")
+      cli_alert_warning("please update template content in {.file {project_check$incomplete}}")
     }
   }
   files <- list.files(dir, search_pattern, recursive = TRUE, full.names = TRUE)
@@ -63,7 +121,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
         if (length(mf)) {
           results$info_incomplete[[f]] <- c(results$info_incomplete[[f]], m)
           issues <- c(issues, paste0(
-            "{.field ", n, "} is missing ", if (length(mf) > 1) "fields" else "a field", ": ",
+            "{.strong {.field ", n, "}} is missing ", if (length(mf) > 1) "fields" else "a field", ": ",
             paste(paste0("{.field ", mf, "}"), collapse = ", ")
           ))
         }
@@ -95,6 +153,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
     "checking {i} of {length(files)} data file{?/s}", "checked {length(files)} data file{?/s}",
     spinner = TRUE
   )
+  census_geolayers <- c(county = 5, tract = 11, "block group" = 12)
   required <- c(id, value_name, value)
   vars <- unique(c(required, time, dataset, entity_info))
   entity_info <- entity_info[!entity_info %in% c(required, time, dataset)]
@@ -123,8 +182,8 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
       } else {
         if (nrow(d)) {
           d[[id]] <- as.character(d[[id]])
+          if (any(cols == "")) results$warn_blank_colnames <- c(results$warn_blank_colnames, f)
           if (!time %in% cols) results$fail_time <- c(results$fail_time, f)
-          if (!dataset %in% cols) results$fail_dataset <- c(results$fail_dataset, f)
           all_entity_info <- all(entity_info %in% cols)
           if (!all_entity_info) results$fail_entity_info <- c(results$fail_entity_info, f)
 
@@ -172,7 +231,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
             }
             if (length(repairs)) {
               if (!nrow(d)) {
-                cli_alert_danger("attempting repairs ({repairs}) removed all rows of {.file {f}}")
+                cli_alert_danger("{.strong attempting repairs ({repairs}) removed all rows of {.file {f}}}")
               } else {
                 tf <- sub("\\..+(?:\\.[bgx]z2?)?$", ".csv.xz", path)
                 w <- tryCatch(
@@ -183,12 +242,12 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
                   error = function(e) NULL
                 )
                 if (is.null(w)) {
-                  cli_alert_danger("failed to write repairs ({repairs}) to {.file {f}}")
+                  cli_alert_danger("{.strong failed to write repairs ({repairs}) to {.file {f}}}")
                 } else {
                   if (path != tf) {
                     unlink(path)
                   }
-                  cli_alert_info("wrote repairs ({repairs}) to {.file {tf}}")
+                  cli_alert_info("{.strong wrote repairs ({repairs}) to {.file {tf}}}")
                 }
               }
             }
@@ -201,7 +260,10 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
               results$warn_value_name_nas <- c(results$warn_value_name_nas, f)
               d <- d[!is.na(d[[value_name]]), ]
             }
-            if (dataset %in% cols && anyNA(d[[dataset]])) results$warn_dataset_nas <- c(results$warn_dataset_nas, f)
+            if (dataset %in% cols && anyNA(d[[dataset]])) {
+              d[[dataset]][is.na(d[[dataset]])] <- ""
+              results$warn_dataset_nas <- c(results$warn_dataset_nas, f)
+            }
             if (all_entity_info && anyNA(d[, entity_info])) results$warn_entity_info_nas <- c(results$warn_entity_info_nas, f)
             if (time %in% cols) {
               if (anyNA(d[[time]])) {
@@ -211,24 +273,41 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
             }
           }
 
-          measures <- unique(d[[value_name]])
-          su <- !measures %in% names(meta)
-          if (any(su)) su[su] <- !make_full_name(f, measures[su]) %in% names(meta)
-          if (any(su)) results$warn_missing_info <- c(results$warn_missing_measures, paste0(f, "::", measures[su]))
-
-          id_chars <- nchar(d[[id]])
-          su <- which(id_chars == 12)
-          if (length(su)) {
-            su <- su[grep("[^0-9]", d[[id]][su], invert = TRUE)]
-            if (length(su) && any(!unique(substring(d[[id]][su], 1, 11)) %in% d[[id]])) {
-              results$warn_bg_agg <- c(results$warn_bg_agg, f)
+          if (nrow(d)) {
+            if (dataset %in% cols) {
+              for (l in names(census_geolayers)) {
+                if (l %in% d[[dataset]]) {
+                  su <- d[[dataset]] == l
+                  n_match <- sum(nchar(d[[id]][su]) == census_geolayers[[l]])
+                  if (n_match && n_match < sum(su)) {
+                    e <- paste0("fail_idlen_", sub(" ", "", l, fixed = TRUE))
+                    results[[e]] <- c(results[[e]], f)
+                  }
+                }
+              }
+            } else {
+              results$fail_dataset <- c(results$fail_dataset, f)
             }
-          }
-          su <- which(id_chars == 11)
-          if (length(su)) {
-            su <- su[grep("[^0-9]", d[[id]][su], invert = TRUE)]
-            if (length(su) && any(!unique(substring(d[[id]][su], 1, 5)) %in% d[[id]])) {
-              results$warn_tr_agg <- c(results$warn_tr_agg, f)
+
+            measures <- unique(d[[value_name]])
+            su <- !measures %in% names(meta)
+            if (any(su)) su[su] <- !make_full_name(f, measures[su]) %in% names(meta)
+            if (any(su)) results$warn_missing_info <- c(results$warn_missing_info, paste0(f, "::", measures[su]))
+
+            id_chars <- nchar(d[[id]])
+            su <- which(id_chars == 12)
+            if (length(su)) {
+              su <- su[grep("[^0-9]", d[[id]][su], invert = TRUE)]
+              if (length(su) && any(!unique(substring(d[[id]][su], 1, 11)) %in% d[[id]])) {
+                results$warn_bg_agg <- c(results$warn_bg_agg, f)
+              }
+            }
+            su <- which(id_chars == 11)
+            if (length(su)) {
+              su <- su[grep("[^0-9]", d[[id]][su], invert = TRUE)]
+              if (length(su) && any(!unique(substring(d[[id]][su], 1, 5)) %in% d[[id]])) {
+                results$warn_tr_agg <- c(results$warn_tr_agg, f)
+              }
             }
           }
         } else {
@@ -244,7 +323,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   long_paths <- files_short[nchar(files_short) > 140]
   n_long_paths <- length(long_paths)
   if (n_long_paths) {
-    cli_alert_warning("{n_long_paths} {?path is/paths are} very long (over 140 character):")
+    cli_alert_warning("{.strong {n_long_paths} {?path is/paths are} very long (over 140 character):}")
     cli_bullets(structure(
       paste0("(", nchar(long_paths), ") {.field ", long_paths, "}"),
       names = rep(">", n_long_paths)
@@ -255,8 +334,8 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   if (length(results$not_considered)) {
     res_summary["SKIP"] <- length(results$not_considered)
     cli_alert_info(paste(
-      'skipped {res_summary["SKIP"]} file{?/s} because {?it does/they do}',
-      "not include all base columns ({.field {required}}):"
+      '{.strong skipped {res_summary["SKIP"]} file{?/s} because {?it does/they do}',
+      "not include all base columns ({.field {required}}):}"
     ))
     cli_bullets(structure(
       paste0("{.field ", results$not_considered, "}"),
@@ -274,18 +353,19 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
     cli_h2("{n_warn} file{? has/s have} warnings")
     sections <- list(
       warn_compressed = "not compressed:",
+      warn_blank_colnames = "contains blank column names:",
       warn_value_nas = "{.field {value}} column contains NAs (which are redundant):",
       warn_id_nas = "{.field {id}} column contains NAs:",
       warn_value_name_nas = "{.field {value_name}} column contains NAs:",
       warn_dataset_nas = "{.field {dataset}} column contains NAs:",
       warn_time_nas = "{.field {time}} column contains NAs:",
-      warn_entity_info_nas = "entity information ({.field {entity_info}}) column{?/s} contain{?s} NAs:",
+      warn_entity_info_nas = "entity information column{?/s} ({.field {entity_info}}) contain{?s/} NAs:",
       warn_bg_agg = "may have block groups that have not been aggregated to tracts:",
       warn_tr_agg = "may have tracts that have not been aggregated to counties:"
     )
     for (s in names(sections)) {
       if (length(results[[s]])) {
-        cli_alert_warning(sections[[s]])
+        cli_alert_warning(paste0("{.strong ", sections[[s]], "}"))
         cli_bullets(structure(
           paste0("{.field ", results[[s]], "}"),
           names = rep(">", length(results[[s]]))
@@ -293,28 +373,22 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
       }
     }
     if (length(results$warn_missing_info)) {
-      cli_alert_warning("missing measure info entries:")
+      cli_alert_warning("{.strong missing measure info entries:}")
+      meta_base <- sub("^[^:]*:", "", names(meta))
       missing_info <- unlist(lapply(
         strsplit(results$warn_missing_info, "::", fixed = TRUE),
-        function(e) paste0("{.field ", e[2], "} in {.field ", e[1], "}")
+        function(e) {
+          base_matches <- if (e[2] %in% meta_base) names(meta)[meta_base == e[2]] else NULL
+          paste0(
+            "{.field ", e[2], "} in {.field ", e[1], "}", if (length(base_matches)) {
+              paste0(
+                "; base matches {.arg ", base_matches[1], "}, but prefix is invalid"
+              )
+            }
+          )
+        }
       ), use.names = FALSE)
       cli_bullets(structure(missing_info, names = rep(">", length(missing_info))))
-    }
-    if (length(results$warn_ids_2020)) {
-      cli_alert_warning("2010-specific GEOIDs are in >2019 data (which no longer exist):")
-      ids_2020 <- unlist(lapply(
-        strsplit(results$warn_ids_2020, "::", fixed = TRUE),
-        function(e) paste0("in {.field ", e[1], "}:\n  {.field ", strsplit(e[2], ", ", fixed = TRUE)[[1]], "}")
-      ), use.names = FALSE)
-      cli_bullets(structure(ids_2020, names = rep(">", length(ids_2020))))
-    }
-    if (length(results$warn_ids_2010)) {
-      cli_alert_warning("2020-specific GEOIDs are in <2020 data (which don't yet exist):")
-      ids_2010 <- unlist(lapply(
-        strsplit(results$warn_ids_2010, "::", fixed = TRUE),
-        function(e) paste0("in {.field ", e[1], "}:\n  {.field ", strsplit(e[2], ", ", fixed = TRUE)[[1]], "}")
-      ), use.names = FALSE)
-      cli_bullets(structure(ids_2010, names = rep(">", length(ids_2010))))
     }
   }
 
@@ -328,11 +402,14 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
       fail_rows = "contains no data:",
       fail_time = "no {.field {time}} column:",
       fail_dataset = "no {.field {dataset}} column:",
-      fail_entity_info = "missing entity information ({.field {entity_info}}) columns:"
+      fail_entity_info = "missing entity information ({.field {entity_info}}) column{?/s}:",
+      fail_idlen_county = "not all county GEOIDs are 5 characters long:",
+      fail_idlen_tract = "not all tract GEOIDs are 11 characters long:",
+      fail_idlen_block_group = "not all block group GEOIDs are 12 characters long:"
     )
     for (s in names(sections)) {
       if (length(results[[s]])) {
-        cli_alert_danger(sections[[s]])
+        cli_alert_danger(paste0("{.strong ", sections[[s]], "}"))
         cli_bullets(structure(
           paste0("{.field ", results[[s]], "}"),
           names = rep(">", length(results[[s]]))
