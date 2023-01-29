@@ -9,6 +9,7 @@
 #' @param refresh_distributions Logical; if \code{TRUE}, will download fresh copies of the distribution metadata.
 #' @param only_new Logical; if \code{TRUE}, only repositories that do not yet exist will be processed.
 #' @param reset_repos Logical; if \code{TRUE}, will fetch and hard reset the repositories to remove any local changes.
+#' @param reset_on_fail Logical; if \code{TRUE}, will reset only if a regular pull fails.
 #' @param rescan_only Logical; if \code{TRUE}, will only read the files that are already in place, without checking for
 #' updates from the remote repository.
 #' @param use_manifest Logical; if \code{TRUE}, will use a \code{manifest.json} file in each repository to identify files.
@@ -24,7 +25,8 @@
 #' @export
 
 datacommons_refresh <- function(dir, clone_method = "http", include_distributions = FALSE, refresh_distributions = FALSE,
-                                only_new = FALSE, reset_repos = FALSE, rescan_only = FALSE, use_manifest = FALSE, verbose = TRUE) {
+                                only_new = FALSE, reset_repos = FALSE, reset_on_fail = FALSE, rescan_only = FALSE,
+                                use_manifest = FALSE, verbose = TRUE) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., as ".")')
   if (Sys.which("git") == "") {
     cli_abort(c(
@@ -63,7 +65,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
       return(invisible(repos))
     }
   }
-  updated <- dist_updated <- logical(length(repos))
+  updated <- dist_updated <- failed <- logical(length(repos))
   wd <- getwd()
   on.exit(setwd(wd))
   repo_dir <- paste0(normalizePath(paste0(dir, "/repos/"), "/", FALSE), "/")
@@ -82,9 +84,15 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
       if (verbose) cli_alert_info(paste(if (change_dir) "pulling" else "cloning", rn))
       if (change_dir) setwd(cr)
       s <- tryCatch(if (change_dir) {
-        if (reset_repos) {
-          system2("git", "fetch", stdout = TRUE)
-          system2("git", "reset --hard FETCH_HEAD", stdout = TRUE)
+        if (reset_repos || reset_on_fail) {
+          attempt <- if (reset_on_fail) system2("git", "pull", stdout = TRUE) else NULL
+          if (!is.null(attr(attempt, "status"))) {
+            system2("git", "clean --f", stdout = TRUE)
+            system2("git", "fetch", stdout = TRUE)
+            system2("git", "reset --hard FETCH_HEAD", stdout = TRUE)
+          } else {
+            attempt
+          }
         } else {
           system2("git", "pull", stdout = TRUE)
         }
@@ -94,6 +102,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
       if (change_dir) setwd(repo_dir)
       if (length(s) != 1 || s != "Already up to date.") {
         if (!is.null(attr(s, "status"))) {
+          failed[i] <- TRUE
           cli_alert_warning(c(
             x = paste0("failed to retrieve ", r, ": ", paste(s, collapse = " "))
           ))
@@ -194,7 +203,10 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
       updated_distributions <- repos[dist_updated]
       cli_alert_success("updated distributed file{?s} in: {.file {updated_distributions}}")
     }
-    if (!any(updated | dist_updated)) {
+    if (any(failed)) {
+      failed_repos <- repos[failed]
+      cli_alert_danger("failed to retrieve repositor{?ies/y}: {.file {failed_repos}}")
+    } else if (!any(updated | dist_updated)) {
       cli_alert_success("all data repositories are up to date")
     }
   }
