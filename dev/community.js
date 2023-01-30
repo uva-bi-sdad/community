@@ -2776,6 +2776,7 @@ void (function () {
             o.header = []
             o.rows = {}
             o.rowIds = {}
+            this.hiddenTimes = []
             o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0
             const time = site.data.meta.times[o.parsed.dataset]
             if (o.tab) {
@@ -3038,21 +3039,31 @@ void (function () {
                           this.rows = tableData
                           appendRows(this.table)
                         }
+                        this.hiddenTimes = []
+                        for (let t = 0; t <= site.data.meta.times[d].value.length; t++) {
+                          if (v.times[t] === false) {
+                            const year = 2009 + t
+                            this.hiddenTimes.push(year.toString())
+                          }
+                        }
 
                         const createTable = table => {
                           clearTable(table)
                           let headers = this.header.map(h => h.title)
                           let thead = document.createElement('thead')
                           let tr = document.createElement('tr')
-                          headers.forEach(header => {
+
+                          for (let i = 0; i < headers.length; i++) {
+                            if (this.hiddenTimes.includes(headers[i])) continue
                             const th = document.createElement('th')
                             const div = document.createElement('div')
-                            div.innerText = header
-                            if (header == time) div.style['border'] = 'solid black'
+                            div.innerText = headers[i]
+                            if (headers[i] == time) div.style['border'] = 'solid black'
                             div.dataset.dir = ''
                             th.append(div)
                             tr.append(th)
-                          })
+                          }
+
                           thead.append(tr)
                           table.append(thead)
                           let tBody = document.createElement('tbody')
@@ -3122,6 +3133,7 @@ void (function () {
                           tr.style['backgroundColor'] = 'inherit'
 
                           for (let t in tableData_sorted[i][1]) {
+                            if (this.hiddenTimes.includes(t)) continue
                             td = document.createElement('td')
                             td.innerText = site.data.format_value(tableData_sorted[i][1][t])
                             tr.append(td)
