@@ -3086,15 +3086,15 @@ void (function () {
                         const time = site.data.meta.times[dataset]
                         const source = v.selection.all
                         for (const key in source) {
-                          const countyName = source[key].features.name
-                          tableData[countyName] = {}
+                          //const countyName = source[key].features.name
+                          tableData[key] = {}
                           const code = source[key].variables[vn].code
                           const t = site.data.variables[vn].time_range[dataset]
                           if (t)
                             for (let n = t[1] - t[0]; n >= 0; n--) {
                               const title = time.value[n + t[0]] + ''
                               if (Object.keys(source[key].data).includes(code))
-                                tableData[countyName][title] = source[key].data[code][n]
+                                tableData[key][title] = source[key].data[code][n]
                             }
                         }
 
@@ -3102,26 +3102,23 @@ void (function () {
                           if (Object.keys(tableData[key]).length == 0) delete tableData[key]
                         }
 
-                        Object.keys(v.selection.all).forEach(e => {
-                          this.rowIds[v.selection.all[e].features.name] = e
-                        })
+                        // Object.keys(v.selection.all).forEach(e => {
+                        //   this.rowIds[v.selection.all[e].features.name] = e
+                        // })
                       }
 
                       const appendRows = table => {
                         prepareData()
-
                         Object.assign(this.rows, tableData)
-
                         let tableData_sorted = Object.entries(tableData).sort(([, a], [, b]) => -(a[time] - b[time]))
-
                         for (var i = 0; i < tableData_sorted.length; i++) {
                           let tr = document.createElement('tr')
                           let td = document.createElement('td')
-                          td.innerText = tableData_sorted[i][0]
+                          td.innerText = v.selection.all[tableData_sorted[i][0]].features.name
 
                           tr.append(td)
 
-                          tr.dataset.geoid = this.rowIds[tableData_sorted[i][0]]
+                          tr.dataset.geoid = tableData_sorted[i][0]
                           tr.style['backgroundColor'] = 'inherit'
 
                           for (let t in tableData_sorted[i][1]) {
