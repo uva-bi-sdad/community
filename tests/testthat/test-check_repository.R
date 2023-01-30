@@ -2,16 +2,17 @@ test_that("all issues are caught", {
   dir <- paste0(tempdir(), "/test_repo")
   init_repository(dir, "dataset", init_git = FALSE)
   info_file <- paste0(dir, "/dataset/data/distribution/measure_info.json")
-  jsonlite::write_json(list(measure = "measure", type = "count"), info_file, auto_unbox = TRUE)
+  jsonlite::write_json(list(measure = "m_int", type = "integer"), info_file, auto_unbox = TRUE)
   data <- data.frame(
-    geoid = c("10000", "516105003003", "511076110241", "1e10", "1e+10", NA),
-    region_name = c(rep("region", 4), NA, "region"),
+    geoid = c(NA, "10000", "516105003003", "511076110241", "1e10", "1e+10", NA),
+    region_name = c(rep("region", 5), NA, "region"),
     region_type = "county",
-    year = c(2010, 2010, 2020, 2011, 2012, NA),
-    value = 1,
-    measure = c("measure", rep("unknown", 5))
+    year = c(2010, 2010, 2010, 2020, 2011, 2012, NA),
+    value = c(1, 1.1, .5, .1, rep(1e-7, 3)),
+    measure_type = c("int", "int", "percent", "percent", rep("small", 3)),
+    measure = c("m_int", "m_int", "m_perc", "m_perc", rep("m_small", 3))
   )
-  data[6, ] <- NA
+  data[7, ] <- NA
   write.csv(data, paste0(dir, "/dataset/data/distribution/data.csv"), row.names = FALSE)
   data_min <- data.frame(GEOID = "a", Value = 1, Measure = "a")
   write.csv(data_min, paste0(dir, "/dataset/data/distribution/data_min.csv"))
@@ -28,20 +29,25 @@ test_that("all issues are caught", {
     "data", "info", "not_considered",
     paste0("info_", c("malformed", "incomplete")),
     paste0("warn_", c(
-      "compressed", "blank_colnames", "value_nas", "scientific", "id_nas", "value_name_nas",
-      "entity_info_nas", "missing_info", "bg_agg"
+      "compressed", "blank_colnames", "value_nas", "dataset_nas", "scientific", "id_nas", "value_name_nas",
+      "entity_info_nas", "missing_info", "bg_agg", "small_percents", "double_ints", "small_values",
+      "time_nas", "value_type_nas"
     )),
-    paste0("fail_", c("idlen_county", "rows", "time", "entity_info", "dataset"))
+    paste0("fail_", c("idlen_county", "rows", "time", "value_type", "entity_info", "dataset"))
   )), sort(names(res)))
   data_measure_info(
     info_file,
-    measure = list(
-      measure = "measure", category = "a", type = "int", short_name = "measure",
+    m_int = list(
+      measure = "m_int", category = "a", type = "int", short_name = "integer",
       short_description = "a measure"
     ),
-    unknown = list(
-      measure = "unknown", category = "a", type = "int", short_name = "unknown",
-      short_description = "an unknown measure"
+    m_perc = list(
+      measure = "m_perc", category = "a", type = "percent", short_name = "percent",
+      short_description = "an percentage"
+    ),
+    m_small = list(
+      measure = "m_small", category = "a", type = "numeric", short_name = "small",
+      short_description = "an small value"
     ),
     open_after = FALSE
   )
