@@ -120,18 +120,40 @@ These may include <strong>general</strong> entries:</p><ul><li><p><strong><code>
 <li><p><strong><code>data</code></strong> (always): All data files found.</p></li>
 <li><p><strong><code>not_considered</code></strong>: Subset of data files that do not contain the minimal
 columns (<code>id</code>, <code>value</code>, and <code>value_type</code>), and so are not checked further.</p></li>
-</ul><p>or those relating to issues with <strong>measure information</strong> files:</p><ul><li><p><strong><code>info_malformed</code></strong>: Files that are not in the expected format (a single object with
+</ul><p>or those relating to issues with <strong>measure information</strong> (see <code><a href="data_measure_info.html">data_measure_info</a></code>) files:</p><ul><li><p><strong><code>info_malformed</code></strong>: Files that are not in the expected format (a single object with
 named entries for each measure), but can be converted automatically.</p></li>
 <li><p><strong><code>info_incomplete</code></strong>: Measure entries that are missing some of the required fields.</p></li>
 <li><p><strong><code>info_invalid</code></strong>: Files that could not be read in (probably because they do not contain valid JSON).</p></li>
+<li><p><strong><code>info_refs_names</code></strong>: Files with a <code>_references</code> entry with no names
+(where it should be a named list).</p></li>
+<li><p><strong><code>info_refs_missing</code></strong>: Files with an entry in its <code>_references</code> entry that
+is missing one or more required entries (<code>author</code>, <code>year</code>, and/or <code>title</code>).</p></li>
+<li><p><strong><code>info_refs_*</code></strong>: Files with an entry in its <code>_references</code> entry that has an entry
+(<code>*</code>) that is a list (where they should all be strings).</p></li>
+<li><p><strong><code>info_refs_author_entry</code></strong>: Files with an entry in its <code>_references</code> entry that has an
+<code>author</code> entry that is missing a <code>family</code> entry.</p></li>
+<li><p><strong><code>info_source_missing</code></strong>: Measures with an entry in its <code>source</code> entry that is missing a
+required entry (<code>name</code> and/or <code>date_accessed</code>).</p></li>
+<li><p><strong><code>info_source_*</code></strong>: Measures with an entry (<code>*</code>) in its <code>source</code> entry that is a
+list (where they should all be strings).</p></li>
+<li><p><strong><code>info_citation</code></strong>: Measures with a <code>citation</code> entry that cannot be found in any
+<code>_references</code> entries across measure info files within the repository.</p></li>
+<li><p><strong><code>info_layer_source</code></strong>: Measures with an entry in its <code>layer</code> entry that is missing a
+<code>source</code> entry.</p></li>
+<li><p><strong><code>info_layer_source_url</code></strong>: Measures with an entry in its <code>layer</code> entry that has a list
+<code>source</code> entry that is missing a <code>url</code> entry. <code>source</code> entries can either be a string containing a
+URL, or a list with a <code>url</code> entry.</p></li>
+<li><p><strong><code>info_layer_filter</code></strong>: Measures with an entry in its <code>layer</code> entry that has a <code>filter</code>
+entry that is missing required entries (<code>feature</code>, <code>operator</code>, and/or <code>value</code>).</p></li>
 </ul><p>or relating to data files with <strong>warnings</strong>:</p><ul><li><p><strong><code>warn_compressed</code></strong>: Files that do not have compression extensions
 (<code>.gz</code>, <code>.bz2</code>, or <code>.xz</code>).</p></li>
 <li><p><strong><code>warn_blank_colnames</code></strong>: Files with blank column names (often due to saving files with row names).</p></li>
 <li><p><strong><code>warn_value_nas</code></strong>: Files that have <code>NA</code>s in their <code>value</code> columns; <code>NA</code>s here
 are redundant with the tall format, and so, should be removed.</p></li>
-<li><p><strong><code>warn_double_ints</code></strong>: Variable names that have an <code>int</code> type, but with values that have remainders.</p></li>
-<li><p><strong><code>warn_small_percents</code></strong>: Variable names that have a <code>percent</code> type, but that are all under <code>1</code>
-(which are assumed to be raw proportions).</p></li>
+<li><p><strong><code>warn_double_ints</code></strong>: Variable names that have an <code>int</code> type, but with values that have
+remainders.</p></li>
+<li><p><strong><code>warn_small_percents</code></strong>: Variable names that have a <code>percent</code> type, but that are all under
+<code>1</code> (which are assumed to be raw proportions).</p></li>
 <li><p><strong><code>warn_small_values</code></strong>: Variable names with many values (over 40%) that are under <code>.00001</code>, and
 no values under <code>0</code> or over <code>1</code>. These values should be scaled in some way to be displayed reliably.</p></li>
 <li><p><strong><code>warn_value_name_nas</code></strong>: Files that have <code>NA</code>s in their <code>name</code> column.</p></li>
@@ -141,7 +163,8 @@ no values under <code>0</code> or over <code>1</code>. These values should be sc
 <li><p><strong><code>warn_time_nas</code></strong>: Files that have <code>NA</code>s in their <code>time</code> column.</p></li>
 <li><p><strong><code>warn_id_nas</code></strong>: Files that have <code>NA</code>s in their <code>id</code> column.</p></li>
 <li><p><strong><code>warn_scientific</code></strong>: Files with IDs that appear to have scientific notation (e.g., <code>1e+5</code>);
-likely introduced when the ID column was converted from numbers to characters -- IDs should always be saved as characters.</p></li>
+likely introduced when the ID column was converted from numbers to characters -- IDs should always be saved as
+characters.</p></li>
 <li><p><strong><code>warn_bg_agg</code></strong>: Files with IDs that appear to be census block group GEOIDs,
 that do not include their tract parents (i.e., IDs consisting of 12 digits, and there are no IDs consisting of
 their first 11 digits). These are automatically aggregated by <code><a href="site_build.html">site_build</a></code>, but they should

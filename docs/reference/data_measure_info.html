@@ -143,7 +143,7 @@ types are rounded to show a set number of digits.</p></li>
 <li><p><code>date_accessed</code>: Date of retrieval (arbitrary format).</p></li>
 </ul></li>
 <li><p><strong><code>citations</code></strong>: A vector of reference ids (the names of <code>reference</code> entries; e.g., <code>c("ref1", "ref3")</code>).</p></li>
-<li><p><strong><code>layer</code></strong>: A list specifying a <code><a href="output_map.html">output_map</a></code> overlay:</p><ul><li><p><code>source</code> (required): A URL to a GeoJSON file, or a list with a <code>url</code> and <code>time</code> entry, where
+<li><p><strong><code>layer</code></strong>: A list specifying an <code><a href="output_map.html">output_map</a></code> overlay:</p><ul><li><p><code>source</code> (required): A URL to a GeoJSON file, or a list with a <code>url</code> and <code>time</code> entry, where
 <code>time</code> conditions the display of the layer on the current selected time. Alternative to a list that specifies time,
 the URL can include a dynamic reference to time, if the time values correspond to a component of the URL
 (e.g., <code>"https://example.com/{time}/points.geojson"</code>).</p></li>

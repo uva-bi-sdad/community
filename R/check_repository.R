@@ -31,12 +31,33 @@
 #'   \item \strong{\code{not_considered}}: Subset of data files that do not contain the minimal
 #'     columns (\code{id}, \code{value}, and \code{value_type}), and so are not checked further.
 #' }
-#' or those relating to issues with \strong{measure information} files:
+#' or those relating to issues with \strong{measure information} (see \code{\link{data_measure_info}}) files:
 #' \itemize{
 #'   \item \strong{\code{info_malformed}}: Files that are not in the expected format (a single object with
 #'     named entries for each measure), but can be converted automatically.
 #'   \item \strong{\code{info_incomplete}}: Measure entries that are missing some of the required fields.
 #'   \item \strong{\code{info_invalid}}: Files that could not be read in (probably because they do not contain valid JSON).
+#'   \item \strong{\code{info_refs_names}}: Files with a \code{_references} entry with no names
+#'     (where it should be a named list).
+#'   \item \strong{\code{info_refs_missing}}: Files with an entry in its \code{_references} entry that
+#'     is missing one or more required entries (\code{author}, \code{year}, and/or \code{title}).
+#'   \item \strong{\code{info_refs_*}}: Files with an entry in its \code{_references} entry that has an entry
+#'     (\code{*}) that is a list (where they should all be strings).
+#'   \item \strong{\code{info_refs_author_entry}}: Files with an entry in its \code{_references} entry that has an
+#'     \code{author} entry that is missing a \code{family} entry.
+#'   \item \strong{\code{info_source_missing}}: Measures with an entry in its \code{source} entry that is missing a
+#'     required entry (\code{name} and/or \code{date_accessed}).
+#'   \item \strong{\code{info_source_*}}: Measures with an entry (\code{*}) in its \code{source} entry that is a
+#'     list (where they should all be strings).
+#'   \item \strong{\code{info_citation}}: Measures with a \code{citation} entry that cannot be found in any
+#'     \code{_references} entries across measure info files within the repository.
+#'   \item \strong{\code{info_layer_source}}: Measures with an entry in its \code{layer} entry that is missing a
+#'     \code{source} entry.
+#'   \item \strong{\code{info_layer_source_url}}: Measures with an entry in its \code{layer} entry that has a list
+#'     \code{source} entry that is missing a \code{url} entry. \code{source} entries can either be a string containing a
+#'     URL, or a list with a \code{url} entry.
+#'   \item \strong{\code{info_layer_filter}}: Measures with an entry in its \code{layer} entry that has a \code{filter}
+#'     entry that is missing required entries (\code{feature}, \code{operator}, and/or \code{value}).
 #' }
 #' or relating to data files with \strong{warnings}:
 #' \itemize{
@@ -45,9 +66,10 @@
 #'   \item \strong{\code{warn_blank_colnames}}: Files with blank column names (often due to saving files with row names).
 #'   \item \strong{\code{warn_value_nas}}: Files that have \code{NA}s in their \code{value} columns; \code{NA}s here
 #'     are redundant with the tall format, and so, should be removed.
-#'   \item \strong{\code{warn_double_ints}}: Variable names that have an \code{int} type, but with values that have remainders.
-#'   \item \strong{\code{warn_small_percents}}: Variable names that have a \code{percent} type, but that are all under \code{1}
-#'     (which are assumed to be raw proportions).
+#'   \item \strong{\code{warn_double_ints}}: Variable names that have an \code{int} type, but with values that have
+#'     remainders.
+#'   \item \strong{\code{warn_small_percents}}: Variable names that have a \code{percent} type, but that are all under
+#'     \code{1} (which are assumed to be raw proportions).
 #'   \item \strong{\code{warn_small_values}}: Variable names with many values (over 40%) that are under \code{.00001}, and
 #'     no values under \code{0} or over \code{1}. These values should be scaled in some way to be displayed reliably.
 #'   \item \strong{\code{warn_value_name_nas}}: Files that have \code{NA}s in their \code{name} column.
@@ -57,7 +79,8 @@
 #'   \item \strong{\code{warn_time_nas}}: Files that have \code{NA}s in their \code{time} column.
 #'   \item \strong{\code{warn_id_nas}}: Files that have \code{NA}s in their \code{id} column.
 #'   \item \strong{\code{warn_scientific}}: Files with IDs that appear to have scientific notation (e.g., \code{1e+5});
-#'     likely introduced when the ID column was converted from numbers to characters -- IDs should always be saved as characters.
+#'     likely introduced when the ID column was converted from numbers to characters -- IDs should always be saved as
+#'     characters.
 #'   \item \strong{\code{warn_bg_agg}}: Files with IDs that appear to be census block group GEOIDs,
 #'     that do not include their tract parents (i.e., IDs consisting of 12 digits, and there are no IDs consisting of
 #'     their first 11 digits). These are automatically aggregated by \code{\link{site_build}}, but they should
@@ -107,7 +130,12 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   meta <- list()
   info_files <- list.files(dir, "^measure_info[^.]*\\.json$", full.names = TRUE, recursive = TRUE)
   results <- list(data = files, info = info_files)
-  required_fields <- c("measure", "category", "type", "short_name", "short_description")
+  required_fields <- c("measure", "category", "type", "long_name", "short_name", "long_description")
+  required_refs <- c("author", "year", "title")
+  required_source <- c("name", "date_accessed")
+  required_layer_filter <- c("feature", "operator", "value")
+  known_references <- NULL
+  flagged_references <- list()
   cli_progress_step(
     "checking {i} of {length(info_files)} measure info files",
     "checked {length(info_files)} measure info files",
@@ -126,16 +154,138 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
       m <- list(m)
       names(m) <- m[[1]]$measure
     }
+    if ("_references" %in% names(m)) {
+      refs <- m[["_references"]]
+      if (is.null(names(refs))) {
+        if (length(refs)) {
+          results$info_refs_names[[f]] <- c(results$info_refs_names, f)
+          issues <- c(issues, "{.arg _references} entries have no names")
+        }
+      } else {
+        for (e in names(refs)) {
+          known_references <- unique(c(known_references, e))
+          su <- !required_refs %in% names(refs[[e]])
+          if (any(su)) {
+            missing_required <- required_refs[su]
+            results$info_refs_missing[[f]] <- c(
+              results$info_refs_missing[[f]], paste0(e, ":", paste(missing_required, collapse = ","))
+            )
+            issues <- c(issues, paste0(
+              "{.arg _references} {.strong {.field ", e, "}} is missing ",
+              if (sum(su) > 1) "entries: " else "an entry: ",
+              paste0("{.pkg ", missing_required, "}", collapse = ", ")
+            ))
+          }
+          if ("author" %in% names(refs[[e]])) {
+            if (is.list(refs[[e]]$author)) {
+              if (!is.null(names(refs[[e]]$author))) refs[[e]]$author <- list(refs[[e]]$author)
+              for (i in seq_along(refs[[e]]$author)) {
+                if (is.null(refs[[e]]$author[[i]]$family)) {
+                  results$info_refs_author_entry[[f]] <- c(
+                    results$info_refs_author_entry[[f]], paste0(e, ":", i)
+                  )
+                  issues <- c(issues, paste0(
+                    "{.arg _references} {.strong {.field ", e, "}}'s number ", i,
+                    " author is missing a {.pkg family} entry"
+                  ))
+                }
+              }
+            } else {
+              results$info_refs_author[[f]] <- c(results$info_refs_author[[f]], e)
+              issues <- c(issues, paste0(
+                "{.arg _references} {.strong {.field ", e, "}}'s {.pkg author} entry is not a list"
+              ))
+            }
+          }
+          for (re in c("year", "title", "journal", "volume", "page", "doi", "version", "url")) {
+            if (is.list(refs[[e]][[re]])) {
+              type <- paste0("info_refs_", re)
+              results[[type]][[f]] <- c(results[[type]][[f]], e)
+              issues <- c(issues, paste0(
+                "{.arg _references} {.strong {.field ", e, "}}'s {.pkg ", re, "} entry is a list"
+              ))
+            }
+          }
+        }
+      }
+    }
     for (n in names(m)) {
       if (!grepl("^_", n)) {
-        cm <- Filter(function(e) length(e) && e != "", m[[n]][required_fields])
-        mf <- required_fields[!required_fields %in% names(cm)]
+        cm <- Filter(function(e) length(e) && (length(e) > 1 || e != ""), m[[n]])
+        entries <- names(cm)
+        mf <- required_fields[!required_fields %in% entries]
         if (length(mf)) {
-          results$info_incomplete[[f]] <- c(results$info_incomplete[[f]], m)
+          results$info_incomplete[[f]] <- c(results$info_incomplete[[f]], n)
           issues <- c(issues, paste0(
             "{.strong {.field ", n, "}} is missing ", if (length(mf) > 1) "fields" else "a field", ": ",
             paste(paste0("{.pkg ", mf, "}"), collapse = ", ")
           ))
+        }
+        if ("sources" %in% entries) {
+          if (!is.null(names(cm$sources))) cm$sources <- list(cm$sources)
+          for (i in seq_along(cm$sources)) {
+            s <- cm$sources[[i]]
+            if (length(s) && is.list(s)) {
+              su <- !required_source %in% names(s)
+              if (any(su)) {
+                missing_required <- required_source[su]
+                results$info_source_missing[[f]] <- c(
+                  results$info_source_missing[[f]], paste0(m, ":", paste(missing_required, collapse = ","))
+                )
+                issues <- c(issues, paste0(
+                  "{.strong {.field ", n, "}}'s number ", i, " {.arg source} entry is missing ",
+                  if (sum(su) > 1) "entries: " else "an entry: ",
+                  paste0("{.pkg ", missing_required, "}", collapse = ", ")
+                ))
+              }
+            }
+            for (re in c(required_source, "location", "location_url")) {
+              if (is.list(s[[re]])) {
+                type <- paste0("info_source_", re)
+                results[[type]][[f]] <- c(results[[type]][[f]], n)
+                issues <- c(issues, paste0(
+                  "{.strong {.field ", n, "}}'s number ", i, " {.arg source} entry's {.pkg ", re, "} entry is a list"
+                ))
+              }
+            }
+          }
+        }
+        if ("citations" %in% entries) {
+          citations <- unlist(cm$citations, use.names = FALSE)
+          su <- !citations %in% known_references
+          if (any(su)) {
+            name <- paste0(f, ":::", n)
+            flagged_references[[name]] <- citations[su]
+          }
+        }
+        if ("layer" %in% entries) {
+          if ("source" %in% names(cm$layer)) {
+            if (is.list(cm$layer$source) && !"url" %in% names(cm$layer$source)) {
+              results$info_layer_source_url[[f]] <- c(results$info_layer_source_url[[f]], n)
+              issues <- c(issues, paste0(
+                "{.strong {.field ", n, "}}'s {.arg source} entry is a list, but doesn't have a {.pkg url} entry"
+              ))
+            }
+          } else {
+            results$info_layer_source[[f]] <- c(results$info_layer_source[[f]], n)
+            issues <- c(issues, paste0(
+              "{.strong {.field ", n, "}}'s {.arg layer} entry is missing a {.pkg source} entry"
+            ))
+          }
+          if ("filter" %in% names(cm$layer)) {
+            if (!is.null(names(cm$layer$filter))) cm$layer$filter <- list(cm$layer$filter)
+            for (i in seq_along(cm$layer$filter)) {
+              missing_required <- required_layer_filter[!required_layer_filter %in% names(cm$layer$filter[[i]])]
+              if (length(missing_required)) {
+                results$info_layer_filter[[f]] <- c(results$info_layer_filter[[f]], n)
+                issues <- c(issues, paste0(
+                  "{.strong {.field ", n, "}}'s number ", i, " {.arg filter} entry is missing ",
+                  if (length(missing_required) > 1) "entries: " else "an entry: ",
+                  paste(paste0("{.pkg ", missing_required, "}"), collapse = ", ")
+                ))
+              }
+            }
+          }
         }
       }
     }
@@ -151,6 +301,22 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   }
   cli_progress_done()
   if (!length(meta)) cli_alert_danger("no valid measure info")
+  if (length(flagged_references)) {
+    for (r in names(flagged_references)) {
+      su <- !flagged_references[[r]] %in% known_references
+      if (any(su)) {
+        f <- strsplit(r, ":::", fixed = TRUE)[[1]]
+        results$info_citation[[f[1]]] <- c(results$info_citation[[f[1]]], paste0(
+          f[2], ": ", paste(flagged_references[[r]][su], collapse = ", ")
+        ))
+        all_issues[[f[1]]] <- c(all_issues[[f[1]]], c(">" = paste0(
+          "unknown {.arg citation} ", if (sum(su) > 1) "entries" else "entry",
+          " in {.strong {.field ", f[2], "}}: ",
+          paste0("{.pkg ", flagged_references[[r]][su], "}", collapse = ", ")
+        )))
+      }
+    }
+  }
   if (length(all_issues)) {
     cli_h2("{length(all_issues)} measure info file{? has/s have} issues")
     for (f in names(all_issues)) {

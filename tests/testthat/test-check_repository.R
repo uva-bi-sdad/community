@@ -35,22 +35,38 @@ test_that("all issues are caught", {
     )),
     paste0("fail_", c("idlen_county", "rows", "time", "value_type", "entity_info", "dataset"))
   )), sort(names(res)))
-  data_measure_info(
+  expect_warning(data_measure_info(
     info_file,
     m_int = list(
-      measure = "m_int", category = "a", type = "int", short_name = "integer",
-      short_description = "a measure"
+      measure = "m_int", category = "a", type = "int", long_name = "integer", short_name = "integer",
+      long_description = "a measure", layer = list(filter = "filter")
     ),
     m_perc = list(
-      measure = "m_perc", category = "a", type = "percent", short_name = "percent",
-      short_description = "an percentage"
+      measure = "m_perc", category = "a", type = "percent", long_name = "integer", short_name = "percent",
+      long_description = "an percentage", sources = list(name = list("name")),
+      layer = list(source = list("url"))
     ),
     m_small = list(
-      measure = "m_small", category = "a", type = "numeric", short_name = "small",
-      short_description = "an small value"
+      measure = "m_small", category = "a", type = "numeric", long_name = "integer", short_name = "small",
+      long_description = "an small value", citations = c("a", "b", "absent"),
+      sources = list(name = "a source", date_accessed = 2013, url = "example.com"),
+      layer = list(source = "url", filter = list(feature = "f"))
+    ),
+    references = list(
+      a = list(
+        author = list(list(family = "af")),
+        year = 2013,
+        title = "a title"
+      ),
+      b = list(author = "name"),
+      broken = list(
+        author = list(name = "br f"),
+        year = list(1),
+        title = list("br title")
+      )
     ),
     open_after = FALSE
-  )
+  ), "no matching reference")
   data$geoid <- substr(format(as.numeric(data$geoid), scientific = FALSE), 1, 5)
   write.csv(data, paste0(dir, "/dataset/data/distribution/data.csv"), row.names = FALSE)
   data_min$Year <- 1
@@ -59,6 +75,9 @@ test_that("all issues are caught", {
   write.csv(data, paste0(dir, "/dataset/data/distribution/data_min.csv"))
   unlink(paste0(dir, "/dataset/data/distribution/data_", c("skip", "invalid"), ".csv"))
   res <- check_repository(dir, attempt_repair = TRUE)
-  expect_identical(c("data", "info"), names(res))
+  expect_identical(sort(c("data", "info", paste0("info_", c(
+    "refs_missing", "refs_author", "refs_author_entry", "refs_year", "refs_title",
+    "source_missing", "source_name", "citation", "layer_source", "layer_filter", "layer_source_url"
+  )))), sort(names(res)))
   unlink(dir, TRUE)
 })
