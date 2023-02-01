@@ -2797,9 +2797,10 @@ void (function () {
               o.e.addEventListener('click', elements.table.click.bind(o))
             }
             o.show = function (e) {
-              const existing_geoids = Object.values(this.rowIds)
+              const existing_geoids = Object.keys(this.rows)
               if (e.features && existing_geoids.includes(e.features.id)) {
                 const row = this.e.querySelector(`[data-geoid='${e.features.id}']`)
+                if (row) {
                 row.style.backgroundColor = defaults.background_highlight
                 if (site.settings.table_autoscroll) {
                   const h = this.e.parentElement.getBoundingClientRect().height,
@@ -2811,11 +2812,12 @@ void (function () {
                 }
               }
             }
+            }
             o.revert = function (e) {
-              const existing_geoids = Object.values(this.rowIds)
+              const existing_geoids = Object.keys(this.rows)
               if (e.features && existing_geoids.includes(e.features.id)) {
                 const row = this.e.querySelector(`[data-geoid='${e.features.id}']`)
-                row.style.backgroundColor = 'inherit'
+                if (row) row.style.backgroundColor = 'inherit'
               }
             }
             o.options.variable_source = o.options.variables
