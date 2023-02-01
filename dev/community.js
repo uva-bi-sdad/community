@@ -2801,17 +2801,17 @@ void (function () {
               if (e.features && existing_geoids.includes(e.features.id)) {
                 const row = this.e.querySelector(`[data-geoid='${e.features.id}']`)
                 if (row) {
-                row.style.backgroundColor = defaults.background_highlight
-                if (site.settings.table_autoscroll) {
-                  const h = this.e.parentElement.getBoundingClientRect().height,
-                    top = row.getBoundingClientRect().y - this.e.getBoundingClientRect().y
-                  this.e.parentElement.scroll({
-                    top: h > this.e.scrollHeight - top ? this.e.parentElement.scrollHeight : top,
-                    behavior: site.settings.table_scroll_behavior || 'smooth',
-                  })
+                  row.style.backgroundColor = defaults.background_highlight
+                  if (site.settings.table_autoscroll) {
+                    const h = this.e.parentElement.getBoundingClientRect().height,
+                      top = row.getBoundingClientRect().y - row.parentElement.getBoundingClientRect().y
+                    this.e.parentElement.scroll({
+                      top: h > this.e.scrollHeight - top ? this.e.parentElement.scrollHeight : top,
+                      behavior: site.settings.table_scroll_behavior || 'smooth',
+                    })
+                  }
                 }
               }
-            }
             }
             o.revert = function (e) {
               const existing_geoids = Object.keys(this.rows)
