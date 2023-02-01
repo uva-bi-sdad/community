@@ -1271,3 +1271,13 @@ input[type='range']::-ms-thumb {
   background: white;
   z-index: 1;
 }
+
+.table-wrapper table > thead > tr > th:first-child,
+.table-wrapper table > tbody > tr > td:first-child {
+  text-align: left;
+}
+
+.table-wrapper table > tbody > tr > td:not(:first-child),
+.table-wrapper table > thead > tr > th:not(:first-child) {
+  text-align: right;
+}
