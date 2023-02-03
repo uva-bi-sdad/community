@@ -3107,7 +3107,9 @@ void (function () {
                             for (let n = t[1] - t[0]; n >= 0; n--) {
                               const title = time.value[n + t[0]] + ''
                               if (Object.keys(source[key].data).includes(code))
-                                tableData[key][title] = source[key].data[code][n]
+                                if (typeof source[key].data[code] == 'number')
+                                  tableData[key][title] = source[key].data[code]
+                                else tableData[key][title] = source[key].data[code][n]
                             }
                         }
 
