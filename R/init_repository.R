@@ -1,4 +1,3 @@
-
 #' Create a Data Repository
 #'
 #' Create a repository for a dataset, which may include data documentation and/or a data site.
@@ -36,7 +35,7 @@ init_repository <- function(dir, datasets = NULL, init_data = TRUE, init_site = 
       "<template: Describe the repository>",
       "\n# Structure",
       "This is a community data repository, created with the `community::init_repository()` function.",
-      "1. `{set}/code/ingest.R` should download and prepare data from a public source, and output files to `{set}/data/distribution`.",
+      "1. `{set}/code/distribution/ingest.R` should download and prepare data from a public source, and output files to `{set}/data/distribution`.",
       "2. `{set}/data/distribution/measure_info.json` should contain metadata for each of the measures in the distribution data file(s).",
       if (init_site) {
         paste(
@@ -79,7 +78,7 @@ init_repository <- function(dir, datasets = NULL, init_data = TRUE, init_site = 
   if (is.character(datasets) && any(!datasets_inited)) {
     for (i in seq_along(datasets)) {
       dataset <- datasets[i]
-      dirs <- paste0(dir, "/", dataset, c("/code", "/data"))
+      dirs <- paste0(dir, "/", dataset, c("/code/distribution", "/data"))
       if (!any(file.exists(dirs))) {
         dir.create(dirs[[1]], FALSE, TRUE)
         ingest_file <- paste0(dirs[[1]], "/ingest.R")

@@ -23,6 +23,7 @@ Other contributors:
 \itemize{
   \item Biocomplexity Institute [copyright holder, funder]
   \item Alan Wang [contributor]
+  \item Prashanth Wagle [contributor]
 }
 
 }

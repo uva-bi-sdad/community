@@ -51,7 +51,7 @@
 #'       \item \code{date_accessed}: Date of retrieval (arbitrary format).
 #'     }
 #'   \item \strong{\code{citations}}: A vector of reference ids (the names of \code{reference} entries; e.g., \code{c("ref1", "ref3")}).
-#'   \item \strong{\code{layer}}: A list specifying a \code{\link{output_map}} overlay:
+#'   \item \strong{\code{layer}}: A list specifying an \code{\link{output_map}} overlay:
 #'     \itemize{
 #'       \item \code{source} (required): A URL to a GeoJSON file, or a list with a \code{url} and \code{time} entry, where
 #'         \code{time} conditions the display of the layer on the current selected time. Alternative to a list that specifies time,
@@ -112,6 +112,10 @@ data_measure_info <- function(path, ..., info = list(), references = list(), str
   if (!overwrite && file.exists(path)) {
     if (verbose) cli_bullets(c(i = "updating existing file: {.path {basename(path)}}"))
     built <- read_json(path)
+    if (all(c("measure", "type") %in% names(built))) {
+      built <- list(built)
+      names(built) <- built[[1]]$measure
+    }
   }
   if (length(references)) {
     references <- c(references, built$`_references`)

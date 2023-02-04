@@ -100,25 +100,27 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
           path <- paste0(dir, "/docs/", d$site_file)
           if (file.exists(file)) {
             if (force || (!file.exists(path) || file.mtime(file) > file.mtime(path))) {
-              data <- if (grepl("[gbx]z2?$", file)) {
-                as.data.table(read.csv(gzfile(file), check.names = FALSE))
-              } else {
-                fread(file)
-              }
+              data <- as.data.frame(read_delim_arrow(
+                gzfile(file),
+                if (grepl(".csv", file, fixed = TRUE)) "," else "\t",
+                col_names = c("ID", vapply(d$schema$fields, "[[", "", "name")),
+                col_types = paste(c("c", rep("n", length(d$schema$fields))), collapse = ""),
+                skip = 1
+              ))
               time <- NULL
               if (length(d$time) && d$time[[1]] %in% colnames(data)) {
                 time <- d$time[[1]]
                 data <- data[order(data[[d$time[[1]]]]), ]
               }
               if (length(d$ids) && d$ids[[1]]$variable %in% colnames(data)) {
-                ids <- trimws(format(data[[d$ids[[1]]$variable]], scientific = FALSE))
+                ids <- gsub("^\\s+|\\s+$", "", format(data[[d$ids[[1]]$variable]], scientific = FALSE))
                 if (is.null(time) && anyDuplicated(ids)) {
                   cli_abort(paste(
                     "no time variable was specified, yet {?an id was/ids were} duplicated:",
                     "{.val {unique(ids[duplicated(ids)])}}"
                   ))
                 }
-                set(data, NULL, d$ids[[1]]$variable, NULL)
+                data <- data[, colnames(data) != d$ids[[1]]$variable, drop = FALSE]
               } else {
                 ids <- rownames(data)
               }
@@ -140,7 +142,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                     } else {
                       tryCatch(
                         read_json(if (length(mf)) mf[[1]] else d$ids[[1]]$map),
-                        error = function(e) NULL
+                        error = function(e) cli_alert_warning("failed to read ID map: {e$message}")
                       )
                     }
                     ids_maps[[d$ids[[1]]$map]] <- ids_map
@@ -154,7 +156,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                 }
                 cids <- NULL
                 for (pname in rev(names(previous_data))) {
-                  if (!is.null(ids_map[[pname]][[1]][[d$name]])) {
+                  if (pname %in% names(ids_map) && !is.null(ids_map[[pname]][[1]][[d$name]])) {
                     child <- pname
                     cids <- vapply(ids_map[[pname]], function(e) {
                       if (is.null(e[[d$name]])) "" else e[[d$name]]
@@ -176,7 +178,6 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                         if (is.null(time)) {
                           aggs <- vapply(cd, function(v) if (is.numeric(v) && !all(is.na(v))) mean(v, na.rm = TRUE) else NA, 0)
                           aggs <- aggs[!is.na(aggs) & names(aggs) %in% cn & names(aggs) != "time"]
-                          sdata[[id]] <- as.data.frame(sdata[[id]])
                           aggs <- aggs[is.na(sdata[[id]][, names(aggs)])]
                           if (length(aggs)) {
                             aggregated <- TRUE
@@ -184,7 +185,6 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                           }
                         } else {
                           cd <- split(cd, cd[[time]])
-                          sdata[[id]] <- as.data.frame(sdata[[id]])
                           for (ct in names(cd)) {
                             aggs <- vapply(cd[[ct]], function(v) if (is.numeric(v) && !all(is.na(v))) mean(v, na.rm = TRUE) else NA, 0)
                             aggs <- aggs[!is.na(aggs) & names(aggs) %in% cn]
@@ -209,7 +209,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
               if (fixed_ids) id_lengths[d$name] <- pn
               previous_data[[d$name]] <- sdata
               evars <- vars
-              if (!length(evars)) evars <- colnames(data)
+              if (!length(evars)) evars <- colnames(data)[colnames(data) %in% names(var_codes)]
               if (!is.null(time) && time %in% evars) evars <- evars[evars != time]
               var_meta <- lapply(evars, function(vn) {
                 list(
@@ -230,7 +230,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
               })
               names(var_meta) <- evars
               sdata <- lapply(sdata, function(e) {
-                e <- if (class(e)[1] == "data.table") e[, evars, with = FALSE] else e[, evars]
+                e <- e[, evars]
                 e <- as.list(e)
                 if (sparse_time) {
                   for (f in evars) {
@@ -287,7 +287,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     theme_dark = FALSE, partial_init = TRUE, palette = "vik", hide_url_parameters = FALSE,
     background_shapes = TRUE, iqr_box = TRUE, polygon_outline = 1.5, color_scale_center = "none",
     table_autoscroll = TRUE, table_scroll_behavior = "smooth", hide_tooltips = FALSE,
-    map_animations = "all", trace_limit = 20, map_overlay = TRUE, circle_radius = 5
+    map_animations = "all", trace_limit = 20, map_overlay = TRUE, circle_radius = 7
   )
   for (s in names(defaults)) {
     if (!is.null(options[[s]])) {

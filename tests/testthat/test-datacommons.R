@@ -4,19 +4,19 @@ dir <- paste0(tempdir(), "/datacommons")
 dir_view <- paste0(tempdir(), "/view")
 
 test_that("initialization works", {
-  init_datacommons(dir, repos = "uva-bi-sdad/sdc.health", refresh_after = TRUE)
-  expect_true(dir.exists(paste0(dir, "/repos/sdc.health")))
+  init_datacommons(dir, repos = "uva-bi-sdad/sdc.education", refresh_after = TRUE)
+  expect_true(dir.exists(paste0(dir, "/repos/sdc.education")))
 })
 
 test_that("mapping works", {
-  datacommons_map_files(dir)
+  datacommons_map_files(dir, overwrite = TRUE)
   expect_identical(list.files(paste0(dir, "/cache")), c("id_map.json", "variable_map.csv"))
 })
 
 test_that("find variables", {
   expect_identical(
-    datacommons_find_variables("hosp", dir)[[1]]$variable,
-    paste0("hosp_", c("2", "e2", "3"), "sfca")
+    datacommons_find_variables("daycare", dir)[[1]]$variable,
+    paste0("daycare_", c("capacity", "min_drivetime", "per_1k"))
   )
 })
 
@@ -29,7 +29,7 @@ test_that("view works", {
   expect_true(dir.exists(dir_view))
   expect_true(length(jsonlite::read_json(
     paste0(dir_view, "/docs/data/manifest.json")
-  )[["uva-bi-sdad/sdc.health"]]$files) != 0)
+  )[["uva-bi-sdad/sdc.education"]]$files) != 0)
   datacommons_view(
     dir, "view", dir_view,
     variables = variables[1:5], ids = paste0("5100", c(1, 3, 5)), verbose = FALSE

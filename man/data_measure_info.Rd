@@ -75,7 +75,7 @@ types are rounded to show a set number of digits.
 \item \code{date_accessed}: Date of retrieval (arbitrary format).
 }
 \item \strong{\code{citations}}: A vector of reference ids (the names of \code{reference} entries; e.g., \code{c("ref1", "ref3")}).
-\item \strong{\code{layer}}: A list specifying a \code{\link{output_map}} overlay:
+\item \strong{\code{layer}}: A list specifying an \code{\link{output_map}} overlay:
 \itemize{
 \item \code{source} (required): A URL to a GeoJSON file, or a list with a \code{url} and \code{time} entry, where
 \code{time} conditions the display of the layer on the current selected time. Alternative to a list that specifies time,

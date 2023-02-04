@@ -24,10 +24,12 @@
 #' \code{remote} entry (GitHub repository, including user name and repo name), and optionally \code{name}
 #' and \code{url} (link to the served site), which will otherwise be derived from \code{remote}.
 #' @param execute Logical; if \code{FALSE}, will create/update, but not run the view.
-#' @param prefer_repo Logical; if \code{TRUE}, will prefer repository files over those from distributions
-#' (such as Dataverse).
+#' @param prefer_repo Logical; if \code{FALSE}, will prefer distribution files (such as from Dataverse)
+#' over those in the repositories.
+#' @param preselect_files Logical; if \code{TRUE}, will select files by ID coverage before processing them,
+#' which can save time, but might miss data spread across multiple files.
 #' @param refresh_map Logical; if \code{TRUE}, overwrites any existing map files.
-#' @param use_manifest Logical; if \code{FALSE}, will not search for manifest files in each repository to
+#' @param use_manifest Logical; if \code{TRUE}, will search for manifest files in each repository to
 #' extract measure information from. These should have \code{data} entries with object arrays containing a
 #' \code{measure_info} entry (e.g., \code{'{"data: [{"measure_info": [{...}]}]"}'}).
 #' @param overwrite Logical; if \code{TRUE}, reformatted files in \code{output}.
@@ -45,8 +47,9 @@
 
 datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL, ids = NULL,
                              files = NULL, run_after = NULL, run_before = NULL, measure_info = list(),
-                             remote = NULL, url = NULL, children = list(), execute = TRUE, prefer_repo = FALSE,
-                             refresh_map = FALSE, use_manifest = TRUE, overwrite = FALSE, verbose = TRUE) {
+                             remote = NULL, url = NULL, children = list(), execute = TRUE, prefer_repo = TRUE,
+                             preselect_files = FALSE, refresh_map = FALSE, use_manifest = FALSE, overwrite = FALSE,
+                             verbose = TRUE) {
   if (missing(commons)) cli_abort('{.arg commons} must be speficied (e.g., commons = ".")')
   if (missing(name)) {
     name <- list.files(paste0(commons, "/views"))[1]
@@ -196,34 +199,37 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
           Reduce("+", lapply(view$ids, function(id) cfs %in% map$ids[[id]]$file))
       ), ]
       files <- files[!duplicated(paste(files$dir_name, basename(files$file))), , drop = FALSE]
-      sel_files <- unique(unlist(lapply(split(files, files$dir_name), function(fs) {
-        if (nrow(fs) == 1) {
-          fs$file
-        } else {
-          ccfs <- sub("^/", "", fs$file)
-          ifm <- vapply(map$ids[view$ids], function(im) ccfs %in% sub("^/", "", im$files), logical(length(ccfs)))
-          is <- colSums(ifm) != 0
-          sel <- NULL
-          for (i in seq_along(ccfs)) {
-            if (any(is[ifm[i, ]])) {
-              sel <- c(sel, fs$file[i])
-              is[ifm[i, ]] <- FALSE
+      if (preselect_files) {
+        sel_files <- unique(unlist(lapply(split(files, files$dir_name), function(fs) {
+          if (nrow(fs) == 1) {
+            fs$file
+          } else {
+            ccfs <- sub("^/", "", fs$file)
+            ifm <- vapply(map$ids[view$ids], function(im) ccfs %in% sub("^/", "", im$files), logical(length(ccfs)))
+            is <- colSums(ifm) != 0
+            sel <- NULL
+            for (i in seq_along(ccfs)) {
+              if (any(is[ifm[i, ]])) {
+                sel <- c(sel, fs$file[i])
+                is[ifm[i, ]] <- FALSE
+              }
             }
+            sel
           }
-          sel
-        }
-      }), use.names = FALSE))
-      files <- files[files$file %in% sel_files, ]
+        }), use.names = FALSE))
+        files <- files[files$file %in% sel_files, ]
+      }
+      files <- files[order(file.mtime(paste0(commons, "/", files$file)), decreasing = TRUE), ]
       if (verbose) cli_alert_info("updating manifest: {.file {paths[2]}}")
       repo_manifest <- read_json(paste0(commons, "/manifest/repos.json"))
       manifest <- lapply(split(files, files$repo), function(r) {
         hr <- repo_manifest[[r$repo[[1]]]]
         files <- paste0(commons, "/", unique(r$file))
-        names(files) <- basename(files)
+        names(files) <- sub("^[^/]+/[^/]+/", "", unique(r$file))
         list(
           repository = r$repo[[1]],
           files = lapply(files, function(f) {
-            name <- basename(f)
+            name <- sub("^/[^/]+/[^/]+/", "", sub(commons, "", f, fixed = TRUE))
             if (grepl("repos/", f, fixed = TRUE)) {
               m <- hr$files[[name]]
               m$baseurl <- hr$url
@@ -238,6 +244,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       if (is.character(measure_info)) {
         measure_info <- if (length(measure_info) == 1 && file.exists(measure_info)) read_json(measure_info) else as.list(measure_info)
       }
+      base_vars <- sub("^[^:/]+[:/]", "", view$variables)
       for (r in unique(files$repo)) {
         ri <- NULL
         if (use_manifest) {
@@ -265,11 +272,22 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
           ri <- lapply(list.files(
             paste0(commons, "/repos/", sub("^.+/", "", r)), "^measure_info[^.]*\\.json$",
             full.names = TRUE, recursive = TRUE
-          ), read_json)
+          ), function(f) {
+            m <- tryCatch(read_json(f), error = function(e) {
+              cli_alert_warning("failed to read measure info: {.file {f}}")
+              NULL
+            })
+            if (all(c("measure", "type", "short_description") %in% names(m))) {
+              m <- list(m)
+              names(m) <- m[[1]]$measure
+            }
+            m
+          })
         }
         if (length(ri)) {
           ri <- unlist(ri, recursive = FALSE)
           nri <- names(ri)
+          if (any(nri == "")) for (mname in which(nri == "")) names(ri)[mname] <- ri[[mname]]$measure
           es <- nri[grepl("^_", nri) & !nri %in% view$variables]
           if (length(es)) {
             for (e in es) {
@@ -281,13 +299,12 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
             }
           }
           if (length(view$variables) && any(!nri %in% view$variables)) {
-            base_vars <- sub("^[^:/]+[:/]", "", view$variables)
             for (i in seq_along(nri)) {
               n <- nri[i]
               if (n %in% base_vars) {
                 names(ri)[i] <- view$variables[which(base_vars == n)[1]]
               } else {
-                n <- sub("^[^:]+:", "", nri[i])
+                n <- sub("^[^:]*:", "", nri[i])
                 if (n %in% view$variables) {
                   names(ri)[i] <- n
                 }
@@ -296,7 +313,11 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
             nri <- names(ri)
           }
           ri <- ri[(if (length(view$variables)) nri %in% view$variables else TRUE) & !nri %in% names(measure_info)]
-          if (length(ri)) measure_info[names(ri)] <- ri
+          if (length(ri)) {
+            measure_info[names(ri)] <- lapply(
+              ri, function(e) if (is.null(names(e)) && !is.null(names(e[[1]]))) e[[1]] else e
+            )
+          }
         }
       }
       if (length(measure_info)) {

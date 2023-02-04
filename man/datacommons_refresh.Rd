@@ -5,16 +5,16 @@
 \title{Refresh Data Commons Repositories}
 \usage{
 datacommons_refresh(dir, clone_method = "http",
-  include_distributions = TRUE, refresh_distributions = FALSE,
-  only_new = FALSE, reset_repos = FALSE, rescan_only = FALSE,
-  use_manifest = TRUE, verbose = TRUE)
+  include_distributions = FALSE, refresh_distributions = FALSE,
+  only_new = FALSE, reset_repos = FALSE, reset_on_fail = FALSE,
+  rescan_only = FALSE, use_manifest = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{dir}{Directory of the data commons projects, as created by \code{\link{init_datacommons}}.}
 
 \item{clone_method}{Means of cloning new repositories; either \code{"http"} (default) or \code{"ssh"}.}
 
-\item{include_distributions}{Logical; if \code{TRUE} (default), will attempt to locate and cache copies of datasets
+\item{include_distributions}{Logical; if \code{TRUE}, will attempt to locate and cache copies of datasets
 pointed to from the data repositories (so far just from Dataverse, implicitly from DOI files).}
 
 \item{refresh_distributions}{Logical; if \code{TRUE}, will download fresh copies of the distribution metadata.}
@@ -23,11 +23,13 @@ pointed to from the data repositories (so far just from Dataverse, implicitly fr
 
 \item{reset_repos}{Logical; if \code{TRUE}, will fetch and hard reset the repositories to remove any local changes.}
 
+\item{reset_on_fail}{Logical; if \code{TRUE}, will reset only if a regular pull fails.}
+
 \item{rescan_only}{Logical; if \code{TRUE}, will only read the files that are already in place, without checking for
 updates from the remote repository.}
 
-\item{use_manifest}{Logical; if \code{FALSE}, will search for files rather than using a \code{manifest.json} file in each
-repository. Each manifest should contain an object with a \code{data} entry containing an object array with \code{path}
+\item{use_manifest}{Logical; if \code{TRUE}, will use a \code{manifest.json} file in each repository to identify files.
+Each manifest should contain an object with a \code{data} entry containing an object array with \code{path}
 entries (e.g., \code{'{"data": [{"path": "path/from/repos/repo_name/data.csv"}]}'}).}
 
 \item{verbose}{Logical; if \code{FALSE}, will not show updated repositories.}

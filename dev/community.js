@@ -186,7 +186,7 @@ void (function () {
         levels: /^lev/,
         ids: /^ids/,
         minmax: /^m[inax]{2}$/,
-        int_types: /^(?:year|integer)$/,
+        int_types: /^(?:year|int.*)$/,
         end_punct: /[.?!]$/,
         mustache: /\{(.*?)\}/g,
         measure_name: /(?:^measure|_name)$/,
@@ -200,6 +200,7 @@ void (function () {
         median: /^med/i,
         location_string: /^[^?]*/,
         time_ref: /\{time\}/g,
+        pre_colon: /^[^:]*:/,
       },
       tooltip_icon_rule =
         'button.has-note::after,.button-wrapper.has-note button::before,.has-note legend::before,.has-note label::before,.wrapper.has-note > div > label::before{display:none}',
@@ -1546,13 +1547,13 @@ void (function () {
           },
           mouseover: function (d) {
             if (d.points && 1 === d.points.length && this.e.data[d.points[0].fullData.index]) {
-              Plotly.restyle(this.e, {'line.width': 5, 'marker.size': 12}, d.points[0].fullData.index)
+              Plotly.restyle(this.e, {'line.width': 5}, d.points[0].fullData.index)
               update_subs(this.id, 'show', site.data.entities[d.points[0].data.id])
             }
           },
           mouseout: function (d) {
             if (d.points && 1 === d.points.length && this.e.data[d.points[0].fullData.index]) {
-              Plotly.restyle(this.e, {'line.width': 2, 'marker.size': 8}, d.points[0].fullData.index)
+              Plotly.restyle(this.e, {'line.width': 2}, d.points[0].fullData.index)
               update_subs(this.id, 'revert', site.data.entities[d.points[0].data.id])
             }
           },
@@ -1586,20 +1587,16 @@ void (function () {
                   if (!(this.parsed.palette in palettes)) this.parsed.palette = defaults.palette
                   this.parsed.time = (y ? y.value() - site.data.meta.times[d].range[0] : 0) - varcol.time_range[d][0]
                   this.parsed.summary = varcol[this.view].summaries[d]
-                  if (!this.parsed.summary.n[this.parsed.time]) {
-                    this.parsed.time = 0
-                    missingVals = true
-                  }
-                  const summary = vary[this.view].summaries[d],
-                    missing = this.parsed.summary.missing[this.parsed.time],
-                    n = this.parsed.summary.n[this.parsed.time],
+
+                  const display_time = this.parsed.summary.n[this.parsed.time] ? this.parsed.time : 0,
+                    summary = vary[this.view].summaries[d],
+                    missing = this.parsed.summary.missing[display_time],
+                    n = this.parsed.summary.n[display_time],
                     subset = n !== v.n_selected.dataset,
                     rank = subset ? 'subset_rank' : 'rank',
-                    order = subset
-                      ? varcol[this.view].order[d][this.parsed.time]
-                      : varcol.info[d].order[this.parsed.time],
+                    order = subset ? varcol[this.view].order[d][display_time] : varcol.info[d].order[display_time],
                     traces = []
-                  let i = this.parsed.summary.missing[this.parsed.time],
+                  let i = this.parsed.summary.missing[display_time],
                     k,
                     b,
                     fn = order ? order.length : 0,
@@ -1611,6 +1608,7 @@ void (function () {
                       d +
                       this.parsed.x +
                       this.parsed.y +
+                      this.parsed.time +
                       this.parsed.palette +
                       this.parsed.color +
                       site.settings.summary_selection +
@@ -1758,7 +1756,7 @@ void (function () {
                     e.layer[this.id][time].setStyle({
                       color: defaults['border_highlight_' + site.settings.theme_dark],
                     })
-                } else {
+                } else if (e.layer[this.id].setStyle) {
                   e.layer[this.id].setStyle({
                     color: defaults['border_highlight_' + site.settings.theme_dark],
                   })
@@ -1789,7 +1787,7 @@ void (function () {
             if (o.time) add_dependency(o.time, dep)
             if (!o.e.style.height) o.e.style.height = o.options.height ? o.options.height : '400px'
             if (o.options.overlays_from_measures && site.data.variable_info) {
-              if (!site.map[o.id].overlays) site.map[o.id].overlays = []
+              if (!Array.isArray(site.map[o.id].overlays)) site.map[o.id].overlays = []
               const overlays = site.map[o.id].overlays
               Object.keys(site.data.variable_info).forEach(variable => {
                 const info = site.data.variable_info[variable]
@@ -1798,7 +1796,7 @@ void (function () {
                     const temp = info.layer.source
                     info.layer.source = []
                     for (
-                      let range = site.data.meta.ranges[variable], y = range[0], max = range[1], time;
+                      let range = site.data.meta.ranges[variable], y = range[0], max = range[1] + 1, time;
                       y < max;
                       y++
                     ) {
@@ -1808,7 +1806,8 @@ void (function () {
                   }
                   patterns.time_ref.lastIndex = 0
                   const layer = {variable: variable, source: info.layer.source}
-                  if (info.layer.filter) layer.filter = info.layer.filter
+                  if (info.layer.filter && (Array.isArray(info.layer.filter) || info.layer.filter.feature))
+                    layer.filter = info.layer.filter
                   overlays.push(layer)
                 }
               })
@@ -4061,6 +4060,12 @@ void (function () {
           u.listbox.id = u.id + '-listbox'
         }
       }
+      const url_set = site.url_options[u.id]
+      let ck_suffix = false
+      if (url_set && !(url_set in site.data.variables)) {
+        site.url_options[u.id] = url_set.replace(patterns.pre_colon, '')
+        if (!(site.url_options[u.id] in site.data.variables)) ck_suffix = true
+      }
       site.metadata.info[d].schema.fields.forEach(m => {
         const v = site.data.variables[m.name]
         if (v && !v.is_time) {
@@ -4125,6 +4130,10 @@ void (function () {
             s[n].id = u.id + '-option' + n
             values[m.name] = n
             disp[l] = n++
+          }
+          if (ck_suffix && url_set === m.name.replace(patterns.pre_colon, '')) {
+            site.url_options[u.id] = m.name
+            ck_suffix = false
           }
         }
       })
