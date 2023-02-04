@@ -3018,7 +3018,6 @@ void (function () {
                         } else this.state = ''
                         this.options.order[0][0] = this.header.length - 1
                         this.options.columns = this.header
-                        //TODO: This code isn't needed for now per se, as sorting is implemented by selected year
                         this.sortTable = e => {
                           let tableData = this.rows
                           const direction = e.target.dataset.dir == 'desc' ? 'asc' : 'desc'
@@ -3079,25 +3078,12 @@ void (function () {
                         createTable(this.table)
                       }
 
-                      const n = this.header.length
                       let reset
-                      // for (let i = 1; i < n; i++) {
-                      //   this.table.column(i).visible(v.times[i - 1 + this.parsed.time_range[0]], false)
-                      //   if (v.times[i - 1 + this.parsed.time_range[0]]) reset = false
-                      // }
+
                       if (reset) this.state = ''
                     }
                     if (this.options.wide) {
                       const tableData = {}
-                      //TODO: This is the code for sorting by columns
-                      // const attachSortEventListener = () => {
-                      //   const buttons = this.table.querySelectorAll('th')
-                      //   buttons.forEach(button => {
-                      //     button.addEventListener('click', this.sortTable)
-                      //   })
-                      // }
-
-                      // attachSortEventListener()
 
                       const prepareData = () => {
                         const dataset = d
@@ -3121,10 +3107,6 @@ void (function () {
                         for (let key in tableData) {
                           if (Object.keys(tableData[key]).length == 0) delete tableData[key]
                         }
-
-                        // Object.keys(v.selection.all).forEach(e => {
-                        //   this.rowIds[v.selection.all[e].features.name] = e
-                        // })
                       }
 
                       const appendRows = table => {
