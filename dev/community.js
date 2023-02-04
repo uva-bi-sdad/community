@@ -3048,7 +3048,7 @@ void (function () {
                         this.hiddenTimes = []
                         for (let t = 0; t <= site.data.meta.times[d].value.length; t++) {
                           if (v.times[t] === false) {
-                            const year = 2009 + t
+                            const year = site.data.meta.times[dataset].range[0] + t
                             this.hiddenTimes.push(year.toString())
                           }
                         }
