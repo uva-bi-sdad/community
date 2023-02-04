@@ -2978,8 +2978,7 @@ void (function () {
                       k => (this.options[k] = valueOf(this.reference_options[k]))
                     )
                     if (this.options.single_variable) {
-                      const time = valueOf(v.time_agg),
-                        variable = await get_variable(vn, this.view)
+                      const variable = await get_variable(vn, this.view)
                       this.parsed.dataset = d
                       this.parsed.color = vn
                       this.parsed.time_range = variable.time_range[d]
@@ -2988,7 +2987,13 @@ void (function () {
                         this.parsed.time_range[0]
                       this.parsed.summary = this.view in variable ? variable[this.view].summaries[d] : false
                       this.parsed.order = this.view in variable ? variable[this.view].order[d][this.parsed.time] : false
-                      if (this.header.length < 2 || d !== this.header[1].dataset || vn !== this.header[1].variable) {
+                      if (
+                        this.header.length < 2 ||
+                        d !== this.header[1].dataset ||
+                        vn !== this.header[1].variable ||
+                        (this.time && this.time !== valueOf(v.time_agg))
+                      ) {
+                        this.time = valueOf(v.time_agg)
                         const destroyTable = () => {
                           this.e.innerHTML = ''
                         }
@@ -3060,7 +3065,7 @@ void (function () {
                             const th = document.createElement('th')
                             const div = document.createElement('div')
                             div.innerText = headers[i]
-                            if (headers[i] == time) div.style['border'] = 'solid black'
+                            if (headers[i] == this.time) div.style['border'] = 'solid black'
                             div.dataset.dir = ''
                             th.append(div)
                             tr.append(th)
