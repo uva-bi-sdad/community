@@ -3220,6 +3220,7 @@ void (function () {
             if (e.target.tagName == 'TD' && e.target.parentElement.tagName == 'TR') {
               const parent = e.target.parentElement
               parent.style['backgroundColor'] = defaults.background_highlight
+              parent.children[0].style['backgroundColor'] = defaults.background_highlight
               const id = parseInt(parent.dataset.geoid)
               if (id in site.data.entities) {
                 update_subs(this.id, 'show', site.data.entities[id])
@@ -3231,6 +3232,7 @@ void (function () {
               const parent = e.target.parentElement
               const id = parseInt(parent.dataset.geoid)
               parent.style['backgroundColor'] = 'inherit'
+              parent.children[0].style['backgroundColor'] = `var(--background-border)`
               if (id in site.data.entities) {
                 update_subs(this.id, 'revert', site.data.entities[id])
               }
