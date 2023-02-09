@@ -3125,6 +3125,7 @@ void (function () {
                         let tableData_sorted = Object.entries(tableData).sort(([, a], [, b]) => -(a[time] - b[time]))
                         for (var i = 0; i < tableData_sorted.length; i++) {
                           let tr = document.createElement('tr')
+                          tr.style.cursor = 'pointer'
                           let td = document.createElement('td')
                           td.innerText = v.selection.all[tableData_sorted[i][0]].features.name
 
