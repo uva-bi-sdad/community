@@ -100,6 +100,12 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
       )
       if (!is.null(d)) {
         if (nrow(d)) {
+          lcols <- tolower(colnames(d))
+          vars <- c(id_location, variable_location)
+          if (any(!vars %in% colnames(d))) {
+            l <- !colnames(d) %in% vars & lcols %in% vars
+            colnames(d)[l] <- lcols[l]
+          }
           if (is.character(variable_location) && !variable_location %in% colnames(d)) {
             novars <- c(novars, f)
             next
