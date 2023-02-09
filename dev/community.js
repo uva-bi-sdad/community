@@ -1066,7 +1066,7 @@ void (function () {
             c.type = 'text'
             c.setAttribute('aria-labelledby', id + '-label')
             c.id = id + '-input'
-            c.autocomplete = 'false'
+            c.autocomplete = 'off'
             if (settings && settings.clearable) {
               e.firstElementChild.appendChild((c = document.createElement('button')))
               c.type = 'button'

@@ -88,7 +88,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
     f <- path[[file]]
     m <- metas[[file]]
     name <- basename(f)
-    format <- tolower(strsplit(f, ".", fixed = TRUE)[[1]][2])
+    format <- if (grepl(".csv", name, fixed = TRUE)) "csv" else if (grepl(".rds", name, fixed = TRUE)) "rds" else "tsv"
     if (is.na(format)) format <- "rds"
     info <- file.info(f)
     metas <- list()
