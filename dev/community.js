@@ -2967,7 +2967,13 @@ void (function () {
                   this.rows = {}
                   this.rowIds = {}
                   const clearTable = table => {
-                    while (table.childNodes && table.childNodes.length > 1) table.removeChild(table.lastChild)
+                    for (const el of table.childNodes) {
+                      if (el.tagName == 'TBODY')
+                        while (el.firstChild) {
+                          el.removeChild(el.lastChild)
+                        }
+                    }
+                    // while (table.childNodes && table.childNodes.length > 1) table.removeChild(table.lastChild)
                   }
                   clearTable(this.table)
                   let redraw = true
