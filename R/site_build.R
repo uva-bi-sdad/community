@@ -100,12 +100,16 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
           path <- paste0(dir, "/docs/", d$site_file)
           if (file.exists(file)) {
             if (force || (!file.exists(path) || file.mtime(file) > file.mtime(path))) {
+              vars <- vapply(d$schema$fields, "[[", "", "name")
+              types <- vapply(d$schema$fields, function(e) if (e$type == "string") "c" else "n", "")
+              if (length(d$ids)) {
+                vars <- c("ID", vars)
+                types <- c("c", types)
+              }
               data <- as.data.frame(read_delim_arrow(
                 gzfile(file),
                 if (grepl(".csv", file, fixed = TRUE)) "," else "\t",
-                col_names = c("ID", vapply(d$schema$fields, "[[", "", "name")),
-                col_types = paste(c("c", rep("n", length(d$schema$fields))), collapse = ""),
-                skip = 1
+                col_names = vars, col_types = paste(types, collapse = ""), skip = 1
               ))
               time <- NULL
               if (length(d$time) && d$time[[1]] %in% colnames(data)) {
@@ -211,6 +215,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
               evars <- vars
               if (!length(evars)) evars <- colnames(data)[colnames(data) %in% names(var_codes)]
               if (!is.null(time) && time %in% evars) evars <- evars[evars != time]
+              evars <- evars[evars %in% names(var_codes)]
               var_meta <- lapply(evars, function(vn) {
                 list(
                   code = var_codes[[vn]],

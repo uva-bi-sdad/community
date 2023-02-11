@@ -531,19 +531,22 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
             if (any(su)) su[su] <- !make_full_name(f, measures[su]) %in% names(meta)
             if (any(su)) results$warn_missing_info[[f]] <- c(results$warn_missing_info[[f]], measures[su])
 
-            id_chars <- nchar(d[[id]])
-            su <- which(id_chars == 12)
-            if (length(su)) {
-              su <- su[grep("[^0-9]", d[[id]][su], invert = TRUE)]
-              if (length(su) && any(!unique(substring(d[[id]][su], 1, 11)) %in% d[[id]])) {
-                results$warn_bg_agg <- c(results$warn_bg_agg, f)
+            for (m in measures) {
+              mids <- d[[id]][d[[value_name]] == m]
+              id_chars <- nchar(mids)
+              su <- which(id_chars == 12)
+              if (length(su)) {
+                su <- su[grep("[^0-9]", mids[su], invert = TRUE)]
+                if (length(su) && any(!unique(substring(mids[su], 1, 11)) %in% mids)) {
+                  results$warn_bg_agg[[f]] <- c(results$warn_bg_agg[[f]], m)
+                }
               }
-            }
-            su <- which(id_chars == 11)
-            if (length(su)) {
-              su <- su[grep("[^0-9]", d[[id]][su], invert = TRUE)]
-              if (length(su) && any(!unique(substring(d[[id]][su], 1, 5)) %in% d[[id]])) {
-                results$warn_tr_agg <- c(results$warn_tr_agg, f)
+              su <- which(id_chars == 11)
+              if (length(su)) {
+                su <- su[grep("[^0-9]", mids[su], invert = TRUE)]
+                if (length(su) && any(!unique(substring(mids[su], 1, 5)) %in% mids)) {
+                  results$warn_tr_agg[[f]] <- c(results$warn_tr_agg[[f]], m)
+                }
               }
             }
 
@@ -619,9 +622,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
       warn_value_type_nas = "{.pkg {value_type}} column contains NAs:",
       warn_dataset_nas = "{.pkg {dataset}} column contains NAs:",
       warn_time_nas = "{.pkg {time}} column contains NAs:",
-      warn_entity_info_nas = "entity information column{?/s} ({.pkg {entity_info}}) contain{?s/} NAs:",
-      warn_bg_agg = "may have block groups that have not been aggregated to tracts:",
-      warn_tr_agg = "may have tracts that have not been aggregated to counties:"
+      warn_entity_info_nas = "entity information column{?/s} ({.pkg {entity_info}}) contain{?s/} NAs:"
     )
     for (s in names(sections)) {
       if (length(results[[s]])) {
@@ -636,7 +637,9 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
       warn_missing_info = "missing measure info entries:",
       warn_small_percents = "no values with a {.pkg percent} type are over 1",
       warn_double_ints = "values with an {.pkg int*} type have decimals",
-      warn_small_values = "non-zero values are very small (under .00001) -- they will display as 0s"
+      warn_small_values = "non-zero values are very small (under .00001) -- they will display as 0s",
+      warn_bg_agg = "may have block groups that have not been aggregated to tracts:",
+      warn_tr_agg = "may have tracts that have not been aggregated to counties:"
     )
     for (s in names(sections)) {
       if (length(results[[s]])) {
@@ -660,7 +663,16 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
               )
             }
           } else {
-            function(f) paste0("{.pkg ", results[[s]][[f]], "} in {.field ", f, "}")
+            function(f) {
+              vars <- results[[s]][[f]]
+              paste0(
+                if (length(vars) > 50) {
+                  paste(prettyNum(length(vars), big.mark = ","), "variables")
+                } else {
+                  paste0("{.pkg ", vars, "}", collapse = ", ")
+                }, " in {.field ", f, "}"
+              )
+            }
           }
         ), use.names = FALSE)
         cli_bullets(structure(missing_info, names = rep(">", length(missing_info))))
