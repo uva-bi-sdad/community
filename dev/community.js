@@ -2976,7 +2976,6 @@ void (function () {
                           el.removeChild(el.lastChild)
                         }
                     }
-                    // while (table.childNodes && table.childNodes.length > 1) table.removeChild(table.lastChild)
                   }
                   clearTable(this.table)
                   let redraw = true
@@ -3028,33 +3027,6 @@ void (function () {
                         } else this.state = ''
                         this.options.order[0][0] = this.header.length - 1
                         this.options.columns = this.header
-                        this.sortTable = e => {
-                          let tableData = this.rows
-                          const direction = e.target.dataset.dir == 'desc' ? 'asc' : 'desc'
-                          const param = e.target.innerText
-                          direction == 'asc'
-                            ? tableData.sort(function (a, b) {
-                                if (a[param] < b[param]) {
-                                  return -1
-                                }
-                                if (a[param] > b[param]) {
-                                  return 1
-                                }
-                                return 0
-                              })
-                            : tableData.sort(function (a, b) {
-                                if (b[param] < a[param]) {
-                                  return -1
-                                }
-                                if (b[param] > a[param]) {
-                                  return 1
-                                }
-                                return 0
-                              })
-
-                          this.rows = tableData
-                          appendRows(this.table)
-                        }
                         this.hiddenTimes = []
                         for (let t = 0; t <= site.data.meta.times[d].value.length; t++) {
                           if (v.times[t] === false) {
@@ -3128,9 +3100,7 @@ void (function () {
                           tr.style.cursor = 'pointer'
                           let td = document.createElement('td')
                           td.innerText = v.selection.all[tableData_sorted[i][0]].features.name
-
                           tr.append(td)
-
                           tr.dataset.geoid = tableData_sorted[i][0]
                           tr.style['backgroundColor'] = 'inherit'
 
