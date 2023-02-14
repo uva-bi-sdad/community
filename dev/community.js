@@ -2801,6 +2801,7 @@ void (function () {
                 const row = this.e.querySelector(`[data-geoid='${e.features.id}']`)
                 if (row) {
                   row.style.backgroundColor = defaults.background_highlight
+                  row.children[0].style['backgroundColor'] = defaults.background_highlight
                   if (site.settings.table_autoscroll) {
                     const h = this.e.parentElement.getBoundingClientRect().height,
                       top = row.getBoundingClientRect().y - row.parentElement.getBoundingClientRect().y
@@ -2816,7 +2817,10 @@ void (function () {
               const existing_geoids = Object.keys(this.rows)
               if (e.features && existing_geoids.includes(e.features.id)) {
                 const row = this.e.querySelector(`[data-geoid='${e.features.id}']`)
-                if (row) row.style.backgroundColor = 'inherit'
+                if (row) {
+                  row.style.removeProperty('background-color')
+                  row.children[0].style['backgroundColor'] = `var(--background-border)`
+                }
               }
             }
 
