@@ -26,6 +26,7 @@
 #' \code{wide = TRUE} will show the variable across time columns.
 #' @param class Class names to add to the table.
 #' @param datatables Logical; if \code{TRUE}, uses \href{https://datatables.net}{DataTables}.
+#' @param height String; It denotes the height of the vanilla html table. Works only if parameter \code{datatables} is \code{TRUE}
 #' @examples
 #' output_table()
 #' @return A character vector of the content to be added.
