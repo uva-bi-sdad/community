@@ -215,9 +215,6 @@ void (function () {
                 ? document.body.classList.replace('light-theme', 'dark-theme')
                 : document.body.classList.replace('dark-theme', 'light-theme')
               if (site.plotly) Object.keys(site.plotly).forEach(k => update_plot_theme(site.plotly[k].u))
-              if (site.table) {
-                Object.keys(site.table).forEach(k => update_table_theme(site.table[k].u))
-              }
               if (site.map)
                 Object.keys(site.map).forEach(k => {
                   const u = site.map[k].u
@@ -4257,15 +4254,6 @@ void (function () {
         u.style.xaxis.font.color = s.color
         u.style.yaxis.font.color = s.color
         Plotly.relayout(u.e, u.options.layout)
-      }
-    }
-
-    function update_table_theme(u, table) {
-      if (u.dark_theme !== site.site.settings.theme_dark) {
-        u.dark_theme = site.site.settings.theme_dark
-        if (u.dark_theme == true) {
-        }
-        //TODO: Need to add relevant code here and make sure that site.datk_theme is set before
       }
     }
 
