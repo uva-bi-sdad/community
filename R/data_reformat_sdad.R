@@ -53,7 +53,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     files <- files[!file.exists(files)]
     cli_abort("file{? does/s do} not exist: {files}")
   }
-  vars <- c(value, value_name, id, time, dataset, value_info, entity_info)
+  vars <- c(value, value_name, id, time, dataset, value_info)
   spec <- c(
     missing(value), missing(value_name), missing(id), missing(time), missing(dataset),
     rep(missing(value_info), length(value_info)),
@@ -130,13 +130,14 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     value <- a[1]
     vars <- c(value, vars)
   }
-  vars <- unique(c(vars, "file"))
+  vars <- unique(c(vars, entity_info, "file"))
   if (length(variables)) {
     check_variables <- TRUE
     variables <- unique(as.character(variables))
   }
   data <- do.call(rbind, lapply(names(data), function(f) {
     d <- data[[f]]
+    d[, vars[!vars %in% colnames(d)]] <- ""
     d <- d[, vars]
     d <- d[rowSums(vapply(d, is.na, logical(nrow(d)))) == 0, ]
     if (check_variables) {
@@ -201,14 +202,19 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
             msg_done = paste0("wrote entity metadata file: {.file ", entity_info_file, "}")
           )
         }
-        e <- data[!duplicated(data[[id]]), ]
-        e <- e[, c(id, dataset, unlist(entity_info)), drop = FALSE]
+        e <- data[, unique(c(id, dataset, unlist(entity_info))), drop = FALSE]
         if (!is.null(names(entity_info))) {
-          su <- which(names(entity_info) != "")
-          colnames(e)[su + 2] <- names(entity_info)[su]
+          for (en in names(entity_info)) {
+            if (en != "" && entity_info[[en]] %in% colnames(e)) colnames(e)[colnames(e) == entity_info[[en]]] <- en
+          }
         }
         write_json(
-          lapply(split(e, e[, 2]), function(g) lapply(split(g[, -(1:2)], g[, 1]), as.list)),
+          lapply(split(e, e[, 2]), function(g) {
+            lapply(
+              split(g[, -(1:2), drop = FALSE], g[, 1]),
+              function(l) lapply(l, function(r) r[which(r != "")[1]])
+            )
+          }),
           entity_info_file,
           auto_unbox = TRUE
         )
