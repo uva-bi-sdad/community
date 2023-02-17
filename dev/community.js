@@ -2463,7 +2463,7 @@ void (function () {
               const c = o.options.variables,
                 k = c.name || c
               o.header.push({title: 'Name', data: 'entity.features.name'})
-              if (time.is_single) o.variable_header = true
+              if (time && time.is_single) o.variable_header = true
               const t = site.data.variables[k].time_range[o.parsed.dataset]
               if (t)
                 for (let n = t[1] - t[0] + 1; n--; ) {

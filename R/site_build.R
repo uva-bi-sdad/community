@@ -348,7 +348,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         base = list(type = "script", src = "dist/dev/community.js")
       )
     } else {
-      if (grep("^http", version)) {
+      if (grepl("^http", version)) {
         list(
           base_style = list(type = "stylesheet", src = sub("//", "/", paste0(version, "/community.css"), fixed = TRUE)),
           base = list(type = "script", src = sub("//", "/", paste0(version, "/community.js"), fixed = TRUE))
