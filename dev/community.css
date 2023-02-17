@@ -1,6 +1,10 @@
+:root {
+  --dark-filter: invert(1) grayscale(100%) brightness(200%);
+  --switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%28255, 255, 255, 0.25%29'/%3e%3c/svg%3e");
+}
 .dark-theme {
   --background: #212121;
-  --background-border: #414141;
+  --background-border: #494949;
   --background-input: #000000;
   --body-text: #ffffff;
   --background-highlight: #141414;
@@ -17,10 +21,11 @@
   --syntax-value: #8eb767;
   --syntax-component: #8cade2;
   --syntax-operator: #c79dd2;
+  --bs-border-color-translucent: rgba(255, 255, 255, 0.175);
 }
 .light-theme {
   --background: #ffffff;
-  --background-border: #ededed;
+  --background-border: #c4c4c4;
   --background-input: #ffffff;
   --body-text: #000000;
   --background-highlight: #f0f0f0;
@@ -96,11 +101,15 @@ select {
   background-color: var(--background);
   border-color: var(--background-border);
 }
-.dark-theme .form-check-input {
-  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23414141'/></svg>");
+.form-check-input:checked[type='radio'],
+.form-check-input:checked[type='checkbox'] {
+  background-image: var(--bs-form-check-bg-image);
 }
-.form-check-input {
-  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23bfbfbf'/></svg>");
+.form-check-input:checked[role='switch'] {
+  background-image: var(--bs-form-switch-bg);
+}
+.dark-theme .form-switch .form-check-input:not(:checked):not(:focus) {
+  --bs-form-switch-bg: var(--switch-bg);
 }
 table.dataTable thead th,
 table.dataTable thead td,
@@ -223,7 +232,6 @@ div.filter-hidden {
   display: flex;
   white-space: nowrap;
   align-items: center;
-  /* max-width: 100%; */
 }
 .combobox-selection span {
   overflow-x: clip;
@@ -371,15 +379,8 @@ p.compact {
 button.btn-danger {
   background-color: var(--warning);
 }
-.light-theme .btn-close {
-  background: transparent
-    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'><path d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/></svg>")
-    center/1em auto no-repeat;
-}
 .dark-theme .btn-close {
-  background: transparent
-    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'><path d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/></svg>")
-    center/1em auto no-repeat;
+  filter: var(--dark-filter);
 }
 .btn-full {
   width: 100%;
@@ -422,11 +423,11 @@ button.btn-danger {
   height: 1em;
   width: 1em;
 }
-.dark-theme .menu-toggle::after {
-  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='%23fff' viewBox='0 0 16 16'><path fill-rule='evenodd' d='M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z'/></svg>");
-}
-.light-theme .menu-toggle::after {
+.menu-toggle::after {
   background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='%23000' viewBox='0 0 16 16'><path fill-rule='evenodd' d='M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z'/></svg>");
+}
+.dark-theme .menu-toggle::after {
+  filter: var(--dark-filter);
 }
 .menu-top .menu-toggle {
   border-radius: 0 0 0 15px;
@@ -615,18 +616,18 @@ button.has-note::after {
 .has-note label.form-check-label::before {
   display: none;
 }
+.text-display button::after,
+button.has-note::after,
+.has-note label::before,
+.has-note legend::before {
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='%23000' viewBox='0 0 16 16'><path d='M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z'/><path d='m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z'/></svg>");
+}
 .dark-theme .text-display button::after,
 .dark-theme button.has-note::after,
 .has-note button::before,
 .dark-theme .has-note label::before,
 .dark-theme .has-note legend::before {
-  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='%23fff' viewBox='0 0 16 16'><path d='M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z'/><path d='m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z'/></svg>");
-}
-.light-theme .text-display button::after,
-.light-theme button.has-note::after,
-.light-theme .has-note label::before,
-.light-theme .has-note legend::before {
-  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='%23000' viewBox='0 0 16 16'><path d='M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z'/><path d='m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z'/></svg>");
+  filter: var(--dark-filter);
 }
 .offcanvas-body {
   overflow-x: hidden;
@@ -989,7 +990,6 @@ table.dataTable thead th {
 
 .btn,
 .dt-button,
-.form-check-input:checked,
 .input[type='range'],
 .btn:hover,
 .dt-button:hover,
@@ -999,6 +999,9 @@ table.dataTable thead th {
   color: var(--highlight-text);
   background: var(--highlight);
   border-color: var(--highlight);
+}
+.form-check-input:checked {
+  background: var(--highlight);
 }
 .btn:hover,
 .btn:focus,

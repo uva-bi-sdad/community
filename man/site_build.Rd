@@ -6,10 +6,11 @@
 \title{Render a Website}
 \usage{
 site_build(dir, file = "site.R", name = "index.html", variables = NULL,
-  options = list(), bundle_data = FALSE, open_after = FALSE,
+  options = list(), bundle_data = FALSE, bundle_libs = FALSE,
+  libs_overwrite = FALSE, libs_base_only = FALSE, open_after = FALSE,
   aggregate = TRUE, sparse_time = TRUE, force = FALSE, version = "v1",
-  parent = NULL, include_api = FALSE, endpoint = NULL, serve = FALSE,
-  host = "127.0.0.1", port = 3000)
+  parent = NULL, include_api = FALSE, endpoint = NULL, tag_id = NULL,
+  serve = FALSE, host = "127.0.0.1", port = 3000)
 
 site_start_server(dir, host = "127.0.0.1", port = 3000,
   open_after = TRUE)
@@ -28,7 +29,16 @@ all variables are included.}
 which can be edited by hand.}
 
 \item{bundle_data}{Logical; if \code{TRUE}, will write the data to the site file; useful when
-running the site locally without server. Otherwise, the data will be loaded separately through an http request.}
+running the site locally without a server (viewing the file directly in a browser).
+Otherwise, the data will be loaded separately through an http request.}
+
+\item{bundle_libs}{Logical; if \code{TRUE}, will download dependencies to the \code{docs/lib} directory.
+This can allow you to run the site offline for all but Leaflet tiles and any remote resources specified in
+\code{file} (such as map shapes) or metadata (such as map overlays).}
+
+\item{libs_overwrite}{Logical; if \code{TRUE}, will re-download existing dependencies.}
+
+\item{libs_base_only}{Logical; if \code{TRUE}, will only download the base community dependencies to be served locally.}
 
 \item{open_after}{Logical; if \code{TRUE}, will open the site in a browser after it is built.}
 
@@ -43,13 +53,19 @@ processed version.}
 
 \item{version}{Version of the base script and stylesheet: \code{"v1"} (default) for the version 1 stable release,
 \code{"dev"} for the current unstable release, or \code{"local"} for a copy of the development files
-(\code{community.js} and \code{community.css}) served from a local \code{dist} directory.}
+(\code{community.js} and \code{community.css}) served from a local \code{dist} directory. Can also
+be a URL (starting with \code{http}) where files can be found (\code{{version}/community.js} and
+\code{{version}/community.css}).}
 
 \item{parent}{Directory path or repository URL of a data site from which to use data, rather than using local data.}
 
 \item{include_api}{Logical; if \code{TRUE}, will write the \code{docs/functions/api.js} file.}
 
 \item{endpoint}{URL of the served API.}
+
+\item{tag_id}{Google tag ID (in the form of \code{GTM-XXXXXX}, were \code{GTM-} might be different depending on the
+tag type (such as \code{G-} or \code{GT-}); see \href{tagmanager.google.com}{https://tagmanager.google.com}),
+which will enables tracking, conditional on the \code{settings.tracking} setting.}
 
 \item{serve}{Logical; if \code{TRUE}, starts a local server from the site's \code{docs} directory.
 Once a server is running, you can use \code{\link[httpuv]{stopAllServers}} to stop it.}

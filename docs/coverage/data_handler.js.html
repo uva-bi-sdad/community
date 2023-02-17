@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">43.16% </span>
+                <span class="strong">43.09% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>357/827</span>
+                <span class='fraction'>356/826</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">40.12% </span>
+                <span class="strong">39.81% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>262/653</span>
+                <span class='fraction'>260/653</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">44.99% </span>
+                <span class="strong">44.91% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>337/749</span>
+                <span class='fraction'>336/748</span>
             </div>
         
             
@@ -1325,10 +1325,7 @@
 <a name='L1260'></a><a href='#L1260'>1260</a>
 <a name='L1261'></a><a href='#L1261'>1261</a>
 <a name='L1262'></a><a href='#L1262'>1262</a>
-<a name='L1263'></a><a href='#L1263'>1263</a>
-<a name='L1264'></a><a href='#L1264'>1264</a>
-<a name='L1265'></a><a href='#L1265'>1265</a>
-<a name='L1266'></a><a href='#L1266'>1266</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L1263'></a><a href='#L1263'>1263</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
@@ -1365,25 +1362,23 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1807,7 +1802,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -2620,7 +2614,7 @@
     this.inited = {}
     this.inited_summary = {}
     this.summary_ready = {}
-    this.sets = {}
+    this.sets = data || <span class="branch-1 cbranch-no" title="branch not covered" >{}</span>
     this.data_maps = {}
     this.data_queue = {}
     this.data_promise = {}
@@ -2630,25 +2624,23 @@
     this.data_ready = new Promise(resolve =&gt; {
       this.all_data_ready = resolve
     })
-    data = data || <span class="branch-1 cbranch-no" title="branch not covered" >{}</span>
     <span class="missing-if-branch" title="if path not taken" >I</span>if ('string' === typeof settings.metadata.datasets) <span class="cstat-no" title="statement not covered" >settings.metadata.datasets = [settings.metadata.datasets]</span>
     this.map_variables()
     settings.metadata.datasets.forEach(k =&gt; {
-      this.loaded[k] = k in data
+      this.loaded[k] = k in this.sets
+      this.inited[k] = false
       this.data_processed[k] = new Promise(resolve =&gt; {
         this.data_promise[k] = resolve
       })
-      <span class="missing-if-branch" title="else path not taken" >E</span>if (
+      <span class="missing-if-branch" title="else path not taken" >E</span>if (this.loaded[k]) {
+        this.ingest_data(this.sets[k], k)
+      } else <span class="cstat-no" title="statement not covered" >if (</span>
         !this.in_browser ||
-        (<span class="branch-1 cbranch-no" title="branch not covered" >this.settings.settings </span>&amp;&amp; <span class="branch-2 cbranch-no" title="branch not covered" >!this.settings.settings.partial_init)</span> ||
-<span class="branch-3 cbranch-no" title="branch not covered" >        !this.defaults.dataset </span>||
-<span class="branch-4 cbranch-no" title="branch not covered" >        k === this.defaults.dataset</span>
+        (this.settings.settings &amp;&amp; !this.settings.settings.partial_init) ||
+        !this.defaults.dataset ||
+        k === this.defaults.dataset
       )
-        <span class="missing-if-branch" title="else path not taken" >E</span>if (this.loaded[k]) {
-          this.ingest_data(data[k], k)
-        } else {
-<span class="cstat-no" title="statement not covered" >          this.retrieve(k, settings.metadata.info[k].site_file)</span>
-        }
+<span class="cstat-no" title="statement not covered" >        this.retrieve(k, settings.metadata.info[k].site_file)</span>
     })
   }
 &nbsp;
@@ -3062,7 +3054,7 @@
       <span class="missing-if-branch" title="if path not taken" >I</span>if (
         this.in_browser &amp;&amp;
 <span class="branch-1 cbranch-no" title="branch not covered" >        this.settings.settings.partial_init </span>&amp;&amp;
-        (<span class="branch-2 cbranch-no" title="branch not covered" >!this.defaults.dataset </span>|| <span class="branch-3 cbranch-no" title="branch not covered" >name === this.defaults.dataset </span>|| <span class="branch-4 cbranch-no" title="branch not covered" >site.data.inited.first)</span>
+        (<span class="branch-2 cbranch-no" title="branch not covered" >!this.defaults.dataset </span>|| <span class="branch-3 cbranch-no" title="branch not covered" >name === this.defaults.dataset </span>|| <span class="branch-4 cbranch-no" title="branch not covered" >this.inited.first)</span>
       ) {
 <span class="cstat-no" title="statement not covered" >        this.load_id_maps()</span>
       } else {
@@ -3074,7 +3066,6 @@
     retrieve: <span class="fstat-no" title="function not covered" >as</span>ync function (name, url) {
 <span class="cstat-no" title="statement not covered" >      if (!this.load_requests[name]) {</span>
 <span class="cstat-no" title="statement not covered" >        this.load_requests[name] = url</span>
-<span class="cstat-no" title="statement not covered" >        this.inited[name] = false</span>
         const f = <span class="cstat-no" title="statement not covered" >new window.XMLHttpRequest()</span>
 <span class="cstat-no" title="statement not covered" >        f.onreadystatechange = <span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >          if (4 === f.readyState) {</span>
@@ -3164,7 +3155,7 @@
     },
     init_summary: <span class="fstat-no" title="function not covered" >fu</span>nction (v, d) {
 <span class="cstat-no" title="statement not covered" >      if (!this.inited_summary[d + v]) {</span>
-        ;<span class="cstat-no" title="statement not covered" >(this.in_browser ? Object.keys(site.dataviews) : ['default_view']).forEach(<span class="fstat-no" title="function not covered" >vi</span>ew =&gt; {</span>
+        ;<span class="cstat-no" title="statement not covered" >(this.in_browser ? Object.keys(this.settings.dataviews) : ['default_view']).forEach(<span class="fstat-no" title="function not covered" >vi</span>ew =&gt; {</span>
           const vi = <span class="cstat-no" title="statement not covered" >this.variables[v]</span>
 <span class="cstat-no" title="statement not covered" >          if (!(view in vi))</span>
 <span class="cstat-no" title="statement not covered" >            vi[view] = {order: {}, selected_order: {}, selected_summaries: {}, summaries: {}, state: {}}</span>
@@ -3545,7 +3536,7 @@
       })
     },
     map_entities: async function (g) {
-      const views = this.in_browser ? <span class="branch-0 cbranch-no" title="branch not covered" >Object.keys(site.dataviews) </span>: ['default_view']
+      const views = this.in_browser ? <span class="branch-0 cbranch-no" title="branch not covered" >Object.keys(this.settings.dataviews) </span>: ['default_view']
       if (g in this.sets &amp;&amp; !this.inited[g]) {
         const s = this.sets[g],
           time = this.meta.times[g],
@@ -3865,7 +3856,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-01-28T22:24:56.230Z
+                at 2023-02-17T12:51:09.185Z
             </div>
         <script src="prettify.js"></script>
         <script>

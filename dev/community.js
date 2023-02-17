@@ -246,9 +246,17 @@ void (function () {
                   }
                 }
               })
+            } else if ('tracking' === u.setting) {
+              if (v && site.tag_id && !dataLayer.length) {
+                gtag('js', new Date())
+                gtag('config', site.tag_id)
+                gtag('consent', 'default', {analytics_storage: 'denied'})
+              }
+              gtag('consent', 'update', {analytics_storage: v ? 'granted' : 'denied'})
             } else {
               global_update()
             }
+            gtag('event', 'setting', {event_category: u.setting, event_label: v})
             storage.set(u.setting, site.settings[u.setting])
           }
         },
@@ -641,6 +649,7 @@ void (function () {
                                   setTimeout(function () {
                                     o.e.innerText = o.text
                                   }, 500)
+                                  gtag('event', 'export', {event_category: 'api link'})
                                 }
                               },
                               e => {
@@ -663,6 +672,7 @@ void (function () {
                                 site.data.meta.times[d].value[v.time_range.filtered_index[1]]
                             site.data.export(f, v.selection.all, true)
                           } else site.data.export(f, site.data.entities, true, true)
+                          gtag('event', 'export', {event_category: 'download'})
                         }
                       }.bind(o)
                     : function () {
@@ -3336,6 +3346,7 @@ void (function () {
         }
       page.content.style.top = h + 'px'
     }
+    if (!window.dataLayer) window.dataLayer = []
 
     function pal(value, which, summary, index, rank, total) {
       if (isNaN(value)) return defaults.missing
@@ -4172,6 +4183,12 @@ void (function () {
         },
       }
       page.load_screen = document.getElementById('load_screen')
+
+      // initialize tags
+      if (site.settings.tracking && site.tag_id) {
+        gtag('js', new Date())
+        gtag('config', site.tag_id)
+      }
 
       // make variable info popup
       e = page.modal.info.e
@@ -5086,7 +5103,7 @@ void (function () {
           ee.className = 'filter-label'
           ee.id = f.id + '_remove'
           e.lastElementChild.appendChild((ee = document.createElement('button')))
-          ee.className = 'btn btn-close filter-form-input'
+          ee.className = 'btn-close filter-form-input'
           ee.type = 'button'
           ee.setAttribute('aria-labelledby', f.id + '_remove')
           ee.addEventListener(
@@ -5180,6 +5197,10 @@ void (function () {
           })
         }
       }
+    }
+
+    function gtag() {
+      if (site.settings.tracking) window.dataLayer.push(arguments)
     }
 
     function valueOf(v) {

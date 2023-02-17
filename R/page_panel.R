@@ -2,8 +2,9 @@
 #'
 #' Adds a panel to a website outside of the main content area.
 #'
-#' @param title Content to appear in the panel's header area.
+#' @param title Text to appear in the panel's header area.
 #' @param ... Elements to appear in the panel's body area.
+#' @param foot Content to appear in the panel's footer area.
 #' @param position The side of the screen on which the panel appears; \code{"left"} (default) or \code{"right"}.
 #' @param wraps The class of wrapper to place elements in; either \code{"row"}, \code{"col"}, or \code{""}
 #' (to not wrap the element). Can specify 1 for every element, or a different class for each element.
@@ -25,7 +26,7 @@
 #' @return A character vector of the content to be added.
 #' @export
 
-page_panel <- function(title = "Side Panel", ..., position = "left", wraps = NA, sizes = NA,
+page_panel <- function(title = "Side Panel", ..., foot = NULL, position = "left", wraps = NA, sizes = NA,
                        breakpoints = NA, conditions = "", id = NULL) {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
@@ -33,6 +34,7 @@ page_panel <- function(title = "Side Panel", ..., position = "left", wraps = NA,
   attr(parts, "name") <- "community_site_parts"
   parts$uid <- caller$uid
   elements <- substitute(...())
+  footer <- if (missing(foot)) NULL else substitute(foot)
   n <- length(elements)
   wraps <- rep_len(wraps, n)
   sizes <- rep_len(sizes, n)
@@ -58,6 +60,13 @@ page_panel <- function(title = "Side Panel", ..., position = "left", wraps = NA,
       )
     }), use.names = FALSE),
     "</div>",
+    if (length(footer)) {
+      c(
+        '<div class="card-footer">',
+        unlist(lapply(if (is.list(footer)) footer else list(footer), eval, parts), use.names = FALSE),
+        "</div>"
+      )
+    },
     paste0(
       '<button type="button" title="toggle panel" aria-controls="panel', parts$uid,
       '" aria-expanded="true" class="btn panel-toggle">&Verbar;</button>'
