@@ -2796,9 +2796,9 @@ void (function () {
               o.e.addEventListener('click', elements.table.click.bind(o))
             }
             o.show = function (e) {
-              const existing_geoids = Object.keys(this.rows)
-              if (e.features && existing_geoids.includes(e.features.id)) {
-                const row = this.e.querySelector(`[data-geoid='${e.features.id}']`)
+              const existing_entityIds = Object.keys(this.rows)
+              if (e.features && existing_entityIds.includes(e.features.id)) {
+                const row = this.e.querySelector(`[data-entity-id='${e.features.id}']`)
                 if (row) {
                   row.style.backgroundColor = defaults.background_highlight
                   row.children[0].style['backgroundColor'] = defaults.background_highlight
@@ -2814,9 +2814,9 @@ void (function () {
               }
             }
             o.revert = function (e) {
-              const existing_geoids = Object.keys(this.rows)
-              if (e.features && existing_geoids.includes(e.features.id)) {
-                const row = this.e.querySelector(`[data-geoid='${e.features.id}']`)
+              const existing_entityIds = Object.keys(this.rows)
+              if (e.features && existing_entityIds.includes(e.features.id)) {
+                const row = this.e.querySelector(`[data-entity-id='${e.features.id}']`)
                 if (row) {
                   row.style.removeProperty('background-color')
                   row.children[0].style['backgroundColor'] = `var(--background-border)`
@@ -2896,7 +2896,8 @@ void (function () {
                 let td = document.createElement('td')
                 td.innerText = v.selection.all[tableData_sorted[i][0]].features.name
                 tr.append(td)
-                tr.dataset.geoid = tableData_sorted[i][0]
+                tr.dataset.entityId = tableData_sorted[i][0]
+
                 for (let t in tableData_sorted[i][1]) {
                   if (this.hiddenTimes.includes(t)) continue
                   td = document.createElement('td')
@@ -3192,7 +3193,7 @@ void (function () {
               const parent = e.target.parentElement
               parent.style['backgroundColor'] = defaults.background_highlight
               parent.children[0].style['backgroundColor'] = defaults.background_highlight
-              const id = parseInt(parent.dataset.geoid)
+              const id = parseInt(parent.dataset.entityId)
               if (id in site.data.entities) {
                 update_subs(this.id, 'show', site.data.entities[id])
               }
@@ -3201,7 +3202,7 @@ void (function () {
           mouseout: function (e) {
             if (e.target.tagName == 'TD' && e.target.parentElement.tagName == 'TR') {
               const parent = e.target.parentElement
-              const id = parseInt(parent.dataset.geoid)
+              const id = parseInt(parent.dataset.entityId)
               parent.style.removeProperty('background-color')
               parent.children[0].style['backgroundColor'] = `var(--background-border)`
               if (id in site.data.entities) {
