@@ -2775,7 +2775,6 @@ void (function () {
             o.header = []
             o.rows = {}
             o.rowIds = {}
-            this.hiddenTimes = []
             o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0
             const time = site.data.meta.times[o.parsed.dataset]
             if (o.tab) {
@@ -2913,13 +2912,11 @@ void (function () {
                 tr.append(td)
                 tr.dataset.entityId = tableData_sorted[i][0]
                 for (let t in tableData_sorted[i][1]) {
-                  //if (this.hiddenTimes.includes(t)) continue
                   if (!v.times[idx]) continue
                   td = document.createElement('td')
                   td.innerText = site.data.format_value(tableData_sorted[i][1][t])
                   tr.append(td)
                   idx++
-                  //i += 1
                 }
                 table.querySelector('tbody').append(tr)
               }
@@ -3118,14 +3115,7 @@ void (function () {
                         } else this.state = ''
                         this.options.order[0][0] = this.header.length - 1
                         this.options.columns = this.header
-                        this.hiddenTimes = []
-                        for (let t = 0; t <= site.data.meta.times[d].value.length; t++) {
-                          if (v.times[t] === false) {
-                            const year = site.data.meta.times[d].range[0] + t
-                            this.hiddenTimes.push(year.toString())
-                          }
-                        }
-                        this.createTable(this.table)
+                        this.createTable(this.table, v)
                       }
                       let reset
                       if (reset) this.state = ''
@@ -3229,7 +3219,7 @@ void (function () {
           click: function (e) {
             if (this.clickto && e.target.tagName == 'TD') {
               const parent = e.target.parentElement
-              const id = parent.dataset.geoid
+              const id = parent.dataset.entityId
               if (id in site.data.entities) this.clickto.set(id)
             }
           },
