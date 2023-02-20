@@ -2839,14 +2839,26 @@ void (function () {
               }
             }
 
-            o.createTable = function (table) {
+            o.createTable = function (table, v) {
               this.clearTable(table)
               let headers = this.header.map(h => h.title)
               let thead = document.createElement('thead')
               let tr = document.createElement('tr')
 
-              for (let i = 0; i < headers.length; i++) {
-                if (this.hiddenTimes.includes(headers[i])) continue
+              const th = document.createElement('th')
+              const div = document.createElement('div')
+              div.innerText = headers[0]
+              div.dataset.dir = ''
+              th.append(div)
+              tr.append(th)
+
+              const d = v.get.dataset()
+              let startIdx = parseInt(headers[1]) - site.data.meta.times[d].range[0]
+              for (let i = 1; i < headers.length; i++) {
+                if (!v.times[startIdx]) {
+                  startIdx++
+                  continue
+                }
                 const th = document.createElement('th')
                 const div = document.createElement('div')
                 div.innerText = headers[i]
