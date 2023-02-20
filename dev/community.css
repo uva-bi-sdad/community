@@ -1192,22 +1192,6 @@ input[type='range']::-ms-thumb {
   padding: 0;
 }
 
-/* .table-wrapper table th {
-  padding: 3px;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  width: 25vw;
-  background: white;
-}
-
-
-.table-wrapper table th:first-child{
-  position: sticky;
-  left: 0;
-  z-index: 2;
-} */
-
 .table-wrapper table {
   white-space: nowrap;
   margin: 0;
