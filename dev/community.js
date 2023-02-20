@@ -2851,9 +2851,8 @@ void (function () {
               div.dataset.dir = ''
               th.append(div)
               tr.append(th)
-
               const d = v.get.dataset()
-              let startIdx = parseInt(headers[1]) - site.data.meta.times[d].range[0]
+              let startIdx = this.parsed.time_range[0]
               for (let i = 1; i < headers.length; i++) {
                 if (!v.times[startIdx]) {
                   startIdx++
@@ -2863,9 +2862,9 @@ void (function () {
                 const div = document.createElement('div')
                 div.innerText = headers[i]
                 if (headers[i] == this.time) div.style['border'] = 'solid black'
-                div.dataset.dir = ''
                 th.append(div)
                 tr.append(th)
+                startIdx++
               }
 
               thead.append(tr)
