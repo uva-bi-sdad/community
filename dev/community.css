@@ -1188,8 +1188,8 @@ input[type='range']::-ms-thumb {
 }
 
 .table-wrapper {
-  /* height: 40vh; */
   overflow: auto;
+  padding: 0;
 }
 
 /* .table-wrapper table th {
