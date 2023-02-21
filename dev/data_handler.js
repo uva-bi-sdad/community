@@ -851,7 +851,7 @@ void (function () {
                 ms.min[y] = 0
               }
               if (ms.n[y]) {
-                ms.norm_median[y] = ms.range[y] ? (ms.median[y] - ms.min[y]) / ms.range[y] : ms.median[y]
+                ms.norm_median[y] = ms.range[y] ? (ms.median[y] - ms.min[y]) / ms.range[y] : 0.5
                 if (-1 !== ms.break_median[y]) {
                   ms.lower_median_min[y] = ms.norm_median[y] - (o[ms.missing[y]][1] - ms.min[y]) / ms.range[y]
                   ms.lower_median_range[y] =
@@ -860,7 +860,7 @@ void (function () {
                   ms.upper_median_range[y] =
                     (o[o.length - 1][1] - ms.min[y]) / ms.range[y] - ms.norm_median[y] - ms.upper_median_min[y]
                 }
-                ms.norm_mean[y] = ms.range[y] ? (ms.mean[y] - ms.min[y]) / ms.range[y] : ms.mean[y]
+                ms.norm_mean[y] = ms.range[y] ? (ms.mean[y] - ms.min[y]) / ms.range[y] : 0.5
                 if (-1 !== ms.break_mean[y]) {
                   ms.lower_mean_min[y] = ms.norm_mean[y] - (o[ms.missing[y]][1] - ms.min[y]) / ms.range[y]
                   ms.lower_mean_range[y] =

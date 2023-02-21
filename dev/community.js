@@ -1579,32 +1579,33 @@ void (function () {
                 const v = _u[this.view],
                   s = v.selection && v.selection.all,
                   d = v.get.dataset(),
-                  y = _u[this.time || v.time_agg]
+                  y = _u[this.time || v.time_agg],
+                  parsed = this.parsed
                 if (site.data.inited[d] && s && v.time_range.filtered.length) {
-                  this.parsed.base_trace = valueOf(this.base_trace)
-                  this.parsed.x = valueOf(this.x)
-                  this.parsed.y = valueOf(this.y)
-                  this.parsed.color = valueOf(this.color || v.y || this.parsed.y)
-                  const varx = await get_variable(this.parsed.x, this.view),
-                    vary = await get_variable(this.parsed.y, this.view),
-                    varcol = await get_variable(this.parsed.color, this.view)
-                  this.parsed.x_range = varx.time_range[d]
-                  this.parsed.y_range = vary.time_range[d]
-                  this.parsed.view = v
-                  this.parsed.dataset = d
-                  this.parsed.palette = valueOf(v.palette) || site.settings.palette
-                  if (!(this.parsed.palette in palettes)) this.parsed.palette = defaults.palette
-                  this.parsed.time = (y ? y.value() - site.data.meta.times[d].range[0] : 0) - varcol.time_range[d][0]
-                  this.parsed.summary = varcol[this.view].summaries[d]
-                  const display_time = this.parsed.summary.n[this.parsed.time] ? this.parsed.time : 0,
+                  parsed.base_trace = valueOf(this.base_trace)
+                  parsed.x = valueOf(this.x)
+                  parsed.y = valueOf(this.y)
+                  parsed.color = valueOf(this.color || v.y || parsed.y)
+                  const varx = await get_variable(parsed.x, this.view),
+                    vary = await get_variable(parsed.y, this.view),
+                    varcol = await get_variable(parsed.color, this.view)
+                  parsed.x_range = varx.time_range[d]
+                  parsed.y_range = vary.time_range[d]
+                  parsed.view = v
+                  parsed.dataset = d
+                  parsed.palette = valueOf(v.palette) || site.settings.palette
+                  if (!(parsed.palette in palettes)) parsed.palette = defaults.palette
+                  parsed.time = (y ? y.value() - site.data.meta.times[d].range[0] : 0) - varcol.time_range[d][0]
+                  parsed.summary = varcol[this.view].summaries[d]
+                  const display_time = parsed.summary.n[parsed.time] ? parsed.time : 0,
                     summary = vary[this.view].summaries[d],
-                    missing = this.parsed.summary.missing[display_time],
-                    n = this.parsed.summary.n[display_time],
+                    missing = parsed.summary.missing[display_time],
+                    n = parsed.summary.n[display_time],
                     subset = n !== v.n_selected.dataset,
                     rank = subset ? 'subset_rank' : 'rank',
                     order = subset ? varcol[this.view].order[d][display_time] : varcol.info[d].order[display_time],
                     traces = []
-                  let i = this.parsed.summary.missing[display_time],
+                  let i = parsed.summary.missing[display_time],
                     k,
                     b,
                     fn = order ? order.length : 0,
@@ -1614,11 +1615,11 @@ void (function () {
                       v.value() +
                       v.get.time_filters() +
                       d +
-                      this.parsed.x +
-                      this.parsed.y +
-                      this.parsed.time +
-                      this.parsed.palette +
-                      this.parsed.color +
+                      parsed.x +
+                      parsed.y +
+                      parsed.time +
+                      parsed.palette +
+                      parsed.color +
                       site.settings.summary_selection +
                       site.settings.color_scale_center +
                       site.settings.color_by_order +
@@ -1632,9 +1633,7 @@ void (function () {
                       k = order[i][0]
                       const e = s[k]
                       state += k
-                      traces.push(
-                        make_data_entry(this, e, e[this.view][rank][this.parsed.color][this.parsed.time] - missing, n)
-                      )
+                      traces.push(make_data_entry(this, e, e[this.view][rank][parsed.color][parsed.time] - missing, n))
                       if (lim && !--jump) break
                     }
                   }
@@ -1645,7 +1644,7 @@ void (function () {
                         const e = s[k]
                         state += k
                         traces.push(
-                          make_data_entry(this, e, e[this.view][rank][this.parsed.color][this.parsed.time] - missing, n)
+                          make_data_entry(this, e, e[this.view][rank][parsed.color][parsed.time] - missing, n)
                         )
                         if (!--lim) break
                       }
@@ -1676,17 +1675,17 @@ void (function () {
                       b.upperfence = summary.max
                       b.lowerfence = summary.min
                     }
-                    b.x = b.q1.map((_, i) => s[k].get_value(this.parsed.x, i + this.parsed.y_range[0]))
+                    b.x = b.q1.map((_, i) => s[k].get_value(parsed.x, i + parsed.y_range[0]))
                   }
                   if (state !== this.state) {
                     if ('boolean' !== typeof this.e.layout.yaxis.title)
                       this.e.layout.yaxis.title =
-                        site.data.format_label(this.parsed.y) +
+                        site.data.format_label(parsed.y) +
                         (site.settings.trace_limit < v.n_selected.all
                           ? ' (' + site.settings.trace_limit + ' extremes)'
                           : '')
                     if ('boolean' !== typeof this.e.layout.xaxis.title)
-                      this.e.layout.xaxis.title = site.data.format_label(this.parsed.x)
+                      this.e.layout.xaxis.title = site.data.format_label(parsed.x)
                     this.e.layout.yaxis.autorange = false
                     this.e.layout.yaxis.range = [Infinity, -Infinity]
                     if (!b) b = {upperfence: summary.max, lowerfence: summary.min}
@@ -1699,7 +1698,7 @@ void (function () {
                     const r = (this.e.layout.yaxis.range[1] - this.e.layout.yaxis.range[0]) / 10
                     this.e.layout.yaxis.range[0] -= r
                     this.e.layout.yaxis.range[1] += r
-                    if (site.data.variables[this.parsed.x].is_time) {
+                    if (site.data.variables[parsed.x].is_time) {
                       if (this.e.layout.xaxis.autorange) {
                         this.e.layout.xaxis.autorange = false
                         this.e.layout.xaxis.type = 'linear'
@@ -1828,7 +1827,8 @@ void (function () {
                 this.queue = setTimeout(() => this.update(void 0, void 0, true), 50)
             } else {
               if (this.view && this.displaying) {
-                const view = site.dataviews[this.view],
+                const parsed = this.parsed,
+                  view = site.dataviews[this.view],
                   d = view.get.dataset(),
                   time = valueOf(view.time_agg),
                   match_time = site.map[this.id].has_time ? site.map[this.id].match_time(time) : time,
@@ -1841,8 +1841,8 @@ void (function () {
                   view.state = ''
                   conditionals.dataview(view, void 0, true)
                 }
-                this.parsed.view = view
-                this.parsed.dataset = d
+                parsed.view = view
+                parsed.dataset = d
                 const vstate =
                     view.value() +
                     mapId +
@@ -1866,14 +1866,15 @@ void (function () {
                       ? _u[view.time_agg]
                       : parseInt(view.time_agg)
                     : 0
-                  this.parsed.palette = valueOf(view.palette) || site.settings.palette
-                  if (!(this.parsed.palette in palettes)) this.parsed.palette = defaults.palette
-                  const varc = await get_variable(c, this.view)
-                  this.parsed.time =
-                    (ys.parsed ? ys.value() - site.data.meta.times[d].range[0] : 0) - varc.time_range[d][0]
-                  this.parsed.color = c
-                  this.parsed.summary = varc[this.view].summaries[d]
-                  const subset = this.parsed.summary.n[ys] === view.n_selected.dataset ? 'rank' : 'subset_rank'
+                  parsed.palette = valueOf(view.palette) || site.settings.palette
+                  if (!(parsed.palette in palettes)) parsed.palette = defaults.palette
+                  const varc = await get_variable(c, this.view),
+                    summary = varc[this.view].summaries[d],
+                    time = (ys.parsed ? ys.value() - site.data.meta.times[d].range[0] : 0) - varc.time_range[d][0]
+                  parsed.summary = summary
+                  parsed.time = time
+                  parsed.color = c
+                  const subset = summary.n[ys] === view.n_selected.dataset ? 'rank' : 'subset_rank'
                   if (vstate !== this.vstate) {
                     this.map._zoomAnimated = 'none' !== site.settings.map_animations
                     Object.keys(this.reference_options).forEach(k => {
@@ -1918,8 +1919,8 @@ void (function () {
                   const k =
                     c +
                     this.vstate +
-                    this.parsed.palette +
-                    this.parsed.time +
+                    parsed.palette +
+                    time +
                     site.settings.polygon_outline +
                     site.settings.color_by_order +
                     site.settings.color_scale_center
@@ -1927,25 +1928,19 @@ void (function () {
                     this.cstate = k
                     if (site.map[this.id]) {
                       const ls = this.displaying._layers
-                      const n = this.parsed.summary.n[this.parsed.time]
-                      const missing = this.parsed.summary.missing[this.parsed.time]
+                      const n = summary.n[time]
+                      const missing = summary.missing[time]
                       Object.keys(ls).forEach(id => {
                         const lsi = ls[id]
                         if (d === lsi.entity.group) {
-                          const e = a[lsi.entity.features.id]
+                          const e = a[lsi.entity.features.id],
+                            es = e && e[this.view][subset]
                           lsi.setStyle({
                             fillOpacity: 0.7,
                             color: defaults.border,
                             fillColor:
-                              e && c in e[this.view][subset]
-                                ? pal(
-                                    e.get_value(c, this.parsed.time),
-                                    this.parsed.palette,
-                                    this.parsed.summary,
-                                    this.parsed.time,
-                                    e[this.view][subset][c][this.parsed.time] - missing,
-                                    n
-                                  )
+                              e && c in es
+                                ? pal(e.get_value(c, time), parsed.palette, summary, time, es[c][time] - missing, n)
                                 : defaults.missing,
                             weight: site.settings.polygon_outline,
                           })
@@ -2781,6 +2776,7 @@ void (function () {
               }
             }
             o.parsed = {summary: {}, order: [], selection: {}, time: 0, color: '', rank: false}
+            o.state = ''
             o.parts = {
               ticks: o.e.querySelector('.legend-ticks'),
               scale: o.e.querySelector('.legend-scale'),
@@ -2840,7 +2836,7 @@ void (function () {
                         ? NaN
                         : Math.max(
                             0,
-                            Math.min(1, range ? ((string ? summary.level_ids[value] : value) - min) / range : 0)
+                            Math.min(1, range ? ((string ? summary.level_ids[value] : value) - min) / range : 0.5)
                           )
                       : NaN) * 100,
                   t = this.ticks.entity.firstElementChild.children[1]
@@ -2854,7 +2850,7 @@ void (function () {
                       : e.features.name
                 } else if (site.settings.color_by_order && c.parsed.color in es[subset]) {
                   const i = es[subset][c.parsed.color][c.parsed.time],
-                    po = (i / (n - 1)) * 100
+                    po = n > 1 ? (i / (n - 1)) * 100 : 0
                   this.ticks.entity.firstElementChild.firstElementChild.innerText =
                     i > -1 && (po > 96 || po < 4) && e.features.name.length > 13
                       ? e.features.name.substring(0, 12) + '…'
@@ -2877,15 +2873,17 @@ void (function () {
             const view = _u[this.view],
               variable = valueOf(this.variable || view.y),
               d = view.get.dataset(),
-              var_info = await get_variable(variable, this.view)
-            if (view.valid && var_info && this.view in var_info) {
-              const time = valueOf(view.time_agg),
-                y =
+              var_info = await get_variable(variable, this.view),
+              time = valueOf(view.time_agg)
+            if (null !== time && view.valid && var_info && this.view in var_info) {
+              const y =
                   ('number' === typeof time ? time - site.data.meta.times[d].range[0] : 0) - var_info.time_range[d][0],
                 summary = var_info[this.view].summaries[d],
                 ep = valueOf(this.palette).toLowerCase(),
                 pn = ep in palettes ? ep : site.settings.palette in palettes ? site.settings.palette : defaults.palette,
-                p = palettes[pn].colors
+                p = palettes[pn].colors,
+                s = this.parts.scale,
+                ticks = this.ticks
               this.parsed.summary = summary
               this.parsed.order = var_info[this.view].order[d][y]
               this.parsed.time = y
@@ -2895,45 +2893,62 @@ void (function () {
                   site.data.variable_info[variable] && site.data.variable_info[variable].type
                     ? patterns.int_types.test(site.data.variable_info[variable].type)
                     : true
-                if (
-                  pn + site.settings.color_scale_center !== this.current_palette ||
-                  site.settings.color_by_order !== this.parsed.rank
-                ) {
+                const refresh = site.settings.color_by_order !== this.parsed.rank
+                if (pn + site.settings.color_scale_center !== this.current_palette || refresh) {
                   this.current_palette = pn + site.settings.color_scale_center
                   this.parsed.rank = site.settings.color_by_order
-                  this.parts.scale.innerHTML = ''
+                  const remake = p.length !== s.childElementCount
+                  if (remake) s.innerHTML = ''
                   if ('discrete' === palettes[pn].type) {
-                    if (site.settings.color_by_order || 'none' === site.settings.color_scale_center) {
-                      p.forEach(color => {
-                        this.parts.scale.appendChild(document.createElement('span'))
-                        this.parts.scale.lastElementChild.setAttribute('of', this.id)
-                        this.parts.scale.lastElementChild.style.backgroundColor = color
-                      })
+                    if (site.settings.color_by_order) {
+                      p.forEach(
+                        remake
+                          ? color => {
+                              s.appendChild(document.createElement('span'))
+                              s.lastElementChild.setAttribute('of', this.id)
+                              s.lastElementChild.style.backgroundColor = color
+                            }
+                          : (color, i) => {
+                              s.children[i].style.backgroundColor = color
+                            }
+                      )
                     } else {
                       var i = 0,
                         n = Math.ceil(p.length / 2),
                         e
-                      this.parts.scale.appendChild((e = document.createElement('div')))
-                      e.setAttribute('of', this.id)
-                      e.style.left = 0
-                      for (; i < n; i++) {
-                        e.appendChild(document.createElement('span'))
-                        e.lastElementChild.setAttribute('of', this.id)
-                        e.lastElementChild.style.backgroundColor = p[i]
-                      }
-                      this.parts.scale.appendChild((e = document.createElement('div')))
-                      e.setAttribute('of', this.id)
-                      e.style.right = 0
-                      for (i = Math.floor(p.length / 2), n = p.length; i < n; i++) {
-                        e.appendChild(document.createElement('span'))
-                        e.lastElementChild.setAttribute('of', this.id)
-                        e.lastElementChild.style.backgroundColor = p[i]
+                      if (remake) {
+                        s.appendChild((e = document.createElement('div')))
+                        e.setAttribute('of', this.id)
+                        e.style.left = 0
+                        for (; i < n; i++) {
+                          e.appendChild(document.createElement('span'))
+                          e.lastElementChild.setAttribute('of', this.id)
+                          e.lastElementChild.style.backgroundColor = p[i]
+                        }
+                        s.appendChild((e = document.createElement('div')))
+                        e.setAttribute('of', this.id)
+                        e.style.right = 0
+                        for (i = Math.floor(p.length / 2), n = p.length; i < n; i++) {
+                          e.appendChild(document.createElement('span'))
+                          e.lastElementChild.setAttribute('of', this.id)
+                          e.lastElementChild.style.backgroundColor = p[i]
+                        }
+                      } else {
+                        e = s.children
+                        for (; i < n; i++) {
+                          e[i].style.backgroundColor = p[i]
+                        }
+                        for (i = Math.floor(p.length / 2), n = p.length; i < n; i++) {
+                          e[i].style.backgroundColor = p[i]
+                        }
                       }
                     }
                   } else {
-                    this.parts.scale.appendChild(document.createElement('span'))
-                    this.parts.scale.appendChild(document.createElement('span'))
-                    this.parts.scale.firstElementChild.style.background =
+                    if (remake) {
+                      s.appendChild(document.createElement('span'))
+                      s.appendChild(document.createElement('span'))
+                    }
+                    s.firstElementChild.style.background =
                       'linear-gradient(0.25turn, rgb(' +
                       p[2][0][0] +
                       ', ' +
@@ -2947,7 +2962,7 @@ void (function () {
                       ', ' +
                       p[1][2] +
                       '))'
-                    this.parts.scale.lastElementChild.style.background =
+                    s.lastElementChild.style.background =
                       'linear-gradient(0.25turn, rgb(' +
                       p[1][0] +
                       ', ' +
@@ -2964,54 +2979,61 @@ void (function () {
                   }
                 }
                 if (var_info.levels) {
-                  this.ticks.center.classList.remove('hidden')
-                  this.ticks.min.firstElementChild.firstElementChild.innerText = var_info.levels[0]
-                  this.ticks.max.firstElementChild.firstElementChild.innerText =
-                    var_info.levels[var_info.levels.length - 1]
+                  ticks.center.classList.remove('hidden')
+                  ticks.min.firstElementChild.firstElementChild.innerText = var_info.levels[0]
+                  ticks.max.firstElementChild.firstElementChild.innerText = var_info.levels[var_info.levels.length - 1]
                 } else if (site.settings.color_by_order) {
-                  this.ticks.center.classList.add('hidden')
-                  this.ticks.min.firstElementChild.firstElementChild.innerText =
-                    '# ' + (summary.n[y] ? summary.n[y] : 0)
-                  this.ticks.max.firstElementChild.firstElementChild.innerText = '# ' + (summary.n[y] ? 1 : 0)
+                  ticks.center.classList.add('hidden')
+                  ticks.min.firstElementChild.firstElementChild.innerText = '# ' + (summary.n[y] ? summary.n[y] : 0)
+                  ticks.max.firstElementChild.firstElementChild.innerText = '# ' + (summary.n[y] ? 1 : 0)
                 } else {
-                  this.ticks.center.classList.remove('hidden')
-                  this.ticks.min.firstElementChild.firstElementChild.innerText = summary.n[y]
-                    ? isFinite(summary.min[y])
-                      ? site.data.format_value(summary.min[y], this.integer)
+                  const state =
+                    '' +
+                    summary.n[y] +
+                    summary.min[y] +
+                    summary.max[y] +
+                    site.settings.digits +
+                    site.settings.color_scale_center +
+                    site.settings.summary_selection
+                  if (refresh || state !== this.state) {
+                    this.state = state
+                    ticks.center.classList.remove('hidden')
+                    ticks.min.firstElementChild.firstElementChild.innerText = summary.n[y]
+                      ? isFinite(summary.min[y])
+                        ? site.data.format_value(summary.min[y], this.integer)
+                        : 'unknown'
                       : 'unknown'
-                    : 'unknown'
-                  this.ticks.max.firstElementChild.firstElementChild.innerText = summary.n[y]
-                    ? isFinite(summary.max[y])
-                      ? site.data.format_value(summary.max[y], this.integer)
+                    ticks.max.firstElementChild.firstElementChild.innerText = summary.n[y]
+                      ? isFinite(summary.max[y])
+                        ? site.data.format_value(summary.max[y], this.integer)
+                        : 'unknown'
                       : 'unknown'
-                    : 'unknown'
-                  if ('none' !== site.settings.color_scale_center) {
-                    this.ticks.center.firstElementChild.lastElementChild.innerText =
-                      summary_levels[site.settings.summary_selection] + ' ' + site.settings.color_scale_center
-                    this.ticks.center.firstElementChild.children[1].innerText = site.data.format_value(
-                      summary[site.settings.color_scale_center][y]
-                    )
-                    this.ticks.center.style.left = summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
-                  } else {
-                    this.ticks.center.firstElementChild.lastElementChild.innerText =
-                      summary_levels[site.settings.summary_selection] + ' median'
-                    this.ticks.center.firstElementChild.children[1].innerText = site.data.format_value(
-                      summary.median[y]
-                    )
-                    this.ticks.center.style.left = summary.norm_median[y] * 100 + '%'
-                  }
-                  if (2 === this.parts.scale.childElementCount) {
-                    if ('none' === site.settings.color_scale_center) {
-                      this.parts.scale.firstElementChild.style.width = '50%'
-                      this.parts.scale.lastElementChild.style.width = '50%'
+                    if ('none' !== site.settings.color_scale_center) {
+                      ticks.center.firstElementChild.lastElementChild.innerText =
+                        summary_levels[site.settings.summary_selection] + ' ' + site.settings.color_scale_center
+                      ticks.center.firstElementChild.children[1].innerText = site.data.format_value(
+                        summary[site.settings.color_scale_center][y]
+                      )
+                      ticks.center.style.left = summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
                     } else {
-                      this.parts.scale.firstElementChild.style.width =
-                        summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
-                      this.parts.scale.lastElementChild.style.width =
-                        100 - summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
+                      ticks.center.firstElementChild.lastElementChild.innerText =
+                        summary_levels[site.settings.summary_selection] + ' median'
+                      ticks.center.firstElementChild.children[1].innerText = site.data.format_value(summary.median[y])
+                      ticks.center.style.left = summary.norm_median[y] * 100 + '%'
                     }
+                    if (2 === s.childElementCount) {
+                      if ('none' === site.settings.color_scale_center) {
+                        s.firstElementChild.style.width = '50%'
+                        s.lastElementChild.style.width = '50%'
+                      } else {
+                        s.firstElementChild.style.width =
+                          summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
+                        s.lastElementChild.style.width =
+                          100 - summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
+                      }
+                    }
+                    ticks.center.style.marginLeft = -ticks.center.getBoundingClientRect().width / 2 + 'px'
                   }
-                  this.ticks.center.style.marginLeft = -this.ticks.center.getBoundingClientRect().width / 2 + 'px'
                 }
               }
             }
@@ -3019,7 +3041,7 @@ void (function () {
           mouseover: function (e) {
             const s = this.parts.scale.getBoundingClientRect(),
               p = (Math.max(s.x, Math.min(s.x + s.width, e.clientX)) - s.x) / s.width
-            var entity = false
+            let entity = false
             if (site.settings.color_by_order) {
               if (this.parsed.order && this.parsed.order.length)
                 entity =
@@ -3031,7 +3053,7 @@ void (function () {
                       )
                     ][0]
                   ]
-            } else {
+            } else if ('min' in this.parsed.summary) {
               const min = this.parsed.summary.min[this.parsed.time],
                 max = this.parsed.summary.max[this.parsed.time],
                 tv = min + p * (max - min)
@@ -3353,6 +3375,7 @@ void (function () {
       const centered = 'none' !== site.settings.color_scale_center && !site.settings.color_by_order,
         fixed = 'discrete' === palettes[which].type,
         colors = palettes[which].colors,
+        odd = palettes[which].odd,
         string = 'levels' in summary,
         min = !string ? summary.min[index] : 0,
         range = string ? summary.levels.length - min : summary.range[index],
@@ -3365,14 +3388,14 @@ void (function () {
             ? summary['break_' + center_source][index] / total
             : 0.5
           : isNaN(summary['norm_' + center_source][index])
-          ? 0
+          ? 0.5
           : summary['norm_' + center_source][index],
         r = fixed ? (centered && !site.settings.color_by_order ? Math.ceil(colors.length / 2) : colors.length) : 1,
         p = site.settings.color_by_order
           ? rank / total
           : range
           ? ((string ? summary.level_ids[value] : value) - min) / range
-          : 0,
+          : 0.5,
         upper = p > (centered ? center : 0.5)
       var v = centered
         ? range
@@ -3381,7 +3404,7 @@ void (function () {
               summary['upper_' + center_source + '_range'][index]
             : (p + center - summary['lower_' + center_source + '_min'][index]) /
               summary['lower_' + center_source + '_range'][index]
-          : 0
+          : 1
         : p
       if (!fixed) {
         v = Math.max(0, Math.min(1, v))
@@ -3391,13 +3414,7 @@ void (function () {
       return (string ? value in summary.level_ids : 'number' === typeof value)
         ? fixed
           ? colors[
-              Math.max(
-                0,
-                Math.min(
-                  colors.length - 1,
-                  Math.floor(centered ? (upper ? r - (colors.length % 2) + r * v : r * v) : r * v)
-                )
-              )
+              Math.max(0, Math.min(colors.length - 1, Math.floor(centered ? (upper ? r - odd + r * v : r * v) : r * v)))
             ]
           : 'rgb(' +
             (upper
@@ -4120,6 +4137,7 @@ void (function () {
           )
         }
       }
+      p.odd = p.colors.length % 2
     })
 
     window.onload = function () {
