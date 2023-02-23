@@ -3005,28 +3005,28 @@ void (function () {
                       // ) {
                         this.time = valueOf(v.time_agg)
                         this.destroyTable()
-                        this.header = [{title: 'Name', data: 'entity.features.name'}]
-                        if (-1 !== this.parsed.time_range[0]) {
-                          for (let n = this.parsed.time_range[2]; n--; ) {
-                            this.header[n + 1] = {
-                              dataset: d,
-                              variable: vn,
-                              title: this.variable_header
-                                ? this.options.variables.title || site.data.format_label(vn)
-                                : site.data.meta.times[d].value[n + this.parsed.time_range[0]] + '',
-                              data: site.data.retrievers.vector,
-                              render: site.data.retrievers.row_time.bind({
-                                i: n,
-                                o: this.parsed.time_range[0],
-                                format_value: site.data.format_value.bind(site.data),
-                              }),
-                            }
-                          }
-                        } else this.state = ''
-                        this.options.order[0][0] = this.header.length - 1
+                      // this.header = [{title: 'Name', data: 'entity.features.name'}]
+                      // if (-1 !== this.parsed.time_range[0]) {
+                      //   for (let n = this.parsed.time_range[2]; n--; ) {
+                      //     this.header[n + 1] = {
+                      //       dataset: d,
+                      //       variable: vn,
+                      //       title: this.variable_header
+                      //         ? this.options.variables.title || site.data.format_label(vn)
+                      //         : site.data.meta.times[d].value[n + this.parsed.time_range[0]] + '',
+                      //       data: site.data.retrievers.vector,
+                      //       render: site.data.retrievers.row_time.bind({
+                      //         i: n,
+                      //         o: this.parsed.time_range[0],
+                      //         format_value: site.data.format_value.bind(site.data),
+                      //       }),
+                      //     }
+                      //   }
+                      // } else this.state = ''
+                      //this.options.order[0][0] = this.header.length - 1
                         this.options.columns = this.header
                         this.createTable(this.table, v)
-                      }
+                      //}
                       let reset
                       if (reset) this.state = ''
                     }
