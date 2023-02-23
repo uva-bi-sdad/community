@@ -1570,7 +1570,6 @@ void (function () {
                   s = v.selection && v.selection.all,
                   d = v.get.dataset(),
                   y = _u[this.time || v.time_agg]
-                let missingVals = false
                 if (site.data.inited[d] && s && v.time_range.filtered.length) {
                   this.parsed.base_trace = valueOf(this.base_trace)
                   this.parsed.x = valueOf(this.x)
@@ -1587,7 +1586,6 @@ void (function () {
                   if (!(this.parsed.palette in palettes)) this.parsed.palette = defaults.palette
                   this.parsed.time = (y ? y.value() - site.data.meta.times[d].range[0] : 0) - varcol.time_range[d][0]
                   this.parsed.summary = varcol[this.view].summaries[d]
-
                   const display_time = this.parsed.summary.n[this.parsed.time] ? this.parsed.time : 0,
                     summary = vary[this.view].summaries[d],
                     missing = this.parsed.summary.missing[display_time],
@@ -1625,14 +1623,7 @@ void (function () {
                       const e = s[k]
                       state += k
                       traces.push(
-                        make_data_entry(
-                          this,
-                          e,
-                          e[this.view][rank][this.parsed.color][this.parsed.time] - missing,
-                          n,
-                          null,
-                          missingVals ? defaults.missing : null
-                        )
+                        make_data_entry(this, e, e[this.view][rank][this.parsed.color][this.parsed.time] - missing, n)
                       )
                       if (lim && !--jump) break
                     }
@@ -1643,22 +1634,12 @@ void (function () {
                         k = order[i][0]
                         const e = s[k]
                         state += k
-                        traces.push(
-                          make_data_entry(
-                            this,
-                            e,
-                            e[this.view][rank][this.parsed.color][this.parsed.time] - missing,
-                            n,
-                            null,
-                            missingVals ? defaults.missing : null
-                          )
-                        )
+                        make_data_entry(this, e, e[this.view][rank][this.parsed.color][this.parsed.time] - missing, n)
                         if (!--lim) break
                       }
                     }
                   }
                   state += traces.length && traces[0].type
-
                   if (site.settings.boxplots && 'box' in this.traces && s[k]) {
                     state += 'box' + site.settings.iqr_box
                     b = JSON.parse(this.traces.box)
@@ -1685,7 +1666,6 @@ void (function () {
                     }
                     b.x = b.q1.map((_, i) => s[k].get_value(this.parsed.x, i + this.parsed.y_range[0]))
                   }
-                  state += missingVals
                   if (state !== this.state) {
                     if ('boolean' !== typeof this.e.layout.yaxis.title)
                       this.e.layout.yaxis.title =
@@ -2767,8 +2747,8 @@ void (function () {
         },
         table: {
           init: function (o) {
-            o.e.appendChild(document.createElement('thead'))
-            o.e.appendChild(document.createElement('tbody'))
+            o.e.appendChild(document.createElement('tHead'))
+            o.e.appendChild(document.createElement('tBody'))
             o.click = o.e.getAttribute('click')
             o.features = o.options.features
             o.parsed = {summary: {}, order: [], time: 0, color: '', dataset: _u[o.view].get.dataset()}
