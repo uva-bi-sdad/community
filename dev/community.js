@@ -2899,22 +2899,23 @@ void (function () {
               this.prepareData(v, tableData, vn)
               Object.assign(this.rows, tableData)
               let tableData_sorted = Object.entries(tableData).sort(([, a], [, b]) => -(a[time] - b[time]))
-              let startIdx = this.parsed.time_range[0]
-
+              const dataset = v.get.dataset()
+              const startTime = site.data.meta.times[dataset].range[0]
               for (var i = 0; i < tableData_sorted.length; i++) {
-                let idx = startIdx
                 let tr = document.createElement('tr')
                 tr.style.cursor = 'pointer'
                 let td = document.createElement('td')
                 td.innerText = v.selection.all[tableData_sorted[i][0]].features.name
                 tr.append(td)
                 tr.dataset.entityId = tableData_sorted[i][0]
+                let startIdx = this.parsed.time_range[0]
                 for (let t in tableData_sorted[i][1]) {
+                  const idx = parseInt(t) - startTime
                   if (!v.times[idx]) continue
                   td = document.createElement('td')
                   td.innerText = site.data.format_value(tableData_sorted[i][1][t])
                   tr.append(td)
-                  idx++
+                  startIdx++
                 }
                 table.querySelector('tbody').append(tr)
               }
