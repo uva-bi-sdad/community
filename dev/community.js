@@ -2956,7 +2956,10 @@ void (function () {
               add_dependency(o.view, {type: 'update', id: o.id})
               add_dependency(o.view + '_filter', {type: 'update', id: o.id})
             } else o.view = defaults.dataview
-            queue_init_table.bind(o)()
+            o.options.columns = o.header
+            o.table = o.e
+            this.update()
+            //queue_init_table.bind(o)()
           },
           update: async function (pass) {
             clearTimeout(this.queue)
