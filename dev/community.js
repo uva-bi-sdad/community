@@ -6205,17 +6205,17 @@ void (function () {
       }
     }
 
-    function queue_init_table() {
-      const showing = this.deferred || !this.tab || this.tab.classList.contains('show')
-      if (showing && 'get' in site.dataviews[this.view]) {
-        this.options.columns = this.header
-        this.table = this.e
-        this.update()
-      } else {
-        this.deferred = true
-        setTimeout(queue_init_table.bind(this), showing ? 0 : 2000)
-      }
-    }
+    // function queue_init_table() {
+    //   const showing = this.deferred || !this.tab || this.tab.classList.contains('show')
+    //   if (showing && 'get' in site.dataviews[this.view]) {
+    //     this.options.columns = this.header
+    //     this.table = this.e
+    //     this.update()
+    //   } else {
+    //     this.deferred = true
+    //     setTimeout(queue_init_table.bind(this), showing ? 0 : 2000)
+    //   }
+    // }
   }
 
   if ('undefined' === typeof module) {
