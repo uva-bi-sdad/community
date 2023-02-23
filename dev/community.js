@@ -2838,30 +2838,29 @@ void (function () {
 
             o.createTable = function (table, v) {
               this.clearTable(table)
-              let headers = this.header.map(h => h.title)
+              //let headers = this.header.map(h => h.title)
               let thead = document.createElement('thead')
               let tr = document.createElement('tr')
 
               const th = document.createElement('th')
               const div = document.createElement('div')
-              div.innerText = headers[0]
+              div.innerText = this.header[0]
               div.dataset.dir = ''
               th.append(div)
               tr.append(th)
-              const d = v.get.dataset()
-              let startIdx = this.parsed.time_range[0]
-              for (let i = 1; i < headers.length; i++) {
-                if (!v.times[startIdx]) {
-                  startIdx++
-                  continue
-                }
+              const dataset = v.get.dataset()
+              const startTime = site.data.meta.times[dataset].range[0]
+              //let startIdx = this.parsed.time_range[0]
+              for (let i = 1; i < this.header.length; i++) {
+                const idx = parseInt(this.header[i]) - startTime
+                if (!v.times[idx]) continue
                 const th = document.createElement('th')
                 const div = document.createElement('div')
-                div.innerText = headers[i]
-                if (headers[i] == this.time) div.style['border'] = 'solid black'
+                div.innerText = this.header[i]
+                if (this.header[i] == this.time) div.style['border'] = 'solid black'
                 th.append(div)
                 tr.append(th)
-                startIdx++
+                //startIdx++
               }
 
               thead.append(tr)
