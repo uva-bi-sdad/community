@@ -2949,7 +2949,7 @@ void (function () {
               if (t)
                 for (let n = t[1] - t[0] + 1; n--; ) {
                   o.header[n + 1] = o.variable_header ? c.title || site.data.format_label(k) : time.value[n + t[0]] + ''
-              }
+                }
             }
             if (o.view) {
               add_dependency(o.view, {type: 'update', id: o.id})
@@ -3002,8 +3002,8 @@ void (function () {
                       //   vn !== this.header[1].variable ||
                       //   (this.time && this.time !== valueOf(v.time_agg))
                       // ) {
-                        this.time = valueOf(v.time_agg)
-                        this.destroyTable()
+                      this.time = valueOf(v.time_agg)
+                      this.destroyTable()
                       // this.header = [{title: 'Name', data: 'entity.features.name'}]
                       // if (-1 !== this.parsed.time_range[0]) {
                       //   for (let n = this.parsed.time_range[2]; n--; ) {
@@ -3023,8 +3023,8 @@ void (function () {
                       //   }
                       // } else this.state = ''
                       //this.options.order[0][0] = this.header.length - 1
-                        this.options.columns = this.header
-                        this.createTable(this.table, v)
+                      this.options.columns = this.header
+                      this.createTable(this.table, v)
                       //}
                       let reset
                       if (reset) this.state = ''
