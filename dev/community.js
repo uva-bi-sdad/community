@@ -3087,12 +3087,12 @@ void (function () {
                         this.parsed.time_range[0]
                       this.parsed.summary = this.view in variable ? variable[this.view].summaries[d] : false
                       this.parsed.order = this.view in variable ? variable[this.view].order[d][this.parsed.time] : false
-                      if (
-                        this.header.length < 2 ||
-                        d !== this.header[1].dataset ||
-                        vn !== this.header[1].variable ||
-                        (this.time && this.time !== valueOf(v.time_agg))
-                      ) {
+                      // if (
+                      //   this.header.length < 2 ||
+                      //   d !== this.header[1].dataset ||
+                      //   vn !== this.header[1].variable ||
+                      //   (this.time && this.time !== valueOf(v.time_agg))
+                      // ) {
                         this.time = valueOf(v.time_agg)
                         this.destroyTable()
                         this.header = [{title: 'Name', data: 'entity.features.name'}]
