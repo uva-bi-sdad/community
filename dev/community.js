@@ -2795,8 +2795,7 @@ void (function () {
               o.e.addEventListener('click', elements.table.click.bind(o))
             }
             o.show = function (e) {
-              const existing_entityIds = Object.keys(this.rows)
-              if (e.features && existing_entityIds.includes(e.features.id)) {
+              if (e.features && this.rows[e.features.id]) {
                 const row = this.e.querySelector(`[data-entity-id='${e.features.id}']`)
                 if (row) {
                   row.style.backgroundColor = defaults.background_highlight
@@ -2813,8 +2812,7 @@ void (function () {
               }
             }
             o.revert = function (e) {
-              const existing_entityIds = Object.keys(this.rows)
-              if (e.features && existing_entityIds.includes(e.features.id)) {
+              if (e.features && this.rows[e.features.id]) {
                 const row = this.e.querySelector(`[data-entity-id='${e.features.id}']`)
                 if (row) {
                   row.style.removeProperty('background-color')
