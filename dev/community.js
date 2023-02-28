@@ -2777,6 +2777,16 @@ void (function () {
             }
             o.parsed = {summary: {}, order: [], selection: {}, time: 0, color: '', rank: false}
             o.state = ''
+            o.queue = {
+              lock: false,
+              cooldown: -1,
+              trigger: function () {
+                this.mouseover(this.queue.e)
+              }.bind(o),
+            }
+            o.queue.reset = function () {
+              this.lock = false
+            }.bind(o.queue)
             o.parts = {
               ticks: o.e.querySelector('.legend-ticks'),
               scale: o.e.querySelector('.legend-scale'),
@@ -2785,7 +2795,8 @@ void (function () {
             o.parts.ticks.setAttribute('of', o.id)
             o.parts.scale.setAttribute('of', o.id)
             o.parts.summary.setAttribute('of', o.id)
-            o.e.addEventListener('mousemove', elements.legend.mouseover.bind(o))
+            o.mouseover = elements.legend.mouseover.bind(o)
+            o.e.addEventListener('mousemove', o.mouseover)
             o.e.addEventListener('mouseout', elements.legend.mouseout.bind(o))
             o.e.addEventListener('click', elements.legend.click.bind(o))
             o.click = o.e.getAttribute('click')
@@ -2839,29 +2850,30 @@ void (function () {
                             Math.min(1, range ? ((string ? summary.level_ids[value] : value) - min) / range : 0.5)
                           )
                       : NaN) * 100,
-                  t = this.ticks.entity.firstElementChild.children[1]
+                  container = this.ticks.entity,
+                  t = container.firstElementChild.children[1]
                 if (isFinite(p)) {
                   t.parentElement.classList.remove('hidden')
                   t.innerText = site.data.format_value(value, this.integer)
-                  this.ticks.entity.style.left = p + '%'
-                  this.ticks.entity.firstElementChild.firstElementChild.innerText =
+                  container.style.left = p + '%'
+                  container.firstElementChild.firstElementChild.innerText =
                     (p > 96 || p < 4) && e.features.name.length > 13
                       ? e.features.name.substring(0, 12) + '…'
                       : e.features.name
                 } else if (site.settings.color_by_order && c.parsed.color in es[subset]) {
                   const i = es[subset][c.parsed.color][c.parsed.time],
                     po = n > 1 ? (i / (n - 1)) * 100 : 0
-                  this.ticks.entity.firstElementChild.firstElementChild.innerText =
+                  container.firstElementChild.firstElementChild.innerText =
                     i > -1 && (po > 96 || po < 4) && e.features.name.length > 13
                       ? e.features.name.substring(0, 12) + '…'
                       : e.features.name
                   if (i > -1) {
                     t.parentElement.classList.remove('hidden')
                     t.innerText = '# ' + (n - i)
-                    this.ticks.entity.style.left = po + '%'
+                    container.style.left = po + '%'
                   }
                 }
-                this.ticks.entity.style.marginLeft = -this.ticks.entity.getBoundingClientRect().width / 2 + 'px'
+                container.style.marginLeft = -container.getBoundingClientRect().width / 2 + 'px'
               }
             }
             o.revert = function () {
@@ -3039,53 +3051,62 @@ void (function () {
             }
           },
           mouseover: function (e) {
-            const s = this.parts.scale.getBoundingClientRect(),
-              p = (Math.max(s.x, Math.min(s.x + s.width, e.clientX)) - s.x) / s.width
-            let entity = false
-            if (site.settings.color_by_order) {
-              if (this.parsed.order && this.parsed.order.length)
-                entity =
-                  site.data.entities[
-                    this.parsed.order[
-                      Math.max(
-                        this.parsed.summary.missing[this.parsed.time],
-                        Math.min(this.parsed.order.length - 1, Math.floor((this.parsed.order.length - 1) * p))
-                      )
-                    ][0]
-                  ]
-            } else if ('min' in this.parsed.summary) {
-              const min = this.parsed.summary.min[this.parsed.time],
-                max = this.parsed.summary.max[this.parsed.time],
-                tv = min + p * (max - min)
-              var i, n
-              if (this.parsed.order && this.parsed.order.length) {
-                n = this.parsed.summary.missing[this.parsed.time]
-                if (n < this.parsed.order.length) {
-                  if (1 === this.parsed.order.length || !p) {
-                    entity = site.data.entities[this.parsed.order[n][0]]
-                  } else {
-                    for (i = this.parsed.order.length - 2; i >= n; --i) {
-                      if ((this.parsed.order[i][1] + this.parsed.order[i + 1][1]) / 2 <= tv) break
+            if (!this.queue.lock) {
+              this.queue.lock = true
+              const s = this.parts.scale.getBoundingClientRect(),
+                p = (Math.max(s.x, Math.min(s.x + s.width, e.clientX)) - s.x) / s.width
+              let entity = false
+              if (site.settings.color_by_order) {
+                if (this.parsed.order && this.parsed.order.length)
+                  entity =
+                    site.data.entities[
+                      this.parsed.order[
+                        Math.max(
+                          this.parsed.summary.missing[this.parsed.time],
+                          Math.min(this.parsed.order.length - 1, Math.floor((this.parsed.order.length - 1) * p))
+                        )
+                      ][0]
+                    ]
+              } else if ('min' in this.parsed.summary) {
+                const min = this.parsed.summary.min[this.parsed.time],
+                  max = this.parsed.summary.max[this.parsed.time],
+                  tv = min + p * (max - min)
+                var i, n
+                if (this.parsed.order && this.parsed.order.length) {
+                  n = this.parsed.summary.missing[this.parsed.time]
+                  if (n < this.parsed.order.length) {
+                    if (1 === this.parsed.order.length || !p) {
+                      entity = site.data.entities[this.parsed.order[n][0]]
+                    } else {
+                      for (i = this.parsed.order.length - 2; i >= n; --i) {
+                        if ((this.parsed.order[i][1] + this.parsed.order[i + 1][1]) / 2 <= tv) break
+                      }
+                      i++
+                      entity = site.data.entities[this.parsed.order[i][0]]
                     }
-                    i++
-                    entity = site.data.entities[this.parsed.order[i][0]]
                   }
                 }
               }
-            }
-            if (entity) {
-              this.show(entity, this)
-              if (!this.entity || entity.features.id !== this.entity.features.id) {
-                if (!this.entity) {
+              if (entity) {
+                this.show(entity, this)
+                if (!this.entity || entity.features.id !== this.entity.features.id) {
+                  if (!this.entity) {
+                    this.entity = entity
+                  } else update_subs(this.id, 'revert', this.entity)
+                  update_subs(this.id, 'show', entity)
                   this.entity = entity
-                } else update_subs(this.id, 'revert', this.entity)
-                update_subs(this.id, 'show', entity)
-                this.entity = entity
+                }
               }
+              setTimeout(this.queue.reset, 200)
+            } else {
+              clearTimeout(this.queue.cooldown)
+              this.queue.e = e
+              this.queue.cooldown = setTimeout(this.queue.trigger, 100)
             }
           },
           mouseout: function (e) {
             if (e.relatedTarget && this.id !== e.relatedTarget.getAttribute('of')) {
+              clearTimeout(this.queue.cooldown)
               this.revert()
               if (this.entity) {
                 update_subs(this.id, 'revert', this.entity)
@@ -5340,27 +5361,31 @@ void (function () {
               site.map._queue[source].property_summaries = s
             }
             site.map[u.id]._layers[source] = L.geoJSON(JSON.parse(site.map._raw[source]), {
-              pointToLayer: (point, coords) => {
-                return L.circleMarker(coords)
-              },
-              onEachFeature: (feature, layer) => {
-                const e = document.createElement('table')
-                Object.keys(feature.properties).forEach(f => {
-                  const v = feature.properties[f]
-                  if ('number' === typeof v) {
-                    if (!(f in s)) s[f] = [Infinity, -Infinity]
-                    if (v < s[f][0]) s[f][0] = v
-                    if (v > s[f][1]) s[f][1] = v
-                  }
-                  const r = document.createElement('tr')
-                  r.appendChild(document.createElement('td'))
-                  r.appendChild(document.createElement('td'))
-                  r.firstElementChild.innerText = f
-                  r.lastElementChild.innerText = v
-                  e.appendChild(r)
-                })
-                layer.bindTooltip(e)
-              },
+              pointToLayer: (point, coords) => L.circleMarker(coords),
+            }).on('mouseover', l => {
+              const layer = l.layer
+              if (layer && !layer._tooltip) {
+                const props = layer.feature && layer.feature.properties
+                if (props) {
+                  const e = document.createElement('table')
+                  Object.keys(props).forEach(f => {
+                    const v = props[f]
+                    if ('number' === typeof v) {
+                      if (!(f in s)) s[f] = [Infinity, -Infinity]
+                      if (v < s[f][0]) s[f][0] = v
+                      if (v > s[f][1]) s[f][1] = v
+                    }
+                    const r = document.createElement('tr')
+                    r.appendChild(document.createElement('td'))
+                    r.appendChild(document.createElement('td'))
+                    r.firstElementChild.innerText = f
+                    r.lastElementChild.innerText = v
+                    e.appendChild(r)
+                  })
+                  layer.bindTooltip(e)
+                  layer.openTooltip()
+                }
+              }
             })
             Object.keys(s).forEach(f => {
               s[f].push(s[f][1] - s[f][0])

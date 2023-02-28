@@ -386,13 +386,7 @@ void (function () {
       } else if (int) {
         return v
       } else {
-        if (this.settings.settings.digits > 0) {
-          const d = Math.pow(10, this.settings.settings.digits),
-            r = (Math.round(v * d) / d + '').split('.')
-          return (
-            r[0] + ('.' + (1 === r.length ? '' : r[1]) + '0000000000').substring(0, this.settings.settings.digits + 1)
-          )
-        } else return Math.round(v)
+        return v.toFixed(this.settings.settings.digits > 0 ? this.settings.settings.digits : 0)
       }
     },
     format_label: function (l) {
