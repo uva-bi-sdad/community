@@ -2970,8 +2970,6 @@ void (function () {
                     this.parsed.time =
                       ('number' === typeof time ? time - site.data.meta.times[d].range[0] : 0) -
                       this.parsed.time_range[0]
-                    //this.parsed.summary = this.view in variable ? variable[this.view].summaries[d] : false
-                    // this.parsed.order = this.view in variable ? variable[this.view].order[d][this.parsed.time] : false
                     this.time = valueOf(v.time_agg)
                     this.destroyTable()
                     this.options.columns = this.header
