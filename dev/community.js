@@ -2818,7 +2818,6 @@ void (function () {
 
             o.createTable = function (table, v) {
               this.clearTable(table)
-              //let headers = this.header.map(h => h.title)
               let thead = document.createElement('thead')
               let tr = document.createElement('tr')
 
@@ -2830,17 +2829,16 @@ void (function () {
               tr.append(th)
               const dataset = v.get.dataset()
               const startTime = site.data.meta.times[dataset].range[0]
-              //let startIdx = this.parsed.time_range[0]
+
               for (let i = 1; i < this.header.length; i++) {
                 const idx = parseInt(this.header[i]) - startTime
                 if (!v.times[idx]) continue
                 const th = document.createElement('th')
                 const div = document.createElement('div')
                 div.innerText = this.header[i]
-                if (this.header[i] == this.time) div.style['border'] = 'solid black'
+                if (this.header[i] == this.time) div.classList.add('selected-year')
                 th.append(div)
                 tr.append(th)
-                //startIdx++
               }
 
               thead.append(tr)
@@ -2938,7 +2936,6 @@ void (function () {
             o.options.columns = o.header
             o.table = o.e
             this.update()
-            //queue_init_table.bind(o)()
           },
           update: async function (pass) {
             clearTimeout(this.queue)
@@ -2957,128 +2954,35 @@ void (function () {
                 if (state !== this.state) {
                   this.rows = {}
                   this.rowIds = {}
-                  this.destroyTable.bind(this)
                   this.clearTable.bind(this)
                   this.clearTable(this.table)
                   let redraw = true
-                  if (v.selection) {
-                    this.state = state
-                    Object.keys(this.reference_options).forEach(
-                      k => (this.options[k] = valueOf(this.reference_options[k]))
-                    )
-                    if (this.options.single_variable) {
-                      const variable = await get_variable(vn, this.view)
-                      this.parsed.dataset = d
-                      this.parsed.color = vn
-                      this.parsed.time_range = variable.time_range[d]
-                      this.parsed.time =
-                        ('number' === typeof time ? time - site.data.meta.times[d].range[0] : 0) -
-                        this.parsed.time_range[0]
-                      this.parsed.summary = this.view in variable ? variable[this.view].summaries[d] : false
-                      this.parsed.order = this.view in variable ? variable[this.view].order[d][this.parsed.time] : false
-                      // if (
-                      //   this.header.length < 2 ||
-                      //   d !== this.header[1].dataset ||
-                      //   vn !== this.header[1].variable ||
-                      //   (this.time && this.time !== valueOf(v.time_agg))
-                      // ) {
-                      this.time = valueOf(v.time_agg)
-                      this.destroyTable()
-                      // this.header = [{title: 'Name', data: 'entity.features.name'}]
-                      // if (-1 !== this.parsed.time_range[0]) {
-                      //   for (let n = this.parsed.time_range[2]; n--; ) {
-                      //     this.header[n + 1] = {
-                      //       dataset: d,
-                      //       variable: vn,
-                      //       title: this.variable_header
-                      //         ? this.options.variables.title || site.data.format_label(vn)
-                      //         : site.data.meta.times[d].value[n + this.parsed.time_range[0]] + '',
-                      //       data: site.data.retrievers.vector,
-                      //       render: site.data.retrievers.row_time.bind({
-                      //         i: n,
-                      //         o: this.parsed.time_range[0],
-                      //         format_value: site.data.format_value.bind(site.data),
-                      //       }),
-                      //     }
-                      //   }
-                      // } else this.state = ''
-                      //this.options.order[0][0] = this.header.length - 1
-                      this.options.columns = this.header
-                      this.createTable(this.table, v)
-                      //}
-                      let reset
-                      if (reset) this.state = ''
-                    }
-                    if (this.options.wide) {
-                      this.appendRows.bind(this)
-                      this.appendRows(this.table, v, vn)
-                    } else {
-                      Object.keys(this.filters).forEach(f => {
-                        this.current_filter[c] = valueOf(f)
-                      })
-                      const va = []
-                      let varstate =
-                        '' + this.parsed.dataset + v.get.ids(true) + v.get.features() + site.settings.digits
-                      for (let i = this.options.variables.length; i--; ) {
-                        vn = this.options.variables[i].name || this.options.variables[i]
-                        pass = false
-                        if (vn in site.data.variables && 'meta' in variable) {
-                          if (this.options.filters) {
-                            for (const c in this.current_filter)
-                              if (c in variable.meta) {
-                                pass = variable.meta[c] === this.current_filter[c]
-                                if (!pass) break
-                              }
-                          } else pass = true
-                        }
-                        if (pass) {
-                          varstate += vn
-                          va.push({
-                            variable: vn,
-                            int: patterns.int_types.test(site.data.variable_info[vn].type),
-                            time_range: variable.time_range[d],
-                            renderer: function (o, s) {
-                              const k = s.features.id,
-                                r = this.time_range,
-                                n = r[1]
-                              for (let i = r[0]; i <= n; i++) {
-                                o.rows[k] = o.table.row.add({
-                                  offset: this.time_range[0],
-                                  time: i - this.time_range[0],
-                                  dataset: d,
-                                  variable: this.variable,
-                                  entity: s,
-                                  int: this.int,
-                                })
-                                o.rowIds[o.rows[k].selector.rows] = k
-                              }
-                            },
-                          })
-                        }
-                      }
-                      if (varstate === this.varstate) return void 0
-                      this.varstate = varstate
-                      Object.keys(v.selection.all).forEach(k => {
-                        const e = v.selection.all[k]
-                        if (this.options.single_variable) {
-                          if (vn in e[v].summary && variable.code in e.data) {
-                            this.rows[k] = this.table.row.add({
-                              offset: this.parsed.time_range[0],
-                              dataset: d,
-                              variable: vn,
-                              entity: e,
-                              int: patterns.int_types.test(site.data.variable_info[vn].type),
-                            })
-                            this.rowIds[this.rows[k].selector.rows] = k
-                          }
-                        } else {
-                          va.forEach(v => {
-                            if (site.data.variables[v.variable].code in e.data) v.renderer(this, e)
-                          })
-                        }
-                      })
-                    }
+
+                  this.state = state
+                  Object.keys(this.reference_options).forEach(
+                    k => (this.options[k] = valueOf(this.reference_options[k]))
+                  )
+                  if (this.options.single_variable) {
+                    const variable = await get_variable(vn, this.view)
+                    this.parsed.dataset = d
+                    this.parsed.color = vn
+                    this.parsed.time_range = variable.time_range[d]
+                    this.parsed.time =
+                      ('number' === typeof time ? time - site.data.meta.times[d].range[0] : 0) -
+                      this.parsed.time_range[0]
+                    //this.parsed.summary = this.view in variable ? variable[this.view].summaries[d] : false
+                    // this.parsed.order = this.view in variable ? variable[this.view].order[d][this.parsed.time] : false
+                    this.time = valueOf(v.time_agg)
+                    this.destroyTable()
+                    this.options.columns = this.header
+                    this.createTable(this.table, v)
+
+                    let reset
+                    if (reset) this.state = ''
                   }
+
+                  this.appendRows.bind(this)
+                  this.appendRows(this.table, v, vn)
                 }
               }
             }
