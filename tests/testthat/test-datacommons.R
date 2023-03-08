@@ -28,7 +28,7 @@ test_that("view works", {
   )
   expect_true(dir.exists(dir_view))
   expect_true(length(jsonlite::read_json(
-    paste0(dir_view, "/docs/data/manifest.json")
+    paste0(dir_view, "/manifest.json")
   )[["uva-bi-sdad/sdc.education"]]$files) != 0)
   datacommons_view(
     dir, "view", dir_view,

@@ -59,10 +59,15 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
   view_dir <- normalizePath(paste0(commons, "/views/", name), "/", FALSE)
   dir.create(view_dir, FALSE, TRUE)
   paths <- paste0(view_dir, "/", c("view.json", "manifest.json", "run_after.R", "run_before.R"))
-  if (!is.null(run_after) && (length(run_after) > 1 || !file.exists(run_after))) {
-    if (verbose) cli_alert_info("writting {.file run_after.R}")
-    writeLines(run_after, paths[3])
-    run_after <- paths[3]
+  base_run_after <- run_after
+  if (!is.null(run_after)) {
+    if (length(run_after) > 1 || !grepl("\\w\\.\\w+$", run_after)) {
+      if (verbose) cli_alert_info("writting {.file run_after.R}")
+      writeLines(run_after, paths[3])
+      base_run_after <- run_after <- paths[3]
+    } else if (!file.exists(run_after)) {
+      base_run_after <- paste0(commons, "/", run_after)
+    }
   }
   if (!is.null(run_before) && (length(run_before) > 1 || !file.exists(run_before))) {
     if (verbose) cli_alert_info("writting {.file run_before.R}")
@@ -126,11 +131,21 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
     }
     if (verbose && write_view) cli_alert_info("updating existing {.file view.json}")
   }
+  outbase <- outdir <- view$output
+  if (!is.null(outdir)) {
+    if (!dir.exists(outdir)) {
+      if (dir.exists(paste0(commons, "/", outdir))) {
+        outdir <- paste0(commons, "/", outdir)
+      } else {
+        dir.create(outdir, FALSE, TRUE)
+      }
+    }
+    outbase <- sub("/docs(?:/data)?$", "", outdir)
+  }
   if (length(view$remote)) {
     remote_parts <- strsplit(sub("^(?:https?://)?(?:www\\.)?github\\.com/", "", view$remote), "/")[[1]]
     if (is.null(view$url)) view$url <- paste0("https://", remote_parts[1], ".github.io/", remote_parts[2])
-    if (!is.null(view$output)) {
-      outbase <- sub("/docs(?:/data)?", "", view$output)
+    if (!is.null(outdir)) {
       if (!dir.exists(outbase)) {
         outbase <- dirname(outbase)
         dir.create(outbase, FALSE, TRUE)
@@ -161,8 +176,8 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
   }
   if (length(view$variables)) view$variables <- as.character(view$variables)
   if (length(view$ids)) view$ids <- as.character(view$ids)
-  if (!is.null(view$output) && !dir.exists(view$output)) init_site(view$output, view$name, quiet = TRUE)
-  view$output <- paste0(sub("/docs(?:/data)?", "", if (is.null(view$output)) view_dir else view$output), "/docs/data")
+  if (!is.null(outbase) && !dir.exists(outbase)) init_site(outbase, view$name, quiet = TRUE)
+  if (is.null(view$output)) outdir <- view_dir
   if (write_view) write_json(view, paths[1], pretty = TRUE, auto_unbox = TRUE)
   if (execute) {
     source_env <- new.env()
@@ -321,13 +336,13 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
         }
       }
       if (length(measure_info)) {
-        measure_info_file <- paste0(view$output, "/measure_info.json")
+        measure_info_file <- paste0(outdir, "/measure_info.json")
         if (verbose) cli_alert_info("updating measure info: {.file {measure_info_file}}")
         write_json(rev(measure_info), measure_info_file, pretty = TRUE, auto_unbox = TRUE)
       }
       args <- list(...)
       args$files <- paste0(commons, "/", unique(files$file))
-      args$out <- view$output
+      args$out <- outdir
       args$variables <- view$variables
       args$ids <- view$ids
       args$overwrite <- overwrite
@@ -336,12 +351,12 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
     } else {
       cli_warn("no files were found")
     }
-    if (length(view$run_after) && file.exists(view$run_after)) {
-      if (verbose) cli_alert_info("running post-view script ({.file {view$run_after}})")
-      src <- parse(text = gsub("community::datacommons_view", "datacommons_view", readLines(view$run_after, warn = FALSE), fixed = TRUE))
+    if (length(base_run_after) && file.exists(base_run_after)) {
+      if (verbose) cli_alert_info("running post-view script ({.file {base_run_after}})")
+      src <- parse(text = gsub("community::datacommons_view", "datacommons_view", readLines(base_run_after, warn = FALSE), fixed = TRUE))
       source(local = source_env, exprs = src)
     }
-    write_json(manifest, paste0(view$output, "/manifest.json"), pretty = TRUE, auto_unbox = TRUE)
+    write_json(manifest, paste0(outdir, "/manifest.json"), pretty = TRUE, auto_unbox = TRUE)
   }
   init_datacommons(commons, refresh_after = FALSE, verbose = FALSE)
   invisible(view)

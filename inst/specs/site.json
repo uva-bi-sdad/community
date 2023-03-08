@@ -7,7 +7,6 @@
     "site.R",
     ".gitignore",
     "build.R",
-    "project.Rproj",
     "docs/index.html",
     "docs/settings.json",
     "docs/script.js",

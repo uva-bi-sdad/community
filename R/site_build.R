@@ -112,16 +112,24 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
           if (file.exists(file)) {
             if (force || (!file.exists(path) || file.mtime(file) > file.mtime(path))) {
               vars <- vapply(d$schema$fields, "[[", "", "name")
-              types <- vapply(d$schema$fields, function(e) if (e$type == "string") "c" else "n", "")
-              if (length(d$ids)) {
-                vars <- c("ID", vars)
-                types <- c("c", types)
+              sep <- if (grepl(".csv", file, fixed = TRUE)) "," else "\t"
+              cols <- scan(file, "", nlines = 1, sep = sep, quiet = TRUE)
+              add_id <- length(d$ids) && !d$ids[[1]]$variable %in% vars
+              if (add_id) vars <- c(d$ids[[1]]$variable, vars)
+              if (length(vars) == length(cols) && all(vars %in% cols)) {
+                types <- vapply(d$schema$fields, function(e) if (e$type == "string") "c" else "n", "")
+                if (add_id) types <- c("c", types)
+                data <- as.data.frame(read_delim_arrow(
+                  gzfile(file), sep,
+                  col_names = vars, col_types = paste(types, collapse = ""), skip = 1
+                ))
+              } else {
+                data <- read_delim_arrow(gzfile(file), sep)
+                for (col in colnames(data)) {
+                  v <- data[[col]]
+                  if (!is.numeric(v) && !is.character(v)) data[[col]] <- as.character(v)
+                }
               }
-              data <- as.data.frame(read_delim_arrow(
-                gzfile(file),
-                if (grepl(".csv", file, fixed = TRUE)) "," else "\t",
-                col_names = vars, col_types = paste(types, collapse = ""), skip = 1
-              ))
               time <- NULL
               if (length(d$time) && d$time[[1]] %in% colnames(data)) {
                 time <- d$time[[1]]
