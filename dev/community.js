@@ -2956,8 +2956,6 @@ void (function () {
                   this.rowIds = {}
                   this.clearTable.bind(this)
                   this.clearTable(this.table)
-                  let redraw = true
-
                   this.state = state
                   Object.keys(this.reference_options).forEach(
                     k => (this.options[k] = valueOf(this.reference_options[k]))
@@ -2974,9 +2972,6 @@ void (function () {
                     this.destroyTable()
                     this.options.columns = this.header
                     this.createTable(this.table, v)
-
-                    let reset
-                    if (reset) this.state = ''
                   }
 
                   this.appendRows.bind(this)
