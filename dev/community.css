@@ -1217,6 +1217,10 @@ input[type='range']::-ms-thumb {
   font-weight: bold;
 }
 
+.table-wrapper table thead .selected-year {
+  border: solid var(--body-text);
+}
+
 .table-wrapper table td {
   padding: 4px 5px;
   text-align: center;
@@ -1239,13 +1243,6 @@ input[type='range']::-ms-thumb {
   left: 0;
   z-index: 1;
   background-color: var(--background-border);
-}
-
-.table-wrapper table tbody th {
-  position: sticky;
-  left: 0;
-  background: white;
-  z-index: 1;
 }
 
 .table-wrapper table > thead > tr > th:first-child,
