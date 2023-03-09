@@ -1192,7 +1192,13 @@ void (function () {
               const s = this.e.getBoundingClientRect()
               this.container.style.left = s.x + 'px'
               this.container.style.width = s.width + 'px'
-              this.container.style.top = s.y + s.height + 'px'
+              if (window.screen.height / 2 > s.y) {
+                this.container.style.top = s.y + s.height + 'px'
+                this.container.style.bottom = ''
+              } else {
+                this.container.style.top = ''
+                this.container.style.bottom = -s.y + 'px'
+              }
             }.bind(o)
             window.addEventListener('resize', o.resize)
             o.toggle = function (e) {
