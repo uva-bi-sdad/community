@@ -108,6 +108,9 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
     if (!is.null(run_after) && !identical(view$run_after, run_after)) {
       view$run_after <- run_after
       write_view <- TRUE
+    } else if (length(view$run_after)) {
+      base_run_after <- view$run_after
+      if (!file.exists(base_run_after)) base_run_after <- paste0(commons, "/", base_run_after)
     }
     if (!is.null(run_before) && !identical(view$run_before, run_before)) {
       view$run_before <- run_before
