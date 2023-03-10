@@ -2,13 +2,14 @@
 % Please edit documentation in R/output_credits.R
 \name{output_credits}
 \alias{output_credits}
-\title{Adds a legend to a website}
+\title{Adds credits to a website}
 \usage{
 output_credits(add = NULL, exclude = NULL)
 }
 \arguments{
 \item{add}{A list of credits to add. Each credit should be a list with at least entries for \code{"name"}
-and \code{"url"}, and optionally a \code{"version"} and/or \code{"description"}.}
+and \code{"url"}, and optionally a \code{"version"} and/or \code{"description"}. These can be named,
+which will overwrite other credits with the same name.}
 
 \item{exclude}{Names of automatic credits to exclude. The automatic credits are \code{"bootstrap"},
 \code{"leaflet"} (from \code{\link{output_map}}), \code{"plotly"} (from \code{\link{output_plot}}), and
@@ -18,10 +19,15 @@ and \code{"url"}, and optionally a \code{"version"} and/or \code{"description"}.
 A character vector of the contents to be added.
 }
 \description{
-Adds a legend based on a specified color palette.
+Adds a credits section, which is automatically filled with the libraries used.
+These can be added to or edited.
 }
 \examples{
 \dontrun{
-output_legend("reds")
+# adds an institution credit, and excludes the default colorbrewer credit
+output_credits(
+  list(name = "Institution", url = "https://example.com", description = "The institution."),
+  "colorbrewer"
+)
 }
 }

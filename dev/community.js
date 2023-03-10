@@ -1544,11 +1544,14 @@ void (function () {
                   if (o.base_trace in _u) add_dependency(o.base_trace, {type: 'update', id: o.id})
                 }
               })
-              if (!(o.x in site.data.variables)) {
+              if (o.x && !(o.x in site.data.variables)) {
                 add_dependency(o.x, {type: 'update', id: o.id})
               }
-              if (!(o.y in site.data.variables)) {
+              if (o.y && !(o.y in site.data.variables)) {
                 add_dependency(o.y, {type: 'update', id: o.id})
+              }
+              if (o.color && !(o.color in site.data.variables)) {
+                add_dependency(o.color, {type: 'update', id: o.id})
               }
               if (o.time in _u) {
                 add_dependency(o.time, {type: 'update', id: o.id})
@@ -2249,7 +2252,7 @@ void (function () {
                     if (this.has_default) {
                       this.parts.title.base.classList.add('hidden')
                       this.parts.title.default.classList.remove('hidden')
-                    } else this.parts.title.base.classList.remove('hidden')
+                    }
                   }
                   if (this.parts.body) {
                     this.parts.body.base.classList.add('hidden')
@@ -2911,11 +2914,11 @@ void (function () {
                   site.data.variable_info[variable] && site.data.variable_info[variable].type
                     ? patterns.int_types.test(site.data.variable_info[variable].type)
                     : true
-                const refresh = site.settings.color_by_order !== this.parsed.rank
+                const refresh = site.settings.color_by_order !== this.parsed.rank,
+                  remake = p.length !== s.childElementCount
                 if (pn + site.settings.color_scale_center !== this.current_palette || refresh) {
                   this.current_palette = pn + site.settings.color_scale_center
                   this.parsed.rank = site.settings.color_by_order
-                  const remake = p.length !== s.childElementCount
                   if (remake) s.innerHTML = ''
                   if ('discrete' === palettes[pn].type) {
                     if (site.settings.color_by_order) {
@@ -3013,7 +3016,7 @@ void (function () {
                     site.settings.digits +
                     site.settings.color_scale_center +
                     site.settings.summary_selection
-                  if (refresh || state !== this.state) {
+                  if (remake || refresh || state !== this.state) {
                     this.state = state
                     ticks.center.classList.remove('hidden')
                     ticks.min.firstElementChild.firstElementChild.innerText = summary.n[y]
@@ -3130,14 +3133,13 @@ void (function () {
         credits: {
           init: function (o) {
             const s = site.credit_output && site.credit_output[o.id]
-            o.exclude = []
-            o.add = {}
             o.exclude = (s && s.exclude) || []
             o.add = (s && s.add) || {}
             o.e.appendChild(document.createElement('ul'))
-            Object.keys(site.credits).forEach(k => {
+            o.credits = {...site.credits, ...o.add}
+            Object.keys(o.credits).forEach(k => {
               if (-1 === o.exclude.indexOf(k)) {
-                const c = site.credits[k]
+                const c = o.credits[k]
                 var e
                 o.e.lastElementChild.appendChild((e = document.createElement('li')))
                 if ('url' in c) {
@@ -4663,10 +4665,15 @@ void (function () {
     function get_options_url() {
       var s = ''
       keys._u.forEach(k => {
-        if (_u[k].input && !patterns.settings.test(k)) {
-          let v = _u[k].value()
-          if (Array.isArray(v)) v = v.join(',')
-          if ('' !== v && null != v && '-1' != v) s += (s ? '&' : '?') + k + '=' + v
+        const u = _u[k]
+        if (u.input && !patterns.settings.test(k)) {
+          if (!u.range || u.range[0] !== u.range[1]) {
+            let v = u.value()
+            if (v !== u.default) {
+              if (Array.isArray(v)) v = v.join(',')
+              if ('' !== v && null != v && '-1' != v) s += (s ? '&' : '?') + k + '=' + v
+            }
+          }
         }
       })
       if (site.data && _u._base_filter.c.size) s += '&' + _u._base_filter.value([])
