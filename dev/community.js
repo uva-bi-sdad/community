@@ -2747,8 +2747,8 @@ void (function () {
         },
         table: {
           init: function (o) {
-            o.e.appendChild(document.createElement('tHead'))
-            o.e.appendChild(document.createElement('tBody'))
+            // o.e.appendChild(document.createElement('tHead'))
+            // o.e.appendChild(document.createElement('tBody'))
             o.click = o.e.getAttribute('click')
             o.features = o.options.features
             o.parsed = {summary: {}, order: [], time: 0, color: '', dataset: _u[o.view].get.dataset()}
@@ -2984,7 +2984,7 @@ void (function () {
                       ('number' === typeof time ? time - site.data.meta.times[d].range[0] : 0) -
                       this.parsed.time_range[0]
                     this.time = valueOf(v.time_agg)
-                    this.destroyTable()
+                    if (this.e.innerHTML !== '') this.destroyTable()
                     this.options.columns = this.header
                     this.createTable(this.table, v)
                   }
