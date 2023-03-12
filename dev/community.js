@@ -2807,14 +2807,14 @@ void (function () {
               }
             }
 
-            o.clearTable = table => {
-              for (const el of table.childNodes) {
-                if (el.tagName == 'TBODY')
-                  while (el.firstChild) {
-                    el.removeChild(el.lastChild)
-                  }
-              }
-            }
+            // o.clearTable = table => {
+            //   for (const el of table.childNodes) {
+            //     if (el.tagName == 'TBODY')
+            //       while (el.firstChild) {
+            //         el.removeChild(el.lastChild)
+            //       }
+            //   }
+            // }
 
             o.createTable = function (table, v) {
               const dataset = this.parsed.dataset,
@@ -2969,8 +2969,8 @@ void (function () {
                 if (state !== this.state) {
                   this.rows = {}
                   this.rowIds = {}
-                  this.clearTable.bind(this)
-                  this.clearTable(this.table)
+                  // this.clearTable.bind(this)
+                  // this.clearTable(this.table)
                   this.state = state
                   Object.keys(this.reference_options).forEach(
                     k => (this.options[k] = valueOf(this.reference_options[k]))
