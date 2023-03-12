@@ -2817,7 +2817,22 @@ void (function () {
             }
 
             o.createTable = function (table, v) {
-              this.clearTable(table)
+              const dataset = this.parsed.dataset,
+                c = this.options.variables,
+                k = c.name || c
+              const time = site.data.meta.times[dataset]
+              this.header = []
+              this.header.push('Name')
+              const t = site.data.variables[k].time_range[dataset]
+              if (t)
+                for (let n = t[1] - t[0] + 1; n--; ) {
+                  o.header[n + 1] = o.variable_header ? c.title || site.data.format_label(k) : time.value[n + t[0]] + ''
+                }
+              //const currHeader = JSON.stringify(this.header)
+
+              // if (prevHeader != currHeader) {
+              //   this.clearTable(table)
+              // }
               let thead = document.createElement('thead')
               let tr = document.createElement('tr')
 
