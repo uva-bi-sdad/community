@@ -2913,37 +2913,38 @@ void (function () {
               }
             }
             o.options.variable_source = o.options.variables
-            if (o.options.variables) {
-              if ('string' === typeof o.options.variables) {
-                if (o.options.variables in _u) {
-                  add_dependency(o.options.variables, {type: 'update', id: o.id})
-                  o.options.variables = valueOf(o.options.variables)
-                  o.options.single_variable = 'string' === typeof o.options.variables
-                } else if (!o.options.single_variable) {
-                  o.options.single_variable = [{name: o.options.single_variable}]
-                }
-              }
-            } else o.options.variables = Object.keys(site.data.variables)
-            if (
-              'string' !== typeof o.options.variables &&
-              o.options.variables.length &&
-              'string' === o.options.variables[0]
-            ) {
-              o.options.variables = o.options.variables.map(v => {
-                name: v
-              })
-            }
-            if (o.options.single_variable) {
-              const c = o.options.variables,
-                k = c.name || c
-              o.header.push('Name')
-              if (time.is_single) o.variable_header = true
-              const t = site.data.variables[k].time_range[o.parsed.dataset]
-              if (t)
-                for (let n = t[1] - t[0] + 1; n--; ) {
-                  o.header[n + 1] = o.variable_header ? c.title || site.data.format_label(k) : time.value[n + t[0]] + ''
-                }
-            }
+            // if (o.options.variables) {
+            //   if ('string' === typeof o.options.variables) {
+            //     if (o.options.variables in _u) {
+            //       add_dependency(o.options.variables, {type: 'update', id: o.id})
+            //       o.options.variables = valueOf(o.options.variables)
+            //       o.options.single_variable = 'string' === typeof o.options.variables
+            //     } else if (!o.options.single_variable) {
+            //       o.options.single_variable = [{name: o.options.single_variable}]
+            //     }
+            //   }
+            // } else o.options.variables = Object.keys(site.data.variables)
+            // if (
+            //   'string' !== typeof o.options.variables &&
+            //   o.options.variables.length &&
+            //   'string' === o.options.variables[0]
+            // ) {
+            //   o.options.variables = o.options.variables.map(v => {
+            //     name: v
+            //   })
+            // }
+
+            // if (o.options.single_variable) {
+            //   const c = o.options.variables,
+            //     k = c.name || c
+            //   o.header.push('Name')
+            //   if (time.is_single) o.variable_header = true
+            //   const t = site.data.variables[k].time_range[o.parsed.dataset]
+            //   if (t)
+            //     for (let n = t[1] - t[0] + 1; n--; ) {
+            //       o.header[n + 1] = o.variable_header ? c.title || site.data.format_label(k) : time.value[n + t[0]] + ''
+            //     }
+            // }
             if (o.view) {
               add_dependency(o.view, {type: 'update', id: o.id})
               add_dependency(o.view + '_filter', {type: 'update', id: o.id})
