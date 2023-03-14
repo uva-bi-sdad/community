@@ -2252,7 +2252,8 @@ void (function () {
                     if (this.has_default) {
                       this.parts.title.base.classList.add('hidden')
                       this.parts.title.default.classList.remove('hidden')
-                    }
+                    } else if (!this.parts.title.ref || !('features' in this.parts.title.parsed))
+                      this.parts.title.base.classList.remove('hidden')
                   }
                   if (this.parts.body) {
                     this.parts.body.base.classList.add('hidden')
