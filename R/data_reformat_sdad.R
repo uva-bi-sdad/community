@@ -19,8 +19,6 @@
 #' @param id Column name of IDs which uniquely identify entities.
 #' @param time Column name of the variable representing time.
 #' @param dataset Column name used to separate entity scales.
-#' @param value_info A vector of column names which provide additional information about values
-#' (such as their name and type).
 #' @param entity_info A list containing variable names to extract and create an ids map from (
 #' \code{entity_info.json}, created in the output directory). Entries can be named to rename the
 #' variables they refer to in entity features.
@@ -42,7 +40,7 @@
 #' @export
 
 data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, value = "value", value_name = "measure",
-                               id = "geoid", time = "year", dataset = "region_type", value_info = "measure_type",
+                               id = "geoid", time = "year", dataset = "region_type",
                                entity_info = c(type = "region_type", name = "region_name"),
                                formatters = NULL, compression = "xz", read_existing = TRUE, overwrite = FALSE,
                                get_coverage = TRUE, verbose = TRUE) {
@@ -53,10 +51,9 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     files <- files[!file.exists(files)]
     cli_abort("file{? does/s do} not exist: {files}")
   }
-  vars <- c(value, value_name, id, time, dataset, value_info)
+  vars <- c(value, value_name, id, time, dataset)
   spec <- c(
     missing(value), missing(value_name), missing(id), missing(time), missing(dataset),
-    rep(missing(value_info), length(value_info)),
     rep(missing(entity_info), length(entity_info))
   )
   data <- list()

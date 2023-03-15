@@ -33,7 +33,7 @@
 #'         \code{full_name} (e.g., \code{"{variables.name}"}).
 #'       \item \code{data.<variable>}: The value of another variable at a current time (e.g., \code{"{data.variable_a}"}).
 #'     }
-#'   \item \strong{\code{type}}: Type of the measure's value. Recognized types are displayed in a special way:
+#'   \item \strong{\code{measure_type}}: Type of the measure's value. Recognized types are displayed in a special way:
 #'     \itemize{
 #'       \item \code{year} or \code{integer} show as entered (usually as whole numbers). Other numeric
 #'         types are rounded to show a set number of digits.
@@ -42,6 +42,8 @@
 #'       \item \code{dollar} shows as \code{${value}}.
 #'       \item \code{internet speed} shows as \code{{value} MB/s}.
 #'     }
+#'   \item \strong{\code{units}}: Prefix or suffix associated with the measure's type, such as \code{\%} for \code{percent},
+#'     or \code{MB/s} for \code{rate}.
 #'   \item \strong{\code{sources}}: A list or list of list containing source information, including any of these entries:
 #'     \itemize{
 #'       \item \code{name}: Name of the source (such as an organization name).
@@ -112,7 +114,7 @@ data_measure_info <- function(path, ..., info = list(), references = list(), str
   if (!overwrite && file.exists(path)) {
     if (verbose) cli_bullets(c(i = "updating existing file: {.path {basename(path)}}"))
     built <- read_json(path)
-    if (all(c("measure", "type") %in% names(built))) {
+    if (all(c("measure", "measure_type") %in% names(built))) {
       built <- list(built)
       names(built) <- built[[1]]$measure
     }
@@ -133,7 +135,8 @@ data_measure_info <- function(path, ..., info = list(), references = list(), str
     short_description = "",
     long_description = "",
     statement = "",
-    type = "",
+    measure_type = "",
+    units = "",
     sources = list(),
     citations = list(),
     layer = list()

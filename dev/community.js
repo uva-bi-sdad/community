@@ -3885,13 +3885,18 @@ void (function () {
     }
 
     function make_variable_reference(c) {
+      if (!Array.isArray(c.author)) c.author = [c.author]
       const e = document.createElement('li'),
         n = c.author.length
       var s = '',
         j = 1 === n ? '' : 2 === n ? ' & ' : ', & '
       for (let i = n; i--; ) {
         const a = c.author[i]
-        s = (i ? j : '') + a.family + (a.given ? ', ' + a.given.substring(0, 1) + '.' : '') + s
+        s =
+          (i ? j : '') +
+          ('string' === typeof a ? a : a.family) +
+          (a.given ? ', ' + a.given.substring(0, 1) + '.' : '') +
+          s
         j = ', '
       }
       e.innerHTML =
@@ -3984,11 +3989,12 @@ void (function () {
 
     function show_variable_info() {
       const v = _u[this.view],
-        info = site.data.variable_info[valueOf(this.v || v.y)]
+        name = valueOf(this.v || v.y),
+        info = site.data.variable_info[name]
       page.modal.info.header.firstElementChild.innerText = info.short_name
       page.modal.info.title.innerText = info.long_name
       page.modal.info.description.innerText = info.long_description || info.description || info.short_description || ''
-      page.modal.info.name.lastElementChild.innerText = info.measure || ''
+      page.modal.info.name.lastElementChild.innerText = name
       page.modal.info.type.lastElementChild.innerText = info.type || ''
       if (info.sources && info.sources.length) {
         page.modal.info.sources.lastElementChild.innerHTML = ''

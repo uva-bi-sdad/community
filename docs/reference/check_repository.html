@@ -57,9 +57,8 @@
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">check_repository</span><span class="op">(</span>dir <span class="op">=</span> <span class="st">"."</span>, search_pattern <span class="op">=</span> <span class="st">"\\.csv(?:\\.[gbx]z2?)?$"</span>,</span>
-<span>  value <span class="op">=</span> <span class="st">"value"</span>, value_name <span class="op">=</span> <span class="st">"measure"</span>, value_type <span class="op">=</span> <span class="st">"measure_type"</span>,</span>
-<span>  id <span class="op">=</span> <span class="st">"geoid"</span>, time <span class="op">=</span> <span class="st">"year"</span>, dataset <span class="op">=</span> <span class="st">"region_type"</span>,</span>
-<span>  entity_info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"region_type"</span>, <span class="st">"region_name"</span><span class="op">)</span>, check_values <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  value <span class="op">=</span> <span class="st">"value"</span>, value_name <span class="op">=</span> <span class="st">"measure"</span>, id <span class="op">=</span> <span class="st">"geoid"</span>, time <span class="op">=</span> <span class="st">"year"</span>,</span>
+<span>  dataset <span class="op">=</span> <span class="st">"region_type"</span>, entity_info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"region_type"</span>, <span class="st">"region_name"</span><span class="op">)</span>,</span>
 <span>  attempt_repair <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -81,10 +80,6 @@
 <dd><p>Name of the column containing variable names.</p></dd>
 
 
-<dt>value_type</dt>
-<dd><p>Name of the column indicating the type of each value.</p></dd>
-
-
 <dt>id</dt>
 <dd><p>Column name of IDs that uniquely identify entities.</p></dd>
 
@@ -101,11 +96,6 @@
 <dd><p>A vector of variable names to go into making <code>entity_info.json</code>.</p></dd>
 
 
-<dt>check_values</dt>
-<dd><p>Logical; if <code>FALSE</code>, will skip value-based checks
-(since these are loose heuristics and can be intensive on large files).</p></dd>
-
-
 <dt>attempt_repair</dt>
 <dd><p>Logical; if <code>TRUE</code>, will attempt to fix most warnings in data files.
 Use with caution, as this will often remove rows (given <code>NA</code>s) and rewrite the file.</p></dd>
@@ -119,7 +109,7 @@ Use with caution, as this will often remove rows (given <code>NA</code>s) and re
 These may include <strong>general</strong> entries:</p><ul><li><p><strong><code>info</code></strong> (always): All measurement information (<code>measure_info.json</code>) files found.</p></li>
 <li><p><strong><code>data</code></strong> (always): All data files found.</p></li>
 <li><p><strong><code>not_considered</code></strong>: Subset of data files that do not contain the minimal
-columns (<code>id</code>, <code>value</code>, and <code>value_type</code>), and so are not checked further.</p></li>
+columns (<code>id</code> and <code>value</code>), and so are not checked further.</p></li>
 </ul><p>or those relating to issues with <strong>measure information</strong> (see <code><a href="data_measure_info.html">data_measure_info</a></code>) files:</p><ul><li><p><strong><code>info_malformed</code></strong>: Files that are not in the expected format (a single object with
 named entries for each measure), but can be converted automatically.</p></li>
 <li><p><strong><code>info_incomplete</code></strong>: Measure entries that are missing some of the required fields.</p></li>
@@ -157,7 +147,6 @@ remainders.</p></li>
 <li><p><strong><code>warn_small_values</code></strong>: Variable names with many values (over 40%) that are under <code>.00001</code>, and
 no values under <code>0</code> or over <code>1</code>. These values should be scaled in some way to be displayed reliably.</p></li>
 <li><p><strong><code>warn_value_name_nas</code></strong>: Files that have <code>NA</code>s in their <code>name</code> column.</p></li>
-<li><p><strong><code>warn_value_type_nas</code></strong>: Files that have <code>NA</code>s in their <code>name</code> column.</p></li>
 <li><p><strong><code>warn_entity_info_nas</code></strong>: Files that have <code>NA</code>s in any of their <code>entity_info</code> columns.</p></li>
 <li><p><strong><code>warn_dataset_nas</code></strong>: Files that have <code>NA</code>s in their <code>dataset</code> column.</p></li>
 <li><p><strong><code>warn_time_nas</code></strong>: Files that have <code>NA</code>s in their <code>time</code> column.</p></li>
@@ -180,7 +169,6 @@ It is recommended that entries not include prefixes, and that measure names be s
 (e.g., <code>category_count</code> rather than <code>count</code> with a <code>category:count</code> entry).</p></li>
 </ul><p>or relating to data files with <strong>failures</strong>:</p><ul><li><p><strong><code>fail_read</code></strong>: Files that could not be read in.</p></li>
 <li><p><strong><code>fail_rows</code></strong>: Files containing no rows.</p></li>
-<li><p><strong><code>fail_value_type</code></strong>: Files with no <code>value_type</code> column.</p></li>
 <li><p><strong><code>fail_time</code></strong>: Files with no <code>time</code> column.</p></li>
 <li><p><strong><code>fail_dataset</code></strong>: Files with no <code>dataset</code> column.</p></li>
 <li><p><strong><code>fail_entity_info</code></strong>: Files with no <code>entity_info</code> columns.</p></li>

@@ -57,7 +57,7 @@ All entities have at least \code{name} and \code{id} entries (e.g., \code{"{feat
 \code{full_name} (e.g., \code{"{variables.name}"}).
 \item \code{data.<variable>}: The value of another variable at a current time (e.g., \code{"{data.variable_a}"}).
 }
-\item \strong{\code{type}}: Type of the measure's value. Recognized types are displayed in a special way:
+\item \strong{\code{measure_type}}: Type of the measure's value. Recognized types are displayed in a special way:
 \itemize{
 \item \code{year} or \code{integer} show as entered (usually as whole numbers). Other numeric
 types are rounded to show a set number of digits.
@@ -66,6 +66,8 @@ types are rounded to show a set number of digits.
 \item \code{dollar} shows as \code{${value}}.
 \item \code{internet speed} shows as \code{{value} MB/s}.
 }
+\item \strong{\code{units}}: Prefix or suffix associated with the measure's type, such as \code{\%} for \code{percent},
+or \code{MB/s} for \code{rate}.
 \item \strong{\code{sources}}: A list or list of list containing source information, including any of these entries:
 \itemize{
 \item \code{name}: Name of the source (such as an organization name).

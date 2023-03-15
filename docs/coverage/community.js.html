@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">6.88% </span>
+                <span class="strong">6.87% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>272/3951</span>
+                <span class='fraction'>272/3956</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">2.59% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>82/3157</span>
+                <span class='fraction'>82/3163</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">7.25% </span>
+                <span class="strong">7.24% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>261/3597</span>
+                <span class='fraction'>261/3601</span>
             </div>
         
             
@@ -5966,7 +5966,14 @@
 <a name='L5901'></a><a href='#L5901'>5901</a>
 <a name='L5902'></a><a href='#L5902'>5902</a>
 <a name='L5903'></a><a href='#L5903'>5903</a>
-<a name='L5904'></a><a href='#L5904'>5904</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L5904'></a><a href='#L5904'>5904</a>
+<a name='L5905'></a><a href='#L5905'>5905</a>
+<a name='L5906'></a><a href='#L5906'>5906</a>
+<a name='L5907'></a><a href='#L5907'>5907</a>
+<a name='L5908'></a><a href='#L5908'>5908</a>
+<a name='L5909'></a><a href='#L5909'>5909</a>
+<a name='L5910'></a><a href='#L5910'>5910</a>
+<a name='L5911'></a><a href='#L5911'>5911</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
@@ -8220,7 +8227,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -9861,6 +9869,11 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -9950,6 +9963,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -14123,7 +14137,8 @@
 <span class="cstat-no" title="statement not covered" >                    if (this.has_default) {</span>
 <span class="cstat-no" title="statement not covered" >                      this.parts.title.base.classList.add('hidden')</span>
 <span class="cstat-no" title="statement not covered" >                      this.parts.title.default.classList.remove('hidden')</span>
-                    }
+                    } else <span class="cstat-no" title="statement not covered" >if (!this.parts.title.ref || !('features' in this.parts.title.parsed))</span>
+<span class="cstat-no" title="statement not covered" >                      this.parts.title.base.classList.remove('hidden')</span>
                   }
 <span class="cstat-no" title="statement not covered" >                  if (this.parts.body) {</span>
 <span class="cstat-no" title="statement not covered" >                    this.parts.body.base.classList.add('hidden')</span>
@@ -15755,13 +15770,18 @@
     }
 &nbsp;
     function <span class="fstat-no" title="function not covered" >make_variable_reference(</span>c) {
+<span class="cstat-no" title="statement not covered" >      if (!Array.isArray(c.author)) <span class="cstat-no" title="statement not covered" >c.author = [c.author]</span></span>
       const e = <span class="cstat-no" title="statement not covered" >document.createElement('li'),</span>
         n = <span class="cstat-no" title="statement not covered" >c.author.length</span>
       var s = <span class="cstat-no" title="statement not covered" >'',</span>
         j = <span class="cstat-no" title="statement not covered" >1 === n ? '' : 2 === n ? ' &amp; ' : ', &amp; '</span>
 <span class="cstat-no" title="statement not covered" >      for (let i = <span class="cstat-no" title="statement not covered" >n;</span> i--; ) {</span>
         const a = <span class="cstat-no" title="statement not covered" >c.author[i]</span>
-<span class="cstat-no" title="statement not covered" >        s = (i ? j : '') + a.family + (a.given ? ', ' + a.given.substring(0, 1) + '.' : '') + s</span>
+<span class="cstat-no" title="statement not covered" >        s =</span>
+          (i ? j : '') +
+          ('string' === typeof a ? a : a.family) +
+          (a.given ? ', ' + a.given.substring(0, 1) + '.' : '') +
+          s
 <span class="cstat-no" title="statement not covered" >        j = ', '</span>
       }
 <span class="cstat-no" title="statement not covered" >      e.innerHTML =</span>
@@ -15854,11 +15874,12 @@
 &nbsp;
     function <span class="fstat-no" title="function not covered" >show_variable_info(</span>) {
       const v = <span class="cstat-no" title="statement not covered" >_u[this.view],</span>
-        info = <span class="cstat-no" title="statement not covered" >site.data.variable_info[valueOf(this.v || v.y)]</span>
+        name = <span class="cstat-no" title="statement not covered" >valueOf(this.v || v.y),</span>
+        info = <span class="cstat-no" title="statement not covered" >site.data.variable_info[name]</span>
 <span class="cstat-no" title="statement not covered" >      page.modal.info.header.firstElementChild.innerText = info.short_name</span>
 <span class="cstat-no" title="statement not covered" >      page.modal.info.title.innerText = info.long_name</span>
 <span class="cstat-no" title="statement not covered" >      page.modal.info.description.innerText = info.long_description || info.description || info.short_description || ''</span>
-<span class="cstat-no" title="statement not covered" >      page.modal.info.name.lastElementChild.innerText = info.measure || ''</span>
+<span class="cstat-no" title="statement not covered" >      page.modal.info.name.lastElementChild.innerText = name</span>
 <span class="cstat-no" title="statement not covered" >      page.modal.info.type.lastElementChild.innerText = info.type || ''</span>
 <span class="cstat-no" title="statement not covered" >      if (info.sources &amp;&amp; info.sources.length) {</span>
 <span class="cstat-no" title="statement not covered" >        page.modal.info.sources.lastElementChild.innerHTML = ''</span>
@@ -17779,7 +17800,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-03-10T22:58:31.901Z
+                at 2023-03-15T22:24:52.064Z
             </div>
         <script src="prettify.js"></script>
         <script>
