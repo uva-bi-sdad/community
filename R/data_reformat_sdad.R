@@ -70,7 +70,15 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       read_delim_arrow(gzfile(f), if (grepl(".csv", f, fixed = TRUE)) "," else "\t"),
       error = function(e) NULL
     )
-    if (is.null(d)) cli_abort("failed to read in file {f}")
+    if (is.null(d)) {
+      if (verbose) cli_warn("failed to read in file: {f}")
+      next
+    }
+    if (!id %in% colnames(d)) {
+      if (verbose) cli_warn("file has no ID column: {f}")
+      next
+    }
+    if (anyNA(d[[id]])) d <- d[!is.na(d[[id]]), ]
     if (!nrow(d)) {
       if (verbose) cli_warn("file has no observations: {f}")
       next
@@ -80,29 +88,28 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       l <- !colnames(d) %in% vars & lcols %in% vars
       colnames(d)[l] <- lcols[l]
     }
+    d[[id]] <- as.character(d[[id]])
     if (check_ids) {
-      if (id %in% colnames(d)) {
-        su <- !grepl("[^0-9.e+-]", d[[id]])
-        if (any(su)) {
-          d[[id]][su] <- gsub("^\\s+|\\s+$", "", format(as.numeric(d[[id]][su]), scientific = FALSE))
-        }
-        d[[id]] <- as.character(d[[id]])
-        d <- d[d[[id]] %in% ids, ]
-        if (!nrow(d)) {
-          if (verbose) cli_warn("file has none of the requested IDs: {f}")
-          next
-        }
-      } else {
-        if (verbose) cli_warn("file has no ID column: {f}")
+      su <- !grepl("[^0-9.e+-]", d[[id]])
+      if (any(su)) {
+        d[[id]][su] <- gsub("^\\s+|\\s+$", "", format(as.numeric(d[[id]][su]), scientific = FALSE))
+      }
+      d <- d[d[[id]] %in% ids, ]
+      if (!nrow(d)) {
+        if (verbose) cli_warn("file has none of the requested IDs: {f}")
         next
       }
     }
     if (any(su <- !vars %in% colnames(d))) {
-      if (all(su)) cli_abort("no variables found in file {f}")
+      if (all(su)) {
+        cli_warn("no variables found in file {f}")
+        next
+      }
       if (any(!spec[su])) {
-        cli_abort(
+        cli_warn(
           "table from {f} does not have {?a column name/column names} {.var {vars[su][!spec[su]]}}"
         )
+        next
       }
       vars <- vars[!su]
       spec <- spec[!su]
@@ -136,7 +143,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     d <- data[[f]]
     d[, vars[!vars %in% colnames(d)]] <- ""
     d <- d[, vars]
-    d <- d[rowSums(vapply(d, is.na, logical(nrow(d)))) == 0, ]
+    if (anyNA(d)) d <- d[rowSums(is.na(d)) == 0, ]
     if (check_variables) {
       ovars <- unique(d[[value_name]])
       su <- !ovars %in% variables
@@ -187,9 +194,22 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     }
   }
   times <- sort(unique(data[[time]]))
+  if (all(nchar(times) == 4)) times <- seq(min(times), max(times))
+  n <- length(times)
+  if (!is.null(out)) {
+    files <- paste0(out, "/", gsub("\\s+", "_", tolower(datasets)), ".csv")
+    if (is.character(compression) && grepl("^[gbx]", compression, FALSE)) {
+      compression <- tolower(substr(compression, 1, 1))
+      files <- paste0(files, ".", c(g = "gz", b = "bz2", x = "xz")[[compression]])
+    } else {
+      compression <- FALSE
+    }
+    names(files) <- datasets
+  }
+  write <- vapply(files, function(f) is.null(out) || overwrite || !file.exists(f) || max_age > file.mtime(f), TRUE)
   if (!is.null(out) && (is.list(entity_info) || is.character(entity_info))) {
     entity_info_file <- paste0(out, "/entity_info.json")
-    if (overwrite || !file.exists(entity_info_file) || max_age > file.mtime(entity_info_file)) {
+    if (overwrite || !file.exists(entity_info_file) || any(write)) {
       entity_info <- as.list(entity_info)
       entity_info <- entity_info[unlist(entity_info) %in% colnames(data)]
       if (length(entity_info)) {
@@ -219,19 +239,6 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       }
     }
   }
-  if (all(nchar(times) == 4)) times <- seq(min(times), max(times))
-  n <- length(times)
-  if (!is.null(out)) {
-    files <- paste0(out, "/", gsub("\\s+", "_", tolower(datasets)), ".csv")
-    if (is.character(compression) && grepl("^[gbx]", compression, FALSE)) {
-      compression <- tolower(substr(compression, 1, 1))
-      files <- paste0(files, ".", c(g = "gz", b = "bz2", x = "xz")[[compression]])
-    } else {
-      compression <- FALSE
-    }
-    names(files) <- datasets
-  }
-  write <- vapply(files, function(f) is.null(out) || overwrite || !file.exists(f) || max_age > file.mtime(f), TRUE)
   sets <- lapply(datasets, function(dn) {
     if (write[[dn]]) {
       d <- if (dataset %in% vars) data[data[[dataset]] == dn, ] else data
@@ -253,8 +260,8 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
           ID = rep(as.character(e), n), time = times, check.names = FALSE,
           matrix(NA, n, length(present_vars), dimnames = list(times, present_vars))
         )
-        for (v in present_vars) {
-          if (all(c(value_name, value) %in% names(ed))) {
+        if (all(c(value_name, value) %in% names(ed))) {
+          for (v in present_vars) {
             su <- ed[[value_name]] == v
             su[su] <- !is.na(ed[[value]][su])
             if (sum(su)) {

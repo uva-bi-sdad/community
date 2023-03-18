@@ -7,12 +7,8 @@ page_section(
   wraps = "col", sizes = c(4, NA),
   page_section(
     wraps = "row",
-    output_info(title = "variables.short_name"),
-    input_button("Download", "export", query = list(include = "selected_variable"), class = "btn-full"),
-    output_info(body = "variables.sources"),
-    input_select("Layer", options = "datasets", default = 0, id = "selected_dataset"),
     page_section(
-      wraps = "col", sizes = c(NA, 1),
+      wraps = "col", sizes = c(9, NA),
       input_combobox(
         "Variable", options = "variables", default = 0, depends = "selected_dataset", id = "selected_variable"
       ),
@@ -20,6 +16,10 @@ page_section(
         "Time", min = "filter.time_min", max = "filter.time_max", default = "max", id = "selected_time"
       )
     ),
+    input_select("Layer", options = "datasets", default = 0, id = "selected_dataset"),
+    "<br />",
+    output_info(title = "variables.short_name"),
+    input_button("Download", "export", query = list(include = "selected_variable"), class = "btn-full"),
     output_legend(id = "main_legend", subto = c("main_map", "main_plot")),
     output_info(
       default = c(body = "Hover over output elements for more information."),

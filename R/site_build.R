@@ -179,7 +179,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                 }
                 cids <- NULL
                 for (pname in rev(names(previous_data))) {
-                  if (pname %in% names(ids_map) && !is.null(ids_map[[pname]][[1]][[d$name]])) {
+                  if (pname %in% names(ids_map) && length(ids_map[[pname]]) && !is.null(ids_map[[pname]][[1]][[d$name]])) {
                     child <- pname
                     cids <- vapply(ids_map[[pname]], function(e) {
                       if (is.null(e[[d$name]])) "" else e[[d$name]]

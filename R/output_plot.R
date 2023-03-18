@@ -49,14 +49,14 @@ output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dat
   options$subto <- if (!is.null(subto) && length(subto) == 1) list(subto) else subto
   type <- if (plotly) "plotly" else "echarts"
   r <- paste(c(
-    '<div class="auto-output plotly"',
+    '<div class="plotly-wrap"><div class="auto-output plotly"',
     if (!is.null(dataview)) paste0('data-view="', dataview, '"'),
     if (!is.null(click)) paste0('click="', click, '"'),
     if (!is.null(x)) paste0('x="', x, '"'),
     if (!is.null(y)) paste0('y="', y, '"'),
     if (!is.null(color)) paste0('color="', color, '"'),
     if (!is.null(color_time)) paste0('color-time="', color_time, '"'),
-    paste0('id="', id, '" auto-type="', type, '"></table></div>')
+    paste0('id="', id, '" auto-type="', type, '"></table></div></div>')
   ), collapse = " ")
   if (building) {
     caller$dependencies$plotly <- list(
