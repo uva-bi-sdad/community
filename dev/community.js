@@ -2865,21 +2865,23 @@ void (function () {
             }
 
             o.prepareData = function (v, tableData, vn) {
-              const dataset = v.get.dataset()
+              const dataset = this.parsed.dataset
               const time = site.data.meta.times[dataset]
               const source = v.selection.all
-              for (const key in source) {
-                //const countyName = source[key].features.name
-                tableData[key] = {}
+
+              for (let i = this.parsed.order.length - 1; i >= 0; i--) {
+                const key = this.parsed.order[i][0]
+                const entityData = [key, {}]
                 const code = source[key].variables[vn].code
                 const t = site.data.variables[vn].time_range[dataset]
                 if (t)
                   for (let n = t[1] - t[0]; n >= 0; n--) {
                     const title = time.value[n + t[0]] + ''
                     if (Object.keys(source[key].data).includes(code))
-                      if (typeof source[key].data[code] == 'number') tableData[key][title] = source[key].data[code]
-                      else tableData[key][title] = source[key].data[code][n]
+                      if (typeof source[key].data[code] == 'number') entityData[1][title] = source[key].data[code]
+                      else entityData[1][title] = source[key].data[code][n]
                   }
+                tableData.push(entityData)
               }
 
               for (let key in tableData) {
@@ -2889,25 +2891,24 @@ void (function () {
 
             o.appendRows = function (table, v, vn) {
               const time = valueOf(v.time_agg)
-              const tableData = {}
+              const tableData = []
               this.prepareData(v, tableData, vn)
               Object.assign(this.rows, tableData)
-              let tableData_sorted = Object.entries(tableData).sort(([, a], [, b]) => -(a[time] - b[time]))
               const dataset = v.get.dataset()
               const startTime = site.data.meta.times[dataset].range[0]
-              for (var i = 0; i < tableData_sorted.length; i++) {
+              for (var i = 0; i < tableData.length; i++) {
                 let tr = document.createElement('tr')
                 tr.style.cursor = 'pointer'
                 let td = document.createElement('td')
-                td.innerText = v.selection.all[tableData_sorted[i][0]].features.name
+                td.innerText = v.selection.all[tableData[i][0]].features.name
                 tr.append(td)
-                tr.dataset.entityId = tableData_sorted[i][0]
+                tr.dataset.entityId = tableData[i][0]
                 let startIdx = this.parsed.time_range[0]
-                for (let t in tableData_sorted[i][1]) {
+                for (let t in tableData[i][1]) {
                   const idx = parseInt(t) - startTime
                   if (!v.times[idx]) continue
                   td = document.createElement('td')
-                  td.innerText = site.data.format_value(tableData_sorted[i][1][t])
+                  td.innerText = site.data.format_value(tableData[i][1][t])
                   tr.append(td)
                   startIdx++
                 }
