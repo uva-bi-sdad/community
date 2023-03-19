@@ -2844,7 +2844,7 @@ void (function () {
               div.dataset.dir = ''
               th.append(div)
               tr.append(th)
-              const dataset = v.get.dataset()
+
               const startTime = site.data.meta.times[dataset].range[0]
 
               for (let i = 1; i < this.header.length; i++) {
@@ -2884,9 +2884,9 @@ void (function () {
                 tableData.push(entityData)
               }
 
-              for (let key in tableData) {
-                if (Object.keys(tableData[key]).length == 0) delete tableData[key]
-              }
+              // for (let key in tableData) {
+              //   if (Object.keys(tableData[key]).length == 0) delete tableData[key]
+              // }
             }
 
             o.appendRows = function (table, v, vn) {
@@ -2915,7 +2915,7 @@ void (function () {
                 table.querySelector('tbody').append(tr)
               }
             }
-            o.options.variable_source = o.options.variables
+            //o.options.variable_source = o.options.variables
             // if (o.options.variables) {
             //   if ('string' === typeof o.options.variables) {
             //     if (o.options.variables in _u) {
@@ -2957,14 +2957,14 @@ void (function () {
             this.update()
           },
           update: async function (pass) {
+            performance.mark('updateStart')
             clearTimeout(this.queue)
+
             if (!pass) {
               if (!this.tab || this.tab.classList.contains('show')) this.queue = setTimeout(() => this.update(true), 50)
             } else {
               if (this.table) {
-                var vn =
-                  this.options.variable_source &&
-                  valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.')
+                var vn = this.options.variables && valueOf(this.options.variables).replace(patterns.all_periods, '\\.')
                 const v = _u[this.view],
                   d = v.get.dataset(),
                   time = valueOf(v.time_agg),
@@ -2981,6 +2981,7 @@ void (function () {
                   )
                   if (this.options.single_variable) {
                     const variable = await get_variable(vn, this.view)
+
                     this.parsed.dataset = d
                     this.parsed.color = vn
                     this.parsed.time_range = variable.time_range[d]
@@ -2988,6 +2989,8 @@ void (function () {
                       ('number' === typeof time ? time - site.data.meta.times[d].range[0] : 0) -
                       this.parsed.time_range[0]
                     this.time = valueOf(v.time_agg)
+                    this.parsed.summary = variable[this.view].summaries[d]
+                    this.parsed.order = variable[this.view].order[d][this.parsed.time]
                     if (this.e.innerHTML !== '') this.destroyTable()
                     this.options.columns = this.header
                     this.createTable(this.table, v)
@@ -2998,6 +3001,8 @@ void (function () {
                 }
               }
             }
+            performance.mark('updateEnd')
+            performance.measure('updateMeasure', 'updateStart', 'updateEnd')
           },
           mouseover: function (e) {
             if (e.target.tagName == 'TD' && e.target.parentElement.tagName == 'TR') {
