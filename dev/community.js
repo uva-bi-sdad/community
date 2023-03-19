@@ -1634,7 +1634,9 @@ void (function () {
                         k = order[i][0]
                         const e = s[k]
                         state += k
-                        make_data_entry(this, e, e[this.view][rank][this.parsed.color][this.parsed.time] - missing, n)
+                        traces.push(
+                          make_data_entry(this, e, e[this.view][rank][this.parsed.color][this.parsed.time] - missing, n)
+                        )
                         if (!--lim) break
                       }
                     }
