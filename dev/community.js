@@ -2864,7 +2864,7 @@ void (function () {
               table.append(tBody)
             }
 
-            o.prepareData = function (v, tableData, vn) {
+            o.prepareData = function (v, tableData) {
               const dataset = this.parsed.dataset
               const time = site.data.meta.times[dataset]
               const source = v.selection.all
@@ -2892,10 +2892,10 @@ void (function () {
               // }
             }
 
-            o.appendRows = function (table, v, vn) {
+            o.appendRows = function (table, v) {
               const time = valueOf(v.time_agg)
               const tableData = []
-              this.prepareData(v, tableData, vn)
+              this.prepareData(v, tableData)
               Object.assign(this.rows, tableData)
               const dataset = v.get.dataset()
               const startTime = site.data.meta.times[dataset].range[0]
@@ -3000,7 +3000,7 @@ void (function () {
                   }
 
                   this.appendRows.bind(this)
-                  this.appendRows(this.table, v, vn)
+                  this.appendRows(this.table, v)
                 }
               }
             }
