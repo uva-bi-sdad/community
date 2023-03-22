@@ -42,7 +42,7 @@
 #'       \item \code{dollar} shows as \code{${value}}.
 #'       \item \code{internet speed} shows as \code{{value} MB/s}.
 #'     }
-#'   \item \strong{\code{units}}: Prefix or suffix associated with the measure's type, such as \code{\%} for \code{percent},
+#'   \item \strong{\code{unit}}: Prefix or suffix associated with the measure's type, such as \code{\%} for \code{percent},
 #'     or \code{MB/s} for \code{rate}.
 #'   \item \strong{\code{sources}}: A list or list of list containing source information, including any of these entries:
 #'     \itemize{
@@ -136,7 +136,7 @@ data_measure_info <- function(path, ..., info = list(), references = list(), str
     long_description = "",
     statement = "",
     measure_type = "",
-    units = "",
+    unit = "",
     sources = list(),
     citations = list(),
     layer = list()
