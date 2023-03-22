@@ -2868,21 +2868,22 @@ void (function () {
               const dataset = this.parsed.dataset
               const time = site.data.meta.times[dataset]
               const source = v.selection.all
-
+              const c = this.options.variables,
+                k = c.name || c
               for (let i = this.parsed.order.length - 1; i >= 0; i--) {
                 const key = this.parsed.order[i][0]
                 if (source[key]) {
-                const entityData = [key, {}]
-                const code = source[key].variables[vn].code
-                const t = site.data.variables[vn].time_range[dataset]
-                if (t)
-                  for (let n = t[1] - t[0]; n >= 0; n--) {
-                    const title = time.value[n + t[0]] + ''
-                    if (Object.keys(source[key].data).includes(code))
-                      if (typeof source[key].data[code] == 'number') entityData[1][title] = source[key].data[code]
-                      else entityData[1][title] = source[key].data[code][n]
-                  }
-                tableData.push(entityData)
+                  const entityData = [key, {}]
+                  const code = source[key].variables[c].code
+                  const t = site.data.variables[c].time_range[dataset]
+                  if (t)
+                    for (let n = t[1] - t[0]; n >= 0; n--) {
+                      const title = time.value[n + t[0]] + ''
+                      if (Object.keys(source[key].data).includes(code))
+                        if (typeof source[key].data[code] == 'number') entityData[1][title] = source[key].data[code]
+                        else entityData[1][title] = source[key].data[code][n]
+                    }
+                  tableData.push(entityData)
                 }
               }
 
