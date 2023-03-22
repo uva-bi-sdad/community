@@ -2871,6 +2871,7 @@ void (function () {
 
               for (let i = this.parsed.order.length - 1; i >= 0; i--) {
                 const key = this.parsed.order[i][0]
+                if (source[key]) {
                 const entityData = [key, {}]
                 const code = source[key].variables[vn].code
                 const t = site.data.variables[vn].time_range[dataset]
@@ -2882,6 +2883,7 @@ void (function () {
                       else entityData[1][title] = source[key].data[code][n]
                   }
                 tableData.push(entityData)
+                }
               }
 
               // for (let key in tableData) {
