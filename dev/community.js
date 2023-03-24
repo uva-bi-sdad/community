@@ -2883,7 +2883,7 @@ void (function () {
                         if (typeof source[key].data[code] == 'number') entityData[1][title] = source[key].data[code]
                         else entityData[1][title] = source[key].data[code][n]
                     }
-                  tableData.push(entityData)
+                  if (Object.keys(entityData[1]).length !== 0) tableData.push(entityData)
                 }
               }
             }
