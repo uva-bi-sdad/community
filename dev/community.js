@@ -2907,7 +2907,7 @@ void (function () {
                   const idx = parseInt(t) - startTime
                   if (!v.times[idx]) continue
                   td = document.createElement('td')
-                  td.innerText = site.data.format_value(tableData[i][1][t])
+                  td.innerText = tableData[i][1][t] ? site.data.format_value(tableData[i][1][t]) : 'unknown'
                   tr.append(td)
                   startIdx++
                 }
