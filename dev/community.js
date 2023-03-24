@@ -2790,7 +2790,7 @@ void (function () {
               o.e.addEventListener('click', elements.table.click.bind(o))
             }
             o.show = function (e) {
-              if (e.features && this.rows[e.features.id]) {
+              if (e.features) {
                 const row = this.e.querySelector(`[data-entity-id='${e.features.id}']`)
                 if (row) {
                   row.style.backgroundColor = defaults.background_highlight
@@ -2807,7 +2807,7 @@ void (function () {
               }
             }
             o.revert = function (e) {
-              if (e.features && this.rows[e.features.id]) {
+              if (e.features) {
                 const row = this.e.querySelector(`[data-entity-id='${e.features.id}']`)
                 if (row) {
                   row.style.removeProperty('background-color')
