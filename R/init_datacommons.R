@@ -18,6 +18,8 @@
 #' @param serve Logical; if \code{TRUE}, will serve the \code{docs} directory.
 #' @param host The IPv4 address to listen to if \code{serve} is \code{TRUE}; defaults to \code{"127.0.0.1"}.
 #' @param port The port to listen on if \code{serve} is \code{TRUE}; defaults to 3000.
+#' @param use_local Logical; if \code{TRUE}, will use a \code{datacommons.js} script located in
+#' a local \code{dist/docs/dev} directory, relative to \code{dir}.
 #' @param open_after Logical; if \code{TRUE}, will open the served monitor site in a browser after it is built.
 #' @param verbose Logical; if \code{FALSE}, suppresses messages.
 #' @details
@@ -42,7 +44,8 @@
 
 init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_user = "",
                              remote = NULL, url = NULL, refresh_after = FALSE, overwrite = FALSE, serve = FALSE,
-                             host = "127.0.0.1", port = 3000, open_after = FALSE, verbose = interactive()) {
+                             host = "127.0.0.1", port = 3000, use_local = FALSE, open_after = FALSE,
+                             verbose = interactive()) {
   if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = ".")')
   check <- check_template("datacommons", dir = dir)
   if (missing(refresh_after) && !check$exists) refresh_after <- TRUE
@@ -175,18 +178,29 @@ init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_u
     '<meta name="viewport" content="width=device-width,initial-scale=1" />',
     "<title>Data Commons Monitor</title>",
     '<meta name="description" content="Data commons monitoring site.">',
-    unlist(lapply(list(
-      list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/datacommons.min.css"),
-      list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/datacommons.min.js"),
+    unlist(lapply(c(
+      if (use_local) {
+        list(
+          list(type = "stylesheet", src = "dist/dev/datacommons.css"),
+          list(type = "script", src = "dist/dev/datacommons.js")
+        )
+      } else {
+        list(
+          list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/datacommons.min.css"),
+          list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/datacommons.min.js")
+        )
+      },
       list(
-        type = "stylesheet",
-        src = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css",
-        hash = "sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
-      ),
-      list(
-        type = "script",
-        src = "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js",
-        hash = "sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+        bootstrap_style = list(
+          type = "stylesheet",
+          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css",
+          hash = "sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD"
+        ),
+        bootstrap = list(
+          type = "script",
+          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js",
+          hash = "sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
+        )
       )
     ), head_import, dir = dir)),
     paste0('<meta name="generator" content="community v', packageVersion("community"), '" />'),

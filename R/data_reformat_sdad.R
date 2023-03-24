@@ -19,8 +19,6 @@
 #' @param id Column name of IDs which uniquely identify entities.
 #' @param time Column name of the variable representing time.
 #' @param dataset Column name used to separate entity scales.
-#' @param value_info A vector of column names which provide additional information about values
-#' (such as their name and type).
 #' @param entity_info A list containing variable names to extract and create an ids map from (
 #' \code{entity_info.json}, created in the output directory). Entries can be named to rename the
 #' variables they refer to in entity features.
@@ -42,7 +40,7 @@
 #' @export
 
 data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, value = "value", value_name = "measure",
-                               id = "geoid", time = "year", dataset = "region_type", value_info = "measure_type",
+                               id = "geoid", time = "year", dataset = "region_type",
                                entity_info = c(type = "region_type", name = "region_name"),
                                formatters = NULL, compression = "xz", read_existing = TRUE, overwrite = FALSE,
                                get_coverage = TRUE, verbose = TRUE) {
@@ -53,10 +51,9 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     files <- files[!file.exists(files)]
     cli_abort("file{? does/s do} not exist: {files}")
   }
-  vars <- c(value, value_name, id, time, dataset, value_info, entity_info)
+  vars <- c(value, value_name, id, time, dataset)
   spec <- c(
     missing(value), missing(value_name), missing(id), missing(time), missing(dataset),
-    rep(missing(value_info), length(value_info)),
     rep(missing(entity_info), length(entity_info))
   )
   data <- list()
@@ -73,7 +70,15 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       read_delim_arrow(gzfile(f), if (grepl(".csv", f, fixed = TRUE)) "," else "\t"),
       error = function(e) NULL
     )
-    if (is.null(d)) cli_abort("failed to read in file {f}")
+    if (is.null(d)) {
+      if (verbose) cli_warn("failed to read in file: {f}")
+      next
+    }
+    if (!id %in% colnames(d)) {
+      if (verbose) cli_warn("file has no ID column: {f}")
+      next
+    }
+    if (anyNA(d[[id]])) d <- d[!is.na(d[[id]]), ]
     if (!nrow(d)) {
       if (verbose) cli_warn("file has no observations: {f}")
       next
@@ -83,29 +88,28 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       l <- !colnames(d) %in% vars & lcols %in% vars
       colnames(d)[l] <- lcols[l]
     }
+    d[[id]] <- as.character(d[[id]])
     if (check_ids) {
-      if (id %in% colnames(d)) {
-        su <- !grepl("[^0-9.e+-]", d[[id]])
-        if (any(su)) {
-          d[[id]][su] <- gsub("^\\s+|\\s+$", "", format(as.numeric(d[[id]][su]), scientific = FALSE))
-        }
-        d[[id]] <- as.character(d[[id]])
-        d <- d[d[[id]] %in% ids, ]
-        if (!nrow(d)) {
-          if (verbose) cli_warn("file has none of the requested IDs: {f}")
-          next
-        }
-      } else {
-        if (verbose) cli_warn("file has no ID column: {f}")
+      su <- !grepl("[^0-9.e+-]", d[[id]])
+      if (any(su)) {
+        d[[id]][su] <- gsub("^\\s+|\\s+$", "", format(as.numeric(d[[id]][su]), scientific = FALSE))
+      }
+      d <- d[d[[id]] %in% ids, ]
+      if (!nrow(d)) {
+        if (verbose) cli_warn("file has none of the requested IDs: {f}")
         next
       }
     }
     if (any(su <- !vars %in% colnames(d))) {
-      if (all(su)) cli_abort("no variables found in file {f}")
+      if (all(su)) {
+        cli_warn("no variables found in file {f}")
+        next
+      }
       if (any(!spec[su])) {
-        cli_abort(
+        cli_warn(
           "table from {f} does not have {?a column name/column names} {.var {vars[su][!spec[su]]}}"
         )
+        next
       }
       vars <- vars[!su]
       spec <- spec[!su]
@@ -130,15 +134,16 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     value <- a[1]
     vars <- c(value, vars)
   }
-  vars <- unique(c(vars, "file"))
+  vars <- unique(c(vars, entity_info, "file"))
   if (length(variables)) {
     check_variables <- TRUE
     variables <- unique(as.character(variables))
   }
   data <- do.call(rbind, lapply(names(data), function(f) {
     d <- data[[f]]
+    d[, vars[!vars %in% colnames(d)]] <- ""
     d <- d[, vars]
-    d <- d[rowSums(vapply(d, is.na, logical(nrow(d)))) == 0, ]
+    if (anyNA(d)) d <- d[rowSums(is.na(d)) == 0, ]
     if (check_variables) {
       ovars <- unique(d[[value_name]])
       su <- !ovars %in% variables
@@ -189,33 +194,6 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     }
   }
   times <- sort(unique(data[[time]]))
-  if (!is.null(out) && (is.list(entity_info) || is.character(entity_info))) {
-    entity_info_file <- paste0(out, "/entity_info.json")
-    if (overwrite || !file.exists(entity_info_file) || max_age > file.mtime(entity_info_file)) {
-      entity_info <- as.list(entity_info)
-      entity_info <- entity_info[unlist(entity_info) %in% colnames(data)]
-      if (length(entity_info)) {
-        if (verbose) {
-          cli_progress_step(
-            "writing entity file",
-            msg_done = paste0("wrote entity metadata file: {.file ", entity_info_file, "}")
-          )
-        }
-        e <- data[!duplicated(data[[id]]), ]
-        e <- e[, c(id, dataset, unlist(entity_info)), drop = FALSE]
-        if (!is.null(names(entity_info))) {
-          su <- which(names(entity_info) != "")
-          colnames(e)[su + 2] <- names(entity_info)[su]
-        }
-        write_json(
-          lapply(split(e, e[, 2]), function(g) lapply(split(g[, -(1:2)], g[, 1]), as.list)),
-          entity_info_file,
-          auto_unbox = TRUE
-        )
-        if (verbose) cli_progress_done()
-      }
-    }
-  }
   if (all(nchar(times) == 4)) times <- seq(min(times), max(times))
   n <- length(times)
   if (!is.null(out)) {
@@ -229,6 +207,38 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     names(files) <- datasets
   }
   write <- vapply(files, function(f) is.null(out) || overwrite || !file.exists(f) || max_age > file.mtime(f), TRUE)
+  if (!is.null(out) && (is.list(entity_info) || is.character(entity_info))) {
+    entity_info_file <- paste0(out, "/entity_info.json")
+    if (overwrite || !file.exists(entity_info_file) || any(write)) {
+      entity_info <- as.list(entity_info)
+      entity_info <- entity_info[unlist(entity_info) %in% colnames(data)]
+      if (length(entity_info)) {
+        if (verbose) {
+          cli_progress_step(
+            "writing entity file",
+            msg_done = paste0("wrote entity metadata file: {.file ", entity_info_file, "}")
+          )
+        }
+        e <- data[, unique(c(id, dataset, unlist(entity_info))), drop = FALSE]
+        if (!is.null(names(entity_info))) {
+          for (en in names(entity_info)) {
+            if (en != "" && entity_info[[en]] %in% colnames(e)) colnames(e)[colnames(e) == entity_info[[en]]] <- en
+          }
+        }
+        write_json(
+          lapply(split(e, e[, 2]), function(g) {
+            lapply(
+              split(g[, -(1:2), drop = FALSE], g[, 1]),
+              function(l) lapply(l, function(r) r[which(r != "")[1]])
+            )
+          }),
+          entity_info_file,
+          auto_unbox = TRUE
+        )
+        if (verbose) cli_progress_done()
+      }
+    }
+  }
   sets <- lapply(datasets, function(dn) {
     if (write[[dn]]) {
       d <- if (dataset %in% vars) data[data[[dataset]] == dn, ] else data
@@ -250,8 +260,8 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
           ID = rep(as.character(e), n), time = times, check.names = FALSE,
           matrix(NA, n, length(present_vars), dimnames = list(times, present_vars))
         )
-        for (v in present_vars) {
-          if (all(c(value_name, value) %in% names(ed))) {
+        if (all(c(value_name, value) %in% names(ed))) {
+          for (v in present_vars) {
             su <- ed[[value_name]] == v
             su[su] <- !is.na(ed[[value]][su])
             if (sum(su)) {

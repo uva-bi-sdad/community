@@ -4,13 +4,16 @@
 \alias{page_panel}
 \title{Adds an organizational panel to a website}
 \usage{
-page_panel(title = "Side Panel", ..., position = "left", wraps = NA,
-  sizes = NA, breakpoints = NA, conditions = "", id = NULL)
+page_panel(title = "Side Panel", ..., foot = NULL, position = "left",
+  wraps = NA, sizes = NA, breakpoints = NA, conditions = "",
+  id = NULL)
 }
 \arguments{
-\item{title}{Content to appear in the panel's header area.}
+\item{title}{Text to appear in the panel's header area.}
 
 \item{...}{Elements to appear in the panel's body area.}
+
+\item{foot}{Content to appear in the panel's footer area.}
 
 \item{position}{The side of the screen on which the panel appears; \code{"left"} (default) or \code{"right"}.}
 

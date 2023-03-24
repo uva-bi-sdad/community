@@ -7,19 +7,21 @@ page_section(
   wraps = "col", sizes = c(4, NA),
   page_section(
     wraps = "row",
-    output_info(title = "variables.short_name"),
-    input_button("Download", "export", query = list(include = "selected_variable"), class = "btn-full"),
-    output_info(body = "variables.sources"),
-    input_select("Layer", options = "datasets", default = 0, id = "selected_dataset"),
     page_section(
-      wraps = "col", sizes = c(NA, 1),
+      wraps = "col", sizes = c(9, NA),
       input_combobox(
-        "Variable", options = "variables", default = 0, depends = "selected_dataset", id = "selected_variable"
+        "Variable",
+        options = "variables", default = 0, depends = "selected_dataset", id = "selected_variable"
       ),
       input_number(
-        "Time", min = "filter.time_min", max = "filter.time_max", default = "max", id = "selected_time"
+        "Time",
+        min = "filter.time_min", max = "filter.time_max", default = "max", id = "selected_time"
       )
     ),
+    input_select("Layer", options = "datasets", default = 0, id = "selected_dataset"),
+    "<br />",
+    output_info(title = "variables.short_name"),
+    input_button("Download", "export", query = list(include = "selected_variable"), class = "btn-full"),
     output_legend(id = "main_legend", subto = c("main_map", "main_plot")),
     output_info(
       default = c(body = "Hover over output elements for more information."),
@@ -37,47 +39,43 @@ page_section(
     )
   ),
   page_section(
-    {
-      files <- sub(".csv.xz", "", list.files("docs/data/", "\\.csv\\.xz"), fixed = TRUE)
-      maps <- paste0("docs/", files, ".geojson")
-      maps <- maps[file.exists(maps)]
-      if (length(maps)) {
-        output_map(
-          lapply(maps, function(d) list(
-            name = names(files[which(file.exists(paste0("docs/data/", files)))[1]]),
-            url = "docs/map.geojson"
-          )),
-          id = "main_map",
-          subto = c("main_plot", "main_legend"),
-          options = list(
-            attributionControl = FALSE,
-            scrollWheelZoom = FALSE,
-            height = "500px",
-            zoomAnimation = "settings.map_zoom_animation"
-          ),
-          tiles = list(
-            light = list(url = "https://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}{r}.png"),
-            dark = list(url = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png")
-          ),
-          attribution = list(
-            list(
-              name = "Stamen toner-light",
-              url = "https://stamen.com",
-              description = "Light-theme map tiles by Stamen Design"
-            ),
-            list(
-              name = "CARTO Dark Matter",
-              url = "https://carto.com/attributions",
-              description = "Dark-theme map tiles by CARTO"
-            ),
-            list(
-              name = "OpenStreetMap",
-              url = "https://www.openstreetmap.org/copyright"
-            )
-          )
+    output_map( # by default show
+      list(list(
+        name = "county",
+        url = paste0(
+          "https://raw.githubusercontent.com/uva-bi-sdad/sdc.geographies/main/US/Census%20Geographies/",
+          "County/2020/data/distribution/us_geo_census_cb_2020_counties.geojson"
         )
-      }
-    },
+      )),
+      id = "main_map",
+      subto = c("main_plot", "main_legend"),
+      options = list(
+        attributionControl = FALSE,
+        scrollWheelZoom = FALSE,
+        height = "500px",
+        zoomAnimation = "settings.map_zoom_animation"
+      ),
+      tiles = list(
+        light = list(url = "https://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}{r}.png"),
+        dark = list(url = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png")
+      ),
+      attribution = list(
+        list(
+          name = "Stamen toner-light",
+          url = "https://stamen.com",
+          description = "Light-theme map tiles by Stamen Design"
+        ),
+        list(
+          name = "CARTO Dark Matter",
+          url = "https://carto.com/attributions",
+          description = "Dark-theme map tiles by CARTO"
+        ),
+        list(
+          name = "OpenStreetMap",
+          url = "https://www.openstreetmap.org/copyright"
+        )
+      )
+    ),
     output_plot(
       x = "time", y = "selected_variable", id = "main_plot", subto = c("main_map", "main_legend"),
       options = list(

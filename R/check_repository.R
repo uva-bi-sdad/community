@@ -6,13 +6,10 @@
 #' @param search_pattern Regular expression used to search for data files.
 #' @param value Name of the column containing variable values.
 #' @param value_name Name of the column containing variable names.
-#' @param value_type Name of the column indicating the type of each value.
 #' @param id Column name of IDs that uniquely identify entities.
 #' @param time Column name of the variable representing time.
 #' @param dataset Column name used to separate data into sets (such as by region).
 #' @param entity_info A vector of variable names to go into making \code{entity_info.json}.
-#' @param check_values Logical; if \code{FALSE}, will skip value-based checks
-#' (since these are loose heuristics and can be intensive on large files).
 #' @param attempt_repair Logical; if \code{TRUE}, will attempt to fix most warnings in data files.
 #' Use with caution, as this will often remove rows (given \code{NA}s) and rewrite the file.
 #' @examples
@@ -29,7 +26,7 @@
 #'   \item \strong{\code{info}} (always): All measurement information (\code{measure_info.json}) files found.
 #'   \item \strong{\code{data}} (always): All data files found.
 #'   \item \strong{\code{not_considered}}: Subset of data files that do not contain the minimal
-#'     columns (\code{id}, \code{value}, and \code{value_type}), and so are not checked further.
+#'     columns (\code{id} and \code{value}), and so are not checked further.
 #' }
 #' or those relating to issues with \strong{measure information} (see \code{\link{data_measure_info}}) files:
 #' \itemize{
@@ -73,7 +70,6 @@
 #'   \item \strong{\code{warn_small_values}}: Variable names with many values (over 40%) that are under \code{.00001}, and
 #'     no values under \code{0} or over \code{1}. These values should be scaled in some way to be displayed reliably.
 #'   \item \strong{\code{warn_value_name_nas}}: Files that have \code{NA}s in their \code{name} column.
-#'   \item \strong{\code{warn_value_type_nas}}: Files that have \code{NA}s in their \code{name} column.
 #'   \item \strong{\code{warn_entity_info_nas}}: Files that have \code{NA}s in any of their \code{entity_info} columns.
 #'   \item \strong{\code{warn_dataset_nas}}: Files that have \code{NA}s in their \code{dataset} column.
 #'   \item \strong{\code{warn_time_nas}}: Files that have \code{NA}s in their \code{time} column.
@@ -99,7 +95,6 @@
 #' \itemize{
 #'   \item \strong{\code{fail_read}}: Files that could not be read in.
 #'   \item \strong{\code{fail_rows}}: Files containing no rows.
-#'   \item \strong{\code{fail_value_type}}: Files with no \code{value_type} column.
 #'   \item \strong{\code{fail_time}}: Files with no \code{time} column.
 #'   \item \strong{\code{fail_dataset}}: Files with no \code{dataset} column.
 #'   \item \strong{\code{fail_entity_info}}: Files with no \code{entity_info} columns.
@@ -113,8 +108,8 @@
 #' @export
 
 check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?$", value = "value", value_name = "measure",
-                             value_type = "measure_type", id = "geoid", time = "year", dataset = "region_type",
-                             entity_info = c("region_type", "region_name"), check_values = TRUE, attempt_repair = FALSE) {
+                             id = "geoid", time = "year", dataset = "region_type",
+                             entity_info = c("region_type", "region_name"), attempt_repair = FALSE) {
   if (!dir.exists(dir)) cli_abort("{.path {dir}} does not exist")
   project_check <- check_template("repository", dir = dir)
   if (project_check$exists) {
@@ -130,7 +125,9 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   meta <- list()
   info_files <- list.files(dir, "^measure_info[^.]*\\.json$", full.names = TRUE, recursive = TRUE)
   results <- list(data = files, info = info_files)
-  required_fields <- c("measure", "category", "type", "long_name", "short_name", "long_description")
+  required_fields <- c(
+    "category", "long_name", "short_name", "long_description", "measure_type"
+  )
   required_refs <- c("author", "year", "title")
   required_source <- c("name", "date_accessed")
   required_layer_filter <- c("feature", "operator", "value")
@@ -148,7 +145,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
     i <- i + 1
     cli_progress_update()
     issues <- NULL
-    if (!is.null(m$type) && !is.null(m$measure)) {
+    if (!is.null(m$measure_type) && !is.null(m$measure)) {
       issues <- "recoverably malformed (should be an object with named entries for each measure)"
       results$info_malformed <- c(results$info_malformed, f)
       m <- list(m)
@@ -177,24 +174,17 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
             ))
           }
           if ("author" %in% names(refs[[e]])) {
-            if (is.list(refs[[e]]$author)) {
-              if (!is.null(names(refs[[e]]$author))) refs[[e]]$author <- list(refs[[e]]$author)
-              for (i in seq_along(refs[[e]]$author)) {
-                if (is.null(refs[[e]]$author[[i]]$family)) {
-                  results$info_refs_author_entry[[f]] <- c(
-                    results$info_refs_author_entry[[f]], paste0(e, ":", i)
-                  )
-                  issues <- c(issues, paste0(
-                    "{.arg _references} {.strong {.field ", e, "}}'s number ", i,
-                    " author is missing a {.pkg family} entry"
-                  ))
-                }
+            if (!is.list(refs[[e]]$author) || !is.null(names(refs[[e]]$author))) refs[[e]]$author <- list(refs[[e]]$author)
+            for (i in seq_along(refs[[e]]$author)) {
+              if (is.list(refs[[e]]$author[[i]]) && is.null(refs[[e]]$author[[i]]$family)) {
+                results$info_refs_author_entry[[f]] <- c(
+                  results$info_refs_author_entry[[f]], paste0(e, ":", i)
+                )
+                issues <- c(issues, paste0(
+                  "{.arg _references} {.strong {.field ", e, "}}'s number ", i,
+                  " author is missing a {.pkg family} entry"
+                ))
               }
-            } else {
-              results$info_refs_author[[f]] <- c(results$info_refs_author[[f]], e)
-              issues <- c(issues, paste0(
-                "{.arg _references} {.strong {.field ", e, "}}'s {.pkg author} entry is not a list"
-              ))
             }
           }
           for (re in c("year", "title", "journal", "volume", "page", "doi", "version", "url")) {
@@ -338,7 +328,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   )
   census_geolayers <- c(county = 5, tract = 11, "block group" = 12)
   required <- c(id, value_name, value)
-  vars <- unique(c(required, value_type, time, dataset, entity_info))
+  vars <- unique(c(required, time, dataset, entity_info))
   entity_info <- entity_info[!entity_info %in% c(required, time, dataset)]
   files_short <- sub("^/", "", sub(dir, "", files, fixed = TRUE))
   for (i in seq_along(files)) {
@@ -364,17 +354,8 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
         results$fail_read <- c(results$fail_read, f)
       } else {
         if (nrow(d)) {
-          ck_values <- check_values && value_type %in% cols
-          if (missing(check_values) && nrow(d) > 5e6) {
-            cli_alert_info(paste(
-              "skipping value checks for {.field {f}} due to size ({prettyNum(nrow(d), big.mark = ',')} rows);",
-              "set {.arg check_values} to {.pkg TRUE} to force checks"
-            ))
-            ck_values <- FALSE
-          }
           d[[id]] <- as.character(d[[id]])
           if (!time %in% cols) results$fail_time <- c(results$fail_time, f)
-          if (!value_type %in% cols) results$fail_value_type <- c(results$fail_value_type, f)
           all_entity_info <- all(entity_info %in% cols)
           if (!all_entity_info) results$fail_entity_info <- c(results$fail_entity_info, f)
 
@@ -424,38 +405,6 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
                 d <- d[rowSums(is.na(d[, entity_info, drop = FALSE])) == 0, ]
               }
             }
-            if (nrow(d) && value_type %in% cols) {
-              if (anyNA(d[[value_type]])) {
-                repairs <- c(repairs, "warn_value_type_nas")
-                d <- d[!is.na(d[[value_type]]), ]
-              }
-              if (ck_values && nrow(d)) {
-                md <- split(d, d[[value_name]])
-                for (m in names(md)) {
-                  type <- md[[m]][[value_type]][1]
-                  if (type == "percent") {
-                    if (!any(md[[m]][[value]] > 1)) {
-                      d[[value]][d[[value_name]] == m] <- d[[value]][d[[value_name]] == m] * 100
-                      repairs <- c(repairs, "warn_small_percents")
-                    }
-                  } else if (grepl("^int", type)) {
-                    if (any(md[[m]][[value]] %% 1 != 0)) {
-                      d[[value_type]][d[[value_name]] == m] <- "numeric"
-                      repairs <- c(repairs, "warn_double_ints")
-                    }
-                  } else if (!grepl("^per[ 0-9]", type, TRUE)) {
-                    mm <- min(md[[m]][[value]])
-                    if (mm >= 0 && max(md[[m]][[value]]) < 1 && mean(md[[m]][[value]] > 0 & md[[m]][[value]] < 1e-4) > .4) {
-                      adj <- which(mm < adjustments$min)[1]
-                      if (is.na(adj)) adj <- 1
-                      d[[value]][d[[value_name]] == m] <- d[[value]][d[[value_name]] == m] * adjustments$factor[adj]
-                      d[[value_type]][d[[value_name]] == m] <- adjustments$type[adj]
-                      repairs <- c(repairs, "warn_small_values")
-                    }
-                  }
-                }
-              }
-            }
             if (length(repairs)) {
               if (!nrow(d)) {
                 cli_alert_danger("{.strong attempting repairs ({repairs}) removed all rows of {.file {f}}}")
@@ -483,7 +432,6 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
             if (any(cols == "")) results$warn_blank_colnames <- c(results$warn_blank_colnames, f)
             if (anyNA(d[[value]])) {
               results$warn_value_nas <- c(results$warn_value_nas, f)
-              if (ck_values) d[[value]][is.na(d[[value]])] <- 0
             }
             if (anyNA(d[[id]])) {
               results$warn_id_nas <- c(results$warn_id_nas, f)
@@ -493,10 +441,6 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
             if (anyNA(d[[value_name]])) {
               results$warn_value_name_nas <- c(results$warn_value_name_nas, f)
               d[[value_name]][is.na(d[[value_name]])] <- "NA"
-            }
-            if (value_type %in% cols && anyNA(d[[value_type]])) {
-              results$warn_value_type_nas <- c(results$warn_value_type_nas, f)
-              d[[value_type]][is.na(d[[value_type]])] <- "NA"
             }
             if (dataset %in% cols && anyNA(d[[dataset]])) {
               results$warn_dataset_nas <- c(results$warn_dataset_nas, f)
@@ -531,41 +475,21 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
             if (any(su)) su[su] <- !make_full_name(f, measures[su]) %in% names(meta)
             if (any(su)) results$warn_missing_info[[f]] <- c(results$warn_missing_info[[f]], measures[su])
 
-            id_chars <- nchar(d[[id]])
-            su <- which(id_chars == 12)
-            if (length(su)) {
-              su <- su[grep("[^0-9]", d[[id]][su], invert = TRUE)]
-              if (length(su) && any(!unique(substring(d[[id]][su], 1, 11)) %in% d[[id]])) {
-                results$warn_bg_agg <- c(results$warn_bg_agg, f)
+            for (m in measures) {
+              mids <- d[[id]][d[[value_name]] == m]
+              id_chars <- nchar(mids)
+              su <- which(id_chars == 12)
+              if (length(su)) {
+                su <- su[grep("[^0-9]", mids[su], invert = TRUE)]
+                if (length(su) && any(!unique(substring(mids[su], 1, 11)) %in% mids)) {
+                  results$warn_bg_agg[[f]] <- c(results$warn_bg_agg[[f]], m)
+                }
               }
-            }
-            su <- which(id_chars == 11)
-            if (length(su)) {
-              su <- su[grep("[^0-9]", d[[id]][su], invert = TRUE)]
-              if (length(su) && any(!unique(substring(d[[id]][su], 1, 5)) %in% d[[id]])) {
-                results$warn_tr_agg <- c(results$warn_tr_agg, f)
-              }
-            }
-
-            if (ck_values) {
-              md <- split(d, d[[value_name]])
-              for (m in names(md)) {
-                if (m != "NA") {
-                  type <- md[[m]][[value_type]][1]
-                  if (type == "percent") {
-                    if (!any(md[[m]][[value]] > 1)) {
-                      results$warn_small_percents[[f]] <- c(results$warn_small_percents[[f]], m)
-                    }
-                  } else if (grepl("^int", type)) {
-                    if (any(md[[m]][[value]] %% 1 != 0)) {
-                      results$warn_double_ints[[f]] <- c(results$warn_double_ints[[f]], m)
-                    }
-                  } else if (!grepl("^per[ 0-9]", type, TRUE)) {
-                    mm <- min(md[[m]][[value]])
-                    if (mm >= 0 && max(md[[m]][[value]]) < 1 && mean(md[[m]][[value]] > 0 & md[[m]][[value]] < 1e-4) > .4) {
-                      results$warn_small_values[[f]] <- c(results$warn_small_values[[f]], m)
-                    }
-                  }
+              su <- which(id_chars == 11)
+              if (length(su)) {
+                su <- su[grep("[^0-9]", mids[su], invert = TRUE)]
+                if (length(su) && any(!unique(substring(mids[su], 1, 5)) %in% mids)) {
+                  results$warn_tr_agg[[f]] <- c(results$warn_tr_agg[[f]], m)
                 }
               }
             }
@@ -616,12 +540,9 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
       warn_value_nas = "{.pkg {value}} column contains NAs (which are redundant):",
       warn_id_nas = "{.pkg {id}} column contains NAs:",
       warn_value_name_nas = "{.pkg {value_name}} column contains NAs:",
-      warn_value_type_nas = "{.pkg {value_type}} column contains NAs:",
       warn_dataset_nas = "{.pkg {dataset}} column contains NAs:",
       warn_time_nas = "{.pkg {time}} column contains NAs:",
-      warn_entity_info_nas = "entity information column{?/s} ({.pkg {entity_info}}) contain{?s/} NAs:",
-      warn_bg_agg = "may have block groups that have not been aggregated to tracts:",
-      warn_tr_agg = "may have tracts that have not been aggregated to counties:"
+      warn_entity_info_nas = "entity information column{?/s} ({.pkg {entity_info}}) contain{?s/} NAs:"
     )
     for (s in names(sections)) {
       if (length(results[[s]])) {
@@ -636,7 +557,9 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
       warn_missing_info = "missing measure info entries:",
       warn_small_percents = "no values with a {.pkg percent} type are over 1",
       warn_double_ints = "values with an {.pkg int*} type have decimals",
-      warn_small_values = "non-zero values are very small (under .00001) -- they will display as 0s"
+      warn_small_values = "non-zero values are very small (under .00001) -- they will display as 0s",
+      warn_bg_agg = "may have block groups that have not been aggregated to tracts:",
+      warn_tr_agg = "may have tracts that have not been aggregated to counties:"
     )
     for (s in names(sections)) {
       if (length(results[[s]])) {
@@ -660,7 +583,16 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
               )
             }
           } else {
-            function(f) paste0("{.pkg ", results[[s]][[f]], "} in {.field ", f, "}")
+            function(f) {
+              vars <- results[[s]][[f]]
+              paste0(
+                if (length(vars) > 50) {
+                  paste(prettyNum(length(vars), big.mark = ","), "variables")
+                } else {
+                  paste0("{.pkg ", vars, "}", collapse = ", ")
+                }, " in {.field ", f, "}"
+              )
+            }
           }
         ), use.names = FALSE)
         cli_bullets(structure(missing_info, names = rep(">", length(missing_info))))
@@ -676,7 +608,6 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
     sections <- list(
       fail_read = "failed to read in:",
       fail_rows = "contains no data:",
-      fail_value_type = "no {.pkg {value_type}} column:",
       fail_time = "no {.pkg {time}} column:",
       fail_dataset = "no {.pkg {dataset}} column:",
       fail_entity_info = "missing entity information ({.pkg {entity_info}}) column{?/s}:",

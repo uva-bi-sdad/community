@@ -10,7 +10,13 @@
 #' @param options A list with options to be passed to the site. These will be written to \code{docs/settings.json},
 #' which can be edited by hand.
 #' @param bundle_data Logical; if \code{TRUE}, will write the data to the site file; useful when
-#' running the site locally without server. Otherwise, the data will be loaded separately through an http request.
+#' running the site locally without a server (viewing the file directly in a browser).
+#' Otherwise, the data will be loaded separately through an http request.
+#' @param bundle_libs Logical; if \code{TRUE}, will download dependencies to the \code{docs/lib} directory.
+#' This can allow you to run the site offline for all but Leaflet tiles and any remote resources specified in
+#' \code{file} (such as map shapes) or metadata (such as map overlays).
+#' @param libs_overwrite Logical; if \code{TRUE}, will re-download existing dependencies.
+#' @param libs_base_only Logical; if \code{TRUE}, will only download the base community dependencies to be served locally.
 #' @param open_after Logical; if \code{TRUE}, will open the site in a browser after it is built.
 #' @param aggregate Logical; if \code{TRUE}, and there is a larger datasets with IDs that partially match
 #' IDs in a smaller dataset or that has a map to those IDs, and there are NAs in the smaller dataset, will
@@ -20,10 +26,15 @@
 #' processed version.
 #' @param version Version of the base script and stylesheet: \code{"v1"} (default) for the version 1 stable release,
 #' \code{"dev"} for the current unstable release, or \code{"local"} for a copy of the development files
-#' (\code{community.js} and \code{community.css}) served from a local \code{dist} directory.
+#' (\code{community.js} and \code{community.css}) served from a local \code{dist} directory. Can also
+#' be a URL (starting with \code{http}) where files can be found (\code{{version}/community.js} and
+#' \code{{version}/community.css}).
 #' @param parent Directory path or repository URL of a data site from which to use data, rather than using local data.
 #' @param include_api Logical; if \code{TRUE}, will write the \code{docs/functions/api.js} file.
 #' @param endpoint URL of the served API.
+#' @param tag_id Google tag ID (in the form of \code{GTM-XXXXXX}, were \code{GTM-} might be different depending on the
+#' tag type (such as \code{G-} or \code{GT-}); see \href{tagmanager.google.com}{https://tagmanager.google.com}),
+#' which will enables tracking, conditional on the \code{settings.tracking} setting.
 #' @param serve Logical; if \code{TRUE}, starts a local server from the site's \code{docs} directory.
 #' Once a server is running, you can use \code{\link[httpuv]{stopAllServers}} to stop it.
 #' @param host The IPv4 address to listen to if \code{serve} is \code{TRUE}; defaults to \code{"127.0.0.1"}.
@@ -41,9 +52,9 @@
 #' @export
 
 site_build <- function(dir, file = "site.R", name = "index.html", variables = NULL,
-                       options = list(), bundle_data = FALSE, open_after = FALSE, aggregate = TRUE, sparse_time = TRUE,
-                       force = FALSE, version = "v1", parent = NULL, include_api = FALSE, endpoint = NULL, serve = FALSE,
-                       host = "127.0.0.1", port = 3000) {
+                       options = list(), bundle_data = FALSE, bundle_libs = FALSE, libs_overwrite = FALSE, libs_base_only = FALSE,
+                       open_after = FALSE, aggregate = TRUE, sparse_time = TRUE, force = FALSE, version = "v1", parent = NULL,
+                       include_api = FALSE, endpoint = NULL, tag_id = NULL, serve = FALSE, host = "127.0.0.1", port = 3000) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., dir = ".")')
   page <- paste0(dir, "/", file)
   if (!file.exists(page)) cli_abort("{.file {page}} does not exist")
@@ -100,13 +111,25 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
           path <- paste0(dir, "/docs/", d$site_file)
           if (file.exists(file)) {
             if (force || (!file.exists(path) || file.mtime(file) > file.mtime(path))) {
-              data <- as.data.frame(read_delim_arrow(
-                gzfile(file),
-                if (grepl(".csv", file, fixed = TRUE)) "," else "\t",
-                col_names = c("ID", vapply(d$schema$fields, "[[", "", "name")),
-                col_types = paste(c("c", rep("n", length(d$schema$fields))), collapse = ""),
-                skip = 1
-              ))
+              vars <- vapply(d$schema$fields, "[[", "", "name")
+              sep <- if (grepl(".csv", file, fixed = TRUE)) "," else "\t"
+              cols <- scan(file, "", nlines = 1, sep = sep, quiet = TRUE)
+              add_id <- length(d$ids) && !d$ids[[1]]$variable %in% vars
+              if (add_id) vars <- c(d$ids[[1]]$variable, vars)
+              if (length(vars) == length(cols) && all(vars %in% cols)) {
+                types <- vapply(d$schema$fields, function(e) if (e$type == "string") "c" else "n", "")
+                if (add_id) types <- c("c", types)
+                data <- as.data.frame(read_delim_arrow(
+                  gzfile(file), sep,
+                  col_names = vars, col_types = paste(types, collapse = ""), skip = 1
+                ))
+              } else {
+                data <- read_delim_arrow(gzfile(file), sep)
+                for (col in colnames(data)) {
+                  v <- data[[col]]
+                  if (!is.numeric(v) && !is.character(v)) data[[col]] <- as.character(v)
+                }
+              }
               time <- NULL
               if (length(d$time) && d$time[[1]] %in% colnames(data)) {
                 time <- d$time[[1]]
@@ -156,7 +179,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                 }
                 cids <- NULL
                 for (pname in rev(names(previous_data))) {
-                  if (pname %in% names(ids_map) && !is.null(ids_map[[pname]][[1]][[d$name]])) {
+                  if (pname %in% names(ids_map) && length(ids_map[[pname]]) && !is.null(ids_map[[pname]][[1]][[d$name]])) {
                     child <- pname
                     cids <- vapply(ids_map[[pname]], function(e) {
                       if (is.null(e[[d$name]])) "" else e[[d$name]]
@@ -211,6 +234,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
               evars <- vars
               if (!length(evars)) evars <- colnames(data)[colnames(data) %in% names(var_codes)]
               if (!is.null(time) && time %in% evars) evars <- evars[evars != time]
+              evars <- evars[evars %in% names(var_codes)]
               var_meta <- lapply(evars, function(vn) {
                 list(
                   code = var_codes[[vn]],
@@ -287,7 +311,8 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     theme_dark = FALSE, partial_init = TRUE, palette = "vik", hide_url_parameters = FALSE,
     background_shapes = TRUE, iqr_box = TRUE, polygon_outline = 1.5, color_scale_center = "none",
     table_autoscroll = TRUE, table_scroll_behavior = "smooth", hide_tooltips = FALSE,
-    map_animations = "all", trace_limit = 20, map_overlay = TRUE, circle_radius = 7
+    map_animations = "all", trace_limit = 20, map_overlay = TRUE, circle_radius = 7,
+    tracking = FALSE
   )
   for (s in names(defaults)) {
     if (!is.null(options[[s]])) {
@@ -297,8 +322,8 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   times <- unname(vapply(settings$metadata$info, function(d) if (length(d$time)) d$time else "", ""))
   times <- times[times != ""]
   if (!is.null(variables)) variables <- variables[!grepl("^_", variables)]
-  if (!missing(aggregate) || !is.null(settings$metadata) && length(settings$metadata$variables) &&
-    !identical(as.character(settings$metadata$variables), variables[!variables %in% times])) {
+  if (!missing(aggregate) || (length(variables) && !is.null(settings$metadata) && length(settings$metadata$variables) &&
+    !identical(as.character(settings$metadata$variables), variables[!variables %in% times]))) {
     force <- TRUE
   }
   if (!is.null(variables)) variables <- unique(c(times, variables))
@@ -331,13 +356,20 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         base = list(type = "script", src = "dist/dev/community.js")
       )
     } else {
-      list(
-        base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.min.css"),
-        base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js")
-      )
+      if (grepl("^http", version)) {
+        list(
+          base_style = list(type = "stylesheet", src = sub("//", "/", paste0(version, "/community.css"), fixed = TRUE)),
+          base = list(type = "script", src = sub("//", "/", paste0(version, "/community.js"), fixed = TRUE))
+        )
+      } else {
+        list(
+          base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.min.css"),
+          base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js")
+        )
+      }
     },
     c(
-      lapply(names(cache_scripts), function(f) {
+      lapply(structure(names(cache_scripts), names = names(cache_scripts)), function(f) {
         cached <- cache_scripts[[f]][[if (stable) "stable" else "dev"]]
         dir.create(paste0(dir, "/", cached$location), FALSE, TRUE)
         scripts <- paste0(sub("(?:\\.v1)?(?:\\.min)?\\.js", "", basename(cached$source)), c("", ".min", ".v1.min"), ".js")
@@ -358,18 +390,21 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
           list(type = "script", src = sub("^.*docs/", "", lf))
         }
       }),
+      if (!is.null(tag_id)) {
+        list(ga = list(type = "script", src = paste0("https://www.googletagmanager.com/gtag/js?id=", tag_id)))
+      },
       list(
         custom_style = list(type = "stylesheet", src = "style.css"),
         custom = list(type = "script", src = "script.js"),
         bootstrap_style = list(
           type = "stylesheet",
-          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css",
-          hash = "sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65"
+          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css",
+          hash = "sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD"
         ),
         bootstrap = list(
           type = "script",
-          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js",
-          hash = "sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
+          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js",
+          hash = "sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
         )
       )
     )
@@ -377,7 +412,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   parts$credits$bootstrap <- list(
     name = "Bootstrap",
     url = "https://getbootstrap.com",
-    version = "5.2.3"
+    version = "5.3.0"
   )
   parts$credits$colorbrewer <- list(
     name = "ColorBrewer",
@@ -392,34 +427,44 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   src <- parse(text = gsub("community::site_build", "site_build", readLines(page, warn = FALSE), fixed = TRUE))
   source(local = parts, exprs = src)
   libdir <- paste0(dir, "/docs/lib/")
-  for (d in parts$dependencies) {
-    if (is.character(d$import_url)) {
-      if (!grepl("^lib/", d$src)) d$src <- paste0("lib/", d$src)
-      expath <- paste0(dir, "/docs/", regmatches(d$src, regexec("lib/[^/]+", d$src))[[1]])
-      source_file <- paste0(expath, "/source.txt")
-      source <- if (file.exists(source_file)) readLines(source_file)[1] else ""
-      if (source != d$import_url) {
-        temp <- paste0(libdir, basename(d$import_url))
-        unlink(expath, TRUE)
-        download.file(d$import_url, temp)
-        if (grepl("(?:tar|gz)$", temp)) {
-          untar(temp, exdir = expath)
-        } else {
-          unzip(temp, exdir = expath)
+  if (missing(bundle_libs)) bundle_libs <- libs_overwrite || libs_base_only
+  if (bundle_libs) {
+    dir.create(libdir, FALSE)
+    manifest_file <- paste0(libdir, "manifest.json")
+    manifest <- if (file.exists(manifest_file)) read_json(manifest_file) else list()
+    for (dn in names(parts$dependencies)) {
+      if (if (libs_base_only) dn %in% c("base", "base_style") else !grepl("^(?:ga$|custom|data_handler)", dn)) {
+        d <- parts$dependencies[[dn]]
+        f <- paste0("lib/", dn, "/", basename(d$src))
+        if (is.null(manifest[[dn]])) manifest[[dn]] <- list(file = f, source = d$src)
+        lf <- paste0(dir, "/docs/", f)
+        stale <- libs_overwrite || d$src != manifest[[dn]]$source
+        if (!file.exists(lf) || stale) {
+          if (stale) unlink(dirname(lf), TRUE)
+          dir.create(dirname(lf), FALSE)
+          loc <- paste0(dir, "/docs/", d$src)
+          if (file.exists(loc)) {
+            file.copy(loc, lf)
+          } else {
+            download.file(d$src, lf)
+          }
+          manifest[[dn]] <- list(file = f, source = d$src)
         }
-        pkgdir <- paste0(expath, "/package")
-        if (dir.exists(pkgdir)) {
-          file.copy(
-            list.files(pkgdir, full.names = TRUE, recursive = TRUE),
-            expath,
-            recursive = TRUE
-          )
-          unlink(pkgdir, TRUE)
+        map <- readLines(lf, warn = FALSE)
+        map <- map[length(map)]
+        if (grepl("sourceMappingURL", map, fixed = TRUE)) {
+          mf <- paste0(dirname(lf), "/", regmatches(map, regexec("=([^ ]+)", map))[[1]][2])
+          if (!file.exists(mf)) {
+            download.file(paste0(dirname(d$src), "/", basename(mf)), mf)
+          }
         }
-        writeLines(d$import_url, source_file)
-        unlink(temp)
+        parts$dependencies[[dn]]$src <- f
+        parts$dependencies[[dn]]$hash <- NULL
       }
     }
+    write_json(manifest, manifest_file, auto_unbox = TRUE, pretty = TRUE)
+  } else {
+    unlink(libdir, TRUE)
   }
   for (e in c(
     "rules", "variables", "dataviews", "info", "text", "select", "combobox", "button", "datatable",
@@ -449,12 +494,17 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     }
   }
   if (!is.null(endpoint)) settings$endpoint <- endpoint
+  if (!is.null(tag_id)) settings$tag_id <- tag_id
   write_json(settings, paste0(dir, "/docs/settings.json"), pretty = TRUE, auto_unbox = TRUE)
-  if (include_api) {
+  if (include_api || file.exists(paste0(dir, "/docs/functions/api.js"))) {
     dir.create(paste0(dir, "/docs/functions"), FALSE, TRUE)
     writeLines(c(
       "'use strict'",
-      paste0("const DataHandler = require('../data_handler", if (stable) ".v1", ".min.js'),"),
+      paste0("const DataHandler = require('../", if (version == "local") {
+        parts$dependencies$data_handler$src
+      } else {
+        basename(parts$dependencies$data_handler$src)
+      }, "'),"),
       "  data = new DataHandler(require('../settings.json'), void 0, {",
       paste0(
         "    ",

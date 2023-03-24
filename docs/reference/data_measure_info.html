@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">community</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1.107</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1.108</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -129,13 +129,15 @@ All entities have at least <code>name</code> and <code>id</code> entries (e.g., 
 <code>full_name</code> (e.g., <code>"{variables.name}"</code>).</p></li>
 <li><p><code>data.&lt;variable&gt;</code>: The value of another variable at a current time (e.g., <code>"{data.variable_a}"</code>).</p></li>
 </ul></li>
-<li><p><strong><code>type</code></strong>: Type of the measure's value. Recognized types are displayed in a special way:</p><ul><li><p><code>year</code> or <code>integer</code> show as entered (usually as whole numbers). Other numeric
+<li><p><strong><code>measure_type</code></strong>: Type of the measure's value. Recognized types are displayed in a special way:</p><ul><li><p><code>year</code> or <code>integer</code> show as entered (usually as whole numbers). Other numeric
 types are rounded to show a set number of digits.</p></li>
 <li><p><code>percent</code> shows as <code>{value}%</code>.</p></li>
 <li><p><code>minutes</code> shows as <code>{value} minutes</code>.</p></li>
 <li><p><code>dollar</code> shows as <code>${value}</code>.</p></li>
 <li><p><code>internet speed</code> shows as <code>{value} MB/s</code>.</p></li>
 </ul></li>
+<li><p><strong><code>unit</code></strong>: Prefix or suffix associated with the measure's type, such as <code>%</code> for <code>percent</code>,
+or <code>MB/s</code> for <code>rate</code>.</p></li>
 <li><p><strong><code>sources</code></strong>: A list or list of list containing source information, including any of these entries:</p><ul><li><p><code>name</code>: Name of the source (such as an organization name).</p></li>
 <li><p><code>url</code>: General URL of the source (such as an organization's website).</p></li>
 <li><p><code>location</code>: More specific description of the source (such as a the name of a particular data product).</p></li>

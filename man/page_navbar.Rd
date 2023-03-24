@@ -10,10 +10,10 @@ page_navbar(..., title = "", logo = "", breakpoint = "md",
 \arguments{
 \item{...}{Content to add to the navbar. Can be lists specifying submenus and their items.
 Each list can have entries for \code{"name"} (the navbar button text), \code{"title"} (the menu title),
-\code{"id"} (the ID of the menu element), \code{"class"} (class of the menu element),
-\code{"placement"} (start, top, end, or bottom), \code{"backdrop"} (logical, where \code{FALSE}
-disables the backdrop and makes the menu shift main content), and \code{items}
-(a list of menu items).}
+\code{"foot"} (the menu footer), \code{"id"} (the ID of the menu element),
+\code{"class"} (class of the menu element), \code{"placement"} (start, top, end, or bottom),
+\code{"backdrop"} (logical, where \code{FALSE} disables the backdrop and makes the menu shift
+main content), and \code{items} (a list of menu items).}
 
 \item{title}{A title to appear in the header.}
 

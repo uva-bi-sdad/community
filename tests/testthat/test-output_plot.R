@@ -5,6 +5,7 @@ test_that("structure is intact", {
   expect_true(is.character(raw) && !any(raw == ""))
   html <- read_html(raw)
   expect_true(xml_length(xml_child(html)) == 1)
+  expect_true(xml_length(xml_child(xml_child(html))) == 1)
 })
 
 test_that("build environment is added to", {

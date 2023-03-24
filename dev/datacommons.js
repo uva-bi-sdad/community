@@ -262,7 +262,7 @@ function DataCommons(definition, manifest, views) {
             if (f.variables) {
               if ('string' === typeof f.variables) f.variables = [f.variables]
               for (i = f.variables.length; i--; ) {
-                p = f.prefix + ':' + f.variables[i]
+                p = f.variables[i]
                 if (!Object.hasOwn(this.variables, p)) {
                   this.counts.variables++
                   this.variables[p] = {
@@ -293,8 +293,8 @@ function DataCommons(definition, manifest, views) {
           }
           if (Object.hasOwn(r.files, fn)) {
             r.files[fn].uid = uid
-            r.files[fn].date = this.format.date(new Date(r.files[fn].date))
             r.files[fn].parent = r
+            r.url = 'https://github.com/' + k
             this.files[uid].local.github = r.files[fn]
           }
           for (p in r.distributions)
@@ -306,12 +306,6 @@ function DataCommons(definition, manifest, views) {
                 r.distributions[p].files[fn].uid = uid
                 r.distributions[p].files[fn].parent = r.distributions[p]
                 this.files[uid].local[p] = r.distributions[p].files[fn]
-                if (
-                  Object.hasOwn(r.distributions[p].files[fn], 'date') &&
-                  'string' === typeof r.distributions[p].files[fn].date
-                ) {
-                  r.distributions[p].files[fn].date = this.format.date(new Date(r.distributions[p].files[fn].date))
-                }
               }
             }
         }
@@ -592,10 +586,6 @@ DataCommons.prototype = {
         e.lastElementChild.className = 'entry-info'
         e.lastElementChild.appendChild(document.createElement('span'))
         e.lastElementChild.lastElementChild.className = 'entry-info-entry'
-        e.lastElementChild.lastElementChild.innerText = 'pulled: '
-        e.lastElementChild.appendChild(document.createElement('span'))
-        e.lastElementChild.appendChild(document.createElement('span'))
-        e.lastElementChild.lastElementChild.className = 'entry-info-entry'
         e.lastElementChild.lastElementChild.innerText = 'git sha: '
         e.lastElementChild.appendChild(document.createElement('span'))
         e.lastElementChild.appendChild(document.createElement('span'))
@@ -604,9 +594,10 @@ DataCommons.prototype = {
         e.lastElementChild.appendChild(document.createElement('span'))
         p = Object.hasOwn(f.local, 'github') ? 'github' : 'dataverse'
         if (Object.hasOwn(f.local, p)) {
-          e.lastElementChild.children[1].innerText = f.local[p].date
-          e.lastElementChild.children[3].innerText = f.local[p].sha || 'none'
-          e.lastElementChild.children[5].innerText = f.local[p].md5
+          e.lastElementChild.children[1].innerText = f.local[p].sha || 'none'
+          e.lastElementChild.children[3].innerText = f.local[p].md5
+        } else {
+          e.lastElementChild.classList.add('hidden')
         }
         e.appendChild(document.createElement('div'))
         e.lastElementChild.className = 'entry-checks'
@@ -793,8 +784,7 @@ DataCommons.prototype = {
             f.local.github.parent.url +
             '/blob/' +
             ((f.local.github.parent.providers.github && f.local.github.parent.providers.github.default_branch) ||
-              'master') +
-            '/' +
+              'main') +
             f.local.github.location +
             '/' +
             f.content.name

@@ -5,9 +5,8 @@
 \title{Check Data Repositories}
 \usage{
 check_repository(dir = ".", search_pattern = "\\\\.csv(?:\\\\.[gbx]z2?)?$",
-  value = "value", value_name = "measure", value_type = "measure_type",
-  id = "geoid", time = "year", dataset = "region_type",
-  entity_info = c("region_type", "region_name"), check_values = TRUE,
+  value = "value", value_name = "measure", id = "geoid", time = "year",
+  dataset = "region_type", entity_info = c("region_type", "region_name"),
   attempt_repair = FALSE)
 }
 \arguments{
@@ -19,8 +18,6 @@ check_repository(dir = ".", search_pattern = "\\\\.csv(?:\\\\.[gbx]z2?)?$",
 
 \item{value_name}{Name of the column containing variable names.}
 
-\item{value_type}{Name of the column indicating the type of each value.}
-
 \item{id}{Column name of IDs that uniquely identify entities.}
 
 \item{time}{Column name of the variable representing time.}
@@ -28,9 +25,6 @@ check_repository(dir = ".", search_pattern = "\\\\.csv(?:\\\\.[gbx]z2?)?$",
 \item{dataset}{Column name used to separate data into sets (such as by region).}
 
 \item{entity_info}{A vector of variable names to go into making \code{entity_info.json}.}
-
-\item{check_values}{Logical; if \code{FALSE}, will skip value-based checks
-(since these are loose heuristics and can be intensive on large files).}
 
 \item{attempt_repair}{Logical; if \code{TRUE}, will attempt to fix most warnings in data files.
 Use with caution, as this will often remove rows (given \code{NA}s) and rewrite the file.}
@@ -42,7 +36,7 @@ These may include \strong{general} entries:
 \item \strong{\code{info}} (always): All measurement information (\code{measure_info.json}) files found.
 \item \strong{\code{data}} (always): All data files found.
 \item \strong{\code{not_considered}}: Subset of data files that do not contain the minimal
-columns (\code{id}, \code{value}, and \code{value_type}), and so are not checked further.
+columns (\code{id} and \code{value}), and so are not checked further.
 }
 or those relating to issues with \strong{measure information} (see \code{\link{data_measure_info}}) files:
 \itemize{
@@ -86,7 +80,6 @@ remainders.
 \item \strong{\code{warn_small_values}}: Variable names with many values (over 40\%) that are under \code{.00001}, and
 no values under \code{0} or over \code{1}. These values should be scaled in some way to be displayed reliably.
 \item \strong{\code{warn_value_name_nas}}: Files that have \code{NA}s in their \code{name} column.
-\item \strong{\code{warn_value_type_nas}}: Files that have \code{NA}s in their \code{name} column.
 \item \strong{\code{warn_entity_info_nas}}: Files that have \code{NA}s in any of their \code{entity_info} columns.
 \item \strong{\code{warn_dataset_nas}}: Files that have \code{NA}s in their \code{dataset} column.
 \item \strong{\code{warn_time_nas}}: Files that have \code{NA}s in their \code{time} column.
@@ -112,7 +105,6 @@ or relating to data files with \strong{failures}:
 \itemize{
 \item \strong{\code{fail_read}}: Files that could not be read in.
 \item \strong{\code{fail_rows}}: Files containing no rows.
-\item \strong{\code{fail_value_type}}: Files with no \code{value_type} column.
 \item \strong{\code{fail_time}}: Files with no \code{time} column.
 \item \strong{\code{fail_dataset}}: Files with no \code{dataset} column.
 \item \strong{\code{fail_entity_info}}: Files with no \code{entity_info} columns.

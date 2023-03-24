@@ -1,6 +1,8 @@
 library(community)
 library(jsonlite)
 
+check_repository()
+
 datasets <- paste0(list.dirs("."), "/data/distribution")
 datasets <- datasets[dir.exists(datasets)]
 data_reformat_sdad(list.files(datasets, "\\.csv", full.names = TRUE), "docs/data")
@@ -30,6 +32,6 @@ data_add(
   refresh = TRUE
 )
 
-site_build(".", options = list(
+site_build(".", serve = TRUE, options = list(
   polygon_outline = .5, color_scale_center = "median"
 ))

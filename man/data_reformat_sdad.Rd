@@ -6,10 +6,10 @@
 \usage{
 data_reformat_sdad(files, out = NULL, variables = NULL, ids = NULL,
   value = "value", value_name = "measure", id = "geoid", time = "year",
-  dataset = "region_type", value_info = "measure_type",
-  entity_info = c(type = "region_type", name = "region_name"),
-  formatters = NULL, compression = "xz", read_existing = TRUE,
-  overwrite = FALSE, get_coverage = TRUE, verbose = TRUE)
+  dataset = "region_type", entity_info = c(type = "region_type", name =
+  "region_name"), formatters = NULL, compression = "xz",
+  read_existing = TRUE, overwrite = FALSE, get_coverage = TRUE,
+  verbose = TRUE)
 }
 \arguments{
 \item{files}{A character vector of file paths, or the path to a directory containing data files.}
@@ -30,9 +30,6 @@ not present.}
 \item{time}{Column name of the variable representing time.}
 
 \item{dataset}{Column name used to separate entity scales.}
-
-\item{value_info}{A vector of column names which provide additional information about values
-(such as their name and type).}
 
 \item{entity_info}{A list containing variable names to extract and create an ids map from (
 \code{entity_info.json}, created in the output directory). Entries can be named to rename the

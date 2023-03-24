@@ -25,7 +25,7 @@ void (function () {
     this.inited = {}
     this.inited_summary = {}
     this.summary_ready = {}
-    this.sets = {}
+    this.sets = data || {}
     this.data_maps = {}
     this.data_queue = {}
     this.data_promise = {}
@@ -35,25 +35,23 @@ void (function () {
     this.data_ready = new Promise(resolve => {
       this.all_data_ready = resolve
     })
-    data = data || {}
     if ('string' === typeof settings.metadata.datasets) settings.metadata.datasets = [settings.metadata.datasets]
     this.map_variables()
     settings.metadata.datasets.forEach(k => {
-      this.loaded[k] = k in data
+      this.loaded[k] = k in this.sets
+      this.inited[k] = false
       this.data_processed[k] = new Promise(resolve => {
         this.data_promise[k] = resolve
       })
-      if (
+      if (this.loaded[k]) {
+        this.ingest_data(this.sets[k], k)
+      } else if (
         !this.in_browser ||
         (this.settings.settings && !this.settings.settings.partial_init) ||
         !this.defaults.dataset ||
         k === this.defaults.dataset
       )
-        if (this.loaded[k]) {
-          this.ingest_data(data[k], k)
-        } else {
-          this.retrieve(k, settings.metadata.info[k].site_file)
-        }
+        this.retrieve(k, settings.metadata.info[k].site_file)
     })
   }
 
@@ -388,13 +386,7 @@ void (function () {
       } else if (int) {
         return v
       } else {
-        if (this.settings.settings.digits > 0) {
-          const d = Math.pow(10, this.settings.settings.digits),
-            r = (Math.round(v * d) / d + '').split('.')
-          return (
-            r[0] + ('.' + (1 === r.length ? '' : r[1]) + '0000000000').substring(0, this.settings.settings.digits + 1)
-          )
-        } else return Math.round(v)
+        return v.toFixed(this.settings.settings.digits > 0 ? this.settings.settings.digits : 0)
       }
     },
     format_label: function (l) {
@@ -467,7 +459,7 @@ void (function () {
       if (
         this.in_browser &&
         this.settings.settings.partial_init &&
-        (!this.defaults.dataset || name === this.defaults.dataset || site.data.inited.first)
+        (!this.defaults.dataset || name === this.defaults.dataset || this.inited.first)
       ) {
         this.load_id_maps()
       } else {
@@ -479,7 +471,6 @@ void (function () {
     retrieve: async function (name, url) {
       if (!this.load_requests[name]) {
         this.load_requests[name] = url
-        this.inited[name] = false
         const f = new window.XMLHttpRequest()
         f.onreadystatechange = () => {
           if (4 === f.readyState) {
@@ -569,7 +560,7 @@ void (function () {
     },
     init_summary: function (v, d) {
       if (!this.inited_summary[d + v]) {
-        ;(this.in_browser ? Object.keys(site.dataviews) : ['default_view']).forEach(view => {
+        ;(this.in_browser ? Object.keys(this.settings.dataviews) : ['default_view']).forEach(view => {
           const vi = this.variables[v]
           if (!(view in vi))
             vi[view] = {order: {}, selected_order: {}, selected_summaries: {}, summaries: {}, state: {}}
@@ -854,7 +845,7 @@ void (function () {
                 ms.min[y] = 0
               }
               if (ms.n[y]) {
-                ms.norm_median[y] = ms.range[y] ? (ms.median[y] - ms.min[y]) / ms.range[y] : ms.median[y]
+                ms.norm_median[y] = ms.range[y] ? (ms.median[y] - ms.min[y]) / ms.range[y] : 0.5
                 if (-1 !== ms.break_median[y]) {
                   ms.lower_median_min[y] = ms.norm_median[y] - (o[ms.missing[y]][1] - ms.min[y]) / ms.range[y]
                   ms.lower_median_range[y] =
@@ -863,7 +854,7 @@ void (function () {
                   ms.upper_median_range[y] =
                     (o[o.length - 1][1] - ms.min[y]) / ms.range[y] - ms.norm_median[y] - ms.upper_median_min[y]
                 }
-                ms.norm_mean[y] = ms.range[y] ? (ms.mean[y] - ms.min[y]) / ms.range[y] : ms.mean[y]
+                ms.norm_mean[y] = ms.range[y] ? (ms.mean[y] - ms.min[y]) / ms.range[y] : 0.5
                 if (-1 !== ms.break_mean[y]) {
                   ms.lower_mean_min[y] = ms.norm_mean[y] - (o[ms.missing[y]][1] - ms.min[y]) / ms.range[y]
                   ms.lower_mean_range[y] =
@@ -950,7 +941,7 @@ void (function () {
       })
     },
     map_entities: async function (g) {
-      const views = this.in_browser ? Object.keys(site.dataviews) : ['default_view']
+      const views = this.in_browser ? Object.keys(this.settings.dataviews) : ['default_view']
       if (g in this.sets && !this.inited[g]) {
         const s = this.sets[g],
           time = this.meta.times[g],
