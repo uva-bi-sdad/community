@@ -2923,9 +2923,8 @@ void (function () {
             this.update()
           },
           update: async function (pass) {
-            performance.mark('updateStart')
+            //performance.mark('updateStart')
             clearTimeout(this.queue)
-
             if (!pass) {
               if (!this.tab || this.tab.classList.contains('show')) this.queue = setTimeout(() => this.update(true), 50)
             } else {
@@ -2964,8 +2963,8 @@ void (function () {
                 }
               }
             }
-            performance.mark('updateEnd')
-            performance.measure('updateMeasure', 'updateStart', 'updateEnd')
+            // performance.mark('updateEnd')
+            // performance.measure('updateMeasure', 'updateStart', 'updateEnd')
           },
           mouseover: function (e) {
             if (e.target.tagName == 'TD' && e.target.parentElement.tagName == 'TR') {
