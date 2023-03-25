@@ -2771,7 +2771,7 @@ void (function () {
             o.rows = {}
             o.rowIds = {}
             o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0
-            const time = site.data.meta.times[o.parsed.dataset]
+            //const time = site.data.meta.times[o.parsed.dataset]
             if (o.tab) {
               document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
                 'click',
@@ -2815,6 +2815,19 @@ void (function () {
                 }
               }
             }
+
+            o.options.variable_source = o.options.variables
+            if (o.options.variables) {
+              if ('string' === typeof o.options.variables) {
+                if (o.options.variables in _u) {
+                  add_dependency(o.options.variables, {type: 'update', id: o.id})
+                  o.options.variables = valueOf(o.options.variables)
+                  o.options.single_variable = 'string' === typeof o.options.variables
+                } else if (!o.options.single_variable) {
+                  o.options.single_variable = [{name: o.options.single_variable}]
+                }
+              }
+            } else o.options.variables = Object.keys(site.data.variables)
 
             o.destroyTable = function () {
               while (this.e.firstChild) {
@@ -2929,7 +2942,10 @@ void (function () {
               if (!this.tab || this.tab.classList.contains('show')) this.queue = setTimeout(() => this.update(true), 50)
             } else {
               if (this.table) {
-                var vn = this.options.variables && valueOf(this.options.variables).replace(patterns.all_periods, '\\.')
+                // var vn = this.options.variables && valueOf(this.options.variables).replace(patterns.all_periods, '\\.')
+                var vn =
+                  this.options.variable_source &&
+                  valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.')
                 const v = _u[this.view],
                   d = v.get.dataset(),
                   time = valueOf(v.time_agg),
