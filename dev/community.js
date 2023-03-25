@@ -2892,7 +2892,6 @@ void (function () {
               const time = valueOf(v.time_agg)
               const tableData = []
               this.prepareData(v, tableData)
-              Object.assign(this.rows, tableData)
               const dataset = v.get.dataset()
               const startTime = site.data.meta.times[dataset].range[0]
               for (var i = 0; i < tableData.length; i++) {
@@ -2938,7 +2937,6 @@ void (function () {
                   state = d + v.value() + v.get.time_filters() + site.settings.digits + vn + time
                 if (!site.data.inited[d]) return void 0
                 if (state !== this.state) {
-                  this.rows = {}
                   this.rowIds = {}
                   this.state = state
                   Object.keys(this.reference_options).forEach(
