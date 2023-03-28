@@ -26,22 +26,23 @@
 #' \code{wide = TRUE} will show the variable across time columns.
 #' @param class Class names to add to the table.
 #' @param datatables Logical; if \code{TRUE}, uses \href{https://datatables.net}{DataTables}.
+#' @param height String; It denotes the height of the vanilla html table. Works only if parameter \code{datatables} is \code{TRUE}
 #' @examples
 #' output_table()
 #' @return A character vector of the content to be added.
 #' @export
 
 output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, id = NULL, click = NULL, subto = NULL,
-                         options = NULL, features = NULL, filters = NULL, wide = TRUE, class = "compact", datatables = TRUE) {
+                         options = NULL, features = NULL, filters = NULL, wide = TRUE, class = "compact", datatables = TRUE, height = "40vh") {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   if (is.null(id)) id <- paste0("table", caller$uid)
   type <- if (datatables) "datatable" else "table"
   r <- paste(c(
-    paste0('<table class="auto-output datatables', if (is.null(class)) "" else paste("", class), '"'),
+    paste0(if (!datatables) paste0('<div class="table-wrapper"', ' style="height:', height, '">') , '<table class="auto-output ', if(!datatables) "tables" else "tables" ,  if (is.null(class)) "" else paste("", class), '"'),
     if (!is.null(dataview)) paste0('data-view="', dataview, '"'),
     if (!is.null(click)) paste0('click="', click, '"'),
-    paste0('id="', id, '" auto-type="', type, '"></table>')
+    paste0('id="', id, '" auto-type="', type, '"></table>', if (!datatables) "</div>")
   ), collapse = " ")
   if (building) {
     if (!is.null(variables)) {

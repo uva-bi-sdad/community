@@ -2394,8 +2394,8 @@ void (function () {
         },
         datatable: {
           init: function (o) {
-            o.e.appendChild(document.createElement('tHead'))
-            o.e.appendChild(document.createElement('tBody'))
+            o.e.appendChild(document.createElement('thead'))
+            o.e.appendChild(document.createElement('tbody'))
             o.click = o.e.getAttribute('click')
             o.features = o.options.features
             o.parsed = {summary: {}, order: [], time: 0, color: '', dataset: _u[o.view].get.dataset()}
@@ -2758,6 +2758,252 @@ void (function () {
           click: function (e) {
             if (this.clickto && e.target._DT_CellIndex && e.target._DT_CellIndex.row in this.rowIds) {
               const id = this.rowIds[e.target._DT_CellIndex.row]
+              if (id in site.data.entities) this.clickto.set(id)
+            }
+          },
+        },
+        table: {
+          init: function (o) {
+            o.click = o.e.getAttribute('click')
+            o.features = o.options.features
+            o.parsed = {summary: {}, order: [], time: 0, color: '', dataset: _u[o.view].get.dataset()}
+            o.header = []
+            o.rows = {}
+            o.rowIds = {}
+            o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0
+            //const time = site.data.meta.times[o.parsed.dataset]
+            if (o.tab) {
+              document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
+                'click',
+                function () {
+                  if (!o.e.parentElement.classList.contains('active')) {
+                    setTimeout(this.update, 155)
+                    setTimeout(trigger_resize, 155)
+                  }
+                }.bind(o)
+              )
+            }
+            o.e.addEventListener('mouseover', elements.table.mouseover.bind(o))
+            o.e.addEventListener('mouseout', elements.table.mouseout.bind(o))
+            if (o.click) {
+              if (o.click in _u) o.clickto = _u[o.click]
+              o.e.addEventListener('click', elements.table.click.bind(o))
+            }
+            o.show = function (e) {
+              if (e.features) {
+                const row = this.e.querySelector(`[data-entity-id='${e.features.id}']`)
+                if (row) {
+                  row.style.backgroundColor = defaults.background_highlight
+                  row.children[0].style['backgroundColor'] = defaults.background_highlight
+                  if (site.settings.table_autoscroll) {
+                    const h = this.e.parentElement.getBoundingClientRect().height,
+                      top = row.getBoundingClientRect().y - row.parentElement.getBoundingClientRect().y
+                    this.e.parentElement.scroll({
+                      top: h > this.e.scrollHeight - top ? this.e.parentElement.scrollHeight : top,
+                      behavior: site.settings.table_scroll_behavior || 'smooth',
+                    })
+                  }
+                }
+              }
+            }
+            o.revert = function (e) {
+              if (e.features) {
+                const row = this.e.querySelector(`[data-entity-id='${e.features.id}']`)
+                if (row) {
+                  row.style.removeProperty('background-color')
+                  row.children[0].style['backgroundColor'] = `var(--background-border)`
+                }
+              }
+            }
+
+            o.options.variable_source = o.options.variables
+            if (o.options.variables) {
+              if ('string' === typeof o.options.variables) {
+                if (o.options.variables in _u) {
+                  add_dependency(o.options.variables, {type: 'update', id: o.id})
+                  o.options.variables = valueOf(o.options.variables)
+                  o.options.single_variable = 'string' === typeof o.options.variables
+                } else if (!o.options.single_variable) {
+                  o.options.single_variable = [{name: o.options.single_variable}]
+                }
+              }
+            } else o.options.variables = Object.keys(site.data.variables)
+
+            o.destroyTable = function () {
+              while (this.e.firstChild) {
+                this.e.removeChild(this.e.lastChild)
+              }
+            }
+
+            o.createTable = function (table, v) {
+              const dataset = this.parsed.dataset,
+                c = this.options.variables,
+                k = c.name || c
+              const time = site.data.meta.times[dataset]
+              this.header = []
+              this.header.push('Name')
+              const t = site.data.variables[k].time_range[dataset]
+              if (t)
+                for (let n = t[1] - t[0] + 1; n--; ) {
+                  o.header[n + 1] = o.variable_header ? c.title || site.data.format_label(k) : time.value[n + t[0]] + ''
+                }
+
+              let thead = document.createElement('thead')
+              let tr = document.createElement('tr')
+
+              const th = document.createElement('th')
+              const div = document.createElement('div')
+              div.innerText = this.header[0]
+              div.dataset.dir = ''
+              th.append(div)
+              tr.append(th)
+
+              const startTime = site.data.meta.times[dataset].range[0]
+
+              for (let i = 1; i < this.header.length; i++) {
+                const idx = parseInt(this.header[i]) - startTime
+                if (!v.times[idx]) continue
+                const th = document.createElement('th')
+                const div = document.createElement('div')
+                div.innerText = this.header[i]
+                if (this.header[i] == this.time) div.classList.add('selected-year')
+                th.append(div)
+                tr.append(th)
+              }
+
+              thead.append(tr)
+              table.append(thead)
+              let tBody = document.createElement('tbody')
+              table.append(tBody)
+            }
+
+            o.prepareData = function (v, tableData) {
+              const dataset = this.parsed.dataset
+              const time = site.data.meta.times[dataset]
+              const source = v.selection.all
+              const c = this.options.variables,
+                k = c.name || c
+              for (let i = this.parsed.order.length - 1; i >= 0; i--) {
+                const key = this.parsed.order[i][0]
+                if (source[key]) {
+                  const entityData = [key, {}]
+                  const code = source[key].variables[c].code
+                  const t = site.data.variables[c].time_range[dataset]
+                  if (t)
+                    for (let n = t[1] - t[0]; n >= 0; n--) {
+                      const title = time.value[n + t[0]] + ''
+                      if (Object.keys(source[key].data).includes(code))
+                        if (typeof source[key].data[code] == 'number') entityData[1][title] = source[key].data[code]
+                        else entityData[1][title] = source[key].data[code][n]
+                    }
+                  if (Object.keys(entityData[1]).length !== 0) tableData.push(entityData)
+                }
+              }
+            }
+
+            o.appendRows = function (table, v) {
+              const time = valueOf(v.time_agg)
+              const tableData = []
+              this.prepareData(v, tableData)
+              const dataset = v.get.dataset()
+              const startTime = site.data.meta.times[dataset].range[0]
+              for (var i = 0; i < tableData.length; i++) {
+                let tr = document.createElement('tr')
+                tr.style.cursor = 'pointer'
+                let td = document.createElement('td')
+                td.innerText = v.selection.all[tableData[i][0]].features.name
+                tr.append(td)
+                tr.dataset.entityId = tableData[i][0]
+                let startIdx = this.parsed.time_range[0]
+                for (let t in tableData[i][1]) {
+                  const idx = parseInt(t) - startTime
+                  if (!v.times[idx]) continue
+                  td = document.createElement('td')
+                  td.innerText = tableData[i][1][t] ? site.data.format_value(tableData[i][1][t]) : 'unknown'
+                  tr.append(td)
+                  startIdx++
+                }
+                table.querySelector('tbody').append(tr)
+              }
+            }
+
+            if (o.view) {
+              add_dependency(o.view, {type: 'update', id: o.id})
+              add_dependency(o.view + '_filter', {type: 'update', id: o.id})
+            } else o.view = defaults.dataview
+            o.options.columns = o.header
+            o.table = o.e
+            this.update()
+          },
+          update: async function (pass) {
+            clearTimeout(this.queue)
+            if (!pass) {
+              if (!this.tab || this.tab.classList.contains('show')) this.queue = setTimeout(() => this.update(true), 50)
+            } else {
+              if (this.table) {
+                var vn =
+                  this.options.variable_source &&
+                  valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.')
+                const v = _u[this.view],
+                  d = v.get.dataset(),
+                  time = valueOf(v.time_agg),
+                  state = d + v.value() + v.get.time_filters() + site.settings.digits + vn + time
+                if (!site.data.inited[d]) return void 0
+                if (state !== this.state) {
+                  this.rowIds = {}
+                  this.state = state
+                  Object.keys(this.reference_options).forEach(
+                    k => (this.options[k] = valueOf(this.reference_options[k]))
+                  )
+                  if (this.options.single_variable) {
+                    const variable = await get_variable(vn, this.view)
+
+                    this.parsed.dataset = d
+                    this.parsed.color = vn
+                    this.parsed.time_range = variable.time_range[d]
+                    this.parsed.time =
+                      ('number' === typeof time ? time - site.data.meta.times[d].range[0] : 0) -
+                      this.parsed.time_range[0]
+                    this.time = valueOf(v.time_agg)
+                    this.parsed.summary = variable[this.view].summaries[d]
+                    this.parsed.order = variable[this.view].order[d][this.parsed.time]
+                    if (this.e.innerHTML !== '') this.destroyTable()
+                    this.options.columns = this.header
+                    this.createTable(this.table, v)
+                  }
+
+                  this.appendRows.bind(this)
+                  this.appendRows(this.table, v)
+                }
+              }
+            }
+          },
+          mouseover: function (e) {
+            if (e.target.tagName == 'TD' && e.target.parentElement.tagName == 'TR') {
+              const parent = e.target.parentElement
+              parent.style['backgroundColor'] = defaults.background_highlight
+              parent.children[0].style['backgroundColor'] = defaults.background_highlight
+              const id = parseInt(parent.dataset.entityId)
+              if (id in site.data.entities) {
+                update_subs(this.id, 'show', site.data.entities[id])
+              }
+            }
+          },
+          mouseout: function (e) {
+            if (e.target.tagName == 'TD' && e.target.parentElement.tagName == 'TR') {
+              const parent = e.target.parentElement
+              const id = parseInt(parent.dataset.entityId)
+              parent.style.removeProperty('background-color')
+              parent.children[0].style['backgroundColor'] = `var(--background-border)`
+              if (id in site.data.entities) {
+                update_subs(this.id, 'revert', site.data.entities[id])
+              }
+            }
+          },
+          click: function (e) {
+            if (this.clickto && e.target.tagName == 'TD') {
+              const parent = e.target.parentElement
+              const id = parent.dataset.entityId
               if (id in site.data.entities) this.clickto.set(id)
             }
           },
@@ -5902,6 +6148,18 @@ void (function () {
         setTimeout(queue_init_datatable.bind(this), showing ? 0 : 2000)
       }
     }
+
+    // function queue_init_table() {
+    //   const showing = this.deferred || !this.tab || this.tab.classList.contains('show')
+    //   if (showing && 'get' in site.dataviews[this.view]) {
+    //     this.options.columns = this.header
+    //     this.table = this.e
+    //     this.update()
+    //   } else {
+    //     this.deferred = true
+    //     setTimeout(queue_init_table.bind(this), showing ? 0 : 2000)
+    //   }
+    // }
   }
 
   if ('undefined' === typeof module) {

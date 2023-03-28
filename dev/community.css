@@ -1189,3 +1189,71 @@ input[type='range']::-ms-thumb {
     flex-wrap: wrap;
   }
 }
+
+.table-wrapper {
+  overflow: auto;
+  padding: 0;
+}
+
+.table-wrapper table {
+  white-space: nowrap;
+  margin: 0;
+  border: none;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.table-wrapper table thead th {
+  padding: 3px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  width: 25vw;
+  background-color: var(--background-border);
+  text-align: center;
+}
+
+.table-wrapper table thead th button {
+  border: none;
+  background-color: inherit;
+  font-weight: bold;
+}
+
+.table-wrapper table thead .selected-year {
+  border: solid var(--body-text);
+}
+
+.table-wrapper table td {
+  padding: 4px 5px;
+  text-align: center;
+}
+
+.table-wrapper table tbody th {
+  font-weight: 100;
+  font-style: italic;
+  position: relative;
+}
+
+.table-wrapper table thead th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+.table-wrapper table > tbody > tr > td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background-color: var(--background-border);
+}
+
+.table-wrapper table > thead > tr > th:first-child,
+.table-wrapper table > tbody > tr > td:first-child {
+  text-align: left;
+}
+
+.table-wrapper table > tbody > tr > td:not(:first-child),
+.table-wrapper table > thead > tr > th:not(:first-child) {
+  text-align: right;
+}
