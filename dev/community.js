@@ -1485,7 +1485,7 @@ void (function () {
                 document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
                   'click',
                   function () {
-                    if (!o.e.parentElement.classList.contains('active')) {
+                    if (!this.e.parentElement.classList.contains('active')) {
                       setTimeout(this.update, 155)
                       setTimeout(trigger_resize, 155)
                     }
@@ -2408,7 +2408,7 @@ void (function () {
               document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
                 'click',
                 function () {
-                  if (!o.e.parentElement.classList.contains('active')) {
+                  if (!this.e.parentElement.classList.contains('active')) {
                     setTimeout(this.update, 155)
                     setTimeout(trigger_resize, 155)
                   }
@@ -2766,17 +2766,25 @@ void (function () {
           init: function (o) {
             o.click = o.e.getAttribute('click')
             o.features = o.options.features
-            o.parsed = {summary: {}, order: [], time: 0, color: '', dataset: _u[o.view].get.dataset()}
+            o.parsed = {summary: {}, order: [], time: 0, color: '', dataset: defaults.dataview}
             o.header = []
             o.rows = {}
-            o.rowIds = {}
+            o.parts = {
+              head: document.createElement('thead'),
+              body: document.createElement('tbody'),
+            }
+            o.parts.head.appendChild(document.createElement('tr'))
+            o.e.appendChild(o.parts.head)
+            o.e.appendChild(o.parts.body)
+            if (o.click) o.e.classList.add('interactive')
+            o.options.variable_source = o.options.variables
+            if (o.options.variables in _u) add_dependency(o.options.variables, {type: 'update', id: o.id})
             o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0
-            //const time = site.data.meta.times[o.parsed.dataset]
             if (o.tab) {
               document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
                 'click',
                 function () {
-                  if (!o.e.parentElement.classList.contains('active')) {
+                  if (!this.e.parentElement.classList.contains('active')) {
                     setTimeout(this.update, 155)
                     setTimeout(trigger_resize, 155)
                   }
@@ -2791,10 +2799,9 @@ void (function () {
             }
             o.show = function (e) {
               if (e.features) {
-                const row = this.e.querySelector(`[data-entity-id='${e.features.id}']`)
-                if (row) {
-                  row.style.backgroundColor = defaults.background_highlight
-                  row.children[0].style['backgroundColor'] = defaults.background_highlight
+                const row = this.rows[e.features.id]
+                if (row && row.parentElement) {
+                  row.classList.add('highlighted')
                   if (site.settings.table_autoscroll) {
                     const h = this.e.parentElement.getBoundingClientRect().height,
                       top = row.getBoundingClientRect().y - row.parentElement.getBoundingClientRect().y
@@ -2805,207 +2812,137 @@ void (function () {
                   }
                 }
               }
-            }
+            }.bind(o)
             o.revert = function (e) {
-              if (e.features) {
-                const row = this.e.querySelector(`[data-entity-id='${e.features.id}']`)
-                if (row) {
-                  row.style.removeProperty('background-color')
-                  row.children[0].style['backgroundColor'] = `var(--background-border)`
-                }
+              if (e.features && e.features.id in this.rows) {
+                this.rows[e.features.id].classList.remove('highlighted')
               }
-            }
-
-            o.options.variable_source = o.options.variables
-            if (o.options.variables) {
-              if ('string' === typeof o.options.variables) {
-                if (o.options.variables in _u) {
-                  add_dependency(o.options.variables, {type: 'update', id: o.id})
-                  o.options.variables = valueOf(o.options.variables)
-                  o.options.single_variable = 'string' === typeof o.options.variables
-                } else if (!o.options.single_variable) {
-                  o.options.single_variable = [{name: o.options.single_variable}]
-                }
-              }
-            } else o.options.variables = Object.keys(site.data.variables)
-
-            o.destroyTable = function () {
-              while (this.e.firstChild) {
-                this.e.removeChild(this.e.lastChild)
-              }
-            }
-
-            o.createTable = function (table, v) {
+            }.bind(o)
+            o.createHeader = function (v) {
               const dataset = this.parsed.dataset,
-                c = this.options.variables,
-                k = c.name || c
-              const time = site.data.meta.times[dataset]
-              this.header = []
-              this.header.push('Name')
-              const t = site.data.variables[k].time_range[dataset]
-              if (t)
-                for (let n = t[1] - t[0] + 1; n--; ) {
-                  o.header[n + 1] = o.variable_header ? c.title || site.data.format_label(k) : time.value[n + t[0]] + ''
+                time = site.data.meta.times[dataset],
+                tr = this.parts.head.firstElementChild,
+                range = this.parsed.variable.time_range[dataset],
+                start = range[0],
+                end = range[1] + 1
+              tr.innerHTML = ''
+              tr.appendChild(document.createElement('th'))
+              tr.lastElementChild.appendChild(document.createElement('span'))
+              tr.firstElementChild.lastElementChild.innerText = 'Name'
+              for (let i = start; i < end; i++) {
+                if (v.times[i]) {
+                  tr.appendChild(document.createElement('th'))
+                  tr.lastElementChild.appendChild(document.createElement('span'))
+                  tr.lastElementChild.lastElementChild.innerText = time.value[i]
                 }
-
-              let thead = document.createElement('thead')
-              let tr = document.createElement('tr')
-
-              const th = document.createElement('th')
-              const div = document.createElement('div')
-              div.innerText = this.header[0]
-              div.dataset.dir = ''
-              th.append(div)
-              tr.append(th)
-
-              const startTime = site.data.meta.times[dataset].range[0]
-
-              for (let i = 1; i < this.header.length; i++) {
-                const idx = parseInt(this.header[i]) - startTime
-                if (!v.times[idx]) continue
-                const th = document.createElement('th')
-                const div = document.createElement('div')
-                div.innerText = this.header[i]
-                if (this.header[i] == this.time) div.classList.add('selected-year')
-                th.append(div)
-                tr.append(th)
               }
-
-              thead.append(tr)
-              table.append(thead)
-              let tBody = document.createElement('tbody')
-              table.append(tBody)
-            }
-
-            o.prepareData = function (v, tableData) {
-              const dataset = this.parsed.dataset
-              const time = site.data.meta.times[dataset]
-              const source = v.selection.all
-              const c = this.options.variables,
-                k = c.name || c
-              for (let i = this.parsed.order.length - 1; i >= 0; i--) {
-                const key = this.parsed.order[i][0]
-                if (source[key]) {
-                  const entityData = [key, {}]
-                  const code = source[key].variables[c].code
-                  const t = site.data.variables[c].time_range[dataset]
-                  if (t)
-                    for (let n = t[1] - t[0]; n >= 0; n--) {
-                      const title = time.value[n + t[0]] + ''
-                      if (Object.keys(source[key].data).includes(code))
-                        if (typeof source[key].data[code] == 'number') entityData[1][title] = source[key].data[code]
-                        else entityData[1][title] = source[key].data[code][n]
+            }.bind(o)
+            o.appendRows = function (v) {
+              const es = this.parsed.order,
+                variable = this.parsed.variable,
+                range = variable.time_range[this.parsed.dataset],
+                start = range[0],
+                dn = range[1] - start + 1,
+                selection = v.selection.all
+              this.current_variable = variable.code + this.parsed.dataset
+              this.parts.body.innerHTML = ''
+              for (let n = es.length; n--; ) {
+                const id = es[n][0]
+                if (id in selection) {
+                  const e = site.data.entities[id],
+                    d = e.data[variable.code],
+                    tr = document.createElement('tr')
+                  this.rows[id] = tr
+                  tr.setAttribute('entityId', id)
+                  let td = document.createElement('td')
+                  td.innerText = e.features.name
+                  tr.appendChild(td)
+                  if (1 === dn) {
+                    tr.appendChild((td = document.createElement('td')))
+                    td.innerText = site.data.format_value(d)
+                    td.setAttribute('entityId', id)
+                    td.classList.add('highlighted')
+                  } else {
+                    for (let i = 0; i < dn; i++) {
+                      if (v.times[i + start]) {
+                        tr.appendChild((td = document.createElement('td')))
+                        td.innerText = site.data.format_value(d[i])
+                        if (i === this.parsed.time) td.classList.add('highlighted')
+                      }
                     }
-                  if (Object.keys(entityData[1]).length !== 0) tableData.push(entityData)
+                  }
+                  this.parts.body.appendChild(tr)
                 }
               }
-            }
-
-            o.appendRows = function (table, v) {
-              const time = valueOf(v.time_agg)
-              const tableData = []
-              this.prepareData(v, tableData)
-              const dataset = v.get.dataset()
-              const startTime = site.data.meta.times[dataset].range[0]
-              for (var i = 0; i < tableData.length; i++) {
-                let tr = document.createElement('tr')
-                tr.style.cursor = 'pointer'
-                let td = document.createElement('td')
-                td.innerText = v.selection.all[tableData[i][0]].features.name
-                tr.append(td)
-                tr.dataset.entityId = tableData[i][0]
-                let startIdx = this.parsed.time_range[0]
-                for (let t in tableData[i][1]) {
-                  const idx = parseInt(t) - startTime
-                  if (!v.times[idx]) continue
-                  td = document.createElement('td')
-                  td.innerText = tableData[i][1][t] ? site.data.format_value(tableData[i][1][t]) : 'unknown'
-                  tr.append(td)
-                  startIdx++
-                }
-                table.querySelector('tbody').append(tr)
+              if (
+                site.settings.table_autoscroll &&
+                this.parts.head.firstElementChild.childElementCount > 2 &&
+                this.parts.head.firstElementChild.childElementCount > this.parsed.time + 1
+              ) {
+                const w = this.e.parentElement.getBoundingClientRect().width,
+                  col = this.parts.head.firstElementChild.children[this.parsed.time + 1].getBoundingClientRect()
+                this.e.parentElement.scroll({
+                  left: col.x - this.e.getBoundingClientRect().x + col.width + 16 - w,
+                  behavior: site.settings.table_scroll_behavior || 'smooth',
+                })
               }
-            }
-
+            }.bind(o)
             if (o.view) {
               add_dependency(o.view, {type: 'update', id: o.id})
               add_dependency(o.view + '_filter', {type: 'update', id: o.id})
             } else o.view = defaults.dataview
-            o.options.columns = o.header
-            o.table = o.e
-            this.update()
+            o.update()
           },
           update: async function (pass) {
             clearTimeout(this.queue)
             if (!pass) {
               if (!this.tab || this.tab.classList.contains('show')) this.queue = setTimeout(() => this.update(true), 50)
             } else {
-              if (this.table) {
-                var vn =
-                  this.options.variable_source &&
-                  valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.')
-                const v = _u[this.view],
-                  d = v.get.dataset(),
-                  time = valueOf(v.time_agg),
-                  state = d + v.value() + v.get.time_filters() + site.settings.digits + vn + time
-                if (!site.data.inited[d]) return void 0
-                if (state !== this.state) {
-                  this.rowIds = {}
-                  this.state = state
-                  Object.keys(this.reference_options).forEach(
-                    k => (this.options[k] = valueOf(this.reference_options[k]))
-                  )
-                  if (this.options.single_variable) {
-                    const variable = await get_variable(vn, this.view)
-
-                    this.parsed.dataset = d
-                    this.parsed.color = vn
-                    this.parsed.time_range = variable.time_range[d]
-                    this.parsed.time =
-                      ('number' === typeof time ? time - site.data.meta.times[d].range[0] : 0) -
-                      this.parsed.time_range[0]
-                    this.time = valueOf(v.time_agg)
-                    this.parsed.summary = variable[this.view].summaries[d]
-                    this.parsed.order = variable[this.view].order[d][this.parsed.time]
-                    if (this.e.innerHTML !== '') this.destroyTable()
-                    this.options.columns = this.header
-                    this.createTable(this.table, v)
-                  }
-
-                  this.appendRows.bind(this)
-                  this.appendRows(this.table, v)
-                }
+              var vn =
+                this.options.variable_source &&
+                valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.')
+              const v = _u[this.view],
+                d = v.get.dataset(),
+                time = valueOf(v.time_agg),
+                state = d + v.value() + v.get.time_filters() + site.settings.digits + vn + time
+              if (!site.data.inited[d]) return void 0
+              if (state !== this.state) {
+                this.state = state
+                Object.keys(this.reference_options).forEach(k => (this.options[k] = valueOf(this.reference_options[k])))
+                const variable = await get_variable(vn, this.view)
+                this.parsed.dataset = d
+                this.parsed.color = vn
+                this.parsed.variable = variable
+                this.parsed.time_range = variable.time_range[d]
+                this.parsed.time =
+                  ('number' === typeof time ? time - site.data.meta.times[d].range[0] : 0) - this.parsed.time_range[0]
+                this.parsed.summary = variable[this.view].summaries[d]
+                this.parsed.order = variable[this.view].order[d][this.parsed.time]
+                this.createHeader(v)
+                this.appendRows(v)
               }
             }
           },
           mouseover: function (e) {
-            if (e.target.tagName == 'TD' && e.target.parentElement.tagName == 'TR') {
-              const parent = e.target.parentElement
-              parent.style['backgroundColor'] = defaults.background_highlight
-              parent.children[0].style['backgroundColor'] = defaults.background_highlight
-              const id = parseInt(parent.dataset.entityId)
-              if (id in site.data.entities) {
-                update_subs(this.id, 'show', site.data.entities[id])
-              }
+            const row = 'TD' === e.target.tagName ? e.target.parentElement : e.target,
+              id = row.getAttribute('entityId')
+            if (id) {
+              row.classList.add('highlighted')
+              update_subs(this.id, 'show', site.data.entities[id])
             }
           },
           mouseout: function (e) {
-            if (e.target.tagName == 'TD' && e.target.parentElement.tagName == 'TR') {
-              const parent = e.target.parentElement
-              const id = parseInt(parent.dataset.entityId)
-              parent.style.removeProperty('background-color')
-              parent.children[0].style['backgroundColor'] = `var(--background-border)`
-              if (id in site.data.entities) {
-                update_subs(this.id, 'revert', site.data.entities[id])
-              }
+            const row = 'TD' === e.target.tagName ? e.target.parentElement : e.target,
+              id = row.getAttribute('entityId')
+            if (id) {
+              row.classList.remove('highlighted')
+              update_subs(this.id, 'revert', site.data.entities[id])
             }
           },
           click: function (e) {
-            if (this.clickto && e.target.tagName == 'TD') {
-              const parent = e.target.parentElement
-              const id = parent.dataset.entityId
-              if (id in site.data.entities) this.clickto.set(id)
-            }
+            const row = 'TD' === e.target.tagName ? e.target.parentElement : e.target,
+              id = row.getAttribute('entityId')
+            if (this.clickto && id) this.clickto.set(id)
           },
         },
         legend: {
@@ -6148,18 +6085,6 @@ void (function () {
         setTimeout(queue_init_datatable.bind(this), showing ? 0 : 2000)
       }
     }
-
-    // function queue_init_table() {
-    //   const showing = this.deferred || !this.tab || this.tab.classList.contains('show')
-    //   if (showing && 'get' in site.dataviews[this.view]) {
-    //     this.options.columns = this.header
-    //     this.table = this.e
-    //     this.update()
-    //   } else {
-    //     this.deferred = true
-    //     setTimeout(queue_init_table.bind(this), showing ? 0 : 2000)
-    //   }
-    // }
   }
 
   if ('undefined' === typeof module) {

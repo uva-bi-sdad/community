@@ -7,7 +7,7 @@
   --background-border: #494949;
   --background-input: #000000;
   --body-text: #ffffff;
-  --background-highlight: #141414;
+  --background-highlight: #494949;
   --link: #acc7ff;
   --highlight: #3c3c3c;
   --highlight-text: #ffffff;
@@ -32,7 +32,7 @@
   --link: #315395;
   --highlight: #424242;
   --highlight-text: #ffffff;
-  --highlight-secondary: #eaeaea;
+  --highlight-secondary: #ededed;
   --highlight-secondary-text: #000000;
   --lowlight: #e9ecef;
   --lowlight-text: #575757;
@@ -401,14 +401,15 @@ button.btn-danger {
   z-index: 90;
 }
 .menu {
-  background-color: var(--background-highlight);
+  background-color: var(--background);
+  border: solid 1px var(--background-border);
   padding: 3.9em 3em 0.5em 0.5em;
   flex-wrap: nowrap;
   overflow-x: auto;
 }
 .menu-toggle {
   position: absolute;
-  background-color: var(--background-highlight);
+  background-color: var(--background);
   border: none;
   font-size: 1.7em;
   width: 1.5em;
@@ -1148,6 +1149,58 @@ input[type='range']::-ms-thumb {
   visibility: hidden;
   position: absolute;
 }
+
+.table-wrapper {
+  overflow: auto;
+  padding: 0;
+  border-bottom: solid 1px var(--background-border);
+}
+.table-wrapper table.interactive tbody tr {
+  cursor: pointer;
+}
+.table-wrapper table {
+  white-space: nowrap;
+}
+.table-wrapper th span,
+.table-wrapper td {
+  padding: 0 4px;
+}
+.table-wrapper th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  width: 25vw;
+  background-color: var(--background);
+  text-align: right;
+}
+.table-wrapper th span {
+  width: 100%;
+  display: block;
+  border-bottom: solid 1px var(--background-border);
+}
+.table-wrapper td {
+  text-align: right;
+}
+.table-wrapper th:first-child {
+  left: 0;
+  z-index: 2;
+}
+.table-wrapper td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+.table-wrapper th:first-child,
+.table-wrapper td:first-child {
+  text-align: left;
+  background-color: var(--background);
+}
+tr.highlighted,
+td.highlighted,
+tr.highlighted td:first-child {
+  background-color: var(--background-highlight);
+}
+
 @media screen and (max-width: 700px) {
   .filter-dialog .cell-text {
     font-size: 1.5em;
@@ -1188,72 +1241,4 @@ input[type='range']::-ms-thumb {
   .menu {
     flex-wrap: wrap;
   }
-}
-
-.table-wrapper {
-  overflow: auto;
-  padding: 0;
-}
-
-.table-wrapper table {
-  white-space: nowrap;
-  margin: 0;
-  border: none;
-  border-collapse: separate;
-  border-spacing: 0;
-  table-layout: fixed;
-}
-
-.table-wrapper table thead th {
-  padding: 3px;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  width: 25vw;
-  background-color: var(--background-border);
-  text-align: center;
-}
-
-.table-wrapper table thead th button {
-  border: none;
-  background-color: inherit;
-  font-weight: bold;
-}
-
-.table-wrapper table thead .selected-year {
-  border: solid var(--body-text);
-}
-
-.table-wrapper table td {
-  padding: 4px 5px;
-  text-align: center;
-}
-
-.table-wrapper table tbody th {
-  font-weight: 100;
-  font-style: italic;
-  position: relative;
-}
-
-.table-wrapper table thead th:first-child {
-  position: sticky;
-  left: 0;
-  z-index: 2;
-}
-
-.table-wrapper table > tbody > tr > td:first-child {
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  background-color: var(--background-border);
-}
-
-.table-wrapper table > thead > tr > th:first-child,
-.table-wrapper table > tbody > tr > td:first-child {
-  text-align: left;
-}
-
-.table-wrapper table > tbody > tr > td:not(:first-child),
-.table-wrapper table > thead > tr > th:not(:first-child) {
-  text-align: right;
 }

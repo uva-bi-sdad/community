@@ -1,6 +1,6 @@
 #' Add a table to a webpage
 #'
-#' Adds a DataTables table to a webpage, based on specified or selected variables.
+#' Adds a table to a webpage, based on specified or selected variables.
 #'
 #' @param variables The ID of a variable selecting input, or a list specifying columns (if \code{wide} is
 #' \code{TRUE}) or included variables. Each entry should be a list with at least have a \code{name} entry with a
@@ -16,7 +16,8 @@
 #' @param click The ID of an input to set to a clicked row's entity ID.
 #' @param subto A vector of output IDs to receive hover events from.
 #' @param options A list of configuration options if \code{datatables} is \code{TRUE}, see
-#' \href{https://datatables.net/reference/option}{DataTables Documentation}.
+#' \href{https://datatables.net/reference/option}{DataTables Documentation}; otherwise,
+#' only the \code{scrollY} option has an effect.
 #' @param features A list of features columns to include if multiple variables are included and \code{wide} is
 #' \code{TRUE}.
 #' @param filters A list with names of \code{meta} entries (from \code{variable} entry in \code{\link{data_add}}'s
@@ -26,20 +27,42 @@
 #' \code{wide = TRUE} will show the variable across time columns.
 #' @param class Class names to add to the table.
 #' @param datatables Logical; if \code{TRUE}, uses \href{https://datatables.net}{DataTables}.
-#' @param height String; It denotes the height of the vanilla html table. Works only if parameter \code{datatables} is \code{TRUE}
 #' @examples
 #' output_table()
 #' @return A character vector of the content to be added.
 #' @export
 
 output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, id = NULL, click = NULL, subto = NULL,
-                         options = NULL, features = NULL, filters = NULL, wide = TRUE, class = "compact", datatables = TRUE, height = "40vh") {
+                         options = NULL, features = NULL, filters = NULL, wide = TRUE, class = "compact", datatables = TRUE) {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   if (is.null(id)) id <- paste0("table", caller$uid)
+  defaults <- list(
+    paging = TRUE, scrollY = 500, scrollX = 500, scrollCollapse = TRUE,
+    scroller = TRUE, deferRender = TRUE
+  )
+  if (!is.null(options$height)) {
+    options$scrollY <- options$height
+    options$height <- NULL
+  }
+  so <- names(options)
+  if (!datatables && (!wide || (length(so) && any(so != "scrollY")))) {
+    cli_warn(paste(
+      "because {.arg datatables} is disabled, the {.arg wide} argument is ignored,",
+      "and all {.arg options} except {.arg options$scrollY} are ignored"
+    ))
+  }
+  for (n in names(defaults)) if (!n %in% so) options[[n]] <- defaults[[n]]
   type <- if (datatables) "datatable" else "table"
   r <- paste(c(
-    paste0(if (!datatables) paste0('<div class="table-wrapper"', ' style="height:', height, '">') , '<table class="auto-output ', if(!datatables) "tables" else "tables" ,  if (is.null(class)) "" else paste("", class), '"'),
+    paste0(
+      if (!datatables) {
+        paste0(
+          '<div class="table-wrapper" style="max-height: ', options$scrollY, if (is.numeric(options$scrollY)) "px", '">'
+        )
+      },
+      '<table class="auto-output tables', if (is.null(class)) "" else paste("", class), '"'
+    ),
     if (!is.null(dataview)) paste0('data-view="', dataview, '"'),
     if (!is.null(click)) paste0('click="', click, '"'),
     paste0('id="', id, '" auto-type="', type, '"></table>', if (!datatables) "</div>")
@@ -76,12 +99,6 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, id =
     options$dataset <- dataset
     options$single_variable <- wide && length(variables) == 1
     options$wide <- if (!wide && length(variables) == 1) TRUE else wide
-    defaults <- list(
-      paging = TRUE, scrollY = 500, scrollX = 500, scrollCollapse = TRUE,
-      scroller = TRUE, deferRender = TRUE
-    )
-    so <- names(options)
-    for (n in names(defaults)) if (!n %in% so) options[[n]] <- defaults[[n]]
     if (datatables) {
       caller$dependencies$jquery <- list(
         type = "script",
@@ -91,19 +108,19 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, id =
       )
       caller$dependencies$datatables_style <- list(
         type = "stylesheet",
-        src = "https://cdn.datatables.net/1.13.2/css/jquery.dataTables.min.css",
-        hash = "sha384-nlqJt7hgTYzEtpwtccFUVNZPXLN4pJoZ/QIfCtAIK9txm0dVyw/lz/47SslwYLPj"
+        src = "https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css",
+        hash = "sha384-hkk2Flj2H/aasukwICQRbqkBP6noLNP9GlCSSOdIdAgPOA/K99hy0+A1LFzVmvD+"
       )
       caller$dependencies$datatables <- list(
         type = "script",
-        src = "https://cdn.datatables.net/v/dt/dt-1.13.2/b-2.3.4/b-html5-2.3.4/sc-2.1.0/datatables.min.js",
-        hash = "sha384-AxEUZm93vJc68R6hJA85YhliVWFpx3SxEpQf/A7hnbYmvWTuU5KYsyoc5EFVPpaU",
+        src = "https://cdn.datatables.net/v/dt/dt-1.13.4/b-2.3.6/b-html5-2.3.6/sc-2.1.1/datatables.min.js",
+        hash = "sha384-t2yKxMO6Scx7Z54s8KGl4SQagN8gYQPqgN5MQXCnZRStt9YaQhan7/G/FLiBipCz",
         loading = "defer"
       )
       caller$credits$datatables <- list(
         name = "DataTables",
         url = "https://datatables.net",
-        version = "1.13.2"
+        version = "1.13.4"
       )
     }
     if (datatables) caller$datatable[[id]] <- options else caller$table[[id]] <- options

@@ -30,7 +30,8 @@ used if \code{dataview} is not specified.}
 \item{subto}{A vector of output IDs to receive hover events from.}
 
 \item{options}{A list of configuration options if \code{datatables} is \code{TRUE}, see
-\href{https://datatables.net/reference/option}{DataTables Documentation}.}
+\href{https://datatables.net/reference/option}{DataTables Documentation}; otherwise,
+only the \code{scrollY} option has an effect.}
 
 \item{features}{A list of features columns to include if multiple variables are included and \code{wide} is
 \code{TRUE}.}
@@ -50,7 +51,7 @@ If \code{variables} specifies a single variable, \code{wide = FALSE} will show t
 A character vector of the content to be added.
 }
 \description{
-Adds a DataTables table to a webpage, based on specified or selected variables.
+Adds a table to a webpage, based on specified or selected variables.
 }
 \examples{
 output_table()

@@ -1,10 +1,19 @@
 library(xml2)
 
-test_that("structure is intact", {
+test_that("default structure is intact", {
   raw <- output_table()
   expect_true(is.character(raw) && !any(raw == ""))
   html <- read_html(raw)
   expect_true(xml_length(xml_child(html)) == 1)
+  expect_true(xml_length(xml_child(xml_child(html))) == 0)
+})
+
+test_that("simple structure is intact", {
+  raw <- output_table(datatables = FALSE)
+  expect_true(is.character(raw) && !any(raw == ""))
+  html <- read_html(raw)
+  expect_true(xml_length(xml_child(html)) == 1)
+  expect_true(xml_length(xml_child(xml_child(html))) == 1)
 })
 
 test_that("build environment is added to", {
