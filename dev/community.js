@@ -2664,15 +2664,17 @@ void (function () {
                         }
                       })
                     } else {
-                      Object.keys(this.filters).forEach(f => {
-                        this.current_filter[c] = valueOf(f)
-                      })
+                      if (this.filters)
+                        Object.keys(this.filters).forEach(f => {
+                          this.current_filter[c] = valueOf(f)
+                        })
                       const va = []
                       let varstate =
                         '' + this.parsed.dataset + v.get.ids(true) + v.get.features() + site.settings.digits
                       for (let i = this.options.variables.length; i--; ) {
                         vn = this.options.variables[i].name || this.options.variables[i]
-                        pass = false
+                        pass = !this.filters
+                        const variable = await get_variable(vn, this.view)
                         if (vn in site.data.variables && 'meta' in variable) {
                           if (this.options.filters) {
                             for (const c in this.current_filter)
@@ -5949,9 +5951,9 @@ void (function () {
               } else if ('display' === k) {
                 if (!e.e.classList.contains('hidden')) {
                   e.e.classList.add('hidden')
-                  if (e.u) e.u.reset()
+                  if (e.u && e.u.reset) e.u.reset()
                   e.e.querySelectorAll('.auto-input').forEach(c => {
-                    if (c.id in _u) _u[c.id].reset()
+                    if (c.id in _u && _u[c.id].reset) _u[c.id].reset()
                   })
                 }
               } else if ('lock' === k) {

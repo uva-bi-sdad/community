@@ -41,13 +41,15 @@ page_panel <- function(title = "Side Panel", ..., foot = NULL, position = "left"
   breakpoints <- rep_len(breakpoints, n)
   conditions <- rep_len(conditions, n)
   ids <- paste0("panel", parts$uid, seq_len(n))
+  title <- substitute(title)
   r <- c(
     paste0('<div class="card panel panel-', position, '" id="panel', parts$uid, '">'),
-    paste0('<div class="card-header">', paste(title, collapse = ""), "</div>"),
+    paste0(c('<div class="card-header">', eval(title, parts, caller), "</div>"), collapse = ""),
     '<div class="card-body">',
     unlist(lapply(seq_len(n), function(i) {
+      wrap <- !is.na(wraps[i]) || conditions[i] != ""
       c(
-        if (!is.na(wraps[i]) || conditions[i] != "") {
+        if (wrap) {
           paste(c(
             '<div class="', if (is.na(wraps[i])) "" else wraps[i],
             if (!is.na(breakpoints[i])) c("-", breakpoints[i]),
@@ -56,7 +58,7 @@ page_panel <- function(title = "Side Panel", ..., foot = NULL, position = "left"
           ), collapse = "")
         },
         eval(elements[[i]], parts, caller),
-        if (!is.na(wraps[i])) "</div>"
+        if (wrap) "</div>"
       )
     }), use.names = FALSE),
     "</div>",

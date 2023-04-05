@@ -41,7 +41,9 @@ page_section <- function(..., type = "row", wraps = NA, sizes = NA, breakpoints 
   conditions <- rep_len(conditions, n)
   ids <- paste0("sec", parts$uid, seq_len(n))
   r <- c(
-    paste(c("<div", if (!is.null(type)) c(' class="', type, '"'), ">"), collapse = ""),
+    paste(c(
+      "<div", if (!is.null(id)) c(' id="', id, '"'), if (!is.null(type)) c(' class="', type, '"'), ">"
+    ), collapse = ""),
     unlist(lapply(seq_len(n), function(i) {
       c(
         if (!is.na(wraps[i]) || conditions[i] != "") {
