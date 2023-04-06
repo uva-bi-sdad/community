@@ -31,7 +31,11 @@ input_number <- function(label, id = label, ..., default = NULL, variable = NULL
   id <- gsub("\\s", "", id)
   r <- c(
     if (buttons || show_range) '<div class="wrapper number-input-row">',
-    if (show_range) paste0('<div class="text-muted small indicator-min"><span>', min, "</span></div>"),
+    if (show_range) {
+      paste0(
+        '<div><button role="button" label="set value to min" class="text-muted indicator-min"><span>', min, "</span></button></div>"
+      )
+    },
     if (buttons) '<button role="button" label="decrease value" class="btn number-down">&lt;</button>',
     paste0('<div class="wrapper text-wrapper', if (floating_label) " form-floating", '">'),
     if (!floating_label) paste0('<label for="', id, '">', label, "</label>"),
@@ -51,7 +55,11 @@ input_number <- function(label, id = label, ..., default = NULL, variable = NULL
     ), collapse = ""),
     "</div>",
     if (buttons) '<button role="button" label="increase value" class="btn number-up">&gt;</button>',
-    if (show_range) paste0('<div class="text-muted small indicator-max"><span>', max, "</span></div>"),
+    if (show_range) {
+      paste0(
+        '<div><button role="button" label="set value to max" class="text-muted indicator-max"><span>', max, "</span></button></div>"
+      )
+    },
     if (buttons || show_range) "</div>"
   )
   caller <- parent.frame()

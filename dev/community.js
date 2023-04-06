@@ -4969,9 +4969,25 @@ void (function () {
             o.min = o.e.getAttribute('min')
             o.min_ref = parseFloat(o.min)
             o.min_indicator = o.e.parentElement.parentElement.querySelector('.indicator-min')
+            if (o.min_indicator) {
+              o.min_indicator.addEventListener(
+                'click',
+                function () {
+                  this.set(this.parsed.min)
+                }.bind(o)
+              )
+            }
             o.max = o.e.getAttribute('max')
             o.max_ref = parseFloat(o.max)
             o.max_indicator = o.e.parentElement.parentElement.querySelector('.indicator-max')
+            if (o.max_indicator) {
+              o.max_indicator.addEventListener(
+                'click',
+                function () {
+                  this.set(this.parsed.max)
+                }.bind(o)
+              )
+            }
             o.ref = isNaN(o.min_ref) || isNaN(o.max_ref)
             o.range = [o.min_ref, o.max_ref]
             o.step = parseFloat(o.e.step) || 1

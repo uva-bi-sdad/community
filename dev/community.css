@@ -981,6 +981,9 @@ table.dataTable thead th {
   font-size: 1.2em;
   text-align: center;
 }
+.number-input-row button > span {
+  font-size: 0.735em;
+}
 .light-theme .number-input-row button {
   color: var(--body-text);
 }
