@@ -1242,25 +1242,30 @@ void (function () {
                 if (o) {
                   const previous = this.listbox.querySelector('.highlighted')
                   if (previous) previous.classList.remove('highlighted')
-                  o.classList.add('highlighted')
-                  if (this.settings.accordion) {
-                    const c = o.parentElement.parentElement
-                    if (!c.classList.contains('show')) {
-                      c.classList.add('show')
-                      c.previousElementSibling.firstElementChild.classList.remove('collapsed')
-                      c.previousElementSibling.firstElementChild.setAttribute('aria-expanded', true)
+                  if ('mouseover' === e.type) {
+                    e.target.classList.add('highlighted')
+                  } else {
+                    o.classList.add('highlighted')
+                    if (this.settings.accordion) {
+                      const c = o.parentElement.parentElement
+                      if (!c.classList.contains('show')) {
+                        c.classList.add('show')
+                        c.previousElementSibling.firstElementChild.classList.remove('collapsed')
+                        c.previousElementSibling.firstElementChild.setAttribute('aria-expanded', true)
+                      }
                     }
-                  }
-                  this.e.setAttribute('aria-activedescendant', o.id)
-                  const port = this.container.getBoundingClientRect(),
-                    item = o.getBoundingClientRect()
-                  let top = port.top
-                  if (this.groups && o.getAttribute('group'))
-                    top += this.groups.by_name[o.getAttribute('group')].firstElementChild.getBoundingClientRect().height
-                  if (top > item.top) {
-                    this.container.scrollTo(0, this.container.scrollTop + item.top - top)
-                  } else if (port.bottom < item.bottom) {
-                    this.container.scrollTo(0, this.container.scrollTop + item.bottom - port.bottom)
+                    this.e.setAttribute('aria-activedescendant', o.id)
+                    const port = this.container.getBoundingClientRect(),
+                      item = o.getBoundingClientRect()
+                    let top = port.top
+                    if (this.groups && o.getAttribute('group'))
+                      top +=
+                        this.groups.by_name[o.getAttribute('group')].firstElementChild.getBoundingClientRect().height
+                    if (top > item.top) {
+                      this.container.scrollTo(0, this.container.scrollTop + item.top - top)
+                    } else if (port.bottom < item.bottom) {
+                      this.container.scrollTo(0, this.container.scrollTop + item.bottom - port.bottom)
+                    }
                   }
                 }
               }
@@ -3732,55 +3737,59 @@ void (function () {
             ck = false
           }
           if (u.groups) {
-            const group = entity.features[u.settings.group] || ''
-            if (!(group in u.groups.by_name)) {
-              const e = document.createElement(combobox ? 'div' : 'optgroup')
-              if (combobox) {
-                const id = u.id + '_' + group.replace(patterns.seps, '-')
-                let ee
-                if (u.settings.accordion) {
-                  e.setAttribute('group', group)
-                  e.className = 'combobox-group accordion-item combobox-component'
-                  e.appendChild((ee = document.createElement('div')))
-                  ee.id = id + '-label'
-                  ee.className = 'accordion-header combobox-component'
-                  ee.appendChild((ee = document.createElement('button')))
-                  ee.innerText = group
-                  ee.type = 'button'
-                  ee.className = 'accordion-button combobox-component collapsed'
-                  ee.setAttribute('data-bs-toggle', 'collapse')
-                  ee.setAttribute('data-bs-target', '#' + id)
-                  ee.setAttribute('aria-expanded', false)
-                  ee.setAttribute('aria-controls', id)
-                  e.appendChild((ee = document.createElement('div')))
-                  ee.id = id
-                  ee.className = 'combobox-component accordion-collapse collapse'
-                  ee.setAttribute('aria-labelledby', id + '-label')
-                  ee.setAttribute('data-bs-parent', '#' + u.id + '-listbox')
-                  ee.appendChild((ee = document.createElement('div')))
-                  ee.className = 'accordion-body combobox-component'
+            let groups = entity.features[u.settings.group] || ['No Group']
+            if (!Array.isArray(groups)) groups = [groups]
+            for (let g = groups.length; g--; ) {
+              const group = groups[g]
+              if (!(group in u.groups.by_name)) {
+                const e = document.createElement(combobox ? 'div' : 'optgroup')
+                if (combobox) {
+                  const id = u.id + '_' + group.replace(patterns.seps, '-')
+                  let ee
+                  if (u.settings.accordion) {
+                    e.setAttribute('group', group)
+                    e.className = 'combobox-group accordion-item combobox-component'
+                    e.appendChild((ee = document.createElement('div')))
+                    ee.id = id + '-label'
+                    ee.className = 'accordion-header combobox-component'
+                    ee.appendChild((ee = document.createElement('button')))
+                    ee.innerText = group
+                    ee.type = 'button'
+                    ee.className = 'accordion-button combobox-component collapsed'
+                    ee.setAttribute('data-bs-toggle', 'collapse')
+                    ee.setAttribute('data-bs-target', '#' + id)
+                    ee.setAttribute('aria-expanded', false)
+                    ee.setAttribute('aria-controls', id)
+                    e.appendChild((ee = document.createElement('div')))
+                    ee.id = id
+                    ee.className = 'combobox-component accordion-collapse collapse'
+                    ee.setAttribute('aria-labelledby', id + '-label')
+                    ee.setAttribute('data-bs-parent', '#' + u.id + '-listbox')
+                    ee.appendChild((ee = document.createElement('div')))
+                    ee.className = 'accordion-body combobox-component'
+                  } else {
+                    e.className = 'combobox-group combobox-component'
+                    e.role = 'group'
+                    e.setAttribute('aria-labelledby', id)
+                    e.appendChild((ee = document.createElement('div')))
+                    ee.appendChild((ee = document.createElement('label')))
+                    ee.innerText = group
+                    ee.id = id
+                    ee.className = 'combobox-group-label combobox-component'
+                  }
                 } else {
-                  e.className = 'combobox-group combobox-component'
-                  e.role = 'group'
-                  e.setAttribute('aria-labelledby', id)
-                  e.appendChild((ee = document.createElement('div')))
-                  ee.appendChild((ee = document.createElement('label')))
-                  ee.innerText = group
-                  ee.id = id
-                  ee.className = 'combobox-group-label combobox-component'
+                  e.label = group
                 }
-              } else {
-                e.label = group
+                u.groups.by_name[group] = e
+                u.groups.e.push(e)
               }
-              u.groups.by_name[group] = e
-              u.groups.e.push(e)
-            }
-            const o = u.add(k, entity.features.name, true)
-            o.setAttribute('group', group)
-            if (combobox && u.settings.accordion) {
-              u.groups.by_name[group].lastElementChild.lastElementChild.appendChild(o)
-            } else {
-              u.groups.by_name[group].appendChild(o)
+              const o = u.add(k, entity.features.name, true)
+              o.setAttribute('group', group)
+              if (combobox && u.settings.accordion) {
+                u.groups.by_name[group].lastElementChild.lastElementChild.appendChild(o)
+              } else {
+                u.groups.by_name[group].appendChild(o)
+              }
             }
           } else {
             s.push(u.add(k, entity.features.name))
@@ -3833,55 +3842,59 @@ void (function () {
             ck = false
           }
           if (u.groups) {
-            const group = m.info[u.settings.group] || ''
-            if (!(group in u.groups.by_name)) {
-              const e = document.createElement(combobox ? 'div' : 'optgroup')
-              if (combobox) {
-                const id = u.id + '_' + group.replace(patterns.seps, '-')
-                let ee
-                if (u.settings.accordion) {
-                  e.setAttribute('group', group)
-                  e.className = 'combobox-group accordion-item combobox-component'
-                  e.appendChild((ee = document.createElement('div')))
-                  ee.id = id + '-label'
-                  ee.className = 'accordion-header combobox-component'
-                  ee.appendChild((ee = document.createElement('button')))
-                  ee.innerText = group
-                  ee.type = 'button'
-                  ee.className = 'accordion-button combobox-component collapsed'
-                  ee.setAttribute('data-bs-toggle', 'collapse')
-                  ee.setAttribute('data-bs-target', '#' + id)
-                  ee.setAttribute('aria-expanded', false)
-                  ee.setAttribute('aria-controls', id)
-                  e.appendChild((ee = document.createElement('div')))
-                  ee.id = id
-                  ee.className = 'combobox-component accordion-collapse collapse'
-                  ee.setAttribute('aria-labelledby', id + '-label')
-                  ee.setAttribute('data-bs-parent', '#' + u.id + '-listbox')
-                  ee.appendChild((ee = document.createElement('div')))
-                  ee.className = 'accordion-body combobox-component'
+            let groups = m.info[u.settings.group] || ['No Group']
+            if (!Array.isArray(groups)) groups = [groups]
+            for (let g = groups.length; g--; ) {
+              const group = groups[g]
+              if (!(group in u.groups.by_name)) {
+                const e = document.createElement(combobox ? 'div' : 'optgroup')
+                if (combobox) {
+                  const id = u.id + '_' + group.replace(patterns.seps, '-')
+                  let ee
+                  if (u.settings.accordion) {
+                    e.setAttribute('group', group)
+                    e.className = 'combobox-group accordion-item combobox-component'
+                    e.appendChild((ee = document.createElement('div')))
+                    ee.id = id + '-label'
+                    ee.className = 'accordion-header combobox-component'
+                    ee.appendChild((ee = document.createElement('button')))
+                    ee.innerText = group
+                    ee.type = 'button'
+                    ee.className = 'accordion-button combobox-component collapsed'
+                    ee.setAttribute('data-bs-toggle', 'collapse')
+                    ee.setAttribute('data-bs-target', '#' + id)
+                    ee.setAttribute('aria-expanded', false)
+                    ee.setAttribute('aria-controls', id)
+                    e.appendChild((ee = document.createElement('div')))
+                    ee.id = id
+                    ee.className = 'combobox-component accordion-collapse collapse'
+                    ee.setAttribute('aria-labelledby', id + '-label')
+                    ee.setAttribute('data-bs-parent', '#' + u.id + '-listbox')
+                    ee.appendChild((ee = document.createElement('div')))
+                    ee.className = 'accordion-body combobox-component'
+                  } else {
+                    e.className = 'combobox-group combobox-component'
+                    e.role = 'group'
+                    e.setAttribute('aria-labelledby', id)
+                    e.appendChild((ee = document.createElement('div')))
+                    ee.appendChild((ee = document.createElement('label')))
+                    ee.innerText = group
+                    ee.id = id
+                    ee.className = 'combobox-group-label combobox-component'
+                  }
                 } else {
-                  e.className = 'combobox-group combobox-component'
-                  e.role = 'group'
-                  e.setAttribute('aria-labelledby', id)
-                  e.appendChild((ee = document.createElement('div')))
-                  ee.appendChild((ee = document.createElement('label')))
-                  ee.innerText = group
-                  ee.id = id
-                  ee.className = 'combobox-group-label combobox-component'
+                  e.label = group
                 }
-              } else {
-                e.label = group
+                u.groups.by_name[group] = e
+                u.groups.e.push(e)
               }
-              u.groups.by_name[group] = e
-              u.groups.e.push(e)
-            }
-            const o = u.add(m.name, l, true, m)
-            o.setAttribute('group', group)
-            if (combobox && u.settings.accordion) {
-              u.groups.by_name[group].lastElementChild.lastElementChild.appendChild(o)
-            } else {
-              u.groups.by_name[group].appendChild(o)
+              const o = u.add(m.name, l, true, m)
+              o.setAttribute('group', group)
+              if (combobox && u.settings.accordion) {
+                u.groups.by_name[group].lastElementChild.lastElementChild.appendChild(o)
+              } else {
+                u.groups.by_name[group].appendChild(o)
+              }
             }
           } else {
             s.push(u.add(m.name, l, true, m))
