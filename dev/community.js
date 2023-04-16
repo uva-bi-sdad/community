@@ -2482,7 +2482,7 @@ void (function () {
                     }),
                   }
                 }
-              o.options.order = [[o.header.length - 1, 'dsc']]
+              //o.options.order = [[o.header.length - 1, 'dsc']]
             } else if (o.options.wide) {
               if (o.features) {
                 if ('string' === typeof o.features) o.features = [{name: o.features}]
@@ -2567,6 +2567,7 @@ void (function () {
                 },
               })
             }
+
             if (o.view) {
               add_dependency(o.view, {type: 'update', id: o.id})
               add_dependency(o.view + '_filter', {type: 'update', id: o.id})
@@ -2629,11 +2630,18 @@ void (function () {
                             }
                           }
                         } else this.state = ''
-                        this.options.order[0][0] = this.header.length - 1
+                        //ToDo: Sorting can also be done here
+                        // const colIdx = valueOf(v.time_agg) - site.data.meta.times[d].range[0] - this.header.length + 1
+                        // this.options.order = [[colIdx, 'dsc']]
+                        //this.options.order[0][0] = this.header.length - 1
                         this.options.columns = this.header
+                        this.options.ordering = false
                         this.table = $(this.e).DataTable(this.options)
                       }
                       const n = this.header.length
+                      //TODO: Need to resolve this: The code below has no effect on the code strangely
+                      const colIdx = valueOf(v.time_agg) - site.data.meta.times[d].range[0] - this.header.length + 1
+                      $(this.table.column(colIdx).nodes()).addClass('myclass')
                       let reset
                       for (let i = 1; i < n; i++) {
                         this.table.column(i).visible(v.times[i - 1 + this.parsed.time_range[0]], false)
@@ -2642,28 +2650,52 @@ void (function () {
                       if (reset) this.state = ''
                     }
                     if (this.options.wide) {
-                      Object.keys(v.selection.all).forEach(k => {
-                        if (vn) {
-                          if (vn in v.selection.all[k][this.view].summary) {
-                            this.rows[k] = this.table.row.add({
-                              dataset: d,
-                              variable: vn,
-                              offset: this.parsed.time_range[0],
-                              entity: v.selection.all[k],
-                              int: patterns.int_types.test(site.data.variable_info[vn].type),
-                            })
-                            this.rowIds[this.rows[k].selector.rows] = k
-                          }
-                        } else {
-                          for (let i = site.data.meta.times[d].n; i--; ) {
-                            this.rows[k] = this.table.row.add({
-                              time: i,
-                              entity: v.selection.all[k],
-                            })
-                            this.rowIds[this.rows[k].selector.rows] = k
-                          }
+                      const es = this.parsed.order
+                      const sorted_data = []
+                      let i = 0
+                      for (i = 0; i < Object.keys(v.selection.all).length; i++) {
+                        if (es[i]) {
+                          const entityId = es[i][0]
+                          if (entityId in v.selection.all) sorted_data.push([entityId, v.selection.all[entityId]])
                         }
-                      })
+                      }
+
+                      this.table.clear()
+
+                      for (i = Object.keys(sorted_data).length - 1; i > 0; i--) {
+                        var entityId = sorted_data[i][0]
+                        this.rows[sorted_data[i][0]] = this.table.row.add({
+                          dataset: d,
+                          variable: vn,
+                          offset: this.parsed.time_range[0],
+                          entity: sorted_data[i][1],
+                          int: patterns.int_types.test(site.data.variable_info[vn].type),
+                        })
+                        this.rowIds[this.rows[entityId].selector.rows] = entityId
+                      }
+
+                      // Object.keys(v.selection.all).forEach(k => {
+                      //   if (vn) {
+                      //     if (vn in v.selection.all[k][this.view].summary) {
+                      //       this.rows[k] = this.table.row.add({
+                      //         dataset: d,
+                      //         variable: vn,
+                      //         offset: this.parsed.time_range[0],
+                      //         entity: v.selection.all[k],
+                      //         int: patterns.int_types.test(site.data.variable_info[vn].type),
+                      //       })
+                      //       this.rowIds[this.rows[k].selector.rows] = k
+                      //     }
+                      //   } else {
+                      //     for (let i = site.data.meta.times[d].n; i--; ) {
+                      //       this.rows[k] = this.table.row.add({
+                      //         time: i,
+                      //         entity: v.selection.all[k],
+                      //       })
+                      //       this.rowIds[this.rows[k].selector.rows] = k
+                      //     }
+                      //   }
+                      // })
                     } else {
                       Object.keys(this.filters).forEach(f => {
                         this.current_filter[c] = valueOf(f)
