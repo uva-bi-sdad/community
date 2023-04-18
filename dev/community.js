@@ -2662,7 +2662,7 @@ void (function () {
 
                       this.table.clear()
 
-                      for (i = Object.keys(sorted_data).length - 1; i > 0; i--) {
+                      for (i = Object.keys(sorted_data).length - 1; i >= 0; i--) {
                         var entityId = sorted_data[i][0]
                         this.rows[sorted_data[i][0]] = this.table.row.add({
                           dataset: d,
