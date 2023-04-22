@@ -7,7 +7,7 @@
   --background-border: #494949;
   --background-input: #000000;
   --body-text: #ffffff;
-  --background-highlight: #494949;
+  --background-highlight: #141414;
   --link: #acc7ff;
   --highlight: #3c3c3c;
   --highlight-text: #ffffff;
@@ -980,6 +980,9 @@ table.dataTable thead th {
   border: 0;
   font-size: 1.2em;
   text-align: center;
+}
+.number-input-row button > span {
+  font-size: 0.735em;
 }
 .light-theme .number-input-row button {
   color: var(--body-text);

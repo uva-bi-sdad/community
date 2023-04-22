@@ -517,6 +517,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
       "}"
     ), paste0(dir, "/docs/functions/api.js"))
   }
+  last_deps <- grep("^(?:custom|base)", names(parts$dependencies))
   r <- c(
     "<!doctype html>",
     paste("<!-- page generated from", sub("^.*/", "", file), "by community::site_build() -->"),
@@ -545,7 +546,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         "}\n</script>"
       )
     },
-    unlist(lapply(parts$dependencies[c(2, 5, seq_len(length(parts$dependencies) - 5) + 5, 3, 1, 4)], head_import, dir = dir)),
+    unlist(lapply(parts$dependencies[c(seq_along(parts$dependencies)[-last_deps], last_deps)], head_import, dir = dir)),
     paste0('<meta name="generator" content="community v', packageVersion("community"), '" />'),
     unlist(parts$head[!duplicated(names(parts$head))], use.names = FALSE),
     "</head>",

@@ -41,10 +41,13 @@ page_section <- function(..., type = "row", wraps = NA, sizes = NA, breakpoints 
   conditions <- rep_len(conditions, n)
   ids <- paste0("sec", parts$uid, seq_len(n))
   r <- c(
-    paste(c("<div", if (!is.null(type)) c(' class="', type, '"'), ">"), collapse = ""),
+    paste(c(
+      "<div", if (!is.null(id)) c(' id="', id, '"'), if (!is.null(type)) c(' class="', type, '"'), ">"
+    ), collapse = ""),
     unlist(lapply(seq_len(n), function(i) {
+      wrap <- !is.na(wraps[i]) || conditions[i] != ""
       c(
-        if (!is.na(wraps[i]) || conditions[i] != "") {
+        if (wrap) {
           paste(c(
             '<div class="', if (is.na(wraps[i])) "" else wraps[i],
             if (!is.na(breakpoints[i])) c("-", breakpoints[i]),
@@ -53,7 +56,7 @@ page_section <- function(..., type = "row", wraps = NA, sizes = NA, breakpoints 
           ), collapse = "")
         },
         eval(elements[[i]], parts, caller),
-        if (!is.na(wraps[i])) "</div>"
+        if (wrap) "</div>"
       )
     }), use.names = FALSE),
     "</div>"
