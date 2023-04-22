@@ -2424,11 +2424,32 @@ void (function () {
             o.show = function (e) {
               if (e.features && e.features.id in this.rows) {
                 const row = this.rows[e.features.id].node()
+
+                if (!row) {
+                  var scrollPos = this.e.scrollHeight / 2
+                  const eo = this.parsed.order.map(e => e[0])
+                  const idx = eo.length - eo.indexOf(e.features.id)
+                  console.log(scrollPos)
+                  while (!this.rows[e.features.id].node()) {
+                    console.log(scrollPos)
+                    if (scrollPos > this.e.scrollHeight || scrollPos < 0) break
+                    if (idx > eo.length / 2) {
+                      scrollPos += 500
+                    } else {
+                      scrollPos -= 500
+                    }
+                    this.e.parentElement.scroll({
+                      top: scrollPos,
+                    })
+                  }
+                }
+
                 if (row) {
                   row.style.backgroundColor = defaults.background_highlight
                   if (site.settings.table_autoscroll) {
                     const h = this.e.parentElement.getBoundingClientRect().height,
                       top = row.getBoundingClientRect().y - this.e.getBoundingClientRect().y
+                    //h > this.e.scrollHeight - top ? console.log('In') : console.log('In')
                     this.e.parentElement.scroll({
                       top: h > this.e.scrollHeight - top ? this.e.parentElement.scrollHeight : top,
                       behavior: site.settings.table_scroll_behavior || 'smooth',
