@@ -2679,7 +2679,7 @@ void (function () {
                       const es = this.parsed.order
                       const sorted_data = []
                       let i = 0
-                      for (i = 0; i < Object.keys(v.selection.all).length; i++) {
+                      for (i = 0; i < Object.keys(es).length; i++) {
                         if (es[i]) {
                           const entityId = es[i][0]
                           if (entityId in v.selection.all) sorted_data.push([entityId, v.selection.all[entityId]])
