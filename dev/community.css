@@ -1201,7 +1201,7 @@ input[type='range']::-ms-thumb {
 tr.highlighted,
 td.highlighted,
 tr.highlighted td:first-child {
-  background-color: var(--background-highlight);
+  background-color: rgb(173, 173, 173);
 }
 
 /* tbody .sorting_1 {
