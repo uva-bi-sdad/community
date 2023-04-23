@@ -2793,7 +2793,11 @@ void (function () {
                   }
                   redraw ? this.table.draw() : this.table.columns.adjust().draw(false)
                 }
-                const colIdx = valueOf(v.time_agg) - site.data.meta.times[d].range[0] - this.header.length + 1
+                //const colIdx = valueOf(v.time_agg) - site.data.meta.times[d].range[0] - this.header.length + 1
+                var colIdx
+                this.header.forEach((e, i) => {
+                  if (parseInt(e.title) == valueOf(v.time_agg)) colIdx = i
+                })
                 $(this.table.column(colIdx).nodes()).addClass('highlighted')
                 $(this.table.column(colIdx - 1).nodes()).removeClass('highlighted')
                 $(this.table.column(colIdx + 1).nodes()).removeClass('highlighted')
