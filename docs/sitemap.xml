@@ -1,219 +1,219 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>/404.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/404.html</loc>
   </url>
   <url>
-    <loc>/articles/anti-patterns.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/articles/anti-patterns.html</loc>
   </url>
   <url>
-    <loc>/articles/casestudy-arrests.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/articles/casestudy-arrests.html</loc>
   </url>
   <url>
-    <loc>/articles/index.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/articles/index.html</loc>
   </url>
   <url>
-    <loc>/articles/quickstart-site.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/articles/quickstart-site.html</loc>
   </url>
   <url>
-    <loc>/authors.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/authors.html</loc>
   </url>
   <url>
-    <loc>/coverage/community.js.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/community.js.html</loc>
   </url>
   <url>
-    <loc>/coverage/data_handler.js.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/data_handler.js.html</loc>
   </url>
   <url>
-    <loc>/coverage/index.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/index.html</loc>
   </url>
   <url>
-    <loc>/coverage/package.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/package.html</loc>
   </url>
   <url>
-    <loc>/index.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/index.html</loc>
   </url>
   <url>
-    <loc>/LICENSE-text.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/LICENSE-text.html</loc>
   </url>
   <url>
-    <loc>/LICENSE.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/LICENSE.html</loc>
   </url>
   <url>
-    <loc>/reference/add_data.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/add_data.html</loc>
   </url>
   <url>
-    <loc>/reference/calculate_access.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/calculate_access.html</loc>
   </url>
   <url>
-    <loc>/reference/check_repository.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/check_repository.html</loc>
   </url>
   <url>
-    <loc>/reference/check_template.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/check_template.html</loc>
   </url>
   <url>
-    <loc>/reference/community-package.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/community-package.html</loc>
   </url>
   <url>
-    <loc>/reference/datacommons_find_variables.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/datacommons_find_variables.html</loc>
   </url>
   <url>
-    <loc>/reference/datacommons_map_files.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/datacommons_map_files.html</loc>
   </url>
   <url>
-    <loc>/reference/datacommons_map_variables.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/datacommons_map_variables.html</loc>
   </url>
   <url>
-    <loc>/reference/datacommons_refresh.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/datacommons_refresh.html</loc>
   </url>
   <url>
-    <loc>/reference/datacommons_view.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/datacommons_view.html</loc>
   </url>
   <url>
-    <loc>/reference/data_add.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/data_add.html</loc>
   </url>
   <url>
-    <loc>/reference/data_measure_info.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/data_measure_info.html</loc>
   </url>
   <url>
-    <loc>/reference/data_reformat_sdad.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/data_reformat_sdad.html</loc>
   </url>
   <url>
-    <loc>/reference/download_census_shapes.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/download_census_shapes.html</loc>
   </url>
   <url>
-    <loc>/reference/download_dataverse_data.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/download_dataverse_data.html</loc>
   </url>
   <url>
-    <loc>/reference/index.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/index.html</loc>
   </url>
   <url>
-    <loc>/reference/init_data.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/init_data.html</loc>
   </url>
   <url>
-    <loc>/reference/init_datacommons.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/init_datacommons.html</loc>
   </url>
   <url>
-    <loc>/reference/init_function.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/init_function.html</loc>
   </url>
   <url>
-    <loc>/reference/init_repository.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/init_repository.html</loc>
   </url>
   <url>
-    <loc>/reference/init_shiny.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/init_shiny.html</loc>
   </url>
   <url>
-    <loc>/reference/init_site.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/init_site.html</loc>
   </url>
   <url>
-    <loc>/reference/init_template.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/init_template.html</loc>
   </url>
   <url>
-    <loc>/reference/input_button.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/input_button.html</loc>
   </url>
   <url>
-    <loc>/reference/input_buttongroup.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/input_buttongroup.html</loc>
   </url>
   <url>
-    <loc>/reference/input_checkbox.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/input_checkbox.html</loc>
   </url>
   <url>
-    <loc>/reference/input_combobox.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/input_combobox.html</loc>
   </url>
   <url>
-    <loc>/reference/input_dataview.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/input_dataview.html</loc>
   </url>
   <url>
-    <loc>/reference/input_number.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/input_number.html</loc>
   </url>
   <url>
-    <loc>/reference/input_rule.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/input_rule.html</loc>
   </url>
   <url>
-    <loc>/reference/input_select.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/input_select.html</loc>
   </url>
   <url>
-    <loc>/reference/input_slider.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/input_slider.html</loc>
   </url>
   <url>
-    <loc>/reference/input_switch.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/input_switch.html</loc>
   </url>
   <url>
-    <loc>/reference/input_text.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/input_text.html</loc>
   </url>
   <url>
-    <loc>/reference/input_variable.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/input_variable.html</loc>
   </url>
   <url>
-    <loc>/reference/measure_catchment.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/measure_catchment.html</loc>
   </url>
   <url>
-    <loc>/reference/output_credits.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/output_credits.html</loc>
   </url>
   <url>
-    <loc>/reference/output_info.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/output_info.html</loc>
   </url>
   <url>
-    <loc>/reference/output_legend.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/output_legend.html</loc>
   </url>
   <url>
-    <loc>/reference/output_map.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/output_map.html</loc>
   </url>
   <url>
-    <loc>/reference/output_plot.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/output_plot.html</loc>
   </url>
   <url>
-    <loc>/reference/output_table.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/output_table.html</loc>
   </url>
   <url>
-    <loc>/reference/output_text.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/output_text.html</loc>
   </url>
   <url>
-    <loc>/reference/page_head.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/page_head.html</loc>
   </url>
   <url>
-    <loc>/reference/page_menu.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/page_menu.html</loc>
   </url>
   <url>
-    <loc>/reference/page_navbar.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/page_navbar.html</loc>
   </url>
   <url>
-    <loc>/reference/page_panel.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/page_panel.html</loc>
   </url>
   <url>
-    <loc>/reference/page_popup.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/page_popup.html</loc>
   </url>
   <url>
-    <loc>/reference/page_section.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/page_section.html</loc>
   </url>
   <url>
-    <loc>/reference/page_tabgroup.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/page_tabgroup.html</loc>
   </url>
   <url>
-    <loc>/reference/page_text.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/page_text.html</loc>
   </url>
   <url>
-    <loc>/reference/site_build.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/site_build.html</loc>
   </url>
   <url>
-    <loc>/reference/site_make_child.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/site_make_child.html</loc>
   </url>
   <url>
-    <loc>/reference/template_data.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/template_data.html</loc>
   </url>
   <url>
-    <loc>/reference/template_function.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/template_function.html</loc>
   </url>
   <url>
-    <loc>/reference/template_shiny.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/template_shiny.html</loc>
   </url>
   <url>
-    <loc>/reference/template_spec.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/template_spec.html</loc>
   </url>
   <url>
-    <loc>/reference/template_template.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/template_template.html</loc>
   </url>
   <url>
-    <loc>/reference/util_make_palette.html</loc>
+    <loc>https://uva-bi-sdad.github.io/community/reference/util_make_palette.html</loc>
   </url>
 </urlset>
