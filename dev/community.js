@@ -2646,7 +2646,6 @@ void (function () {
                         this.table = $(this.e).DataTable(this.options)
                       }
                       const n = this.header.length
-                      //TODO: Need to resolve this: The code below has no effect on the code strangely
                       const colIdx = valueOf(v.time_agg) - site.data.meta.times[d].range[0] - this.header.length + 1
                       $(this.table.column(colIdx).nodes()).addClass('myclass')
                       let reset
@@ -2774,14 +2773,26 @@ void (function () {
                   }
                   redraw ? this.table.draw() : this.table.columns.adjust().draw(false)
                 }
-                //const colIdx = valueOf(v.time_agg) - site.data.meta.times[d].range[0] - this.header.length + 1
-                var colIdx
-                this.header.forEach((e, i) => {
-                  if (parseInt(e.title) == valueOf(v.time_agg)) colIdx = i
-                })
-                $(this.table.column(colIdx).nodes()).addClass('highlighted')
-                $(this.table.column(colIdx - 1).nodes()).removeClass('highlighted')
-                $(this.table.column(colIdx + 1).nodes()).removeClass('highlighted')
+                var colIdx = 0
+                let k = parseInt(this.header[1].title) - site.data.meta.times[d].range[0]
+                for (let i = 0; i < this.header.length; i++, k++) {
+                  if (!v.times[k]) continue
+                  if (parseInt(this.header[i].title) == valueOf(v.time_agg)) break
+                  colIdx += 1
+                }
+                // this.header.forEach((e, i) => {
+                //   if (parseInt(e.title) == valueOf(v.time_agg)) colIdx = i
+                // })
+                // colIdx = colIdx - (this.parsed.time_range[1] - this.parsed.time_range[0] + 1 - nVisibleRows)
+                if (this.e.querySelector('style')) {
+                  this.e.removeChild(this.e.querySelector('style'))
+                }
+                const cssRule = `tbody tr td:nth-child(${colIdx + 1}) { background-color: ${
+                  defaults.background_highlight
+                }; }`
+                const styleEl = document.createElement('style')
+                styleEl.innerHTML = cssRule
+                this.e.appendChild(styleEl)
               }
             }
           },
