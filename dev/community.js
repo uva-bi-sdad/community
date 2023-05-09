@@ -5413,7 +5413,7 @@ void (function () {
               passed: 0,
               failed: 0,
             },
-            range = site.data.variables[event.target.value].time_range[_u[defaults.dataview].get.dataset()],
+            range = site.data.variables[event.target.value].info[_u[defaults.dataview].get.dataset()].time_range,
             times = site.data.meta.overall.value
           e.setAttribute('index', _u._base_filter.c.size)
           _u._base_filter.c.set(_u._base_filter.c.size, f)
@@ -5424,7 +5424,7 @@ void (function () {
           e.appendChild(document.createElement('td'))
           e.lastElementChild.appendChild((ee = document.createElement('p')))
           ee.className = 'cell-text'
-          ee.innerText = event.target.innerText + ' (' + times[range[0]] + '-' + times[range[1]] + ')'
+          ee.innerText = event.target.innerText + (range ? ' (' + times[range[0]] + '-' + times[range[1]] + ')' : '')
 
           // filter result
           e.appendChild(document.createElement('td'))
