@@ -3498,7 +3498,14 @@ void (function () {
               }.bind(o)
               o.e.addEventListener('click', o.loader)
               o.deferred = true
-            }
+            } else if (
+              'number' === typeof o.default &&
+              o.default > -1 &&
+              o.options &&
+              o.options.length &&
+              o.default < o.options.length
+            )
+              o.default = o.options[o.default].value
             _u[o.id] = o
           }
         },
