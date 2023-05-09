@@ -54,7 +54,8 @@ void (function () {
         this.data_processed[k] = new Promise(resolve => {
           this.data_promise[k] = resolve
         })
-        if (k in this.info) this.info[k].site_file = this.metadata.url + '/' + this.info[k].name + '.json'
+        if (k in this.info)
+          this.info[k].site_file = (this.metadata.url ? this.metadata.url + '/' : '') + this.info[k].name + '.json'
         if (this.loaded[k]) {
           this.ingest_data(this.sets[k], k)
         } else if (
