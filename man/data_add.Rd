@@ -5,13 +5,14 @@
 \title{Adds documentation of a dataset to a datapackage}
 \usage{
 data_add(path, meta = list(), package_path = "datapackage.json",
-  dir = ".", write = TRUE, refresh = FALSE, sha = "512",
+  dir = ".", write = TRUE, refresh = TRUE, sha = "512",
   clean = FALSE, open_after = FALSE)
 }
 \arguments{
 \item{path}{A character vector of paths to plain-text tabular data files.}
 
-\item{meta}{Information about each data file. A list with a list entry for each entry in \code{path}; see details.}
+\item{meta}{Information about each data file. A list with a list entry for each entry in \code{path}; see details.
+If a single list is provided for multiple data files, it will apply to all.}
 
 \item{package_path}{Package to add the metadata to; path to the .json file, or a list with the read-in version.}
 
@@ -20,7 +21,7 @@ data_add(path, meta = list(), package_path = "datapackage.json",
 \item{write}{Logical; if \code{FALSE}, returns the \code{paths} metadata without reading or rewriting
 \code{package_path}.}
 
-\item{refresh}{Logical; if \code{TRUE}, will remove any existing dataset information.}
+\item{refresh}{Logical; if \code{FALSE}, will retain any existing dataset information.}
 
 \item{sha}{A number specifying the Secure Hash Algorithm function,
 if \code{openssl} is available (checked with \code{Sys.which('openssl')}).}

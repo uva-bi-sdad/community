@@ -186,7 +186,7 @@ void (function () {
         levels: /^lev/,
         ids: /^ids/,
         minmax: /^m[inax]{2}$/,
-        int_types: /^(?:year|int.*)$/,
+        int_types: /^(?:year|int|integer)$/,
         end_punct: /[.?!]$/,
         mustache: /\{(.*?)\}/g,
         measure_name: /(?:^measure|_name)$/,
@@ -201,6 +201,7 @@ void (function () {
         location_string: /^[^?]*/,
         time_ref: /\{time\}/g,
         pre_colon: /^[^:]*:/,
+        exclude_query: /^(features|time_range|id)$/,
       },
       tooltip_icon_rule =
         'button.has-note::after,.button-wrapper.has-note button::before,.has-note legend::before,.has-note label::before,.wrapper.has-note > div > label::before{display:none}',
@@ -286,7 +287,7 @@ void (function () {
                 u.options = u.option_sets[k].options
               }
               var ns = 0
-              if ('ID' === u.variable || 'ids' === u.options_source) {
+              if ('ID' === u.variable || patterns.ids.test(u.options_source)) {
                 const value = u.value()
                 let selection = -1 === value || '' === value ? u.subset : u.selection_subset,
                   v = {}
@@ -342,6 +343,17 @@ void (function () {
               if (u.filter) u.filter()
             }
           }
+        },
+        set_current: function () {
+          this.values = this.option_sets[this.dataset].values
+          this.display = this.option_sets[this.dataset].display
+          this.options = this.option_sets[this.dataset].options
+          this.source = ''
+          this.id in site.url_options
+            ? this.set(site.url_options[this.id])
+            : this.state in this.values
+            ? this.set(this.state)
+            : this.reset()
         },
         min: async function (u, c) {
           var cv = c.value(),
@@ -460,7 +472,6 @@ void (function () {
               site.data.data_queue[f.parsed.dataset][f.id] = function () {
                 return conditionals.dataview(f)
               }
-              if (site.data.loaded[f.parsed.dataset]) site.data.load_id_maps()
             }
           }
         },
@@ -469,8 +480,8 @@ void (function () {
           u.time_range.filtered[1] = -Infinity
           const d = u.get.dataset(),
             time = site.data.meta.times[d],
-            c = _c[u.id + '_filter']
-          if (!site.data.inited[d]) return void 0
+            current = u.time_range.filtered_index + ''
+          if (!site.data.inited[d]) return
           for (let i = time.n; i--; ) {
             let pass = false
             if (i >= u.time_range.index[0] && i <= u.time_range.index[1]) {
@@ -492,14 +503,17 @@ void (function () {
             u.time_range.index[0] + u.time_range.filtered[0] - u.time_range.time[0],
             u.time_range.index[1] + u.time_range.filtered[1] - u.time_range.time[1],
           ]
-          if (c)
-            c.forEach(ci => {
-              if ('update' === ci.type) {
-                _u[ci.id].update()
-              } else if (ci.type in conditionals) {
-                conditionals[ci.type](_u[ci.id], u)
-              }
-            })
+          if (current !== u.time_range.filtered_index + '') {
+            const c = _c[u.id + '_filter']
+            if (c)
+              c.forEach(ci => {
+                if ('update' === ci.type) {
+                  _u[ci.id].update()
+                } else if (ci.type in conditionals) {
+                  conditionals[ci.type](_u[ci.id], u)
+                }
+              })
+          }
         },
         time_range: async function (u, c, passive) {
           const v = c && c.value(),
@@ -508,7 +522,6 @@ void (function () {
             t = tv in site.data.variables ? site.data.variables[tv].info[d].min : 1,
             s = _c[u.id + '_time'],
             variable = v in site.data.variables ? v : valueOf(u.y)
-          if (!site.data.inited[d]) return void 0
           var r = variable && (await get_variable(variable, u.id))
           if (r) {
             const reset = d + variable != u.time_range.dataset + u.time_range.variable
@@ -529,14 +542,16 @@ void (function () {
                   if (reset || (isFinite(u.time_range.time[0]) && parseFloat(su.e.min) !== u.time_range.time[0])) {
                     su.e.min = u.time_range.time[0]
                     if (reset || !meta.retain_state || u.time_range.time[0] > value) {
-                      su.set(u.time_range.time[0])
+                      su.current_default = u.time_range.time[0]
+                      su.set(su.current_default)
                     }
                   }
                 } else if ('max' === si.type) {
                   if (reset || (isFinite(u.time_range.time[1]) && parseFloat(su.e.max) !== u.time_range.time[1])) {
                     su.e.max = u.time_range.time[1]
                     if (reset || !meta.retain_state || u.time_range.time[1] < value || value < u.time_range.time[0]) {
-                      su.set(u.time_range.time[1])
+                      su.current_default = u.time_range.time[1]
+                      su.set(su.current_default)
                     }
                   }
                 }
@@ -612,31 +627,33 @@ void (function () {
                         }
                         if ('copy' === this.target || this.api) {
                           var q = []
-                          if ('include' in f) q.push('include=' + f.include)
-                          if ('dataset' in f) q.push('dataset=' + f.dataset)
                           if ('id' in f && '' !== f.id && -1 != f.id) {
                             q.push('id=' + f.id)
                           } else {
                             if (_u._entity_filter.selected.length) q.push('id=' + _u._entity_filter.selected.join(','))
                           }
                           if (v) {
-                            if (!f.time_range)
+                            if (!f.time_range && v.time_range.filtered_index + '' !== v.time_range.index + '') {
                               q.push(
                                 'time_range=' +
                                   site.data.meta.times[d].value[v.time_range.filtered_index[0]] +
                                   ',' +
                                   site.data.meta.times[d].value[v.time_range.filtered_index[1]]
                               )
-                            if (v.features)
-                              Object.keys(v.features).forEach(k => {
-                                if (!(k in f)) {
-                                  f[k] = valueOf(v.features[k])
-                                  if (Array.isArray(f[k])) f[k] = f[k].join(',')
-                                  q.push(k + '=' + f[k])
-                                }
-                              })
+                            }
+                            if (!v.features) v.features = {}
+                            Object.keys(v.features).forEach(k => {
+                              if (!(k in f)) {
+                                f[k] = valueOf(v.features[k])
+                                if (Array.isArray(f[k])) f[k] = f[k].join(',')
+                                q.push(k + '=' + f[k])
+                              }
+                            })
                             if (_u._base_filter.c.size) _u._base_filter.value(q, v.parsed.time_agg)
                           }
+                          Object.keys(f).forEach(k => {
+                            if (!patterns.exclude_query.test(k) && !(k in v.features)) q.push(k + '=' + f[k])
+                          })
                           const k = s.endpoint + (q.length ? '?' + q.join('&') : '')
                           if (this.api) {
                             window.location.href = k
@@ -792,10 +809,13 @@ void (function () {
           retrieve: function () {
             this.source = []
             this.current_index = []
+            this.off_default = false
             this.options.forEach(o => {
               if (o.checked) {
                 this.source.push(this.values[i])
                 this.current_index.push(i)
+              } else {
+                this.off_default = true
               }
             })
             request_queue(this.id)
@@ -804,18 +824,28 @@ void (function () {
             if ('object' === typeof v) {
               this.source = []
               this.current_index = []
-              this.values.forEach((v, i) => {
-                if (-1 !== v.indexOf(v)) {
-                  this.source.push(v)
+              this.off_default = false
+              this.values.forEach((cv, i) => {
+                if (-1 !== v.indexOf(cv)) {
+                  this.source.push(cv)
                   this.current_index.push(i)
                   this.options[i].checked = true
-                } else this.options[i].checked = false
+                } else {
+                  this.off_default = true
+                  this.options[i].checked = false
+                }
               })
             } else {
               if ('string' === typeof v) {
-                return this.set(v.split(','))
+                return this.set('' === v ? this.values : v.split(','))
               } else {
-                if (-1 !== v) this.options[v].checked = true
+                if (-1 !== v) {
+                  this.options[v].checked = true
+                  this.off_default = false
+                  this.options.forEach(o => {
+                    if (!o.checked) this.off_default = true
+                  })
+                }
               }
             }
             request_queue(this.id)
@@ -824,9 +854,14 @@ void (function () {
             if (e.target.checked) {
               this.source.push(e.target.value)
               this.current_index.push(this.values.indexOf(e.target.value))
+              this.off_default = false
+              this.options.forEach(o => {
+                if (!o.checked) this.off_default = true
+              })
             } else {
               var i = this.source.indexOf(e.target.value)
               if (i !== -1) {
+                this.off_default = true
                 this.source.splice(i, 1)
                 this.current_index.splice(i, 1)
               }
@@ -905,6 +940,7 @@ void (function () {
                   v = this.parsed.max
                 }
               }
+              this.off_default = v !== this.current_default
               this.e.value = this.source = v
               this.current_index = v - this.parsed.min
               if ('range' === this.e.type) {
@@ -1242,7 +1278,7 @@ void (function () {
                 if (o) {
                   const previous = this.listbox.querySelector('.highlighted')
                   if (previous) previous.classList.remove('highlighted')
-                  if ('mouseover' === e.type) {
+                  if (e && 'mouseover' === e.type) {
                     e.target.classList.add('highlighted')
                   } else {
                     o.classList.add('highlighted')
@@ -1585,7 +1621,8 @@ void (function () {
             this.clickto && this.clickto.set(d.points[0].data.id)
           },
           update: async function (pass) {
-            clearTimeout(this.queue)
+            if (this.queue > 0) clearTimeout(this.queue)
+            this.queue = -1
             if (!pass) {
               if (!this.tab || this.tab.classList.contains('show')) this.queue = setTimeout(() => this.update(true), 50)
             } else {
@@ -1835,7 +1872,8 @@ void (function () {
             if (this.clickto) this.clickto.set(e.target.feature.properties[e.target.source.id_property])
           },
           update: async function (entity, caller, pass) {
-            clearTimeout(this.queue)
+            if (this.queue > 0) clearTimeout(this.queue)
+            this.queue = -1
             if (!pass) {
               if (!this.tab || this.tab.classList.contains('show'))
                 this.queue = setTimeout(() => this.update(void 0, void 0, true), 50)
@@ -2047,7 +2085,7 @@ void (function () {
                             entity.get_value(this.parsed.data, this.parent.time),
                             info && info.type ? patterns.int_types.test(info.type) : true
                           )
-                        return 'unknown' !== v && info.type in value_types ? value_types[info.type](v) : v
+                        return NaN !== v && info.type in value_types ? value_types[info.type](v) : v
                       }
                     if ('data' in this.parsed) {
                       return site.data.meta.times[this.parent.dataset].value[this.parent.time_agg]
@@ -2168,6 +2206,7 @@ void (function () {
                   } else {
                     p.temp.lastElementChild.className = p.base.lastElementChild.className =
                       'info-body-row-value' + ('statement' === p.value.parsed.variables ? ' statement' : '')
+                    if (p.name.ref && 'value' === p.value.text) p.value.ref = true
                     if (!p.value.ref)
                       p.temp.lastElementChild.innerText = p.base.lastElementChild.innerText = p.value.get()
                   }
@@ -2185,7 +2224,11 @@ void (function () {
             const y = _u[v.time_agg]
             this.v = valueOf(this.options.variable || (caller && (caller.color || caller.y)) || v.y)
             this.dataset = v.get.dataset()
-            if (y && !(this.dataset in site.data.meta.times)) return
+            if (y && !(this.dataset in site.data.meta.times)) {
+              if (!(this.id in site.data.data_queue[this.dataset]))
+                site.data.data_queue[this.dataset][this.id] = this.update
+              return
+            }
             this.time_agg = y ? y.value() - site.data.meta.times[this.dataset].range[0] : 0
             const time_range = this.v && site.data.variables[this.v].time_range[this.dataset]
             this.time = time_range ? this.time_agg - time_range[0] : 0
@@ -2234,7 +2277,8 @@ void (function () {
                 })
               }
             } else if (!this.options.floating) {
-              clearTimeout(this.queue)
+              if (this.queue > 0) clearTimeout(this.queue)
+              this.queue = -1
               if (!pass) {
                 if (!this.tab || this.tab.classList.contains('show'))
                   this.queue = setTimeout(() => this.update(void 0, void 0, true), 50)
@@ -2403,12 +2447,13 @@ void (function () {
             o.e.appendChild(document.createElement('tbody'))
             o.click = o.e.getAttribute('click')
             o.features = o.options.features
-            o.parsed = {summary: {}, order: [], time: 0, color: '', dataset: _u[o.view].get.dataset()}
+            o.parsed = {summary: {}, order: [], time: -1, color: '', dataset: _u[o.view].get.dataset()}
             o.header = []
             o.rows = {}
             o.rowIds = {}
             o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0
             const time = site.data.meta.times[o.parsed.dataset]
+            o.style = document.head.appendChild(document.createElement('style'))
             if (o.tab) {
               document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
                 'click',
@@ -2428,25 +2473,28 @@ void (function () {
             }
             o.show = function (e) {
               if (e.features && e.features.id in this.rows) {
+                if (site.settings.table_autoscroll) {
+                  this.rows[e.features.id].scrollTo('smooth' === site.settings.table_scroll_behavior)
+                }
+                if (this.pending > 0) clearTimeout(this.pending)
+                this.pending = -1
                 const row = this.rows[e.features.id].node()
                 if (row) {
-                  row.style.backgroundColor = defaults.background_highlight
-                  if (site.settings.table_autoscroll) {
-                    const h = this.e.parentElement.getBoundingClientRect().height,
-                      top = row.getBoundingClientRect().y - this.e.getBoundingClientRect().y
-                    this.e.parentElement.scroll({
-                      top: h > this.e.scrollHeight - top ? this.e.parentElement.scrollHeight : top,
-                      behavior: site.settings.table_scroll_behavior || 'smooth',
-                    })
-                  }
+                  row.classList.add('highlighted')
+                } else {
+                  this.pending = setTimeout(
+                    function () {
+                      const row = this.node()
+                      if (row) row.classList.add('highlighted')
+                    }.bind(this.rows[e.features.id]),
+                    0
+                  )
                 }
               }
             }
-            o.revert = function (e) {
-              if (e.features && e.features.id in this.rows) {
-                const row = this.rows[e.features.id].node()
-                if (row) row.style.backgroundColor = 'inherit'
-              }
+            o.revert = function () {
+              if (this.pending > 0) clearTimeout(this.pending)
+              this.e.querySelectorAll('tr.highlighted').forEach(e => e.classList.remove('highlighted'))
             }
             o.options.variable_source = o.options.variables
             if (o.options.variables) {
@@ -2474,7 +2522,7 @@ void (function () {
                 k = c.name || c
               o.header.push({title: 'Name', data: 'entity.features.name'})
               if (time && time.is_single) o.variable_header = true
-              const t = site.data.variables[k].time_range[o.parsed.dataset]
+              const t = k in site.data.variables && site.data.variables[k].time_range[o.parsed.dataset]
               if (t)
                 for (let n = t[1] - t[0] + 1; n--; ) {
                   o.header[n + 1] = {
@@ -2513,9 +2561,8 @@ void (function () {
                         render: async function (d, type, row) {
                           if ('data' === this.c.source) {
                             if (this.c.name in site.data.variables) {
-                              const i =
-                                row.time -
-                                (await get_variable(this.c.name, this.view).time_range[this.o.parsed.dataset][0])
+                              const v = await get_variable(this.c.name, this.o.view)
+                              const i = row.time - v.time_range[this.o.parsed.dataset][0]
                               return i < 0 ? NaN : row.entity.get_value(this.c.name, i)
                             } else return NaN
                           } else
@@ -2535,11 +2582,7 @@ void (function () {
                   data: 'entity.time.value',
                   render: function (d, type, row) {
                     const t = row.time + row.offset
-                    return d && t >= 0 && t < d.length
-                      ? 'number' === typeof d[t]
-                        ? site.data.format_value(d[t], true)
-                        : d[t]
-                      : NaN
+                    return d && t >= 0 && t < d.length ? d[t] : NaN
                   },
                 })
               }
@@ -2575,11 +2618,13 @@ void (function () {
             if (o.view) {
               add_dependency(o.view, {type: 'update', id: o.id})
               add_dependency(o.view + '_filter', {type: 'update', id: o.id})
+              add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
             } else o.view = defaults.dataview
             queue_init_datatable.bind(o)()
           },
           update: async function (pass) {
-            clearTimeout(this.queue)
+            if (this.queue > 0) clearTimeout(this.queue)
+            this.queue = -1
             if (!pass) {
               if (!this.tab || this.tab.classList.contains('show')) this.queue = setTimeout(() => this.update(true), 50)
             } else {
@@ -2589,38 +2634,38 @@ void (function () {
                   valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.')
                 const v = _u[this.view],
                   d = v.get.dataset(),
-                  state = d + v.value() + v.get.time_filters() + site.settings.digits + vn
-                if (!site.data.inited[d]) return void 0
-                if (state !== this.state) {
+                  state = d + v.value() + v.get.time_filters() + site.settings.digits + vn + site.settings.theme_dark,
+                  update = state !== this.state
+                const time = valueOf(v.time_agg),
+                  variable = await get_variable(vn, this.view)
+                this.parsed.time_range = variable ? variable.time_range[d] : site.data.meta.times[d].info.time_range[d]
+                this.parsed.time =
+                  ('number' === typeof time ? time - site.data.meta.times[d].range[0] : 0) - this.parsed.time_range[0]
+                if (update) {
                   this.rows = {}
                   this.rowIds = {}
                   this.table.clear()
                   let redraw = true
-                  if (v.selection) {
+                  if (v.valid) {
                     this.state = state
                     Object.keys(this.reference_options).forEach(
                       k => (this.options[k] = valueOf(this.reference_options[k]))
                     )
                     if (this.options.single_variable) {
-                      const time = valueOf(v.time_agg),
-                        variable = await get_variable(vn, this.view)
                       this.parsed.dataset = d
                       this.parsed.color = vn
-                      this.parsed.time_range = variable.time_range[d]
-                      this.parsed.time =
-                        ('number' === typeof time ? time - site.data.meta.times[d].range[0] : 0) -
-                        this.parsed.time_range[0]
                       this.parsed.summary = this.view in variable ? variable[this.view].summaries[d] : false
                       this.parsed.order = this.view in variable ? variable[this.view].order[d][this.parsed.time] : false
                       if (this.header.length < 2 || d !== this.header[1].dataset || vn !== this.header[1].variable) {
                         this.table.destroy()
                         $(this.e).empty()
-                        this.header = [{title: 'Name', data: 'entity.features.name'}]
+                        this.header = [{title: 'Name', data: 'entity.features.name', type: 'string'}]
                         if (-1 !== this.parsed.time_range[0]) {
                           for (let n = this.parsed.time_range[2]; n--; ) {
                             this.header[n + 1] = {
                               dataset: d,
                               variable: vn,
+                              type: 'string' === variable.type ? 'string' : 'num',
                               title: this.variable_header
                                 ? this.options.variables.title || site.data.format_label(vn)
                                 : site.data.meta.times[d].value[n + this.parsed.time_range[0]] + '',
@@ -2739,6 +2784,34 @@ void (function () {
                   }
                   redraw ? this.table.draw() : this.table.columns.adjust().draw(false)
                 }
+                if (this.parsed.time > -1 && v.time_range.filtered_index) {
+                  const offset =
+                    (v.time_range.filtered_index ? v.time_range.filtered_index[0] : 0) - v.time_range.index[0]
+                  this.dark_highlight = site.settings.theme_dark
+                  if (this.style.sheet.rules.length) this.style.sheet.removeRule(0)
+                  this.style.sheet.insertRule(
+                    '#' +
+                      this.id +
+                      ' td:nth-child(' +
+                      (this.parsed.time - offset + 2) +
+                      '){background-color: var(--background-highlight)}',
+                    0
+                  )
+                  if (!update && site.settings.table_autosort) {
+                    this.table.order([this.parsed.time + 1, 'dsc']).draw()
+                  }
+                  if (site.settings.table_autoscroll) {
+                    const w = this.e.parentElement.getBoundingClientRect().width,
+                      col = this.table
+                        .column(this.parsed.time + 1)
+                        .header()
+                        .getBoundingClientRect()
+                    this.e.parentElement.scroll({
+                      left: col.x - this.e.getBoundingClientRect().x + col.width + 16 - w,
+                      behavior: site.settings.table_scroll_behavior || 'smooth',
+                    })
+                  }
+                }
               }
             }
           },
@@ -2746,7 +2819,7 @@ void (function () {
             if (e.target._DT_CellIndex && e.target._DT_CellIndex.row in this.rowIds) {
               const id = this.rowIds[e.target._DT_CellIndex.row],
                 row = this.rows[id].node()
-              if (row) row.style.backgroundColor = defaults.background_highlight
+              if (row) row.classList.add('highlighted')
               if (id in site.data.entities) {
                 update_subs(this.id, 'show', site.data.entities[id])
               }
@@ -2756,7 +2829,7 @@ void (function () {
             if (e.target._DT_CellIndex && e.target._DT_CellIndex.row in this.rowIds) {
               const id = this.rowIds[e.target._DT_CellIndex.row],
                 row = this.rows[id].node()
-              if (row) row.style.backgroundColor = 'inherit'
+              if (row) row.classList.remove('highlighted')
               if (id in site.data.entities) {
                 update_subs(this.id, 'revert', site.data.entities[id])
               }
@@ -2901,7 +2974,8 @@ void (function () {
             o.update()
           },
           update: async function (pass) {
-            clearTimeout(this.queue)
+            if (this.queue > 0) clearTimeout(this.queue)
+            this.queue = -1
             if (!pass) {
               if (!this.tab || this.tab.classList.contains('show')) this.queue = setTimeout(() => this.update(true), 50)
             } else {
@@ -3213,13 +3287,13 @@ void (function () {
                     ticks.min.firstElementChild.firstElementChild.innerText = summary.n[y]
                       ? isFinite(summary.min[y])
                         ? site.data.format_value(summary.min[y], this.integer)
-                        : 'unknown'
-                      : 'unknown'
+                        : NaN
+                      : NaN
                     ticks.max.firstElementChild.firstElementChild.innerText = summary.n[y]
                       ? isFinite(summary.max[y])
                         ? site.data.format_value(summary.max[y], this.integer)
-                        : 'unknown'
-                      : 'unknown'
+                        : NaN
+                      : NaN
                     if ('none' !== site.settings.color_scale_center) {
                       ticks.center.firstElementChild.lastElementChild.innerText =
                         summary_levels[site.settings.summary_selection] + ' ' + site.settings.color_scale_center
@@ -3299,14 +3373,15 @@ void (function () {
               }
               setTimeout(this.queue.reset, 200)
             } else {
-              clearTimeout(this.queue.cooldown)
+              if (this.queue.cooldown > 0) clearTimeout(this.queue.cooldown)
               this.queue.e = e
               this.queue.cooldown = setTimeout(this.queue.trigger, 100)
             }
           },
           mouseout: function (e) {
             if (e.relatedTarget && this.id !== e.relatedTarget.getAttribute('of')) {
-              clearTimeout(this.queue.cooldown)
+              if (this.queue.cooldown > 0) clearTimeout(this.queue.cooldown)
+              this.queue.cooldown = -1
               this.revert()
               if (this.entity) {
                 update_subs(this.id, 'revert', this.entity)
@@ -3413,6 +3488,17 @@ void (function () {
             o.options = o.e.querySelectorAll(
               'select' === o.type ? 'option' : 'combobox' === o.type ? '.combobox-option' : 'input'
             )
+            if (o.options_source && patterns.ids.test(o.options_source)) {
+              o.loader = function () {
+                if (!this.e.classList.contains('locked')) {
+                  this.deferred = false
+                  this.e.removeEventListener('click', this.loader)
+                  request_queue(this.id)
+                }
+              }.bind(o)
+              o.e.addEventListener('click', o.loader)
+              o.deferred = true
+            }
             _u[o.id] = o
           }
         },
@@ -3445,7 +3531,6 @@ void (function () {
               elements[o.type].init(o)
             } else {
               site.data.data_queue[_u[o.view].parsed.dataset][o.id] = elements[o.type].init.bind(null, o)
-              if (site.data.loaded[_u[o.view].parsed.dataset]) site.data.load_id_maps()
             }
           }
         },
@@ -3561,7 +3646,9 @@ void (function () {
               const value = Number(f.value),
                 component =
                   'selected' === f.component
-                    ? site.data.meta.overall.value[agg]
+                    ? site.data.meta.overall.value[
+                        'undefined' === typeof agg ? _u[defaults.dataview].parsed.time_agg : agg
+                      ]
                     : f.time_component
                     ? site.data.meta.overall.value[f.component]
                     : f.component
@@ -3673,10 +3760,20 @@ void (function () {
             text.parts.lastElementChild.addEventListener('blur', tooltip_clear)
           } else {
             text.parts.lastElementChild.className = 'btn btn-link'
-            const u = _u[p.target]
-            if (u && 'function' === typeof u[p.type]) {
+            if (!Array.isArray(p.target)) p.target = [p.target]
+            const m = new Map()
+            p.target.forEach(t => {
+              const u = _u[t]
+              if (u && 'function' === typeof u[p.type]) m.set(t, u[p.type])
+            })
+            if (m.size) {
               text.parts.lastElementChild.setAttribute('aria-label', p.text.join(''))
-              text.parts.lastElementChild.addEventListener('click', u[p.type])
+              text.parts.lastElementChild.addEventListener(
+                'click',
+                function () {
+                  this.forEach(f => f())
+                }.bind(m)
+              )
             }
           }
         } else {
@@ -3709,9 +3806,12 @@ void (function () {
     function fill_ids_options(u, d, out, onend) {
       if (!(d in site.data.sets)) {
         site.data.data_queue[d][u.id] = function () {
-          return fill_ids_options(u, d, out, onend)
+          u.e.removeEventListener('click', u.loader)
+          fill_ids_options(u, d, out, onend)
+          u.set_current()
+          u.current_set = d
+          return
         }
-        if (site.data.loaded[d]) site.data.load_id_maps()
         return
       }
       out[d] = {options: [], values: {}, display: {}}
@@ -3833,7 +3933,7 @@ void (function () {
         site.url_options[u.id] = url_set.replace(patterns.pre_colon, '')
         if (!(site.url_options[u.id] in site.data.variables)) ck_suffix = true
       }
-      site.metadata.info[d].schema.fields.forEach(m => {
+      site.data.info[d].schema.fields.forEach(m => {
         const v = site.data.variables[m.name]
         if (v && !v.is_time) {
           const l = site.data.format_label(m.name)
@@ -3974,7 +4074,6 @@ void (function () {
         site.data.data_queue[d][u.id] = function () {
           return fill_levels_options(u, d, v, out)
         }
-        if (site.data.loaded[d]) site.data.load_id_maps()
       }
     }
 
@@ -4241,10 +4340,10 @@ void (function () {
                   entity.get_value(e.v, e.time),
                   patterns.int_types.test(site.data.variable_info[e.v].type)
                 )
-              : 'unknown'
+              : NaN
             s = s.replace(
               m[0],
-              'unknown' !== v && site.data.variable_info[e.v].type in value_types
+              NaN !== v && site.data.variable_info[e.v].type in value_types
                 ? value_types[site.data.variable_info[e.v].type](v)
                 : v
             )
@@ -4391,11 +4490,13 @@ void (function () {
       if (site.settings.hide_tooltips) page.script_style.sheet.insertRule(tooltip_icon_rule, 0)
       page.menu_toggler = {
         hide: function () {
+          page.menu_toggler.timeout = -1
           this.classList.add('hidden')
           content_resize()
         },
         toggle: function (type) {
-          clearTimeout(page.menu_toggler.timeout)
+          if (page.menu_toggler.timeout > 0) clearTimeout(page.menu_toggler.timeout)
+          page.menu_toggler.timeout = -1
           if ('closed' === this.parentElement.state) {
             this.parentElement.state = 'open'
             this.parentElement.firstElementChild.classList.remove('hidden')
@@ -4739,7 +4840,11 @@ void (function () {
           if ('display' in r.effects) {
             r.effects.display = {e: document.getElementById(r.effects.display)}
             e = r.effects.display.e.querySelector('.auto-input')
-            if (e) r.effects.display.u = _u[e.id]
+            if (e) {
+              const u = _u[e.id]
+              u.rule = r
+              r.effects.display.u = u
+            }
           }
           if ('lock' in r.effects) {
             const us = new Map()
@@ -4779,7 +4884,7 @@ void (function () {
         if (1 === site.metadata.datasets.length) {
           defaults.dataset = site.metadata.datasets[0]
         } else {
-          const info = site.metadata.info
+          const info = site.data.info
           for (let i = keys._u.length; i--; ) {
             const u = _u[keys._u[i]]
             if (u.dataset in info) {
@@ -4874,14 +4979,14 @@ void (function () {
         if (u.input && !patterns.settings.test(k)) {
           if (!u.range || u.range[0] !== u.range[1]) {
             let v = u.value()
-            if (v !== u.default) {
+            if ('off_default' in u ? u.off_default : v !== u.default) {
               if (Array.isArray(v)) v = v.join(',')
               if ('' !== v && null != v && '-1' != v) s += (s ? '&' : '?') + k + '=' + v
             }
           }
         }
       })
-      if (site.data && _u._base_filter.c.size) s += '&' + _u._base_filter.value([])
+      if (site.data && _u._base_filter.c.size) s += (s ? '&' : '?') + _u._base_filter.value([])
       return window.location.protocol + '//' + window.location.host + window.location.pathname + s
     }
 
@@ -4916,11 +5021,12 @@ void (function () {
               if (o.view) add_dependency(o.view, {type: 'options', id: o.id})
               const v = valueOf(o.dataset) || defaults.dataset
               if (!o.dataset) o.dataset = v
-              if (v in site.metadata.info) conditionals.options(o)
+              if (v in site.data.info) conditionals.options(o)
             }
           }
           if (combobox || 'select' === o.type) {
             // resolve options
+            o.set_current = conditionals.set_current.bind(o)
             if (Array.isArray(o.values)) {
               o.values = {}
               o.display = {}
@@ -4936,6 +5042,11 @@ void (function () {
               if (!(o.default in o.values) && !(o.default in _u)) {
                 o.default = Number(o.default)
                 if (isNaN(o.default)) o.default = -1
+                if (-1 !== o.default && o.default < o.options.length) {
+                  o.default = o.options[o.default].value
+                } else {
+                  o.default = -1
+                }
               }
               o.source = ''
               o.id in site.url_options ? o.set(site.url_options[o.id]) : o.reset()
@@ -5006,9 +5117,11 @@ void (function () {
             o.step = parseFloat(o.e.step) || 1
             o.parsed = {min: undefined, max: undefined}
             o.depends = {}
+            o.default_max = 'max' === o.default || 'last' === o.default
+            o.default_min = 'min' === o.default || 'first' === o.default
             o.update = async function () {
               const view = _u[this.view],
-                variable = valueOf(o.variable || view.y)
+                variable = valueOf(this.variable || view.y)
               if (!view.time_range) view.time_range = {time: []}
               var d = view.get ? view.get.dataset() : valueOf(this.dataset),
                 min = valueOf(this.min) || view.time,
@@ -5033,6 +5146,11 @@ void (function () {
                   ? site.data.variables[max].info[d || site.data.variables[max].datasets[0]].max
                   : parseFloat(max)
                 : this.min_ref
+              if (this.default_min) {
+                this.current_default = this.parsed.min
+              } else if (this.default_max) {
+                this.current_default = this.parsed.max
+              }
               if (this.ref && variable in site.data.variables) {
                 this.range[0] = this.e.min = isNaN(this.min_ref)
                   ? Math.max(view.time_range.time[0], this.parsed.min)
@@ -5044,13 +5162,13 @@ void (function () {
                   this.depends[view.y] = true
                   add_dependency(view.y, {type: 'update', id: this.id})
                 }
-                if (variable !== this.variable) this.reset()
+                if (this.source > this.parsed.max || this.source < this.parsed.min) this.reset()
                 this.variable = await get_variable(variable, this.view)
               } else {
                 this.e.min = this.parsed.min
-                if (this.parsed.min > this.source || (!this.source && 'min' === this.default)) this.set(this.parsed.min)
+                if (this.parsed.min > this.source || (!this.source && this.default_min)) this.set(this.parsed.min)
                 this.e.max = this.parsed.max
-                if (this.parsed.max < this.source || (!this.source && 'max' === this.default)) this.set(this.parsed.max)
+                if (this.parsed.max < this.source || (!this.source && this.default_max)) this.set(this.parsed.max)
               }
             }.bind(o)
             if (o.view) add_dependency(o.view, {type: 'update', id: o.id})
@@ -5072,20 +5190,26 @@ void (function () {
               if (patterns.number.test(o.default)) {
                 o.default = Number(o.default)
               } else
-                o.reset =
-                  'max' === o.default || 'last' === o.default
-                    ? function () {
-                        if (this.range) this.set(valueOf(this.range[1]))
-                      }.bind(o)
-                    : 'min' === o.default || 'first' === o.default
-                    ? function () {
-                        if (this.range) this.set(valueOf(this.range[0]))
-                      }.bind(o)
-                    : this.default in _u
-                    ? function () {
-                        this.set(valueOf(this.default))
-                      }.bind(o)
-                    : function () {}
+                o.reset = o.default_max
+                  ? function () {
+                      if (this.range) {
+                        this.current_default = valueOf(this.range[1])
+                        this.set(this.current_default)
+                      }
+                    }.bind(o)
+                  : o.default_max
+                  ? function () {
+                      if (this.range) {
+                        this.current_default = valueOf(this.range[0])
+                        this.set(this.current_default)
+                      }
+                    }.bind(o)
+                  : this.default in _u
+                  ? function () {
+                      this.current_default = valueOf(this.default)
+                      this.set(this.current_default)
+                    }.bind(o)
+                  : function () {}
             }
             if (o.variable) {
               const d = -1 === site.metadata.datasets.indexOf(o.dataset) ? defaults.dataset : o.dataset
@@ -5219,7 +5343,7 @@ void (function () {
       e.entity_filters.appendChild(document.createElement('div'))
       e.entity_filters.lastElementChild.className = 'row'
       e.entity_inputs = {}
-      Object.keys(site.data.data_queue)
+      Object.keys(site.data.loaded)
         .reverse()
         .forEach(d => {
           const u = elements.combobox.create(d, void 0, {search: true, multi: true, clearable: true}, 'filter.' + d)
@@ -5231,24 +5355,30 @@ void (function () {
           u.listbox.classList.add('multi')
           u.option_sets = {}
           u.dataset = d
+          u.loader = function () {
+            site.data.retrieve(this.dataset, site.data.info[this.dataset].site_file)
+            this.e.removeEventListener('click', this.loader)
+          }.bind(u)
+          if (!site.data.loaded[d]) {
+            u.e.addEventListener('click', u.loader)
+          }
           u.onchange = function () {
             conditionals.id_filter()
             request_queue('_entity_filter')
           }.bind(u)
+          u.set_current = conditionals.set_current.bind(u)
           fill_ids_options(
             u,
             d,
             u.option_sets,
             function () {
-              this.values = this.option_sets[this.dataset].values
-              this.display = this.option_sets[this.dataset].display
-              this.options = this.option_sets[this.dataset].options
-              toggle_input(u, !!u.options.length)
+              this.set_current()
+              toggle_input(this, !!this.options.length)
               Object.keys(this.values).forEach(id => {
                 _u._entity_filter.entities.set(id, site.data.entities[id])
               })
               _u._entity_filter.registered[d] = true
-              this.set(u.id in site.url_options ? site.url_options[u.id].split(',') : -1)
+              this.set(this.id in site.url_options ? site.url_options[this.id].split(',') : -1)
             }.bind(u)
           )
           toggle_input(u, !!u.options.length)
@@ -5596,12 +5726,9 @@ void (function () {
             }
             site.map[u.id]._layers[source] = L.geoJSON(JSON.parse(site.map._raw[source]), {
               pointToLayer: (point, coords) => L.circleMarker(coords),
-            }).on('mouseover', l => {
-              const layer = l.layer
-              if (layer && !layer._tooltip) {
-                const props = layer.feature && layer.feature.properties
+              onEachFeature: l => {
+                const props = l.properties
                 if (props) {
-                  const e = document.createElement('table')
                   Object.keys(props).forEach(f => {
                     const v = props[f]
                     if ('number' === typeof v) {
@@ -5609,7 +5736,18 @@ void (function () {
                       if (v < s[f][0]) s[f][0] = v
                       if (v > s[f][1]) s[f][1] = v
                     }
-                    const r = document.createElement('tr')
+                  })
+                }
+              },
+            }).on('mouseover', l => {
+              const layer = l.layer
+              if (layer && !layer._tooltip) {
+                const props = layer.feature && layer.feature.properties
+                if (props) {
+                  const e = document.createElement('table')
+                  Object.keys(props).forEach(f => {
+                    const v = props[f],
+                      r = document.createElement('tr')
                     r.appendChild(document.createElement('td'))
                     r.appendChild(document.createElement('td'))
                     r.firstElementChild.innerText = f
@@ -5633,7 +5771,10 @@ void (function () {
               }
             })
           }
-          site.map._overlay_property_selectors.forEach(u => conditionals.options(u))
+          site.map._overlay_property_selectors.forEach(u => {
+            u.dataset = source
+            conditionals.options(u)
+          })
           u.overlay.clearLayers()
           var n = 0
           const summaries = site.settings.circle_property && site.map._queue[source].property_summaries,
@@ -5893,19 +6034,19 @@ void (function () {
 
     function request_queue(id) {
       queue[id] = true
-      clearTimeout(queue._timeout)
+      if (queue._timeout > 0) clearTimeout(queue._timeout)
       queue._timeout = setTimeout(run_queue, 20)
       meta.lock_after = id
     }
 
     function run_queue() {
-      clearTimeout(queue._timeout)
+      if (queue._timeout > 0) clearTimeout(queue._timeout)
+      queue._timeout = -1
       keys._u.forEach(k => {
         if (queue[k]) {
           const d = refresh_conditions(k)
           if (d) {
-            site.data.data_queue[d][k] = run_queue
-            if (site.data.loaded[d]) site.data.load_id_maps()
+            if (!(k in site.data.data_queue[d])) site.data.data_queue[d][k] = run_queue
             return false
           }
           queue[k] = false
@@ -5934,11 +6075,12 @@ void (function () {
         const c = _u[id],
           d = _c[id],
           r = [],
-          v = c && c.value() + '',
-          dd = (c && c.dataset && valueOf(c.dataset)) || v
+          v = c && c.value() + ''
         if (c && (!meta.retain_state || c.state !== v)) {
-          if (dd in site.metadata.info && !site.data.loaded[dd]) {
-            site.data.retrieve(dd, site.metadata.info[dd].site_file)
+          const view = site.dataviews[c.view],
+            dd = c.dataset ? valueOf(c.dataset) : view ? view.get.dataset() : v
+          if (site.data.info && dd in site.data.loaded && !site.data.loaded[dd]) {
+            if (!c.deferred) site.data.retrieve(dd, site.data.info[dd].site_file)
             return dd
           }
           c.state = v
@@ -5971,8 +6113,8 @@ void (function () {
                   e.e.classList.remove('hidden')
                 } else if ('lock' === k) {
                   e.forEach(u => {
-                    u.e.disabled = false
-                    u.e.classList.remove('disabled', 'locked')
+                    u.e.classList.remove('locked')
+                    toggle_input(u, true)
                   })
                 } else if (k in _u) {
                   _u[k].set(valueOf(e))
@@ -5987,8 +6129,8 @@ void (function () {
                 }
               } else if ('lock' === k) {
                 e.forEach(u => {
-                  u.e.disabled = true
-                  u.e.classList.add('disabled', 'locked')
+                  u.e.classList.add('locked')
+                  toggle_input(u)
                 })
               } else if ('default' in ri) {
                 if (k in _u) {

@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">community</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1.108</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1.200</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,11 +57,12 @@
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">site_build</span><span class="op">(</span><span class="va">dir</span>, file <span class="op">=</span> <span class="st">"site.R"</span>, name <span class="op">=</span> <span class="st">"index.html"</span>, variables <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, bundle_data <span class="op">=</span> <span class="cn">FALSE</span>, bundle_libs <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  libs_overwrite <span class="op">=</span> <span class="cn">FALSE</span>, libs_base_only <span class="op">=</span> <span class="cn">FALSE</span>, open_after <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  aggregate <span class="op">=</span> <span class="cn">TRUE</span>, sparse_time <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">FALSE</span>, version <span class="op">=</span> <span class="st">"v1"</span>,</span>
-<span>  parent <span class="op">=</span> <span class="cn">NULL</span>, include_api <span class="op">=</span> <span class="cn">FALSE</span>, endpoint <span class="op">=</span> <span class="cn">NULL</span>, tag_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  serve <span class="op">=</span> <span class="cn">FALSE</span>, host <span class="op">=</span> <span class="st">"127.0.0.1"</span>, port <span class="op">=</span> <span class="fl">3000</span><span class="op">)</span></span>
+<span>  options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, bundle_data <span class="op">=</span> <span class="cn">FALSE</span>, bundle_package <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  bundle_libs <span class="op">=</span> <span class="cn">FALSE</span>, libs_overwrite <span class="op">=</span> <span class="cn">FALSE</span>, libs_base_only <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  open_after <span class="op">=</span> <span class="cn">FALSE</span>, aggregate <span class="op">=</span> <span class="cn">TRUE</span>, sparse_time <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  force <span class="op">=</span> <span class="cn">FALSE</span>, version <span class="op">=</span> <span class="st">"v1"</span>, parent <span class="op">=</span> <span class="cn">NULL</span>, include_api <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  endpoint <span class="op">=</span> <span class="cn">NULL</span>, tag_id <span class="op">=</span> <span class="cn">NULL</span>, serve <span class="op">=</span> <span class="cn">FALSE</span>, host <span class="op">=</span> <span class="st">"127.0.0.1"</span>,</span>
+<span>  port <span class="op">=</span> <span class="fl">3000</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">site_start_server</span><span class="op">(</span><span class="va">dir</span>, host <span class="op">=</span> <span class="st">"127.0.0.1"</span>, port <span class="op">=</span> <span class="fl">3000</span>,</span>
 <span>  open_after <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
@@ -95,6 +96,11 @@ which can be edited by hand.</p></dd>
 <dd><p>Logical; if <code>TRUE</code>, will write the data to the site file; useful when
 running the site locally without a server (viewing the file directly in a browser).
 Otherwise, the data will be loaded separately through an http request.</p></dd>
+
+
+<dt>bundle_package</dt>
+<dd><p>Logical; if <code>TRUE</code>, will include parts of the <code>datapackage.json</code> file in the
+<code>settings.json</code> and <code>index.html</code> files. Otherwise, this will be loaded separately through an http request.</p></dd>
 
 
 <dt>bundle_libs</dt>

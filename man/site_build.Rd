@@ -6,11 +6,12 @@
 \title{Render a Website}
 \usage{
 site_build(dir, file = "site.R", name = "index.html", variables = NULL,
-  options = list(), bundle_data = FALSE, bundle_libs = FALSE,
-  libs_overwrite = FALSE, libs_base_only = FALSE, open_after = FALSE,
-  aggregate = TRUE, sparse_time = TRUE, force = FALSE, version = "v1",
-  parent = NULL, include_api = FALSE, endpoint = NULL, tag_id = NULL,
-  serve = FALSE, host = "127.0.0.1", port = 3000)
+  options = list(), bundle_data = FALSE, bundle_package = FALSE,
+  bundle_libs = FALSE, libs_overwrite = FALSE, libs_base_only = FALSE,
+  open_after = FALSE, aggregate = TRUE, sparse_time = TRUE,
+  force = FALSE, version = "v1", parent = NULL, include_api = FALSE,
+  endpoint = NULL, tag_id = NULL, serve = FALSE, host = "127.0.0.1",
+  port = 3000)
 
 site_start_server(dir, host = "127.0.0.1", port = 3000,
   open_after = TRUE)
@@ -31,6 +32,9 @@ which can be edited by hand.}
 \item{bundle_data}{Logical; if \code{TRUE}, will write the data to the site file; useful when
 running the site locally without a server (viewing the file directly in a browser).
 Otherwise, the data will be loaded separately through an http request.}
+
+\item{bundle_package}{Logical; if \code{TRUE}, will include parts of the \code{datapackage.json} file in the
+\code{settings.json} and \code{index.html} files. Otherwise, this will be loaded separately through an http request.}
 
 \item{bundle_libs}{Logical; if \code{TRUE}, will download dependencies to the \code{docs/lib} directory.
 This can allow you to run the site offline for all but Leaflet tiles and any remote resources specified in

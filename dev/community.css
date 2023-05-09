@@ -4,10 +4,13 @@
 }
 .dark-theme {
   --background: #212121;
+  --border: #7e7e7e;
+  --border-highlight: #ffffff;
   --background-border: #494949;
   --background-input: #000000;
   --body-text: #ffffff;
-  --background-highlight: #141414;
+  --background-highlight: #414141;
+  --background-secondary: #141414;
   --link: #acc7ff;
   --highlight: #3c3c3c;
   --highlight-text: #ffffff;
@@ -17,6 +20,7 @@
   --lowlight-text: #acacac;
   --warning: #dc3545;
   --na: #7e7e7e;
+  --missing: #000000;
   --syntax-var: #aca2ef;
   --syntax-value: #8eb767;
   --syntax-component: #8cade2;
@@ -25,10 +29,13 @@
 }
 .light-theme {
   --background: #ffffff;
+  --border: #7e7e7e;
+  --border-highlight: #000000;
   --background-border: #c4c4c4;
   --background-input: #ffffff;
   --body-text: #000000;
   --background-highlight: #f0f0f0;
+  --background-secondary: #f0f0f0;
   --link: #315395;
   --highlight: #424242;
   --highlight-text: #ffffff;
@@ -38,6 +45,7 @@
   --lowlight-text: #575757;
   --warning: #b50212;
   --na: #7e7e7e;
+  --missing: #000000;
   --syntax-var: #5649b3;
   --syntax-value: #316500;
   --syntax-component: #004ecb;
@@ -63,7 +71,7 @@ table.dataTable tbody tr,
 .card-header {
   font-weight: bold;
   font-size: 1.1em;
-  background-color: var(--background-highlight);
+  background-color: var(--background-secondary);
 }
 .form-check-input,
 .form-check-input > label,
@@ -297,7 +305,7 @@ input.combobox-input {
   font-size: 1.2em;
   font-weight: bold;
   padding: 0.5em 0.3em;
-  background-color: var(--background-highlight);
+  background-color: var(--background-secondary);
   box-shadow: none;
 }
 .dark-theme .accordion-button::after {
@@ -718,7 +726,7 @@ button.has-note::after,
   width: 220px;
   max-width: 100%;
   border-radius: 0;
-  background-color: var(--background-highlight);
+  background-color: var(--background-secondary);
 }
 .panel-toggle.btn {
   position: absolute;
@@ -880,7 +888,7 @@ button.has-note::after,
   padding: 0 0 0.5em 0;
 }
 table.dataTable tbody tr.dtrg-group.dtrg-group {
-  background-color: var(--background-highlight);
+  background-color: var(--background-secondary);
   font-weight: bold;
 }
 table.dataTable.compact thead th,
@@ -1188,11 +1196,15 @@ input[type='range']::-ms-thumb {
   left: 0;
   z-index: 2;
 }
+.dataTables_wrapper td:first-child,
+table.dataTable thead > tr > th:first-child,
 .table-wrapper td:first-child {
   position: sticky;
   left: 0;
   z-index: 1;
 }
+.dataTables_wrapper th:first-child,
+.dataTables_wrapper td:first-child,
 .table-wrapper th:first-child,
 .table-wrapper td:first-child {
   text-align: left;
@@ -1200,8 +1212,11 @@ input[type='range']::-ms-thumb {
 }
 tr.highlighted,
 td.highlighted,
-tr.highlighted td:first-child {
-  background-color: var(--background-highlight);
+tr.highlighted td {
+  background-color: var(--background-highlight) !important;
+}
+.clickable {
+  cursor: pointer;
 }
 
 @media screen and (max-width: 700px) {

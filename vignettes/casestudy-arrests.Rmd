@@ -60,19 +60,28 @@ if (!file.exists(paste0(dir, "/docs/counties.geojson"))) {
   
   cook_suburbs <- cbind(cook[, 1:5], cook_county[2, -(1:6)])
   cook_suburbs$NAME = "cook county suburbs"
-  cook_suburbs[, c("ALAND", "AWATER")] <- colSums(st_drop_geometry(cook_county[-1, c("ALAND", "AWATER")]))
+  cook_suburbs[, c("ALAND", "AWATER")] <- colSums(st_drop_geometry(
+    cook_county[-1, c("ALAND", "AWATER")]
+  ))
   st_geometry(cook_suburbs) <- st_union(cook_county[-1,])
   
   shapes[shapes$NAME == "De Witt", "NAME"] <- "dewitt"
-  shapes <- rbind(shapes[shapes$NAME != "Cook",], chicago, cook_suburbs)
+  cols <- c("GEOID", "NAME", "geometry")
+  shapes <- rbind(shapes[shapes$NAME != "Cook", cols], chicago[, cols], cook_suburbs[, cols])
   unlink(paste0(dir, "/docs/counties.geojson"))
   st_write(shapes, paste0(dir, "/docs/counties.geojson"))
 }
   
 # download arrests data -- run any time the data are updated
-data_sex <- read.csv("https://icjia.illinois.gov/arrestexplorer/api/?split=county,gender")
-data_age <- read.csv("https://icjia.illinois.gov/arrestexplorer/api/?split=county,age_group")
-data_race <- read.csv("https://icjia.illinois.gov/arrestexplorer/api/?split=county,race")
+data_sex <- read.csv(
+  "https://icjia.illinois.gov/arrestexplorer/api/?split=county,gender"
+)
+data_age <- read.csv(
+  "https://icjia.illinois.gov/arrestexplorer/api/?split=county,age_group"
+)
+data_race <- read.csv(
+  "https://icjia.illinois.gov/arrestexplorer/api/?split=county,race"
+)
 data <- cbind(data_sex, data_age[, -(1:2)], data_race[, -(1:2)])
 data <- data[data$county != "non county agencies",]
 
@@ -115,15 +124,18 @@ page_menu(
   default_open = TRUE
 )
 
-input_dataview("main_view", "selected_variable", time = "Year", time_agg = "selected_year")
+input_dataview(
+  "main_view", "selected_variable", time = "Year", time_agg = "selected_year"
+)
 
 output_info(
   "features.name", c("variables.long_name" = "value"),
   floating = TRUE, subto = c("main_map", "main_plot")
 )
 output_map(
-  list(name = "data", url = paste0(dir, "/docs/counties.geojson"), id_property = "GEOID"),
-  id = "main_map", dataview = "main_view", subto = c("main_plot", "main_legend")
+  list(
+    name = "data", url = paste0(dir, "/docs/counties.geojson"), id_property = "GEOID"
+  ), id = "main_map", dataview = "main_view", subto = c("main_plot", "main_legend")
 )
 output_legend(id = "main_legend")
 page_tabgroup(

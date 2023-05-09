@@ -4,11 +4,12 @@
 #'
 #' @param path A character vector of paths to plain-text tabular data files.
 #' @param meta Information about each data file. A list with a list entry for each entry in \code{path}; see details.
+#' If a single list is provided for multiple data files, it will apply to all.
 #' @param package_path Package to add the metadata to; path to the .json file, or a list with the read-in version.
 #' @param dir Directory in which to look for \code{path}, and write \code{package_path}.
 #' @param write Logical; if \code{FALSE}, returns the \code{paths} metadata without reading or rewriting
 #' \code{package_path}.
-#' @param refresh Logical; if \code{TRUE}, will remove any existing dataset information.
+#' @param refresh Logical; if \code{FALSE}, will retain any existing dataset information.
 #' @param sha A number specifying the Secure Hash Algorithm function,
 #' if \code{openssl} is available (checked with \code{Sys.which('openssl')}).
 #' @param clean Logical; if \code{TRUE}, strips special characters before saving.
@@ -47,7 +48,7 @@
 #' @export
 
 data_add <- function(path, meta = list(), package_path = "datapackage.json", dir = ".", write = TRUE,
-                     refresh = FALSE, sha = "512", clean = FALSE, open_after = FALSE) {
+                     refresh = TRUE, sha = "512", clean = FALSE, open_after = FALSE) {
   if (missing(path)) cli_abort("{.arg path} must be specified")
   if (missing(dir)) dir <- dirname(path[[1]])
   if (check_template("site", dir = dir)$status[["strict"]]) dir <- paste0(dir, "/docs/data")
@@ -86,7 +87,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
   }
   collect_metadata <- function(file) {
     f <- path[[file]]
-    m <- metas[[file]]
+    m <- if (single_meta) meta else metas[[file]]
     name <- basename(f)
     format <- if (grepl(".csv", name, fixed = TRUE)) "csv" else if (grepl(".rds", name, fixed = TRUE)) "rds" else "tsv"
     if (is.na(format)) format <- "rds"
@@ -112,17 +113,6 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
     unpack_meta <- function(n) {
       if (!length(m[[n]])) list() else if (is.list(m[[n]][[1]])) m[[n]] else list(m[[n]])
     }
-    varinf <- unpack_meta("variables")
-    if (length(varinf) == 1 && is.character(varinf[[1]])) {
-      if (!file.exists(varinf[[1]])) varinf[[1]] <- paste0(dir, "/", varinf[[1]])
-      if (file.exists(varinf[[1]])) {
-        if (varinf[[1]] %in% names(metas)) {
-          varinf <- metas[[varinf[[1]]]]
-        } else {
-          varinf <- metas[[varinf[[1]]]] <- read_json(varinf[[1]])
-        }
-      }
-    }
     ids <- unpack_meta("ids")
     idvars <- NULL
     for (i in seq_along(ids)) {
@@ -137,8 +127,21 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
     }
     timevar <- unlist(unpack_meta("time"))
     times <- if (is.null(timevar)) rep(1, nrow(data)) else data[[timevar]]
-    varinf_full <- names(varinf)
-    varinf_suf <- sub("^[^:]+:", "", varinf_full)
+    if (!single_meta) {
+      varinf <- unpack_meta("variables")
+      if (length(varinf) == 1 && is.character(varinf[[1]])) {
+        if (!file.exists(varinf[[1]])) varinf[[1]] <- paste0(dir, "/", varinf[[1]])
+        if (file.exists(varinf[[1]])) {
+          if (varinf[[1]] %in% names(metas)) {
+            varinf <- metas[[varinf[[1]]]]
+          } else {
+            varinf <- metas[[varinf[[1]]]] <- read_json(varinf[[1]])
+          }
+        }
+      }
+      varinf_full <- names(varinf)
+      varinf_suf <- sub("^[^:]+:", "", varinf_full)
+    }
     res <- list(
       bytes = as.integer(info$size),
       encoding = stri_enc_detect(f)[[1]][1, 1],
@@ -171,10 +174,12 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
           v <- data[[cn]]
           invalid <- !is.finite(v)
           r <- list(name = cn, duplicates = sum(duplicated(v)))
-          if (cn %in% varinf_full) {
-            r$info <- varinf[[cn]]
-          } else if (cn %in% varinf_suf) {
-            r$info <- varinf[[which(varinf_suf == cn)]]
+          if (!single_meta) {
+            if (cn %in% varinf_full) {
+              r$info <- varinf[[cn]]
+            } else if (cn %in% varinf_suf) {
+              r$info <- varinf[[which(varinf_suf == cn)]]
+            }
           }
           r$time_range <- which(unname(tapply(v, times, function(v) any(!is.na(v))))) - 1
           r$time_range <- if (length(r$time_range)) r$time_range[c(1, length(r$time_range))] else c(-1, -1)
@@ -198,19 +203,30 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
         })
       )
     )
-    if ("_references" %in% names(varinf)) res[["_references"]] <- varinf[["_references"]]
+    if (!single_meta && "_references" %in% names(varinf)) res[["_references"]] <- varinf[["_references"]]
     if (Sys.which("openssl") != "") {
       res[[paste0("sha", sha)]] <- calculate_sha(f, sha)
     }
     res
   }
+  single_meta <- FALSE
   metas <- if (!is.null(names(meta))) {
-    if (!is.null(names(path)) && all(names(path) %in% names(meta))) meta[names(path)] else rep(list(meta), length(path))
+    if (!is.null(names(path)) && all(names(path) %in% names(meta))) {
+      meta[names(path)]
+    } else {
+      single_meta <- TRUE
+      if (length(meta$variables) == 1 && is.character(meta$variables)) {
+        if (!file.exists(meta$variables)) meta$variables <- paste0(dir, "/", meta$variables)
+        if (file.exists(meta$variables)) meta$variables <- read_json(meta$variables)
+      }
+      meta
+    }
   } else {
     meta[seq_along(path)]
   }
   metadata <- lapply(seq_along(path), collect_metadata)
   if (write) {
+    if (single_meta) package$measure_info <- meta$variables
     package$resources <- c(metadata, if (!refresh) package$resources)
     names <- vapply(package$resources, "[[", "", "filename")
     if (anyDuplicated(names)) {
@@ -223,7 +239,9 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
     }
     write_json(package, package_path, pretty = TRUE, auto_unbox = TRUE, digits = 6)
     if (interactive()) {
-      cli_bullets(c(v = "added resource to {.file datapackage.json}:", "*" = paste0("{.path ", package_path, "}")))
+      cli_bullets(c(v = paste(
+        if (refresh) "updated resource in" else "added resource to", "{.file datapackage.json}:"
+      ), "*" = paste0("{.path ", package_path, "}")))
       if (open_after) navigateToFile(package_path)
     }
   }

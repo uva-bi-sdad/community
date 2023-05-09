@@ -4,7 +4,8 @@ void (function () {
     this.hooks = hooks || {}
     this.defaults = defaults || {dataview: 'default_view', time: 'time'}
     this.settings = settings || {}
-    this.info = (settings && settings.metadata.info) || {}
+    this.metadata = this.settings.metadata || {}
+    this.info = this.metadata.info || {}
     this.features = {}
     this.variables = {}
     this.variable_codes = {}
@@ -35,24 +36,74 @@ void (function () {
     this.data_ready = new Promise(resolve => {
       this.all_data_ready = resolve
     })
-    if ('string' === typeof settings.metadata.datasets) settings.metadata.datasets = [settings.metadata.datasets]
-    this.map_variables()
-    settings.metadata.datasets.forEach(k => {
-      this.loaded[k] = k in this.sets
-      this.inited[k] = false
-      this.data_processed[k] = new Promise(resolve => {
-        this.data_promise[k] = resolve
+    if ('string' === typeof this.metadata.datasets) this.metadata.datasets = [this.metadata.datasets]
+    const init = () => {
+      if (!('datasets' in this.metadata)) this.metadata.datasets = Object.keys(this.info)
+      if ('measure_info' in this.metadata) {
+        const info = this.metadata.measure_info
+        this.metadata.datasets.forEach(d => {
+          if ('_references' in info) this.info[d]._references = info._references
+          const v = this.info[d].schema.fields
+          v.forEach(e => (e.name in info ? (e.info = info[e.name]) : ''))
+        })
+      }
+      this.map_variables()
+      this.metadata.datasets.forEach(k => {
+        this.loaded[k] = k in this.sets
+        this.inited[k] = false
+        this.data_processed[k] = new Promise(resolve => {
+          this.data_promise[k] = resolve
+        })
+        if (k in this.info) this.info[k].site_file = this.metadata.url + '/' + this.info[k].name + '.json'
+        if (this.loaded[k]) {
+          this.ingest_data(this.sets[k], k)
+        } else if (
+          !this.in_browser ||
+          (this.settings.settings && !this.settings.settings.partial_init) ||
+          !this.defaults.dataset ||
+          k === this.defaults.dataset
+        )
+          this.retrieve(k, this.info[k].site_file)
       })
-      if (this.loaded[k]) {
-        this.ingest_data(this.sets[k], k)
-      } else if (
-        !this.in_browser ||
-        (this.settings.settings && !this.settings.settings.partial_init) ||
-        !this.defaults.dataset ||
-        k === this.defaults.dataset
-      )
-        this.retrieve(k, settings.metadata.info[k].site_file)
-    })
+    }
+    if ('package' in this.metadata && !('info' in this.metadata)) {
+      if ('undefined' === typeof window) {
+        require('https')
+          .get(this.metadata.url + this.metadata.package, r => {
+            const c = []
+            r.on('data', d => {
+              c.push(d)
+            })
+            r.on('end', () => {
+              this.info = {}
+              const dp = JSON.parse(c.join(''))
+              if (dp.measure_info) this.metadata.measure_info = dp.measure_info
+              dp.resources.forEach(r => (this.info[r.name] = r))
+              init()
+            })
+          })
+          .end()
+      } else {
+        const f = new window.XMLHttpRequest()
+        f.onreadystatechange = () => {
+          if (4 === f.readyState) {
+            if (200 === f.status) {
+              this.info = {}
+              const dp = JSON.parse(f.responseText)
+              if (dp.measure_info) this.metadata.measure_info = dp.measure_info
+              dp.resources.forEach(r => (this.info[r.name] = r))
+              init()
+            } else {
+              throw new Error('failed to load datapackage: ' + f.responseText)
+            }
+          }
+        }
+        f.open('GET', this.metadata.url + this.metadata.package)
+        f.send()
+      }
+    } else {
+      init()
+    }
   }
 
   function quantile(p, n, o, x, l1) {
@@ -382,7 +433,7 @@ void (function () {
     },
     format_value: function (v, int) {
       if (null === v || isNaN(v)) {
-        return 'unknown'
+        return NaN
       } else if (int) {
         return v
       } else {
@@ -430,13 +481,13 @@ void (function () {
               datasets: [name],
               info: {},
               time_range: {},
-              type: 'unknown',
+              type: NaN,
               meta: {
                 full_name: k,
                 measure: k.split(':')[1] || k,
                 short_name: this.format_label(k),
                 long_name: k,
-                type: 'unknown',
+                type: NaN,
               },
             }
             this.variable_info[k] = this.variables[k].meta
@@ -456,17 +507,7 @@ void (function () {
           }
         })
       }
-      if (
-        this.in_browser &&
-        this.settings.settings.partial_init &&
-        (!this.defaults.dataset || name === this.defaults.dataset || this.inited.first)
-      ) {
-        this.load_id_maps()
-      } else {
-        for (const k in this.loaded)
-          if (Object.prototype.hasOwnProperty.call(this.loaded, k) && !this.loaded[k]) return void 0
-        this.load_id_maps()
-      }
+      this.load_id_maps()
     },
     retrieve: async function (name, url) {
       if (!this.load_requests[name]) {
@@ -498,7 +539,7 @@ void (function () {
       this.hooks.data_load && this.hooks.data_load()
     },
     load_id_maps: async function () {
-      this.settings.metadata.datasets.forEach(k => {
+      this.metadata.datasets.forEach(k => {
         var has_map = false
         this.info[k].ids.forEach((id, i) => {
           if ('map' in id) {
@@ -523,7 +564,19 @@ void (function () {
               this.map_entities(k)
             } else {
               this.data_maps[map] = {queue: [k], resource: {}, retrieved: false}
-              if ('undefined' !== typeof window) {
+              if ('undefined' === typeof window) {
+                require('https')
+                  .get(id.map, r => {
+                    const c = []
+                    r.on('data', d => {
+                      c.push(d)
+                    })
+                    r.on('end', () => {
+                      this.ingest_map(JSON.parse(c.join('')), r.req.protocol + '//' + r.req.host + r.req.path, i)
+                    })
+                  })
+                  .end()
+              } else {
                 const f = new window.XMLHttpRequest()
                 f.onreadystatechange = function (url, fi) {
                   if (4 === f.readyState) {
@@ -536,18 +589,6 @@ void (function () {
                 }.bind(this, map, i)
                 f.open('GET', map, true)
                 f.send()
-              } else {
-                require('https')
-                  .get(id.map, r => {
-                    const c = []
-                    r.on('data', d => {
-                      c.push(d)
-                    })
-                    r.on('end', () => {
-                      this.ingest_map(JSON.parse(c.join('')), r.req.protocol + '//' + r.req.host + r.req.path, i)
-                    })
-                  })
-                  .end()
               }
             }
           }
@@ -887,67 +928,68 @@ void (function () {
       } else await this.summary_ready[summaryId]
     },
     map_variables: function () {
-      Object.keys(this.info).forEach(k => {
+      this.metadata.datasets.forEach(k => {
         this.data_queue[k] = {}
         const m = this.info[k]
-        m.id_vars = m.ids.map(id => id.variable)
-        m.schema.fields.forEach(v => {
-          const vn = v.name
-          if (vn in this.variables) {
-            const ve = this.variables[vn]
-            ve.datasets.push(k)
-            ve.info[k] = v
-            if ('string' === v.type) {
-              ve.levels = []
-              ve.levels_ids = {}
-              ;((v.info && v.info.levels) || Object.keys(v.table)).forEach(l => {
-                if (!(l in ve.levels_ids)) {
+        if (m) {
+          m.id_vars = m.ids.map(id => id.variable)
+          m.schema.fields.forEach(v => {
+            const vn = v.name
+            if (vn in this.variables) {
+              const ve = this.variables[vn]
+              ve.datasets.push(k)
+              ve.info[k] = v
+              if ('string' === v.type) {
+                ve.levels = []
+                ve.levels_ids = {}
+                ;((v.info && v.info.levels) || Object.keys(v.table)).forEach(l => {
+                  if (!(l in ve.levels_ids)) {
+                    ve.levels_ids[l] = ve.levels.length
+                    ve.levels.push(l)
+                  }
+                })
+              }
+            } else {
+              const ve = (this.variables[vn] = {
+                datasets: [k],
+                info: {},
+                time_range: {},
+                type: v.type,
+              })
+              ve.info[k] = v
+              if ('string' === v.type) {
+                ve.levels = []
+                ve.levels_ids = {}
+                ;(v.info.levels || Object.keys(v.table)).forEach(l => {
                   ve.levels_ids[l] = ve.levels.length
                   ve.levels.push(l)
-                }
-              })
-            }
-          } else {
-            const ve = (this.variables[vn] = {
-              datasets: [k],
-              info: {},
-              time_range: {},
-              type: v.type,
-            })
-            ve.info[k] = v
-            if ('string' === v.type) {
-              ve.levels = []
-              ve.levels_ids = {}
-              ;(v.info.levels || Object.keys(v.table)).forEach(l => {
-                ve.levels_ids[l] = ve.levels.length
-                ve.levels.push(l)
-              })
-            }
-            ve.meta = ve.info[k].info
-            if (!ve.meta)
-              ve.meta = {
-                full_name: vn,
-                measure: vn.split(':')[1] || vn,
-                short_name: this.format_label(vn),
-                type: 'integer',
+                })
               }
-            ve.meta.full_name = vn
-            if (!('measure' in ve.meta)) ve.meta.measure = vn.split(':')[1] || vn
-            if (!('short_name' in ve.meta)) ve.meta.short_name = this.format_label(vn)
-            if (!('long_name' in ve.meta)) ve.meta.long_name = ve.meta.short_name
-            if (!(vn in this.variable_info)) this.variable_info[vn] = ve.meta
-          }
-        })
+              ve.meta = ve.info[k].info
+              if (!ve.meta)
+                ve.meta = {
+                  full_name: vn,
+                  measure: vn.split(':')[1] || vn,
+                  short_name: this.format_label(vn),
+                  type: 'integer',
+                }
+              ve.meta.full_name = vn
+              if (!('measure' in ve.meta)) ve.meta.measure = vn.split(':')[1] || vn
+              if (!('short_name' in ve.meta)) ve.meta.short_name = this.format_label(vn)
+              if (!('long_name' in ve.meta)) ve.meta.long_name = ve.meta.short_name
+              if (!(vn in this.variable_info)) this.variable_info[vn] = ve.meta
+            }
+          })
+        }
       })
     },
     map_entities: async function (g) {
-      const views = this.in_browser ? Object.keys(this.settings.dataviews) : ['default_view']
       if (g in this.sets && !this.inited[g]) {
         const s = this.sets[g],
           time = this.meta.times[g],
           retriever = this.retrievers[time.is_single ? 'single' : 'multi'],
           datasets = Object.keys(this.sets),
-          infos = this.settings.metadata.info
+          infos = this.info
         Object.keys(s).forEach(id => {
           const si = s[id],
             l = id.length
@@ -980,7 +1022,7 @@ void (function () {
               if ('id' === k || overwrite || !(k in e.features)) {
                 e.features[k] = f[k]
               }
-              if (-1 !== this.settings.metadata.datasets.indexOf(k)) {
+              if (-1 !== this.metadata.datasets.indexOf(k)) {
                 if (!(f[k] in this.entity_tree)) this.entity_tree[f[k]] = {parents: {}, children: {}}
                 this.entity_tree[f[k]].children[id] = rel
                 rel.parents[f[k]] = this.entity_tree[f[k]]
@@ -999,7 +1041,7 @@ void (function () {
                 }
               })
             }
-            views.forEach(v => {
+            ;(this.in_browser ? Object.keys(this.settings.dataviews) : ['default_view']).forEach(v => {
               if (!(v in e)) {
                 e[v] = {summary: {}, rank: {}, subset_rank: {}}
               }

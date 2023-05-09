@@ -28,8 +28,7 @@ data_add(
     time = "time",
     variables = "docs/data/measure_info.json"
   ),
-  dir = "docs/data",
-  refresh = TRUE
+  dir = "docs/data"
 )
 
 site_build(".", serve = TRUE, options = list(

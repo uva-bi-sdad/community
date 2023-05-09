@@ -65,7 +65,7 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
       "page_section(",
       '  wraps = "col-sm",',
       '  output_plot("variable", "mpg", id = "main_plot"),',
-      '  output_table("variable")',
+      '  output_table("variable", options = list(dom = "<\'row\'t>"))',
       ")",
       "",
       "# add a tooltip",

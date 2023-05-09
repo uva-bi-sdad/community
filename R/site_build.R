@@ -12,6 +12,8 @@
 #' @param bundle_data Logical; if \code{TRUE}, will write the data to the site file; useful when
 #' running the site locally without a server (viewing the file directly in a browser).
 #' Otherwise, the data will be loaded separately through an http request.
+#' @param bundle_package Logical; if \code{TRUE}, will include parts of the \code{datapackage.json} file in the
+#' \code{settings.json} and \code{index.html} files. Otherwise, this will be loaded separately through an http request.
 #' @param bundle_libs Logical; if \code{TRUE}, will download dependencies to the \code{docs/lib} directory.
 #' This can allow you to run the site offline for all but Leaflet tiles and any remote resources specified in
 #' \code{file} (such as map shapes) or metadata (such as map overlays).
@@ -52,9 +54,9 @@
 #' @export
 
 site_build <- function(dir, file = "site.R", name = "index.html", variables = NULL,
-                       options = list(), bundle_data = FALSE, bundle_libs = FALSE, libs_overwrite = FALSE, libs_base_only = FALSE,
-                       open_after = FALSE, aggregate = TRUE, sparse_time = TRUE, force = FALSE, version = "v1", parent = NULL,
-                       include_api = FALSE, endpoint = NULL, tag_id = NULL, serve = FALSE, host = "127.0.0.1", port = 3000) {
+                       options = list(), bundle_data = FALSE, bundle_package = FALSE, bundle_libs = FALSE, libs_overwrite = FALSE,
+                       libs_base_only = FALSE, open_after = FALSE, aggregate = TRUE, sparse_time = TRUE, force = FALSE, version = "v1",
+                       parent = NULL, include_api = FALSE, endpoint = NULL, tag_id = NULL, serve = FALSE, host = "127.0.0.1", port = 3000) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., dir = ".")')
   page <- paste0(dir, "/", file)
   if (!file.exists(page)) cli_abort("{.file {page}} does not exist")
@@ -84,13 +86,11 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
       for (oi in seq_along(dataset_order)) {
         i <- dataset_order[oi]
         d <- meta$resources[[i]]
-        time_info <- list()
         temp <- list()
         time_vars <- c(time_vars, d$time)
         for (v in d$schema$fields) {
           if ((length(d$time) && v$name == d$time[[1]]) || v$name %in% vars) {
             temp[[v$name]] <- v
-            if (length(d$time) && v$name == d$time[[1]]) time_info <- v
           }
         }
         if (length(variables)) {
@@ -103,33 +103,23 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
           }
           d$schema$fields <- unname(temp[vars])
         }
-        if (!is.null(parent)) {
-          d$site_file <- paste0(parent, "/", d$name, ".json")
-        } else {
+        if (is.null(parent)) {
           file <- paste0(ddir, d$filename)
-          d$site_file <- paste0(d$name, ".json")
-          path <- paste0(dir, "/docs/", d$site_file)
+          path <- paste0(dir, "/docs/", d$name, ".json")
           if (file.exists(file)) {
             if (force || (!file.exists(path) || file.mtime(file) > file.mtime(path))) {
-              vars <- vapply(d$schema$fields, "[[", "", "name")
               sep <- if (grepl(".csv", file, fixed = TRUE)) "," else "\t"
               cols <- scan(file, "", nlines = 1, sep = sep, quiet = TRUE)
-              add_id <- length(d$ids) && !d$ids[[1]]$variable %in% vars
-              if (add_id) vars <- c(d$ids[[1]]$variable, vars)
-              if (length(vars) == length(cols) && all(vars %in% cols)) {
-                types <- vapply(d$schema$fields, function(e) if (e$type == "string") "c" else "n", "")
-                if (add_id) types <- c("c", types)
-                data <- as.data.frame(read_delim_arrow(
-                  gzfile(file), sep,
-                  col_names = vars, col_types = paste(types, collapse = ""), skip = 1
-                ))
-              } else {
-                data <- read_delim_arrow(gzfile(file), sep)
-                for (col in colnames(data)) {
-                  v <- data[[col]]
-                  if (!is.numeric(v) && !is.character(v)) data[[col]] <- as.character(v)
-                }
-              }
+              vars <- vapply(d$schema$fields, "[[", "", "name")
+              types <- vapply(d$schema$fields, function(e) if (e$type == "string") "c" else "n", "")
+              names(types) <- vars
+              if (length(d$ids[[1]]$variable)) types[d$ids[[1]]$variable] <- "c"
+              types <- types[cols]
+              types[is.na(types)] <- "-"
+              data <- as.data.frame(read_delim_arrow(
+                gzfile(file), sep,
+                col_names = cols, col_types = paste(types, collapse = ""), skip = 1
+              ))
               time <- NULL
               if (length(d$time) && d$time[[1]] %in% colnames(data)) {
                 time <- d$time[[1]]
@@ -293,10 +283,12 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
       }
     }
     list(
-      package = if (file.exists(f)) sub(paste0(dir, "/docs/"), "", f, fixed = TRUE),
+      url = if (is.null(parent)) "" else parent,
+      package = sub(paste0(dir, "/docs/"), "", f, fixed = TRUE),
       datasets = if (length(meta$resources) == 1) list(names(info)) else names(info),
       variables = vars[!vars %in% time_vars],
       info = info,
+      measure_info = meta$measure_info,
       files = vapply(info, "[[", "", "filename")
     )
   }
@@ -310,9 +302,9 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     digits = 2, summary_selection = "all", color_by_order = FALSE, boxplots = TRUE,
     theme_dark = FALSE, partial_init = TRUE, palette = "vik", hide_url_parameters = FALSE,
     background_shapes = TRUE, iqr_box = TRUE, polygon_outline = 1.5, color_scale_center = "none",
-    table_autoscroll = TRUE, table_scroll_behavior = "smooth", hide_tooltips = FALSE,
-    map_animations = "all", trace_limit = 20, map_overlay = TRUE, circle_radius = 7,
-    tracking = FALSE
+    table_autoscroll = TRUE, table_scroll_behavior = "smooth", table_autosort = TRUE,
+    hide_tooltips = FALSE, map_animations = "all", trace_limit = 20, map_overlay = TRUE,
+    circle_radius = 7, tracking = FALSE
   )
   for (s in names(defaults)) {
     if (!is.null(options[[s]])) {
@@ -328,12 +320,17 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   }
   if (!is.null(variables)) variables <- unique(c(times, variables))
   settings$metadata <- if (file.exists(paste0(dir, "/docs/data/datapackage.json"))) data_preprocess(aggregate) else list()
+  measure_info <- settings$metadata$measure_info
   coverage_file <- paste0(dir, "/docs/data/coverage.csv")
   if (file.exists(coverage_file)) {
     coverage <- read.csv(coverage_file, row.names = 1)
-    have_metadata <- unique(unlist(lapply(settings$metadata$info, function(d) {
-      vapply(d$schema$fields, function(e) if (!is.null(e$info$full_name)) e$name else "", "")
-    }), use.names = TRUE))
+    have_metadata <- unique(if (!is.null(measure_info)) {
+      vapply(names(measure_info), function(v) if (!is.null(measure_info[[v]]$short_name)) v else "", "")
+    } else {
+      unlist(lapply(settings$metadata$info, function(d) {
+        vapply(d$schema$fields, function(e) if (!is.null(e$info$short_name)) e$name else "", "")
+      }), use.names = FALSE)
+    })
     if (length(have_metadata)) {
       metadata_bin <- structure(numeric(nrow(coverage)), names = rownames(coverage))
       metadata_bin[have_metadata[have_metadata %in% names(metadata_bin)]] <- 1
@@ -495,17 +492,27 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   }
   if (!is.null(endpoint)) settings$endpoint <- endpoint
   if (!is.null(tag_id)) settings$tag_id <- tag_id
+  if (!bundle_package) settings$metadata$info <- settings$metadata$measure_info <- NULL
   write_json(settings, paste0(dir, "/docs/settings.json"), pretty = TRUE, auto_unbox = TRUE)
   if (include_api || file.exists(paste0(dir, "/docs/functions/api.js"))) {
     dir.create(paste0(dir, "/docs/functions"), FALSE, TRUE)
     writeLines(c(
       "'use strict'",
+      "const settings = require('../settings.json')",
+      if (!bundle_package) {
+        c(
+          "settings.metadata.info = {}",
+          "const dp = require('../data/datapackage.json')",
+          "if (dp.measure_info) settings.metadata.measure_info = dp.measure_info",
+          "dp.resources.forEach(r => (settings.metadata.info[r.name] = r))"
+        )
+      },
       paste0("const DataHandler = require('../", if (version == "local") {
         parts$dependencies$data_handler$src
       } else {
         basename(parts$dependencies$data_handler$src)
       }, "'),"),
-      "  data = new DataHandler(require('../settings.json'), void 0, {",
+      "  data = new DataHandler(settings, void 0, {",
       paste0(
         "    ",
         vapply(settings$metadata$datasets, function(f) paste0(f, ": require('../", f, ".json')"), ""),

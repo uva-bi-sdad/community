@@ -68,14 +68,14 @@ output_text <- function(text, tag = "p", id = NULL, class = NULL, condition = NU
               fixed = TRUE
             )),
             type = if (grepl("[r", rbb, fixed = TRUE)) "reset" else if (grepl("[n", rbb, fixed = TRUE)) "note" else "update",
-            target = gsub("^[^[]*\\[[^\\s]+\\s?|\\]$", "", rbb, perl = TRUE)
+            target = strsplit(gsub("^[^[]*\\[[^\\s]+\\s?|\\]$", "", rbb, perl = TRUE), ",")[[1]]
           )
-          if (res$button[[bid]]$target == "") {
-            res$button[[bid]]$target <- if (grepl("{", rbb, fixed = TRUE)) {
+          if (!length(res$button[[bid]]$target)) {
+            res$button[[bid]]$target <- strsplit(if (grepl("{", rbb, fixed = TRUE)) {
               gsub("^[^{].*\\{|\\}.*$", "", rbb)
             } else {
               sub("\\[.*$", "", rbb)
-            }
+            }, ",")[[1]]
           }
         }
         regmatches(e, m) <- as.list(paste0("_SPLT_", paste0("b", seq_along(rb)), "_SPLT_"))

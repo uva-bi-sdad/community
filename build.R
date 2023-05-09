@@ -41,7 +41,7 @@ if (!dir.exists("../test_site")) {
   library(community)
   init_site("test_site", dir = "../test_site")
   source("../test_site/build.R")
-  site_build("../test_site")
+  site_build("../test_site", bundle_package = TRUE)
 }
 system2("npm", "test")
 covr::report(file = "coverage/package.html", browse = FALSE)

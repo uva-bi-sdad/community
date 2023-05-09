@@ -40,11 +40,11 @@ page_popup <- function(text = "Popup", ..., title = text, footer = NULL, wraps =
   breakpoints <- rep_len(breakpoints, n)
   conditions <- rep_len(conditions, n)
   ids <- paste0("modal", parts$uid, seq_len(n))
-  r <- c(
-    paste0(
-      '<button type="button" class="btn popup-button" data-bs-toggle="modal" data-bs-target="#dialog',
-      parts$uid, '">', text, "</button>"
-    ),
+  r <- paste0(
+    '<button type="button" class="btn popup-button" data-bs-toggle="modal" data-bs-target="#dialog',
+    parts$uid, '">', text, "</button>"
+  )
+  b <- c(
     paste0(
       '<div class="modal" tabindex="-1" id="dialog', parts$uid,
       '"><div class="modal-dialog"><div class="modal-content">'
@@ -65,7 +65,7 @@ page_popup <- function(text = "Popup", ..., title = text, footer = NULL, wraps =
             '"', if (conditions[i] != "") c(' id="', ids[i], '"'), ">"
           ), collapse = "")
         },
-        eval(elements[[i]], parts, caller),
+        eval(elements[[i]], parts),
         if (!is.na(wraps[i])) "</div>"
       )
     }), use.names = FALSE),
@@ -82,7 +82,8 @@ page_popup <- function(text = "Popup", ..., title = text, footer = NULL, wraps =
     "</div></div></div>"
   )
   if (building) {
-    caller$body <- c(caller$body, r)
+    caller$body <- c(caller$body, b)
+    caller$content <- c(caller$content, r)
     for (n in names(parts)) if (n != "content" && n != "uid") caller[[n]] <- c(caller[[n]], parts[[n]])
     process_conditions(conditions, ids, caller)
     caller$uid <- parts$uid + 1
