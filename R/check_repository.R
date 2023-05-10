@@ -96,8 +96,6 @@
 #'   \item \strong{\code{fail_read}}: Files that could not be read in.
 #'   \item \strong{\code{fail_rows}}: Files containing no rows.
 #'   \item \strong{\code{fail_time}}: Files with no \code{time} column.
-#'   \item \strong{\code{fail_dataset}}: Files with no \code{dataset} column.
-#'   \item \strong{\code{fail_entity_info}}: Files with no \code{entity_info} columns.
 #'   \item \strong{\code{fail_idlen_county}}: Files with "county" \code{dataset}s with corresponding IDs
 #'     that are not consistently 5 characters long.
 #'   \item \strong{\code{fail_idlen_tract}}: Files with "tract" \code{dataset}s with corresponding IDs
@@ -329,7 +327,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   census_geolayers <- c(county = 5, tract = 11, "block group" = 12)
   required <- c(id, value_name, value)
   vars <- unique(c(required, time, dataset, entity_info))
-  entity_info <- entity_info[!entity_info %in% c(required, time, dataset)]
+  entity_info <- entity_info[!entity_info %in% c(required, time)]
   files_short <- sub("^/", "", sub(dir, "", files, fixed = TRUE))
   for (i in seq_along(files)) {
     cli_progress_update()
@@ -357,7 +355,6 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
           d[[id]] <- as.character(d[[id]])
           if (!time %in% cols) results$fail_time <- c(results$fail_time, f)
           all_entity_info <- all(entity_info %in% cols)
-          if (!all_entity_info) results$fail_entity_info <- c(results$fail_entity_info, f)
 
           if (attempt_repair) {
             repairs <- NULL
@@ -465,8 +462,6 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
                   }
                 }
               }
-            } else {
-              results$fail_dataset <- c(results$fail_dataset, f)
             }
 
             measures <- unique(d[[value_name]])
@@ -609,8 +604,6 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
       fail_read = "failed to read in:",
       fail_rows = "contains no data:",
       fail_time = "no {.pkg {time}} column:",
-      fail_dataset = "no {.pkg {dataset}} column:",
-      fail_entity_info = "missing entity information ({.pkg {entity_info}}) column{?/s}:",
       fail_idlen_county = "not all county GEOIDs are 5 characters long:",
       fail_idlen_tract = "not all tract GEOIDs are 11 characters long:",
       fail_idlen_block_group = "not all block group GEOIDs are 12 characters long:"

@@ -24,15 +24,15 @@ test_that("all issues are caught", {
   res <- check_repository(dir)
   expect_identical(res$fail_rows, "dataset/data/distribution/data_invalid.csv")
   expect_identical(res$not_considered, "dataset/data/distribution/data_skip.csv")
-  expect_identical(sort(c(
+  expect_identical(sort(names(res)), sort(c(
     "data", "info", "not_considered",
     paste0("info_", c("malformed", "incomplete")),
     paste0("warn_", c(
       "compressed", "blank_colnames", "value_nas", "dataset_nas", "scientific", "id_nas", "value_name_nas",
       "entity_info_nas", "missing_info", "bg_agg", "time_nas"
     )),
-    paste0("fail_", c("idlen_county", "rows", "time", "entity_info", "dataset"))
-  )), sort(names(res)))
+    paste0("fail_", c("idlen_county", "rows", "time"))
+  )))
   expect_warning(data_measure_info(
     info_file,
     m_int = list(

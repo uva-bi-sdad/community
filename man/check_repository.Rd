@@ -106,8 +106,6 @@ or relating to data files with \strong{failures}:
 \item \strong{\code{fail_read}}: Files that could not be read in.
 \item \strong{\code{fail_rows}}: Files containing no rows.
 \item \strong{\code{fail_time}}: Files with no \code{time} column.
-\item \strong{\code{fail_dataset}}: Files with no \code{dataset} column.
-\item \strong{\code{fail_entity_info}}: Files with no \code{entity_info} columns.
 \item \strong{\code{fail_idlen_county}}: Files with "county" \code{dataset}s with corresponding IDs
 that are not consistently 5 characters long.
 \item \strong{\code{fail_idlen_tract}}: Files with "tract" \code{dataset}s with corresponding IDs

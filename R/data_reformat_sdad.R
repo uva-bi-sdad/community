@@ -22,6 +22,8 @@
 #' @param entity_info A list containing variable names to extract and create an ids map from (
 #' \code{entity_info.json}, created in the output directory). Entries can be named to rename the
 #' variables they refer to in entity features.
+#' @param metadata A matrix-like object with additional information associated with entities,
+#' (such as region types and names) to be merged by \code{id}.
 #' @param formatters A list of functions to pass columns through, with names identifying those columns
 #' (e.g., \code{list(region_name = function(x) sub(",.*$", "", x))} to strip text after a comma in the
 #' "region_name" column).
@@ -42,8 +44,8 @@
 data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, value = "value", value_name = "measure",
                                id = "geoid", time = "year", dataset = "region_type",
                                entity_info = c(type = "region_type", name = "region_name"),
-                               formatters = NULL, compression = "xz", read_existing = TRUE, overwrite = FALSE,
-                               get_coverage = TRUE, verbose = TRUE) {
+                               metadata = NULL, formatters = NULL, compression = "xz", read_existing = TRUE,
+                               overwrite = FALSE, get_coverage = TRUE, verbose = TRUE) {
   if (length(files) == 1 && dir.exists(files)) {
     files <- list.files(files, full.names = TRUE)
   }
@@ -159,6 +161,24 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   }))
   if (!nrow(data)) cli_abort("no datasets contained selected variables and/or IDs")
   cn <- colnames(data)
+  if (!id %in% vars) {
+    id <- "id"
+    vars <- c(id, vars)
+    data <- cbind(id = unlist(lapply(table(data$file), seq_len), use.names = FALSE), data)
+  }
+  data[[id]] <- as.character(data[[id]])
+  if (!is.null(metadata)) {
+    if (!id %in% colnames(metadata)) cli_abort("{.arg metadata} does not have an id ({id}) column")
+    su <- colnames(data) != id & colnames(data) %in% colnames(metadata)
+    if (any(su)) data <- data[, colnames(data) == id | !su, drop = FALSE]
+    if (verbose) cli_progress_step("merging in metadata", msg_done = "merged in metadata")
+    metadata <- as.data.frame(metadata[!duplicated(metadata[[id]]) & metadata[[id]] %in% data[[id]], ])
+    if (!nrow(metadata)) cli_abort("{.arg metadata} had no ids in common with data")
+    rownames(metadata) <- metadata[[id]]
+    metadata[[id]] <- NULL
+    data <- cbind(data, metadata[data[[id]], ])
+    cn <- colnames(data)
+  }
   if (!is.null(formatters)) {
     for (n in names(formatters)) {
       if (n %in% cn) {
@@ -166,12 +186,6 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       }
     }
   }
-  if (!id %in% vars) {
-    id <- "id"
-    vars <- c(id, vars)
-    data <- cbind(id = unlist(lapply(table(data$file), seq_len), use.names = FALSE), data)
-  }
-  data[[id]] <- as.character(data[[id]])
   if (!dataset %in% vars) {
     dataset <- "dataset"
     data$dataset <- dataset

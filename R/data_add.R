@@ -137,6 +137,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
           } else {
             varinf <- metas[[varinf[[1]]]] <- read_json(varinf[[1]])
           }
+          varinf <- varinf[varinf != ""]
         }
       }
       varinf_full <- names(varinf)
@@ -180,6 +181,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
             } else if (cn %in% varinf_suf) {
               r$info <- varinf[[which(varinf_suf == cn)]]
             }
+            r$info <- r$info[r$info != ""]
           }
           r$time_range <- which(unname(tapply(v, times, function(v) any(!is.na(v))))) - 1
           r$time_range <- if (length(r$time_range)) r$time_range[c(1, length(r$time_range))] else c(-1, -1)
@@ -226,7 +228,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
   }
   metadata <- lapply(seq_along(path), collect_metadata)
   if (write) {
-    if (single_meta) package$measure_info <- meta$variables
+    if (single_meta) package$measure_info <- lapply(meta$variables, function(e) e[e != ""])
     package$resources <- c(metadata, if (!refresh) package$resources)
     names <- vapply(package$resources, "[[", "", "filename")
     if (anyDuplicated(names)) {

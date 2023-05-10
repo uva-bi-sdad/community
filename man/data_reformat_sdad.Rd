@@ -7,7 +7,7 @@
 data_reformat_sdad(files, out = NULL, variables = NULL, ids = NULL,
   value = "value", value_name = "measure", id = "geoid", time = "year",
   dataset = "region_type", entity_info = c(type = "region_type", name =
-  "region_name"), formatters = NULL, compression = "xz",
+  "region_name"), metadata = NULL, formatters = NULL, compression = "xz",
   read_existing = TRUE, overwrite = FALSE, get_coverage = TRUE,
   verbose = TRUE)
 }
@@ -34,6 +34,9 @@ not present.}
 \item{entity_info}{A list containing variable names to extract and create an ids map from (
 \code{entity_info.json}, created in the output directory). Entries can be named to rename the
 variables they refer to in entity features.}
+
+\item{metadata}{A matrix-like object with additional information associated with entities,
+(such as region types and names) to be merged by \code{id}.}
 
 \item{formatters}{A list of functions to pass columns through, with names identifying those columns
 (e.g., \code{list(region_name = function(x) sub(",.*$", "", x))} to strip text after a comma in the
