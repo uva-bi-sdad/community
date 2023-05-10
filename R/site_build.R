@@ -234,7 +234,6 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                     if (length(range)) {
                       range[c(1, length(range))]
                     } else {
-                      if (aggregate) cli_warn("no observations of {vn} in {d$filename}")
                       c(-1, -1)
                     }
                   } else {

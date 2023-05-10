@@ -1,11 +1,26 @@
 library(community)
 library(jsonlite)
 
+# check data and measure info
 check_repository()
+
+# rebuild site
+entities_file <- "../entities.rds"
+if (file.exists(entities_file)) {
+  entities <- readRDS(entities_file)
+} else {
+  entities <- vroom::vroom(
+    "https://raw.githubusercontent.com/uva-bi-sdad/sdc.geographies/main/geographies_metadata.csv"
+  )
+  entities <- entities[!duplicated(entities$geoid), c("geoid", "region_name", "region_type")]
+  saveRDS(entities, entities_file, compress = "xz")
+}
 
 datasets <- paste0(list.dirs("."), "/data/distribution")
 datasets <- datasets[dir.exists(datasets)]
-data_reformat_sdad(list.files(datasets, "\\.csv", full.names = TRUE), "docs/data")
+data_reformat_sdad(
+  list.files(datasets, "\\.csv", full.names = TRUE), metadata = entities, "docs/data"
+)
 info <- lapply(list.files(datasets, "measure_info\\.json", full.names = TRUE), read_json)
 agg_info <- list()
 for (m in info) {

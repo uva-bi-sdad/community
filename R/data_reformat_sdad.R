@@ -61,7 +61,8 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   )
   data <- list()
   names <- list()
-  if (verbose) cli_progress_step("reading in {length(files)} original file{?s}")
+  i <- 0
+  if (verbose) cli_progress_step("reading in {i}/{length(files)} original file{?s}")
   max_age <- max(file.mtime(files))
   check_variables <- check_ids <- FALSE
   if (length(ids)) {
@@ -69,6 +70,10 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     ids <- unique(as.character(ids))
   }
   for (f in files) {
+    if (verbose) {
+      i <- i + 1
+      cli_progress_update()
+    }
     d <- tryCatch(
       read_delim_arrow(gzfile(f), if (grepl(".csv", f, fixed = TRUE)) "," else "\t"),
       error = function(e) NULL
@@ -93,7 +98,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     }
     d[[id]] <- as.character(d[[id]])
     if (check_ids) {
-      su <- !grepl("[^0-9.e+-]", d[[id]])
+      su <- grepl("\\d[e+-]\\d", d[[id]])
       if (any(su)) {
         d[[id]][su] <- gsub("^\\s+|\\s+$", "", format(as.numeric(d[[id]][su]), scientific = FALSE))
       }
@@ -181,7 +186,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     metadata[[id]] <- NULL
     su <- data[[id]] %in% rownames(metadata)
     if (!all(su)) {
-      if (verbose) cli_warn("{sum(su)} rows contain IDs not in {.arg metadata} IDs, and will be dropped")
+      if (verbose) cli_warn("{sum(!su)} rows contain IDs not in {.arg metadata} IDs, and will be dropped")
       data <- data[su, ]
     }
     data <- cbind(data, metadata[data[[id]], ])
@@ -262,6 +267,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       }
     }
   }
+  data <- unique(data[, c(vars[1:4], dataset)])
   sets <- lapply(datasets, function(dn) {
     if (write[[dn]]) {
       d <- if (dataset %in% vars) data[data[[dataset]] == dn, ] else data
@@ -274,22 +280,21 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
           msg_done = "created {dn} dataset ({length(ids)} IDs)", spinner = TRUE
         )
       }
+      sd <- split(d, d[[id]])
       for (i in seq_along(ids)) {
         if (verbose) cli_progress_update()
         e <- ids[[i]]
-        ed <- d[d[[id]] == e, ]
-        ed <- ed[!duplicated(do.call(paste, ed[, vars[2:4]])), ]
+        ed <- sd[[e]]
         r <- data.frame(
           ID = rep(as.character(e), n), time = times, check.names = FALSE,
           matrix(NA, n, length(present_vars), dimnames = list(times, present_vars))
         )
         if (all(c(value_name, value) %in% names(ed))) {
-          for (v in present_vars) {
-            su <- !is.na(ed[[value]]) & ed[[value_name]] == v
-            if (sum(su)) {
-              vals <- ed[su, ]
-              r[as.character(vals[[time]]), v] <- vals[[value]]
-            }
+          ed <- ed[!is.na(ed[[value]]), ]
+          ed <- split(ed[, c(time, value)], ed[[value_name]])
+          for (v in names(ed)) {
+            vals <- ed[[v]]
+            if (nrow(vals)) r[as.character(vals[[time]]), v] <- vals[[value]]
           }
         }
         rownames(r) <- NULL
