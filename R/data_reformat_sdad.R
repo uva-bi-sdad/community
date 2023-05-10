@@ -53,6 +53,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     files <- files[!file.exists(files)]
     cli_abort("file{? does/s do} not exist: {files}")
   }
+  if (!is.null(metadata) && !id %in% colnames(metadata)) cli_abort("{.arg metadata} does not have an id ({id}) column")
   vars <- c(value, value_name, id, time, dataset)
   spec <- c(
     missing(value), missing(value_name), missing(id), missing(time), missing(dataset),
@@ -136,14 +137,17 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     value <- a[1]
     vars <- c(value, vars)
   }
-  vars <- unique(c(vars, entity_info, "file"))
+  all <- unique(unlist(names))
+  all <- all[all %in% vars & (all == id | !all %in% colnames(metadata))]
+  vars <- c(all, "file")
   if (length(variables)) {
     check_variables <- TRUE
     variables <- unique(as.character(variables))
   }
   data <- do.call(rbind, lapply(names(data), function(f) {
     d <- data[[f]]
-    d[, vars[!vars %in% colnames(d)]] <- ""
+    mv <- vars[!vars %in% colnames(d)]
+    if (length(mv)) d[, vars[!vars %in% colnames(d)]] <- ""
     d <- d[, vars]
     if (anyNA(d)) d <- d[rowSums(is.na(d)) == 0, ]
     if (check_variables) {
@@ -168,7 +172,6 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   }
   data[[id]] <- as.character(data[[id]])
   if (!is.null(metadata)) {
-    if (!id %in% colnames(metadata)) cli_abort("{.arg metadata} does not have an id ({id}) column")
     su <- colnames(data) != id & colnames(data) %in% colnames(metadata)
     if (any(su)) data <- data[, colnames(data) == id | !su, drop = FALSE]
     if (verbose) cli_progress_step("merging in metadata", msg_done = "merged in metadata")
@@ -176,8 +179,14 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     if (!nrow(metadata)) cli_abort("{.arg metadata} had no ids in common with data")
     rownames(metadata) <- metadata[[id]]
     metadata[[id]] <- NULL
+    su <- data[[id]] %in% rownames(metadata)
+    if (!all(su)) {
+      if (verbose) cli_warn("{sum(su)} rows contain IDs not in {.arg metadata} IDs, and will be dropped")
+      data <- data[su, ]
+    }
     data <- cbind(data, metadata[data[[id]], ])
     cn <- colnames(data)
+    vars <- c(vars, colnames(metadata))
   }
   if (!is.null(formatters)) {
     for (n in names(formatters)) {
@@ -276,8 +285,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
         )
         if (all(c(value_name, value) %in% names(ed))) {
           for (v in present_vars) {
-            su <- ed[[value_name]] == v
-            su[su] <- !is.na(ed[[value]][su])
+            su <- !is.na(ed[[value]]) & ed[[value_name]] == v
             if (sum(su)) {
               vals <- ed[su, ]
               r[as.character(vals[[time]]), v] <- vals[[value]]

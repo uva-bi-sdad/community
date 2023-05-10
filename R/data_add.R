@@ -239,7 +239,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       cf <- lma_dict("special", perl = TRUE, as.function = gsub)
       package <- fromJSON(cf(toJSON(package, auto_unbox = TRUE)))
     }
-    write_json(package, package_path, pretty = TRUE, auto_unbox = TRUE, digits = 6)
+    write_json(package, package_path, auto_unbox = TRUE, digits = 6)
     if (interactive()) {
       cli_bullets(c(v = paste(
         if (refresh) "updated resource in" else "added resource to", "{.file datapackage.json}:"
