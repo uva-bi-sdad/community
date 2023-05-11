@@ -62,7 +62,7 @@
 <span>  open_after <span class="op">=</span> <span class="cn">FALSE</span>, aggregate <span class="op">=</span> <span class="cn">TRUE</span>, sparse_time <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  force <span class="op">=</span> <span class="cn">FALSE</span>, version <span class="op">=</span> <span class="st">"v1"</span>, parent <span class="op">=</span> <span class="cn">NULL</span>, include_api <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  endpoint <span class="op">=</span> <span class="cn">NULL</span>, tag_id <span class="op">=</span> <span class="cn">NULL</span>, serve <span class="op">=</span> <span class="cn">FALSE</span>, host <span class="op">=</span> <span class="st">"127.0.0.1"</span>,</span>
-<span>  port <span class="op">=</span> <span class="fl">3000</span><span class="op">)</span></span>
+<span>  port <span class="op">=</span> <span class="fl">3000</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">site_start_server</span><span class="op">(</span><span class="va">dir</span>, host <span class="op">=</span> <span class="st">"127.0.0.1"</span>, port <span class="op">=</span> <span class="fl">3000</span>,</span>
 <span>  open_after <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
@@ -173,6 +173,10 @@ Once a server is running, you can use <code><a href="https://rdrr.io/pkg/httpuv/
 
 <dt>port</dt>
 <dd><p>The port to listen on if <code>serve</code> is <code>TRUE</code>; defaults to 3000.</p></dd>
+
+
+<dt>verbose</dt>
+<dd><p>Logical; if <code>FALSE</code>, will not show status messages.</p></dd>
 
 </dl></div>
     <div class="section level2">

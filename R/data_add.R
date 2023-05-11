@@ -73,7 +73,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       }
       if (file.exists(package)) {
         package_path <- package
-        package <- read_json(package)
+        package <- jsonify::from_json(package, simplify = FALSE)
       } else {
         cli_abort(c("{.arg package} ({.path {package}}) does not exist", i = "create it with {.fn init_data}"))
       }
@@ -135,7 +135,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
           if (varinf[[1]] %in% names(metas)) {
             varinf <- metas[[varinf[[1]]]]
           } else {
-            varinf <- metas[[varinf[[1]]]] <- read_json(varinf[[1]])
+            varinf <- metas[[varinf[[1]]]] <- jsonify::from_json(varinf[[1]], simplify = FALSE)
           }
           varinf <- varinf[varinf != ""]
         }
@@ -219,7 +219,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       single_meta <- TRUE
       if (length(meta$variables) == 1 && is.character(meta$variables)) {
         if (!file.exists(meta$variables)) meta$variables <- paste0(dir, "/", meta$variables)
-        if (file.exists(meta$variables)) meta$variables <- read_json(meta$variables)
+        if (file.exists(meta$variables)) meta$variables <- jsonify::from_json(meta$variables, simplify = FALSE)
       }
       meta
     }
@@ -237,9 +237,9 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
     package_path <- if (is.character(package_path)) package_path else "datapackage.json"
     if (clean) {
       cf <- lma_dict("special", perl = TRUE, as.function = gsub)
-      package <- fromJSON(cf(toJSON(package, auto_unbox = TRUE)))
+      package <- jsonify::from_json(cf(jsonify::to_json(package, unbox = TRUE)), simplify = FALSE)
     }
-    write_json(package, package_path, auto_unbox = TRUE, digits = 6)
+    write(jsonify::to_json(package, unbox = TRUE, digits = 6), package_path)
     if (interactive()) {
       cli_bullets(c(v = paste(
         if (refresh) "updated resource in" else "added resource to", "{.file datapackage.json}:"

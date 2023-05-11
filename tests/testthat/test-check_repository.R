@@ -2,7 +2,7 @@ test_that("all issues are caught", {
   dir <- paste0(tempdir(), "/test_repo")
   init_repository(dir, "dataset", init_git = FALSE)
   info_file <- paste0(dir, "/dataset/data/distribution/measure_info.json")
-  jsonlite::write_json(list(measure = "m_int", measure_type = "integer"), info_file, auto_unbox = TRUE)
+  write(jsonify::to_json(list(measure = "m_int", measure_type = "integer"), unbox = TRUE), info_file)
   data <- data.frame(
     geoid = c(NA, "10000", "516105003003", "511076110241", "1e10", "1e+10", NA),
     region_name = c(rep("region", 5), NA, "region"),

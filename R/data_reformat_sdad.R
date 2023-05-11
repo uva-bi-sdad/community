@@ -62,7 +62,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   data <- list()
   names <- list()
   i <- 0
-  if (verbose) cli_progress_step("reading in {i}/{length(files)} original file{?s}")
+  if (verbose) cli_progress_step("reading in {i}/{length(files)} original file{?s}", spinner = TRUE)
   max_age <- max(file.mtime(files))
   check_variables <- check_ids <- FALSE
   if (length(ids)) {
@@ -98,11 +98,12 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     }
     d[[id]] <- as.character(d[[id]])
     if (check_ids) {
-      su <- grepl("\\d[e+-]\\d", d[[id]])
+      su <- grepl("\\de[+-]\\d", d[[id]], perl = TRUE)
       if (any(su)) {
         d[[id]][su] <- gsub("^\\s+|\\s+$", "", format(as.numeric(d[[id]][su]), scientific = FALSE))
       }
-      d <- d[d[[id]] %in% ids, ]
+      su <- d[[id]] %in% ids
+      if (!all(su)) d <- d[su, ]
       if (!nrow(d)) {
         if (verbose) cli_warn("file has none of the requested IDs: {f}")
         next
@@ -253,16 +254,16 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
             if (en != "" && entity_info[[en]] %in% colnames(e)) colnames(e)[colnames(e) == entity_info[[en]]] <- en
           }
         }
-        write_json(
+        write(jsonify::to_json(
           lapply(split(e, e[, 2]), function(g) {
             lapply(
               split(g[, -(1:2), drop = FALSE], g[, 1]),
               function(l) lapply(l, function(r) r[which(r != "")[1]])
             )
           }),
-          entity_info_file,
-          auto_unbox = TRUE
-        )
+          unbox = TRUE,
+          digits = 6
+        ), entity_info_file)
         if (verbose) cli_progress_done()
       }
     }
@@ -273,7 +274,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       d <- if (dataset %in% vars) data[data[[dataset]] == dn, ] else data
       dc <- list()
       ids <- unique(d[[id]])
-      i <- 1
+      i <- 0
       if (verbose) {
         cli_progress_step(
           "creating {dn} dataset (ID {i}/{length(ids)})",
@@ -323,7 +324,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       for (i in seq_along(sets)) {
         if (write[[i]]) {
           if (is.character(compression)) o <- do.call(paste0(compression, "zfile"), list(files[[i]]))
-          write.csv(sets[[i]], o, row.names = FALSE)
+          write_csv_arrow(sets[[i]], o)
         }
       }
       if (verbose) {

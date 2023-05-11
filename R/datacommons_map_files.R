@@ -44,7 +44,7 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
       i = paste0('use {.code datacommons_refresh("', dir, '")} to bring in remote data')
     ))
   }
-  commons <- read_json(paste0(dir, "commons.json"))
+  commons <- jsonify::from_json(paste0(dir, "commons.json"), simplify = FALSE)
   all_files <- NULL
   if (use_manifest) {
     rmanifest_files <- list.files(paste0(dir, "repos"), "^manifest\\.json$", full.names = TRUE, recursive = TRUE)
@@ -53,7 +53,7 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
     ]
     if (length(rmanifest_files)) {
       all_files <- unlist(lapply(rmanifest_files, function(f) {
-        m <- read_json(f, simplifyVector = TRUE)
+        m <- jsonify::from_json(f)
         if (length(m$data)) {
           files <- m$data[grepl(search_pattern, m$data$path), "path"]
           if (length(files)) {
@@ -72,7 +72,7 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
   if (overwrite) unlink(res)
   if (all(file.exists(res)) && all(file.mtime(res) > max(file.mtime(all_files)))) {
     if (verbose) cli_alert_success("the maps are up to date")
-    return(invisible(list(variables = read.csv(res[1]), ids = read_json(res[2]))))
+    return(invisible(list(variables = read.csv(res[1]), ids = jsonify::from_json(res[2], simplify = FALSE))))
   }
   i <- 1
   map <- idmap <- list()
@@ -157,10 +157,10 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
     if (length(noids)) cli_warn("{.arg {id_location}} was not in {?some files'/a file's} column names: {noids}")
   }
   dir.create(paste0(dir, "manifest"), FALSE)
-  write_json(manifest, paste0(dir, "manifest/files.json"), pretty = TRUE, auto_unbox = TRUE)
+  write(jsonify::pretty_json(manifest, unbox = TRUE), paste0(dir, "manifest/files.json"))
   dir.create(paste0(dir, "cache"), FALSE)
   idmap <- lapply(split(idmap, idmap$id), function(d) list(repos = unique(d$repo), files = unique(d$file)))
-  write_json(idmap, res[2], pretty = TRUE, auto_unbox = TRUE)
+  write(jsonify::pretty_json(idmap, unbox = TRUE), res[2])
   write.csv(map, res[1], row.names = FALSE)
   init_datacommons(dir, refresh_after = FALSE, verbose = FALSE)
   invisible(list(variables = map, ids = idmap))

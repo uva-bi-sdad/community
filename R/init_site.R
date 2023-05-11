@@ -79,7 +79,7 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
     ), paths[2])
   }
   if (node_project && !file.exists(paths[3])) {
-    write_json(list(
+    write(jsonify::pretty_json(list(
       name = gsub("\\s+", "_", tolower(title)),
       version = "1.0.0",
       description = "",
@@ -89,7 +89,7 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
       dependencies = list(express = "latest"),
       author = "",
       license = "ISC"
-    ), paths[3], pretty = TRUE, auto_unbox = TRUE)
+    ), unbox = TRUE), paths[3])
   }
   if (node_project && !file.exists(paths[4])) {
     writeLines(c(

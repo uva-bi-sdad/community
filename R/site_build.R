@@ -41,6 +41,7 @@
 #' Once a server is running, you can use \code{\link[httpuv]{stopAllServers}} to stop it.
 #' @param host The IPv4 address to listen to if \code{serve} is \code{TRUE}; defaults to \code{"127.0.0.1"}.
 #' @param port The port to listen on if \code{serve} is \code{TRUE}; defaults to 3000.
+#' @param verbose Logical; if \code{FALSE}, will not show status messages.
 #' @examples
 #' \dontrun{
 #' # run from within a site project directory, initialized with `init_site()`
@@ -56,7 +57,8 @@
 site_build <- function(dir, file = "site.R", name = "index.html", variables = NULL,
                        options = list(), bundle_data = FALSE, bundle_package = FALSE, bundle_libs = FALSE, libs_overwrite = FALSE,
                        libs_base_only = FALSE, open_after = FALSE, aggregate = TRUE, sparse_time = TRUE, force = FALSE, version = "v1",
-                       parent = NULL, include_api = FALSE, endpoint = NULL, tag_id = NULL, serve = FALSE, host = "127.0.0.1", port = 3000) {
+                       parent = NULL, include_api = FALSE, endpoint = NULL, tag_id = NULL, serve = FALSE, host = "127.0.0.1",
+                       port = 3000, verbose = TRUE) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., dir = ".")')
   page <- paste0(dir, "/", file)
   if (!file.exists(page)) cli_abort("{.file {page}} does not exist")
@@ -76,7 +78,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     }
     time_vars <- NULL
     if (file.exists(f)) {
-      meta <- read_json(f)
+      meta <- jsonify::from_json(f, simplify = FALSE)
       previous_data <- list()
       ids_maps <- list()
       child <- id_lengths <- NULL
@@ -108,6 +110,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
           path <- paste0(dir, "/docs/", d$name, ".json")
           if (file.exists(file)) {
             if (force || (!file.exists(path) || file.mtime(file) > file.mtime(path))) {
+              if (verbose) cli_progress_step("processing {d$name}", msg_done = paste("processed", d$name))
               sep <- if (grepl(".csv", file, fixed = TRUE)) "," else "\t"
               cols <- scan(file, "", nlines = 1, sep = sep, quiet = TRUE)
               vars <- vapply(d$schema$fields, "[[", "", "name")
@@ -153,8 +156,9 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                     ids_map <- if (!is.null(ids_maps[[d$ids[[1]]$map]])) {
                       ids_maps[[d$ids[[1]]$map]]
                     } else {
+                      if (verbose) cli_progress_update(status = "loading ID map")
                       tryCatch(
-                        read_json(if (length(mf)) mf[[1]] else d$ids[[1]]$map),
+                        jsonify::from_json(if (length(mf)) mf[[1]] else d$ids[[1]]$map, simplify = FALSE),
                         error = function(e) cli_alert_warning("failed to read ID map: {e$message}")
                       )
                     }
@@ -182,6 +186,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                   }
                 }
                 if (!is.null(child) && any(cn %in% names(previous_data[[child]][[1]])) && !is.null(cids)) {
+                  if (verbose) cli_progress_update(status = "attempting aggregation from {child}")
                   for (id in names(sdata)) {
                     did <- sdata[[id]]
                     if (anyNA(did)) {
@@ -230,7 +235,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                   code = var_codes[[vn]],
                   time_range = if (sparse_time) {
                     v <- data[[vn]]
-                    range <- which(unname(tapply(v, times, function(v) any(!is.na(v))))) - 1
+                    range <- which(unname(tapply(v, times, function(sv) !all(is.na(sv))))) - 1
                     if (length(range)) {
                       range[c(1, length(range))]
                     } else {
@@ -242,6 +247,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                 )
               })
               names(var_meta) <- evars
+              if (verbose) cli_progress_update(status = "finalizing {d$name}")
               sdata <- lapply(sdata, function(e) {
                 e <- e[, evars]
                 e <- as.list(e)
@@ -266,7 +272,9 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                 ),
                 variables = Filter(function(l) l$time_range[1] != -1 && l$time_range[2] != -1, var_meta)
               )
-              write_json(sdata, path, dataframe = "columns", auto_unbox = TRUE)
+              if (verbose) cli_progress_update(status = "writing {d$name}")
+              write(jsonify::to_json(sdata, unbox = TRUE, digits = 6, by = "row"), path)
+              if (verbose) cli_progress_done("wrote {d$name} site file")
             }
           }
         }
@@ -285,7 +293,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
       url = if (is.null(parent)) "" else parent,
       package = sub(paste0(dir, "/docs/"), "", f, fixed = TRUE),
       datasets = if (length(meta$resources) == 1) list(names(info)) else names(info),
-      variables = vars[!vars %in% time_vars],
+      variables = if (!is.null(variables)) vars[!vars %in% time_vars],
       info = info,
       measure_info = meta$measure_info,
       files = vapply(info, "[[", "", "filename")
@@ -293,7 +301,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   }
   path <- paste0(dir, "/docs/settings.json")
   settings <- if (file.exists(path) && file.size(path)) {
-    read_json(path, auto_unbox = TRUE)
+    jsonify::from_json(path, simplify = FALSE)
   } else {
     list(settings = options)
   }
@@ -427,7 +435,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   if (bundle_libs) {
     dir.create(libdir, FALSE)
     manifest_file <- paste0(libdir, "manifest.json")
-    manifest <- if (file.exists(manifest_file)) read_json(manifest_file) else list()
+    manifest <- if (file.exists(manifest_file)) jsonify::from_json(manifest_file, simplify = FALSE) else list()
     for (dn in names(parts$dependencies)) {
       if (if (libs_base_only) dn %in% c("base", "base_style") else !grepl("^(?:ga$|custom|data_handler)", dn)) {
         d <- parts$dependencies[[dn]]
@@ -458,7 +466,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         parts$dependencies[[dn]]$hash <- NULL
       }
     }
-    write_json(manifest, manifest_file, auto_unbox = TRUE, pretty = TRUE)
+    write(jsonify::pretty_json(manifest, unbox = TRUE), manifest_file)
   } else {
     unlink(libdir, TRUE)
   }
@@ -492,7 +500,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   if (!is.null(endpoint)) settings$endpoint <- endpoint
   if (!is.null(tag_id)) settings$tag_id <- tag_id
   if (!bundle_package) settings$metadata$info <- settings$metadata$measure_info <- NULL
-  write_json(settings, paste0(dir, "/docs/settings.json"), pretty = TRUE, auto_unbox = TRUE)
+  write(jsonify::pretty_json(settings, unbox = TRUE), paste0(dir, "/docs/settings.json"))
   if (include_api || file.exists(paste0(dir, "/docs/functions/api.js"))) {
     dir.create(paste0(dir, "/docs/functions"), FALSE, TRUE)
     writeLines(c(
@@ -534,7 +542,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     '<meta name="viewport" content="width=device-width,initial-scale=1" />',
     paste0(
       '<script type="application/javascript">\nconst site = ',
-      toJSON(settings, auto_unbox = TRUE),
+      jsonify::to_json(settings, unbox = TRUE),
       "\n</script>"
     ),
     if (bundle_data) {

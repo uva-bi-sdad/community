@@ -58,13 +58,22 @@ site_make_child <- function(parent, dir, update = FALSE, overwrite = FALSE, prot
   always_update <- c("docs/data/datapackage.json", include)
   if (!dir.exists(parent)) {
     parent <- regmatches(parent, regexec("^(?:.*github\\.com/)?([^/]+/[^/@]+)", parent))[[1]][2]
-    repo <- tryCatch(read_json(paste0("https://api.github.com/repos/", parent, "/contents")), error = function(e) e$message)
+    repo <- tryCatch(jsonify::from_json(
+      paste0("https://api.github.com/repos/", parent, "/contents"),
+      simplify = FALSE
+    ), error = function(e) e$message)
     if (is.character(repo)) cli_abort("treated {.arg parent} as a GitHub repository, but failed to retrieve it: {repo}")
     if (missing(update)) update <- FALSE
     repo <- c(
       repo,
-      tryCatch(read_json(paste0("https://api.github.com/repos/", parent, "/contents/docs")), error = function(e) NULL),
-      tryCatch(read_json(paste0("https://api.github.com/repos/", parent, "/contents/docs/data")), error = function(e) NULL)
+      tryCatch(jsonify::from_json(
+        paste0("https://api.github.com/repos/", parent, "/contents/docs"),
+        simplify = FALSE
+      ), error = function(e) NULL),
+      tryCatch(jsonify::from_json(
+        paste0("https://api.github.com/repos/", parent, "/contents/docs/data"),
+        simplify = FALSE
+      ), error = function(e) NULL)
     )
     for (f in repo) {
       if (f$path %in% files[!files %in% never_update]) {

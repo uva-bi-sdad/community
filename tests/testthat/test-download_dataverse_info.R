@@ -4,14 +4,14 @@ test_that("downloads and saves the file appropriately", {
   meta <- download_dataverse_info("doi:10.18130/V3/SWK71R")
   meta$latestVersion <- NULL
   expect_true(meta$id == 913)
-  expect_identical(read_json(paste0(tempdir(), "/1018130V3SWK71R.json")), meta)
+  expect_identical(jsonify::from_json(paste0(tempdir(), "/1018130V3SWK71R.json"), simplify = FALSE), meta)
 })
 
 test_that("works with github id", {
   meta <- download_dataverse_info("uva-bi-sdad/dc.arlingtoncounty.parks")
   meta$latestVersion <- NULL
   expect_true(meta$id == 919)
-  expect_identical(read_json(paste0(tempdir(), "/1018130V3GMIVZZ.json")), meta)
+  expect_identical(jsonify::from_json(paste0(tempdir(), "/1018130V3GMIVZZ.json"), simplify = FALSE), meta)
 })
 
 test_that("unpublished sets are accessible with a key", {
@@ -20,5 +20,5 @@ test_that("unpublished sets are accessible with a key", {
   meta <- download_dataverse_info("doi:10.18130/V3/GO64UN")
   meta$latestVersion <- NULL
   expect_true(meta$id == 918)
-  expect_identical(read_json(paste0(tempdir(), "/1018130V3GO64UN.json")), meta)
+  expect_identical(jsonify::from_json(paste0(tempdir(), "/1018130V3GO64UN.json"), simplify = FALSE), meta)
 })

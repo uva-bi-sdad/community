@@ -11,7 +11,7 @@ site_build(dir, file = "site.R", name = "index.html", variables = NULL,
   open_after = FALSE, aggregate = TRUE, sparse_time = TRUE,
   force = FALSE, version = "v1", parent = NULL, include_api = FALSE,
   endpoint = NULL, tag_id = NULL, serve = FALSE, host = "127.0.0.1",
-  port = 3000)
+  port = 3000, verbose = TRUE)
 
 site_start_server(dir, host = "127.0.0.1", port = 3000,
   open_after = TRUE)
@@ -77,6 +77,8 @@ Once a server is running, you can use \code{\link[httpuv]{stopAllServers}} to st
 \item{host}{The IPv4 address to listen to if \code{serve} is \code{TRUE}; defaults to \code{"127.0.0.1"}.}
 
 \item{port}{The port to listen on if \code{serve} is \code{TRUE}; defaults to 3000.}
+
+\item{verbose}{Logical; if \code{FALSE}, will not show status messages.}
 }
 \value{
 Invisible path to the written file.

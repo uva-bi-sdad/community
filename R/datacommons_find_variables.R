@@ -50,7 +50,7 @@ datacommons_find_variables <- function(missed, map = ".", sep = "[_:]", top = 3,
   }
   full_names <- unique(variable_map$full_name)
   if (nm == 1 && file.exists(missed)) {
-    missed <- read_json(if (dir.exists(missed)) paste0(missed, "/view.json") else missed)
+    missed <- jsonify::from_json(if (dir.exists(missed)) paste0(missed, "/view.json") else missed, simplify = FALSE)
     missed <- as.character(missed$variables)
     if (!length(missed)) cli_abort("did not find any variables in the {.arg missed} view definition")
     missed <- missed[!missed %in% full_names]

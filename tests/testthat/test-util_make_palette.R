@@ -1,9 +1,9 @@
 test_that("print works", {
   expect_identical(
     capture.output(util_make_palette("red", FALSE)),
-    strsplit(toJSON(
+    strsplit(jsonify::pretty_json(
       util_make_palette("red", FALSE, print = FALSE),
-      auto_unbox = TRUE, pretty = TRUE
+      unbox = TRUE
     ), "\n")[[1]]
   )
 })

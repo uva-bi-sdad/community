@@ -27,14 +27,17 @@ test_that("view works", {
     variables = variables, ids = paste0("5100", c(1, 3, 5, 7)), verbose = FALSE
   )
   expect_true(dir.exists(dir_view))
-  expect_true(length(jsonlite::read_json(
-    paste0(dir_view, "/manifest.json")
+  expect_true(length(jsonify::from_json(
+    paste0(dir_view, "/manifest.json"),
+    simplify = FALSE
   )[["uva-bi-sdad/sdc.education"]]$files) != 0)
   datacommons_view(
     dir, "view", dir_view,
     variables = variables[1:5], ids = paste0("5100", c(1, 3, 5)), verbose = FALSE
   )
-  expect_identical(unlist(jsonlite::read_json(paste0(dir, "/views/view/view.json"))$variables), variables[1:5])
+  expect_identical(unlist(
+    jsonify::from_json(paste0(dir, "/views/view/view.json"), simplify = FALSE)$variables
+  ), variables[1:5])
   datacommons_view(
     dir, "view2", dir_view,
     variables = variables, ids = paste0("5100", c(1, 3, 5, 7)), verbose = FALSE

@@ -42,7 +42,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
     ))
   }
   dir <- normalizePath(dir, "/", FALSE)
-  commons <- read_json(paste0(dir, "/commons.json"))
+  commons <- jsonify::from_json(paste0(dir, "/commons.json"))
   repos <- Filter(length, commons$repositories)
   if (!length(repos)) repos <- readLines(paste0(dir, "/scripts/repos.txt"))
   if (!length(repos)) cli_abort("no repositories are listed in {.file commons.json}.")
@@ -55,7 +55,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
   repos <- sub("^([^/]+/[^/#@]+)[^/]*$", "\\1", repos)
   if (!identical(unlist(commons$repositories, use.names = FALSE), repos)) {
     commons$repositories <- repos
-    write_json(commons, paste0(dir, "/commons.json"), pretty = TRUE, auto_unbox = TRUE)
+    write(jsonify::pretty_json(commons, unbox = TRUE), paste0(dir, "/commons.json"))
   }
   writeLines(repos, paste0(dir, "/scripts/repos.txt"))
   if (only_new) {
@@ -74,7 +74,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
   method <- if (clone_method == "ssh") "git@github.com:" else "https://github.com/"
   if (include_distributions) dir.create("../cache", FALSE)
   manifest_file <- paste0(dir, "/manifest/repos.json")
-  repo_manifest <- if (file.exists(manifest_file)) read_json(manifest_file) else list()
+  repo_manifest <- if (file.exists(manifest_file)) jsonify::from_json(manifest_file) else list()
   for (i in seq_along(repos)) {
     r <- repos[[i]]
     rn <- sub("^.*/", "", r)
@@ -113,7 +113,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
     }
     files <- NULL
     if (use_manifest && file.exists(paste0(cr, "manifest.json"))) {
-      files <- read_json(paste0(cr, "manifest.json"), simplifyVector = TRUE)$data$path
+      files <- jsonify::from_json(paste0(cr, "manifest.json"))$data$path
       if (length(files)) {
         files <- paste0(cr, files)
         files <- files[file.exists(files)]
@@ -142,7 +142,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
       }
       meta_file <- paste0("../cache/", rn, "/dataverse_metadata.json")
       meta <- if (!refresh_distributions && file.exists(meta_file)) {
-        read_json(meta_file)
+        jsonify::from_json(meta_file)
       } else {
         tryCatch(download_dataverse_info(doi, refresh = refresh_distributions), error = function(e) NULL)
       }
@@ -155,7 +155,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
       } else {
         if (is.null(meta$latestVersion)) meta$latestVersion <- list(files = meta$files)
         dir.create(paste0("../cache/", rn), FALSE)
-        write_json(meta, meta_file, pretty = TRUE, auto_unbox = TRUE)
+        write(jsonify::pretty_json(meta, unbox = TRUE), meta_file)
         repo_manifest[[r]]$distributions$dataverse$id <- meta$datasetId
         repo_manifest[[r]]$distributions$dataverse$server <- meta$server
         repo_manifest[[r]]$distributions$dataverse$files <- list()
@@ -213,7 +213,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
   if (length(repo_manifest)) {
     su <- names(repo_manifest) %in% repos
     if (any(su)) {
-      write_json(repo_manifest[su], manifest_file, pretty = TRUE, auto_unbox = TRUE)
+      write(jsonify::pretty_json(repo_manifest[su], unbox = TRUE), manifest_file)
     } else {
       cli_warn("no repos were found in the existing repo manifest")
     }

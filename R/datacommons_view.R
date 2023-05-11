@@ -92,7 +92,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
     )
     write_view <- TRUE
   } else {
-    view <- read_json(paths[1])
+    view <- jsonify::from_json(paths[1], simplify = FALSE)
     if (!is.null(remote) && !identical(view$remote, remote)) {
       view$remote <- remote
       write_view <- TRUE
@@ -181,7 +181,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
   if (length(view$ids)) view$ids <- as.character(view$ids)
   if (!is.null(outbase) && !dir.exists(outbase)) init_site(outbase, view$name, quiet = TRUE)
   if (is.null(view$output)) outdir <- view_dir
-  if (write_view) write_json(view, paths[1], pretty = TRUE, auto_unbox = TRUE)
+  if (write_view) write(jsonify::pretty_json(view, unbox = TRUE), paths[1])
   if (execute) {
     source_env <- new.env()
     source_env$datacommons_view <- function(...) {}
@@ -239,7 +239,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       }
       files <- files[order(file.mtime(paste0(commons, "/", files$file)), decreasing = TRUE), ]
       if (verbose) cli_alert_info("updating manifest: {.file {paths[2]}}")
-      repo_manifest <- read_json(paste0(commons, "/manifest/repos.json"))
+      repo_manifest <- jsonify::from_json(paste0(commons, "/manifest/repos.json"), simplify = FALSE)
       manifest <- lapply(split(files, files$repo), function(r) {
         hr <- repo_manifest[[r$repo[[1]]]]
         files <- paste0(commons, "/", unique(r$file))
@@ -260,7 +260,11 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
         )
       })
       if (is.character(measure_info)) {
-        measure_info <- if (length(measure_info) == 1 && file.exists(measure_info)) read_json(measure_info) else as.list(measure_info)
+        measure_info <- if (length(measure_info) == 1 && file.exists(measure_info)) {
+          jsonify::from_json(measure_info, simplify = FALSE)
+        } else {
+          as.list(measure_info)
+        }
       }
       base_vars <- sub("^[^:/]+[:/]", "", view$variables)
       for (r in unique(files$repo)) {
@@ -268,7 +272,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
         if (use_manifest) {
           manifest_file <- paste0(commons, "/repos/", sub("^.+/", "", r), "/manifest.json")
           if (file.exists(manifest_file)) {
-            rmanifest <- read_json(manifest_file)
+            rmanifest <- jsonify::from_json(manifest_file, simplify = FALSE)
             ri <- lapply(rmanifest$data, function(e) {
               m <- e$measure_info
               if (length(m)) {
@@ -291,7 +295,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
             paste0(commons, "/repos/", sub("^.+/", "", r)), "^measure_info[^.]*\\.json$",
             full.names = TRUE, recursive = TRUE
           ), function(f) {
-            m <- tryCatch(read_json(f), error = function(e) {
+            m <- tryCatch(jsonify::from_json(f, simplify = FALSE), error = function(e) {
               cli_alert_warning("failed to read measure info: {.file {f}}")
               NULL
             })
@@ -341,7 +345,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       if (length(measure_info)) {
         measure_info_file <- paste0(outdir, "/measure_info.json")
         if (verbose) cli_alert_info("updating measure info: {.file {measure_info_file}}")
-        write_json(rev(measure_info), measure_info_file, pretty = TRUE, auto_unbox = TRUE)
+        write(jsonify::pretty_json(rev(measure_info), unbox = TRUE), measure_info_file)
       }
       args <- list(...)
       args$files <- paste0(commons, "/", unique(files$file))
@@ -359,7 +363,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       src <- parse(text = gsub("community::datacommons_view", "datacommons_view", readLines(base_run_after, warn = FALSE), fixed = TRUE))
       source(local = source_env, exprs = src)
     }
-    write_json(manifest, paste0(outdir, "/manifest.json"), pretty = TRUE, auto_unbox = TRUE)
+    write(jsonify::pretty_json(manifest, unbox = TRUE), paste0(outdir, "/manifest.json"))
   }
   init_datacommons(commons, refresh_after = FALSE, verbose = FALSE)
   invisible(view)

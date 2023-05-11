@@ -69,7 +69,7 @@ init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_u
     repos <- readLines(paths[5], warn = FALSE)
   }
   if (file.exists(paths[1])) {
-    existing <- read_json(paths[1])
+    existing <- jsonify::from_json(paths[1], simplify = FALSE)
     if (missing(name)) name <- existing$name
     if (!length(repos)) repos <- existing$repositories
   }
@@ -77,7 +77,7 @@ init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_u
     if (default_user != "") repos <- paste0(default_user, "/", repos)
     repos <- unlist(regmatches(repos, regexec("[^/]+/[^/#@]+$", repos)), use.names = FALSE)
   }
-  write_json(list(name = name, repositories = repos), paths[1], pretty = TRUE, auto_unbox = TRUE)
+  write(jsonify::pretty_json(list(name = name, repositories = repos), unbox = TRUE), paths[1])
   if (!file.exists(paths[2])) {
     writeLines(c(
       paste("#", name),
@@ -214,12 +214,12 @@ init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_u
         "repos:", if (file.exists(manifest_files[1])) paste0(readLines(manifest_files[1]), collapse = "") else "{}",
         ",files:", if (file.exists(manifest_files[2])) paste0(readLines(manifest_files[2]), collapse = "") else "{}",
         "}, ",
-        toJSON(Filter(length, lapply(
+        jsonify::to_json(Filter(length, lapply(
           list.dirs(paste0(dir, "/views"), FALSE)[-1], function(v) {
             f <- paste0(dir, "/views/", v, "/", "view.json")
-            if (file.exists(f)) list(name = v, view = read_json(f))
+            if (file.exists(f)) list(name = v, view = jsonify::from_json(f, simplify = FALSE))
           }
-        )), auto_unbox = TRUE),
+        )), unbox = TRUE),
         ")}"
       ), perl = TRUE),
       "</script>"
