@@ -33,6 +33,7 @@
 #'   }
 #'   \item{variables}{
 #'   A list with named entries providing more information about the variables in the dataset.
+#'   See \code{\link{data_measure_info}}.
 #'   }
 #' }
 #' @examples
@@ -43,7 +44,8 @@
 #' # add it to an existing datapackage.json file in the current working directory
 #' data_add("mtcars.csv")
 #' }
-#' @return An invisible version of the metadata, which is also added to \code{datapackage.json} if \code{write = TRUE}.
+#' @return An invisible version of the updated datapackage, which is also written to
+#' \code{datapackage.json} if \code{write = TRUE}.
 #' @seealso Initialize the \code{datapackage.json} file with \code{\link{init_data}}.
 #' @export
 
@@ -221,24 +223,31 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
         if (!file.exists(meta$variables)) meta$variables <- paste0(dir, "/", meta$variables)
         if (file.exists(meta$variables)) meta$variables <- jsonify::from_json(meta$variables, simplify = FALSE)
       }
+      meta$variables <- replace_equations(meta$variables)
       meta
     }
   } else {
     meta[seq_along(path)]
   }
+  if (!single_meta) {
+    metas <- lapply(metas, function(m) {
+      m$variables <- replace_equations(m$variables)
+      m
+    })
+  }
   metadata <- lapply(seq_along(path), collect_metadata)
+  if (single_meta) package$measure_info <- lapply(meta$variables, function(e) e[e != ""])
+  package$resources <- c(metadata, if (!refresh) package$resources)
+  names <- vapply(package$resources, "[[", "", "filename")
+  if (anyDuplicated(names)) {
+    package$resources <- package$resources[!duplicated(names)]
+  }
+  if (clean) {
+    cf <- lma_dict("special", perl = TRUE, as.function = gsub)
+    package <- jsonify::from_json(cf(jsonify::to_json(package, unbox = TRUE)), simplify = FALSE)
+  }
   if (write) {
-    if (single_meta) package$measure_info <- lapply(meta$variables, function(e) e[e != ""])
-    package$resources <- c(metadata, if (!refresh) package$resources)
-    names <- vapply(package$resources, "[[", "", "filename")
-    if (anyDuplicated(names)) {
-      package$resources <- package$resources[!duplicated(names)]
-    }
     package_path <- if (is.character(package_path)) package_path else "datapackage.json"
-    if (clean) {
-      cf <- lma_dict("special", perl = TRUE, as.function = gsub)
-      package <- jsonify::from_json(cf(jsonify::to_json(package, unbox = TRUE)), simplify = FALSE)
-    }
     write(jsonify::to_json(package, unbox = TRUE, digits = 6), package_path)
     if (interactive()) {
       cli_bullets(c(v = paste(
@@ -247,5 +256,5 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       if (open_after) navigateToFile(package_path)
     }
   }
-  invisible(metadata)
+  invisible(package)
 }

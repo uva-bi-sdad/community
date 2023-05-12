@@ -31,7 +31,8 @@ if \code{openssl} is available (checked with \code{Sys.which('openssl')}).}
 \item{open_after}{Logical; if \code{TRUE}, opens the written datapackage after saving.}
 }
 \value{
-An invisible version of the metadata, which is also added to \code{datapackage.json} if \code{write = TRUE}.
+An invisible version of the updated datapackage, which is also written to
+\code{datapackage.json} if \code{write = TRUE}.
 }
 \description{
 Add information about variables in a dataset to a \code{datapackage.json} metadata file.
@@ -55,6 +56,7 @@ A string giving the name of a variable in the dataset representing a repeated ob
 }
 \item{variables}{
 A list with named entries providing more information about the variables in the dataset.
+See \code{\link{data_measure_info}}.
 }
 }
 }

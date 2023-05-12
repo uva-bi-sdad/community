@@ -99,3 +99,35 @@ make_full_name <- function(filename, variable) {
     gsub("^.*\\d{4}(?:q\\d)?_|\\.\\w{3,4}(?:\\.[gbx]z2?)?$|\\..*$", "", basename(filename))
   ), ":", variable))
 }
+
+replace_equations <- function(info) {
+  lapply(info, function(e) {
+    descriptions <- grep("description", names(e), fixed = TRUE)
+    if (length(descriptions)) {
+      for (d in descriptions) {
+        p <- gregexec(
+          "(?:\\$|\\\\\\[|\\\\\\(|\\\\begin\\{math\\})(.+?)(?:\\$|\\\\\\]|\\\\\\)|\\\\end\\{math\\})",
+          e[[d]]
+        )[[1]]
+        if (length(p) > 1) {
+          ml <- attr(p, "match.length")
+          re <- paste("", e[[d]], "")
+          for (i in seq_len(ncol(p))) {
+            mp <- p[2, i]
+            eq <- substring(e[[d]], mp, mp + ml[2, i] - 1)
+            parsed <- tryCatch(katex_mathml(eq), error = function(e) NULL)
+            if (!is.null(parsed)) {
+              mp <- p[1, i]
+              re <- paste(
+                strsplit(re, substring(e[[d]], mp, mp + ml[1, i] - 1), fixed = TRUE)[[1]],
+                collapse = sub("^<[^>]*>", "", sub("<[^>]*>$", "", parsed))
+              )
+            }
+          }
+          e[[d]] <- gsub("^ | $", "", re)
+        }
+      }
+    }
+    e
+  })
+}

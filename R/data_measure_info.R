@@ -21,7 +21,10 @@
 #'   \item \strong{\code{long_name}}: Longer display name.
 #'   \item \strong{\code{category}}: Arbitrary category for the measure.
 #'   \item \strong{\code{short_description}}: Shortest possible description.
-#'   \item \strong{\code{long_description}}: Complete description.
+#'   \item \strong{\code{long_description}}: Complete description. Either description can include
+#'     TeX-style equations, surrounded by \code{$}s (e.g.,
+#'     \code{"The equation $a_{i} = b^\\\\frac{c}{d}$ was used."}). These are pre-rendered to MathML with
+#'     \code{\link[katex]{katex_mathml}}.
 #'   \item \strong{\code{statement}}: String with dynamic references to entity features
 #'     (e.g., \code{"measure value = {value}"}). References can include:
 #'     \itemize{

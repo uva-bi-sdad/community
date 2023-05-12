@@ -7,7 +7,7 @@ Authors@R: c(
     person("Alan", "Wang", role = "ctb"),
     person("Prashanth", "Wagle", role = "ctb")
   )
-Imports: cli, arrow, jsonify, rstudioapi, stats, stringi, lingmatch, httpuv
+Imports: cli, arrow, jsonify, rstudioapi, stats, stringi, lingmatch, httpuv, katex
 Description: A toolset and web framework to help manage and present data.
 URL: https://github.com/uva-bi-sdad/community
 BugReports: https://github.com/uva-bi-sdad/community/issues

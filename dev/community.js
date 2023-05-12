@@ -201,7 +201,12 @@ void (function () {
         location_string: /^[^?]*/,
         time_ref: /\{time\}/g,
         pre_colon: /^[^:]*:/,
-        exclude_query: /^(features|time_range|id)$/,
+        exclude_query: /^(?:features|time_range|id)$/,
+        space: /\s+/,
+        has_equation: /<math/,
+        bracket_content: /(?:^|>)[^<]*(?:<|$)/,
+        math_tags: /^(?:semantics|annotation|annotation\-xml|m)/,
+        math_attributes: /^(?:xmlns|display|displaystyle|style|encoding|stretchy|alttext|scriptlevel|fence|math)/,
       },
       tooltip_icon_rule =
         'button.has-note::after,.button-wrapper.has-note button::before,.has-note legend::before,.has-note label::before,.wrapper.has-note > div > label::before{display:none}',
@@ -1796,11 +1801,11 @@ void (function () {
                   )
                   if (e.layer[this.id][time])
                     e.layer[this.id][time].setStyle({
-                      color: defaults['border_highlight_' + site.settings.theme_dark],
+                      color: 'var(--background-highlight)',
                     })
                 } else if (e.layer[this.id].setStyle) {
                   e.layer[this.id].setStyle({
-                    color: defaults['border_highlight_' + site.settings.theme_dark],
+                    color: 'var(--background-highlight)',
                   })
                 }
               }
@@ -1858,14 +1863,14 @@ void (function () {
           },
           mouseover: function (e) {
             e.target.setStyle({
-              color: defaults['border_highlight_' + site.settings.theme_dark],
+              color: 'var(--border-highlight)',
             })
             update_subs(this.id, 'show', site.data.entities[e.target.feature.properties[e.target.source.id_property]])
           },
           mouseout: function (e) {
             update_subs(this.id, 'revert', site.data.entities[e.target.feature.properties[e.target.source.id_property]])
             e.target.setStyle({
-              color: defaults.border,
+              color: 'var(--border)',
             })
           },
           click: function (e) {
@@ -1887,7 +1892,9 @@ void (function () {
                   has_time = d + match_time + this.id in site.data.inited,
                   mapId = has_time ? d + match_time : d
                 if (site.map._queue && mapId in site.map._queue && !site.data.inited[mapId + this.id]) {
-                  return retrieve_layer(this, site.map._queue[mapId], () => this.update(void 0, void 0, true))
+                  if (!has_time || null !== time)
+                    retrieve_layer(this, site.map._queue[mapId], () => this.update(void 0, void 0, true))
+                  return
                 }
                 if (!view.valid && site.data.inited[d]) {
                   view.state = ''
@@ -1899,10 +1906,11 @@ void (function () {
                     view.value() +
                     mapId +
                     site.settings.background_shapes +
+                    site.settings.background_top +
+                    site.settings.background_polygon_outline +
                     site.data.inited[this.options.background_shapes],
                   a = view.selection.all,
                   s = view.selection[site.settings.background_shapes && this.options.background_shapes ? 'ids' : 'all'],
-                  bgc = defaults.border,
                   c = valueOf(this.color || view.y)
                 if (site.settings.map_overlay && c in site.map[this.id].triggers) {
                   show_overlay(this, site.map[this.id].triggers[c], site.data.meta.overall.value[view.parsed.time_agg])
@@ -1946,12 +1954,14 @@ void (function () {
                           n++
                           cl.options.interactive = fg
                           cl.addTo(this.displaying)
-                          if (!fg) {
-                            cl.bringToBack()
+                          if (fg) {
+                            if (site.settings.background_top) cl.bringToBack()
+                          } else {
+                            if (!site.settings.background_top) cl.bringToBack()
                             cl.setStyle({
                               fillOpacity: 0,
-                              color: bgc,
-                              weight: 0.3,
+                              color: 'var(--border-highlight)',
+                              weight: site.settings.background_polygon_outline,
                             })
                           }
                           if (!this.vstate) this.vstate = vstate
@@ -1989,7 +1999,7 @@ void (function () {
                             es = e && e[this.view][subset]
                           lsi.setStyle({
                             fillOpacity: 0.7,
-                            color: defaults.border,
+                            color: 'var(--border)',
                             fillColor:
                               e && c in es
                                 ? pal(e.get_value(c, time), parsed.palette, summary, time, es[c][time] - missing, n)
@@ -2802,14 +2812,13 @@ void (function () {
                   }
                   if (site.settings.table_autoscroll) {
                     const w = this.e.parentElement.getBoundingClientRect().width,
-                      col = this.table
-                        .column(this.parsed.time + 1)
-                        .header()
-                        .getBoundingClientRect()
-                    this.e.parentElement.scroll({
-                      left: col.x - this.e.getBoundingClientRect().x + col.width + 16 - w,
-                      behavior: site.settings.table_scroll_behavior || 'smooth',
-                    })
+                      col = this.table.column(this.parsed.time + 1),
+                      h = col.selector.cols > 1 && col.header().getBoundingClientRect()
+                    if (h)
+                      this.e.parentElement.scroll({
+                        left: h.x - this.e.getBoundingClientRect().x + h.width + 16 - w,
+                        behavior: site.settings.table_scroll_behavior || 'smooth',
+                      })
                   }
                 }
               }
@@ -4297,7 +4306,7 @@ void (function () {
         info = site.data.variable_info[name]
       page.modal.info.header.firstElementChild.innerText = info.short_name
       page.modal.info.title.innerText = info.long_name
-      page.modal.info.description.innerText = info.long_description || info.description || info.short_description || ''
+      set_description(page.modal.info.description, info)
       page.modal.info.name.lastElementChild.innerText = name
       page.modal.info.type.lastElementChild.innerText = info.type || ''
       if (info.sources && info.sources.length) {
@@ -4336,6 +4345,29 @@ void (function () {
           if (c in r) page.modal.info.references.lastElementChild.appendChild(r[c].element)
         })
       } else page.modal.info.references.classList.add('hidden')
+    }
+
+    function set_description(e, info) {
+      const description = info.long_description || info.description || info.short_description || ''
+      let has_equation = patterns.has_equation.test(description)
+      if (has_equation) {
+        const tags = description.split(patterns.bracket_content)
+        for (let i = tags.length; i--; ) {
+          const t = tags[i]
+          if (t && '/' !== t.substring(0, 1)) {
+            const p = t.split(patterns.space),
+              n = p.length
+            has_equation = patterns.math_tags.test(p[0])
+            if (!has_equation) break
+            for (let a = 1; a < n; a++) {
+              has_equation = patterns.math_attributes.test(p[a])
+              if (!has_equation) break
+            }
+            if (!has_equation) break
+          }
+        }
+      }
+      e[has_equation ? 'innerHTML' : 'innerText'] = description
     }
 
     function parse_variables(s, type, e, entity) {
@@ -6198,6 +6230,7 @@ void (function () {
           if (!('_raw' in site.map)) site.map._raw = {}
           if (!('_queue' in site.map)) site.map._queue = {}
           if (!('_layers' in site.map[this.id])) site.map[this.id]._layers = {}
+          const time = site.data.meta.overall.value[_u[this.view].parsed.time_agg]
           site.map[this.id].shapes.forEach((shape, i) => {
             const has_time = 'time' in shape
             if (!site.map[this.id].has_time && has_time) {
@@ -6218,9 +6251,8 @@ void (function () {
             site.map._queue[mapId] = shape
             site.data.inited[mapId + this.id] = false
             if (
-              site.data.loaded[k] &&
-              (k === mapId ||
-                shape.time == site.map[this.id].match_time(site.data.meta.overall.value[_u[this.view].parsed.time_agg]))
+              (site.data.loaded[k] || k === this.options.background_shapes) &&
+              (k === mapId || (time && shape.time == site.map[this.id].match_time(time)))
             )
               retrieve_layer(this, shape)
           })

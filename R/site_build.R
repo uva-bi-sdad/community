@@ -308,7 +308,8 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   defaults <- list(
     digits = 2, summary_selection = "all", color_by_order = FALSE, boxplots = TRUE,
     theme_dark = FALSE, partial_init = TRUE, palette = "vik", hide_url_parameters = FALSE,
-    background_shapes = TRUE, iqr_box = TRUE, polygon_outline = 1.5, color_scale_center = "none",
+    background_shapes = TRUE, background_top = FALSE, background_polygon_outline = 2,
+    polygon_outline = 1.5, iqr_box = TRUE, color_scale_center = "none",
     table_autoscroll = TRUE, table_scroll_behavior = "smooth", table_autosort = TRUE,
     hide_tooltips = FALSE, map_animations = "all", trace_limit = 20, map_overlay = TRUE,
     circle_radius = 7, tracking = FALSE

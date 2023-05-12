@@ -12,6 +12,7 @@
 #' @importFrom lingmatch lma_dict lma_dtm lma_simets
 #' @importFrom grDevices rgb col2rgb
 #' @importFrom httpuv listServers staticPath startServer stopServer stopAllServers
+#' @importFrom katex katex_mathml
 #' @keywords internal
 "_PACKAGE"
 
