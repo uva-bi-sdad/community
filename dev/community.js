@@ -3958,7 +3958,7 @@ void (function () {
             ck = false
           }
           if (u.groups) {
-            let groups = m.info[u.settings.group] || ['No Group']
+            let groups = (m.info && m.info[u.settings.group]) || ['No Group']
             if (!Array.isArray(groups)) groups = [groups]
             for (let g = groups.length; g--; ) {
               const group = groups[g]
