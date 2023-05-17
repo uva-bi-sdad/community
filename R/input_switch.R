@@ -28,7 +28,7 @@ input_switch <- function(label, id = label, ..., note = NULL, default_on = FALSE
     paste0('<div class="form-check', if (!as.checkbox) " form-switch", '">'),
     paste0('<label class="form-check-label" for="', id, '">', label, "</label>"),
     paste0(
-      '<input auto-type="switch" type="checkbox" autocomplete="off"',
+      '<input data-autoType="switch" type="checkbox" autocomplete="off"',
       ' class="auto-input form-check-input"', if (!as.checkbox) ' role="switch"', ' id="', id, '"',
       if (!is.null(note)) paste0(' aria-description="', note, '"'),
       if (default_on) " checked", ">"

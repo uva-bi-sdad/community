@@ -5,8 +5,8 @@
 \title{Add a combobox select input to a website}
 \usage{
 input_combobox(label, options, default = -1, display = options,
-  id = label, ..., strict = TRUE, search = TRUE, multi = FALSE,
-  accordion = FALSE, clearable = FALSE, note = NULL,
+  id = label, ..., strict = TRUE, numeric = FALSE, search = TRUE,
+  multi = FALSE, accordion = FALSE, clearable = FALSE, note = NULL,
   group_feature = NULL, variable = NULL, dataset = NULL,
   depends = NULL, dataview = NULL, subset = "filtered",
   selection_subset = "full_filter", filters = NULL, reset_button = FALSE,
@@ -30,6 +30,9 @@ to select between properties.}
 
 \item{strict}{Logical; if \code{FALSE}, allows arbitrary user input, rather than limiting input to the
 option set.}
+
+\item{numeric}{Logical; if \code{TRUE}, will treat all numeric inputs as custom values,
+rather than as potential option indices.}
 
 \item{search}{Logical; if \code{FALSE}, does not dynamically filter the option set on user input.}
 

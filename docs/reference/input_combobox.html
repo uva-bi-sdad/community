@@ -12,7 +12,7 @@ allowing for multiple selection, dynamic filtering, and custom entries."><meta p
     
     <a class="navbar-brand me-2" href="../index.html">community</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1.200</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1.201</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,8 +60,8 @@ allowing for multiple selection, dynamic filtering, and custom entries.</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">input_combobox</span><span class="op">(</span><span class="va">label</span>, <span class="va">options</span>, default <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, display <span class="op">=</span> <span class="va">options</span>,</span>
-<span>  id <span class="op">=</span> <span class="va">label</span>, <span class="va">...</span>, strict <span class="op">=</span> <span class="cn">TRUE</span>, search <span class="op">=</span> <span class="cn">TRUE</span>, multi <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  accordion <span class="op">=</span> <span class="cn">FALSE</span>, clearable <span class="op">=</span> <span class="cn">FALSE</span>, note <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  id <span class="op">=</span> <span class="va">label</span>, <span class="va">...</span>, strict <span class="op">=</span> <span class="cn">TRUE</span>, numeric <span class="op">=</span> <span class="cn">FALSE</span>, search <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  multi <span class="op">=</span> <span class="cn">FALSE</span>, accordion <span class="op">=</span> <span class="cn">FALSE</span>, clearable <span class="op">=</span> <span class="cn">FALSE</span>, note <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  group_feature <span class="op">=</span> <span class="cn">NULL</span>, variable <span class="op">=</span> <span class="cn">NULL</span>, dataset <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  depends <span class="op">=</span> <span class="cn">NULL</span>, dataview <span class="op">=</span> <span class="cn">NULL</span>, subset <span class="op">=</span> <span class="st">"filtered"</span>,</span>
 <span>  selection_subset <span class="op">=</span> <span class="st">"full_filter"</span>, filters <span class="op">=</span> <span class="cn">NULL</span>, reset_button <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -100,6 +100,11 @@ to select between properties.</p></dd>
 <dt>strict</dt>
 <dd><p>Logical; if <code>FALSE</code>, allows arbitrary user input, rather than limiting input to the
 option set.</p></dd>
+
+
+<dt>numeric</dt>
+<dd><p>Logical; if <code>TRUE</code>, will treat all numeric inputs as custom values,
+rather than as potential option indices.</p></dd>
 
 
 <dt>search</dt>

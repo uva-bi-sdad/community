@@ -104,8 +104,8 @@ input_button <- function(label, target = "reset_selection", id = label, dataview
       )
     } else {
       paste0(
-        '<button type="button" auto-type="button" class="auto-input btn', if (class != "") paste("", class),
-        '" id="', id, '"', if (length(target) == 1 && !is.list(target) && is.null(names(target))) paste0(' target="', target, '"'),
+        '<button type="button" data-autoType="button" class="auto-input btn', if (class != "") paste("", class),
+        '" id="', id, '"', if (length(target) == 1 && !is.list(target) && is.null(names(target))) paste0(' data-target="', target, '"'),
         if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
         if (!is.null(note)) paste0(' aria-description="', note, '"'),
         ">", label, "</button>"

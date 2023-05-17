@@ -51,12 +51,12 @@ output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dat
   r <- paste(c(
     '<div class="plotly-wrap"><div class="auto-output plotly"',
     if (!is.null(dataview)) paste0('data-view="', dataview, '"'),
-    if (!is.null(click)) paste0('click="', click, '"'),
-    if (!is.null(x)) paste0('x="', x, '"'),
-    if (!is.null(y)) paste0('y="', y, '"'),
-    if (!is.null(color)) paste0('color="', color, '"'),
-    if (!is.null(color_time)) paste0('color-time="', color_time, '"'),
-    paste0('id="', id, '" auto-type="', type, '"></table></div></div>')
+    if (!is.null(click)) paste0('data-click="', click, '"'),
+    if (!is.null(x)) paste0('data-x="', x, '"'),
+    if (!is.null(y)) paste0('data-y="', y, '"'),
+    if (!is.null(color)) paste0('data-color="', color, '"'),
+    if (!is.null(color_time)) paste0('data-colorTime="', color_time, '"'),
+    paste0('id="', id, '" data-autoType="', type, '"></table></div></div>')
   ), collapse = " ")
   if (building) {
     caller$dependencies$plotly <- list(

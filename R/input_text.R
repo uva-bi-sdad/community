@@ -36,7 +36,7 @@ input_text <- function(label, id = label, ..., default = NULL, note = NULL, mult
       },
       if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
       if (!is.null(note)) c(' aria-description="', note, '"'),
-      ' class="form-control auto-input', if (!is.null(class)) paste("", class), '" auto-type="intext">',
+      ' class="form-control auto-input', if (!is.null(class)) paste("", class), '" data-autoType="intext">',
       if (multiline) "</textarea>",
       if (floating_label) paste0('<label for="', id, '">', label, "</label>")
     ), collapse = ""),

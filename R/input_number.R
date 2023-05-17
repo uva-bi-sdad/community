@@ -42,15 +42,15 @@ input_number <- function(label, id = label, ..., default = NULL, variable = NULL
     paste0(c(
       '<input type="', type, '"',
       ' id="', id, '"',
-      if (!is.null(default)) paste0(' default="', default, '"'),
+      if (!is.null(default)) paste0(' data-default="', default, '"'),
       if (!is.null(note)) paste0(' aria-description="', note, '"'),
-      if (!is.null(variable)) paste0(' variable="', variable, '"'),
+      if (!is.null(variable)) paste0(' data-variable="', variable, '"'),
       if (!is.null(min)) paste0(' min="', min, '"'),
       if (!is.null(max)) paste0(' max="', max, '"'),
       if (!is.null(step)) paste0(' step="', step, '"'),
       if (!is.null(dataview)) paste0(' data-view="', dataview, '"'),
       unlist(list(...)),
-      ' class="form-control auto-input', if (!is.null(class)) paste("", class), '" auto-type="number">',
+      ' class="form-control auto-input', if (!is.null(class)) paste("", class), '" data-autoType="number">',
       if (floating_label) paste0('<label for="', id, '">', label, "</label>")
     ), collapse = ""),
     "</div>",

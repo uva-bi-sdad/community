@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">community</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1.200</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1.201</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -119,45 +119,89 @@ initial and final colors in the sequence to add in order to reduce warping at th
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># a discrete palette</span></span></span>
 <span class="r-in"><span><span class="fu">util_make_palette</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"red"</span>, <span class="st">"green"</span>, <span class="st">"blue"</span><span class="op">)</span>, <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   "name": "custom",</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   "type": "discrete",</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   "colors": ["#FF0000", "#00FF00", "#0000FF"]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     "name": "custom",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     "type": "discrete",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     "colors": [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "#FF0000",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "#00FF00",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "#0000FF"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     ]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a continuous palette</span></span></span>
 <span class="r-in"><span><span class="fu">util_make_palette</span><span class="op">(</span><span class="st">"red"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   "name": "custom",</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   "type": "continuous",</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   "colors": [</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       [255, 0, 0],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       [-127.5, 0, 0]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     ],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [127.5, 0, 0],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       [0, 0, 0],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       [127.5, 0, 0]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     "name": "custom",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     "type": "continuous",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     "colors": [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 255.0,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 0.0,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 0.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             ],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 -127.5,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 0.0,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 0.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             ]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         ],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             127.5,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             0.0,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             0.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         ],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 0.0,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 0.0,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 0.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             ],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 127.5,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 0.0,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 0.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             ]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         ]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     ]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a divergent continuous palette</span></span></span>
 <span class="r-in"><span><span class="fu">util_make_palette</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"red"</span>, <span class="st">"green"</span><span class="op">)</span>, divergent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   "name": "custom",</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   "type": "continuous-divergent",</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   "colors": [</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       [0, 255, 0],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       [127.5, -127.5, 0]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     ],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [127.5, 127.5, 0],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       [255, 0, 0],</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       [-127.5, 127.5, 0]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     "name": "custom",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     "type": "continuous-divergent",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     "colors": [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 0.0,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 255.0,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 0.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             ],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 127.5,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 -127.5,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 0.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             ]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         ],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             127.5,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             127.5,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             0.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         ],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 255.0,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 0.0,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 0.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             ],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 -127.5,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 127.5,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 0.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             ]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         ]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     ]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 </code></pre></div>
     </div>

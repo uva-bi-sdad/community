@@ -64,8 +64,8 @@ output_table <- function(variables = NULL, dataset = NULL, dataview = NULL, id =
       '<table class="auto-output tables', if (is.null(class)) "" else paste("", class), '"'
     ),
     if (!is.null(dataview)) paste0('data-view="', dataview, '"'),
-    if (!is.null(click)) paste0('click="', click, '"'),
-    paste0('id="', id, '" auto-type="', type, '"></table>', if (!datatables) "</div>")
+    if (!is.null(click)) paste0('data-click="', click, '"'),
+    paste0('id="', id, '" data-autoType="', type, '"></table>', if (!datatables) "</div>")
   ), collapse = " ")
   if (building) {
     if (!is.null(variables)) {

@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">community</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1.200</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1.201</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -113,11 +113,11 @@ reference (e.g., <code>"{input_a}[r]"</code> is the same as <code>"{input_a}[r i
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># text that shows the current value of `input_a`, and resets it on click</span></span></span>
 <span class="r-in"><span><span class="fu">output_text</span><span class="op">(</span><span class="st">"Selection: {input_a}[r]"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "&lt;p auto-type=\"text\" id=\"text\" class=\"auto-output output-text\"&gt;&lt;/p&gt;"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "&lt;p data-autoType=\"text\" id=\"text\" class=\"auto-output output-text\"&gt;&lt;/p&gt;"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># adds a parenthetical if the value of the input is 0</span></span></span>
 <span class="r-in"><span><span class="fu">output_text</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Selection: {input_a}[r]"</span>, <span class="st">"?{input_a == 0}(input is zero)"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "&lt;p auto-type=\"text\" id=\"text\" class=\"auto-output output-text\"&gt;&lt;/p&gt;"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "&lt;p data-autoType=\"text\" id=\"text\" class=\"auto-output output-text\"&gt;&lt;/p&gt;"</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

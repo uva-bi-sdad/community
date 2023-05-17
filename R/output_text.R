@@ -98,7 +98,7 @@ output_text <- function(text, tag = "p", id = NULL, class = NULL, condition = NU
     }
   }
   r <- paste0(c(
-    "<", tag, ' auto-type="text" id="', id, '"',
+    "<", tag, ' data-autoType="text" id="', id, '"',
     ' class="auto-output output-text', if (!is.null(class)) paste("", class), '"',
     "></", tag, ">"
   ), collapse = "")

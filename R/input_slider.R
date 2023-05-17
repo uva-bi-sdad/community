@@ -29,11 +29,11 @@ input_slider <- function(label, id = label, ..., min = 0, max = 1, step = 1, def
     '<div class="wrapper slider-wrapper">',
     paste0('<label class="form-label" for="', id, '">', label, "</label>"),
     paste0(
-      '<input role="slider" type="range" class="auto-input form-range" auto-type="number" id="', id, '" default=', default,
+      '<input role="slider" type="range" class="auto-input form-range" data-autoType="number" id="', id, '" data-default=', default,
       " step=", step, " min=", min, " max=", max,
       if (!is.null(depends)) {
-        paste0(' depends="', depends, '"')
-      } else if (!is.null(dataset)) paste0('dataset="', dataset, '"'),
+        paste0(' data-depends="', depends, '"')
+      } else if (!is.null(dataset)) paste0('data-dataset="', dataset, '"'),
       if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
       if (!is.null(note)) paste0(' aria-description="', note, '"'),
       ">"

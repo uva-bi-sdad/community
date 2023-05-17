@@ -273,11 +273,11 @@ void (function () {
             k = d + (va ? va : ''),
             combobox = 'combobox' === u.type
           if (!(k in u.option_sets)) {
-            if (patterns.variable.test(u.options_source)) {
+            if (patterns.variable.test(u.optionSource)) {
               fill_variables_options(u, d, u.option_sets)
-            } else if (patterns.levels.test(u.options_source)) {
+            } else if (patterns.levels.test(u.optionSource)) {
               fill_levels_options(u, d, va, u.option_sets)
-            } else if (patterns.ids.test(u.options_source)) {
+            } else if (patterns.ids.test(u.optionSource)) {
               fill_ids_options(u, d, u.option_sets)
             }
           }
@@ -292,7 +292,7 @@ void (function () {
                 u.options = u.option_sets[k].options
               }
               var ns = 0
-              if ('ID' === u.variable || patterns.ids.test(u.options_source)) {
+              if ('ID' === u.variable || patterns.ids.test(u.optionSource)) {
                 const value = u.value()
                 let selection = -1 === value || '' === value ? u.subset : u.selection_subset,
                   v = {}
@@ -603,7 +603,7 @@ void (function () {
       elements = {
         button: {
           init: function (o) {
-            o.target = o.e.getAttribute('target')
+            o.target = o.e.getAttribute('data-target')
             if ('copy' === o.target) o.settings.endpoint = site.endpoint
             if ('filter' === o.target) {
               o.e.setAttribute('data-bs-toggle', 'modal')
@@ -792,7 +792,7 @@ void (function () {
           },
           adder: function (value, display, noadd) {
             const e = document.createElement('div'),
-              s = 'TRUE' === this.e.getAttribute('switch')
+              s = 'TRUE' === this.e.getAttribute('data-switch')
             e.className = 'form-check' + (s ? ' form-switch' : '')
             e.appendChild(document.createElement('input'))
             e.appendChild(document.createElement('label'))
@@ -875,7 +875,7 @@ void (function () {
           },
           adder: function (value, display, noadd) {
             var e = document.createElement('div'),
-              s = 'TRUE' === this.e.getAttribute('switch')
+              s = 'TRUE' === this.e.getAttribute('data-switch')
             e.className = 'form-check' + (s ? ' form-switch' : '')
             e.appendChild(document.createElement('input'))
             e.appendChild(document.createElement('label'))
@@ -1101,7 +1101,7 @@ void (function () {
             e.className = 'wrapper combobox-wrapper'
             e.appendChild(c)
             c.id = id
-            c.setAttribute('auto-type', 'combobox')
+            c.setAttribute('data-autoType', 'combobox')
             c.className = 'auto-input form-select combobox combobox-component'
             c.role = 'combobox'
             c.setAttribute('aria-haspopup', 'listbox')
@@ -1165,7 +1165,7 @@ void (function () {
                 Object.keys(u.groups.by_name).forEach(g => {
                   u.groups.by_name[g].querySelectorAll('.combobox-option').forEach(c => {
                     u.options.push(c)
-                    c.setAttribute('group', g)
+                    c.setAttribute('data-group', g)
                     u.values[c.value] = n
                     u.display[c.innerText] = n++
                   })
@@ -1255,12 +1255,10 @@ void (function () {
                       }
                     })
                   this.container.style.display = ''
-                  if (!this.settings.multi) {
-                    if ('' !== this.selection.innerText) this.cleared_selection = this.selection.innerText
-                    if (this.cleared_selection in this.display)
-                      this.highlight({target: this.options[this.display[this.cleared_selection]]})
-                    this.selection.innerText = ''
-                  }
+                  if ('' !== this.selection.innerText) this.cleared_selection = this.selection.innerText
+                  if (this.cleared_selection in this.display)
+                    this.highlight({target: this.options[this.display[this.cleared_selection]]})
+                  this.selection.innerText = ''
                   window.addEventListener('click', this.close)
                   this.e.setAttribute('aria-expanded', true)
                   if (!e || e.target !== this.input_element) setTimeout(() => this.input_element.focus(), 0)
@@ -1299,9 +1297,10 @@ void (function () {
                     const port = this.container.getBoundingClientRect(),
                       item = o.getBoundingClientRect()
                     let top = port.top
-                    if (this.groups && o.getAttribute('group'))
+                    if (this.groups && o.getAttribute('data-group'))
                       top +=
-                        this.groups.by_name[o.getAttribute('group')].firstElementChild.getBoundingClientRect().height
+                        this.groups.by_name[o.getAttribute('data-group')].firstElementChild.getBoundingClientRect()
+                          .height
                     if (top > item.top) {
                       this.container.scrollTo(0, this.container.scrollTop + item.top - top)
                     } else if (port.bottom < item.bottom) {
@@ -1314,8 +1313,8 @@ void (function () {
             o.listbox.addEventListener('mouseover', o.highlight)
             if (o.settings.accordion) {
               o.listbox.addEventListener('show.bs.collapse', e => {
-                const group = o.options[o.hover_index].getAttribute('group')
-                if (group !== e.target.getAttribute('group')) {
+                const group = o.options[o.hover_index].getAttribute('data-group')
+                if (group !== e.target.getAttribute('data-group')) {
                   o.highlight({target: e.target.firstElementChild.firstElementChild})
                   o.input_element.focus()
                 }
@@ -1348,7 +1347,7 @@ void (function () {
                     if (o.innerText.toLowerCase().includes(q)) {
                       o.classList.remove('filter-hidden')
                       this.filter_index.push(i)
-                      const group = o.getAttribute('group')
+                      const group = o.getAttribute('data-group')
                       if (group) {
                         this.groups.by_name[group].firstElementChild.firstElementChild.classList.remove('hidden')
                         if (this.settings.accordion) {
@@ -1433,7 +1432,7 @@ void (function () {
                 (this.options[i].classList.contains('hidden') || this.options[i].classList.contains('filter-hidden'))
               )
                 i = -1
-              v = -1 === i ? v.target.innerText || v.target.value : i
+              v = -1 === i ? v.target.innerText || v.target.value : this.options[i].value
               toggle = this.settings.multi
             }
             this.filter_reset()
@@ -1452,7 +1451,7 @@ void (function () {
             } else {
               if (this.settings.strict && 'string' === typeof v && !(v in this.values) && patterns.number.test(v))
                 v = Number(v)
-              if ('number' === typeof v && v > -1 && v < this.options.length) {
+              if ('number' !== this.value_type && 'number' === typeof v && this.options[v]) {
                 v = this.options[v].value
               }
               if ('string' === v && v in this.display) v = this.options[this.display[v]].value
@@ -1518,11 +1517,11 @@ void (function () {
           init: function (o) {
             o.previous_span = 1
             if (o.id in site.plotly) {
-              o.x = o.e.getAttribute('x')
-              o.y = o.e.getAttribute('y')
-              o.color = o.e.getAttribute('color')
-              o.time = o.e.getAttribute('color-time')
-              o.click = o.e.getAttribute('click')
+              o.x = o.e.getAttribute('data-x')
+              o.y = o.e.getAttribute('data-y')
+              o.color = o.e.getAttribute('data-color')
+              o.time = o.e.getAttribute('data-colorTime')
+              o.click = o.e.getAttribute('data-click')
               if (o.click in _u) o.clickto = _u[o.click]
               o.parsed = {}
               o.traces = {}
@@ -1785,9 +1784,9 @@ void (function () {
         },
         map: {
           init: function (o) {
-            o.color = o.e.getAttribute('color')
-            o.time = o.e.getAttribute('color-time')
-            o.click = o.e.getAttribute('click')
+            o.color = o.e.getAttribute('data-color')
+            o.time = o.e.getAttribute('data-colorTime')
+            o.click = o.e.getAttribute('data-click')
             if (o.click && o.click in _u) o.clickto = _u[o.click]
             o.parsed = {}
             o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0
@@ -2392,11 +2391,13 @@ void (function () {
                           s.appendChild(ss)
                           ss.appendChild(document.createElement('span'))
                           ss.lastElementChild.className = 'syntax-value'
-                          ss.lastElementChild.innerText = f.value
+                          ss.lastElementChild.innerText =
+                            'number' === typeof f.value ? site.data.format_value(f.value) : f.value
                           ss = document.createElement('td')
                           s.appendChild(ss)
                           ss.appendChild(document.createElement('span'))
-                          ss.lastElementChild.innerText = '(' + result + ')'
+                          ss.lastElementChild.innerText =
+                            '(' + (f.value_source ? f.value_source + '; ' : '') + result + ')'
                           e.appendChild(s)
                         }
                       })
@@ -2455,7 +2456,7 @@ void (function () {
           init: function (o) {
             o.e.appendChild(document.createElement('thead'))
             o.e.appendChild(document.createElement('tbody'))
-            o.click = o.e.getAttribute('click')
+            o.click = o.e.getAttribute('data-click')
             o.features = o.options.features
             o.parsed = {summary: {}, order: [], time: -1, color: '', dataset: _u[o.view].get.dataset()}
             o.header = []
@@ -2853,7 +2854,7 @@ void (function () {
         },
         table: {
           init: function (o) {
-            o.click = o.e.getAttribute('click')
+            o.click = o.e.getAttribute('data-click')
             o.features = o.options.features
             o.parsed = {summary: {}, order: [], time: 0, color: '', dataset: defaults.dataview}
             o.header = []
@@ -2942,14 +2943,14 @@ void (function () {
                     d = e.data[variable.code],
                     tr = document.createElement('tr')
                   this.rows[id] = tr
-                  tr.setAttribute('entityId', id)
+                  tr.setAttribute('data-entityId', id)
                   let td = document.createElement('td')
                   td.innerText = e.features.name
                   tr.appendChild(td)
                   if (1 === dn) {
                     tr.appendChild((td = document.createElement('td')))
                     td.innerText = site.data.format_value(d)
-                    td.setAttribute('entityId', id)
+                    td.setAttribute('data-entityId', id)
                     td.classList.add('highlighted')
                   } else {
                     for (let i = 0; i < dn; i++) {
@@ -3015,7 +3016,7 @@ void (function () {
           },
           mouseover: function (e) {
             const row = 'TD' === e.target.tagName ? e.target.parentElement : e.target,
-              id = row.getAttribute('entityId')
+              id = row.getAttribute('data-entityId')
             if (id) {
               row.classList.add('highlighted')
               update_subs(this.id, 'show', site.data.entities[id])
@@ -3023,7 +3024,7 @@ void (function () {
           },
           mouseout: function (e) {
             const row = 'TD' === e.target.tagName ? e.target.parentElement : e.target,
-              id = row.getAttribute('entityId')
+              id = row.getAttribute('data-entityId')
             if (id) {
               row.classList.remove('highlighted')
               update_subs(this.id, 'revert', site.data.entities[id])
@@ -3031,7 +3032,7 @@ void (function () {
           },
           click: function (e) {
             const row = 'TD' === e.target.tagName ? e.target.parentElement : e.target,
-              id = row.getAttribute('entityId')
+              id = row.getAttribute('data-entityId')
             if (this.clickto && id) this.clickto.set(id)
           },
         },
@@ -3048,7 +3049,7 @@ void (function () {
                 o.palette = 'settings.palette' in _u ? 'settings.palette' : site.settings.palette
               }
             }
-            o.variable = o.e.getAttribute('variable')
+            o.variable = o.e.getAttribute('data-variable')
             if (o.variable) {
               if (o.variable in _u) add_dependency(o.variable, {type: 'update', id: o.id})
             } else if (view.y in _u) add_dependency(view.y, {type: 'update', id: o.id})
@@ -3075,14 +3076,14 @@ void (function () {
               scale: o.e.querySelector('.legend-scale'),
               summary: o.e.querySelector('.legend-summary'),
             }
-            o.parts.ticks.setAttribute('of', o.id)
-            o.parts.scale.setAttribute('of', o.id)
-            o.parts.summary.setAttribute('of', o.id)
+            o.parts.ticks.setAttribute('data-of', o.id)
+            o.parts.scale.setAttribute('data-of', o.id)
+            o.parts.summary.setAttribute('data-of', o.id)
             o.mouseover = elements.legend.mouseover.bind(o)
             o.e.addEventListener('mousemove', o.mouseover)
             o.e.addEventListener('mouseout', elements.legend.mouseout.bind(o))
             o.e.addEventListener('click', elements.legend.click.bind(o))
-            o.click = o.e.getAttribute('click')
+            o.click = o.e.getAttribute('data-click')
             if (o.click in _u) o.clickto = _u[o.click]
             o.ticks = {
               center: o.parts.summary.appendChild(document.createElement('div')),
@@ -3091,17 +3092,17 @@ void (function () {
               entity: o.parts.ticks.appendChild(document.createElement('div')),
             }
             Object.keys(o.ticks).forEach(t => {
-              o.ticks[t].setAttribute('of', o.id)
+              o.ticks[t].setAttribute('data-of', o.id)
               o.ticks[t].className = 'legend-tick'
               o.ticks[t].appendChild((e = document.createElement('div')))
-              e.setAttribute('of', o.id)
+              e.setAttribute('data-of', o.id)
               e.appendChild(document.createElement('p'))
-              e.lastElementChild.setAttribute('of', o.id)
+              e.lastElementChild.setAttribute('data-of', o.id)
               if ('m' !== t.substring(0, 1)) {
                 e.appendChild(document.createElement('p'))
-                e.lastElementChild.setAttribute('of', o.id)
+                e.lastElementChild.setAttribute('data-of', o.id)
                 e.appendChild(document.createElement('p'))
-                e.lastElementChild.setAttribute('of', o.id)
+                e.lastElementChild.setAttribute('data-of', o.id)
                 if ('entity' === t) {
                   o.ticks[t].firstElementChild.lastElementChild.classList.add('entity')
                 } else {
@@ -3200,7 +3201,7 @@ void (function () {
                         remake
                           ? color => {
                               s.appendChild(document.createElement('span'))
-                              s.lastElementChild.setAttribute('of', this.id)
+                              s.lastElementChild.setAttribute('data-of', this.id)
                               s.lastElementChild.style.backgroundColor = color
                             }
                           : (color, i) => {
@@ -3213,19 +3214,19 @@ void (function () {
                         e
                       if (remake) {
                         s.appendChild((e = document.createElement('div')))
-                        e.setAttribute('of', this.id)
+                        e.setAttribute('data-of', this.id)
                         e.style.left = 0
                         for (; i < n; i++) {
                           e.appendChild(document.createElement('span'))
-                          e.lastElementChild.setAttribute('of', this.id)
+                          e.lastElementChild.setAttribute('data-of', this.id)
                           e.lastElementChild.style.backgroundColor = p[i]
                         }
                         s.appendChild((e = document.createElement('div')))
-                        e.setAttribute('of', this.id)
+                        e.setAttribute('data-of', this.id)
                         e.style.right = 0
                         for (i = Math.floor(p.length / 2), n = p.length; i < n; i++) {
                           e.appendChild(document.createElement('span'))
-                          e.lastElementChild.setAttribute('of', this.id)
+                          e.lastElementChild.setAttribute('data-of', this.id)
                           e.lastElementChild.style.backgroundColor = p[i]
                         }
                       } else {
@@ -3388,7 +3389,7 @@ void (function () {
             }
           },
           mouseout: function (e) {
-            if (e.relatedTarget && this.id !== e.relatedTarget.getAttribute('of')) {
+            if (e.relatedTarget && this.id !== e.relatedTarget.getAttribute('data-of')) {
               if (this.queue.cooldown > 0) clearTimeout(this.queue.cooldown)
               this.queue.cooldown = -1
               this.revert()
@@ -3439,19 +3440,19 @@ void (function () {
         },
         init_input: function (e) {
           const o = {
-            type: e.getAttribute('auto-type'),
+            type: e.getAttribute('data-autoType'),
             source: void 0,
             value: function () {
               const v = valueOf(this.source)
               return 'undefined' === typeof v ? valueOf(this.default) : v
             },
-            default: e.getAttribute('default'),
-            options_source: e.getAttribute('auto-options'),
-            depends: e.getAttribute('depends'),
-            variable: e.getAttribute('variable'),
-            dataset: e.getAttribute('dataset'),
+            default: e.getAttribute('data-default'),
+            optionSource: e.getAttribute('data-optionSource'),
+            depends: e.getAttribute('data-depends'),
+            variable: e.getAttribute('data-variable'),
+            dataset: e.getAttribute('data-dataset'),
             view: e.getAttribute('data-view'),
-            id: e.id || e.options_source || 'ui' + page.elementCount++,
+            id: e.id || e.optionSource || 'ui' + page.elementCount++,
             note: e.getAttribute('aria-description') || '',
             current_index: -1,
             previous: '',
@@ -3467,10 +3468,10 @@ void (function () {
             : o.e.parentElement.parentElement
           if (o.wrapper) {
             if (o.note) o.wrapper.classList.add('has-note')
-            o.wrapper.setAttribute('of', o.id)
+            o.wrapper.setAttribute('data-of', o.id)
             ;['div', 'span', 'label', 'fieldset', 'legend', 'input', 'button'].forEach(type => {
               const c = o.wrapper.querySelectorAll(type)
-              if (c.length) c.forEach(ci => ci.setAttribute('of', o.id))
+              if (c.length) c.forEach(ci => ci.setAttribute('data-of', o.id))
             })
           }
           if (o.note) {
@@ -3497,7 +3498,7 @@ void (function () {
             o.options = o.e.querySelectorAll(
               'select' === o.type ? 'option' : 'combobox' === o.type ? '.combobox-option' : 'input'
             )
-            if (o.options_source && patterns.ids.test(o.options_source)) {
+            if (o.optionSource && patterns.ids.test(o.optionSource)) {
               o.loader = function () {
                 if (!this.e.classList.contains('locked')) {
                   this.deferred = false
@@ -3520,7 +3521,7 @@ void (function () {
         },
         init_output: function (e, i) {
           const o = {
-            type: e.getAttribute('auto-type'),
+            type: e.getAttribute('data-autoType'),
             view: e.getAttribute('data-view') || defaults.dataview,
             id: e.id || 'out' + i,
             note: e.getAttribute('aria-description') || '',
@@ -3599,18 +3600,18 @@ void (function () {
         Time: ['first', 'selected', 'last'],
         summary: ['missing', 'min', 'q1', 'mean', 'median', 'q3', 'max'],
       },
-      filter_funs = {
-        number: function (e, v) {
-          return e.get_value(v.name, this - v.range[0])
+      time_funs = {
+        number: function (v) {
+          return this - v.range[0]
         },
-        first: function (e, v) {
-          return e.get_value(v.name, 0)
+        first: function (v) {
+          return 0
         },
-        selected: function (e, v, p) {
-          return e.get_value(v.name, p.time_agg - v.range[0])
+        selected: function (v, p) {
+          return p.time_agg - v.range[0]
         },
-        last: function (e, v) {
-          return e.get_value(v.name, v.range[1] - v.range[0])
+        last: function (v) {
+          return v.range[1] - v.range[0]
         },
       },
       page = {
@@ -3659,17 +3660,16 @@ void (function () {
             const as_state = !q
             if (as_state) q = []
             _u._base_filter.c.forEach(f => {
-              const value = Number(f.value),
-                component =
-                  'selected' === f.component
-                    ? site.data.meta.overall.value[
-                        'undefined' === typeof agg ? _u[defaults.dataview].parsed.time_agg : agg
-                      ]
-                    : f.time_component
-                    ? site.data.meta.overall.value[f.component]
-                    : f.component
-              if (!isNaN(value))
-                q.push(f.variable + '[' + component + ']' + f.operator + value + (as_state ? f.active : ''))
+              const component =
+                'selected' === f.component
+                  ? site.data.meta.overall.value[
+                      'undefined' === typeof agg ? _u[defaults.dataview].parsed.time_agg : agg
+                    ]
+                  : f.time_component
+                  ? site.data.meta.overall.value[f.component]
+                  : f.component
+              if (f.value)
+                q.push(f.variable + '[' + component + ']' + f.operator + f.value + (as_state ? f.active : ''))
             })
             return q.join('&')
           },
@@ -3769,7 +3769,7 @@ void (function () {
           p.trigger = tooltip_trigger.bind({id: o.id + p.text, note: p.target, wrapper: text.parts.lastElementChild})
           if ('note' === p.type) {
             text.parts.lastElementChild.setAttribute('aria-description', p.target)
-            text.parts.lastElementChild.setAttribute('of', o.id + p.text)
+            text.parts.lastElementChild.setAttribute('data-of', o.id + p.text)
             text.parts.lastElementChild.className = 'has-note'
             text.parts.lastElementChild.addEventListener('mouseover', p.trigger)
             text.parts.lastElementChild.addEventListener('focus', p.trigger)
@@ -3863,7 +3863,7 @@ void (function () {
                   const id = u.id + '_' + group.replace(patterns.seps, '-')
                   let ee
                   if (u.settings.accordion) {
-                    e.setAttribute('group', group)
+                    e.setAttribute('data-group', group)
                     e.className = 'combobox-group accordion-item combobox-component'
                     e.appendChild((ee = document.createElement('div')))
                     ee.id = id + '-label'
@@ -3900,7 +3900,7 @@ void (function () {
                 u.groups.e.push(e)
               }
               const o = u.add(k, entity.features.name, true)
-              o.setAttribute('group', group)
+              o.setAttribute('data-group', group)
               if (combobox && u.settings.accordion) {
                 u.groups.by_name[group].lastElementChild.lastElementChild.appendChild(o)
               } else {
@@ -3968,7 +3968,7 @@ void (function () {
                   const id = u.id + '_' + group.replace(patterns.seps, '-')
                   let ee
                   if (u.settings.accordion) {
-                    e.setAttribute('group', group)
+                    e.setAttribute('data-group', group)
                     e.className = 'combobox-group accordion-item combobox-component'
                     e.appendChild((ee = document.createElement('div')))
                     ee.id = id + '-label'
@@ -4005,7 +4005,7 @@ void (function () {
                 u.groups.e.push(e)
               }
               const o = u.add(m.name, l, true, m)
-              o.setAttribute('group', group)
+              o.setAttribute('data-group', group)
               if (combobox && u.settings.accordion) {
                 u.groups.by_name[group].lastElementChild.lastElementChild.appendChild(o)
               } else {
@@ -4679,8 +4679,8 @@ void (function () {
       ee.className = 'form-floating text-wrapper wrapper'
       ee.appendChild(document.createElement('input'))
       ee.lastElementChild.className = 'form-control auto-input'
-      ee.lastElementChild.setAttribute('auto-type', 'number')
-      ee.lastElementChild.setAttribute('default', 'min')
+      ee.lastElementChild.setAttribute('data-autoType', 'number')
+      ee.lastElementChild.setAttribute('data-default', 'min')
       ee.lastElementChild.max = 'filter.time_max'
       ee.lastElementChild.type = 'number'
       ee.lastElementChild.autoType = 'number'
@@ -4694,8 +4694,8 @@ void (function () {
       ee.className = 'form-floating text-wrapper wrapper'
       ee.appendChild(document.createElement('input'))
       ee.lastElementChild.className = 'form-control auto-input'
-      ee.lastElementChild.setAttribute('auto-type', 'number')
-      ee.lastElementChild.setAttribute('default', 'max')
+      ee.lastElementChild.setAttribute('data-autoType', 'number')
+      ee.lastElementChild.setAttribute('data-default', 'max')
       ee.lastElementChild.min = 'filter.time_min'
       ee.lastElementChild.type = 'number'
       ee.lastElementChild.autoType = 'number'
@@ -4735,7 +4735,7 @@ void (function () {
       page.menus.length &&
         page.menus.forEach(m => {
           const has_toggler = m.lastElementChild.tagName === 'BUTTON'
-          m.state = m.getAttribute('state')
+          m.state = m.getAttribute('data-state')
           if (m.classList.contains('menu-top')) {
             page.top_menu = m
             page.top_menu.style.left = page.content_bounds.left + 'px'
@@ -4948,7 +4948,9 @@ void (function () {
         })
         site.dataviews[defaults.dataview].dataset = defaults.dataset
       }
-      if ('undefined' !== typeof DataHandler) {
+      if ('undefined' === typeof DataHandler) {
+        site.data = {}
+      } else {
         defaults.dataset = valueOf(site.dataviews[defaults.dataview].dataset)
         if ('number' === typeof defaults.dataset) defaults.dataset = site.metadata.datasets[defaults.dataset]
         site.data = new DataHandler(site, defaults, site.data, {
@@ -5041,18 +5043,18 @@ void (function () {
         if (_u[k].type in elements) {
           const o = _u[k],
             combobox = 'combobox' === o.type
-          if (o.options_source) {
-            if (patterns.palette.test(o.options_source)) {
+          if (o.optionSource) {
+            if (patterns.palette.test(o.optionSource)) {
               o.options = []
               Object.keys(palettes).forEach(v => o.options.push(o.add(v, palettes[v].name)))
               if (-1 === o.default) o.default = defaults.palette
-            } else if (patterns.datasets.test(o.options_source)) {
+            } else if (patterns.datasets.test(o.optionSource)) {
               o.options = []
               site.metadata.datasets.forEach(d => o.options.push(o.add(d)))
             } else {
               o.sensitive = false
               o.option_sets = {}
-              if (patterns.properties.test(o.options_source)) {
+              if (patterns.properties.test(o.optionSource)) {
                 site.map._overlay_property_selectors.push(o)
               }
               if (o.depends) add_dependency(o.depends, {type: 'options', id: o.id})
@@ -5090,8 +5092,8 @@ void (function () {
               o.source = ''
               o.id in site.url_options ? o.set(site.url_options[o.id]) : o.reset()
             }
-            o.subset = o.e.getAttribute('subset') || 'all'
-            o.selection_subset = o.e.getAttribute('selection-subset') || o.subset
+            o.subset = o.e.getAttribute('data-subset') || 'all'
+            o.selection_subset = o.e.getAttribute('data-selectionSubset') || o.subset
             if (o.type in site && o.id in site[o.type]) {
               o.settings = site[o.type][o.id]
               if (o.settings.filters) {
@@ -5444,10 +5446,13 @@ void (function () {
               id: 'vf' + _u._base_filter.c.size,
               passed: 0,
               failed: 0,
+              info: site.data.variables[event.target.value].info,
+              view: _u[defaults.dataview],
             },
-            range = site.data.variables[event.target.value].info[_u[defaults.dataview].get.dataset()].time_range,
+            d = f.view.get.dataset(),
+            range = f.info[d].time_range,
             times = site.data.meta.overall.value
-          e.setAttribute('index', _u._base_filter.c.size)
+          e.setAttribute('data-index', _u._base_filter.c.size)
           _u._base_filter.c.set(_u._base_filter.c.size, f)
           if (presets.time_component) f.component = String(times[f.component])
 
@@ -5529,14 +5534,31 @@ void (function () {
           ee.innerText = 'Value'
           ee.className = 'filter-label'
           ee.id = f.id + '_value'
-          e.lastElementChild.appendChild((ee = document.createElement('input')))
-          ee.className = 'form-control filter-form-input'
-          ee.type = 'number'
-          ee.value = f.value
-          ee.addEventListener('change', e => {
-            f.value = e.target.value
+          const value_select = elements.combobox.create('component', ['min', 'q1', 'median', 'mean', 'q3', 'max'])
+          value_select.value_type = 'number'
+          value_select.default = f.value
+          value_select.set(f.value)
+          e.lastElementChild.appendChild(value_select.e.parentElement)
+          value_select.e.parentElement.removeChild(value_select.e.parentElement.lastElementChild)
+          value_select.e.parentElement.classList.add('filter-form-input')
+          value_select.e.setAttribute('aria-labelledby', f.id + '_component')
+          value_select.onchange = async function (f) {
+            f.value = this.value()
+            if (patterns.number.test(f.value)) {
+              f.value = Number(f.value)
+              f.value_source = ''
+            } else {
+              f.view.reparse()
+              const v = await get_variable(f.variable, f.view.id),
+                s = v && v[f.view.id].summaries[f.view.parsed.dataset]
+              if (s && f.value in s) {
+                const a = f.view.parsed.variable_values[f.index]
+                f.value_source = f.value
+                f.value = s[f.value][a.comp_fun(a, f.view.parsed)]
+              }
+            }
             request_queue('_base_filter')
-          })
+          }.bind(value_select, f)
 
           // remove button
           e.appendChild(document.createElement('td'))
@@ -5621,7 +5643,7 @@ void (function () {
           ee.lastElementChild.className = 'has-note'
           l.wrapper.innerText = h
           l.wrapper.id = l.id
-          l.wrapper.setAttribute('of', l.id)
+          l.wrapper.setAttribute('data-of', l.id)
           l.wrapper.setAttribute('aria-description', l.note)
           ee.lastElementChild.addEventListener('mouseover', tooltip_trigger.bind(l))
         } else {
@@ -5665,7 +5687,7 @@ void (function () {
     function tooltip_clear(e) {
       if (
         page.tooltip.showing &&
-        ('blur' === e.type || page.tooltip.showing !== (e.target.getAttribute('of') || e.target.id))
+        ('blur' === e.type || page.tooltip.showing !== (e.target.getAttribute('data-of') || e.target.id))
       ) {
         page.tooltip.showing = ''
         page.tooltip.e.classList.add('hidden')
@@ -5852,9 +5874,9 @@ void (function () {
           }
       }
       return 'number' === typeof c
-        ? filter_funs.number.bind(c)
-        : c in filter_funs
-        ? filter_funs[c]
+        ? time_funs.number.bind(c)
+        : c in time_funs
+        ? time_funs[c]
         : function () {
             return NaN
           }
@@ -6024,7 +6046,7 @@ void (function () {
             for (let i = this.parsed.variable_values.length; i--; ) {
               const v = this.parsed.variable_values[i]
               if (v.active && !isNaN(v.value)) {
-                const ev = v.comp_fun(e, v, this.parsed),
+                const ev = e.get_value(v.name, v.comp_fun(v, this.parsed)),
                   ck = !isNaN(ev) && DataHandler.prototype.checks[v.operator](ev, v.value)
                 v.filter[ck ? 'passed' : 'failed']++
                 if (pass && !ck) pass = false

@@ -89,11 +89,11 @@ output_map <- function(shapes = NULL, overlays = NULL, color = NULL, color_time 
   r <- paste(c(
     '<div class="auto-output leaflet"',
     if (!is.null(dataview)) paste0('data-view="', dataview, '"'),
-    if (!is.null(click)) paste0('click="', click, '"'),
-    if (!is.null(color)) paste0('color="', color, '"'),
-    if (!is.null(color_time)) paste0('color-time="', color_time, '"'),
+    if (!is.null(click)) paste0('data-click="', click, '"'),
+    if (!is.null(color)) paste0('data-color="', color, '"'),
+    if (!is.null(color_time)) paste0('data-colorTime="', color_time, '"'),
     paste0('id="', id, '"'),
-    'auto-type="map"></div>'
+    'data-autoType="map"></div>'
   ), collapse = " ")
   if (building) {
     caller$content <- c(caller$content, r)

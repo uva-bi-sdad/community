@@ -87,6 +87,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       ))
     }
   }
+  if (!is.list(package)) package <- list()
   collect_metadata <- function(file) {
     f <- path[[file]]
     m <- if (single_meta) meta else metas[[file]]

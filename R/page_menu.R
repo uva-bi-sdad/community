@@ -49,7 +49,7 @@ page_menu <- function(..., position = "right", width = "300px", height = NULL, c
   if (is.numeric(height)) height <- paste0(height, "px")
   r <- c(
     paste0(c(
-      '<div state="', if (default_open) "open" else "closed", '" class="menu-wrapper menu-', position, '"',
+      '<div data-state="', if (default_open) "open" else "closed", '" class="menu-wrapper menu-', position, '"',
       c(
         ' style="', position, ": ", if (default_open) 0 else paste0("-", width), "; ",
         if (!is.null(height)) c("; height: ", height),

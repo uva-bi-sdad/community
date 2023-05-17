@@ -235,6 +235,7 @@ div.filter-hidden {
   padding-bottom: 0;
 }
 .combobox-selection {
+  width: 100%;
   padding: 0.3em 0.3em 0.3em 0;
   background-color: transparent;
   display: flex;
@@ -244,6 +245,7 @@ div.filter-hidden {
 .combobox-selection span {
   overflow-x: clip;
   text-overflow: ellipsis;
+  position: absolute;
 }
 input.combobox-input {
   background-color: transparent;
@@ -256,7 +258,7 @@ input.combobox-input {
 }
 .combobox .btn-close {
   position: absolute;
-  right: 3em;
+  right: 2em;
   top: 1.4em;
   font-size: 0.8em;
 }
@@ -665,7 +667,7 @@ button.has-note::after,
   margin: 0 0 0.2em 0;
 }
 .modal-dialog {
-  max-width: 1000px;
+  max-width: 1200px;
 }
 .modal-body table {
   width: 100%;
@@ -1155,6 +1157,9 @@ input[type='range']::-ms-thumb {
 }
 .filter-body td {
   align-items: center;
+}
+.filter-body td:first-child {
+  min-width: 30%;
 }
 .filter-label {
   visibility: hidden;

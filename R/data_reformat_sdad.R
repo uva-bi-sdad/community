@@ -193,6 +193,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     data <- cbind(data, metadata[data[[id]], ])
     cn <- colnames(data)
     vars <- c(vars, colnames(metadata))
+    if (verbose) cli_progress_done()
   }
   if (!is.null(formatters)) {
     for (n in names(formatters)) {

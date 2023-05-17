@@ -617,6 +617,7 @@ void (function () {
             const da = this.sets[d]
             const n = this.info[d].entity_count
             const at = !n || n > 65535 ? Uint32Array : n > 255 ? Uint16Array : Uint8Array
+            if (!(d in vi.info)) vi.info[d] = {}
             const info = vi.info[d]
             const is_string = 'string' === info.type
             if ('order' in info) {

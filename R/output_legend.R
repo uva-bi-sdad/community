@@ -38,11 +38,11 @@ output_legend <- function(palette = "", variable = NULL, dataview = NULL, id = N
       )
     },
     paste(c(
-      '<div id="', id, '" auto-type="legend" class="auto-output legend',
+      '<div id="', id, '" data-autoType="legend" class="auto-output legend',
       if (class != "") c(" ", class), '"',
-      if (!is.null(variable)) paste0(' variable="', variable, '"'),
+      if (!is.null(variable)) paste0(' data-variable="', variable, '"'),
       if (!is.null(dataview)) paste0(' data-view="', dataview, '"'),
-      if (!is.null(click)) paste0(' click="', click, '"'),
+      if (!is.null(click)) paste0(' data-click="', click, '"'),
       ">"
     ), collapse = ""),
     '<div class="legend-ticks"></div>',

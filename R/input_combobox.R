@@ -14,6 +14,8 @@
 #' @param ... Additional attributes to set on the input element.
 #' @param strict Logical; if \code{FALSE}, allows arbitrary user input, rather than limiting input to the
 #' option set.
+#' @param numeric Logical; if \code{TRUE}, will treat all numeric inputs as custom values,
+#' rather than as potential option indices.
 #' @param search Logical; if \code{FALSE}, does not dynamically filter the option set on user input.
 #' @param multi Logical; if \code{TRUE}, allows multiple options to be selected.
 #' @param accordion Logical; if \code{TRUE}, option groups will be collapsible.
@@ -51,10 +53,11 @@
 #' @export
 
 input_combobox <- function(label, options, default = -1, display = options, id = label, ...,
-                           strict = TRUE, search = TRUE, multi = FALSE, accordion = FALSE, clearable = FALSE,
-                           note = NULL, group_feature = NULL, variable = NULL, dataset = NULL, depends = NULL,
-                           dataview = NULL, subset = "filtered", selection_subset = "full_filter", filters = NULL,
-                           reset_button = FALSE, button_class = NULL, as.row = FALSE, floating_label = TRUE) {
+                           strict = TRUE, numeric = FALSE, search = TRUE, multi = FALSE, accordion = FALSE,
+                           clearable = FALSE, note = NULL, group_feature = NULL, variable = NULL, dataset = NULL,
+                           depends = NULL, dataview = NULL, subset = "filtered", selection_subset = "full_filter",
+                           filters = NULL, reset_button = FALSE, button_class = NULL, as.row = FALSE,
+                           floating_label = TRUE) {
   id <- gsub("\\s", "", id)
   a <- list(...)
   if (as.row) floating_label <- FALSE
@@ -65,18 +68,18 @@ input_combobox <- function(label, options, default = -1, display = options, id =
       if (reset_button) "input-group", if (floating_label) "form-floating"
     ), collapse = " "), '">'),
     paste0(
-      '<div role="combobox" class="auto-input form-select combobox combobox-component" auto-type="combobox"',
+      '<div role="combobox" class="auto-input form-select combobox combobox-component" data-autoType="combobox"',
       ' aria-haspopup="listbox" aria-expanded="false" aria-labelledby="', id,
       '-label" aria-controls="', id, '-listbox" id="', id, '" ',
-      if (is.character(options) && length(options) == 1) paste0('auto-options="', options, '"'),
-      if (!is.null(default)) paste0(' default="', default, '"'),
+      if (is.character(options) && length(options) == 1) paste0('data-optionSource="', options, '"'),
+      if (!is.null(default)) paste0(' data-default="', default, '"'),
       if (!is.null(note)) paste0(' aria-description="', note, '"'),
       if (!is.null(dataview)) paste0(' data-view="', dataview, '"'),
-      if (!is.null(subset)) paste0(' subset="', subset, '"'),
-      if (!is.null(selection_subset)) paste0(' selection-subset="', selection_subset, '"'),
-      if (!is.null(depends)) paste0(' depends="', depends, '"'),
-      if (!is.null(dataset)) paste0(' dataset="', dataset, '"'),
-      if (!is.null(variable)) paste0(' variable="', variable, '"'),
+      if (!is.null(subset)) paste0(' data-subset="', subset, '"'),
+      if (!is.null(selection_subset)) paste0(' selectionSubset="', selection_subset, '"'),
+      if (!is.null(depends)) paste0(' data-depends="', depends, '"'),
+      if (!is.null(dataset)) paste0(' data-dataset="', dataset, '"'),
+      if (!is.null(variable)) paste0(' data-variable="', variable, '"'),
       if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
       '><div class="combobox-selection combobox-component"><span class="combobox-component"></span>',
       '<input class="combobox-input combobox-component" type="text" aria-labelledby="', id,
@@ -129,10 +132,11 @@ input_combobox <- function(label, options, default = -1, display = options, id =
   if (as.row) r <- to_input_row(r)
   caller <- parent.frame()
   if (!is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts") {
-    if (!is.null(strict)) caller$combobox[[id]]$strict <- strict
-    if (!is.null(search)) caller$combobox[[id]]$search <- search
-    if (!is.null(multi)) caller$combobox[[id]]$multi <- multi
-    if (!is.null(accordion)) caller$combobox[[id]]$accordion <- accordion && (is.list(options) || !is.null(group_feature))
+    if (strict) caller$combobox[[id]]$strict <- strict
+    if (numeric) caller$combobox[[id]]$numeric <- numeric
+    if (search) caller$combobox[[id]]$search <- search
+    if (multi) caller$combobox[[id]]$multi <- multi
+    if (accordion) caller$combobox[[id]]$accordion <- accordion && (is.list(options) || !is.null(group_feature))
     if (!is.null(group_feature)) caller$combobox[[id]]$group <- group_feature
     if (!is.null(filters)) caller$combobox[[id]]$filters <- as.list(filters)
     caller$content <- c(caller$content, r)
