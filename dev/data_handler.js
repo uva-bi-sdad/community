@@ -565,9 +565,13 @@ void (function () {
               this.map_entities(k)
             } else {
               this.data_maps[map] = {queue: [k], resource: {}, retrieved: false}
-              if ('undefined' === typeof window) {
+              if (this.settings.entity_info && map in this.settings.entity_info) {
+                const e = this.settings.entity_info
+                if ('string' === typeof e[map]) e[map] = JSON.parse(e[map])
+                this.ingest_map(e[map], map, i)
+              } else if ('undefined' === typeof window) {
                 require('https')
-                  .get(id.map, r => {
+                  .get(map, r => {
                     const c = []
                     r.on('data', d => {
                       c.push(d)
@@ -986,7 +990,7 @@ void (function () {
       })
     },
     map_entities: async function (g) {
-      if (g in this.sets && !this.inited[g]) {
+      if (g in this.sets && !this.inited[g] && g in this.meta.times) {
         const s = this.sets[g],
           time = this.meta.times[g],
           retriever = this.retrievers[time.is_single ? 'single' : 'multi'],
@@ -1129,7 +1133,7 @@ void (function () {
               if (k === tf.name) tf.name = k.substring(0, k.length - 1)
             }
             if (undefined === tf.value || '-1' == tf.value) return
-            if (('=' === tf.operator || '!' === tf.operator) && patterns.comma.test(tf.value)) {
+            if (('=' === tf.operator || '!' === tf.operindexator) && patterns.comma.test(tf.value)) {
               tf.value = tf.value.split(',')
               tf.operator = '=' === tf.operator ? 'includes' : 'excludes'
             }

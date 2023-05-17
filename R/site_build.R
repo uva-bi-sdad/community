@@ -81,6 +81,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
       meta <- jsonify::from_json(f, simplify = FALSE)
       previous_data <- list()
       ids_maps <- list()
+      ids_maps_paths <- NULL
       child <- id_lengths <- NULL
       dataset_order <- order(-vapply(meta$resources, "[[", 0, "bytes"))
       var_codes <- unique(unlist(lapply(meta$resources, function(d) vapply(d$schema$fields, "[[", "", "name")), use.names = FALSE))
@@ -109,6 +110,13 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
           file <- paste0(ddir, d$filename)
           path <- paste0(dir, "/docs/", d$name, ".json")
           if (file.exists(file)) {
+            if (!is.null(d$ids)) {
+              for (i in seq_along(d$ids)) {
+                if (file.exists(paste0(dir, "/docs/", d$ids[[i]]$map))) {
+                  ids_maps_paths <- c(ids_maps_paths, d$ids[[i]]$map)
+                }
+              }
+            }
             if (force || (!file.exists(path) || file.mtime(file) > file.mtime(path))) {
               if (verbose) cli_progress_step("processing {d$name}", msg_done = paste("processed", d$name))
               sep <- if (grepl(".csv", file, fixed = TRUE)) "," else "\t"
@@ -296,6 +304,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
       variables = if (!is.null(variables)) vars[!vars %in% time_vars],
       info = info,
       measure_info = meta$measure_info,
+      entity_info = ids_maps_paths,
       files = vapply(info, "[[", "", "filename")
     )
   }
@@ -501,12 +510,31 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   if (!is.null(endpoint)) settings$endpoint <- endpoint
   if (!is.null(tag_id)) settings$tag_id <- tag_id
   if (!bundle_package) settings$metadata$info <- settings$metadata$measure_info <- NULL
+  entity_info <- NULL
+  if (length(settings$metadata$entity_info)) {
+    entity_info <- unique(settings$metadata$entity_info)
+    settings$metadata$entity_info <- NULL
+    if (bundle_package) {
+      settings$entity_info <- lapply(
+        structure(paste0(dir, "/docs/", entity_info), names = entity_info),
+        jsonify::from_json,
+        simplify = FALSE
+      )
+    }
+  }
   write(jsonify::pretty_json(settings, unbox = TRUE), paste0(dir, "/docs/settings.json"))
   if (include_api || file.exists(paste0(dir, "/docs/functions/api.js"))) {
     dir.create(paste0(dir, "/docs/functions"), FALSE, TRUE)
     writeLines(c(
       "'use strict'",
       "const settings = require('../settings.json')",
+      if (length(entity_info)) {
+        paste0(
+          "settings.entity_info = {",
+          paste0("'", entity_info, "': require('../", entity_info, "')", collapse = ", "),
+          "}"
+        )
+      },
       if (!bundle_package) {
         c(
           "settings.metadata.info = {}",
