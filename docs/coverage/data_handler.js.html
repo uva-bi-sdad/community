@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">42.8% </span>
+                <span class="strong">42.56% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>369/862</span>
+                <span class='fraction'>369/867</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">39.79% </span>
+                <span class="strong">39.52% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>267/671</span>
+                <span class='fraction'>268/678</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">44.91% </span>
+                <span class="strong">44.68% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>349/777</span>
+                <span class='fraction'>349/781</span>
             </div>
         
             
@@ -1363,7 +1363,11 @@
 <a name='L1298'></a><a href='#L1298'>1298</a>
 <a name='L1299'></a><a href='#L1299'>1299</a>
 <a name='L1300'></a><a href='#L1300'>1300</a>
-<a name='L1301'></a><a href='#L1301'>1301</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L1301'></a><a href='#L1301'>1301</a>
+<a name='L1302'></a><a href='#L1302'>1302</a>
+<a name='L1303'></a><a href='#L1303'>1303</a>
+<a name='L1304'></a><a href='#L1304'>1304</a>
+<a name='L1305'></a><a href='#L1305'>1305</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
@@ -1929,6 +1933,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -3230,9 +3238,13 @@
 <span class="cstat-no" title="statement not covered" >              this.map_entities(k)</span>
             } else {
 <span class="cstat-no" title="statement not covered" >              this.data_maps[map] = {queue: [k], resource: {}, retrieved: false}</span>
-<span class="cstat-no" title="statement not covered" >              if ('undefined' === typeof window) {</span>
+<span class="cstat-no" title="statement not covered" >              if (this.settings.entity_info &amp;&amp; map in this.settings.entity_info) {</span>
+                const e = <span class="cstat-no" title="statement not covered" >this.settings.entity_info</span>
+<span class="cstat-no" title="statement not covered" >                if ('string' === typeof e[map]) <span class="cstat-no" title="statement not covered" >e[map] = JSON.parse(e[map])</span></span>
+<span class="cstat-no" title="statement not covered" >                this.ingest_map(e[map], map, i)</span>
+              } else <span class="cstat-no" title="statement not covered" >if ('undefined' === typeof window) {</span>
 <span class="cstat-no" title="statement not covered" >                require('https')</span>
-                  .get(id.map, <span class="fstat-no" title="function not covered" >r </span>=&gt; {
+                  .get(map, <span class="fstat-no" title="function not covered" >r </span>=&gt; {
                     const c = <span class="cstat-no" title="statement not covered" >[]</span>
 <span class="cstat-no" title="statement not covered" >                    r.on('data', <span class="fstat-no" title="function not covered" >d </span>=&gt; {</span>
 <span class="cstat-no" title="statement not covered" >                      c.push(d)</span>
@@ -3651,7 +3663,7 @@
       })
     },
     map_entities: async function (g) {
-      <span class="missing-if-branch" title="else path not taken" >E</span>if (g in this.sets &amp;&amp; !this.inited[g]) {
+      <span class="missing-if-branch" title="else path not taken" >E</span>if (g in this.sets &amp;&amp; !this.inited[g] &amp;&amp; g in this.meta.times) {
         const s = this.sets[g],
           time = this.meta.times[g],
           retriever = this.retrievers[time.is_single ? <span class="branch-0 cbranch-no" title="branch not covered" >'single' </span>: 'multi'],
@@ -3794,7 +3806,7 @@
               <span class="missing-if-branch" title="if path not taken" >I</span>if (k === tf.name) <span class="cstat-no" title="statement not covered" >tf.name = k.substring(0, k.length - 1)</span>
             }
             <span class="missing-if-branch" title="if path not taken" >I</span>if (undefined === tf.value || '-1' == tf.value) <span class="cstat-no" title="statement not covered" >return</span>
-            if (('=' === tf.operator || '!' === tf.operator) &amp;&amp; patterns.comma.test(tf.value)) {
+            if (('=' === tf.operator || '!' === tf.operindexator) &amp;&amp; patterns.comma.test(tf.value)) {
               tf.value = tf.value.split(',')
               tf.operator = '=' === tf.operator ? 'includes' : <span class="branch-1 cbranch-no" title="branch not covered" >'excludes'</span>
             }
@@ -3970,7 +3982,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-05-17T13:24:44.389Z
+                at 2023-05-18T15:33:23.523Z
             </div>
         <script src="prettify.js"></script>
         <script>

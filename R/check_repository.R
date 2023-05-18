@@ -4,6 +4,7 @@
 #'
 #' @param dir Root directory of the data repository.
 #' @param search_pattern Regular expression used to search for data files.
+#' @param exclude Subdirectories to exclude from the file search.
 #' @param value Name of the column containing variable values.
 #' @param value_name Name of the column containing variable names.
 #' @param id Column name of IDs that uniquely identify entities.
@@ -105,8 +106,8 @@
 #' }
 #' @export
 
-check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?$", value = "value", value_name = "measure",
-                             id = "geoid", time = "year", dataset = "region_type",
+check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?$", exclude = NULL,
+                             value = "value", value_name = "measure", id = "geoid", time = "year", dataset = "region_type",
                              entity_info = c("region_type", "region_name"), attempt_repair = FALSE) {
   if (!dir.exists(dir)) cli_abort("{.path {dir}} does not exist")
   project_check <- check_template("repository", dir = dir)
@@ -116,7 +117,11 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
     }
   }
   files <- list.files(dir, search_pattern, recursive = TRUE, full.names = TRUE)
-  files <- files[!grepl("[/\\](?:docs|code|working|original)[/\\]", files, TRUE)]
+  files <- files[!grepl(paste0(
+    "[/\\](?:docs|code|working|original",
+    if (length(exclude)) paste0("|", paste(exclude, collapse = "|")),
+    ")[/\\]"
+  ), files, TRUE)]
   if (!length(files)) cli_abort("no files found")
   i <- 0
   cli_h1("measure info")

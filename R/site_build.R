@@ -331,8 +331,10 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   times <- unname(vapply(settings$metadata$info, function(d) if (length(d$time)) d$time else "", ""))
   times <- times[times != ""]
   if (!is.null(variables)) variables <- variables[!grepl("^_", variables)]
-  if (!missing(aggregate) || (length(variables) && !is.null(settings$metadata) && length(settings$metadata$variables) &&
-    !identical(as.character(settings$metadata$variables), variables[!variables %in% times]))) {
+  if (
+    (is.null(settings$aggregated) || settings$aggregated != aggregate) ||
+      (length(variables) && !is.null(settings$metadata) && length(settings$metadata$variables) &&
+        !identical(as.character(settings$metadata$variables), variables[!variables %in% times]))) {
     force <- TRUE
   }
   if (!is.null(variables)) variables <- unique(c(times, variables))
@@ -522,6 +524,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
       )
     }
   }
+  settings$aggregated <- aggregate
   write(jsonify::pretty_json(settings, unbox = TRUE), paste0(dir, "/docs/settings.json"))
   if (include_api || file.exists(paste0(dir, "/docs/functions/api.js"))) {
     dir.create(paste0(dir, "/docs/functions"), FALSE, TRUE)

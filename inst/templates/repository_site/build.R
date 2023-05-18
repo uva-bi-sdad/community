@@ -19,7 +19,8 @@ if (file.exists(entities_file)) {
 datasets <- paste0(list.dirs("."), "/data/distribution")
 datasets <- datasets[dir.exists(datasets)]
 data_reformat_sdad(
-  list.files(datasets, "\\.csv", full.names = TRUE), metadata = entities, "docs/data"
+  list.files(datasets, "\\.csv", full.names = TRUE),
+  metadata = entities, "docs/data"
 )
 info <- lapply(list.files(datasets, "measure_info\\.json", full.names = TRUE), read_json)
 agg_info <- list()

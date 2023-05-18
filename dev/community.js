@@ -291,7 +291,7 @@ void (function () {
                 u.display = u.option_sets[k].display
                 u.options = u.option_sets[k].options
               }
-              var ns = 0
+              let ns = 0
               if ('ID' === u.variable || patterns.ids.test(u.optionSource)) {
                 const value = u.value()
                 let selection = -1 === value || '' === value ? u.subset : u.selection_subset,
@@ -361,7 +361,7 @@ void (function () {
             : this.reset()
         },
         min: async function (u, c) {
-          var cv = c.value(),
+          let cv = c.value(),
             uv = u.value(),
             v = _u[u.view || c.view],
             variable
@@ -383,7 +383,7 @@ void (function () {
           if (u.min_indicator) u.min_indicator.firstElementChild.innerText = cv
         },
         max: async function (u, c) {
-          var cv = c.value(),
+          let cv = c.value(),
             uv = u.value(),
             v = _u[u.view || c.view],
             variable
@@ -527,7 +527,7 @@ void (function () {
             t = tv in site.data.variables ? site.data.variables[tv].info[d].min : 1,
             s = _c[u.id + '_time'],
             variable = v in site.data.variables ? v : valueOf(u.y)
-          var r = variable && (await get_variable(variable, u.id))
+          let r = variable && (await get_variable(variable, u.id))
           if (r) {
             const reset = d + variable != u.time_range.dataset + u.time_range.variable
             r = r.time_range[d]
@@ -631,7 +631,7 @@ void (function () {
                           if (!('id' in f) && v.ids) f.id = valueOf(v.ids)
                         }
                         if ('copy' === this.target || this.api) {
-                          var q = []
+                          let q = []
                           if ('id' in f && '' !== f.id && -1 != f.id) {
                             q.push('id=' + f.id)
                           } else {
@@ -750,7 +750,7 @@ void (function () {
             this.set(e.target.value)
           },
           adder: function (i, value, display, noadd) {
-            var e = [document.createElement('input'), document.createElement('label')]
+            let e = [document.createElement('input'), document.createElement('label')]
             e[0].className = 'btn-check'
             e[0].type = 'radio'
             e[0].name = this.e.id + '_options'
@@ -864,7 +864,7 @@ void (function () {
                 if (!o.checked) this.off_default = true
               })
             } else {
-              var i = this.source.indexOf(e.target.value)
+              let i = this.source.indexOf(e.target.value)
               if (i !== -1) {
                 this.off_default = true
                 this.source.splice(i, 1)
@@ -874,7 +874,7 @@ void (function () {
             request_queue(this.id)
           },
           adder: function (value, display, noadd) {
-            var e = document.createElement('div'),
+            let e = document.createElement('div'),
               s = 'TRUE' === this.e.getAttribute('data-switch')
             e.className = 'form-check' + (s ? ' form-switch' : '')
             e.appendChild(document.createElement('input'))
@@ -1134,7 +1134,7 @@ void (function () {
             c.innerText = label
             elements.init_input(e.firstElementChild)
             const u = _u[id]
-            var n = 0
+            let n = 0
             u.options = []
             if (options)
               if (Array.isArray(options)) {
@@ -1423,8 +1423,8 @@ void (function () {
           setter: function (v, toggle) {
             if (!v) v = this.input_element.value
             if (v.target && (this.settings.accordion ? 'BUTTON' : 'LABEL') === v.target.tagName) return void 0
-            let update = false
-            var i = -1
+            let update = false,
+              i = -1
             if (v.target) {
               i = this.hover_index
               if (
@@ -1539,7 +1539,7 @@ void (function () {
               }
               o.show = function (e) {
                 o.revert()
-                var trace = make_data_entry(
+                let trace = make_data_entry(
                   this,
                   e,
                   0,
@@ -1563,7 +1563,7 @@ void (function () {
                   if (patterns.period.test(k)) {
                     const es = k.split('.'),
                       n = es.length - 1
-                    var pl = null
+                    let pl = null
                     es.forEach((e, ei) => {
                       pl = pl ? (pl[e] = ei === n ? p[k] : {}) : (p[e] = {})
                     })
@@ -1887,11 +1887,11 @@ void (function () {
                   view = site.dataviews[this.view],
                   d = view.get.dataset(),
                   time = valueOf(view.time_agg),
-                  match_time = site.map[this.id].has_time ? site.map[this.id].match_time(time) : time,
-                  has_time = d + match_time + this.id in site.data.inited,
-                  mapId = has_time ? d + match_time : d
+                  map_time = site.map[this.id].has_time ? site.map[this.id].match_time(time) : '',
+                  inited = d + map_time + this.id in site.data.inited,
+                  mapId = inited ? d + map_time : d
                 if (site.map._queue && mapId in site.map._queue && !site.data.inited[mapId + this.id]) {
-                  if (!has_time || null !== time)
+                  if (!inited || null !== time)
                     retrieve_layer(this, site.map._queue[mapId], () => this.update(void 0, void 0, true))
                   return
                 }
@@ -1943,12 +1943,12 @@ void (function () {
                     this.displaying.clearLayers()
                     this.fresh_shapes = true
                     this.vstate = false
-                    var n = 0
+                    let n = 0
                     Object.keys(s).forEach(k => {
                       const skl = s[k].layer
                       if (skl && skl[this.id]) {
                         const fg = k in a,
-                          cl = skl[this.id].has_time ? skl[this.id][match_time] : skl[this.id]
+                          cl = skl[this.id].has_time ? skl[this.id][map_time] : skl[this.id]
                         if (cl && (fg || this.options.background_shapes === site.data.entities[k].group)) {
                           n++
                           cl.options.interactive = fg
@@ -2176,7 +2176,7 @@ void (function () {
                 o.parts.body.default.className =
                   'info-body hidden'
               if (o.has_default && o.options.default.body) o.parts.body.default.innerText = o.options.default.body
-              var h = 0
+              let h = 0
               o.options.body.forEach((op, i) => {
                 const p = {
                   name: parse_part(o, op.name),
@@ -2640,7 +2640,7 @@ void (function () {
               if (!this.tab || this.tab.classList.contains('show')) this.queue = setTimeout(() => this.update(true), 50)
             } else {
               if (this.table) {
-                var vn =
+                let vn =
                   this.options.variable_source &&
                   valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.')
                 const v = _u[this.view],
@@ -2989,7 +2989,7 @@ void (function () {
             if (!pass) {
               if (!this.tab || this.tab.classList.contains('show')) this.queue = setTimeout(() => this.update(true), 50)
             } else {
-              var vn =
+              let vn =
                 this.options.variable_source &&
                 valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.')
               const v = _u[this.view],
@@ -3209,7 +3209,7 @@ void (function () {
                             }
                       )
                     } else {
-                      var i = 0,
+                      let i = 0,
                         n = Math.ceil(p.length / 2),
                         e
                       if (remake) {
@@ -3355,7 +3355,7 @@ void (function () {
                 const min = this.parsed.summary.min[this.parsed.time],
                   max = this.parsed.summary.max[this.parsed.time],
                   tv = min + p * (max - min)
-                var i, n
+                let i, n
                 if (this.parsed.order && this.parsed.order.length) {
                   n = this.parsed.summary.missing[this.parsed.time]
                   if (n < this.parsed.order.length) {
@@ -3416,7 +3416,7 @@ void (function () {
             Object.keys(o.credits).forEach(k => {
               if (-1 === o.exclude.indexOf(k)) {
                 const c = o.credits[k]
-                var e
+                let e
                 o.e.lastElementChild.appendChild((e = document.createElement('li')))
                 if ('url' in c) {
                   e.appendChild((e = document.createElement('a')))
@@ -3682,7 +3682,7 @@ void (function () {
     document.body.appendChild(page.overlay)
     document.body.className = storage.get('theme_dark') || site.settings.theme_dark ? 'dark-theme' : 'light-theme'
     if (page.content) {
-      var i = page.menus.length,
+      let i = page.menus.length,
         h = page.navbar ? page.navbar.getBoundingClientRect().height : 0
       for (; i--; )
         if (page.menus[i].classList.contains('menu-top')) {
@@ -3720,7 +3720,7 @@ void (function () {
           ? ((string ? summary.level_ids[value] : value) - min) / range
           : 0.5,
         upper = p > (centered ? center : 0.5)
-      var v = centered
+      let v = centered
         ? range
           ? upper
             ? (p - center - summary['upper_' + center_source + '_min'][index]) /
@@ -3836,7 +3836,7 @@ void (function () {
         values = out[d].values,
         disp = out[d].display,
         combobox = 'combobox' === u.type
-      var ck = !u.sensitive && !!u.current_set,
+      let ck = !u.sensitive && !!u.current_set,
         n = 0
       if (u.settings.group) {
         u.groups = {e: [], by_name: {}}
@@ -3934,7 +3934,7 @@ void (function () {
         values = out[d].values,
         disp = out[d].display,
         combobox = 'combobox' === u.type
-      var ck = !u.sensitive && !!u.current_set,
+      let ck = !u.sensitive && !!u.current_set,
         n = 0
       if (u.settings.group) {
         u.groups = {e: [], by_name: {}}
@@ -4045,7 +4045,7 @@ void (function () {
         values = out[source].values,
         disp = out[source].display,
         combobox = 'combobox' === u.type
-      var ck = !u.sensitive && !!u.current_set,
+      let ck = !u.sensitive && !!u.current_set,
         n = 0
       if (u.settings.group) {
         u.groups = {e: [], by_name: {}}
@@ -4074,7 +4074,7 @@ void (function () {
           s = out[k].options,
           values = out[k].values,
           disp = out[k].display
-        var ck = !u.sensitive && !!u.current_set,
+        let ck = !u.sensitive && !!u.current_set,
           n = 0
         Object.keys(l).forEach(k => {
           const lk = l[k]
@@ -4132,7 +4132,7 @@ void (function () {
 
     function update_subs(id, fun, e) {
       if (id in subs) {
-        for (var i = subs[id].length; i--; ) {
+        for (let i = subs[id].length; i--; ) {
           if (fun in subs[id][i]) subs[id][i][fun](e, _u[id])
         }
       }
@@ -4201,7 +4201,7 @@ void (function () {
       if (!Array.isArray(c.author)) c.author = [c.author]
       const e = document.createElement('li'),
         n = c.author.length
-      var s = '',
+      let s = '',
         j = 1 === n ? '' : 2 === n ? ' & ' : ', & '
       for (let i = n; i--; ) {
         const a = c.author[i]
@@ -4372,7 +4372,7 @@ void (function () {
 
     function parse_variables(s, type, e, entity) {
       if ('statement' === type) {
-        for (var m, v; (m = patterns.mustache.exec(s)); ) {
+        for (let m, v; (m = patterns.mustache.exec(s)); ) {
           if ('value' === m[1]) {
             v = entity
               ? site.data.format_value(
@@ -4407,7 +4407,7 @@ void (function () {
       return s
     }
 
-    var k, i, e, ee, c
+    let k, i, e, ee, c
     // get options from url
     site.query = k = window.location.search.replace('?', '')
     site.url_options = {}
@@ -4490,7 +4490,9 @@ void (function () {
     // preprocess polynomial palettes
     function poly_channel(ch, pos, coefs) {
       const n = coefs.length
-      for (var v = coefs[0][ch] + pos * coefs[1][ch], i = 2; i < n; i++) {
+      let v = coefs[0][ch] + pos * coefs[1][ch],
+        i = 2
+      for (; i < n; i++) {
         v += Math.pow(pos, i) * coefs[i][ch]
       }
       return Math.max(0, Math.min(255, v))
@@ -4809,7 +4811,7 @@ void (function () {
               states: v.states,
               update: function () {
                 this.source = void 0
-                for (var p, i = this.states.length; i--; ) {
+                for (let p, i = this.states.length; i--; ) {
                   p = true
                   for (let c = this.states[i].condition.length; c--; ) {
                     const r = this.states[i].condition[c]
@@ -5014,7 +5016,7 @@ void (function () {
     }
 
     function get_options_url() {
-      var s = ''
+      let s = ''
       keys._u.forEach(k => {
         const u = _u[k]
         if (u.input && !patterns.settings.test(k)) {
@@ -5106,9 +5108,9 @@ void (function () {
                   Object.keys(this.filters).forEach(f => {
                     this.current_filter[f] = valueOf(this.filters[f])
                   })
-                  var first
+                  let first
                   Object.keys(this.values).forEach((v, i) => {
-                    var pass = false
+                    let pass = false
                     if (v in site.data.variables && 'meta' in site.data.variables[v]) {
                       for (const k in this.current_filter)
                         if (k in site.data.variables[v].meta) {
@@ -5164,7 +5166,7 @@ void (function () {
               const view = _u[this.view],
                 variable = valueOf(this.variable || view.y)
               if (!view.time_range) view.time_range = {time: []}
-              var d = view.get ? view.get.dataset() : valueOf(this.dataset),
+              let d = view.get ? view.get.dataset() : valueOf(this.dataset),
                 min = valueOf(this.min) || view.time,
                 max = valueOf(this.max) || view.time
               if (patterns.minmax.test(min)) min = _u[this.min][min]
@@ -5456,7 +5458,7 @@ void (function () {
           _u._base_filter.c.set(_u._base_filter.c.size, f)
           if (presets.time_component) f.component = String(times[f.component])
 
-          var ee
+          let ee
           // variable name
           e.appendChild(document.createElement('td'))
           e.lastElementChild.appendChild((ee = document.createElement('p')))
@@ -5695,28 +5697,40 @@ void (function () {
     }
 
     async function retrieve_layer(u, source, callback) {
+      const mapId = source.name ? source.name + (source.time || '') : source.url
       if (source.url in site.map._raw) {
         process_layer(source, u)
-        site.map._queue[source.name + (source.time ? source.time : '')].retrieved = true
+        site.map._queue[mapId].retrieved = true
         callback && callback()
       } else {
-        const f = new window.XMLHttpRequest()
-        f.onreadystatechange = () => {
-          if (4 === f.readyState && 200 === f.status) {
-            site.map._raw[source.url] = f.responseText
-            if (source.name) {
-              site.map._queue[source.name + (source.time || '')].retrieved = true
-            }
-            callback && callback()
+        if (site.map._queue[mapId] && 'retrieved' in site.map._queue[mapId]) {
+          if (callback) {
+            if (!site.map._queue[mapId].callbacks) site.map._queue[mapId].callbacks = []
+            site.map._queue[mapId].callbacks.push(callback)
           }
+        } else {
+          site.map._queue[mapId].retrieved = false
+          const f = new window.XMLHttpRequest()
+          f.onreadystatechange = () => {
+            if (4 === f.readyState && 200 === f.status) {
+              site.map._raw[source.url] = f.responseText
+              if (source.name) {
+                site.map._queue[mapId].retrieved = true
+              }
+              if (site.map._queue[mapId].callbacks) {
+                if (callback) site.map._queue[mapId].callbacks.push(callback)
+                site.map._queue[mapId].callbacks.forEach(f => f())
+              } else callback && callback()
+            }
+          }
+          f.open('GET', source.url, true)
+          f.send()
         }
-        f.open('GET', source.url, true)
-        f.send()
       }
     }
 
     function process_layer(source, u) {
-      var p, id
+      let p, id
       const has_time = 'time' in source,
         layerId = source.name + (has_time ? source.time : '')
       site.map[u.id]._layers[layerId] = L.geoJSON(JSON.parse(site.map._raw[source.url]), {
@@ -5767,7 +5781,7 @@ void (function () {
     }
 
     function show_overlay(u, o, time) {
-      var i = 0,
+      let i = 0,
         source = 'string' === typeof o.source ? o.source : ''
       if (!source && o.source) {
         for (i = o.source.length; i--; ) {
@@ -5837,7 +5851,7 @@ void (function () {
             conditionals.options(u)
           })
           u.overlay.clearLayers()
-          var n = 0
+          let n = 0
           const summaries = site.settings.circle_property && site.map._queue[source].property_summaries,
             prop_summary = summaries && summaries[site.settings.circle_property]
           site.map[u.id]._layers[source].eachLayer(l => {
@@ -5920,7 +5934,7 @@ void (function () {
           return false
         },
         features: function () {
-          var s = ''
+          let s = ''
           v.features &&
             Object.keys(v.features).forEach(k => {
               s += k + valueOf(v.features[k])
@@ -5930,7 +5944,7 @@ void (function () {
         variables: function () {
           if (v.variables || _u._base_filter.c.size) {
             if (!v.parsed.variable_values.length) v.reparse()
-            var s = ''
+            let s = ''
             v.parsed.variable_values.forEach(vi => {
               s += vi.name + vi.operator + vi.component + vi.value + vi.active
             })
@@ -5938,7 +5952,7 @@ void (function () {
           } else return ''
         },
         time_filters: function () {
-          var s = ''
+          let s = ''
           v.time_filters &&
             v.time_filters.forEach(f => {
               s += f.value in _u ? valueOf(f.value) : f.value
@@ -5981,7 +5995,7 @@ void (function () {
         }
         if (this.features) {
           this.parsed.feature_values = {}
-          for (var k in this.features)
+          for (let k in this.features)
             if (k in this.features) {
               this.parsed.feature_values[k] = {value: valueOf(this.features[k])}
               this.parsed.feature_values[k].operator =
@@ -6006,7 +6020,7 @@ void (function () {
           })
         if (this.variables || this.parsed.variable_values.length) {
           if (this.variables)
-            for (var i = this.variables.length, v; i--; ) {
+            for (let i = this.variables.length, v; i--; ) {
               v = valueOf(this.variables[i].value)
               this.parsed.variable_values.push({
                 name: valueOf(this.variables[i].variable),
@@ -6027,7 +6041,7 @@ void (function () {
         }.bind(v),
         features: function (e) {
           if (e.features) {
-            var k,
+            let k,
               v,
               pass = true
             for (k in this.parsed.feature_values) {
@@ -6159,7 +6173,7 @@ void (function () {
             }
           })
           r.forEach(i => {
-            var pass = false
+            let pass = false
             const ri = site.rules[i],
               n = ri.condition.length
             for (let i = 0; i < n; i++) {
@@ -6252,32 +6266,37 @@ void (function () {
           if (!('_raw' in site.map)) site.map._raw = {}
           if (!('_queue' in site.map)) site.map._queue = {}
           if (!('_layers' in site.map[this.id])) site.map[this.id]._layers = {}
-          const time = site.data.meta.overall.value[_u[this.view].parsed.time_agg]
+          const time = site.data.meta.overall.value[_u[this.view].parsed.time_agg],
+            by_time = []
           site.map[this.id].shapes.forEach((shape, i) => {
             const has_time = 'time' in shape
-            if (!site.map[this.id].has_time && has_time) {
-              site.map[this.id].has_time = true
-              add_dependency(this.view, {type: 'update', id: this.id})
-              site.map[this.id].match_time =
-                'exact' === shape.resolution
-                  ? time => {
-                      return time + ''
-                    }
-                  : time => {
-                      return Number(time) > 2019 ? '2020' : '2010'
-                    }
+            if (has_time) {
+              if (!site.map[this.id].has_time) {
+                site.map[this.id].has_time = true
+                add_dependency(this.view, {type: 'update', id: this.id})
+              }
+              by_time.push(Number(shape.time))
             }
-            var k = shape.name
+            let k = shape.name
             if (!k) shape.name = k = site.metadata.datasets[i < site.metadata.datasets.length ? i : 0]
             const mapId = k + (has_time ? shape.time : '')
-            site.map._queue[mapId] = shape
+            if (!(mapId in site.map._queue)) site.map._queue[mapId] = shape
             site.data.inited[mapId + this.id] = false
             if (
               (site.data.loaded[k] || k === this.options.background_shapes) &&
-              (k === mapId || (time && shape.time == site.map[this.id].match_time(time)))
+              (k === mapId ||
+                (time && site.map[this.id].match_time && shape.time == site.map[this.id].match_time(time)))
             )
               retrieve_layer(this, shape)
           })
+          if (site.map[this.id].has_time) {
+            by_time.sort()
+            site.map[this.id].match_time = function (time) {
+              let i = by_time.length
+              for (; i--; ) if (!i || by_time[i] <= time) break
+              return by_time[i]
+            }.bind(by_time)
+          }
           site.map[this.id].triggers = {}
           site.map[this.id].overlay_summaries = {}
           if (Array.isArray(site.map[this.id].overlays)) {
@@ -6285,7 +6304,6 @@ void (function () {
               if ('string' === typeof l.source) l.source = [{url: l.source}]
               const source = l.source
               source.forEach(s => {
-                s.retrieved = s.url in site.map._raw
                 s.processed = false
                 s.property_summaries = {}
                 site.map._queue[s.url] = s

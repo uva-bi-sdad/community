@@ -5,7 +5,8 @@
 \title{Create a Data Repository}
 \usage{
 init_repository(dir, datasets = NULL, init_data = TRUE, init_site = TRUE,
-  init_git = TRUE, overwrite = FALSE, quiet = !interactive())
+  init_git = TRUE, template = "sdad_dashboard", overwrite = FALSE,
+  quiet = !interactive())
 }
 \arguments{
 \item{dir}{Directory in which to create the repository's structure. Will be created if it does not exist.}
@@ -18,6 +19,9 @@ containing \code{code} and \code{data} directories.}
 \item{init_site}{Logical; if \code{FALSE}, will not run \code{\link{init_site}} on the repository.}
 
 \item{init_git}{Logical; if \code{FALSE}, will not run \code{git init} on the repository.}
+
+\item{template}{A character indicating which site and build template to use, between
+\code{sdad_dashboard} (default) and \code{repository_site}.}
 
 \item{overwrite}{Logical; if \code{TRUE}, will overwrite existing site files in \code{dir}.}
 

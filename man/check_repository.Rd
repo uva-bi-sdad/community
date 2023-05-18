@@ -5,14 +5,16 @@
 \title{Check Data Repositories}
 \usage{
 check_repository(dir = ".", search_pattern = "\\\\.csv(?:\\\\.[gbx]z2?)?$",
-  value = "value", value_name = "measure", id = "geoid", time = "year",
-  dataset = "region_type", entity_info = c("region_type", "region_name"),
-  attempt_repair = FALSE)
+  exclude = NULL, value = "value", value_name = "measure",
+  id = "geoid", time = "year", dataset = "region_type",
+  entity_info = c("region_type", "region_name"), attempt_repair = FALSE)
 }
 \arguments{
 \item{dir}{Root directory of the data repository.}
 
 \item{search_pattern}{Regular expression used to search for data files.}
+
+\item{exclude}{Subdirectories to exclude from the file search.}
 
 \item{value}{Name of the column containing variable values.}
 

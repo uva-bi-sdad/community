@@ -190,7 +190,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       if (verbose) cli_warn("{sum(!su)} rows contain IDs not in {.arg metadata} IDs, and will be dropped")
       data <- data[su, ]
     }
-    data <- cbind(data, metadata[data[[id]], ])
+    data <- cbind(data, metadata[data[[id]], , drop = FALSE])
     cn <- colnames(data)
     vars <- c(vars, colnames(metadata))
     if (verbose) cli_progress_done()

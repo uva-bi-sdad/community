@@ -8,6 +8,8 @@
 #' @param init_data Logical; if \code{FALSE}, will not run \code{\link{init_data}} on the repository.
 #' @param init_site Logical; if \code{FALSE}, will not run \code{\link{init_site}} on the repository.
 #' @param init_git Logical; if \code{FALSE}, will not run \code{git init} on the repository.
+#' @param template A character indicating which site and build template to use, between
+#' \code{sdad_dashboard} (default) and \code{repository_site}.
 #' @param overwrite Logical; if \code{TRUE}, will overwrite existing site files in \code{dir}.
 #' @param quiet Logical; if \code{TRUE}, suppresses messages.
 #' @examples
@@ -19,7 +21,7 @@
 #' @export
 
 init_repository <- function(dir, datasets = NULL, init_data = TRUE, init_site = TRUE, init_git = TRUE,
-                            overwrite = FALSE, quiet = !interactive()) {
+                            template = "sdad_dashboard", overwrite = FALSE, quiet = !interactive()) {
   if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = ".")')
   check <- check_template("repository", dir = dir)
   datasets_inited <- file.exists(paste0(dir, "/", datasets, "/data"))
@@ -61,15 +63,13 @@ init_repository <- function(dir, datasets = NULL, init_data = TRUE, init_site = 
     ), paths[2])
   }
   if (init_site) {
-    if (!file.exists(paste0(dir, "/build.R"))) {
-      file.copy(
-        paste0(path.package("community"), "/templates/repository_site/build.R"), paste0(dir, "/build.R")
-      )
+    td <- paste0(path.package("community"), "/templates/", template)
+    if (!dir.exists(td)) td <- paste0(path.package("community"), "/templates/sdad_dashboard")
+    if (overwrite || !file.exists(paste0(dir, "/build.R"))) {
+      file.copy(paste0(td, "/build.R"), paste0(dir, "/build.R"))
     }
-    if (!file.exists(paste0(dir, "/site.R"))) {
-      file.copy(
-        paste0(path.package("community"), "/templates/repository_site/site.R"), paste0(dir, "/site.R")
-      )
+    if (overwrite || !file.exists(paste0(dir, "/site.R"))) {
+      file.copy(paste0(td, "/site.R"), paste0(dir, "/site.R"))
     }
     init_site(dir, with_data = init_data, quiet = TRUE)
   } else if (init_data) {
