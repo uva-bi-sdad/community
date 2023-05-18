@@ -226,7 +226,7 @@ page_section(
         parts <- strsplit(f, "[_.]")[[1]]
         list(
           name = if (parts[1] == "bg") "block_group" else parts[1],
-          year = parts[2],
+          time = parts[2],
           url = paste0("maps/", f),
           id_property = "GEOID"
         )
