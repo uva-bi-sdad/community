@@ -38,7 +38,12 @@ void (function () {
     })
     if ('string' === typeof this.metadata.datasets) this.metadata.datasets = [this.metadata.datasets]
     const init = () => {
-      if (!('datasets' in this.metadata)) this.metadata.datasets = Object.keys(this.info)
+      if ('datasets' in this.metadata) {
+        for (let i = this.metadata.datasets.length; i--; )
+          if (!(this.metadata.datasets[i] in this.info)) this.metadata.datasets.split(i, 1)
+      } else {
+        this.metadata.datasets = Object.keys(this.info)
+      }
       if ('measure_info' in this.metadata) {
         const info = this.metadata.measure_info
         this.metadata.datasets.forEach(d => {

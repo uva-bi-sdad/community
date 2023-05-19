@@ -284,7 +284,7 @@ void (function () {
           if (k in u.option_sets) {
             const fresh = k !== u.current_set && (u.sensitive || !u.current_set),
               c = u[combobox ? 'listbox' : 'e']
-            if (fresh || u.filter) {
+            if (fresh || u.filter || u.selection_subset) {
               if (fresh) {
                 c.innerHTML = ''
                 u.values = u.option_sets[k].values
@@ -2795,7 +2795,7 @@ void (function () {
                   }
                   redraw ? this.table.draw() : this.table.columns.adjust().draw(false)
                 }
-                if (this.parsed.time > -1 && v.time_range.filtered_index) {
+                if (this.parsed.time > -1 && this.header.length > 1 && v.time_range.filtered_index) {
                   const offset =
                     (v.time_range.filtered_index ? v.time_range.filtered_index[0] : 0) - v.time_range.index[0]
                   this.dark_highlight = site.settings.theme_dark
@@ -2814,7 +2814,7 @@ void (function () {
                   if (site.settings.table_autoscroll) {
                     const w = this.e.parentElement.getBoundingClientRect().width,
                       col = this.table.column(this.parsed.time + 1),
-                      h = col.selector.cols > 1 && col.header().getBoundingClientRect()
+                      h = col.header().getBoundingClientRect()
                     if (h)
                       this.e.parentElement.scroll({
                         left: h.x - this.e.getBoundingClientRect().x + h.width + 16 - w,
