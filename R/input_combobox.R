@@ -63,7 +63,7 @@ input_combobox <- function(label, options, default = -1, display = options, id =
   if (as.row) floating_label <- FALSE
   r <- c(
     '<div class="wrapper combobox-wrapper">',
-    if (!floating_label) paste0('<label id="', id, '-label">', label, "</label>"),
+    if (!floating_label) paste0('<label id="', id, '-label" for="', id, '-input">', label, "</label>"),
     paste0('<div class="', paste(c(
       if (reset_button) "input-group", if (floating_label) "form-floating"
     ), collapse = " "), '">'),
@@ -96,28 +96,51 @@ input_combobox <- function(label, options, default = -1, display = options, id =
       if (is.null(names(options))) names(options) <- seq_along(options)
       if (missing(accordion)) accordion <- TRUE
       unlist(lapply(names(options), function(g) {
-        group <- paste0('<div class="combobox-option-group combobox-component" label="', g, '">')
+        group <- paste0(
+          '<div class="combobox-group combobox-component',
+          if (accordion) " accordion-item",
+          '" data-group="', g, '">'
+        )
+        if (accordion) {
+          gid <- paste0(id, "_", gsub("[\\s,/._-]+", "", g))
+          group <- c(
+            group,
+            paste0('<div id="', gid, '-label" class="accordion-header combobox-component">'),
+            paste0(
+              '<button role="button" ',
+              'data-bs-toggle="collapse" data-bs-target="#', gid,
+              '" aria-expanded=false aria-controls="', gid,
+              '" class="accordion-button combobox-component collapsed">',
+              g, "</button></div>"
+            ),
+            paste0(
+              '<div id="', gid, '" class="combobox-component accordion-collapse collapse" ',
+              'aria-labelledby="', gid, '-label" data-group="', g, '" data-bs-parent="#', id,
+              '-listbox"><div class="accordion-body combobox-component">'
+            )
+          )
+        }
         for (gi in seq_along(options[[g]])) {
           i <<- i + 1
           group <- c(group, paste0(
-            '<div class="combobox-component', if (i == default) " selected", '" role="option" tabindex="0"',
-            ' id="', id, "-option", i, '" value="', options[[g]][[gi]], '" aria-selected="',
+            '<div class="combobox-option combobox-component', if (i == default) " selected", '" role="option" tabindex="0"',
+            ' data-group="', g, '" id="', id, "-option", i, '" data-value="', options[[g]][[gi]], '" aria-selected="',
             if (i == default) "true" else "false", '">', display[[g]][[gi]], "</div>"
           ))
         }
-        c(group, "</div>")
+        c(group, "</div>", if (accordion) "</div></div>")
       }), use.names = FALSE)
     } else if (length(options) > 1 || !options %in% c("datasets", "variables", "ids", "palettes")) {
       unlist(lapply(seq_along(options), function(i) {
         paste0(
           '<div class="combobox-component', if (i == default) " selected", '" role="option" tabindex="0"',
-          ' id="', id, "-option", i, '" value="', options[i], '" aria-selected="',
+          ' id="', id, "-option", i, '" data-value="', options[i], '" aria-selected="',
           if (i == default) "true" else "false", '">', display[i], "</div>"
         )
       }), use.names = FALSE)
     },
     "</div>",
-    if (floating_label) paste0('<label id="', id, '-label">', label, "</label>"),
+    if (floating_label) paste0('<label id="', id, '-label" for="', id, '-input">', label, "</label>"),
     if (!missing(reset_button)) {
       paste(c(
         '<button type="button" class="btn btn-link', if (!is.null(button_class)) paste("", button_class), ' select-reset">',

@@ -38,12 +38,7 @@ void (function () {
     })
     if ('string' === typeof this.metadata.datasets) this.metadata.datasets = [this.metadata.datasets]
     const init = () => {
-      if ('datasets' in this.metadata) {
-        for (let i = this.metadata.datasets.length; i--; )
-          if (!(this.metadata.datasets[i] in this.info)) this.metadata.datasets.split(i, 1)
-      } else {
-        this.metadata.datasets = Object.keys(this.info)
-      }
+      if (!('datasets' in this.metadata)) this.metadata.datasets = Object.keys(this.info)
       if ('measure_info' in this.metadata) {
         const info = this.metadata.measure_info
         this.metadata.datasets.forEach(d => {
@@ -133,7 +128,7 @@ void (function () {
           max: -Infinity,
           last: vec[n - 1],
         }
-      var on = 0
+      let on = 0
       for (let i = Math.max(range[0], 0); i < n; i++) {
         const v = vec[i]
         if (isNaN(v)) {
@@ -182,10 +177,10 @@ void (function () {
 
   function passes_feature_filter(entities, id, filter) {
     const entity = entities[id]
-    for (var i = filter.length; i--; )
+    for (let i = filter.length; i--; )
       if (filter[i].value !== '-1')
         if ('id' === filter[i].name) {
-          var pass = false
+          let pass = false
           filter[i].value.forEach(id => {
             if (!pass) {
               const group = id in entities && entities[id].group
@@ -236,7 +231,7 @@ void (function () {
         if (entity.group in this.meta.times) {
           const op = [],
             time = this.meta.times[entity.group].value
-          var tr = ''
+          let tr = ''
           Object.keys(feats).forEach(f => {
             tr += '"' + entity.features[feats[f]] + '"' + sep
           })
@@ -244,7 +239,7 @@ void (function () {
             const vc = entity.variables[k].code
             if (vc in entity.data) {
               const range = this.meta.variables[entity.group][k].time_range
-              var r = ''
+              let r = ''
               const yn = time_range[1] + 1
               for (let y = time_range[0]; y < yn; y++) {
                 if (y >= range[0] && y <= range[1]) {
@@ -264,13 +259,13 @@ void (function () {
         if (entity.group in this.meta.times) {
           const op = [],
             time = this.meta.times[entity.group].value
-          var tr = ''
+          let tr = ''
           Object.keys(feats).forEach(f => {
             tr += '"' + entity.features[feats[f]] + '"' + sep
           })
           const yn = time_range[1] + 1
           for (let y = time_range[0]; y < yn; y++) {
-            var r = tr + time[y]
+            let r = tr + time[y]
             vars.forEach(k => {
               const vc = entity.variables[k].code
               if (vc in entity.data) {
@@ -293,7 +288,7 @@ void (function () {
       },
       wide: function (entity, time_range, feats, vars, sep) {
         if (entity.group in this.meta.times) {
-          var r = ''
+          let r = ''
           Object.keys(feats).forEach(f => {
             r += (r ? sep : '') + '"' + entity.features[feats[f]] + '"'
           })
@@ -546,7 +541,7 @@ void (function () {
     },
     load_id_maps: async function () {
       this.metadata.datasets.forEach(k => {
-        var has_map = false
+        let has_map = false
         this.info[k].ids.forEach((id, i) => {
           if ('map' in id) {
             has_map = true
@@ -622,7 +617,7 @@ void (function () {
           const m = vi[view],
             c = vi.code
           if (d in this.sets) {
-            var o
+            let o
             const da = this.sets[d]
             const n = this.info[d].entity_count
             const at = !n || n > 65535 ? Uint32Array : n > 255 ? Uint16Array : Uint8Array
@@ -819,7 +814,7 @@ void (function () {
         order.forEach((o, y) => {
           const moy = mo[y],
             msoy = mso[y]
-          var rank = 0
+          let rank = 0
           o.forEach(oi => {
             const k = oi[0],
               value = oi[1]

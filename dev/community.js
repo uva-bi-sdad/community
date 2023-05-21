@@ -315,7 +315,7 @@ void (function () {
                 }
                 u.options.forEach(si => {
                   if (fresh && !u.groups) c.appendChild(si)
-                  if (no_view || si.value in v) {
+                  if (no_view || (si.value || si.dataset.value) in v) {
                     si.classList.remove('hidden')
                     ns++
                   } else {
@@ -1151,7 +1151,6 @@ void (function () {
                   const e = document.createElement('div'),
                     id = u.id + '_group_' + k.replace(patterns.seps, '-')
                   e.className = 'combobox-group combobox-component'
-                  e.role = 'group'
                   e.setAttribute('aria-labelledby', id)
                   e.appendChild(document.createElement('label'))
                   e.firstElementChild.innerText = k
@@ -1166,7 +1165,7 @@ void (function () {
                   u.groups.by_name[g].querySelectorAll('.combobox-option').forEach(c => {
                     u.options.push(c)
                     c.setAttribute('data-group', g)
-                    u.values[c.value] = n
+                    u.values[c.dataset.value] = n
                     u.display[c.innerText] = n++
                   })
                 })
@@ -1178,6 +1177,24 @@ void (function () {
             o.cleared_selection = ''
             o.expanded = false
             o.listbox = o.e.parentElement.children[1]
+            o.options = o.listbox.querySelectorAll('.combobox-option')
+            if (o.options.length) {
+              o.values = {}
+              o.display = {}
+              o.options.forEach((e, i) => {
+                o.values[e.dataset.value] = i
+                o.display[e.innerText] = i
+              })
+              const group = o.listbox.querySelectorAll('.combobox-group')
+              if (group.length) {
+                o.groups = {e: [], by_name: {}}
+                group.forEach(e => {
+                  const name = e.dataset.group
+                  o.groups.e[name] = e
+                  o.groups.by_name[name] = e
+                })
+              }
+            }
             o.container = document.createElement('div')
             o.container.className = 'combobox-options-container combobox-component'
             o.container.style.display = 'none'
@@ -1221,7 +1238,8 @@ void (function () {
             o.listbox.addEventListener('click', o.set)
             o.close = function (e) {
               if (this.expanded && (!e || !e.target.classList || !e.target.classList.contains('combobox-component'))) {
-                if ('' === this.selection.innerText) this.selection.innerText = this.cleared_selection
+                if ('' === this.selection.innerText && this.source.length)
+                  this.selection.innerText = this.cleared_selection
                 if ('' !== this.input_element.value) setTimeout(this.set, 0)
                 this.e.setAttribute('aria-expanded', false)
                 this.expanded = false
@@ -1269,10 +1287,10 @@ void (function () {
             }.bind(o)
             o.e.addEventListener('mousedown', o.toggle)
             o.highlight = function (e) {
-              if (!e || !e.target || e.target.value in this.values) {
+              if (!e || !e.target || e.target.dataset.value in this.values) {
                 if (!this.groups) this.settings.accordion = false
-                if (e && e.target && e.target.value) {
-                  this.hover_index = this.values[e.target.value]
+                if (e && e.target && e.target.dataset.value) {
+                  this.hover_index = this.values[e.target.dataset.value]
                 } else if (-1 === this.hover_index && this.source) {
                   this.hover_index = this.values[this.source[0]]
                 }
@@ -1313,7 +1331,7 @@ void (function () {
             o.listbox.addEventListener('mouseover', o.highlight)
             if (o.settings.accordion) {
               o.listbox.addEventListener('show.bs.collapse', e => {
-                const group = o.options[o.hover_index].getAttribute('data-group')
+                const group = o.hover_index === -1 ? '' : o.options[o.hover_index].getAttribute('data-group')
                 if (group !== e.target.getAttribute('data-group')) {
                   o.highlight({target: e.target.firstElementChild.firstElementChild})
                   o.input_element.focus()
@@ -1417,7 +1435,7 @@ void (function () {
           },
           retrieve: function () {
             this.source = []
-            this.listbox.querySelectorAll('.selected').forEach(o => this.source.push(o.value))
+            this.listbox.querySelectorAll('.selected').forEach(o => this.source.push(o.dataset.value))
             request_queue(this.id)
           },
           setter: function (v, toggle) {
@@ -1432,7 +1450,10 @@ void (function () {
                 (this.options[i].classList.contains('hidden') || this.options[i].classList.contains('filter-hidden'))
               )
                 i = -1
-              v = -1 === i ? v.target.innerText || v.target.value : this.options[i].value
+              v =
+                -1 === i
+                  ? v.target.dataset.value || v.target.innerText
+                  : this.options[i].dataset.value || this.options[i].innerText
               toggle = this.settings.multi
             }
             this.filter_reset()
@@ -1452,9 +1473,9 @@ void (function () {
               if (this.settings.strict && 'string' === typeof v && !(v in this.values) && patterns.number.test(v))
                 v = Number(v)
               if ('number' !== this.value_type && 'number' === typeof v && this.options[v]) {
-                v = this.options[v].value
+                v = this.options[v].dataset.value
               }
-              if ('string' === v && v in this.display) v = this.options[this.display[v]].value
+              if ('string' === typeof v && v in this.display) v = this.options[this.display[v]].dataset.value
               if (this.settings.strict && !(v in this.values)) v = this.default
               i = this.source.indexOf(v)
               if (-1 === i) {
@@ -1502,7 +1523,7 @@ void (function () {
             e.setAttribute('aria-selected', false)
             e.tabindex = '0'
             e.className = 'combobox-option combobox-component'
-            e.value = value
+            e.dataset.value = value
             e.innerText = display || site.data.format_label(value)
             if (meta && meta.info) {
               e.appendChild(document.createElement('p'))
@@ -1792,34 +1813,39 @@ void (function () {
             o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0
             o.show = function (e) {
               if (e.layer && e.layer[this.id]) {
+                const highlight_style = {
+                  color: 'var(--border-highlight)',
+                  weight: site.settings.polygon_outline + 1,
+                  fillOpacity: 1,
+                }
                 if (!site.data.inited[this.parsed.dataset + o.id]) {
                   const time = site.map[this.id].match_time(
                     site.data.meta.overall.value[
                       site.data.variables[this.parsed.color].time_range[this.parsed.dataset][0] + this.parsed.time
                     ]
                   )
-                  if (e.layer[this.id][time])
-                    e.layer[this.id][time].setStyle({
-                      color: 'var(--background-highlight)',
-                    })
+                  if (e.layer[this.id][time]) e.layer[this.id][time].setStyle(highlight_style)
                 } else if (e.layer[this.id].setStyle) {
-                  e.layer[this.id].setStyle({
-                    color: 'var(--background-highlight)',
-                  })
+                  e.layer[this.id].setStyle(highlight_style)
                 }
               }
             }
             o.revert = function (e) {
               if (e.layer && e.layer[this.id]) {
+                const default_style = {
+                  color: 'var(--border)',
+                  weight: site.settings.polygon_outline,
+                  fillOpacity: 0.7,
+                }
                 if (!site.data.inited[this.parsed.dataset + this.id]) {
                   const time = site.map[this.id].match_time(
                     site.data.meta.overall.value[
                       site.data.variables[this.parsed.color].time_range[this.parsed.dataset][0] + this.parsed.time
                     ]
                   )
-                  if (e.layer[this.id][time]) e.layer[this.id][time].setStyle({color: defaults.border})
+                  if (e.layer[this.id][time]) e.layer[this.id][time].setStyle(default_style)
                 } else {
-                  e.layer[this.id].setStyle({color: defaults.border})
+                  e.layer[this.id].setStyle(default_style)
                 }
               }
             }
@@ -3190,53 +3216,48 @@ void (function () {
                     ? patterns.int_types.test(site.data.variable_info[variable].type)
                     : true
                 const refresh = site.settings.color_by_order !== this.parsed.rank,
-                  remake = p.length !== s.childElementCount
+                  bins = s.querySelectorAll('span'),
+                  odd = palettes[pn].odd,
+                  remake =
+                    'discrete' === palettes[pn].type
+                      ? p.length !== bins.length - odd
+                      : !s.firstElementChild || 'SPAN' !== s.firstElementChild.tagName
                 if (pn + site.settings.color_scale_center !== this.current_palette || refresh) {
                   this.current_palette = pn + site.settings.color_scale_center
                   this.parsed.rank = site.settings.color_by_order
                   if (remake) s.innerHTML = ''
                   if ('discrete' === palettes[pn].type) {
-                    if (site.settings.color_by_order) {
-                      p.forEach(
-                        remake
-                          ? color => {
-                              s.appendChild(document.createElement('span'))
-                              s.lastElementChild.setAttribute('data-of', this.id)
-                              s.lastElementChild.style.backgroundColor = color
-                            }
-                          : (color, i) => {
-                              s.children[i].style.backgroundColor = color
-                            }
-                      )
+                    let i = 0,
+                      n = Math.ceil(p.length / 2),
+                      e
+                    if (remake) {
+                      s.appendChild((e = document.createElement('div')))
+                      e.dataset.of = this.id
+                      e.style.left = 0
+                      const prop = (1 / (n - odd / 2)) * 100 + '%'
+                      for (; i < n; i++) {
+                        e.appendChild(document.createElement('span'))
+                        e.lastElementChild.dataset.of = this.id
+                        e.lastElementChild.style.backgroundColor = p[i]
+                        e.lastElementChild.style.width = prop
+                      }
+                      if (odd) e.lastElementChild.style.width = ((1 / (n - odd / 2)) * 100) / 2 + '%'
+                      s.appendChild((e = document.createElement('div')))
+                      e.dataset.of = this.id
+                      e.style.right = 0
+                      for (i = Math.floor(p.length / 2), n = p.length; i < n; i++) {
+                        e.appendChild(document.createElement('span'))
+                        e.lastElementChild.dataset.of = this.id
+                        e.lastElementChild.style.backgroundColor = p[i]
+                        e.lastElementChild.style.width = prop
+                      }
+                      if (odd) e.firstElementChild.style.width = ((1 / (n - odd / 2)) * 100) / 2 + '%'
                     } else {
-                      let i = 0,
-                        n = Math.ceil(p.length / 2),
-                        e
-                      if (remake) {
-                        s.appendChild((e = document.createElement('div')))
-                        e.setAttribute('data-of', this.id)
-                        e.style.left = 0
-                        for (; i < n; i++) {
-                          e.appendChild(document.createElement('span'))
-                          e.lastElementChild.setAttribute('data-of', this.id)
-                          e.lastElementChild.style.backgroundColor = p[i]
-                        }
-                        s.appendChild((e = document.createElement('div')))
-                        e.setAttribute('data-of', this.id)
-                        e.style.right = 0
-                        for (i = Math.floor(p.length / 2), n = p.length; i < n; i++) {
-                          e.appendChild(document.createElement('span'))
-                          e.lastElementChild.setAttribute('data-of', this.id)
-                          e.lastElementChild.style.backgroundColor = p[i]
-                        }
-                      } else {
-                        e = s.children
-                        for (; i < n; i++) {
-                          e[i].style.backgroundColor = p[i]
-                        }
-                        for (i = Math.floor(p.length / 2), n = p.length; i < n; i++) {
-                          e[i].style.backgroundColor = p[i]
-                        }
+                      for (; i < n; i++) {
+                        bins[i].style.backgroundColor = p[i]
+                      }
+                      for (i = Math.floor(p.length / 2), n = p.length; i < n; i++) {
+                        bins[i + odd].style.backgroundColor = p[i]
                       }
                     }
                   } else {
@@ -3304,32 +3325,29 @@ void (function () {
                         ? site.data.format_value(summary.max[y], this.integer)
                         : NaN
                       : NaN
-                    if ('none' !== site.settings.color_scale_center) {
+                    if ('none' === site.settings.color_scale_center) {
+                      ticks.center.firstElementChild.lastElementChild.innerText =
+                        summary_levels[site.settings.summary_selection] + ' median'
+                      ticks.center.firstElementChild.children[1].innerText = site.data.format_value(summary.median[y])
+                      ticks.center.style.left = summary.norm_median[y] * 100 + '%'
+                    } else {
                       ticks.center.firstElementChild.lastElementChild.innerText =
                         summary_levels[site.settings.summary_selection] + ' ' + site.settings.color_scale_center
                       ticks.center.firstElementChild.children[1].innerText = site.data.format_value(
                         summary[site.settings.color_scale_center][y]
                       )
                       ticks.center.style.left = summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
-                    } else {
-                      ticks.center.firstElementChild.lastElementChild.innerText =
-                        summary_levels[site.settings.summary_selection] + ' median'
-                      ticks.center.firstElementChild.children[1].innerText = site.data.format_value(summary.median[y])
-                      ticks.center.style.left = summary.norm_median[y] * 100 + '%'
-                    }
-                    if (2 === s.childElementCount) {
-                      if ('none' === site.settings.color_scale_center) {
-                        s.firstElementChild.style.width = '50%'
-                        s.lastElementChild.style.width = '50%'
-                      } else {
-                        s.firstElementChild.style.width =
-                          summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
-                        s.lastElementChild.style.width =
-                          100 - summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
-                      }
                     }
                     ticks.center.style.marginLeft = -ticks.center.getBoundingClientRect().width / 2 + 'px'
                   }
+                }
+                if (site.settings.color_by_order || 'none' === site.settings.color_scale_center) {
+                  s.firstElementChild.style.width = '50%'
+                  s.lastElementChild.style.width = '50%'
+                } else {
+                  s.firstElementChild.style.width = summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
+                  s.lastElementChild.style.width =
+                    100 - summary['norm_' + site.settings.color_scale_center][y] * 100 + '%'
                 }
               }
             }
@@ -3495,9 +3513,7 @@ void (function () {
             if (p.adder) o.add = p.adder.bind(o)
             if (p.listener) o.listen = p.listener.bind(o)
             if (p.init) p.init(o)
-            o.options = o.e.querySelectorAll(
-              'select' === o.type ? 'option' : 'combobox' === o.type ? '.combobox-option' : 'input'
-            )
+            if (!o.options) o.options = o.e.querySelectorAll('select' === o.type ? 'option' : 'input')
             if (o.optionSource && patterns.ids.test(o.optionSource)) {
               o.loader = function () {
                 if (!this.e.classList.contains('locked')) {
@@ -3515,7 +3531,7 @@ void (function () {
               o.options.length &&
               o.default < o.options.length
             )
-              o.default = o.options[o.default].value
+              o.default = o.options[o.default].value || o.options[o.default].dataset.value
             _u[o.id] = o
           }
         },
@@ -3713,7 +3729,11 @@ void (function () {
           : isNaN(summary['norm_' + center_source][index])
           ? 0.5
           : summary['norm_' + center_source][index],
-        r = fixed ? (centered && !site.settings.color_by_order ? Math.ceil(colors.length / 2) : colors.length) : 1,
+        r = fixed
+          ? centered && !site.settings.color_by_order
+            ? Math.ceil(colors.length / 2) - odd / 2
+            : colors.length
+          : 1,
         p = site.settings.color_by_order
           ? rank / total
           : range
@@ -3736,9 +3756,7 @@ void (function () {
       }
       return (string ? value in summary.level_ids : 'number' === typeof value)
         ? fixed
-          ? colors[
-              Math.max(0, Math.min(colors.length - 1, Math.floor(centered ? (upper ? r - odd + r * v : r * v) : r * v)))
-            ]
+          ? colors[Math.max(0, Math.min(colors.length - 1, Math.floor(centered ? (upper ? r + r * v : r * v) : r * v)))]
           : 'rgb(' +
             (upper
               ? colors[0][0][0] +
@@ -3885,12 +3903,14 @@ void (function () {
                     ee.className = 'accordion-body combobox-component'
                   } else {
                     e.className = 'combobox-group combobox-component'
+                    e.id = id
                     e.role = 'group'
-                    e.setAttribute('aria-labelledby', id)
+                    e.setAttribute('aria-labelledby', id + '-label')
                     e.appendChild((ee = document.createElement('div')))
                     ee.appendChild((ee = document.createElement('label')))
                     ee.innerText = group
-                    ee.id = id
+                    ee.id = id + '-label'
+                    ee.for = id
                     ee.className = 'combobox-group-label combobox-component'
                   }
                 } else {
@@ -3919,7 +3939,7 @@ void (function () {
         Object.keys(u.groups.by_name).forEach(g => {
           u.groups.by_name[g].querySelectorAll(combobox ? '.combobox-option' : 'option').forEach(c => {
             s.push(c)
-            values[c.value] = n
+            values[combobox ? c.dataset.value : c.value] = n
             disp[c.innerText] = n++
           })
         })
@@ -4030,7 +4050,7 @@ void (function () {
           u.groups.by_name[g].querySelectorAll(combobox ? '.combobox-option' : 'option').forEach(c => {
             s.push(c)
             s[n].id = u.id + '-option' + n
-            values[c.value] = n
+            values[combobox ? c.dataset.value : c.value] = n
             disp[(c.firstChild && c.firstChild.textContent) || c.innerText] = n++
           })
         })
@@ -5074,19 +5094,21 @@ void (function () {
               o.values = {}
               o.display = {}
               let new_display = true
+              const select = 'select' === o.type
               o.options.forEach(e => {
-                if (new_display) new_display = e.value === e.innerText
+                if (select) e.dataset.value = e.value
+                if (new_display) new_display = e.dataset.value === e.innerText
               })
               o.options.forEach((e, i) => {
-                o.values[e.value] = i
-                if (new_display) e.innerText = site.data.format_label(e.value)
+                o.values[e.dataset.value] = i
+                if (new_display) e.innerText = site.data.format_label(e.dataset.value)
                 o.display[e.innerText] = i
               })
               if (!(o.default in o.values) && !(o.default in _u)) {
                 o.default = Number(o.default)
                 if (isNaN(o.default)) o.default = -1
                 if (-1 !== o.default && o.default < o.options.length) {
-                  o.default = o.options[o.default].value
+                  o.default = o.options[o.default].dataset.value
                 } else {
                   o.default = -1
                 }
@@ -5271,7 +5293,7 @@ void (function () {
           if (Array.isArray(o.values)) {
             if (!o.values.length) {
               o.values = []
-              if (o.options.length) o.options.forEach(e => o.values.push(e.value))
+              if (o.options.length) o.options.forEach(e => o.values.push(e.value || e.dataset.value))
             }
             if (o.values.length && !(o.default in _u) && -1 === o.values.indexOf(o.default)) {
               o.default = parseInt(o.default)
@@ -5440,7 +5462,7 @@ void (function () {
             f = {
               e,
               index: _u._base_filter.c.size,
-              variable: event.target.value,
+              variable: event.target.dataset.value,
               component: presets.component || 'last',
               operator: presets.operator || '>=',
               value: presets.value || '',
@@ -5448,7 +5470,7 @@ void (function () {
               id: 'vf' + _u._base_filter.c.size,
               passed: 0,
               failed: 0,
-              info: site.data.variables[event.target.value].info,
+              info: site.data.variables[event.target.dataset.value].info,
               view: _u[defaults.dataview],
             },
             d = f.view.get.dataset(),
@@ -5506,6 +5528,7 @@ void (function () {
           comp_select.e.parentElement.removeChild(comp_select.e.parentElement.lastElementChild)
           comp_select.e.parentElement.classList.add('filter-form-input')
           comp_select.e.setAttribute('aria-labelledby', f.id + '_component')
+          comp_select.input_element.setAttribute('aria-labelledby', f.id + '_component')
           comp_select.onchange = function () {
             f.component = this.value()
             request_queue('_base_filter')
@@ -5519,7 +5542,7 @@ void (function () {
           ee.id = f.id + '_operator'
           e.lastElementChild.appendChild((ee = document.createElement('select')))
           ee.className = 'form-select filter-form-input'
-          ee.setAttribute('aria-labelledby', f.id + '_value')
+          ee.setAttribute('aria-labelledby', f.id + '_operator')
           ee.addEventListener('change', e => {
             f.operator = e.target.selectedOptions[0].value
             request_queue('_base_filter')
@@ -5543,7 +5566,8 @@ void (function () {
           e.lastElementChild.appendChild(value_select.e.parentElement)
           value_select.e.parentElement.removeChild(value_select.e.parentElement.lastElementChild)
           value_select.e.parentElement.classList.add('filter-form-input')
-          value_select.e.setAttribute('aria-labelledby', f.id + '_component')
+          value_select.e.setAttribute('aria-labelledby', f.id + '_value')
+          value_select.input_element.setAttribute('aria-labelledby', f.id + '_value')
           value_select.onchange = async function (f) {
             f.value = this.value()
             if (patterns.number.test(f.value)) {
@@ -5612,7 +5636,7 @@ void (function () {
           e.appendChild(document.createElement('a'))
           e.lastElementChild.className = 'dropdown-item'
           e.lastElementChild.href = '#'
-          e.lastElementChild.value = k
+          e.lastElementChild.dataset.value = k
           e.lastElementChild.innerText = (site.data.variable_info[k] && site.data.variable_info[k].short_name) || k
           c.lastElementChild.appendChild(e)
         }
@@ -5659,7 +5683,8 @@ void (function () {
         if (site.parsed_query.variables.conditions.length) {
           site.parsed_query.variables.conditions.forEach(f => {
             const info = site.data.variable_info[f.name]
-            if (info) add_filter_condition({target: {tagName: 'A', value: f.name, innerText: info.short_name}}, f)
+            if (info)
+              add_filter_condition({target: {tagName: 'A', dataset: {value: f.name}, innerText: info.short_name}}, f)
           })
         }
       }

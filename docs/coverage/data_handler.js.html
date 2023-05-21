@@ -2801,7 +2801,7 @@
           max: -Infinity,
           last: vec[n - 1],
         }
-      var on = <span class="cstat-no" title="statement not covered" >0</span>
+      let on = <span class="cstat-no" title="statement not covered" >0</span>
 <span class="cstat-no" title="statement not covered" >      for (let i = <span class="cstat-no" title="statement not covered" >Math.max(range[0], 0);</span> i &lt; n; i++) {</span>
         const v = <span class="cstat-no" title="statement not covered" >vec[i]</span>
 <span class="cstat-no" title="statement not covered" >        if (isNaN(v)) {</span>
@@ -2850,10 +2850,10 @@
 &nbsp;
   function passes_feature_filter(entities, id, filter) {
     const entity = entities[id]
-    for (var i = filter.length; i--; )
+    for (let i = filter.length; i--; )
       <span class="missing-if-branch" title="else path not taken" >E</span>if (filter[i].value !== '-1')
         <span class="missing-if-branch" title="else path not taken" >E</span>if ('id' === filter[i].name) {
-          var pass = false
+          let pass = false
           filter[i].value.forEach(id =&gt; {
             if (!pass) {
               const group = id in entities &amp;&amp; entities[id].group
@@ -2904,7 +2904,7 @@
         <span class="missing-if-branch" title="else path not taken" >E</span>if (entity.group in this.meta.times) {
           const op = [],
             time = this.meta.times[entity.group].value
-          var tr = ''
+          let tr = ''
           Object.keys(feats).forEach(f =&gt; {
             tr += '"' + entity.features[feats[f]] + '"' + sep
           })
@@ -2912,7 +2912,7 @@
             const vc = entity.variables[k].code
             <span class="missing-if-branch" title="else path not taken" >E</span>if (vc in entity.data) {
               const range = this.meta.variables[entity.group][k].time_range
-              var r = ''
+              let r = ''
               const yn = time_range[1] + 1
               for (let y = time_range[0]; y &lt; yn; y++) {
                 if (y &gt;= range[0] &amp;&amp; y &lt;= range[1]) {
@@ -2932,13 +2932,13 @@
         <span class="missing-if-branch" title="else path not taken" >E</span>if (entity.group in this.meta.times) {
           const op = [],
             time = this.meta.times[entity.group].value
-          var tr = ''
+          let tr = ''
           Object.keys(feats).forEach(f =&gt; {
             tr += '"' + entity.features[feats[f]] + '"' + sep
           })
           const yn = time_range[1] + 1
           for (let y = time_range[0]; y &lt; yn; y++) {
-            var r = tr + time[y]
+            let r = tr + time[y]
             vars.forEach(k =&gt; {
               const vc = entity.variables[k].code
               <span class="missing-if-branch" title="else path not taken" >E</span>if (vc in entity.data) {
@@ -2961,7 +2961,7 @@
       },
       wide: function (entity, time_range, feats, vars, sep) {
         <span class="missing-if-branch" title="else path not taken" >E</span>if (entity.group in this.meta.times) {
-          var r = ''
+          let r = ''
           Object.keys(feats).forEach(f =&gt; {
             r += (r ? sep : '') + '"' + entity.features[feats[f]] + '"'
           })
@@ -3214,7 +3214,7 @@
     },
     load_id_maps: async function () {
       this.metadata.datasets.forEach(k =&gt; {
-        var has_map = false
+        let has_map = false
         this.info[k].ids.forEach(<span class="fstat-no" title="function not covered" >(i</span>d, i) =&gt; {
 <span class="cstat-no" title="statement not covered" >          if ('map' in id) {</span>
 <span class="cstat-no" title="statement not covered" >            has_map = true</span>
@@ -3290,7 +3290,7 @@
           const m = <span class="cstat-no" title="statement not covered" >vi[view],</span>
             c = <span class="cstat-no" title="statement not covered" >vi.code</span>
 <span class="cstat-no" title="statement not covered" >          if (d in this.sets) {</span>
-            var o
+            let o
             const da = <span class="cstat-no" title="statement not covered" >this.sets[d]</span>
             const n = <span class="cstat-no" title="statement not covered" >this.info[d].entity_count</span>
             const at = <span class="cstat-no" title="statement not covered" >!n || n &gt; 65535 ? Uint32Array : n &gt; 255 ? Uint16Array : Uint8Array</span>
@@ -3487,7 +3487,7 @@
 <span class="cstat-no" title="statement not covered" >        order.forEach(<span class="fstat-no" title="function not covered" >(o</span>, y) =&gt; {</span>
           const moy = <span class="cstat-no" title="statement not covered" >mo[y],</span>
             msoy = <span class="cstat-no" title="statement not covered" >mso[y]</span>
-          var rank = <span class="cstat-no" title="statement not covered" >0</span>
+          let rank = <span class="cstat-no" title="statement not covered" >0</span>
 <span class="cstat-no" title="statement not covered" >          o.forEach(<span class="fstat-no" title="function not covered" >oi</span> =&gt; {</span>
             const k = <span class="cstat-no" title="statement not covered" >oi[0],</span>
               value = <span class="cstat-no" title="statement not covered" >oi[1]</span>
@@ -3982,7 +3982,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-05-18T15:33:23.523Z
+                at 2023-05-21T15:44:30.126Z
             </div>
         <script src="prettify.js"></script>
         <script>
