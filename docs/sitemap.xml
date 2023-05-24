@@ -4,6 +4,12 @@
     <loc>https://uva-bi-sdad.github.io/community/404.html</loc>
   </url>
   <url>
+    <loc>https://uva-bi-sdad.github.io/community/LICENSE-text.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/LICENSE.html</loc>
+  </url>
+  <url>
     <loc>https://uva-bi-sdad.github.io/community/articles/anti-patterns.html</loc>
   </url>
   <url>
@@ -34,12 +40,6 @@
     <loc>https://uva-bi-sdad.github.io/community/index.html</loc>
   </url>
   <url>
-    <loc>https://uva-bi-sdad.github.io/community/LICENSE-text.html</loc>
-  </url>
-  <url>
-    <loc>https://uva-bi-sdad.github.io/community/LICENSE.html</loc>
-  </url>
-  <url>
     <loc>https://uva-bi-sdad.github.io/community/reference/add_data.html</loc>
   </url>
   <url>
@@ -55,6 +55,15 @@
     <loc>https://uva-bi-sdad.github.io/community/reference/community-package.html</loc>
   </url>
   <url>
+    <loc>https://uva-bi-sdad.github.io/community/reference/data_add.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/reference/data_measure_info.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/reference/data_reformat_sdad.html</loc>
+  </url>
+  <url>
     <loc>https://uva-bi-sdad.github.io/community/reference/datacommons_find_variables.html</loc>
   </url>
   <url>
@@ -68,15 +77,6 @@
   </url>
   <url>
     <loc>https://uva-bi-sdad.github.io/community/reference/datacommons_view.html</loc>
-  </url>
-  <url>
-    <loc>https://uva-bi-sdad.github.io/community/reference/data_add.html</loc>
-  </url>
-  <url>
-    <loc>https://uva-bi-sdad.github.io/community/reference/data_measure_info.html</loc>
-  </url>
-  <url>
-    <loc>https://uva-bi-sdad.github.io/community/reference/data_reformat_sdad.html</loc>
   </url>
   <url>
     <loc>https://uva-bi-sdad.github.io/community/reference/download_census_shapes.html</loc>

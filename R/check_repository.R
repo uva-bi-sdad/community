@@ -9,7 +9,8 @@
 #' @param value_name Name of the column containing variable names.
 #' @param id Column name of IDs that uniquely identify entities.
 #' @param time Column name of the variable representing time.
-#' @param dataset Column name used to separate data into sets (such as by region).
+#' @param dataset Column name used to separate data into sets (such as by region), or a vector
+#' of datasets, with \code{id}s as names, used to map IDs to datasets.
 #' @param entity_info A vector of variable names to go into making \code{entity_info.json}.
 #' @param attempt_repair Logical; if \code{TRUE}, will attempt to fix most warnings in data files.
 #' Use with caution, as this will often remove rows (given \code{NA}s) and rewrite the file.
@@ -331,6 +332,11 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   )
   census_geolayers <- c(county = 5, tract = 11, "block group" = 12)
   required <- c(id, value_name, value)
+  dataset_map <- NULL
+  if (length(dataset) > 1) {
+    dataset_map <- dataset
+    dataset <- "dataset"
+  }
   vars <- unique(c(required, time, dataset, entity_info))
   entity_info <- entity_info[!entity_info %in% c(required, time)]
   files_short <- sub("^/", "", sub(dir, "", files, fixed = TRUE))
@@ -388,6 +394,10 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
                 repairs <- c(repairs, "warn_value_name_nas")
                 d <- d[!is.na(d[[value_name]]), ]
               }
+            }
+            if (length(dataset_map)) {
+              data$dataset <- dataset_map[data[[id]]]
+              cols <- c(cols, "dataset")
             }
             if (nrow(d) && dataset %in% cols) {
               if (anyNA(d[[dataset]])) {

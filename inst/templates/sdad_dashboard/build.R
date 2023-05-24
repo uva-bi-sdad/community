@@ -1,9 +1,6 @@
 library(community)
 
-# check data and measure info
-check_repository()
-
-# rebuild site
+# get GEOID to entity info map
 entities_file <- "../entities.rds"
 if (file.exists(entities_file)) {
   entities <- readRDS(entities_file)
@@ -14,6 +11,11 @@ if (file.exists(entities_file)) {
   entities <- entities[!duplicated(entities$geoid), c("geoid", "region_type")]
   saveRDS(entities, entities_file, compress = "xz")
 }
+
+# check data and measure info
+check_repository(dataset = structure(entities$region_type, names = entities$geoid))
+
+# rebuild site
 
 ## unify original files
 datasets <- paste0(list.dirs("."), "/data/distribution")

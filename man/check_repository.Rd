@@ -24,7 +24,8 @@ check_repository(dir = ".", search_pattern = "\\\\.csv(?:\\\\.[gbx]z2?)?$",
 
 \item{time}{Column name of the variable representing time.}
 
-\item{dataset}{Column name used to separate data into sets (such as by region).}
+\item{dataset}{Column name used to separate data into sets (such as by region), or a vector
+of datasets, with \code{id}s as names, used to map IDs to datasets.}
 
 \item{entity_info}{A vector of variable names to go into making \code{entity_info.json}.}
 
