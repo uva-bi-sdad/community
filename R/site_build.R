@@ -511,7 +511,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   }
   if (!is.null(endpoint)) settings$endpoint <- endpoint
   if (!is.null(tag_id)) settings$tag_id <- tag_id
-  if (!bundle_package) settings$metadata$info <- settings$metadata$measure_info <- NULL
+  if (!bundle_package) settings$metadata$info <- settings$metadata$measure_info <- settings$entity_info <- NULL
   entity_info <- NULL
   if (length(settings$metadata$entity_info)) {
     entity_info <- unique(settings$metadata$entity_info)
