@@ -4,17 +4,13 @@ spelling::spell_check_package()
 devtools::document()
 pkgdown::build_site(lazy = TRUE)
 
-# move web resource to dist
-update_stable <- FALSE
-for (f in list.files("dev", "min\\.[cjs]+$", full.names = TRUE)) {
-  file.copy(f, paste0("docs/dist/", sub("^.*\\.", "", f), "/", sub("-min", ".min", basename(f), fixed = TRUE)), TRUE)
-  if (grepl("^dev/(?:com|data_)", f) && update_stable) {
-    file.copy(
-      f, paste0("docs/dist/", sub("^.*\\.", "", f), "/", sub(".", ".v1.", sub("-min", ".min", basename(f), fixed = TRUE), fixed = TRUE)), TRUE
-    )
-  }
-  file.remove(f)
-}
+# update site assets
+
+## rebuild minified files
+system2("npm", "run build")
+
+## rebuild v1 scripts (if dev should be v1)
+if (FALSE) system2("npm", "run build-v1")
 
 ## update cache script information
 cache_scripts <- list(
@@ -44,8 +40,7 @@ if (!dir.exists("../test_site")) {
   site_build("../test_site", bundle_package = TRUE)
 }
 system2("npm", "test")
-covr::report(file = "coverage/package.html", browse = FALSE)
-system2("xcopy", c("/S /Y", shQuote("coverage"), shQuote("docs/coverage")))
+covr::report(file = "docs/coverage/package.html", browse = FALSE)
 
 # increment development version
 description <- readLines("DESCRIPTION")

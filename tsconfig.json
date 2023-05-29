@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "outDir": "./dev",
+    "allowJs": true,
+    "target": "es5"
+  },
+  "include": ["js/site/**/*", "./js/data_handler/**/*", "js/types.ts"]
+}

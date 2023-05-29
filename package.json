@@ -1,27 +1,39 @@
 {
   "name": "community",
   "version": "0.0.1",
-  "description": "Base script for community data sites.",
-  "main": "community.js",
+  "description": "Base assets for community data sites.",
+  "main": "dev/community.js",
   "directories": {
     "doc": "docs",
     "man": "man",
     "test": "tests/js"
   },
   "scripts": {
-    "test": "nyc --reporter=html mocha tests/js"
+    "start": "webpack --watch --config webpack.config.js",
+    "build": "webpack --config webpack.prod.js & node js/style.js",
+    "build-v1": "webpack --config webpack.prod-v1.js & node js/style-v1.js",
+    "test": "nyc --reporter=html --report-dir=./docs/coverage mocha tests/js",
+    "find-deadcode": "ts-prune"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/miserman/community.git"
+    "url": "git+https://github.com/uva-bi-sdad/community.git"
   },
   "author": "Biocomplexity Institute",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/miserman/community/issues"
+    "url": "https://github.com/uva-bi-sdad/community/issues"
   },
   "homepage": "https://uva-bi-sdad.github.io/community",
   "devDependencies": {
+    "csso": "latest",
+    "source-map-loader": "latest",
+    "ts-loader": "latest",
+    "ts-prune": "latest",
+    "typescript": "latest",
+    "webpack": "latest",
+    "webpack-cli": "latest",
+    "webpack-dev-server": "latest",
     "jsdom": "latest",
     "mocha": "latest",
     "nyc": "latest"

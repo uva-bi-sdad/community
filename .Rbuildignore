@@ -8,12 +8,14 @@
 ^LICENSE\.md$
 ^build\.R$
 ^logo\.svg$
-^.*\.Rproj$
+\.Rproj$
 ^vignettes
 ^tests/js$
-^package
 ^node_modules$
 ^coverage$
 _snaps
 ^dev
-^.*\.[cjs]+$
+^dist
+^js
+\.[cjts]+$
+^[^/]+\.json$
