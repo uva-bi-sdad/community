@@ -26,7 +26,7 @@ export function variables() {
           const ve: Variable = (this.variables[vn] = {
             datasets: [k],
             info: {full_name: k, type: 'unknown'} as UnparsedObject,
-            time_range: {},
+            time_range: [],
             type: v.type,
             code: k,
             name: k,

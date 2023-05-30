@@ -71,16 +71,16 @@ export type MeasureInfos = {
 
 export type Variable = {
   code: string
-  name: string
-  datasets: string[]
-  time_range: {[index: string]: number[]}
-  type: string
-  info: MeasureInfo | UnparsedObject
-  levels: string[]
-  level_ids: {[index: string]: number}
-  table: {[index: string]: string}
-  meta: MeasureInfo | UnparsedObject
-  order: Order[]
+  name?: string
+  datasets?: string[]
+  time_range: number[]
+  type?: string
+  info?: MeasureInfo | UnparsedObject
+  levels?: string[]
+  level_ids?: {[index: string]: number}
+  table?: {[index: string]: string}
+  meta?: MeasureInfo | UnparsedObject
+  order?: Order[]
 }
 
 export type Variables = {
@@ -92,12 +92,12 @@ export type Features = {[index: string]: string}
 export type LogicalObject = {[index: string]: number | boolean}
 
 type Time = {
-  is_single: boolean
-  n: number
   name: string
-  range: number[]
   value: number[]
-  info: Object
+  range?: number[]
+  n?: number
+  is_single?: boolean
+  info?: Object
 }
 
 export type MetaTime = {
@@ -135,9 +135,11 @@ export type VariableFilter = {
   conditions: Filter[]
 }
 
+type EntityMeta = {time: Time; variables: Variables}
+
 export type Data = {
-  [index: string]: EntityData
-  _meta: {time: Time; variables: Variables}
+  [index: string]: EntityData | EntityMeta
+  _meta: EntityMeta
 }
 
 export type DataSets = {[index: string]: Data}

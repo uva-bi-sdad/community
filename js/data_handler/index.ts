@@ -28,10 +28,10 @@ import type {
 
 module.exports = class DataHandler {
   constructor(
-    settings: Settings,
-    defaults: {[index: string]: string},
-    data: DataSets,
-    hooks: {[index: string]: Function}
+    settings?: Settings,
+    defaults?: {[index: string]: string},
+    data?: DataSets,
+    hooks?: {[index: string]: Function}
   ) {
     if (hooks) this.hooks = hooks
     if (defaults) this.defaults = defaults

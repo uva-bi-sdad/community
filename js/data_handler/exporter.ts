@@ -3,9 +3,9 @@ import {group_checks, export_checks} from './checks'
 import {passes_filter, passes_feature_filter} from './filter_check'
 import {patterns} from './patterns'
 import * as row_writers from './row_writers'
-import type {Query, Entity, Features, Entities} from '../types'
+import type {Query, Entity, Features, Entities, RawQuery} from '../types'
 
-export async function exporter(query_string: string, entities: Entities, in_browser: boolean, all_data: boolean) {
+export async function exporter(query_string?: RawQuery, entities?: Entities, in_browser?: boolean, all_data?: boolean) {
   if (!in_browser) await this.data_ready
   const query: Query = this.parse_query(query_string)
   entities = entities || this.entities
