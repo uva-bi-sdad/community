@@ -1741,6 +1741,112 @@ void (function () {
             }
           },
         },
+        echarts: {
+          init: function (o) {
+            o.previous_span = 1
+            if (o.id in site.echarts) {
+              o.x = o.e.getAttribute('x')
+              o.y = o.e.getAttribute('y')
+              o.color = o.e.getAttribute('color')
+              o.time = o.e.getAttribute('color-time')
+              o.click = o.e.getAttribute('click')
+              //TDB
+              if (o.click in _u) o.clickto = _u[o.click]
+              o.parsed = {}
+              o.traces = {}
+              o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0
+              if (o.tab) {
+                document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
+                  'click',
+                  function () {
+                    if (!this.e.parentElement.classList.contains('active')) {
+                      setTimeout(this.update, 155)
+                      setTimeout(trigger_resize, 155)
+                    }
+                  }.bind(o)
+                )
+              }
+              o.show = function (e) {
+                o.revert()
+                var trace = make_data_entry(
+                  this,
+                  e,
+                  0,
+                  0,
+                  'hover_line',
+                  defaults['border_highlight_' + site.settings.theme_dark]
+                )
+                if (trace) {
+                  trace.line.width = 4
+                  trace.marker.size = 12
+                  var currentOptions = chart.getOption()
+                  currentOptions.series.push(trace)
+                  chart.setOption(currentOptions)
+                }
+              }
+              o.revert = function () {
+                // Use urrentOptions here
+                // if (this.e.data.length && 'hover_line' === this.e.data[this.e.data.length - 1].name)
+                //   Plotly.deleteTraces(this.e, this.e.data.length - 1)
+              }
+              if (o.options) site.echarts[o.id].u = o
+              site.echarts[o.id].data.forEach((p, i) => {
+                Object.keys(p).forEach(k => {
+                  if (patterns.period.test(k)) {
+                    const es = k.split('.'),
+                      n = es.length - 1
+                    var pl = null
+                    es.forEach((e, ei) => {
+                      pl = pl ? (pl[e] = ei === n ? p[k] : {}) : (p[e] = {})
+                    })
+                  }
+                })
+                if (!('textfont' in p)) p.textfont = {}
+                if (!('color' in p.textfont)) p.textfont.color = defaults.background_highlight
+                if (!('line' in p)) p.line = {}
+                if (!('color' in p.line)) p.line.color = defaults.background_highlight
+                if (!('marker' in p)) p.marker = {}
+                p.marker.size = 8
+                if (!('color' in p.marker)) p.marker.color = defaults.background_highlight
+                if (!('line' in p.marker)) p.marker.line = {}
+                if (!('color' in p.marker.line)) p.marker.line.color = defaults.background_highlight
+                if (!('text' in p)) p.text = []
+                if (!('x' in p)) p.x = []
+                if ('box' === p.type) {
+                  p.hoverinfo = 'none'
+                } else if (!('y' in p)) p.y = []
+                o.traces[p.type] = JSON.stringify(p)
+                if (!i) {
+                  o.base_trace = p.type
+                  if (o.base_trace in _u) add_dependency(o.base_trace, {type: 'update', id: o.id})
+                }
+              })
+              if (o.x && !(o.x in site.data.variables)) {
+                add_dependency(o.x, {type: 'update', id: o.id})
+              }
+              if (o.y && !(o.y in site.data.variables)) {
+                add_dependency(o.y, {type: 'update', id: o.id})
+              }
+              if (o.color && !(o.color in site.data.variables)) {
+                add_dependency(o.color, {type: 'update', id: o.id})
+              }
+              if (o.time in _u) {
+                add_dependency(o.time, {type: 'update', id: o.id})
+              }
+              if (o.view) {
+                add_dependency(o.view, {type: 'update', id: o.id})
+                add_dependency(o.view + '_filter', {type: 'update', id: o.id})
+                if (_u[o.view].time_agg in _u) add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
+              } else o.view = defaults.dataview
+              queue_init_eCharts.bind(o)()
+            }
+          },
+
+          mouseover: function () {},
+          mouseout: function () {},
+          click: function () {},
+          update: function () {},
+        },
         map: {
           init: function (o) {
             o.color = o.e.getAttribute('color')
@@ -4136,6 +4242,55 @@ void (function () {
       }
     }
 
+    function make_data_entry2(u, e, rank, total, name, color) {
+      if (e.data && u.parsed.x in site.data.variables) {
+        const x = site.data.retrievers.vector({variable: u.parsed.x, entity: e}),
+          y = site.data.retrievers.vector({variable: u.parsed.y, entity: e}),
+          t = JSON.parse(`{
+            tooltip: {
+              trigger: "axis",
+            },
+            xAxis: {
+              type: "category",
+              data: [],
+            },
+            series: [
+              {
+                type: "plot_type",
+                data: [],
+              }
+            ],
+          }`),
+          yr = site.data.variables[u.parsed.y].time_range[u.parsed.dataset],
+          xr = site.data.variables[u.parsed.x].time_range[u.parsed.dataset],
+          n = Math.min(yr[1], xr[1]) + 1
+        for (let i = Math.max(yr[0], xr[0]); i < n; i++) {
+          t.text.push(e.features.name)
+          t.xAxis.data.push(u.parsed.x_range[0] <= i && i <= u.parsed.x_range[1] ? x[i - u.parsed.x_range[0]] : NaN)
+          t.series.data.push(u.parsed.y_range[0] <= i && i <= u.parsed.y_range[1] ? y[i - u.parsed.y_range[0]] : NaN)
+        }
+        t.series.type = u.parsed.base_trace == 'scatter' ? 'line' : u.parsed.base_trace
+        // t.color =
+        //   t.line.color =
+        //   t.marker.color =
+        //   t.textfont.color =
+        //     color ||
+        //     pal(
+        //       e.get_value(u.parsed.color, u.parsed.time),
+        //       u.parsed.palette,
+        //       u.parsed.summary,
+        //       u.parsed.time,
+        //       rank,
+        //       total
+        //     ) ||
+        //     defaults.border
+        if ('bar' === t.type) t.marker.line.width = 0
+        t.name = name || e.features.name
+        t.id = e.features.id
+        return t
+      }
+    }
+
     function make_variable_reference(c) {
       if (!Array.isArray(c.author)) c.author = [c.author]
       const e = document.createElement('li'),
@@ -6069,6 +6224,24 @@ void (function () {
       } else {
         this.deferred = true
         setTimeout(queue_init_plotly.bind(this), showing ? 0 : 2000)
+      }
+    }
+
+    function queue_init_eCharts() {
+      const showing = this.deferred || !this.tab || this.tab.classList.contains('show')
+      if (showing && window.ECharts) {
+        var chartContainer = document.getElementsByClassName('echarts-wrap')
+        var chart = echarts.init(chartContainer)
+        chart.setOption(options)
+        this.e
+          .on('mouseover', elements.plotly.mouseover.bind(this))
+          .on('mouseout', elements.plotly.mouseout.bind(this))
+          .on('click', elements.plotly.click.bind(this))
+        update_plot_theme(this)
+        this.update()
+      } else {
+        this.deferred = true
+        setTimeout(queue_init_eCharts.bind(this), showing ? 0 : 2000)
       }
     }
 
