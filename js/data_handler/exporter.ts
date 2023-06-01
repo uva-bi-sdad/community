@@ -4,14 +4,25 @@ import {passes_filter, passes_feature_filter} from './filter_check'
 import {patterns} from './patterns'
 import * as row_writers from './row_writers'
 import type {Query, Entity, Features, Entities, RawQuery} from '../types'
+import {DataHandler} from './index'
 
-export async function exporter(query_string?: RawQuery, entities?: Entities, in_browser?: boolean, all_data?: boolean) {
+export async function exporter(
+  this: DataHandler,
+  query_string?: RawQuery,
+  entities?: Entities,
+  in_browser?: boolean,
+  all_data?: boolean
+) {
   if (!in_browser) await this.data_ready
   const query: Query = this.parse_query(query_string)
   entities = entities || this.entities
   if (-1 === params.options.file_format.indexOf(query.file_format)) query.file_format = params.defaults.file_format
   if (!(query.table_format in row_writers)) query.table_format = params.defaults.table_format
-  const res = {statusCode: 400, headers: {'Content-Type': 'text/plain; charset=utf-8'}, body: 'Invalid Request'},
+  const res = {
+      statusCode: 400,
+      headers: {'Content-Type': 'text/plain; charset=utf-8', 'Content-Disposition': 'attachment; filename='},
+      body: 'Invalid Request',
+    },
     inc: string[] =
       query.include && query.include.length
         ? 'string' === typeof query.include
@@ -37,7 +48,7 @@ export async function exporter(query_string?: RawQuery, entities?: Entities, in_
   })
   for (const k in export_checks)
     if (k in query) {
-      const r: string = export_checks[k]('include' === k ? inc : query[k], this.variables)
+      const r: string = export_checks[k]('include' === k ? inc : query[k as keyof Query], this.variables)
       if (r) {
         res.body = 'Failed check for ' + k + ': ' + r
         return res
@@ -113,7 +124,7 @@ export async function exporter(query_string?: RawQuery, entities?: Entities, in_
     }, 0)
   } else {
     res.statusCode = 200
-    res.headers['Content-Disposition'] = 'attachment; filename=' + filename + '.' + query.file_format
+    res.headers['Content-Disposition'] += filename + '.' + query.file_format
     return res
   }
 }

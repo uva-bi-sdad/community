@@ -1,18 +1,18 @@
-import type {Data, Entities, IdMap} from '../types'
+import {DataHandler} from '.'
+import type {Data, EntityFeatureSet, EntityFeatures, IdMap} from '../types'
 
-export function data(d: Data, name: string) {
+export function data(this: DataHandler, d: Data, name: string) {
   this.sets[name] = d
   this.loaded[name] = true
   if (!(name in this.info)) this.info[name] = {schema: {fields: []}, ids: []}
   if ('_meta' in d) {
     this.meta.times[name] = d._meta.time
-    if ('object' !== typeof this.meta.times[name].value) this.meta.times[name].value = [this.meta.times[name].value]
-    this.meta.times[name].n = this.meta.times[name].value.length
+    if ('number' === typeof this.meta.times[name].value)
+      this.meta.times[name].value = [this.meta.times[name].value as number]
+    const times = this.meta.times[name].value as number[]
+    this.meta.times[name].n = times.length
     this.meta.times[name].is_single = 1 === this.meta.times[name].n
-    this.meta.times[name].range = [
-      this.meta.times[name].value[0],
-      this.meta.times[name].value[this.meta.times[name].n - 1],
-    ]
+    this.meta.times[name].range = [times[0], times[this.meta.times[name].n - 1]]
     if (d._meta.time.name in this.variables) {
       this.meta.times[name].info = this.variables[this.meta.times[name].name]
       this.meta.times[name].info.is_time = true
@@ -21,7 +21,7 @@ export function data(d: Data, name: string) {
       this.meta.overall.range[0] = this.meta.times[name].range[0]
     if (this.meta.times[name].range[1] > this.meta.overall.range[1])
       this.meta.overall.range[1] = this.meta.times[name].range[1]
-    this.meta.times[name].value.forEach((v: number) => {
+    times.forEach((v: number) => {
       if (-1 === this.meta.overall.value.indexOf(v)) this.meta.overall.value.push(v)
     })
     this.meta.overall.value.sort()
@@ -33,6 +33,8 @@ export function data(d: Data, name: string) {
           info: {},
           time_range: {},
           type: 'unknown',
+          code: k,
+          views: {},
           meta: {
             full_name: k,
             measure: k.split(':')[1] || k,
@@ -61,7 +63,7 @@ export function data(d: Data, name: string) {
   this.load_id_maps()
 }
 
-export async function id_maps() {
+export async function id_maps(this: DataHandler) {
   this.metadata.datasets.forEach((k: string) => {
     let has_map = false
     this.info[k].ids.forEach((id: IdMap, i: number) => {
@@ -70,27 +72,32 @@ export async function id_maps() {
         const map = id.map
         if (map in this.data_maps) {
           if (this.data_maps[map].retrieved) {
-            this.info[k].schema.fields[i].ids = this.data_maps[k] =
+            const features = (
               k in this.data_maps[map].resource ? this.data_maps[map].resource[k] : this.data_maps[map].resource
+            ) as EntityFeatures
+            this.info[k].schema.fields[i].ids = this.entity_features[k] = features
             this.map_entities(k)
           } else {
-            if (-1 === this.data_maps[map].queue.indexOf(k)) this.data_maps[map].queue.push(k)
+            const queue = this.data_maps[map].queue as string[]
+            if (-1 === queue.indexOf(k)) queue.push(k)
           }
         } else if ('string' !== typeof map || id.map_content) {
-          if (id.map_content) {
+          if ('string' === typeof map) {
             this.data_maps[map] = {queue: [], resource: JSON.parse(id.map_content), retrieved: true}
-            this.info[k].schema.fields[i].ids = this.data_maps[k] =
+            const features = (
               k in this.data_maps[map].resource ? this.data_maps[map].resource[k] : this.data_maps[map].resource
+            ) as EntityFeatures
+            this.info[k].schema.fields[i].ids = this.entity_features[k] = features
           } else {
-            this.data_maps[k] = map
+            this.entity_features[k] = map
           }
           this.map_entities(k)
         } else {
           this.data_maps[map] = {queue: [k], resource: {}, retrieved: false}
           if (this.settings.entity_info && map in this.settings.entity_info) {
             const e = this.settings.entity_info
-            if ('string' === typeof e[map]) e[map] = JSON.parse(e[map])
-            this.ingest_map(e[map], map, i)
+            if ('string' === typeof e[map]) e[map] = JSON.parse(e[map] as string)
+            this.ingest_map(e[map] as EntityFeatures, map, i)
           } else if ('undefined' === typeof window) {
             require('https')
               .get(map, (r: {req: {protocol: string; host: string; path: string}; on: Function}) => {
@@ -105,7 +112,7 @@ export async function id_maps() {
               .end()
           } else {
             const f = new window.XMLHttpRequest()
-            f.onreadystatechange = function (url: string, fi: number) {
+            f.onreadystatechange = function (this: DataHandler, url: string, fi: number) {
               if (4 === f.readyState) {
                 if (200 === f.status) {
                   this.ingest_map(JSON.parse(f.responseText), url, fi)
@@ -121,19 +128,22 @@ export async function id_maps() {
       }
     })
     if (!has_map) {
-      this.data_maps[k] = {}
+      this.entity_features[k] = {}
       this.map_entities(k)
     }
   })
 }
 
-export function map(m: Entities, url: string, field: string) {
+export function map(this: DataHandler, m: EntityFeatures | EntityFeatureSet, url: string, field: number) {
   this.data_maps[url].resource = m
   this.data_maps[url].retrieved = true
   this.data_maps[url].queue.forEach((k: string) => {
     if (this.info[k].schema.fields.length > field) {
-      this.info[k].schema.fields[field].ids = this.data_maps[k] =
+      if (!(k in this.entity_features)) this.entity_features[k] = {}
+      const features = (
         k in this.data_maps[url].resource ? this.data_maps[url].resource[k] : this.data_maps[url].resource
+      ) as EntityFeatures
+      this.info[k].schema.fields[field].ids = this.entity_features[k] = features
       this.map_entities(k)
     }
   })

@@ -81,7 +81,7 @@ Then you can start webpack in development mode, which will watch the source file
 final bundles whenever they are changed:
 
 ```bash
-npm run start
+npm start
 ```
 
 The rebuilt scripts can be worked with in a running site by adding `version = "local"` to the

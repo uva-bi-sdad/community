@@ -1,13 +1,14 @@
 import {patterns} from './patterns'
-import {Filter, Query, RawQuery, UnparsedObject} from '../types'
+import {Filter, Query, UnparsedObject} from '../types'
 import * as params from './export_params'
 import {group_checks} from './checks'
+import {DataHandler} from '.'
 
-export function query(q: RawQuery): Query {
+export function query(this: DataHandler, q: any): Query {
   const f: UnparsedObject = JSON.parse(JSON.stringify(params.defaults))
   if ('string' === typeof q) {
     if ('?' === q[0]) q = q.substring(1)
-    const aq = q.split('&')
+    const aq: string[] = q.split('&')
     q = {}
     aq.forEach(aqi => {
       const a = aqi.split('=')
@@ -56,7 +57,7 @@ export function query(q: RawQuery): Query {
             }
           }
         }
-        if (patterns.operator_start.test(k) && k[k.length - 1] in this.checks) {
+        if (patterns.operator_start.test(k) && k[k.length - 1] in DataHandler.checks) {
           tf.operator = k[k.length - 1]
           if (!a.length) tf.operator += '='
           if (k === tf.name) tf.name = k.substring(0, k.length - 1)
@@ -71,7 +72,7 @@ export function query(q: RawQuery): Query {
           tf.operator = '=' === tf.operator ? 'includes' : 'excludes'
         }
         if ('time_range' === tf.name) {
-          if (tf.value) {
+          if (Array.isArray(tf.value)) {
             f.time_range = [
               this.meta.overall.value.indexOf(Number(tf.value[0])),
               this.meta.overall.value.indexOf(Number(tf.value[1])),
@@ -93,19 +94,19 @@ export function query(q: RawQuery): Query {
         } else if (tf.name in this.variables) {
           tf.check = (
             tf.time_component
-              ? function (d: number | number[], adj: number) {
+              ? function (this: {check: Function; condition: Filter}, d: number | number[], adj: number) {
                   const multi = 'number' !== typeof d,
-                    i = this.condition.component - adj
+                    i = 'number' === typeof this.condition.component ? this.condition.component - adj : 0
                   return multi
                     ? this.check(d[i], this.condition.value)
                     : !i
                     ? this.check(d, this.condition.value)
                     : false
                 }
-              : function (s: {[index: string]: string}) {
+              : function (this: {check: Function; condition: Filter}, s: {[index: string]: string}) {
                   return this.check(s[this.condition.component], this.condition.value)
                 }
-          ).bind({check: this.checks[tf.operator], condition: tf})
+          ).bind({check: DataHandler.checks[tf.operator], condition: tf})
           if (-1 === f.variables.filter_by.indexOf(tf.name)) f.variables.filter_by.push(tf.name)
           f.variables.conditions.push(tf)
         }

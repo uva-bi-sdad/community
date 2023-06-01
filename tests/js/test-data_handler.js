@@ -1,4 +1,4 @@
-var assert = require('assert'),
+const assert = require('assert'),
   DataHandler = require('../../dev/data_handler.js'),
   data = new DataHandler({metadata: {datasets: ['a', 'b']}}, void 0, {
     a: {

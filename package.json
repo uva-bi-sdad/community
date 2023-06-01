@@ -27,15 +27,15 @@
   "homepage": "https://uva-bi-sdad.github.io/community",
   "devDependencies": {
     "csso": "latest",
+    "jsdom": "latest",
+    "mocha": "latest",
+    "nyc": "latest",
     "source-map-loader": "latest",
     "ts-loader": "latest",
     "ts-prune": "latest",
     "typescript": "latest",
     "webpack": "latest",
     "webpack-cli": "latest",
-    "webpack-dev-server": "latest",
-    "jsdom": "latest",
-    "mocha": "latest",
-    "nyc": "latest"
+    "webpack-dev-server": "latest"
   }
 }

@@ -2,7 +2,7 @@ export type UnparsedObject = {[index: string]: any}
 
 export type Filter = {
   name: string
-  component: string
+  component: string | number
   operator: string
   value: string | string[]
   time_component: boolean
@@ -73,14 +73,16 @@ export type Variable = {
   code: string
   name?: string
   datasets?: string[]
-  time_range: number[]
+  time_range: {[index: string]: [number, number, number?]}
   type?: string
-  info?: MeasureInfo | UnparsedObject
+  info?: {[index: string]: ResourceField}
   levels?: string[]
   level_ids?: {[index: string]: number}
   table?: {[index: string]: string}
   meta?: MeasureInfo | UnparsedObject
   order?: Order[]
+  is_time?: boolean
+  views: {[index: string]: VariableView}
 }
 
 export type Variables = {
@@ -93,16 +95,20 @@ export type LogicalObject = {[index: string]: number | boolean}
 
 type Time = {
   name: string
-  value: number[]
+  value: number | number[]
   range?: number[]
   n?: number
   is_single?: boolean
-  info?: Object
+  info?: Variable
+}
+
+type VariableMeta = {
+  [index: string]: {code: string; time_range: [number, number]}
 }
 
 export type MetaTime = {
   times: {[index: string]: Time}
-  variables: Variables
+  variables: {[index: string]: VariableMeta}
   ranges: {[index: string]: [number, number]}
   overall: {
     range: [number, number]
@@ -115,7 +121,13 @@ export type Relations = {
   children: {[index: string]: Relations}
 }
 
-export type EntityData = {[index: string]: number | number[]} | {time: Time}
+export type EntityData = {[index: string]: number | number[]}
+
+type EntityView = {
+  summary: EntitySummaries
+  rank: {[index: string]: Uint8Array | Uint16Array | Uint32Array}
+  subset_rank: {[index: string]: Uint8Array | Uint16Array | Uint32Array}
+}
 
 export type Entity = {
   group: string
@@ -126,6 +138,7 @@ export type Entity = {
   relations: Relations
   time: Time
   variables: Variables
+  views: {[index: string]: EntityView}
 }
 
 export type Entities = {[index: string]: Entity}
@@ -135,7 +148,7 @@ export type VariableFilter = {
   conditions: Filter[]
 }
 
-type EntityMeta = {time: Time; variables: Variables}
+type EntityMeta = {time: Time; variables: VariableMeta}
 
 export type Data = {
   [index: string]: EntityData | EntityMeta
@@ -159,7 +172,7 @@ export type DataPackage = {
   measure_info: MeasureInfos
 }
 
-type ResourceField = {
+export type ResourceField = {
   duplicates: number
   max: number
   mean: number
@@ -170,28 +183,32 @@ type ResourceField = {
   time_range: [number, number]
   type: string
   info: MeasureInfo
+  ids?: EntityFeatures
+  table?: {[index: string]: number}
+  order?: Order[]
 }
 
 export type DataResource = {
-  bytes: number
-  created: string
-  encoding: string
-  entity_count: number
-  filename: string
-  format: string
-  id_length: number
+  bytes?: number
+  created?: string
+  encoding?: string
+  entity_count?: number
+  filename?: string
+  format?: string
+  id_length?: number
   ids: IdMap[]
-  last_modified: string
-  md5: string
-  name: string
-  profile: string
-  row_count: number
+  last_modified?: string
+  md5?: string
+  name?: string
+  profile?: string
+  row_count?: number
   schema: {fields: ResourceField[]}
-  sha512: string
-  sources: string[]
-  time: string
-  site_file: string
-  _references: References
+  sha512?: string
+  sources?: string[]
+  time?: string
+  site_file?: string
+  _references?: References
+  id_vars?: string[]
 }
 
 export type Metadata = {
@@ -203,9 +220,20 @@ export type Metadata = {
   measure_info?: MeasureInfos
 }
 
+type DataviewSelection = {[index: string]: Entities}
+
+type DataView = {
+  state: string
+  get: {[index: string]: Function}
+  selection: DataviewSelection
+  n_selected: {[index: string]: number}
+}
+
 export type Settings = {
   settings?: {[index: string]: string}
+  dataviews?: {[index: string]: DataView}
   metadata?: Metadata
+  entity_info?: EntityFeatureSet | {[index: string]: string}
 }
 
 type Reference = {
@@ -228,21 +256,6 @@ export type Query = {
   exclude: string | string[]
 }
 
-export type DataView = {
-  state: string
-  get: {
-    dataset: Function
-  }
-  selection: {
-    all: Entities
-    ids: Entities
-    dataset: Entities
-  }
-  n_selected: {
-    dataset: number
-  }
-}
-
 export type Order = [string, number][]
 
 type Orders = {[index: string]: Order[]}
@@ -253,12 +266,6 @@ type EntitySummaries = {
     overall: Summary
     order: Order[]
   }
-}
-
-export type EntityView = {
-  summary: EntitySummaries
-  rank: {[index: string]: Uint8Array | Uint16Array | Uint32Array}
-  subset_rank: {[index: string]: Uint8Array | Uint16Array | Uint32Array}
 }
 
 export type VariableView = {
@@ -272,12 +279,13 @@ export type VariableView = {
 
 export type Promises = {[index: string]: Promise<void>}
 
+export type EntityFeatures = {[index: string]: Features}
+export type EntityFeatureSet = {[index: string]: {[index: string]: Features}}
+
 export type DataMaps = {
-  [index: string]:
-    | Entities
-    | {
-        queue: string[]
-        resources: {[index: string]: {[index: string]: string}}
-        retrieved: boolean
-      }
+  [index: string]: {
+    queue: string[]
+    resource: EntityFeatures | EntityFeatureSet
+    retrieved: boolean
+  }
 }

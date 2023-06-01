@@ -2,7 +2,9 @@
   "compilerOptions": {
     "outDir": "./dev",
     "allowJs": true,
-    "target": "es5"
+    "target": "ES5",
+    "noImplicitAny": true,
+    "noImplicitThis": true
   },
   "include": ["js/site/**/*", "./js/data_handler/**/*", "js/types.ts"]
 }

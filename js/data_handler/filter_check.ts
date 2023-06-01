@@ -41,8 +41,8 @@ export function passes_filter(
   filter: VariableFilter,
   variables: Variables
 ): boolean {
-  const s = {},
-    adjs = {}
+  const s: {[index: string]: VectorSummary} = {},
+    adjs: {[index: string]: number} = {}
   for (let i = filter.filter_by.length; i--; ) {
     const f = filter.filter_by[i]
     const c = variables[f].code

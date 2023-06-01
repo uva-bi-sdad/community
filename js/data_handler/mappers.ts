@@ -1,12 +1,13 @@
-import type {IdMap, UnparsedObject, Variable} from '../types'
+import {DataHandler} from '.'
+import type {Entity, EntityData, IdMap, ResourceField, UnparsedObject, Variable} from '../types'
 
-export function variables() {
+export function variables(this: DataHandler) {
   this.metadata.datasets.forEach((k: string) => {
     this.data_queue[k] = {}
     const m = this.info[k]
     if (m) {
       m.id_vars = m.ids.map((id: IdMap) => id.variable)
-      m.schema.fields.forEach((v: Variable) => {
+      m.schema.fields.forEach((v: ResourceField) => {
         const vn = v.name
         if (vn in this.variables) {
           const ve = this.variables[vn]
@@ -14,10 +15,10 @@ export function variables() {
           ve.info[k] = v
           if ('string' === v.type) {
             ve.levels = []
-            ve.levels_ids = {}
+            ve.level_ids = {}
             ;((v.info && v.info.levels) || Object.keys(v.table)).forEach(l => {
-              if (!(l in ve.levels_ids)) {
-                ve.levels_ids[l] = ve.levels.length
+              if (!(l in ve.level_ids)) {
+                ve.level_ids[l] = ve.levels.length
                 ve.levels.push(l)
               }
             })
@@ -26,7 +27,7 @@ export function variables() {
           const ve: Variable = (this.variables[vn] = {
             datasets: [k],
             info: {full_name: k, type: 'unknown'} as UnparsedObject,
-            time_range: [],
+            time_range: {},
             type: v.type,
             code: k,
             name: k,
@@ -35,6 +36,7 @@ export function variables() {
             level_ids: {},
             table: {},
             order: [],
+            views: {},
           })
           ve.info[k] = v
           if ('string' === v.type) {
@@ -63,21 +65,21 @@ export function variables() {
   })
 }
 
-export async function entities(g: string) {
+export async function entities(this: DataHandler, g: string): Promise<void> {
   if (g in this.sets && !this.inited[g] && g in this.meta.times) {
     const s = this.sets[g],
       time = this.meta.times[g],
-      retriever = this.retrievers[time.is_single ? 'single' : 'multi'],
+      retriever = DataHandler.retrievers[time.is_single ? 'single' : 'multi'],
       datasets = Object.keys(this.sets),
       infos = this.info
     Object.keys(s).forEach((id: string) => {
-      const si = s[id],
+      const si = s[id] as EntityData,
         l = id.length
       if ('_meta' !== id) {
-        const overwrite = this.data_maps[g][id]
+        const overwrite = this.entity_features[g][id]
         const f = overwrite || {id: id, name: id}
         f.id = id
-        const e =
+        const e = (
           id in this.entities
             ? this.entities[id]
             : {
@@ -85,12 +87,14 @@ export async function entities(g: string) {
                 data: si,
                 variables: this.variables,
                 features: f,
+                views: {},
               }
+        ) as Entity
         if (id in this.entities) {
           e.group = g
           e.data = si
           e.variables = this.variables
-          if (!('features' in e)) e.features = {}
+          if (!e.features) e.features = {}
         } else {
           this.entities[id] = e
         }
@@ -122,8 +126,8 @@ export async function entities(g: string) {
           })
         }
         ;(this.in_browser ? Object.keys(this.settings.dataviews) : ['default_view']).forEach((v: string) => {
-          if (!(v in e)) {
-            e[v] = {summary: {}, rank: {}, subset_rank: {}}
+          if (!(v in e.views)) {
+            e.views[v] = {summary: {}, rank: {}, subset_rank: {}}
           }
         })
         e.time = time

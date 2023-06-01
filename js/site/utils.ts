@@ -1,5 +1,6 @@
+import {MeasureInfo} from '../types'
 import {patterns} from './patterns'
-export function set_description(e: HTMLElement, info) {
+export function set_description(e: HTMLElement, info: MeasureInfo) {
   const description = info.long_description || info.description || info.short_description || ''
   let has_equation = patterns.has_equation.test(description)
   if (has_equation) {

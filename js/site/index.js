@@ -5,7 +5,6 @@ import {value_types} from './value_types'
 import {defaults} from './defaults'
 import {summary_levels} from './summary_levels'
 import {set_description} from './utils'
-import {value_checks} from './checks'
 const tooltip_icon_rule =
     'button.has-note::after,.button-wrapper.has-note button::before,.has-note legend::before,.has-note label::before,.wrapper.has-note > div > label::before{display:none}',
   conditionals = {
@@ -288,7 +287,7 @@ const tooltip_icon_rule =
             const v = {},
               tf = u.time_filters[f]
             if (!(tf.value in v)) v[tf.value] = valueOf(tf.value)
-            pass = value_checks[tf.type](time.value[i], v[tf.value])
+            pass = DataHandler.checks[tf.type](time.value[i], v[tf.value])
             if (!pass) break
           }
         }
@@ -830,7 +829,7 @@ const tooltip_icon_rule =
             o.text.forEach((k, i) => {
               if (Array.isArray(k)) {
                 k.forEach(ki => {
-                  if ('default' === ki.id || value_checks[ki.type](valueOf(ki.id), valueOf(ki.value))) k = ki.text
+                  if ('default' === ki.id || DataHandler.checks[ki.type](valueOf(ki.id), valueOf(ki.value))) k = ki.text
                 })
               }
               if (this.depends.has(k)) {
@@ -1474,14 +1473,14 @@ const tooltip_icon_rule =
               parsed.palette = valueOf(v.palette) || site.settings.palette
               if (!(parsed.palette in palettes)) parsed.palette = defaults.palette
               parsed.time = (y ? y.value() - site.data.meta.times[d].range[0] : 0) - varcol.time_range[d][0]
-              parsed.summary = varcol[this.view].summaries[d]
+              parsed.summary = varcol.views[this.view].summaries[d]
               const display_time = parsed.summary.n[parsed.time] ? parsed.time : 0,
-                summary = vary[this.view].summaries[d],
+                summary = vary.views[this.view].summaries[d],
                 missing = parsed.summary.missing[display_time],
                 n = parsed.summary.n[display_time],
                 subset = n !== v.n_selected.dataset,
                 rank = subset ? 'subset_rank' : 'rank',
-                order = subset ? varcol[this.view].order[d][display_time] : varcol.info[d].order[display_time],
+                order = subset ? varcol.views[this.view].order[d][display_time] : varcol.info[d].order[display_time],
                 traces = []
               let i = parsed.summary.missing[display_time],
                 k,
@@ -1509,7 +1508,9 @@ const tooltip_icon_rule =
                   k = order[i][0]
                   const e = s[k]
                   state += k
-                  traces.push(make_data_entry(this, e, e[this.view][rank][parsed.color][parsed.time] - missing, n))
+                  traces.push(
+                    make_data_entry(this, e, e.views[this.view][rank][parsed.color][parsed.time] - missing, n)
+                  )
                   if (lim && !--jump) break
                 }
               }
@@ -1519,7 +1520,9 @@ const tooltip_icon_rule =
                     k = order[i][0]
                     const e = s[k]
                     state += k
-                    traces.push(make_data_entry(this, e, e[this.view][rank][parsed.color][parsed.time] - missing, n))
+                    traces.push(
+                      make_data_entry(this, e, e.views[this.view][rank][parsed.color][parsed.time] - missing, n)
+                    )
                     if (!--lim) break
                   }
                 }
@@ -1763,7 +1766,7 @@ const tooltip_icon_rule =
                   const fa = Array.isArray(fs) ? fs : [fs]
                   site.map[this.id].triggers[l.variable].filter = fa
                   fa.forEach(f => {
-                    f.check = value_checks[f.operator]
+                    f.check = DataHandler.checks[f.operator]
                   })
                 }
               })
@@ -1842,7 +1845,7 @@ const tooltip_icon_rule =
               parsed.palette = valueOf(view.palette) || site.settings.palette
               if (!(parsed.palette in palettes)) parsed.palette = defaults.palette
               const varc = await site.data.get_variable(c, this.view),
-                summary = varc[this.view].summaries[d],
+                summary = varc.views[this.view].summaries[d],
                 time = (ys.parsed ? ys.value() - site.data.meta.times[d].range[0] : 0) - varc.time_range[d][0]
               parsed.summary = summary
               parsed.time = time
@@ -1909,7 +1912,7 @@ const tooltip_icon_rule =
                     const lsi = ls[id]
                     if (d === lsi.entity.group) {
                       const e = a[lsi.entity.features.id],
-                        es = e && e[this.view][subset]
+                        es = e && e.views[this.view][subset]
                       lsi.setStyle({
                         fillOpacity: 0.7,
                         color: 'var(--border)',
@@ -2156,7 +2159,7 @@ const tooltip_icon_rule =
         this.time = time_range ? this.time_agg - time_range[0] : 0
         if (this.options.show_summary) {
           this.var = this.v && (await site.data.get_variable(this.v, this.view))
-          this.summary = this.view in this.var && this.var[this.view].summaries[this.dataset]
+          this.summary = this.view in this.var.views && this.var.views[this.view].summaries[this.dataset]
         }
         if (!this.processed) {
           this.processed = true
@@ -2450,8 +2453,8 @@ const tooltip_icon_rule =
             for (let n = t[1] - t[0] + 1; n--; ) {
               o.header[n + 1] = {
                 title: o.variable_header ? c.title || site.data.format_label(k) : time.value[n + t[0]] + '',
-                data: site.data.retrievers.vector,
-                render: site.data.retrievers.row_time.bind({
+                data: DataHandler.retrievers.vector,
+                render: DataHandler.retrievers.row_time.bind({
                   i: n,
                   o: t[0],
                   format_value: site.data.format_value.bind(site.data),
@@ -2528,7 +2531,7 @@ const tooltip_icon_rule =
           })
           o.header.push({
             title: 'Value',
-            data: site.data.retrievers.vector,
+            data: DataHandler.retrievers.vector,
             render: function (d, type, row) {
               return d
                 ? 'number' === typeof d[row.time]
@@ -2585,8 +2588,9 @@ const tooltip_icon_rule =
                 if (this.options.single_variable) {
                   this.parsed.dataset = d
                   this.parsed.color = vn
-                  this.parsed.summary = this.view in variable ? variable[this.view].summaries[d] : false
-                  this.parsed.order = this.view in variable ? variable[this.view].order[d][this.parsed.time] : false
+                  this.parsed.summary = this.view in variable.views ? variable.views[this.view].summaries[d] : false
+                  this.parsed.order =
+                    this.view in variable.views ? variable.views[this.view].order[d][this.parsed.time] : false
                   if (this.header.length < 2 || d !== this.header[1].dataset || vn !== this.header[1].variable) {
                     this.table.destroy()
                     $(this.e).empty()
@@ -2600,8 +2604,8 @@ const tooltip_icon_rule =
                           title: this.variable_header
                             ? this.options.variables.title || site.data.format_label(vn)
                             : site.data.meta.times[d].value[n + this.parsed.time_range[0]] + '',
-                          data: site.data.retrievers.vector,
-                          render: site.data.retrievers.row_time.bind({
+                          data: DataHandler.retrievers.vector,
+                          render: DataHandler.retrievers.row_time.bind({
                             i: n,
                             o: this.parsed.time_range[0],
                             format_value: site.data.format_value.bind(site.data),
@@ -2624,7 +2628,7 @@ const tooltip_icon_rule =
                 if (this.options.wide) {
                   Object.keys(v.selection.all).forEach(k => {
                     if (vn) {
-                      if (vn in v.selection.all[k][this.view].summary) {
+                      if (vn in v.selection.all[k].views[this.view].summary) {
                         this.rows[k] = this.table.row.add({
                           dataset: d,
                           variable: vn,
@@ -2924,8 +2928,8 @@ const tooltip_icon_rule =
             this.parsed.time_range = variable.time_range[d]
             this.parsed.time =
               ('number' === typeof time ? time - site.data.meta.times[d].range[0] : 0) - this.parsed.time_range[0]
-            this.parsed.summary = variable[this.view].summaries[d]
-            this.parsed.order = variable[this.view].order[d][this.parsed.time]
+            this.parsed.summary = variable.views[this.view].summaries[d]
+            this.parsed.order = variable.views[this.view].order[d][this.parsed.time]
             this.createHeader(v)
             this.appendRows(v)
           }
@@ -3040,7 +3044,7 @@ const tooltip_icon_rule =
               range = summary ? (string ? summary.levels.length - min : summary.range[c.parsed.time]) : 1,
               n = summary.n[c.parsed.time],
               subset = n === view.n_selected.dataset ? 'rank' : 'subset_rank',
-              es = site.data.entities[e.features.id][this.view],
+              es = site.data.entities[e.features.id].views[this.view],
               value = e.get_value(c.parsed.color, c.parsed.time),
               p =
                 ((string ? value in summary.level_ids : 'number' === typeof value)
@@ -3091,14 +3095,14 @@ const tooltip_icon_rule =
         if (null !== time && view.valid && var_info && this.view in var_info) {
           const y =
               ('number' === typeof time ? time - site.data.meta.times[d].range[0] : 0) - var_info.time_range[d][0],
-            summary = var_info[this.view].summaries[d],
+            summary = var_info.views[this.view].summaries[d],
             ep = valueOf(this.palette).toLowerCase(),
             pn = ep in palettes ? ep : site.settings.palette in palettes ? site.settings.palette : defaults.palette,
             p = palettes[pn].colors,
             s = this.parts.scale,
             ticks = this.ticks
           this.parsed.summary = summary
-          this.parsed.order = var_info[this.view].order[d][y]
+          this.parsed.order = var_info.views[this.view].order[d][y]
           this.parsed.time = y
           this.parsed.color = variable
           if (summary && y < summary.n.length) {
@@ -3683,7 +3687,7 @@ function init_text(o, text) {
         } else {
           o.depends.set(c.id, c)
           c.check = function () {
-            return 'default' === this.id || value_checks[this.type](valueOf(this.id), valueOf(this.value))
+            return 'default' === this.id || DataHandler.checks[this.type](valueOf(this.id), valueOf(this.value))
           }.bind(c)
         }
       }
@@ -4038,8 +4042,8 @@ function update_plot_theme(u) {
 
 function make_data_entry(u, e, rank, total, name, color) {
   if (e.data && u.parsed.x in site.data.variables) {
-    const x = site.data.retrievers.vector({variable: u.parsed.x, entity: e}),
-      y = site.data.retrievers.vector({variable: u.parsed.y, entity: e}),
+    const x = DataHandler.retrievers.vector({variable: u.parsed.x, entity: e}),
+      y = DataHandler.retrievers.vector({variable: u.parsed.y, entity: e}),
       t = JSON.parse(u.traces[u.base_trace]),
       yr = site.data.variables[u.parsed.y].time_range[u.parsed.dataset],
       xr = site.data.variables[u.parsed.x].time_range[u.parsed.dataset],
@@ -4657,7 +4661,7 @@ window.onload = function () {
               p = true
               for (let c = this.states[i].condition.length; c--; ) {
                 const r = this.states[i].condition[c]
-                if (value_checks[r.type](valueOf(r.id), valueOf(r.value))) {
+                if (DataHandler.checks[r.type](valueOf(r.id), valueOf(r.value))) {
                   if (r.any) {
                     p = true
                     break
@@ -4735,9 +4739,9 @@ window.onload = function () {
         r.effects.lock = us
       }
       r.condition.forEach(c => {
-        if (c.type in value_checks) {
+        if (c.type in DataHandler.checks) {
           c.check = function () {
-            return value_checks[this.type](valueOf(this.id), valueOf(this.value))
+            return DataHandler.checks[this.type](valueOf(this.id), valueOf(this.value))
           }.bind(c)
           if (c.id in _u) {
             add_dependency(c.id, {type: 'rule', id: c.id, condition: c, rule: i})
@@ -4808,7 +4812,7 @@ window.onload = function () {
         Object.keys(_c).forEach(request_queue)
       },
     })
-    site.data.retrievers.vector = site.data.retrievers.vector.bind(site.data)
+    DataHandler.retrievers.vector = DataHandler.retrievers.vector.bind(site.data)
   }
 
   if (page.load_screen && site.data.inited) {
@@ -5895,7 +5899,7 @@ function compile_dataview(v) {
         for (k in this.parsed.feature_values) {
           if (k in this.parsed.feature_values) {
             v = this.parsed.feature_values[k]
-            pass = value_checks[v.operator](v.value, valueOf(e.features[k]))
+            pass = DataHandler.checks[v.operator](v.value, valueOf(e.features[k]))
             if (!pass) break
           }
         }
@@ -5909,7 +5913,7 @@ function compile_dataview(v) {
           const v = this.parsed.variable_values[i]
           if (v.active && !isNaN(v.value)) {
             const ev = e.get_value(v.name, v.comp_fun(v, this.parsed)),
-              ck = !isNaN(ev) && value_checks[v.operator](ev, v.value)
+              ck = !isNaN(ev) && DataHandler.checks[v.operator](ev, v.value)
             v.filter[ck ? 'passed' : 'failed']++
             if (pass && !ck) pass = false
           } else {

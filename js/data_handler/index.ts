@@ -1,4 +1,5 @@
 'use strict'
+import {value_checks} from './checks'
 import {exporter} from './exporter'
 import * as retrievers from './retrievers'
 import * as formatter from './formatters'
@@ -24,9 +25,10 @@ import type {
   DataResource,
   MeasureInfo,
   DataPackage,
+  EntityFeatureSet,
 } from '../types'
 
-module.exports = class DataHandler {
+export class DataHandler {
   constructor(
     settings?: Settings,
     defaults?: {[index: string]: string},
@@ -140,12 +142,13 @@ module.exports = class DataHandler {
   inited: LogicalObject = {}
   inited_summary: Promises = {}
   summary_ready: {[index: string]: Function} = {}
+  entity_features: EntityFeatureSet = {}
   data_maps: DataMaps = {}
   data_queue: {[index: string]: {[index: string]: Function}} = {}
   data_promise: {[index: string]: Function} = {}
   data_processed: Promises = {}
   load_requests: {[index: string]: string} = {}
-  retrieve = async function (name: string, url: string) {
+  retrieve = async function (this: DataHandler, name: string, url: string) {
     if (!this.load_requests[name]) {
       this.load_requests[name] = url
       const f = new window.XMLHttpRequest()
@@ -164,7 +167,6 @@ module.exports = class DataHandler {
   }
   format_value = formatter.value
   format_label = formatter.label
-  retrievers = retrievers
   ingest_data = ingester.data
   ingest_map = ingester.map
   load_id_maps = ingester.id_maps
@@ -174,8 +176,12 @@ module.exports = class DataHandler {
   map_entities = mapper.entities
   parse_query = parser.query
   export = exporter
-  get_variable = async function (variable: string, view: string): Promise<Variable> {
+  get_variable = async function (this: DataHandler, variable: string, view: string): Promise<Variable> {
     if (variable in this.variables) await this.calculate_summary(variable, view, true)
     return this.variables[variable]
   }
+  public static retrievers = retrievers
+  public static checks = value_checks
 }
+
+module.exports = DataHandler

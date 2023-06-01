@@ -1,4 +1,5 @@
-import type {Order, Data, DataView, Variable, Entities, EntityView, VariableView, EntityData, Summary} from '../types'
+import {DataHandler} from '.'
+import type {Order, Data, Variable, VariableView, EntityData, Summary, MeasureInfo} from '../types'
 
 function sort_a1(a: [string, number], b: [string, number]): number {
   return isNaN(a[1]) ? (isNaN(b[1]) ? 0 : -1) : isNaN(b[1]) ? 1 : a[1] - b[1]
@@ -36,41 +37,38 @@ function summary_template(): Summary {
   }
 }
 
-export function init(v: string, d: string) {
+export function init(this: DataHandler, v: string, d: string) {
   if (!this.inited_summary[d + v]) {
     ;(this.in_browser ? Object.keys(this.settings.dataviews) : ['default_view']).forEach((view: string) => {
       const vi: Variable = this.variables[v]
-      if (!(view in vi))
-        vi[view] = {
+      if (!(view in vi.views))
+        vi.views[view] = {
           order: {},
           selected_order: {},
           selected_summaries: {},
           summaries: {},
           state: {},
           table: {},
-        } as VariableView
+        }
       if (!(d in vi.time_range)) {
         vi.time_range[d] = [0, this.meta.times[d].n - 1]
       }
       const ny = (vi.time_range[d][2] = vi.time_range[d][1] - vi.time_range[d][0] + 1)
-      const m: VariableView = vi[view],
+      const m: VariableView = vi.views[view],
         c = vi.code
       if (d in this.sets) {
         const da: Data = this.sets[d]
         const n: number = this.info[d].entity_count
         const at = !n || n > 65535 ? Uint32Array : n > 255 ? Uint16Array : Uint8Array
-        if (!(d in vi.info)) vi.info[d] = {}
-        const info: Variable = vi.info[d]
+        const info = vi.info[d]
         const is_string = 'string' === info.type
         let o = info.order
         if (o) {
           Object.keys(da).forEach((k: string) => {
-            if (!(k in this.entities)) {
-              this.entities[k] = {}
-            }
-            if (!(view in this.entities[k])) this.entities[k][view] = {summary: {}, rank: {}, subset_rank: {}}
-            this.entities[k][view].rank[v] = new at(ny)
-            this.entities[k][view].subset_rank[v] = new at(ny)
+            if (!(k in this.entities)) return
+            if (!(view in this.entities[k])) this.entities[k].views[view] = {summary: {}, rank: {}, subset_rank: {}}
+            this.entities[k].views[view].rank[v] = new at(ny)
+            this.entities[k].views[view].subset_rank[v] = new at(ny)
           })
         } else {
           info.order = o = []
@@ -78,7 +76,7 @@ export function init(v: string, d: string) {
             o.push([])
           }
           Object.keys(da).forEach((k: string) => {
-            const dak: EntityData = da[k]
+            const dak = da[k] as EntityData
             if ('_meta' !== k && c in dak) {
               const ev: number | number[] = dak[c]
               if (Array.isArray(ev)) {
@@ -97,11 +95,10 @@ export function init(v: string, d: string) {
                   o[0].push([k, NaN])
                 } else o[0].push([k, ev])
               }
-              if (!(k in this.entities)) {
-                this.entities[k] = {}
-              }
-              if (!(view in this.entities[k])) this.entities[k][view] = {summary: {}, rank: {}, subset_rank: {}}
-              const eview: EntityView = this.entities[k][view]
+              if (!(k in this.entities)) return
+              if (!(view in this.entities[k].views))
+                this.entities[k].views[view] = {summary: {}, rank: {}, subset_rank: {}}
+              const eview = this.entities[k].views[view]
               if (!(v in eview.rank)) {
                 eview.rank[v] = new at(ny)
                 eview.subset_rank[v] = new at(ny)
@@ -115,7 +112,7 @@ export function init(v: string, d: string) {
             Object.freeze(ev)
           }
           ev.forEach((r, i) => {
-            this.entities[r[0]][view].rank[v][y] = i
+            this.entities[r[0]].views[view].rank[v][y] = i
           })
         })
       }
@@ -124,7 +121,7 @@ export function init(v: string, d: string) {
         m.selected_order[d] = []
         m.selected_summaries[d] = summary_template()
         const s = summary_template()
-        if ('string' === vi.info[d].type) {
+        if ('string' === vi.info[d as keyof MeasureInfo].type) {
           s.type = 'string'
           s.level_ids = vi.level_ids
           s.levels = vi.levels
@@ -189,8 +186,8 @@ function quantile(p: number, n: number, o: number, x: Order): number {
   return x[i][1] * ap + x[b][1] * bp
 }
 
-export async function calculate(measure: string, view: string, full: boolean): Promise<void> {
-  const v: DataView = this.settings.dataviews[view]
+export async function calculate(this: DataHandler, measure: string, view: string, full: boolean): Promise<void> {
+  const v = this.settings.dataviews[view]
   const dataset: string = v.get.dataset()
   await this.data_processed[dataset]
   const summaryId = dataset + measure
@@ -198,20 +195,20 @@ export async function calculate(measure: string, view: string, full: boolean): P
   this.inited_summary[summaryId] = new Promise(resolve => {
     this.summary_ready[summaryId] = resolve
   })
-  const variable: Variable = this.variables[measure],
-    m: VariableView = variable[view]
+  const variable = this.variables[measure],
+    m = variable.views[view]
   if (m.state[dataset] !== v.state) {
-    const s: Entities = v.selection[this.settings.settings.summary_selection],
-      a: Entities = v.selection.all,
-      mo: Order[] = m.order[dataset],
-      mso: Order[] = m.selected_order[dataset],
+    const s = v.selection[this.settings.settings.summary_selection],
+      a = v.selection.all,
+      mo = m.order[dataset],
+      mso = m.selected_order[dataset],
       ny = variable.time_range[dataset][2],
-      order: Order[] = variable.info[dataset].order,
+      order = variable.info[dataset].order,
       levels = variable.levels,
       level_ids = variable.level_ids,
       subset = v.n_selected[this.settings.settings.summary_selection] !== v.n_selected.dataset,
-      mss: Summary = m.selected_summaries[dataset],
-      ms: Summary = m.summaries[dataset],
+      mss = m.selected_summaries[dataset],
+      ms = m.summaries[dataset],
       is_string = 'string' === variable.type
     for (let y = ny; y--; ) {
       mo[y] = subset ? [] : order[y]
@@ -222,7 +219,7 @@ export async function calculate(measure: string, view: string, full: boolean): P
       ms.n[y] = 0
       if (is_string) {
         ms.mode[y] = ''
-        levels.forEach((k: string) => (m.table[k][y] = 0))
+        levels.forEach(k => (m.table[k][y] = 0))
       } else {
         ms.sum[y] = 0
         ms.mean[y] = 0
@@ -232,15 +229,15 @@ export async function calculate(measure: string, view: string, full: boolean): P
         ms.break_median[y] = -1
       }
     }
-    order.forEach((o: Order, y: number) => {
+    order.forEach((o, y) => {
       const moy = mo[y],
         msoy = mso[y]
       let rank = 0
-      o.forEach((oi: [string, number]) => {
+      o.forEach(oi => {
         const k = oi[0],
           value = oi[1]
         if (k in s) {
-          const en: EntityView = s[k][view],
+          const en = s[k].views[view],
             present = !isNaN(value)
           if (!y) {
             if (!(measure in en.summary)) en.summary[measure] = {n: 0, overall: ms, order: mo}
@@ -271,7 +268,7 @@ export async function calculate(measure: string, view: string, full: boolean): P
       })
     })
     if (full) {
-      mo.forEach((o: Order, y: number) => {
+      mo.forEach((o, y) => {
         if (is_string) {
           if (ms.n[y]) {
             let l = 0
@@ -342,7 +339,7 @@ export async function calculate(measure: string, view: string, full: boolean): P
         if (ms.n[y]) {
           if (is_string) {
             let q1 = 0
-            Object.keys(m.table).forEach((k: string) => {
+            Object.keys(m.table).forEach(k => {
               if (m.table[k][y] > m.table[levels[q1]][y]) q1 = level_ids[k]
             })
             ms.mode[y] = levels[q1]

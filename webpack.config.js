@@ -21,10 +21,14 @@ module.exports = [
   },
   {
     mode: 'development',
-    target: 'node',
+    target: 'web',
     entry: './js/data_handler/index.ts',
     output: {
-      library: 'DataHandler',
+      library: {
+        name: 'DataHandler',
+        type: 'umd',
+      },
+      globalObject: 'this',
       filename: '../dev/data_handler.js',
     },
     devtool: 'source-map',
