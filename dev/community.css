@@ -1,6 +1,9 @@
 :root {
   --dark-filter: invert(1) grayscale(100%) brightness(200%);
   --switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%28255, 255, 255, 0.25%29'/%3e%3c/svg%3e");
+  --bs-body-bg: var(--background);
+  --bs-table-color: var(--body-text);
+  --bs-table-color-state: var(--body-text);
 }
 .dark-theme {
   --background: #212121;
@@ -62,6 +65,7 @@ table.dataTable tbody tr,
 .leaflet-tooltip,
 .card,
 .table,
+.table > :not(caption) > * > *,
 .accordion-button,
 .accordion-button:not(.collapsed) {
   background-color: var(--background);
@@ -566,6 +570,19 @@ button.dropdown-toggle {
   opacity: 1;
   max-width: 500px;
   min-width: 80px;
+}
+/* .form-floating > .form-control-plaintext ~ label::after,
+.form-floating > .form-control:focus ~ label::after,
+.form-floating > .form-control:not(:placeholder-shown) ~ label::after,
+.form-floating > .form-select ~ label::after {
+  background-color: transparent;
+} */
+.form-floating > .form-control-plaintext ~ label,
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label,
+.form-floating > .form-select ~ label {
+  opacity: 0.65;
+  color: var(--body-text);
 }
 .tooltip p {
   margin: 0;

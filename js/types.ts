@@ -71,11 +71,11 @@ export type MeasureInfos = {
 
 export type Variable = {
   code: string
-  name?: string
+  name: string
   datasets?: string[]
   time_range: {[index: string]: [number, number, number?]}
   type?: string
-  info?: {[index: string]: ResourceField}
+  info: {[index: string]: ResourceField}
   levels?: string[]
   level_ids?: {[index: string]: number}
   table?: {[index: string]: string}
@@ -199,14 +199,14 @@ export type DataResource = {
   ids: IdMap[]
   last_modified?: string
   md5?: string
-  name?: string
+  name: string
   profile?: string
   row_count?: number
   schema: {fields: ResourceField[]}
   sha512?: string
   sources?: string[]
   time?: string
-  site_file?: string
+  site_file: string
   _references?: References
   id_vars?: string[]
 }
@@ -215,7 +215,7 @@ export type Metadata = {
   package?: string
   url?: string
   files?: string[]
-  datasets?: string[]
+  datasets: string[]
   info?: MeasureInfos
   measure_info?: MeasureInfos
 }

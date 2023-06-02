@@ -1,4 +1,3 @@
-import {DataHandler} from '.'
 import {Entity} from '../types'
 
 export function single(this: Entity, v: string, t: number) {
@@ -19,15 +18,6 @@ export function multi(this: Entity, v: string, t: number) {
     v = this.variables[v].code
     const value = this.data[v]
     return v in this.data ? (Array.isArray(value) ? (t < value.length ? value[t] : NaN) : 0 === t ? value : NaN) : NaN
-  }
-}
-
-export function vector(this: DataHandler, r: {variable: string; entity: Entity}) {
-  if (this.variables[r.variable].is_time) {
-    return r.entity.time.value
-  } else {
-    const v = this.variables[r.variable].code
-    return v in r.entity.data ? ('object' === typeof r.entity.data[v] ? r.entity.data[v] : [r.entity.data[v]]) : [NaN]
   }
 }
 

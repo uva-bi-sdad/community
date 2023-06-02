@@ -9,9 +9,9 @@
     "test": "tests/js"
   },
   "scripts": {
-    "start": "webpack --watch --config webpack.config.js",
-    "build": "webpack --config webpack.prod.js & node js/style.js",
-    "build-v1": "webpack --config webpack.prod-v1.js & node js/style-v1.js",
+    "start": "rollup --config --watch --bundleConfigAsCjs",
+    "build": "rollup --config --bundleConfigAsCjs",
+    "build-v1": "rollup --config --environment community_dist_version:v1 --bundleConfigAsCjs",
     "test": "nyc --reporter=html --report-dir=./docs/coverage mocha tests/js",
     "find-deadcode": "ts-prune"
   },
@@ -26,16 +26,17 @@
   },
   "homepage": "https://uva-bi-sdad.github.io/community",
   "devDependencies": {
+    "@rollup/plugin-terser": "latest",
+    "@rollup/plugin-typescript": "latest",
     "csso": "latest",
     "jsdom": "latest",
     "mocha": "latest",
     "nyc": "latest",
-    "source-map-loader": "latest",
+    "rollup": "latest",
+    "rollup-plugin-serve": "latest",
     "ts-loader": "latest",
     "ts-prune": "latest",
-    "typescript": "latest",
-    "webpack": "latest",
-    "webpack-cli": "latest",
-    "webpack-dev-server": "latest"
+    "tslib": "latest",
+    "typescript": "latest"
   }
 }

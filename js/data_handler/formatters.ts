@@ -1,4 +1,4 @@
-import {DataHandler} from '.'
+import DataHandler from '.'
 import {Settings} from '../types'
 import {patterns} from './patterns'
 

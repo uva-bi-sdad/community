@@ -65,7 +65,7 @@ See the [Build a Data Site](https://uva-bi-sdad.github.io/community/articles/qui
 
 ## JavaScript Development
 
-This project uses webpack to assemble the development JavaScript files into the scripts that run
+This project uses Rollup to assemble the development JavaScript files into the scripts that run
 data sites (in a web browser and/or in a Node environment as part of an API).
 
 [Visual Studio Code](https://code.visualstudio.com) is recommended for automatic code styling.
@@ -77,30 +77,19 @@ then install the development dependencies:
 npm install
 ```
 
-Then you can start webpack in development mode, which will watch the source files and rebuild the
-final bundles whenever they are changed:
+Then you can start Rollup in development mode, which will watch the source files to rebuild the
+development scripts whenever they are changed, and serve them on `http://localhost:8000`:
 
 ```bash
 npm start
 ```
 
-The rebuilt scripts can be worked with in a running site by adding `version = "local"` to the
-`site_build` command for that site. This depends on a symlink being present between the `community`
-directory and a `docs/dist` directory in the site's directory. That is, with `version = "local"`,
-the site will load assets from `/dist/dev/` (e.g., the core site script would be at
-`http://localhost:3000/dist/dev/community.js` by default with `serve = TRUE`).
+The development scripts can be worked with in a running site by starting a development server, and adding
+`version = "local"` to the `site_build` command for that site.
 
 ### Testing
 
-To run the JavaScript tests, first make a test site from R:
-
-```R
-init_site("test_site", dir = "../test_site")
-source("../test_site/build.R")
-site_build("../test_site")
-```
-
-Then run the tests, which will also rebuild the html report in the created `docs/coverage` directory:
+Run the JavaScript tests to rebuild the coverage report in `docs/coverage`:
 
 ```bash
 npm test
@@ -114,4 +103,4 @@ This will rebuild the distributed, minified JavaScript and CSS files that are us
 npm run build
 ```
 
-That updates the "dev" versions of the distribution scripts, where `build-v1` will update the "v1" scripts.
+That updates the "dev" versions of the distribution assets, where `build-v1` will update the "v1" assets.

@@ -2,7 +2,7 @@ import {patterns} from './patterns'
 import {Filter, Query, UnparsedObject} from '../types'
 import * as params from './export_params'
 import {group_checks} from './checks'
-import {DataHandler} from '.'
+import DataHandler from '.'
 
 export function query(this: DataHandler, q: any): Query {
   const f: UnparsedObject = JSON.parse(JSON.stringify(params.defaults))

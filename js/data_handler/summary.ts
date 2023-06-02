@@ -1,4 +1,4 @@
-import {DataHandler} from '.'
+import DataHandler from '.'
 import type {Order, Data, Variable, VariableView, EntityData, Summary, MeasureInfo} from '../types'
 
 function sort_a1(a: [string, number], b: [string, number]): number {

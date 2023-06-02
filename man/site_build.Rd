@@ -57,9 +57,8 @@ processed version.}
 
 \item{version}{Version of the base script and stylesheet: \code{"v1"} (default) for the version 1 stable release,
 \code{"dev"} for the current unstable release, or \code{"local"} for a copy of the development files
-(\code{community.js} and \code{community.css}) served from a local \code{dist} directory. Can also
-be a URL (starting with \code{http}) where files can be found (\code{{version}/community.js} and
-\code{{version}/community.css}).}
+(\code{community.js} and \code{community.css}) served from \code{http://localhost:8000}. Can also
+be a URL where files can be found (\code{{version}/community.js} and \code{{version}/community.css}).}
 
 \item{parent}{Directory path or repository URL of a data site from which to use data, rather than using local data.}
 

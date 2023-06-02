@@ -26,9 +26,10 @@ import type {
   MeasureInfo,
   DataPackage,
   EntityFeatureSet,
+  Entity,
 } from '../types'
 
-export class DataHandler {
+export default class DataHandler {
   constructor(
     settings?: Settings,
     defaults?: {[index: string]: string},
@@ -38,8 +39,9 @@ export class DataHandler {
     if (hooks) this.hooks = hooks
     if (defaults) this.defaults = defaults
     if (settings) this.settings = settings
-    if (settings.metadata) this.metadata = settings.metadata
+    if (this.settings.metadata) this.metadata = this.settings.metadata
     if (data) this.sets = data
+    this.get_value = this.get_value.bind(this)
     this.in_browser = 'undefined' !== typeof Window
     if ('string' === typeof this.metadata.datasets) this.metadata.datasets = [this.metadata.datasets]
     const init = () => {
@@ -114,7 +116,7 @@ export class DataHandler {
   hooks: {[index: string]: Function} = {}
   defaults: {[index: string]: string} = {dataview: 'default_view', time: 'time'}
   settings: Settings = {}
-  metadata: Metadata = {}
+  metadata: Metadata = {datasets: []}
   info: {[index: string]: DataResource} = {}
   sets: DataSets = {}
   in_browser = false
@@ -180,8 +182,16 @@ export class DataHandler {
     if (variable in this.variables) await this.calculate_summary(variable, view, true)
     return this.variables[variable]
   }
+  get_value = function vector(this: DataHandler, r: {variable: string; entity: Entity}): number[] {
+    if (this.variables[r.variable].is_time) {
+      return r.entity.time.value as number[]
+    } else {
+      const v = this.variables[r.variable].code
+      return (
+        v in r.entity.data ? (Array.isArray(r.entity.data[v]) ? r.entity.data[v] : [r.entity.data[v]]) : [NaN]
+      ) as number[]
+    }
+  }
   public static retrievers = retrievers
   public static checks = value_checks
 }
-
-module.exports = DataHandler

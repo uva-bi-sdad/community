@@ -1,4 +1,4 @@
-import {DataHandler} from '.'
+import DataHandler from '.'
 import {Entity, Features} from '../types'
 
 export function tall(

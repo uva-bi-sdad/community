@@ -28,9 +28,8 @@
 #' processed version.
 #' @param version Version of the base script and stylesheet: \code{"v1"} (default) for the version 1 stable release,
 #' \code{"dev"} for the current unstable release, or \code{"local"} for a copy of the development files
-#' (\code{community.js} and \code{community.css}) served from a local \code{dist} directory. Can also
-#' be a URL (starting with \code{http}) where files can be found (\code{{version}/community.js} and
-#' \code{{version}/community.css}).
+#' (\code{community.js} and \code{community.css}) served from \code{http://localhost:8000}. Can also
+#' be a URL where files can be found (\code{{version}/community.js} and \code{{version}/community.css}).
 #' @param parent Directory path or repository URL of a data site from which to use data, rather than using local data.
 #' @param include_api Logical; if \code{TRUE}, will write the \code{docs/functions/api.js} file.
 #' @param endpoint URL of the served API.
@@ -366,23 +365,20 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.v1.min.css"),
         base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.v1.min.js")
       )
-    } else if (version == "local") {
+    } else if (version == "dev") {
       list(
-        base_style = list(type = "stylesheet", src = "dist/dev/community.css"),
-        base = list(type = "script", src = "dist/dev/community.js")
+        base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.min.css"),
+        base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js")
       )
     } else {
-      if (grepl("^http", version)) {
-        list(
-          base_style = list(type = "stylesheet", src = sub("//", "/", paste0(version, "/community.css"), fixed = TRUE)),
-          base = list(type = "script", src = sub("//", "/", paste0(version, "/community.js"), fixed = TRUE))
-        )
-      } else {
-        list(
-          base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.min.css"),
-          base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js")
-        )
-      }
+      if (version == "local") version = "http://localhost:8000"
+      if (verbose) cli_alert_info(
+        "loading resources from {.url {if (grepl('^http', version)) version else paste0('http://', host, ':', port, '/', version)}}"
+      )
+      list(
+        base_style = list(type = "stylesheet", src = paste0(version, "/community.css")),
+        base = list(type = "script", src = paste0(version, "/community.js"))
+      )
     },
     c(
       lapply(structure(names(cache_scripts), names = names(cache_scripts)), function(f) {
@@ -392,10 +388,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         script <- scripts[stable + 2]
         lf <- paste0(dir, "/", cached$location, "/", script)
         lff <- paste0("dist/dev/", sub(".min", "", script, fixed = TRUE))
-        if (version == "local") {
-          file.copy(paste0(dir, "/docs/", lff), lf)
-          if (file.exists(lf)) list(type = "script", src = lff)
-        } else {
+        if (stable || version == "dev") {
           lff <- paste0(dir, "/docs/dist/docs/dist/js/", script)
           if (file.exists(lff) && md5sum(lff)[[1]] == cached$md5) file.copy(lff, lf)
           unlink(paste0(dir, "/", cached$location, "/", scripts[scripts != script]))
@@ -404,6 +397,8 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
           }
           if (!file.exists(lf)) cli_abort("failed to download script from {cached$source}")
           list(type = "script", src = sub("^.*docs/", "", lf))
+        } else {
+          list(type = "script", src = paste0(version, "/data_handler.js"))
         }
       }),
       if (!is.null(tag_id)) {
@@ -414,13 +409,13 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         custom = list(type = "script", src = "script.js"),
         bootstrap_style = list(
           type = "stylesheet",
-          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css",
-          hash = "sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD"
+          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css",
+          hash = "sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"
         ),
         bootstrap = list(
           type = "script",
-          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js",
-          hash = "sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
+          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js",
+          hash = "sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
         )
       )
     )

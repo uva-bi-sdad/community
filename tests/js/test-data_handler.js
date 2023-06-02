@@ -74,8 +74,8 @@ describe('when exporting data...', async function () {
         '"id1b","id1b",2011,20\n' +
         '"id2b","id2b",2010,20\n' +
         '"id2b","id2b",2011,30',
-      res1 = await data.export({include: ['variable_name1']}),
-      res2 = await data.export({exclude: ['variable_name2']})
+      res1 = await data.export({include: 'variable_name1'}),
+      res2 = await data.export({exclude: 'variable_name2'})
     assert.strictEqual(res1.body, target)
     assert.strictEqual(res2.body, target)
   })

@@ -4,7 +4,7 @@ import {passes_filter, passes_feature_filter} from './filter_check'
 import {patterns} from './patterns'
 import * as row_writers from './row_writers'
 import type {Query, Entity, Features, Entities, RawQuery} from '../types'
-import {DataHandler} from './index'
+import DataHandler from '.'
 
 export async function exporter(
   this: DataHandler,
@@ -122,9 +122,8 @@ export async function exporter(
       URL.revokeObjectURL.bind(null, e.href)
       document.body.removeChild(e)
     }, 0)
-  } else {
-    res.statusCode = 200
-    res.headers['Content-Disposition'] += filename + '.' + query.file_format
-    return res
   }
+  res.statusCode = 200
+  res.headers['Content-Disposition'] += filename + '.' + query.file_format
+  return res
 }
