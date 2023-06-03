@@ -216,7 +216,7 @@ export type Metadata = {
   url?: string
   files?: string[]
   datasets: string[]
-  info?: MeasureInfos
+  info?: {[index: string]: DataResource}
   measure_info?: MeasureInfos
 }
 

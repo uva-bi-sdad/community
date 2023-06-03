@@ -8,10 +8,10 @@
 site_build(dir, file = "site.R", name = "index.html", variables = NULL,
   options = list(), bundle_data = FALSE, bundle_package = FALSE,
   bundle_libs = FALSE, libs_overwrite = FALSE, libs_base_only = FALSE,
-  open_after = FALSE, aggregate = TRUE, sparse_time = TRUE,
-  force = FALSE, version = "v1", parent = NULL, include_api = FALSE,
-  endpoint = NULL, tag_id = NULL, serve = FALSE, host = "127.0.0.1",
-  port = 3000, verbose = TRUE)
+  remote_data_handler = TRUE, open_after = FALSE, aggregate = TRUE,
+  sparse_time = TRUE, force = FALSE, version = "v1", parent = NULL,
+  include_api = FALSE, endpoint = NULL, tag_id = NULL, serve = FALSE,
+  host = "127.0.0.1", port = 3000, verbose = TRUE)
 
 site_start_server(dir, host = "127.0.0.1", port = 3000,
   open_after = TRUE)
@@ -43,6 +43,9 @@ This can allow you to run the site offline for all but Leaflet tiles and any rem
 \item{libs_overwrite}{Logical; if \code{TRUE}, will re-download existing dependencies.}
 
 \item{libs_base_only}{Logical; if \code{TRUE}, will only download the base community dependencies to be served locally.}
+
+\item{remote_data_handler}{Logical; if \code{FALSE}, will load the data handler script from the site's directory,
+(which is updated on rebuild) even when \code{version} is custom. Useful for locally testing an API.}
 
 \item{open_after}{Logical; if \code{TRUE}, will open the site in a browser after it is built.}
 

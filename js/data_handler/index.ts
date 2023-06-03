@@ -110,6 +110,7 @@ export default class DataHandler {
         f.send()
       }
     } else {
+      if (this.metadata.info) this.info = this.metadata.info
       init()
     }
   }

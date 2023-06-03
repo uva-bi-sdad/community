@@ -19,6 +19,8 @@
 #' \code{file} (such as map shapes) or metadata (such as map overlays).
 #' @param libs_overwrite Logical; if \code{TRUE}, will re-download existing dependencies.
 #' @param libs_base_only Logical; if \code{TRUE}, will only download the base community dependencies to be served locally.
+#' @param remote_data_handler Logical; if \code{FALSE}, will load the data handler script from the site's directory,
+#' (which is updated on rebuild) even when \code{version} is custom. Useful for locally testing an API.
 #' @param open_after Logical; if \code{TRUE}, will open the site in a browser after it is built.
 #' @param aggregate Logical; if \code{TRUE}, and there is a larger datasets with IDs that partially match
 #' IDs in a smaller dataset or that has a map to those IDs, and there are NAs in the smaller dataset, will
@@ -55,9 +57,9 @@
 
 site_build <- function(dir, file = "site.R", name = "index.html", variables = NULL,
                        options = list(), bundle_data = FALSE, bundle_package = FALSE, bundle_libs = FALSE, libs_overwrite = FALSE,
-                       libs_base_only = FALSE, open_after = FALSE, aggregate = TRUE, sparse_time = TRUE, force = FALSE, version = "v1",
-                       parent = NULL, include_api = FALSE, endpoint = NULL, tag_id = NULL, serve = FALSE, host = "127.0.0.1",
-                       port = 3000, verbose = TRUE) {
+                       libs_base_only = FALSE, remote_data_handler = TRUE, open_after = FALSE, aggregate = TRUE, sparse_time = TRUE,
+                       force = FALSE, version = "v1", parent = NULL, include_api = FALSE, endpoint = NULL, tag_id = NULL,
+                       serve = FALSE, host = "127.0.0.1", port = 3000, verbose = TRUE) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., dir = ".")')
   page <- paste0(dir, "/", file)
   if (!file.exists(page)) cli_abort("{.file {page}} does not exist")
@@ -371,10 +373,12 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js")
       )
     } else {
-      if (version == "local") version = "http://localhost:8000"
-      if (verbose) cli_alert_info(
-        "loading resources from {.url {if (grepl('^http', version)) version else paste0('http://', host, ':', port, '/', version)}}"
-      )
+      if (version == "local") version <- "http://localhost:8000"
+      if (verbose) {
+        cli_alert_info(
+          "loading resources from {.url {if (grepl('^http', version)) version else paste0('http://', host, ':', port, '/', version)}}"
+        )
+      }
       list(
         base_style = list(type = "stylesheet", src = paste0(version, "/community.css")),
         base = list(type = "script", src = paste0(version, "/community.js"))
@@ -390,7 +394,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         lff <- paste0("dist/dev/", sub(".min", "", script, fixed = TRUE))
         if (stable || version == "dev") {
           lff <- paste0(dir, "/docs/dist/docs/dist/js/", script)
-          if (file.exists(lff) && md5sum(lff)[[1]] == cached$md5) file.copy(lff, lf)
+          if (file.exists(lff) && md5sum(lff)[[1]] == cached$md5) file.copy(lff, lf, TRUE)
           unlink(paste0(dir, "/", cached$location, "/", scripts[scripts != script]))
           if (!file.exists(lf) || md5sum(lf)[[1]] != cached$md5) {
             tryCatch(download.file(cached$source, lf, quiet = TRUE), error = function(e) NULL)
@@ -398,7 +402,14 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
           if (!file.exists(lf)) cli_abort("failed to download script from {cached$source}")
           list(type = "script", src = sub("^.*docs/", "", lf))
         } else {
-          list(type = "script", src = paste0(version, "/data_handler.js"))
+          lff <- paste0(version, "/data_handler.js")
+          if (file.exists(lff)) {
+            file.copy(lff, lf, TRUE)
+          } else if (!file.exists(lf) || md5sum(lf)[[1]] != cached$md5) {
+            tryCatch(download.file(lff, lf, quiet = TRUE), error = function(e) NULL)
+          }
+          if (!file.exists(lf)) cli_abort("failed to retrieve script from {lff}")
+          list(type = "script", src = if (remote_data_handler) lff else sub("^.*docs/", "", lf))
         }
       }),
       if (!is.null(tag_id)) {

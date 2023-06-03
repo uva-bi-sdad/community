@@ -22,6 +22,48 @@
     <loc>https://uva-bi-sdad.github.io/community/coverage/checks.ts.html</loc>
   </url>
   <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/data_handler/checks.ts.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/data_handler/exporter.ts.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/data_handler/export_params.ts.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/data_handler/filter_check.ts.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/data_handler/formatters.ts.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/data_handler/index.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/data_handler/index.ts.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/data_handler/ingesters.ts.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/data_handler/mappers.ts.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/data_handler/parsers.ts.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/data_handler/patterns.ts.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/data_handler/retrievers.ts.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/data_handler/row_writers.ts.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/data_handler/summary.ts.html</loc>
+  </url>
+  <url>
     <loc>https://uva-bi-sdad.github.io/community/coverage/exporter.ts.html</loc>
   </url>
   <url>
@@ -59,6 +101,30 @@
   </url>
   <url>
     <loc>https://uva-bi-sdad.github.io/community/coverage/row_writers.ts.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/site/defaults.ts.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/site/index.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/site/index.js.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/site/palettes.ts.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/site/patterns.ts.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/site/summary_levels.ts.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/site/utils.ts.html</loc>
+  </url>
+  <url>
+    <loc>https://uva-bi-sdad.github.io/community/coverage/site/value_types.ts.html</loc>
   </url>
   <url>
     <loc>https://uva-bi-sdad.github.io/community/coverage/summary.ts.html</loc>

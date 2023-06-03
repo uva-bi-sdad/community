@@ -5454,7 +5454,9 @@ const community = function (window, document, site) {
             if (1 === e.which) {
               this.e.parentElement.removeChild(this.e)
               _u._base_filter.c.delete(this.index)
-              _u._base_filter.c.forEach((f, i) => (f.index = i))
+              _u._base_filter.c.forEach((f, i) => {
+                if (i > this.index) f.index -= 1
+              })
               request_queue('_base_filter')
             }
           }.bind(f)

@@ -59,10 +59,10 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">site_build</span><span class="op">(</span><span class="va">dir</span>, file <span class="op">=</span> <span class="st">"site.R"</span>, name <span class="op">=</span> <span class="st">"index.html"</span>, variables <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, bundle_data <span class="op">=</span> <span class="cn">FALSE</span>, bundle_package <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  bundle_libs <span class="op">=</span> <span class="cn">FALSE</span>, libs_overwrite <span class="op">=</span> <span class="cn">FALSE</span>, libs_base_only <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  open_after <span class="op">=</span> <span class="cn">FALSE</span>, aggregate <span class="op">=</span> <span class="cn">TRUE</span>, sparse_time <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  force <span class="op">=</span> <span class="cn">FALSE</span>, version <span class="op">=</span> <span class="st">"v1"</span>, parent <span class="op">=</span> <span class="cn">NULL</span>, include_api <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  endpoint <span class="op">=</span> <span class="cn">NULL</span>, tag_id <span class="op">=</span> <span class="cn">NULL</span>, serve <span class="op">=</span> <span class="cn">FALSE</span>, host <span class="op">=</span> <span class="st">"127.0.0.1"</span>,</span>
-<span>  port <span class="op">=</span> <span class="fl">3000</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>  remote_data_handler <span class="op">=</span> <span class="cn">TRUE</span>, open_after <span class="op">=</span> <span class="cn">FALSE</span>, aggregate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  sparse_time <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">FALSE</span>, version <span class="op">=</span> <span class="st">"v1"</span>, parent <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  include_api <span class="op">=</span> <span class="cn">FALSE</span>, endpoint <span class="op">=</span> <span class="cn">NULL</span>, tag_id <span class="op">=</span> <span class="cn">NULL</span>, serve <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  host <span class="op">=</span> <span class="st">"127.0.0.1"</span>, port <span class="op">=</span> <span class="fl">3000</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">site_start_server</span><span class="op">(</span><span class="va">dir</span>, host <span class="op">=</span> <span class="st">"127.0.0.1"</span>, port <span class="op">=</span> <span class="fl">3000</span>,</span>
 <span>  open_after <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
@@ -115,6 +115,11 @@ This can allow you to run the site offline for all but Leaflet tiles and any rem
 
 <dt>libs_base_only</dt>
 <dd><p>Logical; if <code>TRUE</code>, will only download the base community dependencies to be served locally.</p></dd>
+
+
+<dt>remote_data_handler</dt>
+<dd><p>Logical; if <code>FALSE</code>, will load the data handler script from the site's directory,
+(which is updated on rebuild) even when <code>version</code> is custom. Useful for locally testing an API.</p></dd>
 
 
 <dt>open_after</dt>

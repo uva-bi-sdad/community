@@ -10,8 +10,8 @@
   },
   "scripts": {
     "start": "rollup --config --watch --bundleConfigAsCjs",
-    "build": "rollup --config --bundleConfigAsCjs",
-    "build-v1": "rollup --config --environment community_dist_version:v1 --bundleConfigAsCjs",
+    "build": "rollup --config rollup.prod.js --bundleConfigAsCjs",
+    "build-v1": "rollup --config rollup.prod.js --environment community_dist_version:v1 --bundleConfigAsCjs",
     "test": "nyc --reporter=html --report-dir=./docs/coverage mocha tests/js",
     "find-deadcode": "ts-prune"
   },

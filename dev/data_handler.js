@@ -1569,6 +1569,8 @@
                 }
             }
             else {
+                if (this.metadata.info)
+                    this.info = this.metadata.info;
                 init$1();
             }
         }
