@@ -394,10 +394,14 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         lff <- paste0("dist/dev/", sub(".min", "", script, fixed = TRUE))
         if (stable || version == "dev") {
           lff <- paste0(dir, "/docs/dist/docs/dist/js/", script)
-          if (file.exists(lff) && md5sum(lff)[[1]] == cached$md5) file.copy(lff, lf, TRUE)
+          if (file.exists(lff) && md5sum(lff)[[1]] == cached$md5) {
+            file.copy(lff, lf, TRUE)
+            file.copy(paste0(lff, ".map"), paste0(lf, ".map"), TRUE)
+          }
           unlink(paste0(dir, "/", cached$location, "/", scripts[scripts != script]))
           if (!file.exists(lf) || md5sum(lf)[[1]] != cached$md5) {
             tryCatch(download.file(cached$source, lf, quiet = TRUE), error = function(e) NULL)
+            tryCatch(download.file(paste0(cached$source, ".map"), paste0(lf, ".map"), quiet = TRUE), error = function(e) NULL)
           }
           if (!file.exists(lf)) cli_abort("failed to download script from {cached$source}")
           list(type = "script", src = sub("^.*docs/", "", lf))
