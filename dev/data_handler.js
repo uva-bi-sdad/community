@@ -769,7 +769,7 @@
                         Object.keys(da_1).forEach(function (k) {
                             if (!(k in _this.entities))
                                 return;
-                            if (!(view in _this.entities[k]))
+                            if (!(view in _this.entities[k].views))
                                 _this.entities[k].views[view] = { summary: {}, rank: {}, subset_rank: {} };
                             _this.entities[k].views[view].rank[v] = new at_1(ny);
                             _this.entities[k].views[view].subset_rank[v] = new at_1(ny);
@@ -1176,6 +1176,8 @@
                             var overwrite_1 = _this.entity_features[g][id];
                             var f_1 = overwrite_1 || { id: id, name: id };
                             f_1.id = id;
+                            if (!f_1.name)
+                                f_1.name = id;
                             var e_1 = (id in _this.entities
                                 ? _this.entities[id]
                                 : {

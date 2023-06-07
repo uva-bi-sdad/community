@@ -116,7 +116,7 @@ data_measure_info <- function(path, ..., info = list(), references = list(), str
   built <- list()
   if (!overwrite && file.exists(path)) {
     if (verbose) cli_bullets(c(i = "updating existing file: {.path {basename(path)}}"))
-    built <- jsonify::from_json(path, simplify = FALSE)
+    built <- jsonlite::read_json(path)
     if (all(c("measure", "measure_type") %in% names(built))) {
       built <- list(built)
       names(built) <- built[[1]]$measure
@@ -179,7 +179,7 @@ data_measure_info <- function(path, ..., info = list(), references = list(), str
   }
   built <- built[order(grepl("^_", names(built)))]
   if (verbose) cli_bullets(c(i = "writing info to {.path {path}}"))
-  write(jsonify::pretty_json(built, unbox = TRUE), path)
+  jsonlite::write_json(built, path, auto_unbox = TRUE, pretty = TRUE)
   if (open_after) navigateToFile(path)
   invisible(built)
 }

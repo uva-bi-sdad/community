@@ -79,7 +79,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     }
     time_vars <- NULL
     if (file.exists(f)) {
-      meta <- jsonify::from_json(f, simplify = FALSE)
+      meta <- jsonlite::read_json(f)
       previous_data <- list()
       ids_maps <- list()
       ids_maps_paths <- NULL
@@ -167,7 +167,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                     } else {
                       if (verbose) cli_progress_update(status = "loading ID map")
                       tryCatch(
-                        jsonify::from_json(if (length(mf)) mf[[1]] else d$ids[[1]]$map, simplify = FALSE),
+                        jsonlite::read_json(if (length(mf)) mf[[1]] else d$ids[[1]]$map),
                         error = function(e) cli_alert_warning("failed to read ID map: {e$message}")
                       )
                     }
@@ -282,7 +282,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
                 variables = Filter(function(l) l$time_range[1] != -1 && l$time_range[2] != -1, var_meta)
               )
               if (verbose) cli_progress_update(status = "writing {d$name}")
-              write(jsonify::to_json(sdata, unbox = TRUE, digits = 6, by = "row"), path)
+              jsonlite::write_json(sdata, path, auto_unbox = TRUE, digits = 6, dataframe = "row")
               if (verbose) cli_progress_done("wrote {d$name} site file")
             }
           }
@@ -311,7 +311,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   }
   path <- paste0(dir, "/docs/settings.json")
   settings <- if (file.exists(path) && file.size(path)) {
-    jsonify::from_json(path, simplify = FALSE)
+    jsonlite::read_json(path)
   } else {
     list(settings = options)
   }
@@ -457,7 +457,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   if (bundle_libs) {
     dir.create(libdir, FALSE)
     manifest_file <- paste0(libdir, "manifest.json")
-    manifest <- if (file.exists(manifest_file)) jsonify::from_json(manifest_file, simplify = FALSE) else list()
+    manifest <- if (file.exists(manifest_file)) jsonlite::read_json(manifest_file) else list()
     for (dn in names(parts$dependencies)) {
       if (if (libs_base_only) dn %in% c("base", "base_style") else !grepl("^(?:ga$|custom|data_handler)", dn)) {
         d <- parts$dependencies[[dn]]
@@ -488,7 +488,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         parts$dependencies[[dn]]$hash <- NULL
       }
     }
-    write(jsonify::pretty_json(manifest, unbox = TRUE), manifest_file)
+    jsonlite::write_json(manifest, manifest_file, auto_unbox = TRUE)
   } else {
     unlink(libdir, TRUE)
   }
@@ -529,13 +529,13 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     if (bundle_package) {
       settings$entity_info <- lapply(
         structure(paste0(dir, "/docs/", entity_info), names = entity_info),
-        jsonify::from_json,
+        jsonlite::read_json,
         simplify = FALSE
       )
     }
   }
   settings$aggregated <- aggregate
-  write(jsonify::pretty_json(settings, unbox = TRUE), paste0(dir, "/docs/settings.json"))
+  jsonlite::write_json(settings, paste0(dir, "/docs/settings.json"), auto_unbox = TRUE, pretty = TRUE)
   if (include_api || file.exists(paste0(dir, "/docs/functions/api.js"))) {
     dir.create(paste0(dir, "/docs/functions"), FALSE, TRUE)
     writeLines(c(
@@ -584,7 +584,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     '<meta name="viewport" content="width=device-width,initial-scale=1" />',
     paste0(
       '<script type="application/javascript">\nconst site = ',
-      jsonify::to_json(settings, unbox = TRUE),
+      jsonlite::toJSON(settings, auto_unbox = TRUE),
       "\n</script>"
     ),
     if (bundle_data) {

@@ -51,7 +51,7 @@ check_template <- function(template, name = "", dir = ".", spec = NULL) {
       report$status[] <- FALSE
       return(report)
     }
-    spec <- jsonify::from_json(path, simplify = FALSE)
+    spec <- jsonlite::read_json(path)
   }
   report$spec <- spec
   if (missing(name)) {

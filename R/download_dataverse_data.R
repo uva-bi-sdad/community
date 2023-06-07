@@ -144,7 +144,7 @@ download_dataverse_data <- function(id, outdir = tempdir(), files = NULL, versio
       json <- grepl("\\.json$", ffs[i])
       data[[fn]] <- tryCatch(
         if (json) {
-          jsonify::from_json(ffs[i])
+          jsonlite::read_json(ffs[i], simplifyVector = TRUE)
         } else {
           read_delim_arrow(gzfile(ffsx[i]), if (grepl("csv", format, fixed = TRUE)) "," else "\t")
         },

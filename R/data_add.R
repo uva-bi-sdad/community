@@ -75,7 +75,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       }
       if (file.exists(package)) {
         package_path <- package
-        package <- jsonify::from_json(package, simplify = FALSE)
+        package <- jsonlite::read_json(package)
       } else {
         cli_abort(c("{.arg package} ({.path {package}}) does not exist", i = "create it with {.fn init_data}"))
       }
@@ -138,7 +138,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
           if (varinf[[1]] %in% names(metas)) {
             varinf <- metas[[varinf[[1]]]]
           } else {
-            varinf <- metas[[varinf[[1]]]] <- jsonify::from_json(varinf[[1]], simplify = FALSE)
+            varinf <- metas[[varinf[[1]]]] <- jsonlite::read_json(varinf[[1]])
           }
           varinf <- varinf[varinf != ""]
         }
@@ -222,7 +222,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       single_meta <- TRUE
       if (length(meta$variables) == 1 && is.character(meta$variables)) {
         if (!file.exists(meta$variables)) meta$variables <- paste0(dir, "/", meta$variables)
-        if (file.exists(meta$variables)) meta$variables <- jsonify::from_json(meta$variables, simplify = FALSE)
+        if (file.exists(meta$variables)) meta$variables <- jsonlite::read_json(meta$variables)
       }
       meta$variables <- replace_equations(meta$variables)
       meta
@@ -245,11 +245,11 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
   }
   if (clean) {
     cf <- lma_dict("special", perl = TRUE, as.function = gsub)
-    package <- jsonify::from_json(cf(jsonify::to_json(package, unbox = TRUE)), simplify = FALSE)
+    package <- jsonlite::fromJSON(cf(jsonlite::toJSON(package, auto_unbox = TRUE)))
   }
   if (write) {
     package_path <- if (is.character(package_path)) package_path else "datapackage.json"
-    write(jsonify::to_json(package, unbox = TRUE, digits = 6), package_path)
+    jsonlite::write_json(package, package_path, auto_unbox = TRUE, digits = 6)
     if (interactive()) {
       cli_bullets(c(v = paste(
         if (refresh) "updated resource in" else "added resource to", "{.file datapackage.json}:"

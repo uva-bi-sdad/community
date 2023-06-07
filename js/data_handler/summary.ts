@@ -66,7 +66,8 @@ export function init(this: DataHandler, v: string, d: string) {
         if (o) {
           Object.keys(da).forEach((k: string) => {
             if (!(k in this.entities)) return
-            if (!(view in this.entities[k])) this.entities[k].views[view] = {summary: {}, rank: {}, subset_rank: {}}
+            if (!(view in this.entities[k].views))
+              this.entities[k].views[view] = {summary: {}, rank: {}, subset_rank: {}}
             this.entities[k].views[view].rank[v] = new at(ny)
             this.entities[k].views[view].subset_rank[v] = new at(ny)
           })

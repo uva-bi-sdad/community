@@ -255,16 +255,17 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
             if (en != "" && entity_info[[en]] %in% colnames(e)) colnames(e)[colnames(e) == entity_info[[en]]] <- en
           }
         }
-        write(jsonify::to_json(
+        jsonlite::write_json(
           lapply(split(e, e[, 2]), function(g) {
             lapply(
               split(g[, -(1:2), drop = FALSE], g[, 1]),
               function(l) lapply(l, function(r) r[which(r != "")[1]])
             )
           }),
-          unbox = TRUE,
+          entity_info_file,
+          auto_unbox = TRUE,
           digits = 6
-        ), entity_info_file)
+        )
         if (verbose) cli_progress_done()
       }
     }

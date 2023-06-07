@@ -79,6 +79,7 @@ export async function entities(this: DataHandler, g: string): Promise<void> {
         const overwrite = this.entity_features[g][id]
         const f = overwrite || {id: id, name: id}
         f.id = id
+        if (!f.name) f.name = id
         const e = (
           id in this.entities
             ? this.entities[id]

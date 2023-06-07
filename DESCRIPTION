@@ -1,13 +1,13 @@
 Package: community
 Title: Community Analysis Framework
-Version: 0.0.1.201
+Version: 0.0.1.202
 Authors@R: c(
     person("Biocomplexity Institute", role = c("cph", "fnd")),
     person("Micah", "Iserman", role = c("aut", "cre"), email = "micah.iserman@gmail.com"),
     person("Alan", "Wang", role = "ctb"),
     person("Prashanth", "Wagle", role = "ctb")
   )
-Imports: cli, arrow, jsonify, rstudioapi, stats, stringi, lingmatch, httpuv, katex
+Imports: cli, arrow, jsonlite, rstudioapi, stats, stringi, lingmatch, httpuv, katex
 Description: A toolset and web framework to help manage and present data.
 URL: https://github.com/uva-bi-sdad/community
 BugReports: https://github.com/uva-bi-sdad/community/issues

@@ -26,7 +26,7 @@ output_plot <- function(x = NULL, y = NULL, color = NULL, color_time = NULL, dat
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   if (is.null(id)) id <- paste0("plot", caller$uid)
   entries <- c("layout", "config", "data")
-  if (is.character(options)) options <- jsonify::from_json(options, simplify = FALSE)
+  if (is.character(options)) options <- jsonlite::fromJSON(options)
   if ("x" %in% names(options)) options <- options$x
   options <- options[entries[entries %in% names(options)]]
   defaults <- list(

@@ -11,9 +11,8 @@ download_dataverse_info <- function(id, server = NULL, key = NULL, refresh = FAL
       if (is.na(branch)) branch <- NULL
     }
     id <- regmatches(id, regexec("^(?:.*github\\.com/)?([^/]+/[^/@]+)", id))[[1]][2]
-    repo <- tryCatch(jsonify::from_json(
-      paste0("https://api.github.com/repos/", id),
-      simplify = FALSE
+    repo <- tryCatch(jsonlite::read_json(
+      paste0("https://api.github.com/repos/", id)
     ), error = function(e) NULL)
     if (!is.null(repo$default_branch)) {
       if (verbose) cli_alert_info("getting ID from Github repository {id}")
@@ -82,7 +81,7 @@ download_dataverse_info <- function(id, server = NULL, key = NULL, refresh = FAL
             quiet = TRUE, headers = c("X-Dataverse-key" = key)
           )
           if (file.exists(temp)) {
-            res <- jsonify::from_json(temp, simplify = FALSE)
+            res <- jsonlite::read_json(temp)
             if (is.null(res$data)) {
               unlink(temp)
               stop(res$message)
@@ -93,17 +92,16 @@ download_dataverse_info <- function(id, server = NULL, key = NULL, refresh = FAL
           }
         } else {
           if (verbose) cli_alert_info("trying without key")
-          res <- jsonify::from_json(
-            paste0(server, "api/datasets/:persistentId/versions/", version, "?persistentId=doi:", id),
-            simplify = FALSE
+          res <- jsonlite::read_json(
+            paste0(server, "api/datasets/:persistentId/versions/", version, "?persistentId=doi:", id)
           )$data
         }
         res$server <- server
-        write(jsonify::to_json(res, unbox = TRUE), temp)
+        jsonlite::write_json(res, temp, auto_unbox = TRUE)
         res
       } else {
         if (verbose) cli_alert_info("reading in existing metadata for {id}")
-        jsonify::from_json(temp, simplify = FALSE)
+        jsonlite::read_json(temp)
       }
     },
     error = function(e) e$message

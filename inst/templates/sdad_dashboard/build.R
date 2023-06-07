@@ -5,9 +5,12 @@ entities_file <- "../entities.rds"
 if (file.exists(entities_file)) {
   entities <- readRDS(entities_file)
 } else {
-  entities <- vroom::vroom(
-    "https://raw.githubusercontent.com/uva-bi-sdad/sdc.geographies/main/geographies_metadata.csv"
-  )
+  file <- tempfile(fileext = ".csv.xz")
+  download.file(paste0(
+    "https://raw.githubusercontent.com/uva-bi-sdad/sdc.geographies/main/",
+    "docs/distribution/geographies_metadata.csv.xz"
+  ), file)
+  entities <- vroom::vroom(file)
   entities <- entities[!duplicated(entities$geoid), c("geoid", "region_type")]
   saveRDS(entities, entities_file, compress = "xz")
 }
@@ -26,8 +29,7 @@ data_reformat_sdad(
 )
 info <- lapply(
   list.files(datasets, "measure_info\\.json", full.names = TRUE),
-  jsonify::from_json,
-  simplify = FALSE
+  jsonlite::read_json
 )
 agg_info <- list()
 for (m in info) {
@@ -36,7 +38,7 @@ for (m in info) {
   }
 }
 if (length(agg_info)) {
-  write(jsonify::pretty_json(agg_info, unbox = TRUE), "docs/data/measure_info.json")
+  jsonlite::write_json(agg_info, "docs/data/measure_info.json", auto_unbox = TRUE, pretty = TRUE)
 }
 
 ## add unified files

@@ -92,7 +92,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
     )
     write_view <- TRUE
   } else {
-    view <- jsonify::from_json(paths[1], simplify = FALSE)
+    view <- jsonlite::read_json(paths[1])
     if (!is.null(remote) && !identical(view$remote, remote)) {
       view$remote <- remote
       write_view <- TRUE
@@ -181,7 +181,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
   if (length(view$ids)) view$ids <- as.character(view$ids)
   if (!is.null(outbase) && !dir.exists(outbase)) init_site(outbase, view$name, quiet = TRUE)
   if (is.null(view$output)) outdir <- view_dir
-  if (write_view) write(jsonify::pretty_json(view, unbox = TRUE), paths[1])
+  if (write_view) jsonlite::write_json(view, paths[1], auto_unbox = TRUE)
   if (execute) {
     source_env <- new.env()
     source_env$datacommons_view <- function(...) {}
@@ -239,7 +239,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       }
       files <- files[order(file.mtime(paste0(commons, "/", files$file)), decreasing = TRUE), ]
       if (verbose) cli_alert_info("updating manifest: {.file {paths[2]}}")
-      repo_manifest <- jsonify::from_json(paste0(commons, "/manifest/repos.json"), simplify = FALSE)
+      repo_manifest <- jsonlite::read_json(paste0(commons, "/manifest/repos.json"))
       manifest <- lapply(split(files, files$repo), function(r) {
         hr <- repo_manifest[[r$repo[[1]]]]
         files <- paste0(commons, "/", unique(r$file))
@@ -261,7 +261,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       })
       if (is.character(measure_info)) {
         measure_info <- if (length(measure_info) == 1 && file.exists(measure_info)) {
-          jsonify::from_json(measure_info, simplify = FALSE)
+          jsonlite::read_json(measure_info)
         } else {
           as.list(measure_info)
         }
@@ -272,7 +272,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
         if (use_manifest) {
           manifest_file <- paste0(commons, "/repos/", sub("^.+/", "", r), "/manifest.json")
           if (file.exists(manifest_file)) {
-            rmanifest <- jsonify::from_json(manifest_file, simplify = FALSE)
+            rmanifest <- jsonlite::read_json(manifest_file)
             ri <- lapply(rmanifest$data, function(e) {
               m <- e$measure_info
               if (length(m)) {
@@ -295,7 +295,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
             paste0(commons, "/repos/", sub("^.+/", "", r)), "^measure_info[^.]*\\.json$",
             full.names = TRUE, recursive = TRUE
           ), function(f) {
-            m <- tryCatch(jsonify::from_json(f, simplify = FALSE), error = function(e) {
+            m <- tryCatch(jsonlite::read_json(f), error = function(e) {
               cli_alert_warning("failed to read measure info: {.file {f}}")
               NULL
             })
@@ -345,7 +345,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       if (length(measure_info)) {
         measure_info_file <- paste0(outdir, "/measure_info.json")
         if (verbose) cli_alert_info("updating measure info: {.file {measure_info_file}}")
-        write(jsonify::pretty_json(rev(measure_info), unbox = TRUE), measure_info_file)
+        jsonlite::write_json(rev(measure_info), measure_info_file, auto_unbox = TRUE, pretty = TRUE)
       }
       args <- list(...)
       args$files <- paste0(commons, "/", unique(files$file))
@@ -363,7 +363,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       src <- parse(text = gsub("community::datacommons_view", "datacommons_view", readLines(base_run_after, warn = FALSE), fixed = TRUE))
       source(local = source_env, exprs = src)
     }
-    write(jsonify::pretty_json(manifest, unbox = TRUE), paste0(outdir, "/manifest.json"))
+    jsonlite::write_json(manifest, paste0(outdir, "/manifest.json"), auto_unbox = TRUE, pretty = TRUE)
   }
   init_datacommons(commons, refresh_after = FALSE, verbose = FALSE)
   invisible(view)

@@ -1,4 +1,4 @@
-#' @importFrom jsonify to_json from_json pretty_json
+#' @importFrom jsonlite read_json write_json toJSON fromJSON
 #' @importFrom tools md5sum
 #' @importFrom utils packageVersion write.csv download.file unzip untar read.csv
 #' @importFrom cli cli_abort cli_alert_success cli_bullets cli_warn cli_alert_info

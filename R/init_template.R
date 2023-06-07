@@ -66,7 +66,7 @@ init_template <- function(name, files, dir = ".", spec_dir = ".", context = name
     name,
     ".json"
   ), "/", FALSE)
-  if (overwrite || !file.exists(path)) write(jsonify::pretty_json(spec, unbox = TRUE), path)
+  if (overwrite || !file.exists(path)) jsonlite::write_json(spec, path, auto_unbox = TRUE)
   if (interactive()) {
     cli_bullets(c(v = "created a spec file for {name}:", "*" = paste0("{.file ", path, "}")))
   }

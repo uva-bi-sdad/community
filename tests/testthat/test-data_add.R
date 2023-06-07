@@ -6,11 +6,12 @@ init_data("mtcars", "Motor Trend Car Road Tests", dir = dir, quiet = TRUE)
 
 test_that("adds to an existing package", {
   metadata <- data_add(path, package_path = paste0(dir, "/datapackage.json"))
-  read <- jsonify::from_json(paste0(dir, "/datapackage.json"), simplify = FALSE)$resources
+  read <- jsonlite::read_json(paste0(dir, "/datapackage.json"))$resources
   read[[1]]$schema$fields <- lapply(read[[1]]$schema$fields, function(f) {
     f$time_range <- as.numeric(f$time_range)
     f
   })
+  metadata$resources[[1]]$time <- Filter(length, list(a = NULL))
   expect_equal(metadata$resources, read)
 })
 

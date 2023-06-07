@@ -7,7 +7,7 @@ test_that("makes an initial file", {
     short_description = "A measure.",
     statement = "This entity has {value} measure units."
   ))
-  expect_identical(initial, jsonify::from_json(path, simplify = FALSE))
+  expect_identical(initial, jsonlite::read_json(path))
 })
 
 test_that("existing files is added to", {

@@ -41,7 +41,7 @@ init_data <- function(name, title = name, dir = ".", ..., write = TRUE, overwrit
   if (length(list(...))) package$resources <- data_add(..., dir = dir, write = FALSE)
   if (write) {
     if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
-    write(jsonify::pretty_json(package, unbox = TRUE, digits = 6), package_path)
+    jsonlite::write_json(package, package_path, auto_unbox = TRUE, digits = 6, pretty = TRUE)
     if (!quiet) {
       cli_bullets(c(v = "created metadata template for {name}:", "*" = paste0("{.path ", package_path, "}")))
       navigateToFile(package_path)

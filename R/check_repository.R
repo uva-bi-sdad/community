@@ -144,7 +144,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   )
   all_issues <- list()
   for (f in info_files) {
-    m <- tryCatch(jsonify::from_json(f, simplify = FALSE), error = function(e) NULL)
+    m <- tryCatch(jsonlite::read_json(f), error = function(e) NULL)
     if (is.null(m)) cli_abort("measure info is malformed: {.file {f}}")
     i <- i + 1
     cli_progress_update()

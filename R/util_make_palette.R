@@ -126,6 +126,6 @@ util_make_palette <- function(colors, continuous = length(colors) < 5, divergent
       ), use.names = FALSE)
     )
   }
-  if (print) cat(jsonify::pretty_json(palette, unbox = TRUE))
+  if (print) cat(jsonlite::toJSON(palette, auto_unbox = TRUE, pretty = TRUE))
   invisible(palette)
 }
