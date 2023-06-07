@@ -148,6 +148,7 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
     }
     if (verbose) cli_progress_update()
   }
+  if (verbose) cli_progress_done()
   map <- do.call(rbind, unname(map))
   idmap <- do.call(rbind, unname(idmap))
   if (verbose) {
@@ -156,6 +157,7 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
     if (length(novars)) cli_warn("{.arg {variable_location}} was not in {?some files'/a file's} column names: {novars}")
     if (length(noids)) cli_warn("{.arg {id_location}} was not in {?some files'/a file's} column names: {noids}")
   }
+  if (!length(idmap)) cli_abort("no IDs were mapped")
   dir.create(paste0(dir, "manifest"), FALSE)
   jsonlite::write_json(manifest, paste0(dir, "manifest/files.json"), auto_unbox = TRUE, pretty = TRUE)
   dir.create(paste0(dir, "cache"), FALSE)
