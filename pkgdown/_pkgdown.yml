@@ -1,5 +1,22 @@
 url: https://uva-bi-sdad.github.io/community
 
+navbar:
+  components:
+    articles:
+      text: Articles
+      menu:
+      - text: Examples
+      - text: Build a Data Site
+        href: articles/quickstart-site.html
+      - text: Illinois Arrests
+        href: articles/casestudy-arrests.html
+      - text: Other
+      - text: Developer Course
+        href: articles/developer-course.html
+      - text: Alan Notes
+        href: articles/anti-patterns.html
+      
+
 template:
   bootstrap: 5
   params:
