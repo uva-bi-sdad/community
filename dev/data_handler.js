@@ -1358,7 +1358,7 @@
                     else if (tf.name in _this.features) {
                         if ('id' === tf.name && !tf.value)
                             tf.value = String(tf.value).split(',');
-                        tf.check = group_checks[tf.operator].bind(tf.value || tf.value);
+                        tf.check = group_checks[tf.operator].bind(tf.value);
                         f.feature_conditions.push(tf);
                     }
                     else if (tf.name in _this.variables) {

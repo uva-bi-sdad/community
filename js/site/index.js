@@ -1482,10 +1482,11 @@ const community = function (window, document, site) {
                 if (!(parsed.palette in palettes)) parsed.palette = defaults.palette
                 parsed.time = (y ? y.value() - site.data.meta.times[d].range[0] : 0) - varcol.time_range[d][0]
                 parsed.summary = varcol.views[this.view].summaries[d]
-                const display_time = parsed.summary.n[parsed.time] ? parsed.time : 0,
+                const ns = parsed.summary.n,
+                  display_time = ns[parsed.time] ? parsed.time : 0,
                   summary = vary.views[this.view].summaries[d],
                   missing = parsed.summary.missing[display_time],
-                  n = parsed.summary.n[display_time],
+                  n = ns[display_time],
                   subset = n !== v.n_selected.dataset,
                   rank = subset ? 'subset_rank' : 'rank',
                   order = subset ? varcol.views[this.view].order[d][display_time] : varcol.info[d].order[display_time],
@@ -1508,7 +1509,8 @@ const community = function (window, document, site) {
                     site.settings.summary_selection +
                     site.settings.color_scale_center +
                     site.settings.color_by_order +
-                    site.settings.trace_limit
+                    site.settings.trace_limit +
+                    site.settings.show_empty_times
                 lim = jump = lim && lim < n ? Math.ceil(Math.min(lim / 2, n / 2)) : 0
                 Object.keys(this.reference_options).forEach(k => (this.options[k] = valueOf(this.reference_options[k])))
                 for (; i < fn; i++) {
@@ -1560,7 +1562,16 @@ const community = function (window, document, site) {
                     b.upperfence = summary.max
                     b.lowerfence = summary.min
                   }
-                  b.x = b.q1.map((_, i) => s[k].get_value(parsed.x, i + parsed.y_range[0]))
+                  if (site.settings.show_empty_times) {
+                    b.x = b.q1.map((_, i) => s[k].get_value(parsed.x, i + parsed.y_range[0]))
+                  } else {
+                    b.x = []
+                    for (i = b.q1.length; i--; ) {
+                      if (ns[i]) {
+                        b.x[i] = s[k].get_value(parsed.x, i + parsed.y_range[0])
+                      }
+                    }
+                  }
                 }
                 if (state !== this.state) {
                   if ('boolean' !== typeof this.e.layout.yaxis.title)
@@ -1574,24 +1585,30 @@ const community = function (window, document, site) {
                   this.e.layout.yaxis.autorange = false
                   this.e.layout.yaxis.range = [Infinity, -Infinity]
                   if (!b) b = {upperfence: summary.max, lowerfence: summary.min}
+                  let any_skipped = false
                   summary.min.forEach((min, i) => {
-                    const l = Math.min(b.lowerfence[i], min),
-                      u = Math.max(b.upperfence[i], summary.max[i])
-                    if (this.e.layout.yaxis.range[0] > l) this.e.layout.yaxis.range[0] = l
-                    if (this.e.layout.yaxis.range[1] < u) this.e.layout.yaxis.range[1] = u
+                    if (site.settings.show_empty_times || ns[i]) {
+                      const l = Math.min(b.lowerfence[i], min),
+                        u = Math.max(b.upperfence[i], summary.max[i])
+                      if (this.e.layout.yaxis.range[0] > l) this.e.layout.yaxis.range[0] = l
+                      if (this.e.layout.yaxis.range[1] < u) this.e.layout.yaxis.range[1] = u
+                    } else any_skipped = true
                   })
                   const r = (this.e.layout.yaxis.range[1] - this.e.layout.yaxis.range[0]) / 10
                   this.e.layout.yaxis.range[0] -= r
                   this.e.layout.yaxis.range[1] += r
                   if (site.data.variables[parsed.x].is_time) {
+                    const start = v.time_range.filtered[0],
+                      end = v.time_range.filtered[1],
+                      adj = any_skipped && end > start ? Math.log(end - start) : 0.5
                     if (this.e.layout.xaxis.autorange) {
                       this.e.layout.xaxis.autorange = false
                       this.e.layout.xaxis.type = 'linear'
                       this.e.layout.xaxis.dtick = 1
-                      this.e.layout.xaxis.range = [v.time_range.filtered[0] - 0.5, v.time_range.filtered[1] + 0.5]
+                      this.e.layout.xaxis.range = [start - adj, end + adj]
                     } else {
-                      this.e.layout.xaxis.range[0] = v.time_range.filtered[0] - 0.5
-                      this.e.layout.xaxis.range[1] = v.time_range.filtered[1] + 0.5
+                      this.e.layout.xaxis.range[0] = start - adj
+                      this.e.layout.xaxis.range[1] = end + adj
                     }
                   }
                   if (b.lowerfence.length < this.previous_span) {
@@ -2383,7 +2400,7 @@ const community = function (window, document, site) {
           o.e.appendChild(document.createElement('tbody'))
           o.click = o.e.getAttribute('data-click')
           o.features = o.options.features
-          o.parsed = {summary: {}, order: [], time: -1, color: '', dataset: _u[o.view].get.dataset()}
+          o.parsed = {summary: {}, order: [], time: -1, color: '', dataset: _u[o.view].get.dataset(), time_index: {}}
           o.header = []
           o.rows = {}
           o.rowIds = {}
@@ -2581,13 +2598,20 @@ const community = function (window, document, site) {
                 valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.')
               const v = _u[this.view],
                 d = v.get.dataset(),
-                state = d + v.value() + v.get.time_filters() + site.settings.digits + vn + site.settings.theme_dark,
-                update = state !== this.state
-              const time = valueOf(v.time_agg),
+                times = site.data.meta.times[d],
+                state =
+                  d +
+                  v.value() +
+                  v.get.time_filters() +
+                  site.settings.digits +
+                  vn +
+                  site.settings.theme_dark +
+                  site.settings.show_empty_times,
+                update = state !== this.state,
+                time = valueOf(v.time_agg),
                 variable = await site.data.get_variable(vn, this.view)
-              this.parsed.time_range = variable ? variable.time_range[d] : site.data.meta.times[d].info.time_range[d]
-              this.parsed.time =
-                ('number' === typeof time ? time - site.data.meta.times[d].range[0] : 0) - this.parsed.time_range[0]
+              this.parsed.time_range = variable ? variable.time_range[d] : times.info.time_range[d]
+              this.parsed.time = ('number' === typeof time ? time - times.range[0] : 0) - this.parsed.time_range[0]
               if (update) {
                 this.rows = {}
                 this.rowIds = {}
@@ -2599,6 +2623,7 @@ const community = function (window, document, site) {
                     k => (this.options[k] = valueOf(this.reference_options[k]))
                   )
                   if (this.options.single_variable) {
+                    this.parsed.time_index = {}
                     this.parsed.dataset = d
                     this.parsed.color = vn
                     this.parsed.summary = this.view in variable.views ? variable.views[this.view].summaries[d] : false
@@ -2616,7 +2641,7 @@ const community = function (window, document, site) {
                             type: 'string' === variable.type ? 'string' : 'num',
                             title: this.variable_header
                               ? this.options.variables.title || site.data.format_label(vn)
-                              : site.data.meta.times[d].value[n + this.parsed.time_range[0]] + '',
+                              : times.value[n + this.parsed.time_range[0]] + '',
                             data: site.data.get_value,
                             render: DataHandler.retrievers.row_time.bind({
                               i: n,
@@ -2630,11 +2655,16 @@ const community = function (window, document, site) {
                       this.options.columns = this.header
                       this.table = $(this.e).DataTable(this.options)
                     }
-                    const n = this.header.length
+                    const n = this.header.length,
+                      ns = this.parsed.summary.n
                     let reset
-                    for (let i = 1; i < n; i++) {
-                      this.table.column(i).visible(v.times[i - 1 + this.parsed.time_range[0]], false)
-                      if (v.times[i - 1 + this.parsed.time_range[0]]) reset = false
+                    for (let i = 1, show = false, nshowing = 0; i < n; i++) {
+                      show = v.times[i - 1 + this.parsed.time_range[0]] && (site.settings.show_empty_times || ns[i - 1])
+                      this.table.column(i).visible(show, false)
+                      if (show) {
+                        this.parsed.time_index[times.value[i - 1 + this.parsed.time_range[0]]] = ++nshowing
+                        reset = false
+                      }
                     }
                     if (reset) this.state = ''
                   }
@@ -2652,7 +2682,7 @@ const community = function (window, document, site) {
                           this.rowIds[this.rows[k].selector.rows] = k
                         }
                       } else {
-                        for (let i = site.data.meta.times[d].n; i--; ) {
+                        for (let i = times.n; i--; ) {
                           this.rows[k] = this.table.row.add({
                             time: i,
                             entity: v.selection.all[k],
@@ -2732,18 +2762,17 @@ const community = function (window, document, site) {
                 redraw ? this.table.draw() : this.table.columns.adjust().draw(false)
               }
               if (this.parsed.time > -1 && this.header.length > 1 && v.time_range.filtered_index) {
-                const offset =
-                  (v.time_range.filtered_index ? v.time_range.filtered_index[0] : 0) - v.time_range.index[0]
                 this.dark_highlight = site.settings.theme_dark
                 if (this.style.sheet.rules.length) this.style.sheet.removeRule(0)
-                this.style.sheet.insertRule(
-                  '#' +
-                    this.id +
-                    ' td:nth-child(' +
-                    (this.parsed.time - offset + 2) +
-                    '){background-color: var(--background-highlight)}',
-                  0
-                )
+                if (this.parsed.time_index[time])
+                  this.style.sheet.insertRule(
+                    '#' +
+                      this.id +
+                      ' td:nth-child(' +
+                      (this.parsed.time_index[time] + 1) +
+                      '){background-color: var(--background-highlight)}',
+                    0
+                  )
                 if (!update && site.settings.table_autosort) {
                   this.table.order([this.parsed.time + 1, 'dsc']).draw()
                 }
@@ -2792,7 +2821,7 @@ const community = function (window, document, site) {
         init: function (o) {
           o.click = o.e.getAttribute('data-click')
           o.features = o.options.features
-          o.parsed = {summary: {}, order: [], time: 0, color: '', dataset: defaults.dataview}
+          o.parsed = {summary: {}, order: [], time: 0, color: '', dataset: defaults.dataview, time_index: {}}
           o.header = []
           o.rows = {}
           o.parts = {
@@ -2850,13 +2879,16 @@ const community = function (window, document, site) {
               tr = this.parts.head.firstElementChild,
               range = this.parsed.variable.time_range[dataset],
               start = range[0],
-              end = range[1] + 1
+              end = range[1] + 1,
+              ns = this.parsed.summary.n
+            this.parsed.time_index = {}
             tr.innerHTML = ''
             tr.appendChild(document.createElement('th'))
             tr.lastElementChild.appendChild(document.createElement('span'))
             tr.firstElementChild.lastElementChild.innerText = 'Name'
-            for (let i = start; i < end; i++) {
-              if (v.times[i]) {
+            for (let i = start, nshowing = 0; i < end; i++) {
+              if (v.times[i] && (site.settings.show_empty_times || ns[i - start])) {
+                this.parsed.time_index[time.value[i]] = nshowing++
                 tr.appendChild(document.createElement('th'))
                 tr.lastElementChild.appendChild(document.createElement('span'))
                 tr.lastElementChild.lastElementChild.innerText = time.value[i]
@@ -2866,6 +2898,7 @@ const community = function (window, document, site) {
           o.appendRows = function (v) {
             const es = this.parsed.order,
               variable = this.parsed.variable,
+              times = site.data.meta.times[this.parsed.dataset].value,
               range = variable.time_range[this.parsed.dataset],
               start = range[0],
               dn = range[1] - start + 1,
@@ -2890,7 +2923,7 @@ const community = function (window, document, site) {
                   td.classList.add('highlighted')
                 } else {
                   for (let i = 0; i < dn; i++) {
-                    if (v.times[i + start]) {
+                    if (v.times[i + start] && times[i + start] in this.parsed.time_index) {
                       tr.appendChild((td = document.createElement('td')))
                       td.innerText = site.data.format_value(d[i])
                       if (i === this.parsed.time) td.classList.add('highlighted')
@@ -2916,6 +2949,7 @@ const community = function (window, document, site) {
           if (o.view) {
             add_dependency(o.view, {type: 'update', id: o.id})
             add_dependency(o.view + '_filter', {type: 'update', id: o.id})
+            add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id})
           } else o.view = defaults.dataview
           o.update()
         },
@@ -2930,7 +2964,8 @@ const community = function (window, document, site) {
             const v = _u[this.view],
               d = v.get.dataset(),
               time = valueOf(v.time_agg),
-              state = d + v.value() + v.get.time_filters() + site.settings.digits + vn + time
+              state =
+                d + v.value() + v.get.time_filters() + site.settings.digits + vn + time + site.settings.show_empty_times
             if (!site.data.inited[d]) return void 0
             if (state !== this.state) {
               this.state = state
@@ -4064,11 +4099,14 @@ const community = function (window, document, site) {
         t = JSON.parse(u.traces[u.base_trace]),
         yr = site.data.variables[u.parsed.y].time_range[u.parsed.dataset],
         xr = site.data.variables[u.parsed.x].time_range[u.parsed.dataset],
-        n = Math.min(yr[1], xr[1]) + 1
+        n = Math.min(yr[1], xr[1]) + 1,
+        ns = u.parsed.summary.n
       for (let i = Math.max(yr[0], xr[0]); i < n; i++) {
-        t.text.push(e.features.name)
-        t.x.push(u.parsed.x_range[0] <= i && i <= u.parsed.x_range[1] ? x[i - u.parsed.x_range[0]] : NaN)
-        t.y.push(u.parsed.y_range[0] <= i && i <= u.parsed.y_range[1] ? y[i - u.parsed.y_range[0]] : NaN)
+        if (site.settings.show_empty_times || ns[i - u.parsed.y_range[0]]) {
+          t.text.push(e.features.name)
+          t.x.push(u.parsed.x_range[0] <= i && i <= u.parsed.x_range[1] ? x[i - u.parsed.x_range[0]] : NaN)
+          t.y.push(u.parsed.y_range[0] <= i && i <= u.parsed.y_range[1] ? y[i - u.parsed.y_range[0]] : NaN)
+        }
       }
       t.type = u.parsed.base_trace
       t.color =

@@ -322,7 +322,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     polygon_outline = 1.5, iqr_box = TRUE, color_scale_center = "none",
     table_autoscroll = TRUE, table_scroll_behavior = "smooth", table_autosort = TRUE,
     hide_tooltips = FALSE, map_animations = "all", trace_limit = 20, map_overlay = TRUE,
-    circle_radius = 7, tracking = FALSE
+    circle_radius = 7, tracking = FALSE, show_empty_times = FALSE
   )
   for (s in names(defaults)) {
     if (!is.null(options[[s]])) {
