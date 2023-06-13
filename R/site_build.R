@@ -258,7 +258,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
               names(var_meta) <- evars
               if (verbose) cli_progress_update(status = "finalizing {d$name}")
               sdata <- lapply(sdata, function(e) {
-                e <- e[, evars]
+                e <- e[, evars, drop = FALSE]
                 e <- as.list(e)
                 if (sparse_time) {
                   for (f in evars) {
