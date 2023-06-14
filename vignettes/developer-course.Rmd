@@ -26,6 +26,8 @@ Each section presents questions or exercises to consider.
 data.frame(value = c(1, 2, 3), year = c(2012, 2013, 2014))
 ```
 
+Answer: `NA`, the year 2015 does not exist in this data frame
+
 2. What is the mean absolute error between the `value`s of `d1` and `d2`?
 
 ```{r}
@@ -35,25 +37,33 @@ data.frame(value = c(1, 2, 3), year = c(2012, 2013, 2014))
 ))
 ```
 
-MAE = `r mean(abs(datasets$d1$value[-1] - datasets$d2$value[1:2]))`
+```{r}
+d3 <- data.frame(
+  year = c(2012, 2013, 2014, 2015),
+  value_d1 = c(1, 2, 3, NA),
+  value_d2 = c(NA, 1, 2, 3),
+  ae = c(NA, 1, 1, NA)
+)
+```
+Answer: MAE = `r mean(d3$ae, na.rm=TRUE)`
+
 
 ## ID Mapping
 
-1. If ID `123` is selected, which rows should be included?
+1. If prefix `123` is selected, which rows should be included?
 
 ```{r}
 data.frame(ID = c(1234, 1243, 1235, 1245))
 ```
+Answer: rows 1 (1234) and 3 (1235)
 
-2. Fill in all possible aggregates for `higher` from `lower`:
+2. We aggregate the `lower` data frame, using mean function, and grouping the data by ID prefix and time as given in the `higher` data frame
 
 ```{r}
 (datasets <- list(
   higher = data.frame(
     ID = c(123, 124, 123, 124),
-    time = c(1, 1, 2, 2),
-    v1 = NA,
-    v2 = NA
+    time = c(1, 1, 2, 2)
   ),
   lower = data.frame(
     ID = c(1234, 1243, 1235, 1245, 1234, 1243, 1235, 1245),

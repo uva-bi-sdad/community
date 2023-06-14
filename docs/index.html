@@ -141,21 +141,21 @@
 <p>This project uses Rollup to assemble the development JavaScript files into the scripts that run data sites (in a web browser and/or in a Node environment as part of an API).</p>
 <p><a href="https://code.visualstudio.com" class="external-link">Visual Studio Code</a> is recommended for automatic code styling.</p>
 <p>To start working on the JavaScript source, first ensure <a href="https://nodejs.org" class="external-link">Node.js</a> is installed, then install the development dependencies:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> install</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">npm</span> install</span></code></pre></div>
 <p>Then you can start Rollup in development mode, which will watch the source files to rebuild the development scripts whenever they are changed, and serve them on <code>http://localhost:8000</code>:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> start</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">npm</span> start</span></code></pre></div>
 <p>The development scripts can be worked with in a running site by starting a development server, and adding <code>version = "local"</code> to the <code>site_build</code> command for that site.</p>
 <div class="section level3">
 <h3 id="testing">Testing<a class="anchor" aria-label="anchor" href="#testing"></a>
 </h3>
 <p>Run the JavaScript tests to rebuild the coverage report in <code>docs/coverage</code>:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> test</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="ex">npm</span> test</span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="production">Production<a class="anchor" aria-label="anchor" href="#production"></a>
 </h3>
 <p>This will rebuild the distributed, minified JavaScript and CSS files that are used in current data sites:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">npm</span> run build</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="ex">npm</span> run build</span></code></pre></div>
 <p>That updates the “dev” versions of the distribution assets, where <code>build-v1</code> will update the “v1” assets.</p>
 </div>
 </div>

@@ -1,7 +1,8 @@
 # rebuild
-styler::style_pkg(filetype = c("R", "Rmd"))
-spelling::spell_check_package()
-devtools::document()
+styler::style_pkg(filetype = c("R", "Rmd")) # if you are editing code, run this
+spelling::spell_check_package() # if you are editing documents/ writing, run this
+# if you are modifying documentation for functions, rebuilds the base documentation from the function source
+devtools::document() 
 pkgdown::build_site(lazy = TRUE)
 
 # update site assets
