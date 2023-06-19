@@ -232,6 +232,7 @@ type DataView = {
 export type Settings = {
   settings?: {[index: string]: string}
   dataviews?: {[index: string]: DataView}
+  view_names?: string[]
   metadata?: Metadata
   entity_info?: EntityFeatureSet | {[index: string]: string}
 }
@@ -289,3 +290,14 @@ export type DataMaps = {
     retrieved: boolean
   }
 }
+
+export type ActiveElement = {
+  id: string
+  e: HTMLElement
+  update?: Function
+  set?: Function
+  toggle?: Function
+  expanded?: boolean
+}
+
+export type RegisteredElements = {[index: string]: ActiveElement}

@@ -246,3 +246,6 @@ span.entry-info-entry {
 .hidden {
   display: none;
 }
+#search_tab {
+  color: #fff;
+}

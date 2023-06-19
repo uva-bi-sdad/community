@@ -26,7 +26,7 @@ function DataCommons(definition, manifest, views) {
   this.file_ids = {}
   this.files = {}
   this.page = {
-    current_tab: '#repos',
+    current_tab: '#search',
     menu: {
       check_all: document.getElementById('refresh_button'),
     },
@@ -34,6 +34,7 @@ function DataCommons(definition, manifest, views) {
     container: document.createElement('div'),
     tooltip: document.createElement('div'),
     tabs: {
+      search: document.createElement('div'),
       repos: document.createElement('div'),
       views: document.createElement('div'),
     },
@@ -45,6 +46,23 @@ function DataCommons(definition, manifest, views) {
   this.page.body.appendChild(this.page.container)
   this.page.container.className = 'commons'
   this.page.container.appendChild(this.page.tabs.repos)
+  this.page.container.appendChild(this.page.tabs.search)
+  !(() => {
+    let e = document.createElement('div')
+    this.page.tabs.search.appendChild(e)
+    e.className = 'search-field'
+    e.appendChild(document.createElement('label'))
+    e.lastElementChild.setAttribute('for', 'searchInput')
+    e.lastElementChild.className = 'form-label'
+    e.lastElementChild.innerText = 'Search'
+    e.appendChild(document.createElement('input'))
+    e.lastElementChild.type = 'text'
+    e.lastElementChild.id = 'searchInput'
+    e.lastElementChild.className = 'form-control'
+    e.lastElementChild.addEventListener('keyup', this.search.bind(this))
+    this.page.tabs.search.appendChild((e = document.createElement('div')))
+    e.className = 'search-results'
+  })()
   this.requester.onmessage = m => {
     const d = m.data
     if (d.response) {
@@ -311,6 +329,7 @@ function DataCommons(definition, manifest, views) {
         }
       this.page.tabs.repos.appendChild(this.display_repo(k))
     }
+  this.counts.views = views.length
   for (i = views.length; i--; ) {
     this.named_view[views[i].name] = views[i]
     views[i].parent = this
@@ -812,7 +831,7 @@ DataCommons.prototype = {
     this.requester.postMessage({type: 'view', view: o.name, url: url})
   },
   request_provider: function (repo, provider) {
-    const api = this.get_provider_link(provider, repo, true)
+    const api = this.get_provider_link(provider, repo)
     if (api) {
       this.queues.distributions.push({
         type: 'provider',
@@ -873,6 +892,19 @@ DataCommons.prototype = {
         }
       }
       this.requester.postMessage(this.queues.distributions.splice(i, 1)[0])
+    }
+  },
+  search: function (e) {
+    const q = (e.target ? e.target.value : e).toLowerCase()
+    if (q in this.repos) {
+      console.log('repo', this.repos[q])
+      this.page.tabs.search.lastChild.innerText = JSON.stringify(this.repos[q], null, 2)
+    } else if (q in this.file_ids) {
+      console.log('file', this.file_ids[q])
+      this.page.tabs.search.lastChild.innerText = JSON.stringify(this.file_ids[q], null, 2)
+    } else if (q in this.ids) {
+      console.log('id', this.ids[q])
+      this.page.tabs.search.lastChild.innerText = JSON.stringify(this.ids[q], null, 2)
     }
   },
 }

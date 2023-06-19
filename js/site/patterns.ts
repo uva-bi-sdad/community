@@ -36,4 +36,5 @@ export const patterns: {[index: string]: RegExp} = {
   bracket_content: /(?:^|>)[^<]*(?:<|$)/,
   math_tags: /^(?:semantics|annotation|annotation\-xml|m)/,
   math_attributes: /^(?:xmlns|display|displaystyle|style|encoding|stretchy|alttext|scriptlevel|fence|math)/,
+  escapes: /([.[\](){}?*-])/g,
 }

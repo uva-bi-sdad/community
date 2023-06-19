@@ -42,10 +42,14 @@ export default class DataHandler {
     if (this.settings.metadata) this.metadata = this.settings.metadata
     if (data) this.sets = data
     this.get_value = this.get_value.bind(this)
-    this.in_browser = 'undefined' !== typeof Window
+    this.dynamic_load = 'dataviews' in this.settings && this.settings.settings && !!this.settings.settings.partial_init
+    this.settings.view_names = this.dynamic_load ? Object.keys(this.settings.dataviews) : ['default_view']
     if ('string' === typeof this.metadata.datasets) this.metadata.datasets = [this.metadata.datasets]
     const init = () => {
-      if (!this.metadata.datasets) this.metadata.datasets = Object.keys(this.info)
+      if (!this.metadata.datasets || !this.metadata.datasets.length) {
+        this.metadata.datasets = Object.keys(this.info)
+        if (!this.metadata.datasets.length) this.metadata.datasets = Object.keys(this.sets)
+      }
       if (this.metadata.measure_info) {
         const info = this.metadata.measure_info
         this.metadata.datasets.forEach((d: string) => {
@@ -66,7 +70,7 @@ export default class DataHandler {
         if (this.loaded[k]) {
           this.ingest_data(this.sets[k], k)
         } else if (
-          !this.in_browser ||
+          !this.dynamic_load ||
           (this.settings.settings && !this.settings.settings.partial_init) ||
           !this.defaults.dataset ||
           k === this.defaults.dataset
@@ -120,7 +124,7 @@ export default class DataHandler {
   metadata: Metadata = {datasets: []}
   info: {[index: string]: DataResource} = {}
   sets: DataSets = {}
-  in_browser = false
+  dynamic_load = false
   all_data_ready: Function = () => false
   data_ready: Promise<void> = new Promise(resolve => {
     this.all_data_ready = resolve

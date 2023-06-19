@@ -94,13 +94,17 @@ datasets$higher
 
 Edit the description of the `dir` argument of the `site_build` function.
 
+1. Where would you make that change?
+
 2. How would you get that change to appear in the local R help (`?site_build`)?
 
 3. How would you get that change to appear on the documentation site ([site_build.html](https://uva-bi-sdad.github.io/community/reference/site_build.html))?
 
 ## Debugging
 
-Without editing any code, calculate the row means of `cols` after it has been updated in
+This is an exercise about stepping into a running function:
+
+Without editing any source code, calculate the row means of `cols` after it has been updated in
 
 ```r
 util_make_palette(rep(c("red", "green", "blue"), each = 10), polynomial = TRUE)
@@ -118,6 +122,12 @@ Write a test to cover the first uncovered line of the `datacommons_refresh` func
 1. How would you update the coverage report?
 
 # JavaScript Background
+
+## Build Tools
+
+1. The `npm start` command is a shortcut. What is the underlying command?
+
+2. What does `npm run find-deadcode` do, and when might you want to run it?
 
 ## Editing Source
 

@@ -12,7 +12,7 @@
     "start": "rollup --config --watch --bundleConfigAsCjs",
     "build": "rollup --config rollup.prod.js --bundleConfigAsCjs",
     "build-v1": "rollup --config rollup.prod.js --environment community_dist_version:v1 --bundleConfigAsCjs",
-    "test": "nyc --reporter=html --report-dir=./docs/coverage mocha tests/js",
+    "test": "npx jest --config jest.config.js",
     "find-deadcode": "ts-prune"
   },
   "repository": {
@@ -26,15 +26,16 @@
   },
   "homepage": "https://uva-bi-sdad.github.io/community",
   "devDependencies": {
+    "@jest/globals": "latest",
     "@rollup/plugin-terser": "latest",
     "@rollup/plugin-typescript": "latest",
+    "@types/jest": "latest",
     "csso": "latest",
-    "jsdom": "latest",
-    "mocha": "latest",
-    "nyc": "latest",
+    "jest": "latest",
+    "jest-environment-jsdom": "latest",
     "rollup": "latest",
     "rollup-plugin-serve": "latest",
-    "ts-loader": "latest",
+    "ts-jest": "latest",
     "ts-prune": "latest",
     "tslib": "latest",
     "typescript": "latest"

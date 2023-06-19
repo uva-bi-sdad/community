@@ -42,7 +42,7 @@ page_popup <- function(text = "Popup", ..., title = text, footer = NULL, wraps =
   ids <- paste0("modal", parts$uid, seq_len(n))
   r <- paste0(
     '<button type="button" class="btn popup-button" data-bs-toggle="modal" data-bs-target="#dialog',
-    parts$uid, '">', text, "</button>"
+    parts$uid, '"', if (!is.null(id)) paste0(' id="', id, '"'), ">", text, "</button>"
   )
   b <- c(
     paste0(

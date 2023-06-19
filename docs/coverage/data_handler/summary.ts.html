@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">0.77% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/258</span>
+                <span class='fraction'>2/259</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/141</span>
+                <span class='fraction'>0/106</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">0.85% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/234</span>
+                <span class='fraction'>2/235</span>
             </div>
         
             
@@ -459,7 +459,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -598,18 +598,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -817,10 +817,10 @@ function <span class="fstat-no" title="function not covered" >summary_template(<
 }
 &nbsp;
 export function <span class="fstat-no" title="function not covered" >init(</span>this: DataHandler, v: string, d: string) {
-<span class="cstat-no" title="statement not covered" >  if (!this.inited_summary[d + v]) {</span>
-    ;<span class="cstat-no" title="statement not covered" >(this.in_browser ? Object.keys(this.settings.dataviews) : ['default_view']).forEach(<span class="fstat-no" title="function not covered" >(v</span>iew: string) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (!this.inited_summary[d + v]) {</span>
+<span class="cstat-no" title="statement not covered" >    this.settings.view_names.forEach(<span class="fstat-no" title="function not covered" >(v</span>iew: string) =&gt; {</span>
       const vi: Variable = <span class="cstat-no" title="statement not covered" >this.variables[v]</span>
-<span class="cstat-no" title="statement not covered" >      if (!(view in vi.views))</span>
+<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>if (!(view in vi.views))</span>
 <span class="cstat-no" title="statement not covered" >        vi.views[view] = {</span>
           order: {},
           selected_order: {},
@@ -829,13 +829,13 @@ export function <span class="fstat-no" title="function not covered" >init(</span
           state: {},
           table: {},
         }
-<span class="cstat-no" title="statement not covered" >      if (!(d in vi.time_range)) {</span>
+<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>if (!(d in vi.time_range)) {</span>
 <span class="cstat-no" title="statement not covered" >        vi.time_range[d] = [0, this.meta.times[d].n - 1]</span>
       }
       const ny = (<span class="cstat-no" title="statement not covered" >vi.time_range[d][2] = vi.time_range[d][1] - vi.time_range[d][0] + 1)</span>
       const m: VariableView = <span class="cstat-no" title="statement not covered" >vi.views[view],</span>
         c = <span class="cstat-no" title="statement not covered" >vi.code</span>
-<span class="cstat-no" title="statement not covered" >      if (d in this.sets) {</span>
+<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>if (d in this.sets) {</span>
         const da: Data = <span class="cstat-no" title="statement not covered" >this.sets[d]</span>
         const n: number = <span class="cstat-no" title="statement not covered" >this.info[d].entity_count</span>
         const at = <span class="cstat-no" title="statement not covered" >!n || n &gt; 65535 ? Uint32Array : n &gt; 255 ? Uint16Array : Uint8Array</span>
@@ -844,8 +844,8 @@ export function <span class="fstat-no" title="function not covered" >init(</span
         let o = <span class="cstat-no" title="statement not covered" >info.order</span>
 <span class="cstat-no" title="statement not covered" >        if (o) {</span>
 <span class="cstat-no" title="statement not covered" >          Object.keys(da).forEach(<span class="fstat-no" title="function not covered" >(k</span>: string) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >            if (!(k in this.entities)) <span class="cstat-no" title="statement not covered" >return</span></span>
-<span class="cstat-no" title="statement not covered" >            if (!(view in this.entities[k].views))</span>
+<span class="cstat-no" title="statement not covered" >            <span class="missing-if-branch" title="if path not taken" >I</span>if (!(k in this.entities)) <span class="cstat-no" title="statement not covered" >return</span></span>
+<span class="cstat-no" title="statement not covered" >            <span class="missing-if-branch" title="if path not taken" >I</span>if (!(view in this.entities[k].views))</span>
 <span class="cstat-no" title="statement not covered" >              this.entities[k].views[view] = {summary: {}, rank: {}, subset_rank: {}}</span>
 <span class="cstat-no" title="statement not covered" >            this.entities[k].views[view].rank[v] = new at(ny)</span>
 <span class="cstat-no" title="statement not covered" >            this.entities[k].views[view].subset_rank[v] = new at(ny)</span>
@@ -857,13 +857,13 @@ export function <span class="fstat-no" title="function not covered" >init(</span
           }
 <span class="cstat-no" title="statement not covered" >          Object.keys(da).forEach(<span class="fstat-no" title="function not covered" >(k</span>: string) =&gt; {</span>
             const dak = <span class="cstat-no" title="statement not covered" >da[k] as EntityData</span>
-<span class="cstat-no" title="statement not covered" >            if ('_meta' !== k &amp;&amp; c in dak) {</span>
+<span class="cstat-no" title="statement not covered" >            <span class="missing-if-branch" title="if path not taken" >I</span>if ('_meta' !== k &amp;&amp; c in dak) {</span>
               const ev: number | number[] = <span class="cstat-no" title="statement not covered" >dak[c]</span>
 <span class="cstat-no" title="statement not covered" >              if (Array.isArray(ev)) {</span>
 <span class="cstat-no" title="statement not covered" >                for (let y = <span class="cstat-no" title="statement not covered" >ny;</span> y--; ) {</span>
 <span class="cstat-no" title="statement not covered" >                  if (is_string &amp;&amp; ev[y] in vi.level_ids) {</span>
 <span class="cstat-no" title="statement not covered" >                    ev[y] = vi.level_ids[ev[y]]</span>
-                  } else <span class="cstat-no" title="statement not covered" >if ('number' !== typeof ev[y]) <span class="cstat-no" title="statement not covered" >ev[y] = NaN</span></span>
+                  } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="if path not taken" >I</span>if ('number' !== typeof ev[y]) <span class="cstat-no" title="statement not covered" >ev[y] = NaN</span></span>
 <span class="cstat-no" title="statement not covered" >                  o[y].push([k, ev[y]])</span>
                 }
 <span class="cstat-no" title="statement not covered" >                Object.freeze(ev)</span>
@@ -875,11 +875,11 @@ export function <span class="fstat-no" title="function not covered" >init(</span
 <span class="cstat-no" title="statement not covered" >                  o[0].push([k, NaN])</span>
                 } else <span class="cstat-no" title="statement not covered" >o[0].push([k, ev])</span>
               }
-<span class="cstat-no" title="statement not covered" >              if (!(k in this.entities)) <span class="cstat-no" title="statement not covered" >return</span></span>
-<span class="cstat-no" title="statement not covered" >              if (!(view in this.entities[k].views))</span>
+<span class="cstat-no" title="statement not covered" >              <span class="missing-if-branch" title="if path not taken" >I</span>if (!(k in this.entities)) <span class="cstat-no" title="statement not covered" >return</span></span>
+<span class="cstat-no" title="statement not covered" >              <span class="missing-if-branch" title="if path not taken" >I</span>if (!(view in this.entities[k].views))</span>
 <span class="cstat-no" title="statement not covered" >                this.entities[k].views[view] = {summary: {}, rank: {}, subset_rank: {}}</span>
               const eview = <span class="cstat-no" title="statement not covered" >this.entities[k].views[view]</span>
-<span class="cstat-no" title="statement not covered" >              if (!(v in eview.rank)) {</span>
+<span class="cstat-no" title="statement not covered" >              <span class="missing-if-branch" title="if path not taken" >I</span>if (!(v in eview.rank)) {</span>
 <span class="cstat-no" title="statement not covered" >                eview.rank[v] = new at(ny)</span>
 <span class="cstat-no" title="statement not covered" >                eview.subset_rank[v] = new at(ny)</span>
               }
@@ -887,7 +887,7 @@ export function <span class="fstat-no" title="function not covered" >init(</span
           })
         }
 <span class="cstat-no" title="statement not covered" >        o.forEach(<span class="fstat-no" title="function not covered" >(e</span>v: Order, y: number) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >          if (!Object.isFrozen(ev)) {</span>
+<span class="cstat-no" title="statement not covered" >          <span class="missing-if-branch" title="if path not taken" >I</span>if (!Object.isFrozen(ev)) {</span>
 <span class="cstat-no" title="statement not covered" >            ev.sort(sort_a1)</span>
 <span class="cstat-no" title="statement not covered" >            Object.freeze(ev)</span>
           }
@@ -896,7 +896,7 @@ export function <span class="fstat-no" title="function not covered" >init(</span
           })
         })
       }
-<span class="cstat-no" title="statement not covered" >      if (!(d in m.summaries)) {</span>
+<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>if (!(d in m.summaries)) {</span>
 <span class="cstat-no" title="statement not covered" >        m.order[d] = []</span>
 <span class="cstat-no" title="statement not covered" >        m.selected_order[d] = []</span>
 <span class="cstat-no" title="statement not covered" >        m.selected_summaries[d] = summary_template()</span>
@@ -955,7 +955,7 @@ export function <span class="fstat-no" title="function not covered" >init(</span
       }
     })
   }
-}<span class="cstat-no" title="statement not covered" ></span>
+}
 &nbsp;
 function <span class="fstat-no" title="function not covered" >quantile(</span>p: number, n: number, o: number, x: Order): number {
   const a = <span class="cstat-no" title="statement not covered" >p * (n - 1),</span>
@@ -971,13 +971,13 @@ export async function <span class="fstat-no" title="function not covered" >calcu
   const <span class="cstat-no" title="statement not covered" >dataset: string = v.get.dataset()</span>
 <span class="cstat-no" title="statement not covered" >  await this.data_processed[dataset]</span>
   const <span class="cstat-no" title="statement not covered" >summaryId = dataset + measure</span>
-<span class="cstat-no" title="statement not covered" >  if (!this.inited_summary[summaryId]) <span class="cstat-no" title="statement not covered" >this.init_summary(measure, dataset)</span></span>
+<span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (!this.inited_summary[summaryId]) <span class="cstat-no" title="statement not covered" >this.init_summary(measure, dataset)</span></span>
 <span class="cstat-no" title="statement not covered" >  this.inited_summary[summaryId] = new Promise(<span class="fstat-no" title="function not covered" >resolve </span>=&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    this.summary_ready[summaryId] = resolve</span>
   })
   const <span class="cstat-no" title="statement not covered" >variable = this.variables[measure],</span>
     m = variable.views[view]
-  if (<span class="cstat-no" title="statement not covered" >m.state[dataset] !== v.state) {</span>
+  if (<span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="if path not taken" >I</span>m.</span>state[dataset] !== v.state) {
     const <span class="cstat-no" title="statement not covered" >s = v.selection[this.settings.settings.summary_selection],</span>
       a = v.selection.all,
       mo = m.order[dataset],
@@ -1016,16 +1016,16 @@ export async function <span class="fstat-no" title="function not covered" >calcu
 <span class="cstat-no" title="statement not covered" >      o.forEach(<span class="fstat-no" title="function not covered" >oi </span>=&gt; {</span>
         const k = <span class="cstat-no" title="statement not covered" >oi[0],</span>
           value = <span class="cstat-no" title="statement not covered" >oi[1]</span>
-<span class="cstat-no" title="statement not covered" >        if (k in s) {</span>
+<span class="cstat-no" title="statement not covered" >        <span class="missing-if-branch" title="if path not taken" >I</span>if (k in s) {</span>
           const en = <span class="cstat-no" title="statement not covered" >s[k].views[view],</span>
             present = <span class="cstat-no" title="statement not covered" >!isNaN(value)</span>
-<span class="cstat-no" title="statement not covered" >          if (!y) {</span>
-<span class="cstat-no" title="statement not covered" >            if (!(measure in en.summary)) <span class="cstat-no" title="statement not covered" >en.summary[measure] = {n: 0, overall: ms, order: mo}</span></span>
+<span class="cstat-no" title="statement not covered" >          <span class="missing-if-branch" title="if path not taken" >I</span>if (!y) {</span>
+<span class="cstat-no" title="statement not covered" >            <span class="missing-if-branch" title="if path not taken" >I</span>if (!(measure in en.summary)) <span class="cstat-no" title="statement not covered" >en.summary[measure] = {n: 0, overall: ms, order: mo}</span></span>
 <span class="cstat-no" title="statement not covered" >            en.summary[measure].n = 0</span>
           }
-<span class="cstat-no" title="statement not covered" >          if (full &amp;&amp; subset) {</span>
+<span class="cstat-no" title="statement not covered" >          <span class="missing-if-branch" title="if path not taken" >I</span>if (full &amp;&amp; subset) {</span>
 <span class="cstat-no" title="statement not covered" >            moy.push(oi)</span>
-<span class="cstat-no" title="statement not covered" >            if (k in a) {</span>
+<span class="cstat-no" title="statement not covered" >            <span class="missing-if-branch" title="if path not taken" >I</span>if (k in a) {</span>
 <span class="cstat-no" title="statement not covered" >              msoy.push(oi)</span>
 <span class="cstat-no" title="statement not covered" >              if (present) {</span>
 <span class="cstat-no" title="statement not covered" >                mss.n[y]++</span>
@@ -1040,8 +1040,8 @@ export async function <span class="fstat-no" title="function not covered" >calcu
 <span class="cstat-no" title="statement not covered" >              m.table[levels[value]][y]++</span>
             } else {
 <span class="cstat-no" title="statement not covered" >              ms.sum[y] += value</span>
-<span class="cstat-no" title="statement not covered" >              if (value &gt; ms.max[y]) <span class="cstat-no" title="statement not covered" >ms.max[y] = value</span></span>
-<span class="cstat-no" title="statement not covered" >              if (value &lt; ms.min[y]) <span class="cstat-no" title="statement not covered" >ms.min[y] = value</span></span>
+<span class="cstat-no" title="statement not covered" >              <span class="missing-if-branch" title="if path not taken" >I</span>if (value &gt; ms.max[y]) <span class="cstat-no" title="statement not covered" >ms.max[y] = value</span></span>
+<span class="cstat-no" title="statement not covered" >              <span class="missing-if-branch" title="if path not taken" >I</span>if (value &lt; ms.min[y]) <span class="cstat-no" title="statement not covered" >ms.min[y] = value</span></span>
             }
           } else <span class="cstat-no" title="statement not covered" >ms.missing[y]++</span>
         }
@@ -1053,15 +1053,15 @@ export async function <span class="fstat-no" title="function not covered" >calcu
 <span class="cstat-no" title="statement not covered" >          if (ms.n[y]) {</span>
             let l = <span class="cstat-no" title="statement not covered" >0</span>
 <span class="cstat-no" title="statement not covered" >            Object.keys(m.table).forEach(<span class="fstat-no" title="function not covered" >k </span>=&gt; {</span>
-<span class="cstat-no" title="statement not covered" >              if (m.table[k][y] &gt; m.table[levels[l]][y]) <span class="cstat-no" title="statement not covered" >l = level_ids[k]</span></span>
+<span class="cstat-no" title="statement not covered" >              <span class="missing-if-branch" title="if path not taken" >I</span>if (m.table[k][y] &gt; m.table[levels[l]][y]) <span class="cstat-no" title="statement not covered" >l = level_ids[k]</span></span>
             })
 <span class="cstat-no" title="statement not covered" >            ms.mode[y] = levels[l]</span>
           } else <span class="cstat-no" title="statement not covered" >ms.mode[y] = ''</span>
         } else {
 <span class="cstat-no" title="statement not covered" >          if (ms.n[y]) {</span>
 <span class="cstat-no" title="statement not covered" >            ms.mean[y] = ms.sum[y] / ms.n[y]</span>
-<span class="cstat-no" title="statement not covered" >            if (!isFinite(ms.min[y])) <span class="cstat-no" title="statement not covered" >ms.min[y] = ms.mean[y]</span></span>
-<span class="cstat-no" title="statement not covered" >            if (!isFinite(ms.max[y])) <span class="cstat-no" title="statement not covered" >ms.max[y] = ms.mean[y]</span></span>
+<span class="cstat-no" title="statement not covered" >            <span class="missing-if-branch" title="if path not taken" >I</span>if (!isFinite(ms.min[y])) <span class="cstat-no" title="statement not covered" >ms.min[y] = ms.mean[y]</span></span>
+<span class="cstat-no" title="statement not covered" >            <span class="missing-if-branch" title="if path not taken" >I</span>if (!isFinite(ms.max[y])) <span class="cstat-no" title="statement not covered" >ms.max[y] = ms.mean[y]</span></span>
 <span class="cstat-no" title="statement not covered" >            ms.range[y] = ms.max[y] - ms.min[y]</span>
 <span class="cstat-no" title="statement not covered" >            if (1 === ms.n[y]) {</span>
 <span class="cstat-no" title="statement not covered" >              ms.q3[y] = ms.median[y] = ms.q1[y] = null == o[0][1] ? ms.mean[y] : o[0][1]</span>
@@ -1073,17 +1073,17 @@ export async function <span class="fstat-no" title="function not covered" >calcu
             const n = <span class="cstat-no" title="statement not covered" >o.length</span>
 <span class="cstat-no" title="statement not covered" >            for (let i = <span class="cstat-no" title="statement not covered" >ms.missing[y],</span> bmd = <span class="cstat-no" title="statement not covered" >false,</span> bme = <span class="cstat-no" title="statement not covered" >false;</span> i &lt; n; i++) {</span>
               const v = <span class="cstat-no" title="statement not covered" >o[i][1]</span>
-<span class="cstat-no" title="statement not covered" >              if ('number' === typeof v) {</span>
-<span class="cstat-no" title="statement not covered" >                if (!bmd &amp;&amp; v &gt; ms.median[y]) {</span>
+<span class="cstat-no" title="statement not covered" >              <span class="missing-if-branch" title="if path not taken" >I</span>if ('number' === typeof v) {</span>
+<span class="cstat-no" title="statement not covered" >                <span class="missing-if-branch" title="if path not taken" >I</span>if (!bmd &amp;&amp; v &gt; ms.median[y]) {</span>
 <span class="cstat-no" title="statement not covered" >                  ms.break_median[y] = i - 1</span>
 <span class="cstat-no" title="statement not covered" >                  bmd = true</span>
                 }
-<span class="cstat-no" title="statement not covered" >                if (!bme &amp;&amp; v &gt; ms.mean[y]) {</span>
+<span class="cstat-no" title="statement not covered" >                <span class="missing-if-branch" title="if path not taken" >I</span>if (!bme &amp;&amp; v &gt; ms.mean[y]) {</span>
 <span class="cstat-no" title="statement not covered" >                  ms.break_mean[y] = i - 1</span>
 <span class="cstat-no" title="statement not covered" >                  bme = true</span>
                 }
               }
-<span class="cstat-no" title="statement not covered" >              if (bmd &amp;&amp; bme) <span class="cstat-no" title="statement not covered" >break</span></span>
+<span class="cstat-no" title="statement not covered" >              <span class="missing-if-branch" title="if path not taken" >I</span>if (bmd &amp;&amp; bme) <span class="cstat-no" title="statement not covered" >break</span></span>
             }
           } else {
 <span class="cstat-no" title="statement not covered" >            ms.max[y] = 0</span>
@@ -1092,9 +1092,9 @@ export async function <span class="fstat-no" title="function not covered" >calcu
 <span class="cstat-no" title="statement not covered" >            ms.q1[y] = 0</span>
 <span class="cstat-no" title="statement not covered" >            ms.min[y] = 0</span>
           }
-<span class="cstat-no" title="statement not covered" >          if (ms.n[y]) {</span>
+<span class="cstat-no" title="statement not covered" >          <span class="missing-if-branch" title="if path not taken" >I</span>if (ms.n[y]) {</span>
 <span class="cstat-no" title="statement not covered" >            ms.norm_median[y] = ms.range[y] ? (ms.median[y] - ms.min[y]) / ms.range[y] : 0.5</span>
-<span class="cstat-no" title="statement not covered" >            if (-1 !== ms.break_median[y]) {</span>
+<span class="cstat-no" title="statement not covered" >            <span class="missing-if-branch" title="if path not taken" >I</span>if (-1 !== ms.break_median[y]) {</span>
 <span class="cstat-no" title="statement not covered" >              ms.lower_median_min[y] = ms.norm_median[y] - (o[ms.missing[y]][1] - ms.min[y]) / ms.range[y]</span>
 <span class="cstat-no" title="statement not covered" >              ms.lower_median_range[y] =</span>
                 ms.norm_median[y] - ((o[ms.break_median[y]][1] - ms.min[y]) / ms.range[y] - ms.lower_median_min[y])
@@ -1103,7 +1103,7 @@ export async function <span class="fstat-no" title="function not covered" >calcu
                 (o[o.length - 1][1] - ms.min[y]) / ms.range[y] - ms.norm_median[y] - ms.upper_median_min[y]
             }
 <span class="cstat-no" title="statement not covered" >            ms.norm_mean[y] = ms.range[y] ? (ms.mean[y] - ms.min[y]) / ms.range[y] : 0.5</span>
-<span class="cstat-no" title="statement not covered" >            if (-1 !== ms.break_mean[y]) {</span>
+<span class="cstat-no" title="statement not covered" >            <span class="missing-if-branch" title="if path not taken" >I</span>if (-1 !== ms.break_mean[y]) {</span>
 <span class="cstat-no" title="statement not covered" >              ms.lower_mean_min[y] = ms.norm_mean[y] - (o[ms.missing[y]][1] - ms.min[y]) / ms.range[y]</span>
 <span class="cstat-no" title="statement not covered" >              ms.lower_mean_range[y] =</span>
                 ms.norm_mean[y] - ((o[ms.break_mean[y]][1] - ms.min[y]) / ms.range[y] - ms.lower_mean_min[y])
@@ -1120,7 +1120,7 @@ export async function <span class="fstat-no" title="function not covered" >calcu
 <span class="cstat-no" title="statement not covered" >          if (is_string) {</span>
             let q1 = <span class="cstat-no" title="statement not covered" >0</span>
 <span class="cstat-no" title="statement not covered" >            Object.keys(m.table).forEach(<span class="fstat-no" title="function not covered" >k </span>=&gt; {</span>
-<span class="cstat-no" title="statement not covered" >              if (m.table[k][y] &gt; m.table[levels[q1]][y]) <span class="cstat-no" title="statement not covered" >q1 = level_ids[k]</span></span>
+<span class="cstat-no" title="statement not covered" >              <span class="missing-if-branch" title="if path not taken" >I</span>if (m.table[k][y] &gt; m.table[levels[q1]][y]) <span class="cstat-no" title="statement not covered" >q1 = level_ids[k]</span></span>
             })
 <span class="cstat-no" title="statement not covered" >            ms.mode[y] = levels[q1]</span>
           } else <span class="cstat-no" title="statement not covered" >ms.mean[y] = ms.sum[y] / ms.n[y]</span>
@@ -1141,7 +1141,7 @@ export async function <span class="fstat-no" title="function not covered" >calcu
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-06-07T11:42:18.535Z
+                at 2023-06-19T00:58:47.130Z
             </div>
         <script src="../prettify.js"></script>
         <script>

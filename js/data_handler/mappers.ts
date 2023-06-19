@@ -115,7 +115,7 @@ export async function entities(this: DataHandler, g: string): Promise<void> {
         })
         if (infos) {
           datasets.forEach((d: string) => {
-            const p = infos[d].id_length
+            const p = d in infos && infos[d].id_length
             if (p && p < l) {
               const sl = id.substring(0, p)
               if (sl in this.sets[d]) {
@@ -126,7 +126,7 @@ export async function entities(this: DataHandler, g: string): Promise<void> {
             }
           })
         }
-        ;(this.in_browser ? Object.keys(this.settings.dataviews) : ['default_view']).forEach((v: string) => {
+        this.settings.view_names.forEach((v: string) => {
           if (!(v in e.views)) {
             e.views[v] = {summary: {}, rank: {}, subset_rank: {}}
           }

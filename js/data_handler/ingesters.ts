@@ -66,67 +66,68 @@ export async function id_maps(this: DataHandler) {
   this.metadata.datasets &&
     this.metadata.datasets.forEach((k: string) => {
       let has_map = false
-      this.info[k].ids.forEach((id: IdMap, i: number) => {
-        if ('map' in id) {
-          has_map = true
-          const map = id.map
-          if (map in this.data_maps) {
-            if (this.data_maps[map].retrieved) {
-              const features = (
-                k in this.data_maps[map].resource ? this.data_maps[map].resource[k] : this.data_maps[map].resource
-              ) as EntityFeatures
-              this.info[k].schema.fields[i].ids = this.entity_features[k] = features
+      k in this.info &&
+        this.info[k].ids.forEach((id: IdMap, i: number) => {
+          if ('map' in id) {
+            has_map = true
+            const map = id.map
+            if (map in this.data_maps) {
+              if (this.data_maps[map].retrieved) {
+                const features = (
+                  k in this.data_maps[map].resource ? this.data_maps[map].resource[k] : this.data_maps[map].resource
+                ) as EntityFeatures
+                this.info[k].schema.fields[i].ids = this.entity_features[k] = features
+                this.map_entities(k)
+              } else {
+                const queue = this.data_maps[map].queue as string[]
+                if (-1 === queue.indexOf(k)) queue.push(k)
+              }
+            } else if ('string' !== typeof map || id.map_content) {
+              if ('string' === typeof map) {
+                this.data_maps[map] = {queue: [], resource: JSON.parse(id.map_content), retrieved: true}
+                const features = (
+                  k in this.data_maps[map].resource ? this.data_maps[map].resource[k] : this.data_maps[map].resource
+                ) as EntityFeatures
+                this.info[k].schema.fields[i].ids = this.entity_features[k] = features
+              } else {
+                this.entity_features[k] = map
+              }
               this.map_entities(k)
             } else {
-              const queue = this.data_maps[map].queue as string[]
-              if (-1 === queue.indexOf(k)) queue.push(k)
-            }
-          } else if ('string' !== typeof map || id.map_content) {
-            if ('string' === typeof map) {
-              this.data_maps[map] = {queue: [], resource: JSON.parse(id.map_content), retrieved: true}
-              const features = (
-                k in this.data_maps[map].resource ? this.data_maps[map].resource[k] : this.data_maps[map].resource
-              ) as EntityFeatures
-              this.info[k].schema.fields[i].ids = this.entity_features[k] = features
-            } else {
-              this.entity_features[k] = map
-            }
-            this.map_entities(k)
-          } else {
-            this.data_maps[map] = {queue: [k], resource: {}, retrieved: false}
-            if (this.settings.entity_info && map in this.settings.entity_info) {
-              const e = this.settings.entity_info
-              if ('string' === typeof e[map]) e[map] = JSON.parse(e[map] as string)
-              this.ingest_map(e[map] as EntityFeatures, map, i)
-            } else if ('undefined' === typeof window) {
-              require('https')
-                .get(map, (r: {req: {protocol: string; host: string; path: string}; on: Function}) => {
-                  const c: string[] = []
-                  r.on('data', (d: string) => {
-                    c.push(d)
+              this.data_maps[map] = {queue: [k], resource: {}, retrieved: false}
+              if (this.settings.entity_info && map in this.settings.entity_info) {
+                const e = this.settings.entity_info
+                if ('string' === typeof e[map]) e[map] = JSON.parse(e[map] as string)
+                this.ingest_map(e[map] as EntityFeatures, map, i)
+              } else if ('undefined' === typeof window) {
+                require('https')
+                  .get(map, (r: {req: {protocol: string; host: string; path: string}; on: Function}) => {
+                    const c: string[] = []
+                    r.on('data', (d: string) => {
+                      c.push(d)
+                    })
+                    r.on('end', () => {
+                      this.ingest_map(JSON.parse(c.join('')), r.req.protocol + '//' + r.req.host + r.req.path, i)
+                    })
                   })
-                  r.on('end', () => {
-                    this.ingest_map(JSON.parse(c.join('')), r.req.protocol + '//' + r.req.host + r.req.path, i)
-                  })
-                })
-                .end()
-            } else {
-              const f = new window.XMLHttpRequest()
-              f.onreadystatechange = function (this: DataHandler, url: string, fi: number) {
-                if (4 === f.readyState) {
-                  if (200 === f.status) {
-                    this.ingest_map(JSON.parse(f.responseText), url, fi)
-                  } else {
-                    throw new Error('data_handler.ingester.id_maps failed: ' + f.responseText)
+                  .end()
+              } else {
+                const f = new window.XMLHttpRequest()
+                f.onreadystatechange = function (this: DataHandler, url: string, fi: number) {
+                  if (4 === f.readyState) {
+                    if (200 === f.status) {
+                      this.ingest_map(JSON.parse(f.responseText), url, fi)
+                    } else {
+                      throw new Error('data_handler.ingester.id_maps failed: ' + f.responseText)
+                    }
                   }
-                }
-              }.bind(this, map, i)
-              f.open('GET', map, true)
-              f.send()
+                }.bind(this, map, i)
+                f.open('GET', map, true)
+                f.send()
+              }
             }
           }
-        }
-      })
+        })
       if (!has_map) {
         this.entity_features[k] = {}
         this.map_entities(k)

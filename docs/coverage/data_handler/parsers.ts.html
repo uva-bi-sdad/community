@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">82.5% </span>
+                <span class="strong">83.33% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>66/80</span>
+                <span class='fraction'>70/84</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">68.68% </span>
+                <span class="strong">70.66% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>68/99</span>
+                <span class='fraction'>53/75</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">91.3% </span>
+                <span class="strong">91.78% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>63/69</span>
+                <span class='fraction'>67/73</span>
             </div>
         
             
@@ -180,13 +180,13 @@
 <a name='L115'></a><a href='#L115'>115</a>
 <a name='L116'></a><a href='#L116'>116</a>
 <a name='L117'></a><a href='#L117'>117</a>
-<a name='L118'></a><a href='#L118'>118</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L118'></a><a href='#L118'>118</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-yes">7x</span>
@@ -296,7 +296,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import {patterns} from './patterns'
 import {Filter, Query, UnparsedObject} from '../types'
 import * as params from './export_params'
@@ -322,7 +322,7 @@ export function query(this: DataHandler, q: any): Query {
         let a: string[] = []
         if (patterns.single_operator.test(k)) {
           a = k.replace(patterns.single_operator, '$1=$2').split('=')
-          <span class="missing-if-branch" title="else path not taken" >E</span>if (a.length &gt; 1) {
+          if (a.length &gt; 1) {
             k = a[0]
             q[k] = a[1]
           }
@@ -337,19 +337,19 @@ export function query(this: DataHandler, q: any): Query {
             check: <span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >f</span>alse,</span>
           }
         <span class="missing-if-branch" title="if path not taken" >I</span>if ('object' === typeof q[k]) {
-<span class="cstat-no" title="statement not covered" >          if ('component' in q[k]) <span class="cstat-no" title="statement not covered" >tf.component = q[k].component</span></span>
-<span class="cstat-no" title="statement not covered" >          if ('operator' in q[k]) <span class="cstat-no" title="statement not covered" >tf.operator = q[k].operator</span></span>
-<span class="cstat-no" title="statement not covered" >          if ('value' in q[k]) <span class="cstat-no" title="statement not covered" >tf.value = q[k].value</span></span>
+<span class="cstat-no" title="statement not covered" >          <span class="missing-if-branch" title="if path not taken" >I</span>if ('component' in q[k]) <span class="cstat-no" title="statement not covered" >tf.component = q[k].component</span></span>
+<span class="cstat-no" title="statement not covered" >          <span class="missing-if-branch" title="if path not taken" >I</span>if ('operator' in q[k]) <span class="cstat-no" title="statement not covered" >tf.operator = q[k].operator</span></span>
+<span class="cstat-no" title="statement not covered" >          <span class="missing-if-branch" title="if path not taken" >I</span>if ('value' in q[k]) <span class="cstat-no" title="statement not covered" >tf.value = q[k].value</span></span>
         }
         k = tf.name
         if (aq) {
           if (-1 !== params.options.filter_components.indexOf(aq[2])) {
             tf.component = aq[2]
             tf.name = aq[1]
-          } else <span class="missing-if-branch" title="else path not taken" >E</span>if (patterns.number.test(aq[2])) {
+          } else if (patterns.number.test(aq[2])) {
             const time = Number(aq[2])
             const i = time &gt; 0 &amp;&amp; time &lt; this.meta.overall.value.length ? <span class="branch-0 cbranch-no" title="branch not covered" >time </span>: this.meta.overall.value.indexOf(time)
-            <span class="missing-if-branch" title="else path not taken" >E</span>if (-1 !== i) {
+            if (-1 !== i) {
               tf.time_component = true
               tf.component = i
               tf.name = aq[1]
@@ -388,9 +388,9 @@ export function query(this: DataHandler, q: any): Query {
           f.dataset = tf
         } else if (tf.name in this.features) {
           <span class="missing-if-branch" title="if path not taken" >I</span>if ('id' === tf.name &amp;&amp; !tf.value) <span class="cstat-no" title="statement not covered" >tf.value = String(tf.value).split(',')</span>
-          tf.check = group_checks[tf.operator].bind(tf.value || <span class="branch-1 cbranch-no" title="branch not covered" >tf.value)</span>
+          tf.check = group_checks[tf.operator].bind(tf.value)
           f.feature_conditions.push(tf)
-        } else <span class="missing-if-branch" title="else path not taken" >E</span>if (tf.name in this.variables) {
+        } else if (tf.name in this.variables) {
           tf.check = (
             tf.time_component
               ? function (this: {check: Function; condition: Filter}, d: number | number[], adj: number) {
@@ -406,7 +406,7 @@ export function query(this: DataHandler, q: any): Query {
                   return this.check(s[this.condition.component], this.condition.value)
                 }
           ).bind({check: DataHandler.checks[tf.operator], condition: tf})
-          <span class="missing-if-branch" title="else path not taken" >E</span>if (-1 === f.variables.filter_by.indexOf(tf.name)) f.variables.filter_by.push(tf.name)
+          if (-1 === f.variables.filter_by.indexOf(tf.name)) f.variables.filter_by.push(tf.name)
           f.variables.conditions.push(tf)
         }
       }
@@ -421,7 +421,7 @@ export function query(this: DataHandler, q: any): Query {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-06-07T11:42:18.535Z
+                at 2023-06-19T00:58:47.130Z
             </div>
         <script src="../prettify.js"></script>
         <script>

@@ -614,72 +614,73 @@
                 this.metadata.datasets &&
                     this.metadata.datasets.forEach(function (k) {
                         var has_map = false;
-                        _this.info[k].ids.forEach(function (id, i) {
-                            if ('map' in id) {
-                                has_map = true;
-                                var map_1 = id.map;
-                                if (map_1 in _this.data_maps) {
-                                    if (_this.data_maps[map_1].retrieved) {
-                                        var features = (k in _this.data_maps[map_1].resource ? _this.data_maps[map_1].resource[k] : _this.data_maps[map_1].resource);
-                                        _this.info[k].schema.fields[i].ids = _this.entity_features[k] = features;
+                        k in _this.info &&
+                            _this.info[k].ids.forEach(function (id, i) {
+                                if ('map' in id) {
+                                    has_map = true;
+                                    var map_1 = id.map;
+                                    if (map_1 in _this.data_maps) {
+                                        if (_this.data_maps[map_1].retrieved) {
+                                            var features = (k in _this.data_maps[map_1].resource ? _this.data_maps[map_1].resource[k] : _this.data_maps[map_1].resource);
+                                            _this.info[k].schema.fields[i].ids = _this.entity_features[k] = features;
+                                            _this.map_entities(k);
+                                        }
+                                        else {
+                                            var queue = _this.data_maps[map_1].queue;
+                                            if (-1 === queue.indexOf(k))
+                                                queue.push(k);
+                                        }
+                                    }
+                                    else if ('string' !== typeof map_1 || id.map_content) {
+                                        if ('string' === typeof map_1) {
+                                            _this.data_maps[map_1] = { queue: [], resource: JSON.parse(id.map_content), retrieved: true };
+                                            var features = (k in _this.data_maps[map_1].resource ? _this.data_maps[map_1].resource[k] : _this.data_maps[map_1].resource);
+                                            _this.info[k].schema.fields[i].ids = _this.entity_features[k] = features;
+                                        }
+                                        else {
+                                            _this.entity_features[k] = map_1;
+                                        }
                                         _this.map_entities(k);
                                     }
                                     else {
-                                        var queue = _this.data_maps[map_1].queue;
-                                        if (-1 === queue.indexOf(k))
-                                            queue.push(k);
-                                    }
-                                }
-                                else if ('string' !== typeof map_1 || id.map_content) {
-                                    if ('string' === typeof map_1) {
-                                        _this.data_maps[map_1] = { queue: [], resource: JSON.parse(id.map_content), retrieved: true };
-                                        var features = (k in _this.data_maps[map_1].resource ? _this.data_maps[map_1].resource[k] : _this.data_maps[map_1].resource);
-                                        _this.info[k].schema.fields[i].ids = _this.entity_features[k] = features;
-                                    }
-                                    else {
-                                        _this.entity_features[k] = map_1;
-                                    }
-                                    _this.map_entities(k);
-                                }
-                                else {
-                                    _this.data_maps[map_1] = { queue: [k], resource: {}, retrieved: false };
-                                    if (_this.settings.entity_info && map_1 in _this.settings.entity_info) {
-                                        var e = _this.settings.entity_info;
-                                        if ('string' === typeof e[map_1])
-                                            e[map_1] = JSON.parse(e[map_1]);
-                                        _this.ingest_map(e[map_1], map_1, i);
-                                    }
-                                    else if ('undefined' === typeof window) {
-                                        require('https')
-                                            .get(map_1, function (r) {
-                                            var c = [];
-                                            r.on('data', function (d) {
-                                                c.push(d);
-                                            });
-                                            r.on('end', function () {
-                                                _this.ingest_map(JSON.parse(c.join('')), r.req.protocol + '//' + r.req.host + r.req.path, i);
-                                            });
-                                        })
-                                            .end();
-                                    }
-                                    else {
-                                        var f_1 = new window.XMLHttpRequest();
-                                        f_1.onreadystatechange = function (url, fi) {
-                                            if (4 === f_1.readyState) {
-                                                if (200 === f_1.status) {
-                                                    this.ingest_map(JSON.parse(f_1.responseText), url, fi);
+                                        _this.data_maps[map_1] = { queue: [k], resource: {}, retrieved: false };
+                                        if (_this.settings.entity_info && map_1 in _this.settings.entity_info) {
+                                            var e = _this.settings.entity_info;
+                                            if ('string' === typeof e[map_1])
+                                                e[map_1] = JSON.parse(e[map_1]);
+                                            _this.ingest_map(e[map_1], map_1, i);
+                                        }
+                                        else if ('undefined' === typeof window) {
+                                            require('https')
+                                                .get(map_1, function (r) {
+                                                var c = [];
+                                                r.on('data', function (d) {
+                                                    c.push(d);
+                                                });
+                                                r.on('end', function () {
+                                                    _this.ingest_map(JSON.parse(c.join('')), r.req.protocol + '//' + r.req.host + r.req.path, i);
+                                                });
+                                            })
+                                                .end();
+                                        }
+                                        else {
+                                            var f_1 = new window.XMLHttpRequest();
+                                            f_1.onreadystatechange = function (url, fi) {
+                                                if (4 === f_1.readyState) {
+                                                    if (200 === f_1.status) {
+                                                        this.ingest_map(JSON.parse(f_1.responseText), url, fi);
+                                                    }
+                                                    else {
+                                                        throw new Error('data_handler.ingester.id_maps failed: ' + f_1.responseText);
+                                                    }
                                                 }
-                                                else {
-                                                    throw new Error('data_handler.ingester.id_maps failed: ' + f_1.responseText);
-                                                }
-                                            }
-                                        }.bind(_this, map_1, i);
-                                        f_1.open('GET', map_1, true);
-                                        f_1.send();
+                                            }.bind(_this, map_1, i);
+                                            f_1.open('GET', map_1, true);
+                                            f_1.send();
+                                        }
                                     }
                                 }
-                            }
-                        });
+                            });
                         if (!has_map) {
                             _this.entity_features[k] = {};
                             _this.map_entities(k);
@@ -742,7 +743,7 @@
     function init(v, d) {
         var _this = this;
         if (!this.inited_summary[d + v]) {
-            (this.in_browser ? Object.keys(this.settings.dataviews) : ['default_view']).forEach(function (view) {
+            this.settings.view_names.forEach(function (view) {
                 var vi = _this.variables[v];
                 if (!(view in vi.views))
                     vi.views[view] = {
@@ -1216,7 +1217,7 @@
                             });
                             if (infos_1) {
                                 datasets_1.forEach(function (d) {
-                                    var p = infos_1[d].id_length;
+                                    var p = d in infos_1 && infos_1[d].id_length;
                                     if (p && p < l) {
                                         var sl = id.substring(0, p);
                                         if (sl in _this.sets[d]) {
@@ -1228,7 +1229,7 @@
                                     }
                                 });
                             }
-                            (_this.in_browser ? Object.keys(_this.settings.dataviews) : ['default_view']).forEach(function (v) {
+                            _this.settings.view_names.forEach(function (v) {
                                 if (!(v in e_1.views)) {
                                     e_1.views[v] = { summary: {}, rank: {}, subset_rank: {} };
                                 }
@@ -1394,7 +1395,7 @@
             this.metadata = { datasets: [] };
             this.info = {};
             this.sets = {};
-            this.in_browser = false;
+            this.dynamic_load = false;
             this.all_data_ready = function () { return false; };
             this.data_ready = new Promise(function (resolve) {
                 _this.all_data_ready = resolve;
@@ -1496,12 +1497,16 @@
             if (data$1)
                 this.sets = data$1;
             this.get_value = this.get_value.bind(this);
-            this.in_browser = 'undefined' !== typeof Window;
+            this.dynamic_load = 'dataviews' in this.settings && this.settings.settings && !!this.settings.settings.partial_init;
+            this.settings.view_names = this.dynamic_load ? Object.keys(this.settings.dataviews) : ['default_view'];
             if ('string' === typeof this.metadata.datasets)
                 this.metadata.datasets = [this.metadata.datasets];
             var init$1 = function () {
-                if (!_this.metadata.datasets)
+                if (!_this.metadata.datasets || !_this.metadata.datasets.length) {
                     _this.metadata.datasets = Object.keys(_this.info);
+                    if (!_this.metadata.datasets.length)
+                        _this.metadata.datasets = Object.keys(_this.sets);
+                }
                 if (_this.metadata.measure_info) {
                     var info_1 = _this.metadata.measure_info;
                     _this.metadata.datasets.forEach(function (d) {
@@ -1523,7 +1528,7 @@
                     if (_this.loaded[k]) {
                         _this.ingest_data(_this.sets[k], k);
                     }
-                    else if (!_this.in_browser ||
+                    else if (!_this.dynamic_load ||
                         (_this.settings.settings && !_this.settings.settings.partial_init) ||
                         !_this.defaults.dataset ||
                         k === _this.defaults.dataset)

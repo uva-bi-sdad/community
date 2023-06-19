@@ -39,7 +39,7 @@ function summary_template(): Summary {
 
 export function init(this: DataHandler, v: string, d: string) {
   if (!this.inited_summary[d + v]) {
-    ;(this.in_browser ? Object.keys(this.settings.dataviews) : ['default_view']).forEach((view: string) => {
+    this.settings.view_names.forEach((view: string) => {
       const vi: Variable = this.variables[v]
       if (!(view in vi.views))
         vi.views[view] = {

@@ -1,7 +1,6 @@
 # rebuild
-styler::style_pkg(filetype = c("R", "Rmd")) # if you are editing code, run this
-spelling::spell_check_package() # if you are editing documents/ writing, run this
-# if you are modifying documentation for functions, rebuilds the base documentation from the function source
+styler::style_pkg(filetype = c("R", "Rmd"))
+spelling::spell_check_package()
 devtools::document() 
 pkgdown::build_site(lazy = TRUE)
 
@@ -34,12 +33,6 @@ save(cache_scripts, file = "R/sysdata.rda")
 devtools::check()
 
 # generate coverage reports
-if (!dir.exists("../test_site")) {
-  library(community)
-  init_site("test_site", dir = "../test_site")
-  source("../test_site/build.R")
-  site_build("../test_site", bundle_package = TRUE)
-}
 system2("npm", "test")
 covr::report(file = "docs/coverage/package.html", browse = FALSE)
 

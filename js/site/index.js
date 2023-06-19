@@ -5,6 +5,7 @@ import {value_types} from './value_types'
 import {defaults} from './defaults'
 import {summary_levels} from './summary_levels'
 import {set_description} from './utils'
+import {TutorialManager} from './tutorials'
 const community = function (window, document, site) {
   const tooltip_icon_rule =
       'button.has-note::after,.button-wrapper.has-note button::before,.has-note legend::before,.has-note label::before,.wrapper.has-note > div > label::before{display:none}',
@@ -696,7 +697,7 @@ const community = function (window, document, site) {
           this.set(this.e.checked)
         },
         setter: function (v) {
-          if ('string' === typeof v) v = 'on' === v
+          if ('string' === typeof v) v = 'on' === v || 'true' === v
           if (v !== this.source) {
             this.previous = this.e.checked
             this.e.checked = this.source = v
@@ -910,6 +911,7 @@ const community = function (window, document, site) {
           c.appendChild((c = document.createElement('input')))
           c.className = 'combobox-input combobox-component'
           c.type = 'text'
+          c.role = 'combobox'
           c.setAttribute('aria-labelledby', id + '-label')
           c.id = id + '-input'
           c.autocomplete = 'off'
@@ -1106,7 +1108,7 @@ const community = function (window, document, site) {
                       c.previousElementSibling.firstElementChild.setAttribute('aria-expanded', true)
                     }
                   }
-                  this.e.setAttribute('aria-activedescendant', o.id)
+                  this.input_element.setAttribute('aria-activedescendant', o.id)
                   const port = this.container.getBoundingClientRect(),
                     item = o.getBoundingClientRect()
                   let top = port.top
@@ -1313,6 +1315,7 @@ const community = function (window, document, site) {
         },
         adder: function (value, display, noadd, meta) {
           const e = document.createElement('div')
+          e.id = this.id + '_' + value
           e.role = 'option'
           e.setAttribute('aria-selected', false)
           e.tabindex = '0'
@@ -4553,7 +4556,6 @@ const community = function (window, document, site) {
     page.modal.filter.init = true
     e.id = 'filter_display'
     e.className = 'modal fade'
-    e.setAttribute('tabindex', '-1')
     e.setAttribute('aria-labelledby', 'filter_title')
     e.ariaHidden = 'true'
     e.appendChild(document.createElement('div'))
@@ -4687,6 +4689,12 @@ const community = function (window, document, site) {
     page.tooltip.e.appendChild(document.createElement('p'))
     document.body.appendChild(page.tooltip.e)
     document.body.addEventListener('mouseover', tooltip_clear)
+
+    // initialize tutorial selection dialog
+    if (site.tutorials) {
+      page.tutorials = new TutorialManager(site.tutorials, _u, global_reset)
+      page.overlay.appendChild(page.tutorials.container)
+    }
 
     // initialize inputs
     if (site.dataviews) {
@@ -4885,6 +4893,12 @@ const community = function (window, document, site) {
     if (site.data.inited) clearTimeout(site.data.inited.load_screen)
     page.wrap.style.visibility = 'visible'
     page.load_screen.style.display = 'none'
+    if (site.tutorials && 'tutorial' in site.url_options) {
+      setTimeout(
+        page.tutorials.start_tutorial.bind(page.tutorials, {target: {dataset: {name: site.url_options.tutorial}}}),
+        0
+      )
+    }
   }
 
   function clear_storage() {
@@ -5832,10 +5846,17 @@ const community = function (window, document, site) {
     v.n_selected = {ids: 0, features: 0, variables: 0, dataset: 0, filtered: 0, full_filter: 0, all: 0}
     v.get = {
       dataset: function () {
-        return (
-          valueOf('string' === typeof v.dataset && v.dataset in _u ? _u[v.dataset].value() : v.dataset) ||
-          defaults.dataset
-        )
+        let d = defaults.dataset
+        if ('string' === typeof v.dataset && v.dataset in _u) {
+          d = valueOf(_u[v.dataset].value())
+          if (!(d in site.data.data_queue)) {
+            d = defaults.dataset
+            _u[v.dataset].set(d)
+          }
+        } else {
+          d = valueOf(v.dataset)
+        }
+        return d in site.data.data_queue ? d : defaults.dataset
       },
       ids: function (single) {
         const id = valueOf('string' === typeof v.ids && v.ids in _u ? _u[v.ids].value() : v.ids)

@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">57.89% </span>
+                <span class="strong">59.32% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>33/57</span>
+                <span class='fraction'>35/59</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">50% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>23/46</span>
+                <span class='fraction'>18/36</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">63.04% </span>
+                <span class="strong">64.58% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>29/46</span>
+                <span class='fraction'>31/48</span>
             </div>
         
             
@@ -193,7 +193,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -223,7 +223,7 @@
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
@@ -271,12 +271,12 @@ function vector_summary(vec: number | number[], range: number[]): VectorSummary 
 <span class="cstat-no" title="statement not covered" >          r.missing++</span>
         } else {
 <span class="cstat-no" title="statement not covered" >          on++</span>
-<span class="cstat-no" title="statement not covered" >          if (r.min &gt; v) <span class="cstat-no" title="statement not covered" >r.min = v</span></span>
-<span class="cstat-no" title="statement not covered" >          if (r.max &lt; v) <span class="cstat-no" title="statement not covered" >r.max = v</span></span>
+<span class="cstat-no" title="statement not covered" >          <span class="missing-if-branch" title="if path not taken" >I</span>if (r.min &gt; v) <span class="cstat-no" title="statement not covered" >r.min = v</span></span>
+<span class="cstat-no" title="statement not covered" >          <span class="missing-if-branch" title="if path not taken" >I</span>if (r.max &lt; v) <span class="cstat-no" title="statement not covered" >r.max = v</span></span>
 <span class="cstat-no" title="statement not covered" >          r.sum += v</span>
         }
       } else {
-<span class="cstat-no" title="statement not covered" >        if ('NA' !== v) <span class="cstat-no" title="statement not covered" >on++</span></span>
+<span class="cstat-no" title="statement not covered" >        <span class="missing-if-branch" title="if path not taken" >I</span>if ('NA' !== v) <span class="cstat-no" title="statement not covered" >on++</span></span>
       }
     }
 <span class="cstat-no" title="statement not covered" >    r.mean = on ? r.sum / on : 0</span>
@@ -320,8 +320,8 @@ export function passes_feature_filter(entities: {[index: string]: Entity}, id: s
   const entity = entities[id]
   for (let i = filter.length; i--; ) {
     const value = filter[i].value
-    <span class="missing-if-branch" title="else path not taken" >E</span>if (value !== '-1') {
-      <span class="missing-if-branch" title="else path not taken" >E</span>if ('id' === filter[i].name &amp;&amp; Array.isArray(value)) {
+    if (value !== '-1') {
+      if ('id' === filter[i].name &amp;&amp; Array.isArray(value)) {
         let pass = false
         value.forEach((id: string) =&gt; {
           if (!pass) {
@@ -337,7 +337,7 @@ export function passes_feature_filter(entities: {[index: string]: Entity}, id: s
           }
         })
         return pass
-      } else <span class="cstat-no" title="statement not covered" >if (!filter[i].check(entity.features[filter[i].name])) return <span class="cstat-no" title="statement not covered" >false</span></span>
+      } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="if path not taken" >I</span><span class="missing-if-branch" title="else path not taken" >E</span>if (!filter[i].check(entity.features[filter[i].name])) return <span class="cstat-no" title="statement not covered" >false</span></span>
     }
   }
 <span class="cstat-no" title="statement not covered" >  return true</span>
@@ -349,7 +349,7 @@ export function passes_feature_filter(entities: {[index: string]: Entity}, id: s
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-06-07T11:42:18.535Z
+                at 2023-06-19T00:58:47.130Z
             </div>
         <script src="../prettify.js"></script>
         <script>

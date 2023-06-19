@@ -10,5 +10,6 @@
   },
   "prettier.arrowParens": "avoid",
   "prettier.bracketSpacing": false,
-  "r.lsp.promptToInstall": false
+  "r.lsp.promptToInstall": false,
+  "cmake.configureOnOpen": false
 }

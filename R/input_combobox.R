@@ -82,7 +82,7 @@ input_combobox <- function(label, options, default = -1, display = options, id =
       if (!is.null(variable)) paste0(' data-variable="', variable, '"'),
       if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
       '><div class="combobox-selection combobox-component"><span class="combobox-component"></span>',
-      '<input class="combobox-input combobox-component" type="text" aria-labelledby="', id,
+      '<input class="combobox-input combobox-component" role="combobox" type="text" aria-labelledby="', id,
       '-label" id="', id, '-input" autocomplete="false"></div>',
       if (clearable) '<button type="button" class="btn-close" title="clear selection"></button>',
       "</div>"
