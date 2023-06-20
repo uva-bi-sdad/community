@@ -68,28 +68,29 @@ input_combobox <- function(label, options, default = -1, display = options, id =
       if (reset_button) "input-group", if (floating_label) "form-floating"
     ), collapse = " "), '">'),
     paste0(
-      '<div role="combobox" class="auto-input form-select combobox combobox-component" data-autoType="combobox"',
-      ' aria-haspopup="listbox" aria-expanded="false" aria-labelledby="', id,
-      '-label" aria-controls="', id, '-listbox" id="', id, '" ',
+      '<div class="auto-input form-select combobox combobox-component" data-autoType="combobox"',
+      ' id="', id, '" ',
       if (is.character(options) && length(options) == 1) paste0('data-optionSource="', options, '"'),
       if (!is.null(default)) paste0(' data-default="', default, '"'),
       if (!is.null(note)) paste0(' aria-description="', note, '"'),
       if (!is.null(dataview)) paste0(' data-view="', dataview, '"'),
       if (!is.null(subset)) paste0(' data-subset="', subset, '"'),
-      if (!is.null(selection_subset)) paste0(' selectionSubset="', selection_subset, '"'),
+      if (!is.null(selection_subset)) paste0(' data-selectionsubset="', selection_subset, '"'),
       if (!is.null(depends)) paste0(' data-depends="', depends, '"'),
       if (!is.null(dataset)) paste0(' data-dataset="', dataset, '"'),
       if (!is.null(variable)) paste0(' data-variable="', variable, '"'),
       if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
-      '><div class="combobox-selection combobox-component"><span class="combobox-component"></span>',
-      '<input class="combobox-input combobox-component" role="combobox" type="text" aria-labelledby="', id,
-      '-label" id="', id, '-input" autocomplete="false"></div>',
+      '><div class="combobox-selection combobox-component">',
+      '<span aria-live="assertive" aria-role="log" class="combobox-component"></span>',
+      '<input class="combobox-input combobox-component" role="combobox" type="text" ',
+      'aria-expanded="false" aria-autocomplete="list" aria-controls="', id,
+      '-listbox" aria-controls="', id, '-listbox" id="', id, '-input" autocomplete="false"></div>',
       if (clearable) '<button type="button" class="btn-close" title="clear selection"></button>',
       "</div>"
     ),
     paste0(
       '<div class="combobox-options combobox-component', if (multi) " multi", '" role="listbox"',
-      ' tabindex="-1" id="', id, '-listbox">'
+      ' id="', id, '-listbox" aria-labelledby="', id, '">'
     ),
     if (is.list(options)) {
       i <- 0

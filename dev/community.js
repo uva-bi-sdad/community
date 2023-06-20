@@ -1502,19 +1502,20 @@
               c.setAttribute('data-autoType', 'combobox');
               c.className = 'auto-input form-select combobox combobox-component';
               c.role = 'combobox';
-              c.setAttribute('aria-haspopup', 'listbox');
-              c.setAttribute('aria-expanded', 'false');
-              c.setAttribute('aria-labelledby', id + '-label');
-              c.setAttribute('aria-controls', id + '-listbox');
               c.appendChild((c = document.createElement('div')));
               c.className = 'combobox-selection combobox-component';
               c.appendChild(document.createElement('span'));
               c.lastElementChild.className = 'combobox-component';
+              c.lastElementChild.setAttribute('aria-live', 'assertive');
+              c.lastElementChild.setAttribute('aria-role', 'log');
               c.appendChild((c = document.createElement('input')));
+              c.setAttribute('aria-haspopup', 'listbox');
+              c.setAttribute('aria-expanded', 'false');
+              c.setAttribute('aria-labelledby', id);
+              c.setAttribute('aria-controls', id + '-listbox');
               c.className = 'combobox-input combobox-component';
               c.type = 'text';
               c.role = 'combobox';
-              c.setAttribute('aria-labelledby', id + '-label');
               c.id = id + '-input';
               c.autocomplete = 'off';
               if (settings && settings.clearable) {
@@ -1531,6 +1532,7 @@
               e.appendChild((c = document.createElement('label')));
               c.id = id + '-label';
               c.innerText = label;
+              c.setAttribute('for', id);
               elements.init_input(e.firstElementChild);
               const u = _u[id];
               let n = 0;
@@ -1595,8 +1597,7 @@
                 }
               }
               o.container = document.createElement('div');
-              o.container.className = 'combobox-options-container combobox-component';
-              o.container.style.display = 'none';
+              o.container.className = 'combobox-options-container combobox-component hidden';
               page.overlay.appendChild(o.container);
               o.container.appendChild(o.listbox);
               o.selection = o.e.firstElementChild.firstElementChild;
@@ -1622,6 +1623,13 @@
                     : ''
                   : valueOf(this.default)
               }.bind(o);
+              o.set_selected = function (value) {
+                if (value in this.values) {
+                  const option = this.options[this.values[value]];
+                  option.classList.add('selected');
+                  option.setAttribute('aria-selected', 'true');
+                }
+              }.bind(o);
               o.input_element.addEventListener(
                 'focus',
                 function () {
@@ -1640,9 +1648,9 @@
                   if ('' === this.selection.innerText && this.source.length)
                     this.selection.innerText = this.cleared_selection;
                   if ('' !== this.input_element.value) setTimeout(this.set, 0);
-                  this.e.setAttribute('aria-expanded', false);
+                  this.e.setAttribute('aria-expanded', 'false');
                   this.expanded = false;
-                  this.container.style.display = 'none';
+                  this.container.classList.add('hidden');
                   window.removeEventListener('click', o.close);
                 }
               }.bind(o);
@@ -1671,13 +1679,13 @@
                           ou.expanded && ou.close();
                         }
                       });
-                    this.container.style.display = '';
+                    this.container.classList.remove('hidden');
                     if ('' !== this.selection.innerText) this.cleared_selection = this.selection.innerText;
                     if (this.cleared_selection in this.display)
                       this.highlight({target: this.options[this.display[this.cleared_selection]]});
                     this.selection.innerText = '';
                     window.addEventListener('click', this.close);
-                    this.e.setAttribute('aria-expanded', true);
+                    this.e.setAttribute('aria-expanded', 'true');
                     if (!e || e.target !== this.input_element) setTimeout(() => this.input_element.focus(), 0);
                     this.resize();
                     this.expanded = true;
@@ -1857,11 +1865,12 @@
               this.filter_reset();
               if ('object' === typeof v) {
                 if (this.settings.multi) {
-                  this.listbox.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'));
-                  this.source = -1 === v ? [] : v;
-                  v.forEach(vv => {
-                    if (vv in this.values) this.options[this.values[vv]].classList.add('selected');
+                  this.listbox.querySelectorAll('.selected').forEach(e => {
+                    e.classList.remove('selected');
+                    e.setAttribute('aria-selected', 'false');
                   });
+                  this.source = -1 === v ? [] : v;
+                  v.forEach(this.set_selected);
                 } else v = v[0];
               }
               if (!Array.isArray(this.source)) this.source = [];
@@ -1888,14 +1897,21 @@
                   if (v in this.values) {
                     if (!this.settings.multi) {
                       const selected = this.listbox.querySelector('.selected');
-                      if (selected) selected.classList.remove('selected');
+                      if (selected) {
+                        selected.classList.remove('selected');
+                        selected.setAttribute('aria-selected', 'false');
+                      }
                     }
-                    this.options[this.values[v]].classList.add('selected');
+                    this.set_selected(v);
                   }
                 } else if (toggle) {
                   update = true;
                   this.source.splice(i, 1);
-                  if (v in this.values) this.options[this.values[v]].classList.remove('selected');
+                  if (v in this.values) {
+                    const selection = this.options[this.values[v]];
+                    selection.classList.remove('selected');
+                    selection.setAttribute('aria-selected', 'false');
+                  }
                 }
               }
               if (!this.settings.multi && this.expanded) {
@@ -1919,7 +1935,7 @@
               const e = document.createElement('div');
               e.id = this.id + '_' + value;
               e.role = 'option';
-              e.setAttribute('aria-selected', false);
+              e.setAttribute('aria-selected', 'false');
               e.tabindex = '0';
               e.className = 'combobox-option combobox-component';
               e.dataset.value = value;
@@ -2948,7 +2964,7 @@
                             e.appendChild(s);
                           }
                         });
-                        this.e.style.display = n ? '' : 'none';
+                        this.e.classList[n ? 'remove' : 'add']('hidden');
                       }
                       if (('variables' in p.value.parsed || 'summary' in p.value.parsed) && !(v.y in this.depends)) {
                         this.depends[v.y] = true;
@@ -3201,8 +3217,9 @@
                     this.options.variable_source &&
                     valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.');
                   const v = _u[this.view],
-                    d = v.get.dataset(),
-                    times = site.data.meta.times[d],
+                    d = v.get.dataset();
+                  if (!site.data.inited[d]) return
+                  const times = site.data.meta.times[d],
                     state =
                       d +
                       v.value() +
@@ -4393,6 +4410,7 @@
                   if (combobox) {
                     const id = u.id + '_' + group.replace(patterns.seps, '-');
                     let ee;
+                    e.role = 'group';
                     if (u.settings.accordion) {
                       e.setAttribute('data-group', group);
                       e.className = 'combobox-group accordion-item combobox-component';
@@ -4417,7 +4435,6 @@
                     } else {
                       e.className = 'combobox-group combobox-component';
                       e.id = id;
-                      e.role = 'group';
                       e.setAttribute('aria-labelledby', id + '-label');
                       e.appendChild((ee = document.createElement('div')));
                       ee.appendChild((ee = document.createElement('label')));
@@ -4500,6 +4517,7 @@
                   if (combobox) {
                     const id = u.id + '_' + group.replace(patterns.seps, '-');
                     let ee;
+                    e.role = 'group';
                     if (u.settings.accordion) {
                       e.setAttribute('data-group', group);
                       e.className = 'combobox-group accordion-item combobox-component';
@@ -4523,7 +4541,6 @@
                       ee.className = 'accordion-body combobox-component';
                     } else {
                       e.className = 'combobox-group combobox-component';
-                      e.role = 'group';
                       e.setAttribute('aria-labelledby', id);
                       e.appendChild((ee = document.createElement('div')));
                       ee.appendChild((ee = document.createElement('label')));
