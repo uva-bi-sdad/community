@@ -1,7 +1,7 @@
 # rebuild
 styler::style_pkg(filetype = c("R", "Rmd"))
 spelling::spell_check_package()
-devtools::document() 
+devtools::document()
 pkgdown::build_site(lazy = TRUE)
 
 # update site assets

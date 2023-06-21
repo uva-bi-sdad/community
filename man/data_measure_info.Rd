@@ -46,8 +46,10 @@ Measure entries are named by the full variable name with any of these entries (i
 \item \strong{\code{category}}: Arbitrary category for the measure.
 \item \strong{\code{short_description}}: Shortest possible description.
 \item \strong{\code{long_description}}: Complete description. Either description can include
-TeX-style equations, surrounded by \code{$}s (e.g.,
-\code{"The equation $a_{i} = b^\\\\frac{c}{d}$ was used."}). These are pre-rendered to MathML with
+TeX-style equations, enclosed in escaped square brackets (e.g.,
+\code{"The equation \\\\[a_{i} = b^\\\\frac{c}{d}\\\\] was used."}; or \code{$...$},
+\code{\\\\(...\\\\)}, or \code{\\\\begin{math}...\\\\end{math}}). The final enclosing symbol must be
+followed by a space or the end of the string. These are pre-rendered to MathML with
 \code{\link[katex]{katex_mathml}}.
 \item \strong{\code{statement}}: String with dynamic references to entity features
 (e.g., \code{"measure value = {value}"}). References can include:

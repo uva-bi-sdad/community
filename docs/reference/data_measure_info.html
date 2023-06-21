@@ -123,8 +123,10 @@
 <li><p><strong><code>category</code></strong>: Arbitrary category for the measure.</p></li>
 <li><p><strong><code>short_description</code></strong>: Shortest possible description.</p></li>
 <li><p><strong><code>long_description</code></strong>: Complete description. Either description can include
-TeX-style equations, surrounded by <code>$</code>s (e.g.,
-<code>"The equation $a_{i} = b^\\frac{c}{d}$ was used."</code>). These are pre-rendered to MathML with
+TeX-style equations, enclosed in escaped square brackets (e.g.,
+<code>"The equation \\[a_{i} = b^\\frac{c}{d}\\] was used."</code>; or <code>$...$</code>,
+<code>\\(...\\)</code>, or <code>\\begin{math}...\\end{math}</code>). The final enclosing symbol must be
+followed by a space or the end of the string. These are pre-rendered to MathML with
 <code><a href="https://docs.ropensci.org/katex/reference/katex.html" class="external-link">katex_mathml</a></code>.</p></li>
 <li><p><strong><code>statement</code></strong>: String with dynamic references to entity features
 (e.g., <code>"measure value = {value}"</code>). References can include:</p><ul><li><p><code>value</code>: Value of a currently displaying variable at a current time.</p></li>
