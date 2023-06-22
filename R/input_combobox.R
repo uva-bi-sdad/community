@@ -81,16 +81,16 @@ input_combobox <- function(label, options, default = -1, display = options, id =
       if (!is.null(variable)) paste0(' data-variable="', variable, '"'),
       if (length(a)) unlist(lapply(seq_along(a), function(i) paste0(" ", names(a)[i], '="', a[[i]], '"'))),
       '><div class="combobox-selection combobox-component">',
-      '<span aria-live="assertive" aria-role="log" class="combobox-component"></span>',
+      '<span aria-live="assertive" aria-atomic="true" aria-role="log" class="combobox-component"></span>',
       '<input class="combobox-input combobox-component" role="combobox" type="text" ',
       'aria-expanded="false" aria-autocomplete="list" aria-controls="', id,
-      '-listbox" aria-controls="', id, '-listbox" id="', id, '-input" autocomplete="false"></div>',
+      '-listbox" aria-controls="', id, '-listbox" id="', id, '-input" autocomplete="off"></div>',
       if (clearable) '<button type="button" class="btn-close" title="clear selection"></button>',
       "</div>"
     ),
     paste0(
       '<div class="combobox-options combobox-component', if (multi) " multi", '" role="listbox"',
-      ' id="', id, '-listbox" aria-labelledby="', id, '">'
+      ' id="', id, '-listbox" aria-labelledby="', id, '-label">'
     ),
     if (is.list(options)) {
       i <- 0
@@ -116,7 +116,7 @@ input_combobox <- function(label, options, default = -1, display = options, id =
             ),
             paste0(
               '<div id="', gid, '" class="combobox-component accordion-collapse collapse" ',
-              'aria-labelledby="', gid, '-label" data-group="', g, '" data-bs-parent="#', id,
+              'data-group="', g, '" data-bs-parent="#', id,
               '-listbox"><div class="accordion-body combobox-component">'
             )
           )

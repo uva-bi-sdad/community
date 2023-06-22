@@ -1507,11 +1507,11 @@
               c.appendChild(document.createElement('span'));
               c.lastElementChild.className = 'combobox-component';
               c.lastElementChild.setAttribute('aria-live', 'assertive');
+              c.lastElementChild.setAttribute('aria-atomic', 'true');
               c.lastElementChild.setAttribute('aria-role', 'log');
               c.appendChild((c = document.createElement('input')));
               c.setAttribute('aria-haspopup', 'listbox');
               c.setAttribute('aria-expanded', 'false');
-              c.setAttribute('aria-labelledby', id);
               c.setAttribute('aria-controls', id + '-listbox');
               c.className = 'combobox-input combobox-component';
               c.type = 'text';
@@ -1526,13 +1526,14 @@
               }
               e.appendChild((c = document.createElement('div')));
               c.className = 'combobox-options combobox-component';
+              c.setAttribute('aria-labelledby', id + '-label');
               c.role = 'listbox';
               c.tabindex = '-1';
               c.id = id + '-listbox';
               e.appendChild((c = document.createElement('label')));
               c.id = id + '-label';
               c.innerText = label;
-              c.setAttribute('for', id);
+              c.setAttribute('for', id + '-input');
               elements.init_input(e.firstElementChild);
               const u = _u[id];
               let n = 0;
@@ -1715,7 +1716,7 @@
                         if (!c.classList.contains('show')) {
                           c.classList.add('show');
                           c.previousElementSibling.firstElementChild.classList.remove('collapsed');
-                          c.previousElementSibling.firstElementChild.setAttribute('aria-expanded', true);
+                          c.previousElementSibling.firstElementChild.setAttribute('aria-expanded', 'true');
                         }
                       }
                       this.input_element.setAttribute('aria-activedescendant', o.id);
@@ -1778,7 +1779,7 @@
                             const g = this.groups.by_name[group];
                             g.firstElementChild.nextElementSibling.classList.add('show');
                             g.firstElementChild.firstElementChild.classList.remove('collapsed');
-                            g.firstElementChild.firstElementChild.setAttribute('aria-expanded', true);
+                            g.firstElementChild.firstElementChild.setAttribute('aria-expanded', 'true');
                           }
                         }
                       } else {
@@ -4410,34 +4411,35 @@
                   if (combobox) {
                     const id = u.id + '_' + group.replace(patterns.seps, '-');
                     let ee;
-                    e.role = 'group';
                     if (u.settings.accordion) {
                       e.setAttribute('data-group', group);
                       e.className = 'combobox-group accordion-item combobox-component';
                       e.appendChild((ee = document.createElement('div')));
-                      ee.id = id + '-label';
                       ee.className = 'accordion-header combobox-component';
                       ee.appendChild((ee = document.createElement('button')));
+                      ee.id = id + '-label';
                       ee.innerText = group;
                       ee.type = 'button';
                       ee.className = 'accordion-button combobox-component collapsed';
                       ee.setAttribute('data-bs-toggle', 'collapse');
                       ee.setAttribute('data-bs-target', '#' + id);
-                      ee.setAttribute('aria-expanded', false);
+                      ee.setAttribute('aria-expanded', 'false');
                       ee.setAttribute('aria-controls', id);
                       e.appendChild((ee = document.createElement('div')));
                       ee.id = id;
                       ee.className = 'combobox-component accordion-collapse collapse';
-                      ee.setAttribute('aria-labelledby', id + '-label');
                       ee.setAttribute('data-bs-parent', '#' + u.id + '-listbox');
                       ee.appendChild((ee = document.createElement('div')));
                       ee.className = 'accordion-body combobox-component';
+                      ee.role = 'group';
+                      ee.setAttribute('aria-labelledby', id + '-label');
                     } else {
                       e.className = 'combobox-group combobox-component';
                       e.id = id;
-                      e.setAttribute('aria-labelledby', id + '-label');
+                      e.role = 'group';
                       e.appendChild((ee = document.createElement('div')));
                       ee.appendChild((ee = document.createElement('label')));
+                      ee.for = id;
                       ee.innerText = group;
                       ee.id = id + '-label';
                       ee.for = id;
@@ -4517,33 +4519,34 @@
                   if (combobox) {
                     const id = u.id + '_' + group.replace(patterns.seps, '-');
                     let ee;
-                    e.role = 'group';
                     if (u.settings.accordion) {
                       e.setAttribute('data-group', group);
                       e.className = 'combobox-group accordion-item combobox-component';
                       e.appendChild((ee = document.createElement('div')));
-                      ee.id = id + '-label';
                       ee.className = 'accordion-header combobox-component';
                       ee.appendChild((ee = document.createElement('button')));
+                      ee.id = id + '-label';
                       ee.innerText = group;
                       ee.type = 'button';
                       ee.className = 'accordion-button combobox-component collapsed';
                       ee.setAttribute('data-bs-toggle', 'collapse');
                       ee.setAttribute('data-bs-target', '#' + id);
-                      ee.setAttribute('aria-expanded', false);
+                      ee.setAttribute('aria-expanded', 'false');
                       ee.setAttribute('aria-controls', id);
                       e.appendChild((ee = document.createElement('div')));
                       ee.id = id;
                       ee.className = 'combobox-component accordion-collapse collapse';
-                      ee.setAttribute('aria-labelledby', id + '-label');
                       ee.setAttribute('data-bs-parent', '#' + u.id + '-listbox');
                       ee.appendChild((ee = document.createElement('div')));
                       ee.className = 'accordion-body combobox-component';
+                      ee.role = 'group';
+                      ee.setAttribute('aria-labelledby', id + '-label');
                     } else {
                       e.className = 'combobox-group combobox-component';
-                      e.setAttribute('aria-labelledby', id);
+                      e.role = 'group';
                       e.appendChild((ee = document.createElement('div')));
                       ee.appendChild((ee = document.createElement('label')));
+                      ee.for = id;
                       ee.innerText = group;
                       ee.id = id;
                       ee.className = 'combobox-group-label combobox-component';
@@ -4649,9 +4652,9 @@
           u.e.classList.remove('disabled');
           if (u.input_element) u.input_element.removeAttribute('disabled');
         } else {
-          u.e.setAttribute('disabled', true);
+          u.e.setAttribute('disabled', 'true');
           u.e.classList.add('disabled');
-          if (u.input_element) u.input_element.setAttribute('disabled', true);
+          if (u.input_element) u.input_element.setAttribute('disabled', 'true');
         }
       }
 
@@ -6050,6 +6053,7 @@
             comp_select.e.parentElement.classList.add('filter-form-input');
             comp_select.e.setAttribute('aria-labelledby', f.id + '_component');
             comp_select.input_element.setAttribute('aria-labelledby', f.id + '_component');
+            comp_select.listbox.setAttribute('aria-labelledby', f.id + '_component');
             comp_select.onchange = function () {
               f.component = this.value();
               request_queue('_base_filter');
@@ -6089,6 +6093,7 @@
             value_select.e.parentElement.classList.add('filter-form-input');
             value_select.e.setAttribute('aria-labelledby', f.id + '_value');
             value_select.input_element.setAttribute('aria-labelledby', f.id + '_value');
+            value_select.listbox.setAttribute('aria-labelledby', f.id + '_value');
             value_select.onchange = async function (f) {
               f.value = this.value();
               if (patterns.number.test(f.value)) {
@@ -6148,7 +6153,7 @@
         c.lastElementChild.id = 'filter_variable_dropdown';
         c.lastElementChild.className = 'btn dropdown-toggle';
         c.lastElementChild.setAttribute('data-bs-toggle', 'dropdown');
-        c.lastElementChild.setAttribute('aria-expanded', false);
+        c.lastElementChild.setAttribute('aria-expanded', 'false');
         c.lastElementChild.innerText = 'Add Variable Condition';
         c.appendChild(document.createElement('ul'));
         c.lastElementChild.addEventListener('click', add_filter_condition.bind(e));

@@ -107,7 +107,8 @@ replace_equations <- function(info) {
       for (d in descriptions) {
         p <- gregexec(
           "(?:\\$|\\\\\\[|\\\\\\(|\\\\begin\\{math\\})(.+?)(?:\\$|\\\\\\]|\\\\\\)|\\\\end\\{math\\})(?=\\s|$)",
-          e[[d]], perl = TRUE
+          e[[d]],
+          perl = TRUE
         )[[1]]
         if (length(p) > 1) {
           ml <- attr(p, "match.length")

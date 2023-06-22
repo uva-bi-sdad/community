@@ -54,13 +54,13 @@ output_map <- function(shapes = NULL, overlays = NULL, color = NULL, color_time 
   if (building) {
     caller$dependencies$leaflet_style <- list(
       type = "stylesheet",
-      src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
-      hash = "sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H"
+      src = "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css",
+      hash = "sha384-EdLG5Q0/L1OytQXhWSU1bWVqvLMxlmdSRaA09iy8FGYjlpP7vnB3MueQ6ZloG9oF"
     )
     caller$dependencies$leaflet <- list(
       type = "script",
-      src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
-      hash = "sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
+      src = "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js",
+      hash = "sha384-u5N8qJeJOO2iqNjIKTdl6KeKsEikMAmCUBPc6sC6uGpgL34aPJ4VgNhuhumedpEk"
     )
     options$overlays_from_measures <- overlays_from_measures
     options$subto <- if (!is.null(subto) && length(subto) == 1) list(subto) else subto

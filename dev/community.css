@@ -6,20 +6,20 @@
   --bs-table-color-state: var(--body-text);
 }
 .dark-theme {
-  --background: #212121;
+  --background: #090909;
   --border: #7e7e7e;
   --border-highlight: #ffffff;
   --background-border: #494949;
   --background-input: #000000;
   --body-text: #ffffff;
-  --background-highlight: #414141;
-  --background-secondary: #141414;
+  --background-highlight: #2b2b2b;
+  --background-secondary: #222222;
   --link: #acc7ff;
   --highlight: #3c3c3c;
   --highlight-text: #ffffff;
   --highlight-secondary: #2e2e2e;
   --highlight-secondary-text: #ffffff;
-  --lowlight: #212121;
+  --lowlight: #262222;
   --lowlight-text: #acacac;
   --warning: #dc3545;
   --na: #7e7e7e;
@@ -155,6 +155,7 @@ body::-webkit-scrollbar-track,
 }
 .leaflet-bar a,
 .leaflet-bar a:hover,
+.leaflet-bar a:focus,
 .nav-tabs .nav-item.show .nav-link {
   background-color: var(--background);
   border-color: var(--highlight-secondary);
@@ -191,6 +192,7 @@ body::-webkit-scrollbar-track,
 button {
   padding: 0;
 }
+button:focus,
 button:hover {
   opacity: 0.7;
 }
@@ -625,7 +627,8 @@ button.has-note::after,
   cursor: text;
   padding: 0;
 }
-button.has-note:hover {
+button.has-note:hover,
+button.has-note:focus {
   opacity: 1;
 }
 button.has-note::after {
@@ -640,15 +643,14 @@ button.has-note::after {
 }
 .text-display button::after,
 button.has-note::after,
-.has-note label::before,
-.has-note legend::before {
+div.has-note span::before,
+.has-note *::before {
   background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='%23000' viewBox='0 0 16 16'><path d='M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z'/><path d='m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z'/></svg>");
 }
 .dark-theme .text-display button::after,
-.dark-theme button.has-note::after,
-.has-note button::before,
-.dark-theme .has-note label::before,
-.dark-theme .has-note legend::before {
+.dark-theme .has-note::after,
+.navbar-dark .has-note *::before,
+.dark-theme .has-note *::before {
   filter: var(--dark-filter);
 }
 .offcanvas-body {
@@ -1017,7 +1019,9 @@ table.dataTable thead th {
 .dt-button,
 .input[type='range'],
 .btn:hover,
+.btn:focus,
 .dt-button:hover,
+.dt-button:focus,
 .form-check-input:checked,
 .input[type='range'],
 .dataTables_wrapper .dataTables_paginate .paginate_button {
