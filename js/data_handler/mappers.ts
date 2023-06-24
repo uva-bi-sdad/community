@@ -26,11 +26,11 @@ export function variables(this: DataHandler) {
         } else {
           const ve: Variable = (this.variables[vn] = {
             datasets: [k],
-            info: {full_name: k, type: 'unknown'} as UnparsedObject,
+            info: {} as UnparsedObject,
             time_range: {},
             type: v.type,
-            code: k,
-            name: k,
+            code: vn,
+            name: vn,
             meta: v.info,
             levels: [],
             level_ids: {},

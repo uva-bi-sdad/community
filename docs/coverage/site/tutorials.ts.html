@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">92.05% </span>
+                <span class="strong">90.55% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>255/277</span>
+                <span class='fraction'>259/286</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">72.09% </span>
+                <span class="strong">67.04% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>62/86</span>
+                <span class='fraction'>59/88</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">94.44% </span>
+                <span class="strong">94.73% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>17/18</span>
+                <span class='fraction'>18/19</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">93.89% </span>
+                <span class="strong">92.25% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>246/262</span>
+                <span class='fraction'>250/271</span>
             </div>
         
             
@@ -414,7 +414,19 @@
 <a name='L349'></a><a href='#L349'>349</a>
 <a name='L350'></a><a href='#L350'>350</a>
 <a name='L351'></a><a href='#L351'>351</a>
-<a name='L352'></a><a href='#L352'>352</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L352'></a><a href='#L352'>352</a>
+<a name='L353'></a><a href='#L353'>353</a>
+<a name='L354'></a><a href='#L354'>354</a>
+<a name='L355'></a><a href='#L355'>355</a>
+<a name='L356'></a><a href='#L356'>356</a>
+<a name='L357'></a><a href='#L357'>357</a>
+<a name='L358'></a><a href='#L358'>358</a>
+<a name='L359'></a><a href='#L359'>359</a>
+<a name='L360'></a><a href='#L360'>360</a>
+<a name='L361'></a><a href='#L361'>361</a>
+<a name='L362'></a><a href='#L362'>362</a>
+<a name='L363'></a><a href='#L363'>363</a>
+<a name='L364'></a><a href='#L364'>364</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -657,6 +669,19 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -675,8 +700,6 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -695,6 +718,7 @@
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
@@ -956,14 +980,14 @@ export class TutorialManager {
     if (name in this.site_elements) {
       this.current_site_element = this.site_elements[name]
       e = this.current_site_element.e
-    } else if (patterns.pre_colon.test(name)) {
+    } else if ('nav:' === name.substring(0, 4).toLowerCase()) {
       const text = name.replace(patterns.pre_colon, '')
       document.querySelectorAll('.nav-item button').forEach((item: HTMLButtonElement) =&gt; {
         if (text === item.innerText) e = item
       })
     } else {
       try {
-        e = document.querySelector(name.replace(patterns.escapes, '\\$1'))
+        e = document.querySelector(name.replace(patterns.id_escapes, '\\$1'))
       } catch (error) {}
     }
     return e
@@ -997,9 +1021,9 @@ export class TutorialManager {
       const t = this.tutorials[this.in_progress]
       let step: TutorialStep
       const handle_object = (obj: {[index: string]: string}) =&gt; {
-        Object.keys(obj).forEach((k, i) =&gt; {
+        Object.keys(obj).forEach(k =&gt; {
           if (patterns.number.test(k)) {
-            do_action(obj[k], i)
+            do_action(obj[k])
           } else {
             if (k in this.site_elements &amp;&amp; this.site_elements[k].set) {
               this.site_elements[k].set(obj[k])
@@ -1007,14 +1031,27 @@ export class TutorialManager {
           }
         })
       }
-      const do_action = (action: string, i: number) =&gt; {
+      const set_value = (value: string | string[]) =&gt; {
+        if (this.current_site_element &amp;&amp; this.current_site_element.set) {
+          this.current_site_element.set(value)
+        } else <span class="missing-if-branch" title="else path not taken" >E</span>{
+          const input =
+<span class="cstat-no" title="statement not covered" >            'value' in this.current_element ? this.current_element : this.current_element.querySelector('input')</span>
+<span class="cstat-no" title="statement not covered" >          <span class="missing-if-branch" title="if path not taken" >I</span>if (input) {</span>
+<span class="cstat-no" title="statement not covered" >            input.value = value</span>
+<span class="cstat-no" title="statement not covered" >            input.dispatchEvent(new Event('change'))</span>
+<span class="cstat-no" title="statement not covered" >            input.dispatchEvent(new KeyboardEvent('keydown', {code: 'Enter'}))</span>
+          }
+        }
+      }
+      const do_action = (action: string) =&gt; {
         action = String(action)
         if ('set' === action) {
-          if ('option' in step &amp;&amp; this.current_site_element.set) this.current_site_element.set(step.option)
+          if ('option' in step) set_value(step.option)
         } else if ('click' === action) {
           <span class="missing-if-branch" title="if path not taken" >I</span>if (
             this.current_site_element &amp;&amp;
-            this.current_site_element.toggle &amp;&amp;
+<span class="branch-1 cbranch-no" title="branch not covered" >            this.current_site_element.toggle </span>&amp;&amp;
 <span class="branch-2 cbranch-no" title="branch not covered" >            action === this.current_site_element.id</span>
           ) {
 <span class="cstat-no" title="statement not covered" >            <span class="missing-if-branch" title="if path not taken" >I</span>if (!this.current_site_element.expanded) <span class="cstat-no" title="statement not covered" >this.current_site_element.toggle({target: this.current_element})</span></span>
@@ -1024,9 +1061,7 @@ export class TutorialManager {
         } else <span class="missing-if-branch" title="if path not taken" >I</span>if ('close' === action) {
 <span class="cstat-no" title="statement not covered" >          document.querySelectorAll('[data-bs-dismiss]').forEach(<span class="fstat-no" title="function not covered" >(c</span>lose: HTMLButtonElement) =&gt; <span class="cstat-no" title="statement not covered" >close.click())</span></span>
         } else if ('value' === action.substring(0, 5)) {
-          this.current_site_element &amp;&amp;
-            this.current_site_element.set &amp;&amp;
-            this.current_site_element.set(action.replace(patterns.pre_colon, '').trimStart())
+          set_value(action.replace(patterns.pre_colon, '').trimStart())
         } else <span class="missing-if-branch" title="else path not taken" >E</span>{
           const e = <span class="cstat-no" title="statement not covered" >this.retrieve_element(action)</span>
 <span class="cstat-no" title="statement not covered" >          <span class="missing-if-branch" title="if path not taken" >I</span>if (e) <span class="cstat-no" title="statement not covered" >e.click()</span></span>
@@ -1046,6 +1081,7 @@ export class TutorialManager {
       if (this.current_step &gt;= t.n_steps) {
         this.end_tutorial()
       } else {
+        this.current_site_element = void 0
         // handle current step's before action
         step = t.steps[this.current_step]
         this.current_element = this.retrieve_element(step.focus)
@@ -1123,7 +1159,7 @@ export class TutorialManager {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-06-19T00:58:47.130Z
+                at 2023-06-24T23:06:36.852Z
             </div>
         <script src="../prettify.js"></script>
         <script>

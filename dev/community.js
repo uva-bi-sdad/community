@@ -177,11 +177,11 @@
         period: /\./,
         all_periods: /\./g,
         word_start: /\b(\w)/g,
-        settings: /^settings\./,
-        features: /^features\./,
+        settings: /^settings?\./,
+        features: /^features?\./,
         filter: /^filter\./,
         data: /^data\./,
-        variables: /^variables\./,
+        variables: /^variables?\./,
         properties: /prop/,
         palette: /^pal/,
         datasets: /^dat/,
@@ -210,7 +210,7 @@
         bracket_content: /(?:^|>)[^<]*(?:<|$)/,
         math_tags: /^(?:semantics|annotation|annotation\-xml|m)/,
         math_attributes: /^(?:xmlns|display|displaystyle|style|encoding|stretchy|alttext|scriptlevel|fence|math)/,
-        escapes: /([.[\](){}?*-])/g,
+        id_escapes: /(?<=#[^\s]+)([.[\](){}?*-])/g,
     };
 
     var value_types = {
@@ -426,7 +426,7 @@
                 this.current_site_element = this.site_elements[name];
                 e = this.current_site_element.e;
             }
-            else if (patterns.pre_colon.test(name)) {
+            else if ('nav:' === name.substring(0, 4).toLowerCase()) {
                 var text_1 = name.replace(patterns.pre_colon, '');
                 document.querySelectorAll('.nav-item button').forEach(function (item) {
                     if (text_1 === item.innerText)
@@ -435,7 +435,7 @@
             }
             else {
                 try {
-                    e = document.querySelector(name.replace(patterns.escapes, '\\$1'));
+                    e = document.querySelector(name.replace(patterns.id_escapes, '\\$1'));
                 }
                 catch (error) { }
             }
@@ -473,9 +473,9 @@
                 var t = this.tutorials[this.in_progress];
                 var step_1;
                 var handle_object = function (obj) {
-                    Object.keys(obj).forEach(function (k, i) {
+                    Object.keys(obj).forEach(function (k) {
                         if (patterns.number.test(k)) {
-                            do_action_1(obj[k], i);
+                            do_action_1(obj[k]);
                         }
                         else {
                             if (k in _this.site_elements && _this.site_elements[k].set) {
@@ -484,11 +484,24 @@
                         }
                     });
                 };
-                var do_action_1 = function (action, i) {
+                var set_value_1 = function (value) {
+                    if (_this.current_site_element && _this.current_site_element.set) {
+                        _this.current_site_element.set(value);
+                    }
+                    else {
+                        var input = 'value' in _this.current_element ? _this.current_element : _this.current_element.querySelector('input');
+                        if (input) {
+                            input.value = value;
+                            input.dispatchEvent(new Event('change'));
+                            input.dispatchEvent(new KeyboardEvent('keydown', { code: 'Enter' }));
+                        }
+                    }
+                };
+                var do_action_1 = function (action) {
                     action = String(action);
                     if ('set' === action) {
-                        if ('option' in step_1 && _this.current_site_element.set)
-                            _this.current_site_element.set(step_1.option);
+                        if ('option' in step_1)
+                            set_value_1(step_1.option);
                     }
                     else if ('click' === action) {
                         if (_this.current_site_element &&
@@ -505,9 +518,7 @@
                         document.querySelectorAll('[data-bs-dismiss]').forEach(function (close) { return close.click(); });
                     }
                     else if ('value' === action.substring(0, 5)) {
-                        _this.current_site_element &&
-                            _this.current_site_element.set &&
-                            _this.current_site_element.set(action.replace(patterns.pre_colon, '').trimStart());
+                        set_value_1(action.replace(patterns.pre_colon, '').trimStart());
                     }
                     else {
                         var e = _this.retrieve_element(action);
@@ -531,6 +542,7 @@
                     this.end_tutorial();
                 }
                 else {
+                    this.current_site_element = void 0;
                     // handle current step's before action
                     step_1 = t.steps[this.current_step];
                     this.current_element = this.retrieve_element(step_1.focus);
@@ -669,7 +681,7 @@
           },
           options: function (u) {
             const no_view = !u.view || !site.dataviews[u.view].selection,
-              d = valueOf(u.dataset),
+              d = valueOf(u.dataset || no_view || site.dataviews[u.view].dataset) || defaults.dataset,
               va = valueOf(u.variable),
               k = d + (va ? va : ''),
               combobox = 'combobox' === u.type;
@@ -1490,19 +1502,26 @@
           combobox: {
             create: function (label, options, settings, id) {
               id = id || 'created_combobox_' + ++page.elementCount;
-              const e = document.createElement('div');
-              let c = document.createElement('div');
+              const main = document.createElement('div');
+              let e = document.createElement('div'),
+                c = document.createElement('div');
               if (settings) {
                 if (!site.combobox) site.combobox = {};
                 site.combobox[id] = settings;
               }
               e.className = 'wrapper combobox-wrapper';
-              e.appendChild(c);
-              c.id = id;
-              c.setAttribute('data-autoType', 'combobox');
-              c.className = 'auto-input form-select combobox combobox-component';
-              c.role = 'combobox';
-              c.appendChild((c = document.createElement('div')));
+              if (settings && settings.floating) {
+                e.appendChild(c);
+                c.className = 'form-floating';
+                c.dataset.of = id;
+                e = c;
+              }
+              e.appendChild(main);
+              main.id = id;
+              main.setAttribute('data-autoType', 'combobox');
+              main.className = 'auto-input form-select combobox combobox-component';
+              main.role = 'combobox';
+              main.appendChild((c = document.createElement('div')));
               c.className = 'combobox-selection combobox-component';
               c.appendChild(document.createElement('span'));
               c.lastElementChild.className = 'combobox-component';
@@ -1534,7 +1553,7 @@
               c.id = id + '-label';
               c.innerText = label;
               c.setAttribute('for', id + '-input');
-              elements.init_input(e.firstElementChild);
+              elements.init_input(main);
               const u = _u[id];
               let n = 0;
               u.options = [];
@@ -1578,6 +1597,7 @@
               o.hover_index = -1;
               o.cleared_selection = '';
               o.expanded = false;
+              o.settings.use_display = o.settings.search || o.settings.multi;
               o.listbox = o.e.parentElement.children[1];
               o.options = o.listbox.querySelectorAll('.combobox-option');
               if (o.options.length) {
@@ -1646,7 +1666,7 @@
               o.listbox.addEventListener('click', o.set);
               o.close = function (e) {
                 if (this.expanded && (!e || !e.target.classList || !e.target.classList.contains('combobox-component'))) {
-                  if ('' === this.selection.innerText && this.source.length)
+                  if (this.settings.use_display && '' === this.selection.innerText && this.source.length)
                     this.selection.innerText = this.cleared_selection;
                   if ('' !== this.input_element.value) setTimeout(this.set, 0);
                   this.e.setAttribute('aria-expanded', 'false');
@@ -1684,7 +1704,7 @@
                     if ('' !== this.selection.innerText) this.cleared_selection = this.selection.innerText;
                     if (this.cleared_selection in this.display)
                       this.highlight({target: this.options[this.display[this.cleared_selection]]});
-                    this.selection.innerText = '';
+                    if (this.settings.use_display) this.selection.innerText = '';
                     window.addEventListener('click', this.close);
                     this.e.setAttribute('aria-expanded', 'true');
                     if (!e || e.target !== this.input_element) setTimeout(() => this.input_element.focus(), 0);
@@ -1756,6 +1776,9 @@
                   this.groups.e.forEach(g => g.firstElementChild.firstElementChild.classList.remove('hidden'));
                 this.input_element.value = '';
                 this.filter_index = [];
+                this.options.forEach((o, i) => {
+                  if (!o.classList.contains('hidden')) this.filter_index.push(i);
+                });
                 this.listbox.querySelectorAll('.filter-hidden').forEach(o => o.classList.remove('filter-hidden'));
               }.bind(o);
               if (o.settings.search) {
@@ -1769,7 +1792,7 @@
                       this.groups.e.forEach(g => g.firstElementChild.firstElementChild.classList.add('hidden'));
                     }
                     this.options.forEach((o, i) => {
-                      if (o.innerText.toLowerCase().includes(q)) {
+                      if (!o.classList.contains('hidden') && o.innerText.toLowerCase().includes(q)) {
                         o.classList.remove('filter-hidden');
                         this.filter_index.push(i);
                         const group = o.getAttribute('data-group');
@@ -1801,35 +1824,40 @@
                       if (!this.expanded) return this.toggle({target: this.input_element})
                       this.set(e);
                     } else if ('move' === action) {
-                      e.preventDefault();
-                      if ('ArrowUp' === e.code) {
-                        if (this.filter_index && this.filter_index.length) {
-                          this.hover_index = this.filter_index.indexOf(this.hover_index) - 1;
-                          this.hover_index = this.filter_index[0 > this.hover_index ? 0 : this.hover_index];
-                        } else {
-                          this.hover_index = Math.max(0, this.hover_index - 1);
+                      const value = this.input_element.value;
+                      if (this.settings.strict || (this.expanded && '' === value)) {
+                        e.preventDefault();
+                        if ('ArrowUp' === e.code) {
+                          if (this.filter_index && this.filter_index.length) {
+                            this.hover_index = this.filter_index.indexOf(this.hover_index) - 1;
+                            this.hover_index = this.filter_index[0 > this.hover_index ? 0 : this.hover_index];
+                          } else {
+                            this.hover_index = Math.max(0, this.hover_index - 1);
+                          }
+                        } else if ('ArrowDown' === e.code) {
+                          if (this.filter_index && this.filter_index.length) {
+                            this.hover_index = this.filter_index.indexOf(this.hover_index) + 1;
+                            this.hover_index =
+                              this.filter_index[
+                                this.filter_index.length - 1 < this.hover_index
+                                  ? this.filter_index.length - 1
+                                  : this.hover_index
+                              ];
+                          } else {
+                            this.hover_index = Math.min(this.options.length - 1, this.hover_index + 1);
+                          }
+                        } else if ('Home' === e.code) {
+                          this.hover_index = 0;
+                        } else if ('End' === e.code) {
+                          this.hover_index = this.options.length - 1;
                         }
-                      } else if ('ArrowDown' === e.code) {
-                        if (this.filter_index && this.filter_index.length) {
-                          this.hover_index = this.filter_index.indexOf(this.hover_index) + 1;
-                          this.hover_index =
-                            this.filter_index[
-                              this.filter_index.length - 1 < this.hover_index
-                                ? this.filter_index.length - 1
-                                : this.hover_index
-                            ];
+                        if (this.expanded) {
+                          this.highlight();
                         } else {
-                          this.hover_index = Math.min(this.options.length - 1, this.hover_index + 1);
+                          this.set(this.hover_index);
                         }
-                      } else if ('Home' === e.code) {
-                        this.hover_index = 0;
-                      } else if ('End' === e.code) {
-                        this.hover_index = this.options.length - 1;
-                      }
-                      if (this.expanded) {
-                        this.highlight();
-                      } else {
-                        this.set(this.hover_index);
+                      } else if (patterns.number.test(value)) {
+                        this.set(Number(value) + ('ArrowUp' === e.code ? 1 : -1));
                       }
                     }
                   } else if (!this.expanded) {
@@ -1859,7 +1887,9 @@
                   i = -1;
                 v =
                   -1 === i
-                    ? v.target.dataset.value || v.target.innerText
+                    ? 'INPUT' === v.target.tagName
+                      ? this.input_element.value
+                      : v.target.dataset.value || v.target.innerText
                     : this.options[i].dataset.value || this.options[i].innerText;
                 toggle = this.settings.multi;
               }
@@ -1920,7 +1950,7 @@
                 this.close();
                 this.filter_reset();
               }
-              this.selection.innerText = this.source.length
+              const display = this.source.length
                 ? this.settings.multi
                   ? this.source.length + ' of ' + this.options.length + ' selected'
                   : this.source[0] in this.values
@@ -1929,6 +1959,11 @@
                   ? ''
                   : this.source[0]
                 : '';
+              if (this.settings.use_display) {
+                this.selection.innerText = display;
+              } else {
+                this.input_element.value = display;
+              }
               if (this.onchange) this.onchange();
               if (update) request_queue(this.id);
             },
@@ -2676,18 +2711,7 @@
                   p.parsed.data = o.options.variable;
                 } else if ('summary' === t) {
                   o.options.show_summary = true;
-                  o.e.classList.add('info-summary-wrapper');
-                  const e = document.createElement('table');
-                  e.className = 'info-summary';
-                  p.parsed.summary = e;
-                  e.appendChild(document.createElement('tr'));
-                  e.appendChild(document.createElement('tr'))
-                  ;['NAs', 'Min', 'Q1', 'Mean', 'Median', 'Q3', 'Max'].forEach(h => {
-                    e.firstElementChild.appendChild(document.createElement('th'));
-                    e.firstElementChild.lastElementChild.innerText = h;
-                    e.lastElementChild.appendChild(document.createElement('td'));
-                    e.lastElementChild.lastElementChild.innerText = 'NA';
-                  });
+                  p.parsed.summary = make_summary_table(o.e);
                 } else if ('filter' === t) {
                   const e = document.createElement('table');
                   e.className = 'info-filter';
@@ -2889,10 +2913,7 @@
                     if (!this.options.subto) this.parts.body.base.classList.remove('hidden');
                     this.parts.body.rows.forEach(p => {
                       if ('summary' in p.value.parsed) {
-                        const e = p.value.parsed.summary.lastElementChild.children;
-                        filter_components.summary.forEach((c, i) => {
-                          e[i].innerText = site.data.format_value(this.summary[c][this.time], 0 === i);
-                        });
+                        fill_summary_table(p.value.parsed.summary, this.summary, this.time);
                       } else if ('filter' in p.value.parsed) {
                         const e = p.value.parsed.filter;
                         let n = 0;
@@ -4588,7 +4609,7 @@
             });
           });
         }
-        if (!(u.default in site.data.variables)) u.default = defaults.variable;
+        if (!u.settings.clearable && !(u.default in site.data.variables)) u.default = defaults.variable;
       }
 
       function fill_overlay_properties_options(u, source, out) {
@@ -4751,6 +4772,40 @@
           t.id = e.features.id;
           return t
         }
+      }
+
+      function make_summary_table(parent, summary, additional) {
+        parent.classList.add('info-summary-wrapper');
+        const e = document.createElement('table');
+        e.className = 'info-summary';
+        e.appendChild(document.createElement('tr'));
+        e.appendChild(document.createElement('tr'));
+        if (additional) {
+          Object.keys(additional).forEach(h => {
+            e.firstElementChild.appendChild(document.createElement('th'));
+            e.firstElementChild.lastElementChild.innerText = h;
+            e.lastElementChild.appendChild(document.createElement('td'));
+            e.lastElementChild.lastElementChild.innerText = additional[h];
+          });
+        }
+    ['NAs', 'Min', 'Q1', 'Mean', 'Median', 'Q3', 'Max'].forEach(h => {
+          const lower = h.toLowerCase();
+          if (!summary || lower in summary) {
+            e.firstElementChild.appendChild(document.createElement('th'));
+            e.firstElementChild.lastElementChild.innerText = h;
+            e.lastElementChild.appendChild(document.createElement('td'));
+            e.lastElementChild.lastElementChild.innerText = summary ? site.data.format_value(summary[lower]) : 'NA';
+          }
+        });
+        parent.appendChild(e);
+        return e
+      }
+
+      function fill_summary_table(table, summary, time) {
+        const e = table.lastElementChild.children;
+        filter_components.summary.forEach((c, i) => {
+          e[i].innerText = site.data.format_value(summary[c][time], 0 === i);
+        });
       }
 
       function make_variable_reference(c) {
@@ -5197,7 +5252,7 @@
         e.header.insertAdjacentElement('afterEnd', (e.body = document.createElement('div')));
         e.body.className = 'modal-body';
         e.body.appendChild(document.createElement('p'));
-        e.body.lastElementChild.className = 'h6 text-muted';
+        e.body.lastElementChild.className = 'h6';
         e.body.lastElementChild.innerText = 'Time Range';
 
         e.body.appendChild((e.time_range = document.createElement('div')));
@@ -5927,8 +5982,11 @@
         // // entity filter
         e.body.appendChild((e.entity_filters = document.createElement('div')));
         e.entity_filters.appendChild(document.createElement('p'));
-        e.entity_filters.lastElementChild.className = 'h6 text-muted';
+        e.entity_filters.lastElementChild.className = 'h6';
         e.entity_filters.lastElementChild.innerText = 'Select Entities';
+        e.entity_filters.lastElementChild.appendChild(document.createElement('span'));
+        e.entity_filters.lastElementChild.lastElementChild.className = 'note';
+        e.entity_filters.lastElementChild.lastElementChild.innerText = '(click disabled selectors to load)';
         e.entity_filters.appendChild(document.createElement('div'));
         e.entity_filters.lastElementChild.className = 'row';
         e.entity_inputs = {};
@@ -5976,168 +6034,196 @@
         // // variable filter
         e.body.appendChild((e.variable_filters = document.createElement('div')));
         e.variable_filters.appendChild(document.createElement('p'));
-        e.variable_filters.lastElementChild.className = 'h6 text-muted';
+        e.variable_filters.lastElementChild.className = 'h6';
         e.variable_filters.lastElementChild.innerText = 'Variable Conditions';
 
-        function add_filter_condition(event, presets) {
-          if ('A' === event.target.tagName) {
-            presets = presets || {};
-            const e = document.createElement('tr'),
-              f = {
-                e,
-                index: _u._base_filter.c.size,
-                variable: event.target.dataset.value,
-                component: presets.component || 'last',
-                operator: presets.operator || '>=',
-                value: presets.value || '',
-                active: true,
-                id: 'vf' + _u._base_filter.c.size,
-                passed: 0,
-                failed: 0,
-                info: site.data.variables[event.target.dataset.value].info,
-                view: _u[defaults.dataview],
-              },
-              d = f.view.get.dataset(),
-              range = f.info[d].time_range,
-              times = site.data.meta.overall.value;
-            e.setAttribute('data-index', _u._base_filter.c.size);
-            _u._base_filter.c.set(_u._base_filter.c.size, f);
-            if (presets.time_component) f.component = String(times[f.component]);
+        function add_filter_condition(variable, presets) {
+          presets = presets || {};
+          const e = document.createElement('tr'),
+            f = {
+              e,
+              variable: variable,
+              component: presets.component || 'last',
+              operator: presets.operator || '>=',
+              value: presets.value || 0,
+              active: true,
+              id: variable + '_' + Date.now(),
+              passed: 0,
+              failed: 0,
+              info: site.data.variables[variable].info,
+              view: _u[defaults.dataview],
+            },
+            d = f.view.get.dataset(),
+            range = f.info[d].time_range,
+            times = site.data.meta.overall.value;
+          _u._base_filter.c.set(f.id, f);
+          if (presets.time_component) f.component = String(times[f.component]);
 
-            let ee;
-            // variable name
-            e.appendChild(document.createElement('td'));
-            e.lastElementChild.appendChild((ee = document.createElement('p')));
-            ee.className = 'cell-text';
-            ee.innerText = event.target.innerText + (range ? ' (' + times[range[0]] + '-' + times[range[1]] + ')' : '');
-
-            // filter result
-            e.appendChild(document.createElement('td'));
-            e.lastElementChild.appendChild((ee = document.createElement('p')));
-            ee.className = 'cell-text';
-            ee.innerText = '0/0';
-
-            // active switch
-            e.appendChild(document.createElement('td'));
-            e.lastElementChild.appendChild((ee = document.createElement('label')));
-            ee.innerText = 'Active';
-            ee.className = 'filter-label';
-            ee.id = f.id + '_switch';
-            e.lastElementChild.appendChild((ee = document.createElement('div')));
-            ee.className = 'form-check form-switch filter-form-input';
-            ee.appendChild((ee = document.createElement('input')));
-            ee.className = 'form-check-input';
-            ee.type = 'checkbox';
-            ee.role = 'switch';
-            ee.setAttribute('aria-labelledby', f.id + '_switch');
-            ee.checked = true;
-            ee.addEventListener(
-              'change',
-              function () {
-                f.active = !f.active;
-                request_queue('_base_filter');
-              }.bind(f)
-            );
-
-            // component combobox
-            e.appendChild(document.createElement('td'));
-            e.lastElementChild.appendChild((ee = document.createElement('label')));
-            ee.innerText = 'Component';
-            ee.className = 'filter-label';
-            ee.id = f.id + '_component';
-            const comp_select = elements.combobox.create('component', filter_components.Time);
-            comp_select.default = f.component;
-            comp_select.set(f.component);
-            e.lastElementChild.appendChild(comp_select.e.parentElement);
-            comp_select.e.parentElement.removeChild(comp_select.e.parentElement.lastElementChild);
-            comp_select.e.parentElement.classList.add('filter-form-input');
-            comp_select.e.setAttribute('aria-labelledby', f.id + '_component');
-            comp_select.input_element.setAttribute('aria-labelledby', f.id + '_component');
-            comp_select.listbox.setAttribute('aria-labelledby', f.id + '_component');
-            comp_select.onchange = function () {
-              f.component = this.value();
-              request_queue('_base_filter');
-            }.bind(comp_select);
-
-            // operator select
-            e.appendChild(document.createElement('td'));
-            e.lastElementChild.appendChild((ee = document.createElement('label')));
-            ee.innerText = 'Operator';
-            ee.className = 'filter-label';
-            ee.id = f.id + '_operator';
-            e.lastElementChild.appendChild((ee = document.createElement('select')));
-            ee.className = 'form-select filter-form-input';
-            ee.setAttribute('aria-labelledby', f.id + '_operator');
-            ee.addEventListener('change', e => {
-              f.operator = e.target.selectedOptions[0].value;
-              request_queue('_base_filter');
-            })
-            ;['>=', '=', '!=', '<='].forEach(k => {
-              ee.appendChild(document.createElement('option'));
-              ee.lastElementChild.value = ee.lastElementChild.innerText = k;
-              if (k === f.operator) ee.lastElementChild.selected = true;
-            });
-
-            // value input
-            e.appendChild(document.createElement('td'));
-            e.lastElementChild.appendChild((ee = document.createElement('label')));
-            ee.innerText = 'Value';
-            ee.className = 'filter-label';
-            ee.id = f.id + '_value';
-            const value_select = elements.combobox.create('component', ['min', 'q1', 'median', 'mean', 'q3', 'max']);
-            value_select.value_type = 'number';
-            value_select.default = f.value;
-            value_select.set(f.value);
-            e.lastElementChild.appendChild(value_select.e.parentElement);
-            value_select.e.parentElement.removeChild(value_select.e.parentElement.lastElementChild);
-            value_select.e.parentElement.classList.add('filter-form-input');
-            value_select.e.setAttribute('aria-labelledby', f.id + '_value');
-            value_select.input_element.setAttribute('aria-labelledby', f.id + '_value');
-            value_select.listbox.setAttribute('aria-labelledby', f.id + '_value');
-            value_select.onchange = async function (f) {
-              f.value = this.value();
-              if (patterns.number.test(f.value)) {
-                f.value = Number(f.value);
-                f.value_source = '';
-              } else {
-                f.view.reparse();
-                const v = await site.data.get_variable(f.variable, f.view.id),
-                  s = v && v.views[f.view.id].summaries[f.view.parsed.dataset];
-                if (s && f.value in s) {
-                  const a = f.view.parsed.variable_values[f.index];
-                  f.value_source = f.value;
-                  f.value = s[f.value][a.comp_fun(a, f.view.parsed)];
+          let ee;
+          // variable name
+          e.appendChild(document.createElement('td'));
+          e.lastElementChild.appendChild((ee = document.createElement('p')));
+          ee.id = f.id;
+          ee.className = 'cell-text';
+          ee.innerText = f.info[d].info.short_name;
+          e.lastElementChild.appendChild(document.createElement('p'));
+          f.summary = {
+            f,
+            update: function () {
+              const d = this.f.view.get.dataset(),
+                range = this.f.info[d].time_range,
+                times = site.data.meta.overall.value;
+              if (d !== this.add.Dataset) {
+                this.add.Dataset = d;
+                this.add.First = times[range[0]] || 'NA';
+                this.add.Last = times[range[1]] || 'NA';
+                const s = this.f.info[d];
+                for (let i = this.table.firstElementChild.childElementCount; i--; ) {
+                  const h = this.table.firstElementChild.children[i].innerText,
+                    n = h.toLowerCase();
+                  this.table.lastElementChild.children[i].innerText = n in s ? site.data.format_value(s[n]) : this.add[h];
                 }
               }
-              request_queue('_base_filter');
-            }.bind(value_select, f);
+            },
+            add: {
+              Dataset: d,
+              First: times[range[0]] || 'NA',
+              Last: times[range[1]] || 'NA',
+            },
+          };
+          f.summary.table = make_summary_table(e.lastElementChild.lastElementChild, f.info[d], f.summary.add);
 
-            // remove button
-            e.appendChild(document.createElement('td'));
-            e.lastElementChild.appendChild((ee = document.createElement('label')));
-            ee.innerText = 'Remove';
-            ee.className = 'filter-label';
-            ee.id = f.id + '_remove';
-            e.lastElementChild.appendChild((ee = document.createElement('button')));
-            ee.className = 'btn-close filter-form-input';
-            ee.type = 'button';
-            ee.setAttribute('aria-labelledby', f.id + '_remove');
-            ee.addEventListener(
-              'mouseup',
-              function (e) {
-                if (1 === e.which) {
-                  this.e.parentElement.removeChild(this.e);
-                  _u._base_filter.c.delete(this.index);
-                  _u._base_filter.c.forEach((f, i) => {
-                    if (i > this.index) f.index -= 1;
-                  });
-                  request_queue('_base_filter');
-                }
-              }.bind(f)
-            );
+          // filter result
+          e.appendChild(document.createElement('td'));
+          e.lastElementChild.appendChild((ee = document.createElement('p')));
+          ee.setAttribute('aria-describedby', f.id);
+          ee.className = 'cell-text';
+          ee.innerText = '0/0';
+
+          // active switch
+          e.appendChild(document.createElement('td'));
+          e.lastElementChild.appendChild((ee = document.createElement('label')));
+          ee.innerText = 'Active';
+          ee.className = 'filter-label';
+          ee.id = f.id + '_switch';
+          e.lastElementChild.appendChild((ee = document.createElement('div')));
+          ee.className = 'form-check form-switch filter-form-input';
+          ee.appendChild((ee = document.createElement('input')));
+          ee.className = 'form-check-input';
+          ee.type = 'checkbox';
+          ee.role = 'switch';
+          ee.setAttribute('aria-labelledby', f.id + '_switch');
+          ee.setAttribute('aria-describedby', f.id);
+          ee.checked = true;
+          ee.addEventListener(
+            'change',
+            function () {
+              f.active = !f.active;
+              request_queue('_base_filter');
+            }.bind(f)
+          );
+
+          // component combobox
+          e.appendChild(document.createElement('td'));
+          e.lastElementChild.appendChild((ee = document.createElement('label')));
+          ee.innerText = 'Component';
+          ee.className = 'filter-label';
+          ee.id = f.id + '_component';
+          const comp_select = elements.combobox.create('component', filter_components.Time);
+          comp_select.default = f.component;
+          comp_select.set(f.component);
+          e.lastElementChild.appendChild(comp_select.e.parentElement);
+          comp_select.e.parentElement.removeChild(comp_select.e.parentElement.lastElementChild);
+          comp_select.e.parentElement.classList.add('filter-form-input');
+          comp_select.e.setAttribute('aria-labelledby', f.id + '_component');
+          comp_select.input_element.setAttribute('aria-labelledby', f.id + '_component');
+          comp_select.input_element.setAttribute('aria-describedby', f.id);
+          comp_select.listbox.setAttribute('aria-labelledby', f.id + '_component');
+          comp_select.onchange = function () {
+            f.component = this.value();
             request_queue('_base_filter');
-            page.modal.filter.variable_filters.lastElementChild.lastElementChild.appendChild(e);
-          }
+          }.bind(comp_select);
+
+          // operator select
+          e.appendChild(document.createElement('td'));
+          e.lastElementChild.appendChild((ee = document.createElement('label')));
+          ee.innerText = 'Operator';
+          ee.className = 'filter-label';
+          ee.id = f.id + '_operator';
+          e.lastElementChild.appendChild((ee = document.createElement('select')));
+          ee.className = 'form-select filter-form-input';
+          ee.setAttribute('aria-labelledby', f.id + '_operator');
+          ee.setAttribute('aria-describedby', f.id);
+          ee.addEventListener('change', e => {
+            f.operator = e.target.selectedOptions[0].value;
+            request_queue('_base_filter');
+          })
+          ;['>=', '=', '!=', '<='].forEach(k => {
+            ee.appendChild(document.createElement('option'));
+            ee.lastElementChild.value = ee.lastElementChild.innerText = k;
+            if (k === f.operator) ee.lastElementChild.selected = true;
+          });
+
+          // value input
+          e.appendChild(document.createElement('td'));
+          e.lastElementChild.appendChild((ee = document.createElement('label')));
+          ee.innerText = 'Value';
+          ee.className = 'filter-label';
+          ee.id = f.id + '_value';
+          const value_select = elements.combobox.create('component', ['min', 'q1', 'median', 'mean', 'q3', 'max']);
+          value_select.value_type = 'number';
+          value_select.default = f.value;
+          value_select.set(f.value);
+          e.lastElementChild.appendChild(value_select.e.parentElement);
+          value_select.e.parentElement.removeChild(value_select.e.parentElement.lastElementChild);
+          value_select.e.parentElement.classList.add('filter-form-input');
+          value_select.e.setAttribute('aria-labelledby', f.id + '_value');
+          value_select.input_element.setAttribute('aria-labelledby', f.id + '_value');
+          value_select.input_element.setAttribute('aria-describedby', f.id);
+          value_select.listbox.setAttribute('aria-labelledby', f.id + '_value');
+          value_select.onchange = async function (f) {
+            f.value = this.value();
+            if (patterns.number.test(f.value)) {
+              f.value = Number(f.value);
+              f.value_source = '';
+            } else {
+              f.view.reparse();
+              const v = await site.data.get_variable(f.variable, f.view.id),
+                s = v && v.views[f.view.id].summaries[f.view.parsed.dataset];
+              if (s && f.value in s) {
+                const a = f.view.parsed.variable_values.get(f.id);
+                f.value_source = f.value;
+                f.value = s[f.value][a.comp_fun(a, f.view.parsed)];
+              }
+            }
+            request_queue('_base_filter');
+          }.bind(value_select, f);
+
+          // remove button
+          e.appendChild(document.createElement('td'));
+          e.lastElementChild.appendChild((ee = document.createElement('label')));
+          ee.innerText = 'Remove';
+          ee.className = 'filter-label';
+          ee.id = f.id + '_remove';
+          e.lastElementChild.appendChild((ee = document.createElement('button')));
+          ee.className = 'btn-close filter-form-input';
+          ee.type = 'button';
+          ee.setAttribute('aria-labelledby', f.id + '_remove');
+          ee.setAttribute('aria-describedby', f.id);
+          ee.addEventListener(
+            'mouseup',
+            function (e) {
+              if (1 === e.which) {
+                this.e.parentElement.removeChild(this.e);
+                _u._base_filter.c.delete(this.id);
+                if (!_u._base_filter.c.size) page.modal.filter.variable_filters.lastElementChild.classList.add('hidden');
+                request_queue('_base_filter');
+              }
+            }.bind(f)
+          );
+          request_queue('_base_filter');
+          page.modal.filter.conditions.lastElementChild.appendChild(e);
+          page.modal.filter.variable_filters.lastElementChild.classList.remove('hidden');
         }
 
         // variable filter dropdown
@@ -6147,38 +6233,40 @@
         ee.appendChild(document.createElement('div'));
         ee.lastElementChild.className = 'col';
         ee.lastElementChild.appendChild((c = document.createElement('div')));
-        c.className = 'dropdown';
-        c.appendChild(document.createElement('button'));
-        c.lastElementChild.type = 'button';
-        c.lastElementChild.id = 'filter_variable_dropdown';
-        c.lastElementChild.className = 'btn dropdown-toggle';
-        c.lastElementChild.setAttribute('data-bs-toggle', 'dropdown');
-        c.lastElementChild.setAttribute('aria-expanded', 'false');
-        c.lastElementChild.innerText = 'Add Variable Condition';
-        c.appendChild(document.createElement('ul'));
-        c.lastElementChild.addEventListener('click', add_filter_condition.bind(e));
-        c.lastElementChild.className = 'dropdown-menu';
-        c.lastElementChild.setAttribute('aria-labelledby', 'filter_variable_dropdown');
-        Object.keys(site.data.variables).forEach(k => {
-          if (!site.data.variables[k].is_time) {
-            const e = document.createElement('li');
-            e.appendChild(document.createElement('a'));
-            e.lastElementChild.className = 'dropdown-item';
-            e.lastElementChild.href = '#';
-            e.lastElementChild.dataset.value = k;
-            e.lastElementChild.innerText = (site.data.variable_info[k] && site.data.variable_info[k].short_name) || k;
-            c.lastElementChild.appendChild(e);
+
+        const filter_select = elements.combobox.create(
+          'Add Variable Condition',
+          void 0,
+          {strict: true, search: true, clearable: true, floating: true, accordion: true, group: 'category'},
+          'filter_variable_dropdown'
+        );
+        filter_select.input = false;
+        filter_select.settings.filter_table = document.querySelector('.filter-body');
+        filter_select.onchange = function () {
+          const value = this.value();
+          if (value in site.data.variables) {
+            add_filter_condition(value);
+            this.selection.innerText = '';
+            const input = document.querySelectorAll('.filter-body .combobox-input');
+            if (input && input.length) input[input.length - 1].focus();
           }
-        });
+        }.bind(filter_select);
+        filter_select.view = defaults.dataview;
+        filter_select.option_sets = {};
+        filter_select.optionSource = 'variables';
+        add_dependency(defaults.dataview, {type: 'options', id: filter_select.id});
+        c.appendChild(filter_select.e.parentElement);
 
         // variable filter table
-        e.variable_filters.appendChild((ee = document.createElement('table')));
+        e.variable_filters.appendChild((ee = document.createElement('div')));
+        ee.className = 'hidden';
+        ee.appendChild((e.conditions = ee = document.createElement('table')));
         ee.className = 'table';
         ee.appendChild((ee = document.createElement('thead')));
         ee.className = 'filter-header';
-        e.variable_filters.lastElementChild.appendChild(document.createElement('tbody'));
-        e.variable_filters.lastElementChild.lastElementChild.className = 'filter-body';
-        ee = ee.appendChild((ee = document.createElement('tr')))
+        e.conditions.appendChild(document.createElement('tbody'));
+        e.conditions.lastElementChild.className = 'filter-body';
+        ee.appendChild((ee = document.createElement('tr')))
         ;['Variable', 'Result', 'Active', 'Component', 'Operator', 'Value', 'Remove'].forEach(h => {
           ee.appendChild(document.createElement('th'));
           if ('Component' === h || 'Result' === h) {
@@ -6205,6 +6293,9 @@
             ee.lastElementChild.innerText = h;
           }
         });
+        e.variable_filters.lastElementChild.appendChild((ee = document.createElement('p')));
+        ee.className = 'note';
+        ee.innerText = 'Summaries are across time within each unfiltered dataset.';
 
         keys._u = Object.keys(_u);
         if (site.query) {
@@ -6212,8 +6303,7 @@
           if (site.parsed_query.variables.conditions.length) {
             site.parsed_query.variables.conditions.forEach(f => {
               const info = site.data.variable_info[f.name];
-              if (info)
-                add_filter_condition({target: {tagName: 'A', dataset: {value: f.name}, innerText: info.short_name}}, f);
+              if (info) add_filter_condition(f.name, f);
             });
           }
         }
@@ -6504,9 +6594,10 @@
           },
           variables: function () {
             if (v.variables || _u._base_filter.c.size) {
-              if (!v.parsed.variable_values.length) v.reparse();
+              if (!v.parsed.variable_values.size) v.reparse();
               let s = '';
               v.parsed.variable_values.forEach(vi => {
+                vi.filter.summary.update();
                 s += vi.name + vi.operator + vi.component + vi.value + vi.active;
               });
               return s
@@ -6532,7 +6623,7 @@
           time_filters: '',
           time_agg: 0,
           id_source: '',
-          variable_values: [],
+          variable_values: new Map(),
           feature_values: {},
         };
         v.reparse = function () {
@@ -6562,10 +6653,10 @@
               }
             this.parsed.features = this.get.features();
           } else this.parsed.features = '';
-          this.parsed.variable_values = [];
+          this.parsed.variable_values.clear();
           if (_u._base_filter.c.size)
             _u._base_filter.c.forEach(f => {
-              this.parsed.variable_values.push({
+              this.parsed.variable_values.set(f.id, {
                 filter: f,
                 name: f.variable,
                 range: site.data.variables[f.variable].info[this.parsed.dataset].time_range,
@@ -6577,17 +6668,19 @@
                 comp_fun: component_fun(f.component),
               });
             });
-          if (this.variables || this.parsed.variable_values.length) {
+          if (this.variables || this.parsed.variable_values.size) {
             if (this.variables)
-              for (let i = this.variables.length, v; i--; ) {
-                v = valueOf(this.variables[i].value);
-                this.parsed.variable_values.push({
-                  name: valueOf(this.variables[i].variable),
-                  operator: valueOf(this.variables[i].type),
-                  value: v,
-                  value_type: typeof v,
+              this.variables.forEach(v => {
+                const value = valueOf(v.value);
+                this.parsed.variable_values.set(this.parsed.variable_values.size, {
+                  name: v.variable,
+                  operator: v.operator,
+                  value: value,
+                  component: v.component,
+                  active: true,
+                  comp_fun: component_fun(v.component),
                 });
-              }
+              });
             this.parsed.variables = this.get.variables();
           } else this.parsed.variables = '';
         }.bind(v);
@@ -6616,8 +6709,7 @@
           variables: function (e) {
             if (e.data) {
               let pass = true;
-              for (let i = this.parsed.variable_values.length; i--; ) {
-                const v = this.parsed.variable_values[i];
+              this.parsed.variable_values.forEach(v => {
                 if (v.active && !isNaN(v.value)) {
                   const ev = e.get_value(v.name, v.comp_fun(v, this.parsed)),
                     ck = !isNaN(ev) && DataHandler.checks[v.operator](ev, v.value);
@@ -6626,7 +6718,7 @@
                 } else {
                   v.filter.failed++;
                 }
-              }
+              });
               return pass
             } else return true
           }.bind(v),

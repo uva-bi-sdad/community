@@ -189,14 +189,14 @@ export class TutorialManager {
     if (name in this.site_elements) {
       this.current_site_element = this.site_elements[name]
       e = this.current_site_element.e
-    } else if (patterns.pre_colon.test(name)) {
+    } else if ('nav:' === name.substring(0, 4).toLowerCase()) {
       const text = name.replace(patterns.pre_colon, '')
       document.querySelectorAll('.nav-item button').forEach((item: HTMLButtonElement) => {
         if (text === item.innerText) e = item
       })
     } else {
       try {
-        e = document.querySelector(name.replace(patterns.escapes, '\\$1'))
+        e = document.querySelector(name.replace(patterns.id_escapes, '\\$1'))
       } catch (error) {}
     }
     return e
@@ -230,9 +230,9 @@ export class TutorialManager {
       const t = this.tutorials[this.in_progress]
       let step: TutorialStep
       const handle_object = (obj: {[index: string]: string}) => {
-        Object.keys(obj).forEach((k, i) => {
+        Object.keys(obj).forEach(k => {
           if (patterns.number.test(k)) {
-            do_action(obj[k], i)
+            do_action(obj[k])
           } else {
             if (k in this.site_elements && this.site_elements[k].set) {
               this.site_elements[k].set(obj[k])
@@ -240,10 +240,23 @@ export class TutorialManager {
           }
         })
       }
-      const do_action = (action: string, i: number) => {
+      const set_value = (value: string | string[]) => {
+        if (this.current_site_element && this.current_site_element.set) {
+          this.current_site_element.set(value)
+        } else {
+          const input =
+            'value' in this.current_element ? this.current_element : this.current_element.querySelector('input')
+          if (input) {
+            input.value = value
+            input.dispatchEvent(new Event('change'))
+            input.dispatchEvent(new KeyboardEvent('keydown', {code: 'Enter'}))
+          }
+        }
+      }
+      const do_action = (action: string) => {
         action = String(action)
         if ('set' === action) {
-          if ('option' in step && this.current_site_element.set) this.current_site_element.set(step.option)
+          if ('option' in step) set_value(step.option)
         } else if ('click' === action) {
           if (
             this.current_site_element &&
@@ -257,9 +270,7 @@ export class TutorialManager {
         } else if ('close' === action) {
           document.querySelectorAll('[data-bs-dismiss]').forEach((close: HTMLButtonElement) => close.click())
         } else if ('value' === action.substring(0, 5)) {
-          this.current_site_element &&
-            this.current_site_element.set &&
-            this.current_site_element.set(action.replace(patterns.pre_colon, '').trimStart())
+          set_value(action.replace(patterns.pre_colon, '').trimStart())
         } else {
           const e = this.retrieve_element(action)
           if (e) e.click()
@@ -279,6 +290,7 @@ export class TutorialManager {
       if (this.current_step >= t.n_steps) {
         this.end_tutorial()
       } else {
+        this.current_site_element = void 0
         // handle current step's before action
         step = t.steps[this.current_step]
         this.current_element = this.retrieve_element(step.focus)

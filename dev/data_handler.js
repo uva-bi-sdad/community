@@ -1122,11 +1122,11 @@
                     else {
                         var ve_2 = (_this.variables[vn] = {
                             datasets: [k],
-                            info: { full_name: k, type: 'unknown' },
+                            info: {},
                             time_range: {},
                             type: v.type,
-                            code: k,
-                            name: k,
+                            code: vn,
+                            name: vn,
                             meta: v.info,
                             levels: [],
                             level_ids: {},

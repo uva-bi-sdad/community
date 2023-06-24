@@ -540,13 +540,19 @@ button.dropdown-toggle {
 .info-summary-wrapper {
   overflow-x: auto;
 }
-.info-body .info-summary {
+.info-summary {
   text-align: center;
   margin: 0.5em 0;
 }
 .info-summary th,
 .info-summary td {
   padding: 0 0.2em;
+}
+.filter-body .info-summary-wrapper,
+.filter-body .info-summary {
+  margin: 3px 0 0 5px;
+  font-size: 0.9em;
+  opacity: 0.85;
 }
 .info-title {
   font-size: clamp(1.3rem, -0.5rem + 2vw, 1.7rem);
@@ -1122,6 +1128,12 @@ input[type='range']::-ms-thumb {
   opacity: 0;
   display: none;
 }
+.note {
+  font-size: 0.8em;
+  opacity: 0.7;
+  padding: 0.3em 0.6em;
+  margin: 0;
+}
 
 .info-body table.info-filter {
   width: auto;
@@ -1170,6 +1182,9 @@ input[type='range']::-ms-thumb {
 }
 .filter-dialog .btn-close {
   padding: 0.7em;
+}
+.filter-dialog .col-sm {
+  min-width: 270px;
 }
 .filter-body td {
   align-items: center;
