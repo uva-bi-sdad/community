@@ -4,11 +4,20 @@ import * as params from './export_params'
 import {group_checks} from './checks'
 import DataHandler from '.'
 
+const ps = {
+  any: /\{(?:categor|variant)/,
+  category: /\{categor(?:y|ies)(\.[^}]+?)?\}/g,
+  variant: /\{variants?(\.[^}]+?)?\}/g,
+  all: /\{(?:categor(?:y|ies)|variants?)(\.[^}]+?)?\}/g,
+  desc: /description$/,
+}
+
 function replace_dynamic(e: string, p: RegExp, s: UnparsedObject, v?: UnparsedObject, d = 'default'): string {
   p.lastIndex = 0
   for (let m, k; (m = p.exec(e)); ) {
     const ss = v && 'v' === m[0].substring(1, 2) ? v : s
     k = m[1] ? m[1].substring(1) : d
+    if (!(k in ss) && ps.desc.test(k)) k = d = 'description'
     if (!(k in ss) && k === d) k = 'default'
     const r = ss[k]
     if (r && 'string' === typeof r) {
@@ -30,12 +39,6 @@ function prepare_source(name: string, o: UnparsedObject, s: UnparsedObject, p: R
 }
 
 export function measure_info(info: MeasureInfos): MeasureInfos {
-  const ps = {
-    any: /\{(?:categor|variant)/,
-    category: /\{categor(?:y|ies)(\.[^}]+?)?\}/g,
-    variant: /\{variants?(\.[^}]+?)?\}/g,
-    all: /\{(?:categor(?:y|ies)|variants?)(\.[^}]+?)?\}/g,
-  }
   Object.keys(info).forEach(name => {
     if (ps.any.test(name)) {
       const base = info[name] as MeasureInfo
@@ -60,7 +63,13 @@ export function measure_info(info: MeasureInfos): MeasureInfos {
               }
             })
             Object.keys(s).forEach(k => {
-              if ('default' !== k && 'name' !== k && !(k in r)) r[k] = s[k]
+              if (
+                !(k in r) &&
+                'default' !== k &&
+                'name' !== k &&
+                ('description' !== k || !(r.long_description || r.short_description))
+              )
+                r[k] = s[k]
             })
             info[replace_dynamic(name, ps.all, cs, vs)] = r as MeasureInfo
           })

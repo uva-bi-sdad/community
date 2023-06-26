@@ -56,7 +56,7 @@ test_that("dynamic entries work", {
     statement = "This entity has {value} {category} {variant}.",
     categories = c("a", "b"),
     variants = list(
-      u1 = list(default = "U1"),
+      u1 = list(default = "U1", description = "You One"),
       u2 = list(full_name = "u_two", source = list(name = "source 1"))
     )
   ), render = TRUE)
@@ -65,6 +65,8 @@ test_that("dynamic entries work", {
     "measure a U1", "measure b U1", "measure a u2", "measure b u2",
     "_references"
   ))
+  expect_identical(rendered[["measure a U1"]]$description, NULL)
+  expect_identical(rendered[["measure a U1"]]$short_description, "Another measure (a; You One).")
   expect_identical(rendered[["measure a u2"]]$full_name, "u_two:measure a")
   expect_identical(rendered[["measure a u2"]]$source, list(name = "source 1"))
 })

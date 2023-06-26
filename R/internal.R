@@ -202,10 +202,18 @@ render_info <- function(info, names_only = FALSE) {
     if (names_only) {
       expanded <- c(expanded, key)
     } else {
-      expanded[[key]] <- c(structure(lapply(names(base), function(n) {
-        e <- base[[n]]
-        if (is.character(e) && length(e) == 1) e <- replace_dynamic(e, p, cs, vs, n)
-      }), names = names(base)), s[!names(s) %in% c("default", "name", names(base))])
+      expanded[[key]] <- c(
+        structure(lapply(names(base), function(n) {
+          e <- base[[n]]
+          if (is.character(e) && length(e) == 1) e <- replace_dynamic(e, p, cs, vs, n)
+        }), names = names(base)),
+        s[!names(s) %in% c(
+          "default",
+          "name",
+          if (any(base[c("long_description", "short_description")] != "")) "description",
+          names(base)
+        )]
+      )
     }
   }
   expanded

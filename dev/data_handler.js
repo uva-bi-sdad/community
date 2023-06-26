@@ -1273,12 +1273,21 @@
         });
     }
 
+    var ps = {
+        any: /\{(?:categor|variant)/,
+        category: /\{categor(?:y|ies)(\.[^}]+?)?\}/g,
+        variant: /\{variants?(\.[^}]+?)?\}/g,
+        all: /\{(?:categor(?:y|ies)|variants?)(\.[^}]+?)?\}/g,
+        desc: /description$/,
+    };
     function replace_dynamic(e, p, s, v, d) {
         if (d === void 0) { d = 'default'; }
         p.lastIndex = 0;
         for (var m = void 0, k = void 0; (m = p.exec(e));) {
             var ss = v && 'v' === m[0].substring(1, 2) ? v : s;
             k = m[1] ? m[1].substring(1) : d;
+            if (!(k in ss) && ps.desc.test(k))
+                k = d = 'description';
             if (!(k in ss) && k === d)
                 k = 'default';
             var r = ss[k];
@@ -1301,12 +1310,6 @@
         return r;
     }
     function measure_info(info) {
-        var ps = {
-            any: /\{(?:categor|variant)/,
-            category: /\{categor(?:y|ies)(\.[^}]+?)?\}/g,
-            variant: /\{variants?(\.[^}]+?)?\}/g,
-            all: /\{(?:categor(?:y|ies)|variants?)(\.[^}]+?)?\}/g,
-        };
         Object.keys(info).forEach(function (name) {
             if (ps.any.test(name)) {
                 var base_1 = info[name];
@@ -1333,7 +1336,10 @@
                                 }
                             });
                             Object.keys(s).forEach(function (k) {
-                                if ('default' !== k && 'name' !== k && !(k in r))
+                                if (!(k in r) &&
+                                    'default' !== k &&
+                                    'name' !== k &&
+                                    ('description' !== k || !(r.long_description || r.short_description)))
                                     r[k] = s[k];
                             });
                             info[replace_dynamic(name, ps.all, cs, vs)] = r;
