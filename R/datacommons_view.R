@@ -29,9 +29,6 @@
 #' @param preselect_files Logical; if \code{TRUE}, will select files by ID coverage before processing them,
 #' which can save time, but might miss data spread across multiple files.
 #' @param refresh_map Logical; if \code{TRUE}, overwrites any existing map files.
-#' @param use_manifest Logical; if \code{TRUE}, will search for manifest files in each repository to
-#' extract measure information from. These should have \code{data} entries with object arrays containing a
-#' \code{measure_info} entry (e.g., \code{'{"data: [{"measure_info": [{...}]}]"}'}).
 #' @param overwrite Logical; if \code{TRUE}, reformatted files in \code{output}.
 #' @param verbose Logical; if \code{FALSE}, will not show status messages.
 #' @examples
@@ -48,8 +45,7 @@
 datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL, ids = NULL,
                              files = NULL, run_after = NULL, run_before = NULL, measure_info = list(),
                              remote = NULL, url = NULL, children = list(), execute = TRUE, prefer_repo = TRUE,
-                             preselect_files = FALSE, refresh_map = FALSE, use_manifest = FALSE, overwrite = FALSE,
-                             verbose = TRUE) {
+                             preselect_files = FALSE, refresh_map = FALSE, overwrite = FALSE, verbose = TRUE) {
   if (missing(commons)) cli_abort('{.arg commons} must be speficied (e.g., commons = ".")')
   if (missing(name)) {
     name <- list.files(paste0(commons, "/views"))[1]
@@ -191,7 +187,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       source(local = source_env, exprs = src)
     }
     if (verbose) cli_alert_info("checking for file maps")
-    map <- datacommons_map_files(commons, use_manifest = use_manifest, overwrite = refresh_map, verbose = verbose)
+    map <- datacommons_map_files(commons, overwrite = refresh_map, verbose = verbose)
     files <- map$variables[
       (if (length(view$files)) grepl(view$files, map$variables$file) else TRUE) &
         (if (length(view$variables)) {
@@ -268,44 +264,24 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
       }
       base_vars <- sub("^[^:/]+[:/]", "", view$variables)
       for (r in unique(files$repo)) {
-        ri <- NULL
-        if (use_manifest) {
-          manifest_file <- paste0(commons, "/repos/", sub("^.+/", "", r), "/manifest.json")
-          if (file.exists(manifest_file)) {
-            rmanifest <- jsonlite::read_json(manifest_file)
-            ri <- lapply(rmanifest$data, function(e) {
-              m <- e$measure_info
-              if (length(m)) {
-                if (is.list(m[[1]])) {
-                  names(m) <- vapply(m, function(e) if (is.null(e$full_name)) "" else e$full_name, "")
-                } else if (is.list(m)) {
-                  m <- list(m)
-                  names(m) <- m[[1]]$full_name
-                }
-              }
-              m
-            })
-            if (!is.null(rmanifest[["_references"]])) {
-              ri <- c(ri, list(rmanifest["_references"]))
-            }
-          }
-        }
-        if (is.null(ri)) {
-          ri <- lapply(list.files(
-            paste0(commons, "/repos/", sub("^.+/", "", r)), "^measure_info[^.]*\\.json$",
-            full.names = TRUE, recursive = TRUE
-          ), function(f) {
-            m <- tryCatch(jsonlite::read_json(f), error = function(e) {
-              cli_alert_warning("failed to read measure info: {.file {f}}")
-              NULL
-            })
-            if (all(c("measure", "type", "short_description") %in% names(m))) {
-              m <- list(m)
-              names(m) <- m[[1]]$measure
-            }
-            m
+        measure_info_files <- sort(list.files(
+          paste0(commons, "/repos/", sub("^.+/", "", r)), "^measure_info[^.]*\\.json$",
+          full.names = TRUE, recursive = TRUE
+        ))
+        measure_info_files <- measure_info_files[
+          !duplicated(sub("_rendered", "", measure_info_files, fixed = TRUE))
+        ]
+        ri <- lapply(measure_info_files, function(f) {
+          m <- tryCatch(jsonlite::read_json(f), error = function(e) {
+            cli_alert_warning("failed to read measure info: {.file {f}}")
+            NULL
           })
-        }
+          if (all(c("measure", "type", "short_description") %in% names(m))) {
+            m <- list(m)
+            names(m) <- m[[1]]$measure
+          }
+          m
+        })
         if (length(ri)) {
           ri <- unlist(ri, recursive = FALSE)
           nri <- names(ri)
@@ -334,7 +310,8 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
             }
             nri <- names(ri)
           }
-          ri <- ri[(if (length(view$variables)) nri %in% view$variables else TRUE) & !nri %in% names(measure_info)]
+          rendered_names <- render_info_names(ri)
+          ri <- ri[(if (length(view$variables)) rendered_names[nri] %in% view$variables else TRUE) & !nri %in% names(measure_info)]
           if (length(ri)) {
             measure_info[names(ri)] <- lapply(
               ri, function(e) if (is.null(names(e)) && !is.null(names(e[[1]]))) e[[1]] else e

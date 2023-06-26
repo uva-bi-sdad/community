@@ -138,7 +138,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
           if (varinf[[1]] %in% names(metas)) {
             varinf <- metas[[varinf[[1]]]]
           } else {
-            varinf <- metas[[varinf[[1]]]] <- jsonlite::read_json(varinf[[1]])
+            varinf <- metas[[varinf[[1]]]] <- data_measure_info(varinf[[1]], write = FALSE, render = TRUE)
           }
           varinf <- varinf[varinf != ""]
         }

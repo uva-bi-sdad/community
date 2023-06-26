@@ -8,8 +8,7 @@ datacommons_view(commons, name, output = NULL, ..., variables = NULL,
   ids = NULL, files = NULL, run_after = NULL, run_before = NULL,
   measure_info = list(), remote = NULL, url = NULL, children = list(),
   execute = TRUE, prefer_repo = TRUE, preselect_files = FALSE,
-  refresh_map = FALSE, use_manifest = FALSE, overwrite = FALSE,
-  verbose = TRUE)
+  refresh_map = FALSE, overwrite = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{commons}{Path to the data commons project.}
@@ -55,10 +54,6 @@ over those in the repositories.}
 which can save time, but might miss data spread across multiple files.}
 
 \item{refresh_map}{Logical; if \code{TRUE}, overwrites any existing map files.}
-
-\item{use_manifest}{Logical; if \code{TRUE}, will search for manifest files in each repository to
-extract measure information from. These should have \code{data} entries with object arrays containing a
-\code{measure_info} entry (e.g., \code{'{"data: [{"measure_info": [{...}]}]"}'}).}
 
 \item{overwrite}{Logical; if \code{TRUE}, reformatted files in \code{output}.}
 

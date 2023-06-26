@@ -21,6 +21,17 @@
     /* global Reflect, Promise */
 
 
+    var __assign = function() {
+        __assign = Object.assign || function __assign(t) {
+            for (var s, i = 1, n = arguments.length; i < n; i++) {
+                s = arguments[i];
+                for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+            }
+            return t;
+        };
+        return __assign.apply(this, arguments);
+    };
+
     function __awaiter(thisArg, _arguments, P, generator) {
         function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
         return new (P || (P = Promise))(function (resolve, reject) {
@@ -1262,6 +1273,77 @@
         });
     }
 
+    function replace_dynamic(e, p, s, v, d) {
+        if (d === void 0) { d = 'default'; }
+        p.lastIndex = 0;
+        for (var m = void 0, k = void 0; (m = p.exec(e));) {
+            var ss = v && 'v' === m[0].substring(1, 2) ? v : s;
+            k = m[1] ? m[1].substring(1) : d;
+            if (!(k in ss) && k === d)
+                k = 'default';
+            var r = ss[k];
+            if (r && 'string' === typeof r) {
+                while (e.includes(m[0]))
+                    e = e.replace(m[0], r);
+                p.lastIndex = 0;
+            }
+        }
+        return e;
+    }
+    function prepare_source(name, o, s, p) {
+        var r = { name: name };
+        Object.keys(o).forEach(function (n) {
+            var e = o[n];
+            r[n] = 'string' === typeof e ? replace_dynamic(e, p, s) : e;
+        });
+        if (!('default' in r))
+            r.default = name;
+        return r;
+    }
+    function measure_info(info) {
+        var ps = {
+            any: /\{(?:categor|variant)/,
+            category: /\{categor(?:y|ies)(\.[^}]+?)?\}/g,
+            variant: /\{variants?(\.[^}]+?)?\}/g,
+            all: /\{(?:categor(?:y|ies)|variants?)(\.[^}]+?)?\}/g,
+        };
+        Object.keys(info).forEach(function (name) {
+            if (ps.any.test(name)) {
+                var base_1 = info[name];
+                var bn_1 = Object.keys(base_1);
+                if (base_1.categories || base_1.variants) {
+                    var categories_1 = Array.isArray(base_1.categories) ? {} : base_1.categories || {};
+                    var variants_1 = Array.isArray(base_1.variants) ? {} : base_1.variants || {};
+                    var cats = Array.isArray(base_1.categories) ? base_1.categories : Object.keys(categories_1);
+                    if (!cats.length)
+                        cats.push('');
+                    var vars_1 = Array.isArray(base_1.variants) ? base_1.variants : Object.keys(variants_1);
+                    if (!vars_1.length)
+                        cats.push('');
+                    cats.forEach(function (cn) {
+                        vars_1.forEach(function (vn) {
+                            var cs = prepare_source(cn, categories_1[cn] || {}, variants_1[vn] || {}, ps.variant);
+                            var vs = prepare_source(vn, variants_1[vn] || {}, categories_1[cn] || {}, ps.category);
+                            var s = __assign(__assign({}, cs), vs);
+                            var r = {};
+                            bn_1.forEach(function (k) {
+                                if ('categories' !== k && 'variants' !== k) {
+                                    var temp = base_1[k];
+                                    r[k] = 'string' === typeof temp ? replace_dynamic(temp, ps.all, cs, vs, k) : temp;
+                                }
+                            });
+                            Object.keys(s).forEach(function (k) {
+                                if ('default' !== k && 'name' !== k && !(k in r))
+                                    r[k] = s[k];
+                            });
+                            info[replace_dynamic(name, ps.all, cs, vs)] = r;
+                        });
+                    });
+                }
+            }
+        });
+        return info;
+    }
     function query(q) {
         var _this = this;
         var f = JSON.parse(JSON.stringify(defaults));
@@ -1508,7 +1590,7 @@
                         _this.metadata.datasets = Object.keys(_this.sets);
                 }
                 if (_this.metadata.measure_info) {
-                    var info_1 = _this.metadata.measure_info;
+                    var info_1 = measure_info(_this.metadata.measure_info);
                     _this.metadata.datasets.forEach(function (d) {
                         if (info_1._references)
                             _this.info[d]._references = info_1._references;

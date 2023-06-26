@@ -47,3 +47,24 @@ test_that("strict works", {
     c("citations", "measure", "full_name", "short_description", "statement")
   )
 })
+
+test_that("dynamic entries work", {
+  rendered <- data_measure_info(path, "measure {category} {variant}" = list(
+    measure = "measure {category}",
+    full_name = "{variant}:measure {category}",
+    short_description = "Another measure ({category}; {variant}).",
+    statement = "This entity has {value} {category} {variant}.",
+    categories = c("a", "b"),
+    variants = list(
+      u1 = list(default = "U1"),
+      u2 = list(full_name = "u_two", source = list(name = "source 1"))
+    )
+  ), render = TRUE)
+  expect_identical(names(rendered), c(
+    "measure name", "measure two", "measure three",
+    "measure a U1", "measure b U1", "measure a u2", "measure b u2",
+    "_references"
+  ))
+  expect_identical(rendered[["measure a u2"]]$full_name, "u_two:measure a")
+  expect_identical(rendered[["measure a u2"]]$source, list(name = "source 1"))
+})

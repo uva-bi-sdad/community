@@ -1,4 +1,31 @@
-export type UnparsedObject = {[index: string]: any}
+type Generic = {[index: string]: string}
+
+export type UnparsedObject = {
+  [index: string]:
+    | string
+    | string[]
+    | number
+    | number[]
+    | Filter
+    | Filter[]
+    | MeasureInfos
+    | Generic
+    | {
+        filter_by: string[]
+        conditions: Filter[]
+      }
+  feature_conditions?: Filter[]
+  variables?: {
+    filter_by: string[]
+    conditions: Filter[]
+  }
+  time_range?: number[]
+  variable_info?: MeasureInfos
+  short_name?: string
+  features?: Features
+  file_format?: FileFormats
+  table_format?: TableFormats
+}
 
 export type Filter = {
   name: string
@@ -52,16 +79,20 @@ export interface Summary {
 type Summaries = {[index: string]: Summary}
 
 export type MeasureInfo = {
-  full_name: string
-  type: string
-  measure: string
-  name: string
-  long_name: string
-  short_name: string
-  description: string
-  long_description: string
-  short_description: string
-  levels: string[]
+  full_name?: string
+  type?: string
+  measure?: string
+  name?: string
+  default?: string
+  long_name?: string
+  short_name?: string
+  description?: string
+  long_description?: string
+  short_description?: string
+  levels?: string[]
+  source?: Generic | {[index: string]: Generic}
+  categories?: string[] | MeasureInfos
+  variants?: string[] | MeasureInfos
 }
 
 export type MeasureInfos = {
@@ -75,10 +106,10 @@ export type Variable = {
   datasets?: string[]
   time_range: {[index: string]: [number, number, number?]}
   type?: string
-  info: {[index: string]: ResourceField}
+  info: ResourceFields
   levels?: string[]
   level_ids?: {[index: string]: number}
-  table?: {[index: string]: string}
+  table?: Generic
   meta?: MeasureInfo | UnparsedObject
   order?: Order[]
   is_time?: boolean
@@ -132,7 +163,7 @@ type EntityView = {
 export type Entity = {
   group: string
   data: EntityData
-  features: {[index: string]: string}
+  features: Features
   get_value: Function
   layer: {[index: string]: Object}
   relations: Relations
@@ -188,6 +219,8 @@ export type ResourceField = {
   order?: Order[]
 }
 
+export type ResourceFields = {[index: string]: ResourceField}
+
 export type DataResource = {
   bytes?: number
   created?: string
@@ -230,11 +263,11 @@ type DataView = {
 }
 
 export type Settings = {
-  settings?: {[index: string]: string}
+  settings?: Generic
   dataviews?: {[index: string]: DataView}
   view_names?: string[]
   metadata?: Metadata
-  entity_info?: EntityFeatureSet | {[index: string]: string}
+  entity_info?: EntityFeatureSet | Generic
 }
 
 type Reference = {
@@ -243,16 +276,18 @@ type Reference = {
 
 export type References = {[index: string]: Reference}
 
-export type RawQuery = string | {[index: string]: string | {[index: string]: string}}
+export type RawQuery = string | {[index: string]: string | Generic}
 
+type FileFormats = 'csv' | 'tsv'
+type TableFormats = 'tall' | 'mixed' | 'wide'
 export type Query = {
   dataset: Filter
   feature_conditions: Filter[]
   variables: VariableFilter
   time_range: [number, number]
-  file_format: 'csv' | 'tsv'
-  table_format: 'tall' | 'mixed' | 'wide'
-  features: {[index: string]: string}
+  file_format: FileFormats
+  table_format: TableFormats
+  features: Features
   include: string | string[]
   exclude: string | string[]
 }
@@ -275,7 +310,7 @@ export type VariableView = {
   selected_summaries: Summaries
   summaries: Summaries
   table: {[index: string]: number[]}
-  state: {[index: string]: string}
+  state: Generic
 }
 
 export type Promises = {[index: string]: Promise<void>}

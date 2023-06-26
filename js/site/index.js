@@ -1640,6 +1640,11 @@ const community = function (window, document, site) {
                   const r = (this.e.layout.yaxis.range[1] - this.e.layout.yaxis.range[0]) / 10
                   this.e.layout.yaxis.range[0] -= r
                   this.e.layout.yaxis.range[1] += r
+                  if (this.e.layout.yaxis.range[1] > 100) {
+                    const yinfo = vary.info[d].info
+                    if (yinfo && 'percent' === (yinfo.aggregation_method || yinfo.type))
+                      this.e.layout.yaxis.range[1] = 100
+                  }
                   if (site.data.variables[parsed.x].is_time) {
                     const start = v.time_range.filtered[0],
                       end = v.time_range.filtered[1],
@@ -2074,12 +2079,14 @@ const community = function (window, document, site) {
                         this.parsed.data = valueOf(o.options.variable || caller.color || caller.y || _u[o.view].y)
                       } else if (this.text in _u) this.parsed.data = valueOf(this.text)
                       if (!(this.parsed.data in site.data.variables)) return this.parsed.data
-                      const info = site.data.variable_info[this.parsed.data],
+                      const info = site.data.variables[this.parsed.data],
                         v = site.data.format_value(
                           entity.get_value(this.parsed.data, this.parent.time),
                           info && info.type ? patterns.int_types.test(info.type) : true
                         )
-                      return NaN !== v && info.type in value_types ? value_types[info.type](v) : v
+                      let type = info.meta.unit || info.meta.type
+                      if (info.meta.aggregation_method && !(type in value_types)) type = info.meta.aggregation_method
+                      return NaN !== v && type in value_types ? value_types[type](v) : v
                     }
                   if ('data' in this.parsed) {
                     return site.data.meta.times[this.parent.dataset].value[this.parent.time_agg]
@@ -2707,7 +2714,7 @@ const community = function (window, document, site) {
                             variable: vn,
                             offset: this.parsed.time_range[0],
                             entity: v.selection.all[k],
-                            int: patterns.int_types.test(site.data.variable_info[vn].type),
+                            int: patterns.int_types.test(site.data.variables[vn].type),
                           })
                           this.rowIds[this.rows[k].selector.rows] = k
                         }
@@ -2745,7 +2752,7 @@ const community = function (window, document, site) {
                         varstate += vn
                         va.push({
                           variable: vn,
-                          int: patterns.int_types.test(site.data.variable_info[vn].type),
+                          int: patterns.int_types.test(site.data.variables[vn].type),
                           time_range: variable.time_range[d],
                           renderer: function (o, s) {
                             const k = s.features.id,
@@ -2777,7 +2784,7 @@ const community = function (window, document, site) {
                             dataset: d,
                             variable: vn,
                             entity: e,
-                            int: patterns.int_types.test(site.data.variable_info[vn].type),
+                            int: patterns.int_types.test(site.data.variables[vn].type),
                           })
                           this.rowIds[this.rows[k].selector.rows] = k
                         }
@@ -3187,7 +3194,7 @@ const community = function (window, document, site) {
             if (summary && y < summary.n.length) {
               this.integer =
                 site.data.variable_info[variable] && site.data.variable_info[variable].type
-                  ? patterns.int_types.test(site.data.variable_info[variable].type)
+                  ? patterns.int_types.test(site.data.variables[variable].type)
                   : true
               const refresh = site.settings.color_by_order !== this.parsed.rank,
                 bins = s.querySelectorAll('span'),
@@ -4307,7 +4314,7 @@ const community = function (window, document, site) {
     page.modal.info.title.innerText = info.long_name
     set_description(page.modal.info.description, info)
     page.modal.info.name.lastElementChild.innerText = name
-    page.modal.info.type.lastElementChild.innerText = info.type || ''
+    page.modal.info.type.lastElementChild.innerText = info.unit || info.aggregation_method || info.type || ''
     if (info.sources && info.sources.length) {
       page.modal.info.sources.lastElementChild.innerHTML = ''
       page.modal.info.sources.classList.remove('hidden')
@@ -4353,15 +4360,13 @@ const community = function (window, document, site) {
           v = entity
             ? site.data.format_value(
                 entity.get_value(e.v, e.time),
-                patterns.int_types.test(site.data.variable_info[e.v].type)
+                patterns.int_types.test(site.data.variables[e.v].type)
               )
             : NaN
-          s = s.replace(
-            m[0],
-            NaN !== v && site.data.variable_info[e.v].type in value_types
-              ? value_types[site.data.variable_info[e.v].type](v)
-              : v
-          )
+          const info = site.data.variable_info[e.v]
+          let type = info.unit || info.type
+          if (info.aggregation_method && !(type in value_types)) type = info.aggregation_method
+          s = s.replace(m[0], NaN !== v && type in value_types ? value_types[type](v) : v)
           patterns.mustache.lastIndex = 0
         } else if (entity) {
           if ('region_name' === m[1]) {

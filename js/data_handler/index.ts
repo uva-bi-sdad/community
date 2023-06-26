@@ -51,7 +51,7 @@ export default class DataHandler {
         if (!this.metadata.datasets.length) this.metadata.datasets = Object.keys(this.sets)
       }
       if (this.metadata.measure_info) {
-        const info = this.metadata.measure_info
+        const info = parser.measure_info(this.metadata.measure_info)
         this.metadata.datasets.forEach((d: string) => {
           if (info._references) this.info[d]._references = info._references
           const v = this.info[d].schema.fields

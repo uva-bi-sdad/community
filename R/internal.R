@@ -132,3 +132,81 @@ replace_equations <- function(info) {
     e
   })
 }
+
+preprocess <- function(l) {
+  if (!is.list(l)) l <- sapply(l, function(n) list())
+  for (n in names(l)) {
+    l[[n]]$name <- n
+    if (is.null(l[[n]]$default)) l[[n]]$default <- n
+  }
+  l
+}
+
+replace_dynamic <- function(e, p, s, v = NULL, default = "default") {
+  m <- gregexec(p, e)
+  if (m[[1]][[1]] != -1) {
+    t <- regmatches(e, m)[[1]]
+    tm <- structure(substring(t[2, ], 2), names = t[1, ])
+    tm <- tm[!duplicated(names(tm))]
+    tm[tm == ""] <- default
+    for (tar in names(tm)) {
+      us <- (if (is.null(v) || substring(tar, 2, 2) == "c") s else v)
+      entry <- tm[[tar]]
+      if (is.null(us[[entry]]) && grepl("description", entry, fixed = TRUE)) {
+        entry <- default <- "description"
+      }
+      if (is.null(us[[entry]]) && entry == default) entry <- "default"
+      if (is.null(us[[entry]])) cli_abort("failed to render measure info from {tar}")
+      e <- gsub(tar, us[[entry]], e, fixed = TRUE)
+    }
+  }
+  e
+}
+
+prepare_source <- function(o, s, p) {
+  lapply(o, function(e) {
+    if (is.character(e) && length(e) == 1) replace_dynamic(e, p, s) else e
+  })
+}
+
+render_info_names <- function(infos) {
+  r <- lapply(names(infos), function(n) render_info(infos[n], TRUE))
+  structure(unlist(r), names = rep(names(infos), vapply(r, length, 0)))
+}
+
+render_info <- function(info, names_only = FALSE) {
+  base_name <- names(info)
+  base <- info[[1]]
+  if (is.null(base$categories) && is.null(base$variants)) {
+    return(if (names_only) base_name else info)
+  }
+  categories <- preprocess(base$categories)
+  variants <- preprocess(base$variants)
+  base$categories <- NULL
+  base$variants <- NULL
+  expanded <- NULL
+  vars <- strsplit(as.character(outer(
+    if (is.null(names(categories))) "" else names(categories),
+    if (is.null(names(variants))) "" else names(variants),
+    paste,
+    sep = "|||"
+  )), "|||", fixed = TRUE)
+  for (var in vars) {
+    cs <- if (var[1] == "") list() else categories[[var[1]]]
+    vs <- if (var[2] == "") list() else variants[[var[2]]]
+    cs <- prepare_source(cs, vs, "\\{variants?(\\.[^}]+?)?\\}")
+    vs <- prepare_source(vs, cs, "\\{categor(?:y|ies)(\\.[^}]+?)?\\}")
+    s <- c(cs, vs[!names(vs) %in% names(cs)])
+    p <- "\\{(?:categor(?:y|ies)|variants?)(\\.[^}]+?)?\\}"
+    key <- replace_dynamic(base_name, p, cs, vs)
+    if (names_only) {
+      expanded <- c(expanded, key)
+    } else {
+      expanded[[key]] <- c(structure(lapply(names(base), function(n) {
+        e <- base[[n]]
+        if (is.character(e) && length(e) == 1) e <- replace_dynamic(e, p, cs, vs, n)
+      }), names = names(base)), s[!names(s) %in% c("default", "name", names(base))])
+    }
+  }
+  expanded
+}

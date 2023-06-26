@@ -7,7 +7,7 @@
 datacommons_refresh(dir, clone_method = "http",
   include_distributions = FALSE, refresh_distributions = FALSE,
   only_new = FALSE, reset_repos = FALSE, reset_on_fail = FALSE,
-  rescan_only = FALSE, use_manifest = FALSE, verbose = TRUE)
+  rescan_only = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{dir}{Directory of the data commons projects, as created by \code{\link{init_datacommons}}.}
@@ -27,10 +27,6 @@ pointed to from the data repositories (so far just from Dataverse, implicitly fr
 
 \item{rescan_only}{Logical; if \code{TRUE}, will only read the files that are already in place, without checking for
 updates from the remote repository.}
-
-\item{use_manifest}{Logical; if \code{TRUE}, will use a \code{manifest.json} file in each repository to identify files.
-Each manifest should contain an object with a \code{data} entry containing an object array with \code{path}
-entries (e.g., \code{'{"data": [{"path": "path/from/repos/repo_name/data.csv"}]}'}).}
 
 \item{verbose}{Logical; if \code{FALSE}, will not show updated repositories.}
 }

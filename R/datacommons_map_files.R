@@ -8,9 +8,6 @@
 #' variable names (e.g., \code{colnames}).
 #' @param id_location The name of a column contain IDs in each dataset, or a function to retrieve
 #' IDs (e.g., \code{rownames}).
-#' @param use_manifest Logical; if \code{TRUE}, will search for manifest files in each repository to use as file lists.
-#' These should have \code{data} entries with object arrays containing a \code{path} entry
-#' (e.g., \code{'{"data: [{"path": "path/from/root/data.csv"}]"}'}).
 #' @param reader A function capable of handling a connection in its first argument, which returns a matrix-like object.
 #' @param overwrite Logical; if \code{TRUE}, creates a new map even if one exists.
 #' @param verbose Logical; if \code{FALSE}, does not print status messages.
@@ -27,8 +24,7 @@
 #' @export
 
 datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$", variable_location = "measure",
-                                  id_location = "geoid", use_manifest = FALSE, reader = read.csv, overwrite = FALSE,
-                                  verbose = TRUE) {
+                                  id_location = "geoid", reader = read.csv, overwrite = FALSE, verbose = TRUE) {
   if (missing(dir)) cli_abort("{.arg dir} must be specified")
   dir <- paste0(normalizePath(dir, "/", FALSE), "/")
   check <- check_template("datacommons", dir = dir)
@@ -45,27 +41,7 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
     ))
   }
   commons <- jsonlite::read_json(paste0(dir, "commons.json"))
-  all_files <- NULL
-  if (use_manifest) {
-    rmanifest_files <- list.files(paste0(dir, "repos"), "^manifest\\.json$", full.names = TRUE, recursive = TRUE)
-    rmanifest_files <- rmanifest_files[
-      grepl("^[^/\\]+[/\\]manifest\\.json$", sub(paste0(dir, "repos/"), "", rmanifest_files, fixed = TRUE))
-    ]
-    if (length(rmanifest_files)) {
-      all_files <- unlist(lapply(rmanifest_files, function(f) {
-        m <- jsonlite::read_json(f, simplifyVector = TRUE)
-        if (length(m$data)) {
-          files <- m$data[grepl(search_pattern, m$data$path), "path"]
-          if (length(files)) {
-            paste0(dirname(f), "/", files)
-          }
-        }
-      }), FALSE, FALSE)
-    }
-  }
-  if (is.null(all_files)) {
-    all_files <- list.files(paste0(dir, c("cache", "repos")), search_pattern, full.names = TRUE, recursive = TRUE)
-  }
+  all_files <- list.files(paste0(dir, c("cache", "repos")), search_pattern, full.names = TRUE, recursive = TRUE)
   all_files <- all_files[!grepl("[/\\](?:working|original)[/\\]|variable_map", all_files)]
   if (!length(all_files)) cli_abort("no files were found")
   res <- paste0(dir, "cache/", c("variable_map.csv", "id_map.json"))

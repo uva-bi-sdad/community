@@ -1,5 +1,5 @@
 import DataHandler from '.'
-import type {Entity, EntityData, IdMap, ResourceField, UnparsedObject, Variable} from '../types'
+import type {Entity, EntityData, IdMap, MeasureInfo, ResourceField, ResourceFields, Variable} from '../types'
 
 export function variables(this: DataHandler) {
   this.metadata.datasets.forEach((k: string) => {
@@ -26,7 +26,7 @@ export function variables(this: DataHandler) {
         } else {
           const ve: Variable = (this.variables[vn] = {
             datasets: [k],
-            info: {} as UnparsedObject,
+            info: {} as ResourceFields,
             time_range: {},
             type: v.type,
             code: vn,
@@ -58,7 +58,7 @@ export function variables(this: DataHandler) {
           if (!('measure' in ve.meta)) ve.meta.measure = vn.split(':')[1] || vn
           if (!('short_name' in ve.meta)) ve.meta.short_name = this.format_label(vn)
           if (!('long_name' in ve.meta)) ve.meta.long_name = ve.meta.short_name
-          if (!(vn in this.variable_info)) this.variable_info[vn] = ve.meta
+          if (!(vn in this.variable_info)) this.variable_info[vn] = ve.meta as MeasureInfo
         }
       })
     }

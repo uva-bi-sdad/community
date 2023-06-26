@@ -8,10 +8,10 @@ export const value_types: {[index: string]: Function} = {
   minutes: function (v: number): string {
     return v + ' minutes'
   },
-  dollar: function (v: number): string {
+  dollars: function (v: number): string {
     return '$' + v
   },
-  'internet speed': function (v: number): string {
-    return v + ' MB/s'
+  'Mb/s': function (v: number): string {
+    return v + ' Mbps'
   },
 }

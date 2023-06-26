@@ -61,7 +61,8 @@
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">data_measure_info</span><span class="op">(</span><span class="va">path</span>, <span class="va">...</span>, info <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, references <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  strict <span class="op">=</span> <span class="cn">FALSE</span>, include_empty <span class="op">=</span> <span class="cn">TRUE</span>, overwrite_entry <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span>, open_after <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>  render <span class="op">=</span> <span class="cn">NULL</span>, overwrite <span class="op">=</span> <span class="cn">FALSE</span>, write <span class="op">=</span> <span class="cn">TRUE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  open_after <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -94,8 +95,17 @@
 <dd><p>Logical; if <code>TRUE</code>, will replace rather than add to an existing entry.</p></dd>
 
 
+<dt>render</dt>
+<dd><p>Path to save a version of <code>path</code> to, with dynamic entries expanded. See the
+Dynamic Entries section.</p></dd>
+
+
 <dt>overwrite</dt>
 <dd><p>Logical; if <code>TRUE</code>, will overwrite rather than add to an existing <code>path</code>.</p></dd>
+
+
+<dt>write</dt>
+<dd><p>Logical; if <code>FALSE</code>, will not write the build or rendered measure info.</p></dd>
 
 
 <dt>verbose</dt>
@@ -110,7 +120,7 @@
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     
 
-<p>An invisible list containing measurement metadata.</p>
+<p>An invisible list containing measurement metadata (the rendered version if made).</p>
     </div>
     <div class="section level2">
     <h2 id="measure-entries">Measure Entries<a class="anchor" aria-label="anchor" href="#measure-entries"></a></h2>
@@ -126,13 +136,13 @@
 TeX-style equations, enclosed in escaped square brackets (e.g.,
 <code>"The equation \\[a_{i} = b^\\frac{c}{d}\\] was used."</code>; or <code>$...$</code>,
 <code>\\(...\\)</code>, or <code>\\begin{math}...\\end{math}</code>). The final enclosing symbol must be
-followed by a space or the end of the string. These are pre-rendered to MathML with
+followed by a space or the end of the string. These are pre-render to MathML with
 <code><a href="https://docs.ropensci.org/katex/reference/katex.html" class="external-link">katex_mathml</a></code>.</p></li>
 <li><p><strong><code>statement</code></strong>: String with dynamic references to entity features
 (e.g., <code>"measure value = {value}"</code>). References can include:</p><ul><li><p><code>value</code>: Value of a currently displaying variable at a current time.</p></li>
-<li><p><code>region_name</code>: Alias of <code>feature.name</code>.</p></li>
-<li><p><code>feature.&lt;entry&gt;</code>: An entity feature, coming from <code>entity_info.json</code> or GeoJSON properties.
-All entities have at least <code>name</code> and <code>id</code> entries (e.g., <code>"{feature.id}"</code>).</p></li>
+<li><p><code>region_name</code>: Alias of <code>features.name</code>.</p></li>
+<li><p><code>features.&lt;entry&gt;</code>: An entity feature, coming from <code>entity_info.json</code> or GeoJSON properties.
+All entities have at least <code>name</code> and <code>id</code> entries (e.g., <code>"{features.id}"</code>).</p></li>
 <li><p><code>variables.&lt;entry&gt;</code>: A variable feature such as <code>name</code> which is the same as
 <code>full_name</code> (e.g., <code>"{variables.name}"</code>).</p></li>
 <li><p><code>data.&lt;variable&gt;</code>: The value of another variable at a current time (e.g., <code>"{data.variable_a}"</code>).</p></li>
@@ -142,10 +152,10 @@ types are rounded to show a set number of digits.</p></li>
 <li><p><code>percent</code> shows as <code>{value}%</code>.</p></li>
 <li><p><code>minutes</code> shows as <code>{value} minutes</code>.</p></li>
 <li><p><code>dollar</code> shows as <code>${value}</code>.</p></li>
-<li><p><code>internet speed</code> shows as <code>{value} MB/s</code>.</p></li>
+<li><p><code>internet speed</code> shows as <code>{value} Mbps</code>.</p></li>
 </ul></li>
 <li><p><strong><code>unit</code></strong>: Prefix or suffix associated with the measure's type, such as <code>%</code> for <code>percent</code>,
-or <code>MB/s</code> for <code>rate</code>.</p></li>
+or <code>Mbps</code> for <code>rate</code>.</p></li>
 <li><p><strong><code>sources</code></strong>: A list or list of list containing source information, including any of these entries:</p><ul><li><p><code>name</code>: Name of the source (such as an organization name).</p></li>
 <li><p><code>url</code>: General URL of the source (such as an organization's website).</p></li>
 <li><p><code>location</code>: More specific description of the source (such as a the name of a particular data product).</p></li>
@@ -162,7 +172,40 @@ the URL can include a dynamic reference to time, if the time values correspond t
 <li><p><code>value</code>: Value to filter by.</p></li>
 </ul></li>
 </ul></li>
+<li><p><strong><code>categories</code></strong>: A named list of categories, with any of the other measure entries, or a
+<code>default</code> entry giving a default category name. See the Dynamic Entries section.</p></li>
+<li><p><strong><code>variants</code></strong>: A named list of variants, with any of the other measure entries, or a
+<code>default</code> entry giving a default variant name. See the Dynamic Entries section.</p></li>
 </ul></div>
+    <div class="section level2">
+    <h2 id="dynamic-entries">Dynamic Entries<a class="anchor" aria-label="anchor" href="#dynamic-entries"></a></h2>
+    
+
+<p>You may have several closely related variables in a dataset, which share sections of metadata,
+or have formulaic differences. In cases like this, the <code>categories</code> and/or <code>variants</code> entries
+can be used along with dynamic notation to construct multiple entries from a single template.</p>
+<p>Though functionally the same, <code>categories</code> might include broken-out subsets of some total
+(such as race groups, as categories of a total population), whereas <code>variants</code> may be different
+transformations of the same variable (such as raw counts versus percentages).</p>
+<p>In dynamic entries, <code>{category}</code> or <code>{variant}</code> refers to entries in the <code>categories</code>
+or <code>variants</code> lists. By default, these are replaced with the name of each entries in those lists
+(e.g., <code>"variable_{category}"</code> where <code>categories = "a"</code> would become <code>"variable_a"</code>).
+A <code>default</code> entry would change this behavior (e.g., with <code>categories = list(a = list(default = "b")</code>
+that would become <code>"variable_b"</code>). Adding <code>.name</code> would force the original behavior (e.g.,
+<code>"variable_{category.name}"</code> would be <code>"variable_a"</code>).</p>
+<p>When notation appears in a measure info entry, they will first default to a matching name in the <code>categories</code>
+or <code>variants</code> list; for example, <code>short_name</code> in <code>list(short_name = "variable {category}")</code> with
+<code>categories = list(a = list(short_name = "(category a)"))</code> would become <code>"variable (category a)"</code>.
+To force this behavior, the entry name can be included in the notation (e.g.,
+<code>"{category.short_name}"</code> would be <code>"variable (category a)"</code> in any entry).</p>
+<p>Only string entries are processed dynamically -- any list-like entries (such as
+<code>source</code>, <code>citations</code>, or <code>layer</code>) appearing in
+<code>categories</code> or <code>variants</code> entries will fully replace the base entry.</p>
+<p>Dynamic entries can be kept dynamic when passed to a data site, but can be rendered for other uses,
+where the rendered version will have each dynamic entry replaced with all unique combinations of
+<code>categories</code> and <code>variants</code> entries, assuming both are used in the dynamic entry's name
+(e.g., <code>"variable_{category}_{variant}"</code>). See Examples.</p>
+    </div>
     <div class="section level2">
     <h2 id="reference-entries">Reference Entries<a class="anchor" aria-label="anchor" href="#reference-entries"></a></h2>
     
@@ -203,6 +246,24 @@ entries for <code>given</code> and <code>family</code> names.</p></li>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">measure_info</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "measure name" "measure two" </span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># add a dynamic measure, and make a rendered version</span></span></span>
+<span class="r-in"><span><span class="va">measure_info_rendered</span> <span class="op">&lt;-</span> <span class="fu">data_measure_info</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">path</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"measure {category} {variant.name}"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    measure <span class="op">=</span> <span class="st">"measure {category}"</span>,</span></span>
+<span class="r-in"><span>    full_name <span class="op">=</span> <span class="st">"{variant}:measure {category}"</span>,</span></span>
+<span class="r-in"><span>    short_description <span class="op">=</span> <span class="st">"Another measure ({category}; {variant})."</span>,</span></span>
+<span class="r-in"><span>    statement <span class="op">=</span> <span class="st">"This entity has {value} {category} {variant}s."</span>,</span></span>
+<span class="r-in"><span>    categories <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    variants <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>u1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>default <span class="op">=</span> <span class="st">"U1"</span><span class="op">)</span>, u2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>default <span class="op">=</span> <span class="st">"U2"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span>,</span></span>
+<span class="r-in"><span>  render <span class="op">=</span> <span class="cn">TRUE</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">measure_info_rendered</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "measure name" "measure two"  "measure a u1" "measure b u1" "measure a u2"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [6] "measure b u2"</span>
+<span class="r-in"><span><span class="va">measure_info_rendered</span><span class="op">[[</span><span class="st">"measure a u1"</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">statement</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "This entity has {value} a U1s."</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

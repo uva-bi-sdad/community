@@ -1,8 +1,75 @@
 import {patterns} from './patterns'
-import {Filter, Query, UnparsedObject} from '../types'
+import {Filter, MeasureInfo, MeasureInfos, Query, UnparsedObject} from '../types'
 import * as params from './export_params'
 import {group_checks} from './checks'
 import DataHandler from '.'
+
+function replace_dynamic(e: string, p: RegExp, s: UnparsedObject, v?: UnparsedObject, d = 'default'): string {
+  p.lastIndex = 0
+  for (let m, k; (m = p.exec(e)); ) {
+    const ss = v && 'v' === m[0].substring(1, 2) ? v : s
+    k = m[1] ? m[1].substring(1) : d
+    if (!(k in ss) && k === d) k = 'default'
+    const r = ss[k]
+    if (r && 'string' === typeof r) {
+      while (e.includes(m[0])) e = e.replace(m[0], r)
+      p.lastIndex = 0
+    }
+  }
+  return e
+}
+
+function prepare_source(name: string, o: UnparsedObject, s: UnparsedObject, p: RegExp): UnparsedObject {
+  const r: UnparsedObject = {name: name}
+  Object.keys(o).forEach(n => {
+    const e = o[n]
+    r[n] = 'string' === typeof e ? replace_dynamic(e, p, s) : e
+  })
+  if (!('default' in r)) r.default = name
+  return r
+}
+
+export function measure_info(info: MeasureInfos): MeasureInfos {
+  const ps = {
+    any: /\{(?:categor|variant)/,
+    category: /\{categor(?:y|ies)(\.[^}]+?)?\}/g,
+    variant: /\{variants?(\.[^}]+?)?\}/g,
+    all: /\{(?:categor(?:y|ies)|variants?)(\.[^}]+?)?\}/g,
+  }
+  Object.keys(info).forEach(name => {
+    if (ps.any.test(name)) {
+      const base = info[name] as MeasureInfo
+      const bn = Object.keys(base)
+      if (base.categories || base.variants) {
+        const categories: {[index: string]: any} = Array.isArray(base.categories) ? {} : base.categories || {}
+        const variants: {[index: string]: any} = Array.isArray(base.variants) ? {} : base.variants || {}
+        const cats: string[] = Array.isArray(base.categories) ? base.categories : Object.keys(categories)
+        if (!cats.length) cats.push('')
+        const vars: string[] = Array.isArray(base.variants) ? base.variants : Object.keys(variants)
+        if (!vars.length) cats.push('')
+        cats.forEach(cn => {
+          vars.forEach(vn => {
+            const cs = prepare_source(cn, categories[cn] || {}, variants[vn] || {}, ps.variant)
+            const vs = prepare_source(vn, variants[vn] || {}, categories[cn] || {}, ps.category)
+            const s = {...cs, ...vs}
+            const r: any = {}
+            bn.forEach((k: keyof MeasureInfo) => {
+              if ('categories' !== k && 'variants' !== k) {
+                const temp = base[k]
+                r[k] = 'string' === typeof temp ? replace_dynamic(temp, ps.all, cs, vs, k) : temp
+              }
+            })
+            Object.keys(s).forEach(k => {
+              if ('default' !== k && 'name' !== k && !(k in r)) r[k] = s[k]
+            })
+            info[replace_dynamic(name, ps.all, cs, vs)] = r as MeasureInfo
+          })
+        })
+      }
+    }
+  })
+  return info
+}
 
 export function query(this: DataHandler, q: any): Query {
   const f: UnparsedObject = JSON.parse(JSON.stringify(params.defaults))

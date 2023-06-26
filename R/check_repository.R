@@ -293,6 +293,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
       results$info_invalid <- c(results$info_invalid, f)
     }
   }
+  rendered_names <- render_info_names(meta)
   cli_progress_done()
   if (!length(meta)) cli_alert_danger("no valid measure info")
   if (length(flagged_references)) {
@@ -481,7 +482,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
 
             measures <- unique(d[[value_name]])
             measures <- measures[measures != "NA"]
-            su <- !measures %in% names(meta)
+            su <- !measures %in% rendered_names
             if (any(su)) su[su] <- !make_full_name(f, measures[su]) %in% names(meta)
             if (any(su)) results$warn_missing_info[[f]] <- c(results$warn_missing_info[[f]], measures[su])
 

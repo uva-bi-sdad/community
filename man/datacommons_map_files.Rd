@@ -6,8 +6,7 @@
 \usage{
 datacommons_map_files(dir, search_pattern = "\\\\.csv(?:\\\\.[gbx]z2?)?$",
   variable_location = "measure", id_location = "geoid",
-  use_manifest = FALSE, reader = read.csv, overwrite = FALSE,
-  verbose = TRUE)
+  reader = read.csv, overwrite = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{dir}{Directory of the data commons projects.}
@@ -19,10 +18,6 @@ variable names (e.g., \code{colnames}).}
 
 \item{id_location}{The name of a column contain IDs in each dataset, or a function to retrieve
 IDs (e.g., \code{rownames}).}
-
-\item{use_manifest}{Logical; if \code{TRUE}, will search for manifest files in each repository to use as file lists.
-These should have \code{data} entries with object arrays containing a \code{path} entry
-(e.g., \code{'{"data: [{"path": "path/from/root/data.csv"}]"}'}).}
 
 \item{reader}{A function capable of handling a connection in its first argument, which returns a matrix-like object.}
 

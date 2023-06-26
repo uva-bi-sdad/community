@@ -12,9 +12,6 @@
 #' @param reset_on_fail Logical; if \code{TRUE}, will reset only if a regular pull fails.
 #' @param rescan_only Logical; if \code{TRUE}, will only read the files that are already in place, without checking for
 #' updates from the remote repository.
-#' @param use_manifest Logical; if \code{TRUE}, will use a \code{manifest.json} file in each repository to identify files.
-#' Each manifest should contain an object with a \code{data} entry containing an object array with \code{path}
-#' entries (e.g., \code{'{"data": [{"path": "path/from/repos/repo_name/data.csv"}]}'}).
 #' @param verbose Logical; if \code{FALSE}, will not show updated repositories.
 #' @examples
 #' \dontrun{
@@ -26,7 +23,7 @@
 
 datacommons_refresh <- function(dir, clone_method = "http", include_distributions = FALSE, refresh_distributions = FALSE,
                                 only_new = FALSE, reset_repos = FALSE, reset_on_fail = FALSE, rescan_only = FALSE,
-                                use_manifest = FALSE, verbose = TRUE) {
+                                verbose = TRUE) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., as ".")')
   if (Sys.which("git") == "") {
     cli_abort(c(
@@ -111,20 +108,10 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
         }
       } else if (!length(list.files(rn))) system2("rm", c("-rf", rn))
     }
-    files <- NULL
-    if (use_manifest && file.exists(paste0(cr, "manifest.json"))) {
-      files <- jsonlite::read_json(paste0(cr, "manifest.json"), simplifyVector = TRUE)$data$path
-      if (length(files)) {
-        files <- paste0(cr, files)
-        files <- files[file.exists(files)]
-      }
-    }
-    if (!length(files)) {
-      files <- list.files(
-        cr, "\\.(?:csv|tsv|txt|dat|rda|rdata)(?:\\.[gbx]z2?)?$",
-        full.names = TRUE, recursive = TRUE, ignore.case = TRUE
-      )
-    }
+    files <- list.files(
+      cr, "\\.(?:csv|tsv|txt|dat|rda|rdata)(?:\\.[gbx]z2?)?$",
+      full.names = TRUE, recursive = TRUE, ignore.case = TRUE
+    )
     files <- normalizePath(files, "/")
     for (f in files) {
       repo_manifest[[r]]$files[[sub(cr, "", f, fixed = TRUE)]] <- list(
