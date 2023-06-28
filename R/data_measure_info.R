@@ -203,7 +203,7 @@ data_measure_info <- function(path, ..., info = list(), references = list(), str
   )
   if (!is.list(info)) info <- sapply(info, function(name) list())
   info <- c(list(...), info)
-  if (is.null(names(info))) cli_abort("supplied measure entries must be named")
+  if (length(info) && is.null(names(info))) cli_abort("supplied measure entries must be named")
   for (n in names(info)) {
     if (overwrite_entry || is.null(built[[n]])) {
       l <- info[[n]]
