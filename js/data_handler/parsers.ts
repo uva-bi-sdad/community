@@ -17,8 +17,13 @@ function replace_dynamic(e: string, p: RegExp, s: UnparsedObject, v?: UnparsedOb
   for (let m, k; (m = p.exec(e)); ) {
     const ss = v && 'v' === m[0].substring(1, 2) ? v : s
     k = m[1] ? m[1].substring(1) : d
-    if (!(k in ss) && ps.desc.test(k)) k = d = 'description'
-    if (!(k in ss) && k === d) k = 'default'
+    if (!(k in ss)) {
+      if ('description' in ss && ps.desc.test(k)) {
+        k = d = 'description'
+      } else if (k === d) {
+        k = 'default'
+      }
+    }
     const r = ss[k]
     if (r && 'string' === typeof r) {
       while (e.includes(m[0])) e = e.replace(m[0], r)

@@ -285,6 +285,8 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
               jsonlite::write_json(sdata, path, auto_unbox = TRUE, digits = 6, dataframe = "row")
               if (verbose) cli_progress_done("wrote {d$name} site file")
             }
+          } else {
+            cli_alert_warning("file does not exist: {.path {file}}")
           }
         }
         info[[d$name]] <- d
@@ -292,7 +294,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     } else {
       data_files <- list.files(ddir, "\\.(?:csv|tsv|txt)")
       if (length(data_files)) {
-        init_data(sub("^.*/", "", normalizePath(dir, "/", FALSE)), dir = dir, path = data_files)
+        init_data(sub("^.*/", "", normalizePath(dir, "/", FALSE)), dir = dir, filename = data_files)
         if (file.exists(f)) {
           return(data_preprocess(aggregate))
         }

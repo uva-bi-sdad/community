@@ -2,21 +2,22 @@
 #'
 #' Add information about variables in a dataset to a \code{datapackage.json} metadata file.
 #'
-#' @param path A character vector of paths to plain-text tabular data files.
-#' @param meta Information about each data file. A list with a list entry for each entry in \code{path}; see details.
-#' If a single list is provided for multiple data files, it will apply to all.
-#' @param package_path Package to add the metadata to; path to the .json file, or a list with the read-in version.
-#' @param dir Directory in which to look for \code{path}, and write \code{package_path}.
+#' @param filename A character vector of paths to plain-text tabular data files, relative to \code{dir}.
+#' @param meta Information about each data file. A list with a list entry for each entry in
+#' \code{filename}; see details. If a single list is provided for multiple data files, it will apply to all.
+#' @param packagename Package to add the metadata to; path to the \code{.json} file relative to
+#' \code{dir}, or a list with the read-in version.
+#' @param dir Directory in which to look for \code{filename}, and write \code{packagename}.
 #' @param write Logical; if \code{FALSE}, returns the \code{paths} metadata without reading or rewriting
-#' \code{package_path}.
+#' \code{packagename}.
 #' @param refresh Logical; if \code{FALSE}, will retain any existing dataset information.
 #' @param sha A number specifying the Secure Hash Algorithm function,
 #' if \code{openssl} is available (checked with \code{Sys.which('openssl')}).
 #' @param clean Logical; if \code{TRUE}, strips special characters before saving.
 #' @param open_after Logical; if \code{TRUE}, opens the written datapackage after saving.
 #' @details
-#' \code{meta} should be a list with unnamed entries for entry in \code{path}, and each entry can include a named entry
-#' for any of these:
+#' \code{meta} should be a list with unnamed entries for entry in \code{filename},
+#' and each entry can include a named entry for any of these:
 #' \describe{
 #'   \item{source}{
 #'   A list or list of lists with entries for at least \code{name}, and ideally for \code{url}.
@@ -49,32 +50,29 @@
 #' @seealso Initialize the \code{datapackage.json} file with \code{\link{init_data}}.
 #' @export
 
-data_add <- function(path, meta = list(), package_path = "datapackage.json", dir = ".", write = TRUE,
+data_add <- function(filename, meta = list(), packagename = "datapackage.json", dir = ".", write = TRUE,
                      refresh = TRUE, sha = "512", clean = FALSE, open_after = FALSE) {
-  if (missing(path)) cli_abort("{.arg path} must be specified")
-  if (missing(dir)) dir <- dirname(path[[1]])
+  if (missing(filename)) cli_abort("{.arg filename} must be specified")
+  setnames <- names(filename)
+  if (file.exists(filename[[1]])) {
+    if (dir == ".") dir <- dirname(filename[[1]])
+    filename <- basename(filename)
+  }
   if (check_template("site", dir = dir)$status[["strict"]]) dir <- paste0(dir, "/docs/data")
-  opath <- path
-  path <- vapply(path, function(f) {
-    normalizePath(if (file.exists(paste0(dir, "/", f))) paste0(dir, "/", f) else f, "/", FALSE)
-  }, "")
-  ck <- !file.exists(path)
-  if (any(ck)) path[ck] <- opath[ck]
-  if (any(!file.exists(path))) cli_abort("{?a path/paths} did not exist: {path[!file.exists(path)]}")
-  package <- if (is.character(package_path) && file.exists(paste0(dir, "/", package_path))) {
-    normalizePath(paste0(dir, "/", package_path), "/", FALSE)
-  } else if (is.character(package_path) && file.exists(package_path)) {
-    normalizePath(package_path, "/", FALSE)
+  if (any(!file.exists(paste0(dir, "/", filename)))) {
+    filename <- filename[!file.exists(filename)]
+    cli_abort("{?a file/files} did not exist: {filename}")
+  }
+  package <- if (is.character(packagename) && file.exists(paste0(dir, "/", packagename))) {
+    paste0(dir, "/", packagename)
   } else {
-    package_path
+    packagename
   }
   if (write) {
     if (is.character(package)) {
-      if (!file.exists(package)) {
-        package <- normalizePath(paste0(dirname(path[[1]]), "/", package_path), "/", FALSE)
-      }
+      package <- paste0(dir, "/", packagename)
       if (file.exists(package)) {
-        package_path <- package
+        packagename <- package
         package <- jsonlite::read_json(package)
       } else {
         cli_abort(c("{.arg package} ({.path {package}}) does not exist", i = "create it with {.fn init_data}"))
@@ -83,16 +81,15 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
     if (!is.list(package) || is.null(package$resource)) {
       cli_abort(c(
         "{.arg package} does not appear to be in the right format",
-        i = "this should be (or be read in from json as) a list with a {.code resource} entry"
+        i = "this should be (or be read in from JSON as) a list with a {.code resource} entry"
       ))
     }
   }
   if (!is.list(package)) package <- list()
   collect_metadata <- function(file) {
-    f <- path[[file]]
+    f <- paste0(dir, "/", filename[[file]])
     m <- if (single_meta) meta else metas[[file]]
-    name <- basename(f)
-    format <- if (grepl(".csv", name, fixed = TRUE)) "csv" else if (grepl(".rds", name, fixed = TRUE)) "rds" else "tsv"
+    format <- if (grepl(".csv", f, fixed = TRUE)) "csv" else if (grepl(".rds", f, fixed = TRUE)) "rds" else "tsv"
     if (is.na(format)) format <- "rds"
     info <- file.info(f)
     metas <- list()
@@ -151,14 +148,14 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       encoding = stri_enc_detect(f)[[1]][1, 1],
       md5 = md5sum(f)[[1]],
       format = format,
-      name = if (!is.null(names(opath))) {
-        names(opath)[file]
+      name = if (!is.null(setnames)) {
+        setnames[file]
       } else if (!is.null(m$name)) {
         m$name
       } else {
-        sub("\\.[^.]*$", "", name)
+        sub("\\.[^.]*$", "", filename[[file]])
       },
-      filename = name,
+      filename = filename[[file]],
       source = unpack_meta("source"),
       ids = ids,
       id_length = if (length(idvars)) {
@@ -216,8 +213,8 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
   }
   single_meta <- FALSE
   metas <- if (!is.null(names(meta))) {
-    if (!is.null(names(path)) && all(names(path) %in% names(meta))) {
-      meta[names(path)]
+    if (!is.null(names(filename)) && all(names(filename) %in% names(meta))) {
+      meta[names(filename)]
     } else {
       single_meta <- TRUE
       if (length(meta$variables) == 1 && is.character(meta$variables)) {
@@ -228,7 +225,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       meta
     }
   } else {
-    meta[seq_along(path)]
+    meta[seq_along(filename)]
   }
   if (!single_meta) {
     metas <- lapply(metas, function(m) {
@@ -236,7 +233,7 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
       m
     })
   }
-  metadata <- lapply(seq_along(path), collect_metadata)
+  metadata <- lapply(seq_along(filename), collect_metadata)
   if (single_meta) package$measure_info <- lapply(meta$variables, function(e) e[e != ""])
   package$resources <- c(metadata, if (!refresh) package$resources)
   names <- vapply(package$resources, "[[", "", "filename")
@@ -248,13 +245,13 @@ data_add <- function(path, meta = list(), package_path = "datapackage.json", dir
     package <- jsonlite::fromJSON(cf(jsonlite::toJSON(package, auto_unbox = TRUE)))
   }
   if (write) {
-    package_path <- if (is.character(package_path)) package_path else "datapackage.json"
-    jsonlite::write_json(package, package_path, auto_unbox = TRUE, digits = 6)
+    packagename <- if (is.character(packagename)) packagename else "datapackage.json"
+    jsonlite::write_json(package, packagename, auto_unbox = TRUE, digits = 6)
     if (interactive()) {
       cli_bullets(c(v = paste(
         if (refresh) "updated resource in" else "added resource to", "{.file datapackage.json}:"
-      ), "*" = paste0("{.path ", package_path, "}")))
-      if (open_after) navigateToFile(package_path)
+      ), "*" = paste0("{.path ", packagename, "}")))
+      if (open_after) navigateToFile(packagename)
     }
   }
   invisible(package)

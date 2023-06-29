@@ -1149,7 +1149,7 @@
                         if ('string' === v.type) {
                             ve_2.levels = [];
                             ve_2.level_ids = {};
-                            (v.info.levels || Object.keys(v.table)).forEach(function (l) {
+                            Object.keys(v.table).forEach(function (l) {
                                 ve_2.level_ids[l] = ve_2.levels.length;
                                 ve_2.levels.push(l);
                             });
@@ -1286,10 +1286,14 @@
         for (var m = void 0, k = void 0; (m = p.exec(e));) {
             var ss = v && 'v' === m[0].substring(1, 2) ? v : s;
             k = m[1] ? m[1].substring(1) : d;
-            if (!(k in ss) && ps.desc.test(k))
-                k = d = 'description';
-            if (!(k in ss) && k === d)
-                k = 'default';
+            if (!(k in ss)) {
+                if ('description' in ss && ps.desc.test(k)) {
+                    k = d = 'description';
+                }
+                else if (k === d) {
+                    k = 'default';
+                }
+            }
             var r = ss[k];
             if (r && 'string' === typeof r) {
                 while (e.includes(m[0]))

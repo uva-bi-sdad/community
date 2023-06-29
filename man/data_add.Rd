@@ -4,22 +4,23 @@
 \alias{data_add}
 \title{Adds documentation of a dataset to a datapackage}
 \usage{
-data_add(path, meta = list(), package_path = "datapackage.json",
+data_add(filename, meta = list(), packagename = "datapackage.json",
   dir = ".", write = TRUE, refresh = TRUE, sha = "512",
   clean = FALSE, open_after = FALSE)
 }
 \arguments{
-\item{path}{A character vector of paths to plain-text tabular data files.}
+\item{filename}{A character vector of paths to plain-text tabular data files, relative to \code{dir}.}
 
-\item{meta}{Information about each data file. A list with a list entry for each entry in \code{path}; see details.
-If a single list is provided for multiple data files, it will apply to all.}
+\item{meta}{Information about each data file. A list with a list entry for each entry in
+\code{filename}; see details. If a single list is provided for multiple data files, it will apply to all.}
 
-\item{package_path}{Package to add the metadata to; path to the .json file, or a list with the read-in version.}
+\item{packagename}{Package to add the metadata to; path to the \code{.json} file relative to
+\code{dir}, or a list with the read-in version.}
 
-\item{dir}{Directory in which to look for \code{path}, and write \code{package_path}.}
+\item{dir}{Directory in which to look for \code{filename}, and write \code{packagename}.}
 
 \item{write}{Logical; if \code{FALSE}, returns the \code{paths} metadata without reading or rewriting
-\code{package_path}.}
+\code{packagename}.}
 
 \item{refresh}{Logical; if \code{FALSE}, will retain any existing dataset information.}
 
@@ -38,8 +39,8 @@ An invisible version of the updated datapackage, which is also written to
 Add information about variables in a dataset to a \code{datapackage.json} metadata file.
 }
 \details{
-\code{meta} should be a list with unnamed entries for entry in \code{path}, and each entry can include a named entry
-for any of these:
+\code{meta} should be a list with unnamed entries for entry in \code{filename},
+and each entry can include a named entry for any of these:
 \describe{
 \item{source}{
 A list or list of lists with entries for at least \code{name}, and ideally for \code{url}.

@@ -5,7 +5,7 @@ test_that("adds data when specified", {
   path <- paste0(dir, "/mtcars.csv")
   write.csv(cbind(mtcars, group = sample(c("a", "b"), nrow(mtcars), TRUE)), path, row.names = FALSE)
   expect_equal(
-    init_data("mtcars", path = path, write = FALSE)$resources,
+    init_data("mtcars", filename = path, write = FALSE)$resources,
     data_add(path, write = FALSE)
   )
 })

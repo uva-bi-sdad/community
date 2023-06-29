@@ -1,11 +1,14 @@
 dir <- tempdir(TRUE)
 on.exit(unlink(dir, TRUE, TRUE))
-path <- paste0(dir, "/mtcars.csv")
-write.csv(cbind(mtcars, group = sample(c("a", "b"), nrow(mtcars), TRUE)), path, row.names = FALSE)
-init_data("mtcars", "Motor Trend Car Road Tests", dir = dir, quiet = TRUE)
+write.csv(
+  cbind(mtcars, group = sample(c("a", "b"), nrow(mtcars), TRUE)),
+  paste0(dir, "/mtcars.csv"),
+  row.names = FALSE
+)
+init_data("mtcars", "Motor Trend Car Road Tests", dir, quiet = TRUE)
 
 test_that("adds to an existing package", {
-  metadata <- data_add(path, package_path = paste0(dir, "/datapackage.json"))
+  metadata <- data_add("mtcars.csv", dir = dir)
   read <- jsonlite::read_json(paste0(dir, "/datapackage.json"))$resources
   read[[1]]$schema$fields <- lapply(read[[1]]$schema$fields, function(f) {
     f$time_range <- as.numeric(f$time_range)
@@ -16,14 +19,14 @@ test_that("adds to an existing package", {
 })
 
 test_that("equations are replaced", {
-  metadata <- data_add(path, list(variables = list(
+  metadata <- data_add("mtcars.csv", list(variables = list(
     e1 = list(description = " $a_{i} = b^\\frac{c}{d}$ "),
     e2 = list(description = "$a_{i} = b^\\frac{c}{d}$"),
     e3 = list(description = "\\[a_{i} = b^\\frac{c}{d}\\]"),
     e4 = list(description = "\\(a_{i} = b^\\frac{c}{d}\\)"),
     e5 = list(description = "\\begin{math}a_{i} = b^\\frac{c}{d}\\end{math}"),
     t1 = list(description = "between $100 and $200")
-  )), package_path = paste0(dir, "/datapackage.json"))
+  )), dir = dir)
   expect_true(all(grepl(
     "<math", vapply(metadata$measure_info[1:5], "[[", "", "description"),
     fixed = TRUE

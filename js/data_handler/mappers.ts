@@ -42,7 +42,7 @@ export function variables(this: DataHandler) {
           if ('string' === v.type) {
             ve.levels = []
             ve.level_ids = {}
-            ;(v.info.levels || Object.keys(v.table)).forEach(l => {
+            Object.keys(v.table).forEach(l => {
               ve.level_ids[l] = ve.levels.length
               ve.levels.push(l)
             })
