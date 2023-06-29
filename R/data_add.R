@@ -58,7 +58,10 @@ data_add <- function(filename, meta = list(), packagename = "datapackage.json", 
     if (dir == ".") dir <- dirname(filename[[1]])
     filename <- basename(filename)
   }
-  if (check_template("site", dir = dir)$status[["strict"]]) dir <- paste0(dir, "/docs/data")
+  if (check_template("site", dir = dir)$status[["strict"]] &&
+    all(file.exists(paste0(dir, "/docs/data/", filename)))) {
+    dir <- paste0(dir, "/docs/data")
+  }
   if (any(!file.exists(paste0(dir, "/", filename)))) {
     filename <- filename[!file.exists(filename)]
     cli_abort("{?a file/files} did not exist: {filename}")
@@ -71,14 +74,14 @@ data_add <- function(filename, meta = list(), packagename = "datapackage.json", 
   if (write) {
     if (is.character(package)) {
       package <- paste0(dir, "/", packagename)
-      if (file.exists(package)) {
+      package <- if (file.exists(package)) {
         packagename <- package
-        package <- jsonlite::read_json(package)
+        jsonlite::read_json(package)
       } else {
-        cli_abort(c("{.arg package} ({.path {package}}) does not exist", i = "create it with {.fn init_data}"))
+        init_data(filename[[1]], dir = dir)
       }
     }
-    if (!is.list(package) || is.null(package$resource)) {
+    if (!is.list(package)) {
       cli_abort(c(
         "{.arg package} does not appear to be in the right format",
         i = "this should be (or be read in from JSON as) a list with a {.code resource} entry"
@@ -153,7 +156,7 @@ data_add <- function(filename, meta = list(), packagename = "datapackage.json", 
       } else if (!is.null(m$name)) {
         m$name
       } else {
-        sub("\\.[^.]*$", "", filename[[file]])
+        sub("\\.[^.]*$", "", basename(filename[[file]]))
       },
       filename = filename[[file]],
       source = unpack_meta("source"),

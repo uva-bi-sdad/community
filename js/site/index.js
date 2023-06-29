@@ -73,6 +73,7 @@ const community = function (window, document, site) {
           combobox = 'combobox' === u.type
         if (!(k in u.option_sets)) {
           if (patterns.variable.test(u.optionSource)) {
+            if (-1 === u.default) u.default = defaults.variable
             fill_variables_options(u, d, u.option_sets)
           } else if (patterns.levels.test(u.optionSource)) {
             fill_levels_options(u, d, va, u.option_sets)
@@ -799,7 +800,7 @@ const community = function (window, document, site) {
             d.parsed = valueOf(d.id)
             if (d.u) {
               if (d.u.options) {
-                d.parsed = d.u.options['combobox' === d.u.type ? d.u.values[d.parsed] : d.u.current_index].innerText
+                d.parsed = d.u.options[d.u.values[d.parsed]].innerText
               } else {
                 d.parsed =
                   d.u.display && d.parsed in d.u.display ? d.u.display[d.parsed] : site.data.format_label(d.parsed)
@@ -2220,7 +2221,7 @@ const community = function (window, document, site) {
             return
           }
           this.time_agg = y ? y.value() - site.data.meta.times[this.dataset].range[0] : 0
-          const time_range = this.v && site.data.variables[this.v].time_range[this.dataset]
+          const time_range = this.v in site.data.variables && site.data.variables[this.v].time_range[this.dataset]
           this.time = time_range ? this.time_agg - time_range[0] : 0
           if (this.options.show_summary) {
             this.var = this.v && (await site.data.get_variable(this.v, this.view))
@@ -4906,7 +4907,7 @@ const community = function (window, document, site) {
     if (!site.dataviews[defaults.dataview].dataset) {
       if (1 === site.metadata.datasets.length) {
         defaults.dataset = site.metadata.datasets[0]
-      } else {
+      } else if (site.data) {
         const info = site.data.info
         for (let i = keys._u.length; i--; ) {
           const u = _u[keys._u[i]]
@@ -4958,7 +4959,7 @@ const community = function (window, document, site) {
   }
 
   function drop_load_screen() {
-    if (site.data.inited) clearTimeout(site.data.inited.load_screen)
+    if (!site.data || site.data.inited) clearTimeout(site.data.inited.load_screen)
     page.wrap.style.visibility = 'visible'
     page.load_screen.style.display = 'none'
     if (site.tutorials && 'tutorial' in site.url_options) {
@@ -5043,6 +5044,7 @@ const community = function (window, document, site) {
             Object.keys(palettes).forEach(v => o.options.push(o.add(v, palettes[v].name)))
             if (-1 === o.default) o.default = defaults.palette
           } else if (patterns.datasets.test(o.optionSource)) {
+            if (-1 === o.default) o.default = defaults.dataset
             o.options = []
             site.metadata.datasets.forEach(d => o.options.push(o.add(d)))
           } else {

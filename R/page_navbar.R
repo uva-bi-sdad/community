@@ -61,8 +61,9 @@ page_navbar <- function(..., title = "", logo = "", breakpoint = "md", logo.heig
     )
     for (i in seq_len(n)) {
       if (submenus[[i]][[1]] == "list") {
+        if (!is.list(submenus[[i]])) submenus[[i]] <- list(items = submenus[[i]])
         id <- if (is.null(submenus[[i]]$id)) paste0("submenu", parts$uid, i) else submenus[[i]]$id
-        if (is.null(submenus[[i]]$name)) submenus[[i]]$name <- "Menu"
+        if (is.null(submenus[[i]]$name)) submenus[[i]]$name <- if (!is.null(names(submenus))) names(submenus)[i] else "Menu"
         r <- c(r, paste0(
           '<li class="nav-item">',
           '<button class="btn btn-link" type="button" data-bs-toggle="offcanvas" data-bs-target="#',

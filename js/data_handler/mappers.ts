@@ -52,7 +52,7 @@ export function variables(this: DataHandler) {
               full_name: vn,
               measure: vn.split(':')[1] || vn,
               short_name: this.format_label(vn),
-              type: 'integer',
+              type: v.type || 'unknown',
             }
           ve.meta.full_name = vn
           if (!('measure' in ve.meta)) ve.meta.measure = vn.split(':')[1] || vn
@@ -96,6 +96,7 @@ export async function entities(this: DataHandler, g: string): Promise<void> {
           e.data = si
           e.variables = this.variables
           if (!e.features) e.features = {}
+          if (!e.views) e.views = {}
         } else {
           this.entities[id] = e
         }

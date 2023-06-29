@@ -1159,7 +1159,7 @@
                                 full_name: vn,
                                 measure: vn.split(':')[1] || vn,
                                 short_name: _this.format_label(vn),
-                                type: 'integer',
+                                type: v.type || 'unknown',
                             };
                         ve_2.meta.full_name = vn;
                         if (!('measure' in ve_2.meta))
@@ -1205,6 +1205,8 @@
                                 e_1.variables = _this.variables;
                                 if (!e_1.features)
                                     e_1.features = {};
+                                if (!e_1.views)
+                                    e_1.views = {};
                             }
                             else {
                                 _this.entities[id] = e_1;

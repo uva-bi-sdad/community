@@ -110,8 +110,8 @@
 <span><span class="co"># in a file like this</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">data</span>, <span class="st">"data.csv"</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># you would make a datapackage.json file to document it like this</span></span>
-<span><span class="fu"><a href="reference/init_data.html">init_data</a></span><span class="op">(</span><span class="st">"example_data"</span>, path <span class="op">=</span> <span class="st">"data.csv"</span><span class="op">)</span></span>
+<span><span class="co"># you could make a datapackage.json file to document it like this</span></span>
+<span><span class="fu"><a href="reference/init_data.html">init_data</a></span><span class="op">(</span><span class="st">"example_data"</span>, filename <span class="op">=</span> <span class="st">"data.csv"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># or like this</span></span>
 <span><span class="fu"><a href="reference/init_data.html">init_data</a></span><span class="op">(</span><span class="st">"example_data"</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -124,14 +124,14 @@
 <p>This example creates a site to explore the <code>mtcars</code> dataset:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># initialize the site in a new directory</span></span>
-<span><span class="fu"><a href="reference/init_site.html">init_site</a></span><span class="op">(</span><span class="st">"example_site"</span>, dir <span class="op">=</span> <span class="st">"../example_site"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/init_site.html">init_site</a></span><span class="op">(</span><span class="st">"../example_site"</span>, template <span class="op">=</span> <span class="st">"mtcars"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># use the created build.R file to prepare and add data</span></span>
-<span><span class="co"># the result should be a plain-text, tabular file with variables in columns</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"../example_site/build.R"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># finally, specify the site in the site.R file, then build it</span></span>
-<span><span class="fu"><a href="reference/site_build.html">site_build</a></span><span class="op">(</span><span class="st">"../example_site"</span>, bundle_data <span class="op">=</span> <span class="cn">TRUE</span>, open_after <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># use the created build.R file to prepare and add data,</span></span>
+<span><span class="co"># then run the site</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"../example_site/build.R"</span>, chdir <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>After the initial site is build, you can edit <code>../example_site/site.R</code>, then rebuild the site and reload the page to see changes:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/site_build.html">site_build</a></span><span class="op">(</span><span class="st">"../example_site"</span>, serve <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>See the <a href="https://uva-bi-sdad.github.io/community/articles/quickstart-site.html">Build a Data Site</a> article for more.</p>
 </div>
 </div>
@@ -141,21 +141,21 @@
 <p>This project uses Rollup to assemble the development JavaScript files into the scripts that run data sites (in a web browser and/or in a Node environment as part of an API).</p>
 <p><a href="https://code.visualstudio.com" class="external-link">Visual Studio Code</a> is recommended for automatic code styling.</p>
 <p>To start working on the JavaScript source, first ensure <a href="https://nodejs.org" class="external-link">Node.js</a> is installed, then install the development dependencies:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">npm</span> install</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">npm</span> install</span></code></pre></div>
 <p>Then you can start Rollup in development mode, which will watch the source files to rebuild the development scripts whenever they are changed, and serve them on <code>http://localhost:8000</code>:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">npm</span> start</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="ex">npm</span> start</span></code></pre></div>
 <p>The development scripts can be worked with in a running site by starting a development server, and adding <code>version = "local"</code> to the <code>site_build</code> command for that site.</p>
 <div class="section level3">
 <h3 id="testing">Testing<a class="anchor" aria-label="anchor" href="#testing"></a>
 </h3>
 <p>Run the JavaScript tests to rebuild the coverage report in <code>docs/coverage</code>:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="ex">npm</span> test</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="ex">npm</span> test</span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="production">Production<a class="anchor" aria-label="anchor" href="#production"></a>
 </h3>
 <p>This will rebuild the distributed, minified JavaScript and CSS files that are used in current data sites:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="ex">npm</span> run build</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="ex">npm</span> run build</span></code></pre></div>
 <p>That updates the “dev” versions of the distribution assets, where <code>build-v1</code> will update the “v1” assets.</p>
 </div>
 </div>

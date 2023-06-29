@@ -35,8 +35,8 @@ data <- data.frame(
 # in a file like this
 write.csv(data, "data.csv", row.names = FALSE)
 
-# you would make a datapackage.json file to document it like this
-init_data("example_data", path = "data.csv")
+# you could make a datapackage.json file to document it like this
+init_data("example_data", filename = "data.csv")
 
 # or like this
 init_data("example_data", overwrite = TRUE)
@@ -51,14 +51,17 @@ This example creates a site to explore the `mtcars` dataset:
 
 ```R
 # initialize the site in a new directory
-init_site("example_site", dir = "../example_site")
+init_site("../example_site", template = "mtcars")
 
-# use the created build.R file to prepare and add data
-# the result should be a plain-text, tabular file with variables in columns
-source("../example_site/build.R")
+# use the created build.R file to prepare and add data,
+# then run the site
+source("../example_site/build.R", chdir = TRUE)
+```
 
-# finally, specify the site in the site.R file, then build it
-site_build("../example_site", bundle_data = TRUE, open_after = TRUE)
+After the initial site is build, you can edit `../example_site/site.R`,
+then rebuild the site and reload the page to see changes:
+```R
+site_build("../example_site", serve = TRUE)
 ```
 
 See the [Build a Data Site](https://uva-bi-sdad.github.io/community/articles/quickstart-site.html) article for more.

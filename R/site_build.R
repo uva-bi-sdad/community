@@ -67,6 +67,15 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   data_preprocess <- function(aggregate) {
     ddir <- paste0(dir, "/docs/data/")
     f <- paste0(ddir, "datapackage.json")
+    if (!file.exists(f)) {
+      sf <- list.files(dir, "datapackage\\.json$", recursive = TRUE, full.names = TRUE)
+      if (length(sf)) {
+        f <- sf[[1]]
+        bundle_package <<- TRUE
+        cli_warn("datapackage was not in {.path {ddir}}, so bundling it")
+        ddir <- paste0(dirname(f), "/")
+      }
+    }
     path <- paste0(dir, "/docs/")
     info <- meta <- list()
     vars <- variables
@@ -111,9 +120,11 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
           file <- paste0(ddir, d$filename)
           path <- paste0(dir, "/docs/", d$name, ".json")
           if (file.exists(file)) {
-            if (!is.null(d$ids)) {
+            if (length(d$ids)) {
               for (i in seq_along(d$ids)) {
-                if (file.exists(paste0(dir, "/docs/", d$ids[[i]]$map))) {
+                if (length(d$ids[[i]]$map) == 1 &&
+                  is.character(d$ids[[i]]$map) &&
+                  file.exists(paste0(dir, "/docs/", d$ids[[i]]$map))) {
                   ids_maps_paths <- c(ids_maps_paths, d$ids[[i]]$map)
                 }
               }
@@ -125,7 +136,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
               vars <- vapply(d$schema$fields, "[[", "", "name")
               types <- vapply(d$schema$fields, function(e) if (e$type == "string") "c" else "n", "")
               names(types) <- vars
-              if (length(d$ids[[1]]$variable)) types[d$ids[[1]]$variable] <- "c"
+              if (length(d$ids) && length(d$ids[[1]]$variable)) types[d$ids[[1]]$variable] <- "c"
               types <- types[cols]
               types[is.na(types)] <- "-"
               data <- as.data.frame(read_delim_arrow(
@@ -300,16 +311,18 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         }
       }
     }
-    list(
-      url = if (is.null(parent)) "" else parent,
-      package = sub(paste0(dir, "/docs/"), "", f, fixed = TRUE),
-      datasets = if (length(meta$resources) == 1) list(names(info)) else names(info),
-      variables = if (!is.null(variables)) vars[!vars %in% time_vars],
-      info = info,
-      measure_info = meta$measure_info,
-      entity_info = ids_maps_paths,
-      files = vapply(info, "[[", "", "filename")
-    )
+    if (length(info)) {
+      list(
+        url = if (is.null(parent)) "" else parent,
+        package = sub(paste0(dir, "/docs/"), "", f, fixed = TRUE),
+        datasets = if (length(meta$resources) == 1) list(names(info)) else names(info),
+        variables = if (!is.null(variables)) vars[!vars %in% time_vars],
+        info = info,
+        measure_info = meta$measure_info,
+        entity_info = ids_maps_paths,
+        files = vapply(info, "[[", "", "filename")
+      )
+    }
   }
   path <- paste0(dir, "/docs/settings.json")
   settings <- if (file.exists(path) && file.size(path)) {
@@ -341,7 +354,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     force <- TRUE
   }
   if (!is.null(variables)) variables <- unique(c(times, variables))
-  settings$metadata <- if (file.exists(paste0(dir, "/docs/data/datapackage.json"))) data_preprocess(aggregate) else list()
+  settings$metadata <- data_preprocess(aggregate)
   measure_info <- settings$metadata$measure_info
   coverage_file <- paste0(dir, "/docs/data/coverage.csv")
   if (file.exists(coverage_file)) {
@@ -631,7 +644,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   )
   writeLines(r, out)
   cli_bullets(c(v = paste("built", name, "file:"), "*" = paste0("{.path ", out, "}")))
-  if (serve) site_start_server(dir, host, port, open_after)
-  if (open_after) viewer(if (serve) paste0("http://", host, ":", port) else out)
+  if (serve) site_start_server(dir, host, port)
+  if (open_after && isAvailable()) viewer(if (serve) paste0("http://", host, ":", port) else out)
   invisible(out)
 }

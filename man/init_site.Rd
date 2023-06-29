@@ -4,15 +4,19 @@
 \alias{init_site}
 \title{Create a website}
 \usage{
-init_site(dir, title = "app", with_data = TRUE, node_project = FALSE,
-  include_api = FALSE, overwrite = FALSE, quiet = !interactive())
+init_site(dir, title = "app", template = "mtcars", with_data = FALSE,
+  node_project = FALSE, include_api = FALSE, overwrite = FALSE,
+  quiet = !interactive())
 }
 \arguments{
 \item{dir}{Directory in which to create the site's structure. Will be created if it does not exist.}
 
 \item{title}{Title of the site.}
 
-\item{with_data}{Logical; if \code{FALSE}, a data sub-directory and package will not be created.}
+\item{template}{Name of a template to use, which are pre-constructed \code{site.R} and \code{build.R}
+files. If \code{FALSE} or not found, no such files will be made.}
+
+\item{with_data}{Logical; if \code{TRUE}, a data sub-directory and datapackage will be created.}
 
 \item{node_project}{Logical; if \code{TRUE}, includes files used to run the site from a Node.js server.}
 

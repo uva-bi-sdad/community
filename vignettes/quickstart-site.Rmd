@@ -29,7 +29,7 @@ library(community)
 # this can be in an existing or new directory
 # for this example, it is a temporary directory
 output <- paste0(tempdir(), "/example_site")
-init_site(output)
+init_site(output, template = "basic")
 ```
 
 ## 2. Add Data
@@ -44,10 +44,10 @@ data <- data.frame(
 )
 
 # write that set to a file
-write.csv(data, paste0(output, "/docs/data/data.csv"), row.names = FALSE)
+write.csv(data, paste0(output, "/data.csv"), row.names = FALSE)
 
 # add it to the site
-data_add(paste0(output, "/docs/data/data.csv"))
+data_add("../../data.csv", dir = paste0(output, "/docs/data"))
 ```
 
 This sets up the data's metadata (written to `datapackage.json`), which the site will use when it's built.
@@ -145,7 +145,7 @@ add the data.
 For example, run the same `data_add` command as before, but include some information about one of the variables:
 ```r
 data_add(
-  paste0(output, "/docs/data/data.csv"),
+  "../../data.csv",
   list(
     variables = list(
       z = list(
@@ -154,7 +154,8 @@ data_add(
         statement = "{features.name} has a Z value of {value}"
       )
     )
-  )
+  ),
+  dir = paste0(output, "/docs/data")
 )
 ```
 
@@ -201,7 +202,11 @@ output_info("features.name", c(
   "variables.statement"
 ), subto = c("main_plot", "main_map"), floating = TRUE)
 output_map(
-  list(name = "data", id_property = "GEOID", url = paste0(output, "/docs/states.geojson")),
+  list(
+    name = "data",
+    id_property = "GEOID",
+    url = paste0(output, "/docs/states.geojson")
+  ),
   color = "z", id = "main_map"
 )
 ```
@@ -223,7 +228,7 @@ For example, you might add names to some of the entries for which there is no st
 ```r
 # include the ids list in your call to `data_add`
 data_add(
-  paste0(output, "/docs/data/data.csv"),
+  "../../data.csv",
   list(
     variables = list(
       z = list(
@@ -234,19 +239,20 @@ data_add(
     ),
     ids = list(
       variable = "ID",
-      map = list(
-        "3" = list(name = "No State 3"),
-        "7" = list(name = "No State 7")
+      map= list(
+        "61" = list(name = "No State 61"),
+        "43" = list(name = "No State 43")
       )
     )
-  )
+  ),
+  dir = paste0(output, "/docs/data")
 )
 
 # then rebuild
 site_build(output, open_after = TRUE, serve = TRUE)
 ```
 
-Now you should see names for entities 3 and 7.
+Now you should see names for entities 61 and 43.
 
 The `ids` field might be particularly useful if you already have metadata like this in a separate file,
 or plan to use that information between sites. In that case, you can replace the list in `map`

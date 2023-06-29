@@ -7,6 +7,12 @@ Widget: TextInput
 Label: Title
 Default: app
 
+Parameter: template
+Widget: SelectInput
+Label: Template
+Default: mtcars
+Fields: none, basic, mtcars, repository_site, sdad_dashboard
+
 Parameter: with_data
 Widget: CheckboxInput
 Label: Include data documentation files 

@@ -33,7 +33,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">community</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1.202</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1.203</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,7 +89,7 @@
 
     
     
-<p><em>Built with R 4.3.0</em></p>
+<p><em>Built with R 4.3.1</em></p>
 <hr>
 <div class="section level2">
 <h2 id="basic-example">Basic example<a class="anchor" aria-label="anchor" href="#basic-example"></a>
@@ -110,7 +110,7 @@
 <span><span class="co"># this can be in an existing or new directory</span></span>
 <span><span class="co"># for this example, it is a temporary directory</span></span>
 <span><span class="va">output</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"/example_site"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/init_site.html">init_site</a></span><span class="op">(</span><span class="va">output</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/init_site.html">init_site</a></span><span class="op">(</span><span class="va">output</span>, template <span class="op">=</span> <span class="st">"basic"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="add-data">2. Add Data<a class="anchor" aria-label="anchor" href="#add-data"></a>
@@ -127,10 +127,10 @@ site.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># write that set to a file</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">data</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/data/data.csv"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">data</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/data.csv"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># add it to the site</span></span>
-<span><span class="fu"><a href="../reference/data_add.html">data_add</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/data/data.csv"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/data_add.html">data_add</a></span><span class="op">(</span><span class="st">"../../data.csv"</span>, dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/data"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>This sets up the data’s metadata (written to
 <code>datapackage.json</code>), which the site will use when it’s
 built.</p>
@@ -233,7 +233,7 @@ the variables, which you can fill in when you add the data.</p>
 but include some information about one of the variables:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/data_add.html">data_add</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/data/data.csv"</span><span class="op">)</span>,</span>
+<span>  <span class="st">"../../data.csv"</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>    variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>      z <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -242,7 +242,8 @@ but include some information about one of the variables:</p>
 <span>        statement <span class="op">=</span> <span class="st">"{features.name} has a Z value of {value}"</span></span>
 <span>      <span class="op">)</span></span>
 <span>    <span class="op">)</span></span>
-<span>  <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/data"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Then, you can draw from that in the information output in
 <code>site.R</code>:</p>
@@ -272,7 +273,7 @@ download shapes for Census regions within the United States.</p>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">catchment</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># save the state shapes to the distribution directory</span></span>
-<span><span class="fu">download_census_shapes</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs"</span><span class="op">)</span>, name <span class="op">=</span> <span class="st">"states"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/pkg/catchment/man/download_census_shapes.html" class="external-link">download_census_shapes</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs"</span><span class="op">)</span>, name <span class="op">=</span> <span class="st">"states"</span><span class="op">)</span></span></code></pre></div>
 <p>Then add a map to <code>site.R</code> (also subscribing the info pane
 to it):</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
@@ -288,7 +289,11 @@ to it):</p>
 <span>  <span class="st">"variables.statement"</span></span>
 <span><span class="op">)</span>, subto <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"main_plot"</span>, <span class="st">"main_map"</span><span class="op">)</span>, floating <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/output_map.html">output_map</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"data"</span>, id_property <span class="op">=</span> <span class="st">"GEOID"</span>, url <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/states.geojson"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    name <span class="op">=</span> <span class="st">"data"</span>,</span>
+<span>    id_property <span class="op">=</span> <span class="st">"GEOID"</span>,</span>
+<span>    url <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/states.geojson"</span><span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
 <span>  color <span class="op">=</span> <span class="st">"z"</span>, id <span class="op">=</span> <span class="st">"main_map"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Because the shapes also had some properties, these were added as
@@ -313,7 +318,7 @@ there is no state:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># include the ids list in your call to `data_add`</span></span>
 <span><span class="fu"><a href="../reference/data_add.html">data_add</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/data/data.csv"</span><span class="op">)</span>,</span>
+<span>  <span class="st">"../../data.csv"</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>    variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>      z <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -324,17 +329,18 @@ there is no state:</p>
 <span>    <span class="op">)</span>,</span>
 <span>    ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>      variable <span class="op">=</span> <span class="st">"ID"</span>,</span>
-<span>      map <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>        <span class="st">"3"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"No State 3"</span><span class="op">)</span>,</span>
-<span>        <span class="st">"7"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"No State 7"</span><span class="op">)</span></span>
+<span>      map<span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        <span class="st">"61"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"No State 61"</span><span class="op">)</span>,</span>
+<span>        <span class="st">"43"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"No State 43"</span><span class="op">)</span></span>
 <span>      <span class="op">)</span></span>
 <span>    <span class="op">)</span></span>
-<span>  <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">output</span>, <span class="st">"/docs/data"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># then rebuild</span></span>
 <span><span class="fu"><a href="../reference/site_build.html">site_build</a></span><span class="op">(</span><span class="va">output</span>, open_after <span class="op">=</span> <span class="cn">TRUE</span>, serve <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p>Now you should see names for entities 3 and 7.</p>
+<p>Now you should see names for entities 61 and 43.</p>
 <p>The <code>ids</code> field might be particularly useful if you
 already have metadata like this in a separate file, or plan to use that
 information between sites. In that case, you can replace the list in

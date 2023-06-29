@@ -63,8 +63,9 @@ init_repository <- function(dir, datasets = NULL, init_data = TRUE, init_site = 
     ), paths[2])
   }
   if (init_site) {
-    td <- paste0(path.package("community"), "/templates/", template)
-    if (!dir.exists(td)) td <- paste0(path.package("community"), "/templates/sdad_dashboard")
+    td <- paste0(path.package("community"), c("/inst", ""), "/templates/", template, "/")
+    td <- template[which(file.exists(template))[1]]
+    if (is.na(td)) td <- paste0(path.package("community"), "/templates/sdad_dashboard")
     if (overwrite) unlink(paste0(dir, c("/build.R", "/site.R")))
     if (!file.exists(paste0(dir, "/build.R"))) {
       file.copy(paste0(td, "/build.R"), paste0(dir, "/build.R"))

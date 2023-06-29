@@ -33,7 +33,6 @@ init_data <- function(name, title = name, dir = ".", ..., write = TRUE, overwrit
     ),
     resources = list()
   )
-  if (check_template("site", dir = dir)$status[["strict"]]) dir <- paste0(dir, "/docs/data")
   package_path <- normalizePath(paste0(dir, "/datapackage.json"), "/", FALSE)
   if (write && !overwrite && file.exists(package_path)) {
     cli_abort(c("datapackage ({.path {package_path}}) already exists", i = "add {.code overwrite = TRUE} to overwrite it"))

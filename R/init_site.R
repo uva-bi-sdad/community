@@ -4,7 +4,9 @@
 #'
 #' @param dir Directory in which to create the site's structure. Will be created if it does not exist.
 #' @param title Title of the site.
-#' @param with_data Logical; if \code{FALSE}, a data sub-directory and package will not be created.
+#' @param template Name of a template to use, which are pre-constructed \code{site.R} and \code{build.R}
+#' files. If \code{FALSE} or not found, no such files will be made.
+#' @param with_data Logical; if \code{TRUE}, a data sub-directory and datapackage will be created.
 #' @param node_project Logical; if \code{TRUE}, includes files used to run the site from a Node.js server.
 #' @param include_api Logical; if \code{TRUE}, will make a \code{netlify.toml} config file to specify the
 #' function directory for the API function, if included by \code{\link{site_build}}.
@@ -18,8 +20,8 @@
 #' @return Path to the created site directory.
 #' @export
 
-init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE, include_api = FALSE,
-                      overwrite = FALSE, quiet = !interactive()) {
+init_site <- function(dir, title = "app", template = "mtcars", with_data = FALSE, node_project = FALSE,
+                      include_api = FALSE, overwrite = FALSE, quiet = !interactive()) {
   if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = ".")')
   check <- check_template("site", dir = dir)
   if (!quiet && check$exists && !overwrite) {
@@ -29,9 +31,10 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
   dir.create(dir, FALSE, TRUE)
   dir <- normalizePath(dir, "/", FALSE)
   paths <- paste0(dir, "/", c(
-    "README.md", "site.R", "package.json", "server.js", ".gitignore", "build.R", "project.Rproj", "netlify.toml"
+    "README.md", "site.R", "package.json", "server.js", ".gitignore", "build.R",
+    "project.Rproj", "netlify.toml"
   ))
-  if (overwrite) unlink(paths)
+  if (overwrite) unlink(paths, TRUE)
   if (!file.exists(paths[1])) {
     writeLines(c(
       paste("#", title),
@@ -41,42 +44,15 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
       '# remotes::install_github("uva-bi-sdad/community")',
       "library(community)",
       "\n# from the site directory:",
-      "site_build()",
+      'site_build(".")',
       "```"
     ), paths[1])
   }
-  if (!file.exists(paths[2])) {
-    writeLines(c(
-      "library(community)",
-      "# prepare and connect data in build.R:",
-      paste0('# source("', dir, '/build.R")'),
-      "",
-      "# use `page_` functions to add parts of a page:",
-      'page_navbar("Motor Trend Car Road Tests")',
-      'page_text("Motor Trend Car Road Tests", tag = "h1", class = "text-center")',
-      "",
-      "# use `input_` functions to add input elements that affect outputs:",
-      "page_menu(",
-      '  input_select("Select a Variable", options = "variables", label = "variable", default = "wt"),',
-      '  position = "top", default_open = TRUE',
-      ")",
-      "",
-      "# use `output_` functions to data display components:",
-      "page_section(",
-      '  wraps = "col-sm",',
-      '  output_plot("variable", "mpg", id = "main_plot"),',
-      '  output_table("variable", options = list(dom = "<\'row\'t>"))',
-      ")",
-      "",
-      "# add a tooltip",
-      "output_info(",
-      '  body = c("variables.short_name" = "value"), row_style = "stack",',
-      '  subto = "main_plot", floating = TRUE',
-      ")",
-      "",
-      "# render the site:",
-      paste0('site_build("', dir, '", bundle_data = TRUE, serve = TRUE, open_after = TRUE)')
-    ), paths[2])
+  template <- paste0(path.package("community"), c("/inst", ""), "/templates/", template, "/")
+  template <- template[which(file.exists(template))[1]]
+  if (!is.na(template)) {
+    if (!file.exists(paths[2])) file.copy(paste0(template, "site.R"), paths[2])
+    if (!file.exists(paths[6])) file.copy(paste0(template, "build.R"), paths[6])
   }
   if (node_project && !file.exists(paths[3])) {
     jsonlite::write_json(list(
@@ -115,20 +91,6 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
       "docs/dist"
     ), paths[5])
   }
-  if (!file.exists(paths[6])) {
-    writeLines(c(
-      "# if there are datasets to add, include any preprocessing steps here",
-      paste0('write.csv(cbind(name = rownames(mtcars), mtcars), "', dir, '/docs/data/mtcars.csv", row.names = FALSE)'),
-      "",
-      "# then add them to the site:",
-      paste0(
-        'data_add(\n  c(mtcars = "mtcars.csv"),\n  meta = list(\n    ids = list(variable = "name")\n  ),\n  dir = "',
-        dir, '/docs/data",\n  refresh = TRUE\n)'
-      ),
-      "",
-      "# now edit the site and build it from site.R"
-    ), paths[6])
-  }
   if (!file.exists(paths[7]) && !any(grepl("\\.Rproj$", list.files(dir)))) writeLines("Version: 1.0\n", paths[7])
   if (include_api && !file.exists(paths[8])) {
     writeLines(c(
@@ -155,7 +117,7 @@ init_site <- function(dir, title = "app", with_data = TRUE, node_project = FALSE
       v = "created a site skeleton for {title}:",
       "*" = paste0("{.path ", normalizePath(dir, "/", FALSE), "}")
     ))
-    navigateToFile(paths[2])
+    if (file.exists(paths[2])) navigateToFile(paths[2])
   }
   invisible(dir)
 }

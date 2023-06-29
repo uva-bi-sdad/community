@@ -20,7 +20,6 @@
 #' @param port The port to listen on if \code{serve} is \code{TRUE}; defaults to 3000.
 #' @param use_local Logical; if \code{TRUE}, will use a \code{datacommons.js} script located in
 #' a local \code{dist/docs/dev} directory, relative to \code{dir}.
-#' @param open_after Logical; if \code{TRUE}, will open the served monitor site in a browser after it is built.
 #' @param verbose Logical; if \code{FALSE}, suppresses messages.
 #' @details
 #' The shell scripts included in the project's \code{scripts} directory can be used to retrieve
@@ -44,8 +43,7 @@
 
 init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_user = "",
                              remote = NULL, url = NULL, refresh_after = FALSE, overwrite = FALSE, serve = FALSE,
-                             host = "127.0.0.1", port = 3000, use_local = FALSE, open_after = FALSE,
-                             verbose = interactive()) {
+                             host = "127.0.0.1", port = 3000, use_local = FALSE, verbose = interactive()) {
   if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = ".")')
   check <- check_template("datacommons", dir = dir)
   if (missing(refresh_after) && !check$exists) refresh_after <- TRUE
@@ -267,6 +265,6 @@ init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_u
     ))
   }
   if (refresh_after && length(repos)) datacommons_refresh(dir, verbose = verbose)
-  if (serve) site_start_server(dir, host, port, open_after)
+  if (serve) site_start_server(dir, host, port)
   invisible(dir)
 }
