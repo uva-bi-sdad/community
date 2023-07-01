@@ -4352,6 +4352,31 @@ const community = function (window, document, site) {
         if (c in r) page.modal.info.references.lastElementChild.appendChild(r[c].element)
       })
     } else page.modal.info.references.classList.add('hidden')
+    if ('origin' in info) {
+      page.modal.info.origin.classList.remove('hidden')
+      const l = page.modal.info.origin.lastElementChild
+      l.innerHTML = ''
+      if ('string' === typeof info.origin) info.origin = [info.origin]
+      info.origin.forEach(url => {
+        const c = document.createElement('li'),
+          repo = patterns.repo.exec(url)[1]
+        let link = document.createElement('a')
+        link.href = 'https://github.com/' + repo
+        link.target = '_blank'
+        link.rel = 'noreferrer'
+        link.innerText = repo
+        c.appendChild(link)
+        c.appendChild(document.createElement('span'))
+        c.lastElementChild.innerText = ' / '
+        link = document.createElement('a')
+        link.href = url
+        link.target = '_blank'
+        link.rel = 'noreferrer'
+        link.innerText = url.replace(patterns.basename, '')
+        c.appendChild(link)
+        l.appendChild(c)
+      })
+    }
   }
 
   function parse_variables(s, type, e, entity) {
@@ -4619,6 +4644,14 @@ const community = function (window, document, site) {
     e.references.firstElementChild.innerText = 'References'
     e.references.appendChild((e = document.createElement('ul')))
     e.className = 'reference-list'
+
+    e = page.modal.info
+    e.body.appendChild((e.origin = document.createElement('div')))
+    e.origin.appendChild(document.createElement('p'))
+    e.origin.firstElementChild.className = 'h3'
+    e.origin.firstElementChild.innerText = 'Origin'
+    e.origin.appendChild((e = document.createElement('ul')))
+    e.className = 'origin-list'
 
     // set up filter's time range
     document.body.appendChild((e = page.modal.filter.e))

@@ -716,13 +716,21 @@ div.has-note span::before,
 .sources-cards p span:first-child {
   opacity: 0.7;
 }
-.reference-list {
+.reference-list,
+.origin-list {
   padding: 0;
 }
-.reference-list li {
+.reference-list li,
+.origin-list li {
   list-style-type: none;
   margin: 0 0 0 1.5em;
   text-indent: -1.5em;
+}
+.origin-list li {
+  margin: 0 0 0 2em;
+}
+.origin-list a:first-child {
+  font-weight: bold;
 }
 .cell-text {
   margin: 0;

@@ -37,4 +37,6 @@ export const patterns: {[index: string]: RegExp} = {
   math_tags: /^(?:semantics|annotation|annotation\-xml|m)/,
   math_attributes: /^(?:xmlns|display|displaystyle|style|encoding|stretchy|alttext|scriptlevel|fence|math)/,
   id_escapes: /(?<=#[^\s]+)([.[\](){}?*-])/g,
+  repo: /\.com\/([^\/]+\/[^\/]+)/,
+  basename: /^.*\//,
 }

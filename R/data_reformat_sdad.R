@@ -43,7 +43,7 @@
 
 data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, value = "value", value_name = "measure",
                                id = "geoid", time = "year", dataset = "region_type",
-                               entity_info = c(type = "region_type", name = "region_name"),
+                               entity_info = c(type = "region_type", name = "region_name"), measure_info = list(),
                                metadata = NULL, formatters = NULL, compression = "xz", read_existing = TRUE,
                                overwrite = FALSE, get_coverage = TRUE, verbose = TRUE) {
   if (length(files) == 1 && dir.exists(files)) {
@@ -124,7 +124,19 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       spec <- spec[!su]
     }
     names <- c(names, list(colnames(d)))
-    d$file <- f
+    gitconfig <- sub("(^.+repos/[^/]+/).*$", "\\1.git/config", f)
+    if (file.exists(gitconfig)) {
+      conf <- readLines(gitconfig)
+      branch <- grep("[branch", conf, fixed = TRUE, value = TRUE)
+      url <- grep("url =", conf, fixed = TRUE, value = TRUE)
+      if (length(branch) && length(url)) {
+        d$file <- paste0(
+          gsub("^.+=\\s|\\.git", "", url), "/blob/",
+          gsub('^[^"]+"|"\\]', "", branch), sub("^.+repos/[^/]+", "", f)
+        )
+      }
+    }
+    if (is.null(d$file)) d$file <- sub("^.+repos/", "", f)
     data <- c(data, list(d))
     names(data)[length(data)] <- f
   }
@@ -270,7 +282,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       }
     }
   }
-  data <- unique(data[, c(vars[1:4], dataset)])
+  data <- unique(data[, c(vars[1:5], dataset)])
   sets <- lapply(datasets, function(dn) {
     if (write[[dn]]) {
       d <- if (dataset %in% vars) data[data[[dataset]] == dn, ] else data
@@ -282,6 +294,16 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
           "creating {dn} dataset (ID {i}/{length(ids)})",
           msg_done = "created {dn} dataset ({length(ids)} IDs)", spinner = TRUE
         )
+      }
+      d <- d[!duplicated(paste(d[[id]], d[[value_name]], d[[time]])),]
+      if (length(measure_info)) {
+        source <- unique(d[, c(value_name, "file")])
+        source <- structure(source[[2]], names = source[[1]])
+        for (measure in names(source)) if (length(measure_info[[measure]])) {
+          measure_info[[measure]]$origin <<- unique(c(
+            measure_info[[measure]]$origin, source[[measure]]
+          ))
+        }
       }
       sd <- split(d, d[[id]])
       for (i in seq_along(ids)) {
@@ -310,8 +332,14 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     }
   })
   names(sets) <- datasets
+  if (length(measure_info)) {
+    measure_info_file <- paste0(out, "/measure_info.json")
+    if (verbose) cli_alert_info("updating measure info: {.file {measure_info_file}}")
+    jsonlite::write_json(measure_info[sort(names(measure_info))], measure_info_file, auto_unbox = TRUE, pretty = TRUE)
+  }
   if (!is.null(out)) {
     if (get_coverage && read_existing) {
+      if (verbose) cli_progress_step("updating coverage report", msg_done = "updated coverage report")
       variables <- sort(if (length(variables)) variables else unique(unlist(lapply(sets, colnames), use.names = FALSE)))
       allcounts <- structure(numeric(length(variables)), names = variables)
       write.csv(vapply(sets, function(d) {
@@ -320,6 +348,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
         allcounts[names(counts)] <- counts
         allcounts
       }, numeric(length(variables))), paste0(out, "/coverage.csv"))
+      if (verbose) cli_progress_done()
     }
     if (any(write)) {
       if (verbose) cli_progress_step("writing data files", msg_done = "wrote reformatted datasets:")

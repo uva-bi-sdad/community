@@ -241,7 +241,6 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
         files <- paste0(commons, "/", unique(r$file))
         names(files) <- sub("^[^/]+/[^/]+/", "", unique(r$file))
         list(
-          repository = r$repo[[1]],
           files = lapply(files, function(f) {
             name <- sub("^/[^/]+/[^/]+/", "", sub(commons, "", f, fixed = TRUE))
             if (grepl("repos/", f, fixed = TRUE)) {
@@ -319,12 +318,8 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
           }
         }
       }
-      if (length(measure_info)) {
-        measure_info_file <- paste0(outdir, "/measure_info.json")
-        if (verbose) cli_alert_info("updating measure info: {.file {measure_info_file}}")
-        jsonlite::write_json(rev(measure_info), measure_info_file, auto_unbox = TRUE, pretty = TRUE)
-      }
       args <- list(...)
+      if (length(measure_info)) args$measure_info <- measure_info
       args$files <- paste0(commons, "/", unique(files$file))
       args$out <- outdir
       args$variables <- view$variables
