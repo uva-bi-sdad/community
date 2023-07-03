@@ -71,11 +71,12 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
   method <- if (clone_method == "ssh") "git@github.com:" else "https://github.com/"
   if (include_distributions) dir.create("../cache", FALSE)
   manifest_file <- paste0(dir, "/manifest/repos.json")
-  repo_manifest <- if (file.exists(manifest_file)) jsonlite::read_json(manifest_file) else list()
+  repo_manifest <- list()
   for (i in seq_along(repos)) {
     r <- repos[[i]]
     rn <- sub("^.*/", "", r)
     cr <- paste0(repo_dir, rn, "/")
+    repo_manifest[[r]]$base_url <- get_git_remote(paste0(cr, ".git/config"))
     if (!rescan_only) {
       change_dir <- dir.exists(rn)
       if (verbose) cli_alert_info(paste(if (change_dir) "pulling" else "cloning", rn))

@@ -4990,7 +4990,7 @@
             c.appendChild(link);
             l.appendChild(c);
           });
-        }
+        } else page.modal.info.origin.classList.add('hidden');
       }
 
       function parse_variables(s, type, e, entity) {

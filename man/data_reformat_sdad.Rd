@@ -7,9 +7,9 @@
 data_reformat_sdad(files, out = NULL, variables = NULL, ids = NULL,
   value = "value", value_name = "measure", id = "geoid", time = "year",
   dataset = "region_type", entity_info = c(type = "region_type", name =
-  "region_name"), metadata = NULL, formatters = NULL, compression = "xz",
-  read_existing = TRUE, overwrite = FALSE, get_coverage = TRUE,
-  verbose = TRUE)
+  "region_name"), measure_info = list(), metadata = NULL,
+  formatters = NULL, compression = "xz", read_existing = TRUE,
+  overwrite = FALSE, get_coverage = TRUE, verbose = TRUE)
 }
 \arguments{
 \item{files}{A character vector of file paths, or the path to a directory containing data files.}
@@ -34,6 +34,8 @@ not present.}
 \item{entity_info}{A list containing variable names to extract and create an ids map from (
 \code{entity_info.json}, created in the output directory). Entries can be named to rename the
 variables they refer to in entity features.}
+
+\item{measure_info}{Measure info to add file information to (as \code{origin}) to, and write to \code{out}.}
 
 \item{metadata}{A matrix-like object with additional information associated with entities,
 (such as region types and names) to be merged by \code{id}.}

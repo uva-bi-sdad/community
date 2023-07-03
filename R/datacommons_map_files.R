@@ -44,17 +44,17 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
   all_files <- list.files(paste0(dir, c("cache", "repos")), search_pattern, full.names = TRUE, recursive = TRUE)
   all_files <- all_files[!grepl("[/\\](?:working|original)[/\\]|variable_map", all_files)]
   if (!length(all_files)) cli_abort("no files were found")
-  res <- paste0(dir, "cache/", c("variable_map.csv", "id_map.json"))
+  res <- paste0(dir, "cache/", c("variable_map.csv", "id_map.rds"))
   if (overwrite) unlink(res)
   if (all(file.exists(res)) && all(file.mtime(res) > max(file.mtime(all_files)))) {
     if (verbose) cli_alert_success("the maps are up to date")
-    return(invisible(list(variables = read.csv(res[1]), ids = jsonlite::read_json(res[2]))))
+    return(invisible(list(variables = read.csv(res[1]), ids = readRDS(res[2]))))
   }
   i <- 1
   map <- idmap <- list()
   noread <- novars <- noids <- empty <- NULL
   repos <- commons$repositories
-  manifest <- list()
+  manifest <- measure_info <- list()
   if (verbose) {
     cli_progress_step(
       "scanning files in repos: {i}/{length(repos)}",
@@ -68,6 +68,24 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
       paste0(dir, c("repos", "cache"), "/", sub("^[^/]+/", "", r)), search_pattern,
       full.names = TRUE, recursive = TRUE, ignore.case = TRUE
     )
+    measure_info_files <- sort(list.files(
+      paste0(dir, "repos/", sub("^.+/", "", r)), "^measure_info[^.]*\\.json$",
+      full.names = TRUE, recursive = TRUE
+    ))
+    measure_info_files <- measure_info_files[
+      !duplicated(sub("_rendered", "", measure_info_files, fixed = TRUE))
+    ]
+    if (length(measure_info_files)) {
+      measure_info <- c(measure_info, lapply(
+        structure(measure_info_files, names = sub(paste0(dir, "repos/"), "", measure_info_files, fixed = TRUE)),
+        function(f) {
+          tryCatch(lapply(jsonlite::read_json(f), function(m) m[m != ""]), error = function(e) {
+            cli_alert_warning("failed to read measure info: {.file {f}}")
+            NULL
+          })
+        }
+      ))
+    }
     files <- files[files %in% all_files]
     for (f in files) {
       d <- tryCatch(
@@ -91,7 +109,8 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
             next
           }
           hash <- md5sum(f)[[1]]
-          manifest[[r]][[hash]]$name <- basename(f)
+          relf <- sub(paste0(dir, "repos/", sub("^.+/", "", r), "/"), "", f, fixed = TRUE)
+          manifest[[r]][[hash]]$name <- relf
           manifest[[r]][[hash]]$providers <- c(manifest[[r]][[hash]]$provider, if (grepl("repos/", f, fixed = TRUE)) "github" else "dataverse")
           vars <- if (is.function(variable_location)) variable_location(d) else d[[variable_location]]
           if (length(vars)) {
@@ -110,7 +129,7 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
           ids <- if (is.function(id_location)) id_location(d) else d[[id_location]]
           if (length(ids)) {
             ids <- gsub("^\\s+|\\s+$", "", format(unique(ids), scientific = FALSE))
-            idmap[[f]] <- data.frame(id = ids, repo = r, file = sub(dir, "", f, fixed = TRUE))
+            idmap[[f]] <- data.frame(id = ids, repo = r, file = relf)
             manifest[[r]][[hash]]$ids <- ids
           } else {
             noids <- c(noids, f)
@@ -125,6 +144,9 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
     if (verbose) cli_progress_update()
   }
   if (verbose) cli_progress_done()
+  if (length(measure_info)) {
+    jsonlite::write_json(measure_info, paste0(dir, "cache/measure_info.json"), auto_unbox = TRUE)
+  }
   map <- do.call(rbind, unname(map))
   idmap <- do.call(rbind, unname(idmap))
   if (verbose) {
@@ -138,7 +160,7 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
   jsonlite::write_json(manifest, paste0(dir, "manifest/files.json"), auto_unbox = TRUE, pretty = TRUE)
   dir.create(paste0(dir, "cache"), FALSE)
   idmap <- lapply(split(idmap, idmap$id), function(d) list(repos = unique(d$repo), files = unique(d$file)))
-  jsonlite::write_json(idmap, res[2], auto_unbox = TRUE, pretty = TRUE)
+  saveRDS(idmap, res[2], compress = "xz")
   write.csv(map, res[1], row.names = FALSE)
   init_datacommons(dir, refresh_after = FALSE, verbose = FALSE)
   invisible(list(variables = map, ids = idmap))

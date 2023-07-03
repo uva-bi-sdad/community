@@ -1,9 +1,10 @@
 :root {
   --background: #212121;
+  --bs-body-bg: #212121;
   --background-border: #414141;
   --background-input: #000000;
   --body-text: #ffffff;
-  --background-secondary: #202020;
+  --background-secondary: #0e0e0e;
   --background-highlight: #141414;
   --link: #9bbcff;
   --highlight: #595959;
@@ -12,17 +13,53 @@
   --highlight-secondary-text: #ffffff;
   --lowlight: #212121;
   --lowlight-text: #bebebe;
+  --pending: #000d41;
   --pass: #294b8f;
   --fail: #fcad3a;
   --fail-text: #000;
 }
 body,
 html,
-.modal-content,
+div.modal-content,
 .offcanvas,
 div.toast,
 .hover-note {
   background-color: var(--background);
+  border-color: var(--background-border);
+  color: var(--body-text);
+}
+.modal-dialog {
+  min-width: 80%;
+}
+.modal-body div > table tr {
+  border-bottom: 1px solid var(--highlight-secondary);
+}
+.modal-body div > table {
+  margin: 0 0.5em;
+}
+.modal-body td > table {
+  border: 1px solid var(--background-border);
+  background-color: var(--background-secondary);
+  margin: 0.2em 0;
+}
+.modal-body table {
+  margin: 0;
+}
+.modal-body th {
+  vertical-align: top;
+  padding: 0 0.4em 0 0;
+  width: 1px;
+}
+.modal-body ul {
+  list-style: none;
+  padding: 0 0 0 0.5em;
+}
+.modal-body a {
+  word-break: break-all;
+}
+input.form-control,
+input.form-control:focus {
+  background-color: var(--background-input);
   border-color: var(--background-border);
   color: var(--body-text);
 }
@@ -81,6 +118,7 @@ div.toast-header {
   border-radius: 15px;
   text-align: center;
   word-break: break-word;
+  z-index: 3;
 }
 .hover-note p {
   padding: 0.5em;
@@ -102,7 +140,7 @@ div.card {
   border-color: var(--background-border);
 }
 .commons {
-  margin: auto;
+  margin: 0.5em auto;
   max-width: 1000px;
 }
 .card {
@@ -121,6 +159,9 @@ div.card-header {
 .repo_header > span:first-of-type {
   font-size: 0.7em;
   opacity: 0.6;
+}
+.accordion-collapse {
+  padding: 0.5em;
 }
 span.spinner-border {
   width: 1.5em;
@@ -164,6 +205,10 @@ span.spinner-border {
   border-radius: 0 25px 25px 0;
   background-color: var(--pass);
 }
+.pending-check span:last-child,
+.pending-check .btn:last-child {
+  background-color: var(--pending);
+}
 .failed-check span:last-child,
 .failed-check .btn:last-child {
   background-color: var(--fail);
@@ -187,7 +232,6 @@ span.spinner-border {
 }
 .card-section {
   font-weight: 500;
-  padding: 0.5em 1em;
   background-color: var(--highlight-secondary);
   border-radius: 5px;
   margin: 0 0 1em 0;
@@ -223,7 +267,7 @@ span.spinner-border {
   font-size: 1em;
 }
 .entry-name {
-  font-size: 1.3em;
+  font-size: 1em;
   padding: 0 0 0.5em 0;
 }
 .entry-info span {
@@ -246,6 +290,44 @@ span.entry-info-entry {
 .hidden {
   display: none;
 }
-#search_tab {
+.search-wrapper {
   color: #fff;
+}
+.search-field {
+  top: 0;
+  position: sticky;
+  background-color: var(--background);
+}
+.search-field input {
+  padding: 1em 0.5em;
+}
+.search-results {
+  padding: 1em 0.5em;
+  overflow-x: auto;
+}
+.search-results p {
+  padding: 0.1em 0;
+}
+.variable {
+  background-color: var(--highlight-secondary);
+  border-radius: 5px;
+  font-size: 0.95em;
+  padding: 0 0 0.5em 0;
+  margin: 0 0 1em 0;
+}
+.variable p {
+  padding: 0 1em;
+}
+.variable button {
+  background-color: var(--background-secondary);
+  color: var(--body-text);
+  padding: 0.2em;
+  border-radius: 5px 5px 0 0;
+  width: 100%;
+  font-size: 1.5em;
+  text-align: left;
+}
+.content p.variable-name {
+  font-size: 0.9em;
+  color: var(--lowlight-text);
 }

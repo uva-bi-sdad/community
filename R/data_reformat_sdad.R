@@ -22,6 +22,7 @@
 #' @param entity_info A list containing variable names to extract and create an ids map from (
 #' \code{entity_info.json}, created in the output directory). Entries can be named to rename the
 #' variables they refer to in entity features.
+#' @param measure_info Measure info to add file information to (as \code{origin}) to, and write to \code{out}.
 #' @param metadata A matrix-like object with additional information associated with entities,
 #' (such as region types and names) to be merged by \code{id}.
 #' @param formatters A list of functions to pass columns through, with names identifying those columns
@@ -125,17 +126,8 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     }
     names <- c(names, list(colnames(d)))
     gitconfig <- sub("(^.+repos/[^/]+/).*$", "\\1.git/config", f)
-    if (file.exists(gitconfig)) {
-      conf <- readLines(gitconfig)
-      branch <- grep("[branch", conf, fixed = TRUE, value = TRUE)
-      url <- grep("url =", conf, fixed = TRUE, value = TRUE)
-      if (length(branch) && length(url)) {
-        d$file <- paste0(
-          gsub("^.+=\\s|\\.git", "", url), "/blob/",
-          gsub('^[^"]+"|"\\]', "", branch), sub("^.+repos/[^/]+", "", f)
-        )
-      }
-    }
+    remote <- get_git_remote(sub("(^.+repos/[^/]+/).*$", "\\1.git/config", f))
+    if (length(remote)) d$file <- paste0(remote, sub("^.+repos/[^/]+", "", f))
     if (is.null(d$file)) d$file <- sub("^.+repos/", "", f)
     data <- c(data, list(d))
     names(data)[length(data)] <- f
@@ -295,14 +287,16 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
           msg_done = "created {dn} dataset ({length(ids)} IDs)", spinner = TRUE
         )
       }
-      d <- d[!duplicated(paste(d[[id]], d[[value_name]], d[[time]])),]
+      d <- d[!duplicated(paste(d[[id]], d[[value_name]], d[[time]])), ]
       if (length(measure_info)) {
         source <- unique(d[, c(value_name, "file")])
         source <- structure(source[[2]], names = source[[1]])
-        for (measure in names(source)) if (length(measure_info[[measure]])) {
-          measure_info[[measure]]$origin <<- unique(c(
-            measure_info[[measure]]$origin, source[[measure]]
-          ))
+        for (measure in names(source)) {
+          if (length(measure_info[[measure]])) {
+            measure_info[[measure]]$origin <<- unique(c(
+              measure_info[[measure]]$origin, source[[measure]]
+            ))
+          }
         }
       }
       sd <- split(d, d[[id]])

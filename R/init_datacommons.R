@@ -167,6 +167,7 @@ init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_u
     ""
   ), paths[7])
   manifest_files <- paste0(dir, "/manifest/", c("repos", "files"), ".json")
+  measure_infos <- paste0(dir, "/cache/measure_info.json")
   writeLines(c(
     "<!doctype html>",
     '<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">',
@@ -205,12 +206,13 @@ init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_u
     paste(c(
       '<script type="text/javascript">',
       "var commons",
-      gsub("\\s+(?=\\W)", "", paste0(
+      paste0(
         "window.onload = function(){commons = new DataCommons(",
         gsub("\\s+", "", paste0(readLines(paste0(dir, "/commons.json")), collapse = "")),
         ", {",
         "repos:", if (file.exists(manifest_files[1])) paste0(readLines(manifest_files[1]), collapse = "") else "{}",
         ",files:", if (file.exists(manifest_files[2])) paste0(readLines(manifest_files[2]), collapse = "") else "{}",
+        ",variables:", if (file.exists(measure_infos)) paste0(readLines(measure_infos), collapse = "") else "{}",
         "}, ",
         jsonlite::toJSON(Filter(length, lapply(
           list.dirs(paste0(dir, "/views"), FALSE)[-1], function(v) {
@@ -219,7 +221,7 @@ init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_u
           }
         )), auto_unbox = TRUE),
         ")}"
-      ), perl = TRUE),
+      ),
       "</script>"
     ), collapse = "\n"),
     "</head>",

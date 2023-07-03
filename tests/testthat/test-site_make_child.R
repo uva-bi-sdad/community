@@ -1,5 +1,5 @@
 test_that("copies a local site", {
-  dir <- if (dir.exists("../community_example")) "../community_example" else "test_site"
+  dir <- if (dir.exists("../community_example")) "../community_example" else "../../community_example"
   skip_if_not(dir.exists(dir), "no test site available")
   cdir <- paste0(tempdir(), "/site_child")
   site_make_child(dir, cdir)

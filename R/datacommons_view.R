@@ -196,10 +196,10 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
           TRUE
         }) &
         (if (length(view$ids)) {
-          map$variables$file %in% sub("^/", "", unique(unlist(
+          sub("^[^/]+/[^/]+/", "", map$variables$file) %in% unique(unlist(
             lapply(map$ids[view$ids %in% names(map$ids)], "[[", "files"),
             use.names = FALSE
-          )))
+          ))
         } else {
           TRUE
         }), ,

@@ -218,3 +218,17 @@ render_info <- function(info, names_only = FALSE) {
   }
   expanded
 }
+
+get_git_remote <- function(config) {
+  if (file.exists(config)) {
+    conf <- readLines(config)
+    branch <- grep("[branch", conf, fixed = TRUE, value = TRUE)
+    url <- grep("url =", conf, fixed = TRUE, value = TRUE)
+    if (length(branch) && length(url)) {
+      paste0(
+        gsub("^.+=\\s|\\.git", "", url), "/blob/",
+        gsub('^[^"]+"|"\\]', "", branch)
+      )
+    }
+  }
+}

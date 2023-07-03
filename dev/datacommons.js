@@ -18,7 +18,7 @@ function DataCommons(definition, manifest, views) {
   this.views = views
   this.named_view = {}
   this.counts = {views: 0, repos: 0, files: 0, variables: 0, ids: 0}
-  this.variables = {}
+  this.variables = new Map()
   this.ids = {}
   this.repos = {}
   this.providers = {}
@@ -38,6 +38,14 @@ function DataCommons(definition, manifest, views) {
       repos: document.createElement('div'),
       views: document.createElement('div'),
     },
+    modal: {
+      frame: document.createElement('div'),
+      title: document.createElement('div'),
+      body: document.createElement('div'),
+      files: document.createElement('div'),
+      dashboards: document.createElement('div'),
+      measure_info: document.createElement('div'),
+    },
     views: {},
     repos: {},
     files: {},
@@ -47,20 +55,59 @@ function DataCommons(definition, manifest, views) {
   this.page.container.className = 'commons'
   this.page.container.appendChild(this.page.tabs.repos)
   this.page.container.appendChild(this.page.tabs.search)
+  const m = this.page.modal
+  document.body.appendChild(m.frame)
+  m.frame.className = 'modal fade'
+  m.frame.id = 'general_modal'
+  m.frame.tabIndex = -1
+  m.frame.setAttribute('data-bs-theme', 'dark')
+  m.frame.setAttribute('aria-labelledby', 'general_modal_label')
+  m.frame.setAttribute('aria-hidden', 'true')
+  m.frame.appendChild(document.createElement('div'))
+  m.frame.lastElementChild.className = 'modal-dialog'
+  m.frame.lastElementChild.appendChild(document.createElement('div'))
+  m.frame.lastElementChild.lastElementChild.className = 'modal-content'
+  m.frame.lastElementChild.lastElementChild.appendChild(m.title)
+  m.title.className = 'modal-header'
+  m.title.appendChild(document.createElement('h3'))
+  m.title.firstElementChild.className = 'modal-title'
+  m.title.firstElementChild.id = 'general_modal_label'
+  m.title.appendChild(document.createElement('button'))
+  m.title.lastElementChild.type = 'button'
+  m.title.lastElementChild.className = 'btn-close'
+  m.title.lastElementChild.setAttribute('data-bs-dismiss', 'modal')
+  m.title.lastElementChild.setAttribute('aria-label', 'Close')
+  m.frame.lastElementChild.lastElementChild.appendChild(m.body)
+  m.body.className = 'modal-body'
+  m.body.appendChild(m.files)
+  m.files.appendChild(document.createElement('h4'))
+  m.files.lastElementChild.innerText = 'Data Files'
+  m.files.appendChild(document.createElement('ul'))
+  m.body.appendChild(m.dashboards)
+  m.dashboards.appendChild(document.createElement('h4'))
+  m.dashboards.lastElementChild.innerText = 'Dashboards'
+  m.dashboards.appendChild(document.createElement('ul'))
+  m.body.appendChild(m.measure_info)
+  m.measure_info.appendChild(document.createElement('h4'))
+  m.measure_info.lastElementChild.innerText = 'Measure Info'
+  m.measure_info.appendChild(document.createElement('ul'))
+  m.measure_info.appendChild(document.createElement('table'))
   !(() => {
     let e = document.createElement('div')
     this.page.tabs.search.appendChild(e)
+    e.className = 'search-wrapper'
+    e.appendChild((e = document.createElement('div')))
     e.className = 'search-field'
     e.appendChild(document.createElement('label'))
     e.lastElementChild.setAttribute('for', 'searchInput')
     e.lastElementChild.className = 'form-label'
-    e.lastElementChild.innerText = 'Search'
+    e.lastElementChild.innerText = 'Search Variables'
     e.appendChild(document.createElement('input'))
     e.lastElementChild.type = 'text'
     e.lastElementChild.id = 'searchInput'
     e.lastElementChild.className = 'form-control'
     e.lastElementChild.addEventListener('keyup', this.search.bind(this))
-    this.page.tabs.search.appendChild((e = document.createElement('div')))
+    this.page.tabs.search.firstElementChild.appendChild((e = document.createElement('div')))
     e.className = 'search-results'
   })()
   this.requester.onmessage = m => {
@@ -70,26 +117,27 @@ function DataCommons(definition, manifest, views) {
       const resp = JSON.parse(d.response)
       var status = 200 !== d.status ? d.status : resp.status ? resp.status : resp.message ? 'ERROR' : 'OK'
       if ('provider' === d.type) {
-        this.repos[d.repo].providers[d.provider] = JSON.parse(d.response)
+        this.repos[d.repo].providers[d.provider + d.dir] = JSON.parse(d.response)
         const r = this.repos[d.repo],
-          p = r.providers[d.provider],
-          mismatches = []
+          p = r.providers[d.provider + d.dir],
+          mismatches = [],
+          e = r.distributions[d.provider].display
         var i = 0,
           n = 0,
           fs,
           uid,
           any_matches = false
-        r.distributions[d.provider].display.lastElementChild.lastElementChild.className = ''
+        e.lastElementChild.lastElementChild.className = ''
         if ('OK' === status) {
-          r.distributions[d.provider].display.classList.add('passed-check')
-          r.distributions[d.provider].display.classList.remove('failed-check')
+          e.classList.add('passed-check')
+          e.classList.remove('failed-check')
           if ('github' === d.provider) {
             for (n = p.length; i < n; i++) {
-              if (Object.hasOwn(this.file_ids, p[i].name)) {
+              if (Object.hasOwn(this.file_ids, p[i].path)) {
                 any_matches = true
-                uid = this.file_ids[p[i].name]
+                uid = this.file_ids[p[i].path]
                 this.files[uid].remote.github = p[i]
-                if (!Object.hasOwn(r.all_files, this.files[uid].local.github.md5)) mismatches.push(p[i].name)
+                if (!Object.hasOwn(r.all_files, this.files[uid].local.github.md5)) mismatches.push(p[i].path)
               }
             }
           } else if ('dataverse' === d.provider) {
@@ -117,11 +165,11 @@ function DataCommons(definition, manifest, views) {
           }
         }
         if ('OK' !== status) {
-          r.distributions[d.provider].display.classList.remove('passed-check')
-          r.distributions[d.provider].display.classList.add('failed-check')
-          r.distributions[d.provider].display.lastElementChild.setAttribute('aria-description', p.message)
+          e.classList.remove('passed-check')
+          e.classList.add('failed-check')
+          e.lastElementChild.setAttribute('aria-description', p.message)
         }
-        r.distributions[d.provider].display.lastElementChild.lastElementChild.innerText = status
+        e.lastElementChild.lastElementChild.innerText = status
         this.display_repo(d.repo)
       } else if ('view' === d.type) {
         const v = this.named_view[d.view]
@@ -252,6 +300,7 @@ function DataCommons(definition, manifest, views) {
       r.file_ids = []
       r.ufiles = {}
       r.all_files = manifest.files[k]
+      r.variables = {}
       for (h in r.all_files)
         if (Object.hasOwn(r.all_files, h)) {
           f = r.all_files[h]
@@ -281,29 +330,93 @@ function DataCommons(definition, manifest, views) {
               if ('string' === typeof f.variables) f.variables = [f.variables]
               for (i = f.variables.length; i--; ) {
                 p = f.variables[i]
-                if (!Object.hasOwn(this.variables, p)) {
+                if (!(p in r.variables)) {
                   this.counts.variables++
-                  this.variables[p] = {
-                    display: document.createElement('div'),
+                  const e = document.createElement('div')
+                  r.variables[p] = {
+                    string: p.toLowerCase(),
+                    display: e,
                     files: [],
+                    repos: [],
+                    info: {},
+                    info_files: [],
                   }
-                  this.variables[p].display.className = 'variable'
+                  this.variables.set(p, r.variables[p])
+                  e.className = 'variable'
+                  e.appendChild(document.createElement('button'))
+                  e.lastElementChild.type = 'button'
+                  e.lastElementChild.innerText = p
+                  e.lastElementChild.className = 'btn'
+                  e.lastElementChild.setAttribute('data-bs-toggle', 'modal')
+                  e.lastElementChild.setAttribute('data-bs-target', '#general_modal')
+                  e.lastElementChild.addEventListener(
+                    'click',
+                    function (e, v) {
+                      const s = v.info
+                      this.page.modal.title.firstElementChild.innerText = s.short_name || s.long_name
+                      this.page.modal.files.lastElementChild.innerHTML = ''
+                      v.files.forEach(f => {
+                        const li = document.createElement('li')
+                        li.appendChild(document.createElement('a'))
+                        li.lastElementChild.target = '_blank'
+                        li.lastElementChild.rel = 'noreferrer'
+                        li.lastElementChild.innerText = v.repos[0] + ': ' + f.content.name
+                        li.lastElementChild.href = this.repos[v.repos[0]].base_url + '/' + f.content.name
+                        this.page.modal.files.lastElementChild.appendChild(li)
+                      })
+                      this.page.modal.dashboards.lastElementChild.innerHTML = ''
+                      this.views.forEach(view => {
+                        if (v.name in view.variables) {
+                          const li = document.createElement('li')
+                          li.appendChild(document.createElement('a'))
+                          li.lastElementChild.target = '_blank'
+                          li.lastElementChild.rel = 'noreferrer'
+                          li.lastElementChild.href = view.view.url + '?selected_variable=' + v.name
+                          li.lastElementChild.innerText = view.name
+                          this.page.modal.dashboards.lastElementChild.appendChild(li)
+                        }
+                      })
+                      this.page.modal.measure_info.children[1].innerHTML = ''
+                      v.info_files.forEach(f => {
+                        f = f.replace(/^[^\/]+\//, '')
+                        const li = document.createElement('li')
+                        li.appendChild(document.createElement('a'))
+                        li.lastElementChild.target = '_blank'
+                        li.lastElementChild.rel = 'noreferrer'
+                        li.lastElementChild.innerText = v.repos[0] + ': ' + f
+                        li.lastElementChild.href = this.repos[v.repos[0]].base_url + '/' + f
+                        this.page.modal.measure_info.children[1].appendChild(li)
+                      })
+                      this.page.modal.measure_info.lastElementChild.innerHTML = ''
+                      this.page.modal.measure_info.appendChild(
+                        this.display_object({measure: v.name, ...s}, this.page.modal.measure_info.lastElementChild)
+                      )
+                    }.bind(this, null, r.variables[p])
+                  )
+                  e.appendChild(document.createElement('p'))
+                  e.lastElementChild.className = 'variable-name'
+                  e.appendChild(document.createElement('p'))
                 }
-                this.variables[p].files.push(this.files[uid])
+                const v = r.variables[p]
+                v.files.push(this.files[uid])
+                if (-1 === v.repos.indexOf(k)) v.repos.push(k)
               }
             }
-            if (f.ids)
-              for (i = f.ids.length; i--; ) {
-                if (!Object.hasOwn(this.ids, f.ids[i])) {
+            if (f.ids) {
+              if ('string' === typeof f.ids) f.ids = [f.ids]
+              f.ids.forEach(id => {
+                if (!(id in this.ids)) {
                   this.counts.ids++
-                  this.ids[f.ids[i]] = {
-                    display: document.createElement('div'),
-                    files: [],
-                  }
-                  this.ids[f.ids[i]].display.className = 'id'
+                  const e = document.createElement('div')
+                  this.ids[id] = {display: e, files: []}
+                  e.className = 'id'
+                  e.appendChild(document.createElement('p'))
+                  e.lastElementChild.innerText = id
+                  e.lastElementChild.className = 'h5'
                 }
-                this.ids[f.ids[i]].files.push(this.files[uid])
-              }
+                this.ids[id].files.push(this.files[uid])
+              })
+            }
           }
           if (!Object.hasOwn(r.ufiles, uid)) {
             r.file_ids.push(uid)
@@ -329,6 +442,21 @@ function DataCommons(definition, manifest, views) {
         }
       this.page.tabs.repos.appendChild(this.display_repo(k))
     }
+  Object.keys(manifest.variables).forEach(file => {
+    const infos = manifest.variables[file]
+    Object.keys(infos).forEach(v => {
+      if (this.variables.has(v)) {
+        const r = this.variables.get(v)
+        r.info_files.push(file)
+        r.name = v
+        r.info = infos[v]
+        r.display.children[0].innerText = r.info.short_name || r.info.long_name || v
+        r.display.children[1].innerText = v
+        r.display.children[2].innerText = r.info.short_description || r.info.long_description || ''
+        r.string += ' ' + JSON.stringify(r.info).toLowerCase()
+      }
+    })
+  })
   this.counts.views = views.length
   for (i = views.length; i--; ) {
     this.named_view[views[i].name] = views[i]
@@ -406,6 +534,7 @@ DataCommons.prototype = {
                 if ('remote' === s) fck = f.local[k][h] === f.remote[k][h]
                 fck = fck && f.local[p].md5 === f.local[k].md5
                 if (!fck) ck = false
+                f.local[k].display.classList[fck && s === 'local' ? 'add' : 'remove']('pending-check')
                 f.local[k].display.classList[fck ? 'remove' : 'add']('failed-check')
                 f.local[k].display.lastElementChild.setAttribute('aria-description', 'Source: ' + s)
                 f.local[k].display.lastElementChild.innerText = f[s][k][h]
@@ -422,8 +551,8 @@ DataCommons.prototype = {
         v.missed_variables = []
         for (var all = true, i = v.view.variables.length, name; i--; ) {
           name = v.view.variables[i]
-          if (Object.hasOwn(v.parent.variables, name)) {
-            v.variables[name].firstElementChild.innerText = v.parent.variables[name].files.length
+          if (v.parent.variables.has(name)) {
+            v.variables[name].firstElementChild.innerText = v.parent.variables.get(name).files.length
             v.variables[name].firstElementChild.classList.add('passed-check')
           } else {
             v.variables[name].firstElementChild.classList.remove('passed-check')
@@ -530,6 +659,32 @@ DataCommons.prototype = {
         v.view.children[ch].parts[k].classList[ck ? 'remove' : 'add']('failed-check')
       }
   },
+  display_object: function (s, t) {
+    if (!t) t = document.createElement('table')
+    Object.keys(s).forEach(f => {
+      const r = document.createElement('tr'),
+        h = document.createElement('th'),
+        c = document.createElement('td')
+      r.appendChild(h)
+      r.appendChild(c)
+      h.innerText = f
+      if (Array.isArray(s[f])) {
+        if ('string' === typeof s[f][0]) {
+          c.innerText = s[f].join(', ')
+        } else {
+          s[f].forEach(e => {
+            c.appendChild(this.display_object(e))
+          })
+        }
+      } else if ('object' === typeof s[f]) {
+        c.appendChild(this.display_object(s[f]))
+      } else {
+        c.innerText = s[f]
+      }
+      t.appendChild(r)
+    })
+    return t
+  },
   display_repo: function (repo) {
     const r = this.repos[repo],
       exists = Object.hasOwn(this.page.repos, repo),
@@ -580,7 +735,26 @@ DataCommons.prototype = {
             ee.lastElementChild.appendChild(document.createElement('span'))
           }
         e.lastElementChild.appendChild((ee = document.createElement('div')))
-        ee.className = 'repo_files card-section'
+        ee.className = 'repo_files card-section accordion'
+        ee.id = 'file-list-container-' + repo
+        ee.setAttribute('data-bs-theme', 'dark')
+        ee.appendChild((ee = document.createElement('div')))
+        ee.className = 'accordion-item'
+        ee.appendChild((ee = document.createElement('h2')))
+        ee.className = 'accordion-header'
+        ee.appendChild(document.createElement('button'))
+        ee.lastElementChild.innerText = 'Data Files'
+        ee.lastElementChild.className = 'accordion-button collapsed'
+        ee.lastElementChild.type = 'button'
+        ee.lastElementChild.setAttribute('data-bs-toggle', 'collapse')
+        ee.lastElementChild.setAttribute('data-bs-target', '#file-list-' + repo)
+        ee.lastElementChild.setAttribute('aria-expanded', 'false')
+        ee.lastElementChild.setAttribute('aria-controls', 'file-list-' + repo)
+        ee.insertAdjacentElement('afterend', (ee = document.createElement('div')))
+        ee.id = 'file-list-' + repo
+        ee.className = 'accordion-collapse collapse'
+        ee.setAttribute('data-bs-parent', '#file-list-container-' + repo)
+        ee.appendChild((ee = document.createElement('div')))
         for (h in r.all_files)
           if (Object.hasOwn(r.all_files, h)) {
             ee.appendChild(this.display_file(h))
@@ -804,7 +978,6 @@ DataCommons.prototype = {
             '/blob/' +
             ((f.local.github.parent.providers.github && f.local.github.parent.providers.github.default_branch) ||
               'main') +
-            f.local.github.location +
             '/' +
             f.content.name
           )
@@ -820,7 +993,7 @@ DataCommons.prototype = {
   },
   get_provider_link: function (provider, repo, api) {
     if ('github' === provider) {
-      return api ? 'https://api.github.com/repos/' + repo + '/contents/data' : 'https://github.com/' + repo
+      return api ? 'https://api.github.com/repos/' + repo + '/contents/' : 'https://github.com/' + repo
     }
     const pl = this.repos[repo].distributions[provider]
     if ('dataverse' === provider) {
@@ -831,13 +1004,24 @@ DataCommons.prototype = {
     this.requester.postMessage({type: 'view', view: o.name, url: url})
   },
   request_provider: function (repo, provider) {
-    const api = this.get_provider_link(provider, repo)
+    const api = this.get_provider_link(provider, repo, true)
     if (api) {
-      this.queues.distributions.push({
-        type: 'provider',
-        repo: repo,
-        provider: provider,
-        url: api,
+      const dirname = /\/[^\/]+$/,
+        dirs = [],
+        files = this.repos[repo].files
+      Object.keys(files).forEach(f => {
+        files[f].display && files[f].display.classList.add('failed-check')
+        const path = f.replace(dirname, '')
+        if (-1 === dirs.indexOf(path)) dirs.push(path)
+      })
+      dirs.forEach(dir => {
+        this.queues.distributions.push({
+          type: 'provider',
+          repo: repo,
+          provider: provider,
+          dir: dir,
+          url: api + '/' + dir,
+        })
       })
       this.prompt_dist_requester()
     }
@@ -849,7 +1033,7 @@ DataCommons.prototype = {
         if (this.rates.github.resources.core.remaining > 0) {
           this.rates.github.resources.core.remaining--
         } else {
-          if (Date.now() / 1e3 > this.rates.github.resources.core.reset) {
+          if (Date.now() > this.rates.github.resources.core.reset) {
             if (!this.rates.github.resources.core.queued) {
               const f = new XMLHttpRequest()
               f.onreadystatechange = () => {
@@ -858,6 +1042,7 @@ DataCommons.prototype = {
                     throw new TypeError('failed to retrieve github rate limit; ' + f.responseText)
                   } else {
                     this.rates.github = JSON.parse(f.responseText)
+                    this.rates.github.resources.core.reset = Date.now() + this.rates.github.resources.core.reset / 1e3
                     this.prompt_dist_requester()
                   }
                 }
@@ -868,12 +1053,11 @@ DataCommons.prototype = {
             }
           } else {
             this.page.toast._element.firstElementChild.firstElementChild.innerText = 'GitHub Rate Limit'
-            this.rates.github.resources.core.reset *= 1e3
             this.page.toast._element.lastElementChild.innerText =
               "This IP has reached GitHub's API rate limit; this will reset at " +
-              this.format.time(new Date(this.rates.github.resources.core.rese * 1e3)) +
+              this.format.time(new Date(this.rates.github.resources.core.reset)) +
               ' (in ' +
-              Math.round((this.rates.github.resources.core.reset - Date.now()) / 60) +
+              Math.round((this.rates.github.resources.core.reset - Date.now()) / 6e4) +
               ' minutes).'
             this.page.toast.show()
             this.requester.onmessage({
@@ -895,16 +1079,17 @@ DataCommons.prototype = {
     }
   },
   search: function (e) {
+    const o = this.page.tabs.search.firstElementChild.lastElementChild
     const q = (e.target ? e.target.value : e).toLowerCase()
-    if (q in this.repos) {
-      console.log('repo', this.repos[q])
-      this.page.tabs.search.lastChild.innerText = JSON.stringify(this.repos[q], null, 2)
-    } else if (q in this.file_ids) {
-      console.log('file', this.file_ids[q])
-      this.page.tabs.search.lastChild.innerText = JSON.stringify(this.file_ids[q], null, 2)
-    } else if (q in this.ids) {
-      console.log('id', this.ids[q])
-      this.page.tabs.search.lastChild.innerText = JSON.stringify(this.ids[q], null, 2)
+    o.innerHTML = ''
+    if (q.length > 1) {
+      const matches = document.createElement('div')
+      this.variables.forEach((v, name) => {
+        if (v.string.includes(q)) {
+          matches.appendChild(v.display)
+        }
+      })
+      o.appendChild(matches)
     }
   },
 }

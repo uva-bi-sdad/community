@@ -10,7 +10,10 @@ test_that("initialization works", {
 
 test_that("mapping works", {
   datacommons_map_files(dir, overwrite = TRUE)
-  expect_identical(list.files(paste0(dir, "/cache")), c("id_map.json", "variable_map.csv"))
+  expect_identical(
+    list.files(paste0(dir, "/cache")),
+    c("id_map.rds", "measure_info.json", "variable_map.csv")
+  )
 })
 
 test_that("find variables", {
