@@ -105,8 +105,8 @@ exercises to consider.</p>
 <span><span class="co">## 1     1 2012</span></span>
 <span><span class="co">## 2     2 2013</span></span>
 <span><span class="co">## 3     3 2014</span></span></code></pre>
-<p>Answer: <code>NA</code>, the year 2015 does not exist in this data
-frame</p>
+<p>Answer: <code>NA</code>; the year 2015 does not exist here, but we
+can still virtually access it.</p>
 <ol start="2" style="list-style-type: decimal">
 <li>What is the mean absolute error between the <code>value</code>s of
 <code>d1</code> and <code>d2</code>?</li>
@@ -122,13 +122,19 @@ frame</p>
 <span><span class="co">## 1     1 2013</span></span>
 <span><span class="co">## 2     2 2014</span></span>
 <span><span class="co">## 3     3 2015</span></span></code></pre>
-<p>Answer: MAE = 1</p>
+<p>Answer: MAE = 1; to calculate this, we need to temporally align
+vectors (which could be done virtually):</p>
+<pre><code><span><span class="co">##   year d1 d2</span></span>
+<span><span class="co">## 1 2012  1 NA</span></span>
+<span><span class="co">## 2 2013  2  1</span></span>
+<span><span class="co">## 3 2014  3  2</span></span>
+<span><span class="co">## 4 2015 NA  3</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="id-mapping">ID Mapping<a class="anchor" aria-label="anchor" href="#id-mapping"></a>
 </h3>
 <ol style="list-style-type: decimal">
-<li>If prefix <code>123</code> is selected, which rows should be
+<li>If ID <code>123</code> is selected, which rows should be
 included?</li>
 </ol>
 <pre><code><span><span class="co">##     ID</span></span>
@@ -136,18 +142,19 @@ included?</li>
 <span><span class="co">## 2 1243</span></span>
 <span><span class="co">## 3 1235</span></span>
 <span><span class="co">## 4 1245</span></span></code></pre>
-<p>Answer: rows 1 (1234) and 3 (1235)</p>
+<p>Answer: rows 1 (1234) and 3 (1235); with no additional information,
+we can look for initial substring matches to map one set of IDs to
+another.</p>
 <ol start="2" style="list-style-type: decimal">
-<li>We aggregate the <code>lower</code> data frame, using mean function,
-and grouping the data by ID prefix and time as given in the
-<code>higher</code> data frame</li>
+<li>Calculate all possible aggregates of the <code>lower</code> dataset
+values to the <code>higher</code> dataset.</li>
 </ol>
 <pre><code><span><span class="co">## $higher</span></span>
-<span><span class="co">##    ID time</span></span>
-<span><span class="co">## 1 123    1</span></span>
-<span><span class="co">## 2 124    1</span></span>
-<span><span class="co">## 3 123    2</span></span>
-<span><span class="co">## 4 124    2</span></span>
+<span><span class="co">##    ID time v1 v2</span></span>
+<span><span class="co">## 1 123    1 NA NA</span></span>
+<span><span class="co">## 2 124    1 NA NA</span></span>
+<span><span class="co">## 3 123    2 NA NA</span></span>
+<span><span class="co">## 4 124    2 NA NA</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## $lower</span></span>
 <span><span class="co">##     ID time v1 v2</span></span>
@@ -160,11 +167,14 @@ and grouping the data by ID prefix and time as given in the
 <span><span class="co">## 7 1235    2 18 NA</span></span>
 <span><span class="co">## 8 1245    2 23 NA</span></span></code></pre>
 <p>Aggregated <code>higher</code>:</p>
-<pre><code><span><span class="co">##    ID time   V3 V4</span></span>
+<pre><code><span><span class="co">##    ID time   v1 v2</span></span>
 <span><span class="co">## 1 123    1 15.0  2</span></span>
 <span><span class="co">## 2 124    1  9.0 NA</span></span>
 <span><span class="co">## 3 123    2 12.5  5</span></span>
 <span><span class="co">## 4 124    2 19.0 NA</span></span></code></pre>
+<p>We only ever calculate mean aggregates – this is just a way to fill
+out numbers, as appropriate aggregates should always be included, rather
+than calculated here.</p>
 </div>
 </div>
 <div class="section level2">
@@ -189,7 +199,7 @@ and grouping the data by ID prefix and time as given in the
 <p>This is an exercise about stepping into a running function:</p>
 <p>Without editing any source code, calculate the row means of
 <code>cols</code> after it has been updated in</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/util_make_palette.html">util_make_palette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"red"</span>, <span class="st">"green"</span>, <span class="st">"blue"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>, polynomial <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>Expected result:</p>
 <pre><code><span><span class="co">##   red green  blue </span></span>

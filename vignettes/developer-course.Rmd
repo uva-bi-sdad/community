@@ -26,7 +26,7 @@ Each section presents questions or exercises to consider.
 data.frame(value = c(1, 2, 3), year = c(2012, 2013, 2014))
 ```
 
-Answer: `NA`, the year 2015 does not exist in this data frame
+Answer: `NA`; the year 2015 does not exist here, but we can still virtually access it.
 
 2. What is the mean absolute error between the `value`s of `d1` and `d2`?
 
@@ -37,33 +37,34 @@ Answer: `NA`, the year 2015 does not exist in this data frame
 ))
 ```
 
+Answer: MAE = `r mean(abs(datasets$d1$value[2:3] - datasets$d2$value[1:2]))`; to calculate this, we need to temporally align vectors (which could be done virtually):
 ```{r}
-d3 <- data.frame(
+(data.frame(
   year = c(2012, 2013, 2014, 2015),
-  value_d1 = c(1, 2, 3, NA),
-  value_d2 = c(NA, 1, 2, 3),
-  ae = c(NA, 1, 1, NA)
-)
+  d1 = c(1, 2, 3, NA),
+  d2 = c(NA, 1, 2, 3)
+))
 ```
-Answer: MAE = `r mean(d3$ae, na.rm=TRUE)`
 
 
 ## ID Mapping
 
-1. If prefix `123` is selected, which rows should be included?
+1. If ID `123` is selected, which rows should be included?
 
 ```{r}
 data.frame(ID = c(1234, 1243, 1235, 1245))
 ```
-Answer: rows 1 (1234) and 3 (1235)
+Answer: rows 1 (1234) and 3 (1235); with no additional information, we can look for initial substring matches to map one set of IDs to another.
 
-2. We aggregate the `lower` data frame, using mean function, and grouping the data by ID prefix and time as given in the `higher` data frame
+2. Calculate all possible aggregates of the `lower` dataset values to the `higher` dataset.
 
 ```{r}
 (datasets <- list(
   higher = data.frame(
     ID = c(123, 124, 123, 124),
-    time = c(1, 1, 2, 2)
+    time = c(1, 1, 2, 2),
+    v1 = NA,
+    v2 = NA
   ),
   lower = data.frame(
     ID = c(1234, 1243, 1235, 1245, 1234, 1243, 1235, 1245),
@@ -87,6 +88,9 @@ datasets$higher[, 3:4] <- do.call(rbind, lapply(
 datasets$higher[is.na(datasets$higher)] <- NA
 datasets$higher
 ```
+
+We only ever calculate mean aggregates -- this is just a way to fill out numbers, as appropriate
+aggregates should always be included, rather than calculated here.
 
 # R Packaging Background
 

@@ -76,7 +76,6 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
     r <- repos[[i]]
     rn <- sub("^.*/", "", r)
     cr <- paste0(repo_dir, rn, "/")
-    repo_manifest[[r]]$base_url <- get_git_remote(paste0(cr, ".git/config"))
     if (!rescan_only) {
       change_dir <- dir.exists(rn)
       if (verbose) cli_alert_info(paste(if (change_dir) "pulling" else "cloning", rn))
@@ -109,6 +108,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
         }
       } else if (!length(list.files(rn))) system2("rm", c("-rf", rn))
     }
+    repo_manifest[[r]]$base_url <- get_git_remote(paste0(cr, ".git/config"))
     files <- list.files(
       cr, "\\.(?:csv|tsv|txt|dat|rda|rdata)(?:\\.[gbx]z2?)?$",
       full.names = TRUE, recursive = TRUE, ignore.case = TRUE
