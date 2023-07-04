@@ -14,6 +14,7 @@
 #' @param entity_info A vector of variable names to go into making \code{entity_info.json}.
 #' @param attempt_repair Logical; if \code{TRUE}, will attempt to fix most warnings in data files.
 #' Use with caution, as this will often remove rows (given \code{NA}s) and rewrite the file.
+#' @param verbose Logical; If \code{FALSE}, will not print status messages or check results.
 #' @examples
 #' \dontrun{
 #' # from a data repository
@@ -29,6 +30,7 @@
 #'   \item \strong{\code{data}} (always): All data files found.
 #'   \item \strong{\code{not_considered}}: Subset of data files that do not contain the minimal
 #'     columns (\code{id} and \code{value}), and so are not checked further.
+#'   \item \strong{\code{summary}} (always): Summary of results.
 #' }
 #' or those relating to issues with \strong{measure information} (see \code{\link{data_measure_info}}) files:
 #' \itemize{
@@ -109,7 +111,7 @@
 
 check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?$", exclude = NULL,
                              value = "value", value_name = "measure", id = "geoid", time = "year", dataset = "region_type",
-                             entity_info = c("region_type", "region_name"), attempt_repair = FALSE) {
+                             entity_info = c("region_type", "region_name"), attempt_repair = FALSE, verbose = TRUE) {
   if (!dir.exists(dir)) cli_abort("{.path {dir}} does not exist")
   project_check <- check_template("repository", dir = dir)
   if (project_check$exists) {
@@ -125,7 +127,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   ), files, TRUE)]
   if (!length(files)) cli_abort("no files found")
   i <- 0
-  cli_h1("measure info")
+  if (verbose) cli_h1("measure info")
   meta <- list()
   info_files <- list.files(dir, "^measure_info[^.]*\\.json$", full.names = TRUE, recursive = TRUE)
   results <- list(data = files, info = info_files)
@@ -137,17 +139,19 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   required_layer_filter <- c("feature", "operator", "value")
   known_references <- NULL
   flagged_references <- list()
-  cli_progress_step(
-    "checking {i} of {length(info_files)} measure info files",
-    "checked {length(info_files)} measure info files",
-    spinner = TRUE
-  )
+  if (verbose) {
+    cli_progress_step(
+      "checking {i} of {length(info_files)} measure info files",
+      "checked {length(info_files)} measure info files",
+      spinner = TRUE
+    )
+  }
   all_issues <- list()
   for (f in info_files) {
     m <- tryCatch(jsonlite::read_json(f), error = function(e) NULL)
     if (is.null(m)) cli_abort("measure info is malformed: {.file {f}}")
     i <- i + 1
-    cli_progress_update()
+    if (verbose) cli_progress_update()
     issues <- NULL
     if (!is.null(m$measure_type) && !is.null(m$measure)) {
       issues <- "recoverably malformed (should be an object with named entries for each measure)"
@@ -294,8 +298,8 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
     }
   }
   rendered_names <- render_info_names(meta)
-  cli_progress_done()
-  if (!length(meta)) cli_alert_danger("no valid measure info")
+  if (verbose) cli_progress_done()
+  if (verbose && !length(meta)) cli_alert_danger("no valid measure info")
   if (length(flagged_references)) {
     for (r in names(flagged_references)) {
       su <- !flagged_references[[r]] %in% known_references
@@ -312,7 +316,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
       }
     }
   }
-  if (length(all_issues)) {
+  if (verbose && length(all_issues)) {
     cli_h2("{length(all_issues)} measure info file{? has/s have} issues")
     for (f in names(all_issues)) {
       cli_alert_danger("{.file {f}}:")
@@ -321,11 +325,13 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   }
 
   i <- 0
-  cli_h1("data")
-  cli_progress_step(
-    "checking {i} of {length(files)} data file{?/s}", "checked {length(files)} data file{?/s}",
-    spinner = TRUE
-  )
+  if (verbose) {
+    cli_h1("data")
+    cli_progress_step(
+      "checking {i} of {length(files)} data file{?/s}", "checked {length(files)} data file{?/s}",
+      spinner = TRUE
+    )
+  }
   adjustments <- data.frame(
     min = c(1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4),
     factor = c(1e9, 1e8, 1e7, 1e6, 1e5, 1e4),
@@ -342,7 +348,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   entity_info <- entity_info[!entity_info %in% c(required, time)]
   files_short <- sub("^/", "", sub(dir, "", files, fixed = TRUE))
   for (i in seq_along(files)) {
-    cli_progress_update()
+    if (verbose) cli_progress_update()
     path <- files[[i]]
     f <- files_short[[i]]
     sep <- if (grepl(".csv", path, fixed = TRUE)) "," else "\t"
@@ -420,7 +426,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
             }
             if (length(repairs)) {
               if (!nrow(d)) {
-                cli_alert_danger("{.strong attempting repairs ({repairs}) removed all rows of {.file {f}}}")
+                if (verbose) cli_alert_danger("{.strong attempting repairs ({repairs}) removed all rows of {.file {f}}}")
               } else {
                 tf <- sub("\\..+(?:\\.[bgx]z2?)?$", ".csv.xz", path)
                 w <- tryCatch(
@@ -431,12 +437,12 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
                   error = function(e) NULL
                 )
                 if (is.null(w)) {
-                  cli_alert_danger("failed to write repairs ({.field {repairs}}) to {.file {f}}")
+                  if (verbose) cli_alert_danger("failed to write repairs ({.field {repairs}}) to {.file {f}}")
                 } else {
                   if (path != tf) {
                     unlink(path)
                   }
-                  cli_alert_info("wrote repairs ({.field {repairs}}) to {.file {tf}}")
+                  if (verbose) cli_alert_info("wrote repairs ({.field {repairs}}) to {.file {tf}}")
                 }
               }
             }
@@ -486,8 +492,9 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
             if (any(su)) su[su] <- !make_full_name(f, measures[su]) %in% names(meta)
             if (any(su)) results$warn_missing_info[[f]] <- c(results$warn_missing_info[[f]], measures[su])
 
+            smids <- split(d[[id]], d[[value_name]])
             for (m in measures) {
-              mids <- d[[id]][d[[value_name]] == m]
+              mids <- smids[[m]]
               id_chars <- nchar(mids)
               su <- which(id_chars == 12)
               if (length(su)) {
@@ -513,11 +520,11 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
       results$not_considered <- c(results$not_considered, f)
     }
   }
-  cli_progress_done()
+  if (verbose) cli_progress_done()
 
   long_paths <- files_short[nchar(files_short) > 140]
   n_long_paths <- length(long_paths)
-  if (n_long_paths) {
+  if (verbose && n_long_paths) {
     cli_alert_warning("{.strong {n_long_paths} {?path is/paths are} very long (over 140 character):}")
     cli_bullets(structure(
       paste0("(", nchar(long_paths), ") {.field ", long_paths, "}"),
@@ -528,23 +535,25 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   res_summary <- c(FAIL = 0, WARN = 0, SKIP = 0, PASS = 0)
   if (length(results$not_considered)) {
     res_summary["SKIP"] <- length(results$not_considered)
-    cli_alert_info(paste(
-      '{.strong skipped {res_summary["SKIP"]} file{?/s} because {?it does/they do}',
-      "not include all base columns ({.pkg {required}}):}"
-    ))
-    cli_bullets(structure(
-      paste0("{.field ", results$not_considered, "}"),
-      names = rep(">", length(results$not_considered))
-    ))
+    if (verbose) {
+      cli_alert_info(paste(
+        '{.strong skipped {res_summary["SKIP"]} file{?/s} because {?it does/they do}',
+        "not include all base columns ({.pkg {required}}):}"
+      ))
+      cli_bullets(structure(
+        paste0("{.field ", results$not_considered, "}"),
+        names = rep(">", length(results$not_considered))
+      ))
+    }
   }
 
-  warnings <- unique(unlist(grep("^warn_", names(results), value = TRUE), function(w) {
+  warnings <- unique(unlist(lapply(grep("^warn_", names(results), value = TRUE), function(w) {
     if (is.list(results[[w]])) names(results[[w]]) else results[[w]]
-  }, use.names = FALSE))
+  }), use.names = FALSE))
   n_warn <- length(warnings)
   if (n_warn) {
     res_summary["WARN"] <- n_warn
-    cli_h2("{n_warn} file{? has/s have} warnings")
+    if (verbose) cli_h2("{n_warn} file{? has/s have} warnings")
     sections <- list(
       warn_compressed = "not compressed:",
       warn_blank_colnames = "contains blank column names:",
@@ -556,7 +565,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
       warn_entity_info_nas = "entity information column{?/s} ({.pkg {entity_info}}) contain{?s/} NAs:"
     )
     for (s in names(sections)) {
-      if (length(results[[s]])) {
+      if (verbose && length(results[[s]])) {
         cli_alert_warning(paste0("{.strong ", sections[[s]], "}"))
         cli_bullets(structure(
           paste0("{.field ", results[[s]], "}"),
@@ -574,7 +583,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
     )
     for (s in names(sections)) {
       if (length(results[[s]])) {
-        cli_alert_warning(paste0("{.strong ", sections[[s]], "}"))
+        if (verbose) cli_alert_warning(paste0("{.strong ", sections[[s]], "}"))
         if (s == "warn_missing_info") meta_base <- sub("^[^:]*:", "", names(meta))
         missing_info <- unlist(lapply(
           names(results[[s]]),
@@ -606,7 +615,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
             }
           }
         ), use.names = FALSE)
-        cli_bullets(structure(missing_info, names = rep(">", length(missing_info))))
+        if (verbose) cli_bullets(structure(missing_info, names = rep(">", length(missing_info))))
       }
     }
   }
@@ -615,7 +624,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   n_fails <- length(failures)
   if (n_fails) {
     res_summary["FAIL"] <- n_fails
-    cli_h2("{n_fails} file{?/s} failed checks")
+    if (verbose) cli_h2("{n_fails} file{?/s} failed checks")
     sections <- list(
       fail_read = "failed to read in:",
       fail_rows = "contains no data:",
@@ -625,7 +634,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
       fail_idlen_block_group = "not all block group GEOIDs are 12 characters long:"
     )
     for (s in names(sections)) {
-      if (length(results[[s]])) {
+      if (verbose && length(results[[s]])) {
         cli_alert_danger(paste0("{.strong ", sections[[s]], "}"))
         cli_bullets(structure(
           paste0("{.field ", results[[s]], "}"),
@@ -636,8 +645,11 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   }
 
   res_summary["PASS"] <- sum(!files_short %in% c(results$not_considered, warnings, failures))
+  results$summary <- res_summary
 
-  cat("\n")
-  print(res_summary)
+  if (verbose) {
+    cat("\n")
+    print(res_summary)
+  }
   invisible(results)
 }

@@ -163,6 +163,10 @@ div.card-header {
 .accordion-collapse {
   padding: 0.5em;
 }
+button.accordion-button.empty {
+  background-color: var(--fail);
+  color: #000;
+}
 span.spinner-border {
   width: 1.5em;
   height: 1.5em;
@@ -186,6 +190,9 @@ span.spinner-border {
   border-radius: 25px;
   border: 1px solid var(--background-border);
   margin: 0 1em 0 0;
+}
+.status-chip span:first-child {
+  word-break: break-all;
 }
 .status-chip:last-child {
   margin: 0;
@@ -230,6 +237,18 @@ span.spinner-border {
 .card-links .status-chip span:last-child {
   padding: 0;
 }
+.data-check-summary {
+  display: inline-block;
+  background-color: var(--highlight);
+  border-radius: 25px;
+}
+.data-check-summary > span {
+  padding: 0.5em;
+  font-size: 0.9em;
+}
+.data-check-summary .status-chip {
+  margin: 0.2em;
+}
 .card-section {
   font-weight: 500;
   background-color: var(--highlight-secondary);
@@ -270,8 +289,12 @@ span.spinner-border {
   font-size: 1em;
   padding: 0 0 0.5em 0;
 }
-.entry-info span {
+.entry-info span,
+.entry-info button {
   margin: 0 1.2em 0 0;
+}
+button.entry-info-entry {
+  padding: 0;
 }
 span.entry-info-entry {
   margin: 0;
@@ -283,7 +306,8 @@ span.entry-info-entry {
   opacity: 0.85;
   padding: 0 0 0.5em 1em;
 }
-.entry-checks {
+.entry-checks,
+.file-issues {
   opacity: 0.85;
   padding: 0 0 0.5em 0.3em;
 }

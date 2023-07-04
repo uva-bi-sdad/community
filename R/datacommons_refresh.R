@@ -12,6 +12,10 @@
 #' @param reset_on_fail Logical; if \code{TRUE}, will reset only if a regular pull fails.
 #' @param rescan_only Logical; if \code{TRUE}, will only read the files that are already in place, without checking for
 #' updates from the remote repository.
+#' @param run_checks Logical; if \code{FALSE}, will not run \code{\link{check_repository}} on each repository.
+#' @param dataset_map A named vector of ID to dataset mappings to pass to \code{\link{check_repository}}
+#' if \code{run_checks} is \code{TRUE}.
+#' @param force_value_check Logical; if \code{TRUE}, will always intensively check values, even on large files.
 #' @param verbose Logical; if \code{FALSE}, will not show updated repositories.
 #' @examples
 #' \dontrun{
@@ -23,7 +27,7 @@
 
 datacommons_refresh <- function(dir, clone_method = "http", include_distributions = FALSE, refresh_distributions = FALSE,
                                 only_new = FALSE, reset_repos = FALSE, reset_on_fail = FALSE, rescan_only = FALSE,
-                                verbose = TRUE) {
+                                run_checks = TRUE, dataset_map = "region_type", force_value_check = FALSE, verbose = TRUE) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., as ".")')
   if (Sys.which("git") == "") {
     cli_abort(c(
@@ -179,6 +183,27 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
       if (verbose) {
         cli_end(iul)
         cli_end(ul)
+      }
+    }
+    if (run_checks) {
+      if (verbose) cli_progress_step("running checks...", msg_done = "ran checks:")
+      repo_manifest[[r]]$repo_checks <- tryCatch(
+        check_repository(cr, dataset = dataset_map, verbose = FALSE),
+        error = function(e) NULL
+      )
+      repo_manifest[[r]]$repo_checks <- lapply(repo_manifest[[r]]$repo_checks[
+        grep("^summary|^(?:info|warn|fail)_", names(repo_manifest[[r]]$repo_checks))
+      ], function(l) {
+        if (is.character(l)) l <- sub("^.*/repos/[^/]+/", "", l)
+        if (!is.null(names(l))) names(l) <- sub("^.*/repos/[^/]+/", "", names(l))
+        l
+      })
+      if (verbose) {
+        cli_progress_done()
+        if (length(repo_manifest[[r]]$repo_checks$summary)) {
+          print(repo_manifest[[r]]$repo_checks$summary)
+          cat("\n")
+        }
       }
     }
   }

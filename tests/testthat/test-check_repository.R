@@ -25,7 +25,7 @@ test_that("all issues are caught", {
   expect_identical(res$fail_rows, "dataset/data/distribution/data_invalid.csv")
   expect_identical(res$not_considered, "dataset/data/distribution/data_skip.csv")
   expect_identical(sort(names(res)), sort(c(
-    "data", "info", "not_considered",
+    "data", "info", "not_considered", "summary",
     paste0("info_", c("malformed", "incomplete")),
     paste0("warn_", c(
       "compressed", "blank_colnames", "value_nas", "dataset_nas", "scientific", "id_nas", "value_name_nas",
@@ -73,10 +73,10 @@ test_that("all issues are caught", {
   write.csv(data, paste0(dir, "/dataset/data/distribution/data_min.csv"))
   unlink(paste0(dir, "/dataset/data/distribution/data_", c("skip", "invalid"), ".csv"))
   res <- check_repository(dir, attempt_repair = TRUE)
-  expect_identical(sort(c("data", "info", paste0("info_", c(
+  expect_identical(sort(names(res)), sort(c("data", "info", "summary", paste0("info_", c(
     "refs_missing", "refs_author_entry", "refs_year", "refs_title",
     "source_missing", "source_name", "citation", "incomplete", "layer_source",
     "layer_filter", "layer_source_url"
-  )))), sort(names(res)))
+  )))))
   unlink(dir, TRUE)
 })

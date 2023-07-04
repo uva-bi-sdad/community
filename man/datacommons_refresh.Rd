@@ -7,7 +7,8 @@
 datacommons_refresh(dir, clone_method = "http",
   include_distributions = FALSE, refresh_distributions = FALSE,
   only_new = FALSE, reset_repos = FALSE, reset_on_fail = FALSE,
-  rescan_only = FALSE, verbose = TRUE)
+  rescan_only = FALSE, run_checks = TRUE, dataset_map = "region_type",
+  force_value_check = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{dir}{Directory of the data commons projects, as created by \code{\link{init_datacommons}}.}
@@ -27,6 +28,13 @@ pointed to from the data repositories (so far just from Dataverse, implicitly fr
 
 \item{rescan_only}{Logical; if \code{TRUE}, will only read the files that are already in place, without checking for
 updates from the remote repository.}
+
+\item{run_checks}{Logical; if \code{FALSE}, will not run \code{\link{check_repository}} on each repository.}
+
+\item{dataset_map}{A named vector of ID to dataset mappings to pass to \code{\link{check_repository}}
+if \code{run_checks} is \code{TRUE}.}
+
+\item{force_value_check}{Logical; if \code{TRUE}, will always intensively check values, even on large files.}
 
 \item{verbose}{Logical; if \code{FALSE}, will not show updated repositories.}
 }

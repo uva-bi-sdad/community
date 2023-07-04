@@ -25,6 +25,53 @@ function DataCommons(definition, manifest, views) {
   this.dists = {}
   this.file_ids = {}
   this.files = {}
+  this.info_files = {}
+  this.issue_descriptions = {
+    info_malformed: 'File is not in the expected format.',
+    info_incomplete: 'Entries are missing required fields.',
+    info_invalid: 'File could not be parsed.',
+    info_refs_names: 'References are not named.',
+    info_refs_missing: 'A reference entry is missing a required field.',
+    info_refs_author_entry: 'An author entry is missing a family field.',
+    info_source_missing: 'A source entry is missing a required field.',
+    info_citation: 'A measure refers to a citation that is not found in references.',
+    info_layer_source: 'A layer entry is missing a source field.',
+    info_layer_source_url: 'A layer source entry is missing a URL.',
+    info_layer_filter: "A layer's filter entry is missing a required field.",
+    warn_compressed: 'File is not compressed.',
+    warn_blank_colnames: 'File contains blank column names.',
+    warn_value_nas: 'The value column contains NAs.',
+    warn_id_nas: 'The id column contains NAs.',
+    warn_time_nas: 'The time column contains NAs.',
+    warn_value_name_nas: 'The value names column contains NAs.',
+    warn_dataset_nas: 'The dataset column contains NAs.',
+    warn_entity_info_nas: 'An entity info column contains NAs.',
+    warn_scientific: 'IDs may have been converted to scientific notation.',
+    warn_double_ints: 'A value marked as an integer is actually a double.',
+    warn_small_percent: 'A value is marked as a percent, but has a maximum under 1.',
+    warn_small_value: 'A value has 40% of its entries under under .00001',
+    warn_bg_agg:
+      'The file contains apparent block group GEOIDs, but no higher-order aggregates for the given variables.',
+    warn_tr_agg: 'The file contains apparent tract GEOIDs, but no higher-order aggregates for the given variables.',
+    warn_missing_info: 'Value names in the file were not also found in an associated measure info file.',
+    fail_read: 'File could not be read in.',
+    fail_rows: 'File contained no rows.',
+    fail_time: 'File had no time column',
+    fail_idlen_county: 'IDs marked as of a "county" dataset were not all 5 characters long.',
+    fail_idlen_tract: 'IDs marked as of a "county" dataset were not all 11 characters long.',
+    fail_idlen_block_group: 'IDs marked as of a "county" dataset were not all 12 characters long.',
+  }
+  this.patterns = {
+    file_prefix: /^.*(?:\d{4}(?:q\d)?_)|\..*$/g,
+    json_start: /^[[{]/,
+    dirname: /\/[^\/]+$/,
+    repo_name: /^[^\/]+\/[^/]+\//,
+    pre_underscore: /^[^_]+_/,
+    info: /^info_/,
+    warn: /^warn_/,
+    fail: /^fail_/,
+    trailing_slash: /\/$/,
+  }
   this.page = {
     current_tab: '#search',
     menu: {
@@ -113,7 +160,7 @@ function DataCommons(definition, manifest, views) {
   this.requester.onmessage = m => {
     const d = m.data
     if (d.response) {
-      if (!json_start.test(d.response)) d.response = JSON.stringify({message: d.response})
+      if (!this.patterns.json_start.test(d.response)) d.response = JSON.stringify({message: d.response})
       const resp = JSON.parse(d.response)
       var status = 200 !== d.status ? d.status : resp.status ? resp.status : resp.message ? 'ERROR' : 'OK'
       if ('provider' === d.type) {
@@ -226,16 +273,13 @@ function DataCommons(definition, manifest, views) {
   }
   var k,
     r,
-    h,
     fn,
     f,
     p,
     e,
     uid,
     i,
-    id = 0,
-    file_prefix = /^.*(?:\d{4}(?:q\d)?_)|\..*$/g,
-    json_start = /^[[{]/
+    id = 0
   this.page.current_tab = window.location.hash || this.page.current_tab
   e = document.createElement('div')
   e.className = 'toast'
@@ -291,171 +335,167 @@ function DataCommons(definition, manifest, views) {
       e.setAttribute('aria-labelledby', p + '_button')
       if (this.page.current_tab === '#' + k) this.show_tab({target: this.page.menu[k]})
     }
-  for (k in manifest.repos)
-    if (Object.hasOwn(manifest.repos, k)) {
-      this.counts.repos++
-      r = this.repos[k] = manifest.repos[k]
-      r.checks = {}
-      r.providers = {}
-      r.file_ids = []
-      r.ufiles = {}
-      r.all_files = manifest.files[k]
-      r.variables = {}
-      for (h in r.all_files)
-        if (Object.hasOwn(r.all_files, h)) {
-          f = r.all_files[h]
-          fn = f.name
-          if ('string' === typeof f.providers) f.providers = [f.providers]
-          uid = ''
-          if (Object.hasOwn(this.file_ids, h)) {
-            uid = this.file_ids[h]
-          } else if (Object.hasOwn(this.file_ids, fn)) {
-            uid = this.file_ids[fn]
+  Object.keys(manifest.variables).forEach(file => {
+    const infos = manifest.variables[file],
+      repo = this.patterns.repo_name.exec(file)[0].replace(this.patterns.trailing_slash, '')
+    const r = manifest.repos[repo]
+    if (r) {
+      if (!r.info_files) r.info_files = []
+      const i = {
+        repo: repo,
+        name: file.replace(this.patterns.repo_name, ''),
+        display: document.createElement('div'),
+        content: infos,
+        issues: {},
+        nissues: 0,
+      }
+      this.info_files[file] = i
+      r.info_files.push(i)
+      Object.keys(infos).forEach(v => {
+        const vr = this.display_variable(v)
+        vr.info_files.push(i)
+        vr.info = infos[v]
+        vr.display.children[0].innerText = vr.info.short_name || vr.info.long_name || v
+        vr.display.children[1].innerText = v
+        vr.display.children[2].innerText = vr.info.short_description || vr.info.long_description || ''
+        vr.string += ' ' + JSON.stringify(vr.info).toLowerCase()
+      })
+    }
+  })
+  Object.keys(manifest.repos).forEach(k => {
+    this.counts.repos++
+    r = this.repos[k] = manifest.repos[k]
+    r.checks = {}
+    r.providers = {}
+    r.file_ids = []
+    r.ufiles = {}
+    r.all_files = manifest.files[k]
+    r.variables = {}
+    Object.keys(r.all_files).forEach(h => {
+      f = r.all_files[h]
+      fn = f.name
+      if ('string' === typeof f.providers) f.providers = [f.providers]
+      uid = ''
+      if (h in this.file_ids) {
+        uid = this.file_ids[h]
+      } else if (fn in this.file_ids) {
+        uid = this.file_ids[fn]
+      }
+      if (!uid) {
+        uid = 'f' + id++
+        this.file_ids[h] = this.file_ids[fn] = uid
+      }
+      f.uid = uid
+      if (!Object.hasOwn(this.files, uid)) {
+        this.counts.files++
+        this.files[uid] = {
+          inRepo: r.files[f.name],
+          content: f,
+          local: {},
+          remote: {},
+          display: document.createElement('div'),
+        }
+        f.prefix = f.name.replace(this.patterns.file_prefix, '')
+        if (f.variables) {
+          if ('string' === typeof f.variables) f.variables = [f.variables]
+          for (i = f.variables.length; i--; ) {
+            p = f.variables[i]
+            const v = this.display_variable(p)
+            r.variables[p] = v
+            v.files.push(this.files[uid])
+            if (-1 === v.repos.indexOf(k)) v.repos.push(k)
           }
-          if (!uid) {
-            uid = 'f' + id++
-            this.file_ids[h] = this.file_ids[fn] = uid
+        }
+        if (f.ids) {
+          if ('string' === typeof f.ids) f.ids = [f.ids]
+          f.ids.forEach(id => {
+            if (!(id in this.ids)) {
+              this.counts.ids++
+              const e = document.createElement('div')
+              this.ids[id] = {display: e, files: []}
+              e.className = 'id'
+              e.appendChild(document.createElement('p'))
+              e.lastElementChild.innerText = id
+              e.lastElementChild.className = 'h5'
+            }
+            this.ids[id].files.push(this.files[uid])
+          })
+        }
+      }
+      if (!Object.hasOwn(r.ufiles, uid)) {
+        r.file_ids.push(uid)
+        r.ufiles[uid] = this.files[uid]
+      }
+      if (Object.hasOwn(r.files, fn)) {
+        r.files[fn].uid = uid
+        r.files[fn].parent = r
+        r.name = k
+        this.files[uid].local.github = r.files[fn]
+      }
+      for (p in r.distributions)
+        if (Object.hasOwn(r.distributions, p)) {
+          if (!Object.hasOwn(this.dists, p)) this.dists[p] = {}
+          if (!Object.hasOwn(this.dists[p], r.distributions[p].doi)) this.dists[p][r.distributions[p].doi] = {}
+          this.dists[p][r.distributions[p].doi][k] = r
+          if (r.distributions[p].files && Object.hasOwn(r.distributions[p].files, fn)) {
+            r.distributions[p].files[fn].uid = uid
+            r.distributions[p].files[fn].parent = r.distributions[p]
+            this.files[uid].local[p] = r.distributions[p].files[fn]
           }
-          f.uid = uid
-          if (!Object.hasOwn(this.files, uid)) {
-            this.counts.files++
-            this.files[uid] = {
-              content: f,
-              local: {},
-              remote: {},
-              display: document.createElement('div'),
-            }
-            f.prefix = f.name.replace(file_prefix, '')
-            if (f.variables) {
-              if ('string' === typeof f.variables) f.variables = [f.variables]
-              for (i = f.variables.length; i--; ) {
-                p = f.variables[i]
-                if (!(p in r.variables)) {
-                  this.counts.variables++
-                  const e = document.createElement('div')
-                  r.variables[p] = {
-                    string: p.toLowerCase(),
-                    display: e,
-                    files: [],
-                    repos: [],
-                    info: {},
-                    info_files: [],
-                  }
-                  this.variables.set(p, r.variables[p])
-                  e.className = 'variable'
-                  e.appendChild(document.createElement('button'))
-                  e.lastElementChild.type = 'button'
-                  e.lastElementChild.innerText = p
-                  e.lastElementChild.className = 'btn'
-                  e.lastElementChild.setAttribute('data-bs-toggle', 'modal')
-                  e.lastElementChild.setAttribute('data-bs-target', '#general_modal')
-                  e.lastElementChild.addEventListener(
-                    'click',
-                    function (e, v) {
-                      const s = v.info
-                      this.page.modal.title.firstElementChild.innerText = s.short_name || s.long_name
-                      this.page.modal.files.lastElementChild.innerHTML = ''
-                      v.files.forEach(f => {
-                        const li = document.createElement('li')
-                        li.appendChild(document.createElement('a'))
-                        li.lastElementChild.target = '_blank'
-                        li.lastElementChild.rel = 'noreferrer'
-                        li.lastElementChild.innerText = v.repos[0] + ': ' + f.content.name
-                        li.lastElementChild.href = this.repos[v.repos[0]].base_url + '/' + f.content.name
-                        this.page.modal.files.lastElementChild.appendChild(li)
-                      })
-                      this.page.modal.dashboards.lastElementChild.innerHTML = ''
-                      this.views.forEach(view => {
-                        if (v.name in view.variables) {
-                          const li = document.createElement('li')
-                          li.appendChild(document.createElement('a'))
-                          li.lastElementChild.target = '_blank'
-                          li.lastElementChild.rel = 'noreferrer'
-                          li.lastElementChild.href = view.view.url + '?selected_variable=' + v.name
-                          li.lastElementChild.innerText = view.name
-                          this.page.modal.dashboards.lastElementChild.appendChild(li)
-                        }
-                      })
-                      this.page.modal.measure_info.children[1].innerHTML = ''
-                      v.info_files.forEach(f => {
-                        f = f.replace(/^[^\/]+\//, '')
-                        const li = document.createElement('li')
-                        li.appendChild(document.createElement('a'))
-                        li.lastElementChild.target = '_blank'
-                        li.lastElementChild.rel = 'noreferrer'
-                        li.lastElementChild.innerText = v.repos[0] + ': ' + f
-                        li.lastElementChild.href = this.repos[v.repos[0]].base_url + '/' + f
-                        this.page.modal.measure_info.children[1].appendChild(li)
-                      })
-                      this.page.modal.measure_info.lastElementChild.innerHTML = ''
-                      this.page.modal.measure_info.appendChild(
-                        this.display_object({measure: v.name, ...s}, this.page.modal.measure_info.lastElementChild)
-                      )
-                    }.bind(this, null, r.variables[p])
-                  )
-                  e.appendChild(document.createElement('p'))
-                  e.lastElementChild.className = 'variable-name'
-                  e.appendChild(document.createElement('p'))
+        }
+    })
+    if (r.repo_checks) {
+      Object.keys(r.repo_checks).forEach(issue => {
+        if ('summary' !== issue) {
+          let i = r.repo_checks[issue]
+          if ('string' === typeof i) i = [i]
+          if (this.patterns.info.test(issue)) {
+            if (Array.isArray(i)) {
+              i.forEach(file => {
+                if (file in this.info_files) {
+                  this.info_files[file].issues[issue] = true
+                  this.info_files[file].nissues++
                 }
-                const v = r.variables[p]
-                v.files.push(this.files[uid])
-                if (-1 === v.repos.indexOf(k)) v.repos.push(k)
-              }
-            }
-            if (f.ids) {
-              if ('string' === typeof f.ids) f.ids = [f.ids]
-              f.ids.forEach(id => {
-                if (!(id in this.ids)) {
-                  this.counts.ids++
-                  const e = document.createElement('div')
-                  this.ids[id] = {display: e, files: []}
-                  e.className = 'id'
-                  e.appendChild(document.createElement('p'))
-                  e.lastElementChild.innerText = id
-                  e.lastElementChild.className = 'h5'
+              })
+            } else {
+              Object.keys(i).forEach(file => {
+                const ff = r.name + '/' + file
+                if (ff in this.info_files) {
+                  const f = this.info_files[ff]
+                  let c = i[file]
+                  if (!f.issues[issue]) f.issues[issue] = []
+                  if ('string' === typeof c) c = [c]
+                  f.issues[issue].push(...c)
+                  f.nissues++
                 }
-                this.ids[id].files.push(this.files[uid])
+              })
+            }
+          } else {
+            if (Array.isArray(i)) {
+              i.forEach(file => {
+                if (file in r.files) {
+                  const f = r.files[file]
+                  if (!f.issues) f.issues = {}
+                  f.issues[issue] = true
+                }
+              })
+            } else {
+              Object.keys(i).forEach(file => {
+                if (file in r.files) {
+                  const f = r.files[file]
+                  let c = i[file]
+                  if (!f.issues) f.issues = {}
+                  if (!f.issues[issue]) f.issues[issue] = []
+                  if ('string' === typeof c) c = [c]
+                  f.issues[issue].push(...c)
+                }
               })
             }
           }
-          if (!Object.hasOwn(r.ufiles, uid)) {
-            r.file_ids.push(uid)
-            r.ufiles[uid] = this.files[uid]
-          }
-          if (Object.hasOwn(r.files, fn)) {
-            r.files[fn].uid = uid
-            r.files[fn].parent = r
-            r.url = 'https://github.com/' + k
-            this.files[uid].local.github = r.files[fn]
-          }
-          for (p in r.distributions)
-            if (Object.hasOwn(r.distributions, p)) {
-              if (!Object.hasOwn(this.dists, p)) this.dists[p] = {}
-              if (!Object.hasOwn(this.dists[p], r.distributions[p].doi)) this.dists[p][r.distributions[p].doi] = {}
-              this.dists[p][r.distributions[p].doi][k] = r
-              if (r.distributions[p].files && Object.hasOwn(r.distributions[p].files, fn)) {
-                r.distributions[p].files[fn].uid = uid
-                r.distributions[p].files[fn].parent = r.distributions[p]
-                this.files[uid].local[p] = r.distributions[p].files[fn]
-              }
-            }
         }
-      this.page.tabs.repos.appendChild(this.display_repo(k))
+      })
     }
-  Object.keys(manifest.variables).forEach(file => {
-    const infos = manifest.variables[file]
-    Object.keys(infos).forEach(v => {
-      if (this.variables.has(v)) {
-        const r = this.variables.get(v)
-        r.info_files.push(file)
-        r.name = v
-        r.info = infos[v]
-        r.display.children[0].innerText = r.info.short_name || r.info.long_name || v
-        r.display.children[1].innerText = v
-        r.display.children[2].innerText = r.info.short_description || r.info.long_description || ''
-        r.string += ' ' + JSON.stringify(r.info).toLowerCase()
-      }
-    })
+    this.page.tabs.repos.appendChild(this.display_repo(k))
   })
   this.counts.views = views.length
   for (i = views.length; i--; ) {
@@ -493,14 +533,6 @@ DataCommons.prototype = {
     },
   },
   checks: {
-    has_files: {
-      name: 'Files',
-      domain: 'repo',
-      description: 'Number of latent files between the repository and distributions.',
-      check: function (r) {
-        return r.file_ids.length
-      },
-    },
     has_dist: {
       name: 'Dist',
       domain: 'repo',
@@ -542,6 +574,17 @@ DataCommons.prototype = {
           }
         return ck
       }.bind(this),
+    },
+    info_issue: {
+      name: 'Info Issues',
+      domain: 'repo',
+      description: 'Measure info issues.',
+      invert: true,
+      check: function (r) {
+        let c = 0
+        r.info_files.forEach(f => (c += !!f.nissues))
+        return c
+      },
     },
     missed_variables: {
       name: 'All Variables',
@@ -617,7 +660,7 @@ DataCommons.prototype = {
   show_tab: function (e) {
     if (!e.target.classList.contains('active') && Object.hasOwn(this.page.tabs, e.target.innerText)) {
       const c = e.target.parentElement.getElementsByClassName('active')
-      for (var i = c.length; i--; ) {
+      for (let i = c.length; i--; ) {
         this.page.tabs[c[i].innerText].classList.add('hidden')
         c[i].classList.remove('disabled')
         c[i].classList.remove('active')
@@ -630,16 +673,17 @@ DataCommons.prototype = {
     }
   },
   check_repo: function (r) {
-    for (var k in this.checks)
-      if (Object.hasOwn(this.checks, k) && 'repo' === this.checks[k].domain) {
-        const ck = this.checks[k].check(r)
+    Object.keys(this.checks).forEach(k => {
+      const c = this.checks[k]
+      if ('repo' === c.domain) {
+        const ck = c.check(r)
         r.checks[k].lastElementChild.innerText = ck
-        r.checks[k].classList[ck ? 'remove' : 'add']('failed-check')
+        r.checks[k].classList[(c.invert ? !ck : ck) ? 'remove' : 'add']('failed-check')
       }
+    })
   },
   check_view: function (v) {
-    var k, i
-    for (k in this.checks)
+    for (const k in this.checks)
       if (Object.hasOwn(this.checks, k) && 'view' === this.checks[k].domain) {
         const ck = this.checks[k].check(v)
         v.checks[k].lastElementChild.innerText = ck
@@ -649,10 +693,10 @@ DataCommons.prototype = {
             ck ? 'add' : 'remove'
           ]('hidden')
       }
-    if (Object.hasOwn(v.view, 'children')) for (i = v.view.children.length; i--; ) this.check_child(v, i)
+    if (Object.hasOwn(v.view, 'children')) for (let i = v.view.children.length; i--; ) this.check_child(v, i)
   },
   check_child: function (v, ch) {
-    for (var k in this.checks)
+    for (const k in this.checks)
       if (Object.hasOwn(this.checks, k) && 'child' === this.checks[k].domain) {
         const ck = this.checks[k].check(v, ch)
         v.view.children[ch].parts[k].lastElementChild.innerText = ck
@@ -687,9 +731,9 @@ DataCommons.prototype = {
   },
   display_repo: function (repo) {
     const r = this.repos[repo],
-      exists = Object.hasOwn(this.page.repos, repo),
+      exists = repo in this.page.repos,
       e = exists ? this.page.repos[repo] : document.createElement('div')
-    if (Object.hasOwn(this.repos, repo)) {
+    if (r) {
       var h, ee, eee, c
       if (!exists) {
         this.page.repos[repo] = e
@@ -734,17 +778,35 @@ DataCommons.prototype = {
             ee.lastElementChild.firstElementChild.innerText = this.checks[h].name
             ee.lastElementChild.appendChild(document.createElement('span'))
           }
+        if (r.repo_checks && r.repo_checks.summary) {
+          ee.appendChild((eee = document.createElement('div')))
+          eee.className = 'data-check-summary'
+          eee.setAttribute('aria-description', 'Data file check summary.')
+          eee.appendChild(document.createElement('span'))
+          eee.lastElementChild.innerText = 'data files'
+          ;['FAIL', 'WARN', 'SKIP', 'PASS'].forEach((s, i) => {
+            const c = document.createElement('div'),
+              v = r.repo_checks.summary[i]
+            c.className = 'status-chip' + ((i === 3 && !v) || (i !== 3 && v) ? ' failed-check' : '')
+            c.appendChild(document.createElement('span'))
+            c.firstElementChild.innerText = s
+            c.appendChild(document.createElement('span'))
+            c.lastElementChild.innerText = v
+            eee.appendChild(c)
+          })
+        }
         e.lastElementChild.appendChild((ee = document.createElement('div')))
         ee.className = 'repo_files card-section accordion'
         ee.id = 'file-list-container-' + repo
         ee.setAttribute('data-bs-theme', 'dark')
+
         ee.appendChild((ee = document.createElement('div')))
         ee.className = 'accordion-item'
         ee.appendChild((ee = document.createElement('h2')))
         ee.className = 'accordion-header'
         ee.appendChild(document.createElement('button'))
-        ee.lastElementChild.innerText = 'Data Files'
-        ee.lastElementChild.className = 'accordion-button collapsed'
+        ee.lastElementChild.innerText = 'Data Files (' + r.file_ids.length + ')'
+        ee.lastElementChild.className = 'accordion-button collapsed' + (r.file_ids.length ? '' : ' empty')
         ee.lastElementChild.type = 'button'
         ee.lastElementChild.setAttribute('data-bs-toggle', 'collapse')
         ee.lastElementChild.setAttribute('data-bs-target', '#file-list-' + repo)
@@ -755,10 +817,26 @@ DataCommons.prototype = {
         ee.className = 'accordion-collapse collapse'
         ee.setAttribute('data-bs-parent', '#file-list-container-' + repo)
         ee.appendChild((ee = document.createElement('div')))
-        for (h in r.all_files)
-          if (Object.hasOwn(r.all_files, h)) {
-            ee.appendChild(this.display_file(h))
-          }
+        Object.keys(r.all_files).forEach(h => ee.appendChild(this.display_file(h)))
+
+        ee.parentElement.insertAdjacentElement('afterend', (ee = document.createElement('div')))
+        ee.className = 'accordion-item'
+        ee.appendChild((ee = document.createElement('h2')))
+        ee.className = 'accordion-header'
+        ee.appendChild(document.createElement('button'))
+        ee.lastElementChild.innerText = 'Measure Infos (' + r.info_files.length + ')'
+        ee.lastElementChild.className = 'accordion-button collapsed' + (r.info_files.length ? '' : ' empty')
+        ee.lastElementChild.type = 'button'
+        ee.lastElementChild.setAttribute('data-bs-toggle', 'collapse')
+        ee.lastElementChild.setAttribute('data-bs-target', '#info-list-' + repo)
+        ee.lastElementChild.setAttribute('aria-expanded', 'false')
+        ee.lastElementChild.setAttribute('aria-controls', 'info-list-' + repo)
+        ee.insertAdjacentElement('afterend', (ee = document.createElement('div')))
+        ee.id = 'info-list-' + repo
+        ee.className = 'accordion-collapse collapse'
+        ee.setAttribute('data-bs-parent', '#info-list-container-' + repo)
+        ee.appendChild((ee = document.createElement('div')))
+        r.info_files.forEach(i => ee.appendChild(this.display_info_file(i)))
       }
       this.check_repo(r)
     }
@@ -785,8 +863,8 @@ DataCommons.prototype = {
         e.lastElementChild.lastElementChild.className = 'entry-info-entry'
         e.lastElementChild.lastElementChild.innerText = 'md5: '
         e.lastElementChild.appendChild(document.createElement('span'))
-        p = Object.hasOwn(f.local, 'github') ? 'github' : 'dataverse'
-        if (Object.hasOwn(f.local, p)) {
+        p = 'github' in f.local ? 'github' : 'dataverse'
+        if (p in f.local) {
           e.lastElementChild.children[1].innerText = f.local[p].sha || 'none'
           e.lastElementChild.children[3].innerText = f.local[p].md5
         } else {
@@ -807,9 +885,142 @@ DataCommons.prototype = {
             ee.className = p + '-file'
             f.local[p].display.appendChild(document.createElement('span'))
           }
+        if (f.inRepo.issues) {
+          e.appendChild((ee = document.createElement('div')))
+          ee.className = 'file-issues'
+          Object.keys(f.inRepo.issues).forEach(issue => {
+            const c = document.createElement('div'),
+              v = f.inRepo.issues[issue]
+            c.className = 'status-chip failed-check'
+            if (issue in this.issue_descriptions) c.setAttribute('aria-description', this.issue_descriptions[issue])
+            c.appendChild(document.createElement('span'))
+            c.lastElementChild.innerText = this.patterns.fail.test(issue) ? 'FAIL' : 'WARN'
+            c.appendChild(document.createElement('span'))
+            c.lastElementChild.innerText =
+              issue.replace(this.patterns.pre_underscore, '') + (Array.isArray(v) ? ': ' + v.join(', ') : '')
+            ee.appendChild(c)
+          })
+        }
       }
       return e
     } else return document.createElement('div')
+  },
+  display_variable: function (variable) {
+    if (!this.variables.has(variable)) {
+      const e = document.createElement('div')
+      const v = {
+        name: variable,
+        string: variable.toLowerCase(),
+        display: e,
+        files: [],
+        repos: [],
+        info: {},
+        info_files: [],
+      }
+      v.show = function (e, v) {
+        const s = v.info
+        this.page.modal.title.firstElementChild.innerText = s.short_name || s.long_name || v.name
+        this.page.modal.files.lastElementChild.innerHTML = ''
+        v.files.forEach(f => {
+          const li = document.createElement('li')
+          li.appendChild(document.createElement('a'))
+          li.lastElementChild.target = '_blank'
+          li.lastElementChild.rel = 'noreferrer'
+          li.lastElementChild.innerText = v.repos[0] + ': ' + f.content.name
+          li.lastElementChild.href = this.repos[v.repos[0]].base_url + '/' + f.content.name
+          this.page.modal.files.lastElementChild.appendChild(li)
+        })
+        this.page.modal.dashboards.lastElementChild.innerHTML = ''
+        this.views.forEach(view => {
+          if (v.name in view.variables) {
+            const li = document.createElement('li')
+            li.appendChild(document.createElement('a'))
+            li.lastElementChild.target = '_blank'
+            li.lastElementChild.rel = 'noreferrer'
+            li.lastElementChild.href = view.view.url + '?selected_variable=' + v.name
+            li.lastElementChild.innerText = view.name
+            this.page.modal.dashboards.lastElementChild.appendChild(li)
+          }
+        })
+        this.page.modal.measure_info.children[1].innerHTML = ''
+        v.info_files.forEach(f => {
+          const li = document.createElement('li')
+          li.appendChild(document.createElement('a'))
+          li.lastElementChild.target = '_blank'
+          li.lastElementChild.rel = 'noreferrer'
+          li.lastElementChild.innerText = f.repo + ': ' + f.name
+          li.lastElementChild.href = this.repos[f.repo].base_url + '/' + f.name
+          this.page.modal.measure_info.children[1].appendChild(li)
+        })
+        this.page.modal.measure_info.lastElementChild.innerHTML = ''
+        this.page.modal.measure_info.appendChild(
+          this.display_object({measure: v.name, ...s}, this.page.modal.measure_info.lastElementChild)
+        )
+      }.bind(this, null, v)
+      this.variables.set(variable, v)
+      this.counts.variables++
+      e.className = 'variable'
+      e.appendChild(document.createElement('button'))
+      e.lastElementChild.type = 'button'
+      e.lastElementChild.innerText = variable
+      e.lastElementChild.className = 'btn'
+      e.lastElementChild.setAttribute('data-bs-toggle', 'modal')
+      e.lastElementChild.setAttribute('data-bs-target', '#general_modal')
+      e.lastElementChild.addEventListener('click', v.show)
+      e.appendChild(document.createElement('p'))
+      e.lastElementChild.className = 'variable-name'
+      e.appendChild(document.createElement('p'))
+      return v
+    } else {
+      return this.variables.get(variable)
+    }
+  },
+  display_info_file: function (i) {
+    const e = i.display
+    if (!e.childElementCount) {
+      let ee
+      e.className = 'entry'
+      e.appendChild(document.createElement('p'))
+      e.lastElementChild.className = 'entry-name'
+      e.lastElementChild.appendChild((ee = document.createElement('a')))
+      ee.target = '_blank'
+      ee.rel = 'noreferrer'
+      ee.innerText = i.name
+      ee.href = this.repos[i.repo].base_url + '/' + i.name
+      e.appendChild((ee = document.createElement('p')))
+      ee.className = 'entry-info'
+      const measures = Object.keys(i.content)
+      if (measures.length > 50) {
+        ee.appendChild(document.createElement('span'))
+        ee.lastElementChild.className = 'entry-info-entry'
+        ee.lastElementChild.innerText = measures.length + ' variables'
+      } else {
+        measures.forEach(variable => {
+          ee.appendChild(document.createElement('button'))
+          ee.lastElementChild.type = 'button'
+          ee.lastElementChild.className = 'btn entry-info-entry'
+          ee.lastElementChild.innerText = variable
+          ee.lastElementChild.setAttribute('data-bs-toggle', 'modal')
+          ee.lastElementChild.setAttribute('data-bs-target', '#general_modal')
+          ee.lastElementChild.addEventListener('click', this.variables.get(variable).show)
+        })
+      }
+      e.appendChild((ee = document.createElement('div')))
+      ee.className = 'file-issues'
+      Object.keys(i.issues).forEach(issue => {
+        const c = document.createElement('div'),
+          v = i.issues[issue]
+        c.className = 'status-chip failed-check'
+        if (issue in this.issue_descriptions) c.setAttribute('aria-description', this.issue_descriptions[issue])
+        c.appendChild(document.createElement('span'))
+        c.lastElementChild.innerText = 'info_invalid' === issue ? 'FAIL' : 'WARN'
+        c.appendChild(document.createElement('span'))
+        c.lastElementChild.innerText =
+          issue.replace(this.patterns.pre_underscore, '') + (Array.isArray(v) ? ': ' + v.join(', ') : '')
+        ee.appendChild(c)
+      })
+    }
+    return e
   },
   display_view: function (v) {
     const exists = Object.hasOwn(this.page.views, v.name),
@@ -972,22 +1183,12 @@ DataCommons.prototype = {
     const f = this.files[uid]
     if (f) {
       if ('github' === provider) {
-        if (Object.hasOwn(f.local, 'github')) {
-          return (
-            f.local.github.parent.url +
-            '/blob/' +
-            ((f.local.github.parent.providers.github && f.local.github.parent.providers.github.default_branch) ||
-              'main') +
-            '/' +
-            f.content.name
-          )
+        if (f.local.github) {
+          return f.local.github.parent.base_url + '/' + f.content.name
         }
-      }
-      const pl = f.local[provider]
-      if ('dataverse' === provider) {
-        if (Object.hasOwn(f.local, 'dataverse')) {
-          return pl.parent.server + 'file.xhtml?fileId=' + pl.id
-        }
+      } else if ('dataverse' === provider) {
+        const pl = f.local[provider]
+        if (pl) return pl.parent.server + 'file.xhtml?fileId=' + pl.id
       }
     }
   },
@@ -1006,12 +1207,11 @@ DataCommons.prototype = {
   request_provider: function (repo, provider) {
     const api = this.get_provider_link(provider, repo, true)
     if (api) {
-      const dirname = /\/[^\/]+$/,
-        dirs = [],
+      const dirs = [],
         files = this.repos[repo].files
       Object.keys(files).forEach(f => {
         files[f].display && files[f].display.classList.add('failed-check')
-        const path = f.replace(dirname, '')
+        const path = f.replace(this.patterns.dirname, '')
         if (-1 === dirs.indexOf(path)) dirs.push(path)
       })
       dirs.forEach(dir => {

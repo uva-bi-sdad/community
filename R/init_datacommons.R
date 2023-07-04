@@ -227,10 +227,7 @@ init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_u
     "</head>",
     "<body>",
     '<div id="site_wrap" style="position: fixed; height: 100%; width: 100%">',
-    page_navbar(
-      title = paste(name, "Monitor"),
-      input_button("check repos", id = "refresh_button")
-    ),
+    page_navbar(title = paste(name, "Monitor"), input_button("check repos", id = "refresh_button")),
     '<div class="content container-fluid">',
     "</div>",
     "</div>",

@@ -7,7 +7,8 @@
 check_repository(dir = ".", search_pattern = "\\\\.csv(?:\\\\.[gbx]z2?)?$",
   exclude = NULL, value = "value", value_name = "measure",
   id = "geoid", time = "year", dataset = "region_type",
-  entity_info = c("region_type", "region_name"), attempt_repair = FALSE)
+  entity_info = c("region_type", "region_name"), attempt_repair = FALSE,
+  verbose = TRUE)
 }
 \arguments{
 \item{dir}{Root directory of the data repository.}
@@ -31,6 +32,8 @@ of datasets, with \code{id}s as names, used to map IDs to datasets.}
 
 \item{attempt_repair}{Logical; if \code{TRUE}, will attempt to fix most warnings in data files.
 Use with caution, as this will often remove rows (given \code{NA}s) and rewrite the file.}
+
+\item{verbose}{Logical; If \code{FALSE}, will not print status messages or check results.}
 }
 \value{
 An invisible list of check results, in the form of paths to files and/or measure name.
@@ -40,6 +43,7 @@ These may include \strong{general} entries:
 \item \strong{\code{data}} (always): All data files found.
 \item \strong{\code{not_considered}}: Subset of data files that do not contain the minimal
 columns (\code{id} and \code{value}), and so are not checked further.
+\item \strong{\code{summary}} (always): Summary of results.
 }
 or those relating to issues with \strong{measure information} (see \code{\link{data_measure_info}}) files:
 \itemize{

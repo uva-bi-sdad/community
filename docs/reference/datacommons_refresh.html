@@ -62,7 +62,8 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">datacommons_refresh</span><span class="op">(</span><span class="va">dir</span>, clone_method <span class="op">=</span> <span class="st">"http"</span>,</span>
 <span>  include_distributions <span class="op">=</span> <span class="cn">FALSE</span>, refresh_distributions <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  only_new <span class="op">=</span> <span class="cn">FALSE</span>, reset_repos <span class="op">=</span> <span class="cn">FALSE</span>, reset_on_fail <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  rescan_only <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<span>  rescan_only <span class="op">=</span> <span class="cn">FALSE</span>, run_checks <span class="op">=</span> <span class="cn">TRUE</span>, dataset_map <span class="op">=</span> <span class="st">"region_type"</span>,</span>
+<span>  force_value_check <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -99,6 +100,19 @@ pointed to from the data repositories (so far just from Dataverse, implicitly fr
 <dt>rescan_only</dt>
 <dd><p>Logical; if <code>TRUE</code>, will only read the files that are already in place, without checking for
 updates from the remote repository.</p></dd>
+
+
+<dt>run_checks</dt>
+<dd><p>Logical; if <code>FALSE</code>, will not run <code><a href="check_repository.html">check_repository</a></code> on each repository.</p></dd>
+
+
+<dt>dataset_map</dt>
+<dd><p>A named vector of ID to dataset mappings to pass to <code><a href="check_repository.html">check_repository</a></code>
+if <code>run_checks</code> is <code>TRUE</code>.</p></dd>
+
+
+<dt>force_value_check</dt>
+<dd><p>Logical; if <code>TRUE</code>, will always intensively check values, even on large files.</p></dd>
 
 
 <dt>verbose</dt>
