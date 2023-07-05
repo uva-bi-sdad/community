@@ -352,13 +352,15 @@ function DataCommons(definition, manifest, views) {
       this.info_files[file] = i
       r.info_files.push(i)
       Object.keys(infos).forEach(v => {
-        const vr = this.display_variable(v)
-        vr.info_files.push(i)
-        vr.info = infos[v]
-        vr.display.children[0].innerText = vr.info.short_name || vr.info.long_name || v
-        vr.display.children[1].innerText = v
-        vr.display.children[2].innerText = vr.info.short_description || vr.info.long_description || ''
-        vr.string += ' ' + JSON.stringify(vr.info).toLowerCase()
+        if ('_' !== v.substring(0, 1)) {
+          const vr = this.display_variable(v)
+          vr.info_files.push(i)
+          vr.info = infos[v]
+          vr.display.children[0].innerText = vr.info.short_name || vr.info.long_name || v
+          vr.display.children[1].innerText = v
+          vr.display.children[2].innerText = vr.info.short_description || vr.info.long_description || ''
+          vr.string += ' ' + JSON.stringify(vr.info).toLowerCase()
+        }
       })
     }
   })
@@ -996,13 +998,15 @@ DataCommons.prototype = {
         ee.lastElementChild.innerText = measures.length + ' variables'
       } else {
         measures.forEach(variable => {
-          ee.appendChild(document.createElement('button'))
-          ee.lastElementChild.type = 'button'
-          ee.lastElementChild.className = 'btn entry-info-entry'
-          ee.lastElementChild.innerText = variable
-          ee.lastElementChild.setAttribute('data-bs-toggle', 'modal')
-          ee.lastElementChild.setAttribute('data-bs-target', '#general_modal')
-          ee.lastElementChild.addEventListener('click', this.variables.get(variable).show)
+          if ('_' !== variable.substring(0, 1)) {
+            ee.appendChild(document.createElement('button'))
+            ee.lastElementChild.type = 'button'
+            ee.lastElementChild.className = 'btn entry-info-entry'
+            ee.lastElementChild.innerText = variable
+            ee.lastElementChild.setAttribute('data-bs-toggle', 'modal')
+            ee.lastElementChild.setAttribute('data-bs-target', '#general_modal')
+            ee.lastElementChild.addEventListener('click', this.variables.get(variable).show)
+          }
         })
       }
       e.appendChild((ee = document.createElement('div')))
