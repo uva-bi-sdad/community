@@ -122,50 +122,10 @@ init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_u
     writeLines("Version: 1.0\n", paths[4])
   }
   writeLines(if (length(repos)) Filter(nchar, repos) else "", paths[5])
-  writeLines(c(
-    "#!/bin/bash",
-    'script_dir="$(dirname "$(realpath "$0")")"',
-    'repos_dir="$(dirname "$script_dir")/repos/"',
-    "while read repo",
-    "do",
-    '  repo="${repo%$\'\\r\'}"',
-    '  repo_path="$repos_dir""$(basename "$repo")"',
-    '  if [[ -d "$repo_path" ]]',
-    "  then",
-    '    echo "pulling "$repo""',
-    '    cd "$repo_path"',
-    "    git pull",
-    "  else",
-    '    echo "cloning "$repo""',
-    '    cd "$repos_dir"',
-    '    git clone "git@github.com:""$repo"".git"',
-    "  fi",
-    '  cd "$script_dir"',
-    'done < ""$(dirname "$0")"/repos.txt"',
-    ""
-  ), paths[6])
-  writeLines(c(
-    "#!/bin/bash",
-    'if [[ -z "$1" ]]',
-    "then",
-    '  echo "provide a commit message as the first argument"',
-    "else",
-    '  read -r -p "Are you sure you want to commit and push all changes in all repositories? (y/N): "',
-    '  if [[ "$REPLY" =~ ^[Yy] ]]',
-    "  then",
-    '    repo_dir="$(dirname "$(dirname "$(realpath "$0")")")/repos/"',
-    '    for repo in "$repo_dir"*',
-    "    do",
-    '      echo "updating "$(basename "$repo")""',
-    '      cd "$repo"',
-    "      git add -A",
-    '      git commit -m "$1"',
-    "      git push",
-    "    done",
-    "  fi",
-    "fi",
-    ""
-  ), paths[7])
+  inst <- paste0(path.package("community"), c("/inst", ""), "/templates/datacommons/")
+  inst <- inst[which(file.exists(inst))[1]]
+  file.copy(paste0(inst, "get_repos.sh"), paths[6], TRUE)
+  file.copy(paste0(inst, "update_repos.sh"), paths[7], TRUE)
   manifest_files <- paste0(dir, "/manifest/", c("repos", "files"), ".json")
   measure_infos <- paste0(dir, "/cache/measure_info.json")
   writeLines(c(
@@ -227,7 +187,12 @@ init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_u
     "</head>",
     "<body>",
     '<div id="site_wrap" style="position: fixed; height: 100%; width: 100%">',
-    page_navbar(title = paste(name, "Monitor"), input_button("check repos", id = "refresh_button")),
+    page_navbar(
+      title = paste(name, "Monitor"),
+      input_button("variables", id = "variables_tab_button"),
+      input_button("repos", id = "repos_tab_button"),
+      input_button("views", id = "views_tab_button")
+    ),
     '<div class="content container-fluid">',
     "</div>",
     "</div>",
@@ -235,22 +200,7 @@ init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_u
     "</body>",
     "</html>"
   ), paths[8])
-  writeLines(c(
-    "'use strict'",
-    "onmessage = function(m){",
-    "  const f = new XMLHttpRequest()",
-    "  f.onreadystatechange = function () {",
-    "    if (4 === f.readyState) {",
-    "      m.data.status = f.status",
-    "      m.data.response = f.responseText",
-    "      postMessage(m.data)",
-    "    }",
-    "  }",
-    "  f.open('GET', m.data.url, true)",
-    "  f.send()",
-    "}",
-    ""
-  ), paths[9])
+  file.copy(paste0(inst, "request.js"), paths[9], TRUE)
   if (verbose) {
     cli_bullets(c(
       v = paste(if (check$exists) "updated" else "created", "{name}:"),

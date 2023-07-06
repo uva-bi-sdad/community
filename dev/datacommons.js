@@ -73,15 +73,13 @@ function DataCommons(definition, manifest, views) {
     trailing_slash: /\/$/,
   }
   this.page = {
-    current_tab: '#search',
-    menu: {
-      check_all: document.getElementById('refresh_button'),
-    },
+    current_tab: '#variables',
+    menu: {},
     body: document.getElementsByClassName('content')[0],
     container: document.createElement('div'),
     tooltip: document.createElement('div'),
     tabs: {
-      search: document.createElement('div'),
+      variables: document.createElement('div'),
       repos: document.createElement('div'),
       views: document.createElement('div'),
     },
@@ -100,8 +98,9 @@ function DataCommons(definition, manifest, views) {
   }
   this.page.body.appendChild(this.page.container)
   this.page.container.className = 'commons'
+  this.page.container.appendChild(this.page.tabs.views)
   this.page.container.appendChild(this.page.tabs.repos)
-  this.page.container.appendChild(this.page.tabs.search)
+  this.page.container.appendChild(this.page.tabs.variables)
   const m = this.page.modal
   document.body.appendChild(m.frame)
   m.frame.className = 'modal fade'
@@ -141,7 +140,7 @@ function DataCommons(definition, manifest, views) {
   m.measure_info.appendChild(document.createElement('table'))
   !(() => {
     let e = document.createElement('div')
-    this.page.tabs.search.appendChild(e)
+    this.page.tabs.variables.appendChild(e)
     e.className = 'search-wrapper'
     e.appendChild((e = document.createElement('div')))
     e.className = 'search-field'
@@ -154,7 +153,8 @@ function DataCommons(definition, manifest, views) {
     e.lastElementChild.id = 'searchInput'
     e.lastElementChild.className = 'form-control'
     e.lastElementChild.addEventListener('keyup', this.search.bind(this))
-    this.page.tabs.search.firstElementChild.appendChild((e = document.createElement('div')))
+    setTimeout(this.search.bind(this, {target: e.lastElementChild}), 0)
+    this.page.tabs.variables.firstElementChild.appendChild((e = document.createElement('div')))
     e.className = 'search-results'
   })()
   this.requester.onmessage = m => {
@@ -259,20 +259,7 @@ function DataCommons(definition, manifest, views) {
       }
     }
   }
-  if (this.page.menu.check_all) {
-    this.page.menu.check_all.addEventListener('click', () => {
-      var r, p
-      for (r in this.repos)
-        if (Object.hasOwn(this.repos, r)) {
-          for (p in this.repos[r].distributions)
-            if (Object.hasOwn(this.repos[r].distributions, p)) {
-              this.request_provider(r, p)
-            }
-        }
-    })
-  }
-  var k,
-    r,
+  var r,
     fn,
     f,
     p,
@@ -317,24 +304,19 @@ function DataCommons(definition, manifest, views) {
       this.page.tooltip.classList.add('hidden')
     }
   })
-  for (k in this.page.tabs)
-    if (Object.hasOwn(this.page.tabs, k)) {
-      this.page.menu[k] = e = document.createElement('button')
-      e.addEventListener('click', this.show_tab.bind(this))
-      this.page.menu.check_all.insertAdjacentElement('beforeBegin', e)
-      e.innerText = k
-      e.className = 'btn'
-      e.type = 'button'
-      p = k + '_tab'
-      e.id = p + '_button'
-      e.setAttribute('aria-controls', p)
-      this.page.container.appendChild((e = this.page.tabs[k]))
-      e.className = 'hidden'
-      e.role = 'tabpanel'
-      e.id = p
-      e.setAttribute('aria-labelledby', p + '_button')
-      if (this.page.current_tab === '#' + k) this.show_tab({target: this.page.menu[k]})
-    }
+  Object.keys(this.page.tabs).forEach(k => {
+    const p = k + '_tab',
+      e = document.getElementById(p + '_button'),
+      t = this.page.tabs[k]
+    e.addEventListener('click', this.show_tab.bind(this))
+    e.setAttribute('aria-controls', p)
+    this.page.menu[k] = e
+    t.className = 'hidden'
+    t.role = 'tabpanel'
+    t.id = p
+    t.setAttribute('aria-labelledby', p + '_button')
+    if (this.page.current_tab === '#' + k) this.show_tab({target: this.page.menu[k]})
+  })
   Object.keys(manifest.variables).forEach(file => {
     const infos = manifest.variables[file],
       repo = this.patterns.repo_name.exec(file)[0].replace(this.patterns.trailing_slash, '')
@@ -500,18 +482,18 @@ function DataCommons(definition, manifest, views) {
     this.page.tabs.repos.appendChild(this.display_repo(k))
   })
   this.counts.views = views.length
-  for (i = views.length; i--; ) {
-    this.named_view[views[i].name] = views[i]
-    views[i].parent = this
-    views[i].checks = {}
-    this.page.tabs.views.appendChild(this.display_view(views[i]))
-    if (Object.hasOwn(views[i].view, 'remote'))
+  views.forEach(view => {
+    this.named_view[view.name] = view
+    view.parent = this
+    view.checks = {}
+    this.page.tabs.views.appendChild(this.display_view(view))
+    if (Object.hasOwn(view.view, 'remote'))
       this.requester.postMessage({
         type: 'datapackage',
-        view: views[i].name,
-        url: 'https://raw.githubusercontent.com/' + views[i].view.remote + '/main/docs/data/datapackage.json',
+        view: view.name,
+        url: 'https://raw.githubusercontent.com/' + view.view.remote + '/main/docs/data/datapackage.json',
       })
-  }
+  })
 }
 
 DataCommons.prototype = {
@@ -660,13 +642,12 @@ DataCommons.prototype = {
     },
   },
   show_tab: function (e) {
-    if (!e.target.classList.contains('active') && Object.hasOwn(this.page.tabs, e.target.innerText)) {
-      const c = e.target.parentElement.getElementsByClassName('active')
-      for (let i = c.length; i--; ) {
-        this.page.tabs[c[i].innerText].classList.add('hidden')
-        c[i].classList.remove('disabled')
-        c[i].classList.remove('active')
-      }
+    if (!e.target.classList.contains('active') && e.target.innerText in this.page.tabs) {
+      document.querySelectorAll('.navbar-nav .active').forEach(c => {
+        this.page.tabs[c.innerText].classList.add('hidden')
+        c.classList.remove('disabled')
+        c.classList.remove('active')
+      })
       this.page.tabs[e.target.innerText].classList.remove('hidden')
       e.target.classList.add('disabled')
       e.target.classList.add('active')
@@ -1283,18 +1264,16 @@ DataCommons.prototype = {
     }
   },
   search: function (e) {
-    const o = this.page.tabs.search.firstElementChild.lastElementChild
+    const o = this.page.tabs.variables.firstElementChild.lastElementChild
     const q = (e.target ? e.target.value : e).toLowerCase()
     o.innerHTML = ''
-    if (q.length > 1) {
-      const matches = document.createElement('div')
-      this.variables.forEach((v, name) => {
-        if (v.string.includes(q)) {
-          matches.appendChild(v.display)
-        }
-      })
-      o.appendChild(matches)
-    }
+    const matches = document.createElement('div')
+    this.variables.forEach((v, name) => {
+      if (!q || v.string.includes(q)) {
+        matches.appendChild(v.display)
+      }
+    })
+    o.appendChild(matches)
   },
 }
 

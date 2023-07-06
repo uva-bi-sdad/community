@@ -8,7 +8,7 @@ check_repository(dir = ".", search_pattern = "\\\\.csv(?:\\\\.[gbx]z2?)?$",
   exclude = NULL, value = "value", value_name = "measure",
   id = "geoid", time = "year", dataset = "region_type",
   entity_info = c("region_type", "region_name"), attempt_repair = FALSE,
-  verbose = TRUE)
+  write_infos = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{dir}{Root directory of the data repository.}
@@ -32,6 +32,8 @@ of datasets, with \code{id}s as names, used to map IDs to datasets.}
 
 \item{attempt_repair}{Logical; if \code{TRUE}, will attempt to fix most warnings in data files.
 Use with caution, as this will often remove rows (given \code{NA}s) and rewrite the file.}
+
+\item{write_infos}{Logical; if \code{TRUE}, will save standardized and rendered versions of each measure info file.}
 
 \item{verbose}{Logical; If \code{FALSE}, will not print status messages or check results.}
 }

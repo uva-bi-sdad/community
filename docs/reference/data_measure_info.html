@@ -192,7 +192,8 @@ or <code>variants</code> lists. By default, these are replaced with the name of 
 (e.g., <code>"variable_{category}"</code> where <code>categories = "a"</code> would become <code>"variable_a"</code>).
 A <code>default</code> entry would change this behavior (e.g., with <code>categories = list(a = list(default = "b")</code>
 that would become <code>"variable_b"</code>). Adding <code>.name</code> would force the original behavior (e.g.,
-<code>"variable_{category.name}"</code> would be <code>"variable_a"</code>).</p>
+<code>"variable_{category.name}"</code> would be <code>"variable_a"</code>). A name of <code>"blank"</code> is treated as
+an empty string.</p>
 <p>When notation appears in a measure info entry, they will first default to a matching name in the <code>categories</code>
 or <code>variants</code> list; for example, <code>short_name</code> in <code>list(short_name = "variable {category}")</code> with
 <code>categories = list(a = list(short_name = "(category a)"))</code> would become <code>"variable (category a)"</code>.

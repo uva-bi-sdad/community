@@ -208,8 +208,8 @@
         space: /\s+/,
         has_equation: /<math/,
         bracket_content: /(?:^|>)[^<]*(?:<|$)/,
-        math_tags: /^(?:semantics|annotation|annotation\-xml|m)/,
-        math_attributes: /^(?:xmlns|display|displaystyle|style|encoding|stretchy|alttext|scriptlevel|fence|math)/,
+        math_tags: /^(?:semantics|annotation|m|semantics)/,
+        math_attributes: /^(?:xmlns|display|style|encoding|stretchy|alttext|scriptlevel|fence|math|separator)/,
         id_escapes: /(?<=#[^\s]+)([.[\](){}?*-])/g,
         repo: /\.com\/([^\/]+\/[^\/]+)/,
         basename: /^.*\//,
@@ -219,7 +219,7 @@
         percent: function (v) {
             return v + '%';
         },
-        'drive time': function (v) {
+        minute: function (v) {
             return v + ' minutes';
         },
         minutes: function (v) {

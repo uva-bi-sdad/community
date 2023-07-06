@@ -93,7 +93,8 @@
 #' (e.g., \code{"variable_{category}"} where \code{categories = "a"} would become \code{"variable_a"}).
 #' A \code{default} entry would change this behavior (e.g., with \code{categories = list(a = list(default = "b")}
 #' that would become \code{"variable_b"}). Adding \code{.name} would force the original behavior (e.g.,
-#' \code{"variable_{category.name}"} would be \code{"variable_a"}).
+#' \code{"variable_{category.name}"} would be \code{"variable_a"}). A name of \code{"blank"} is treated as
+#' an empty string.
 #'
 #' When notation appears in a measure info entry, they will first default to a matching name in the \code{categories}
 #' or \code{variants} list; for example, \code{short_name} in \code{list(short_name = "variable {category}")} with
@@ -258,8 +259,8 @@ data_measure_info <- function(path, ..., info = list(), references = list(), str
         }
       )
     }
-    built <- expanded
-    if (write) {
+    if (write && !identical(built, expanded)) {
+      built <- expanded
       path <- if (is.character(render)) render else sub("\\.json", "_rendered.json", path, TRUE)
       if (verbose) cli_bullets(c(i = "writing rendered info to {.path {path}}"))
       jsonlite::write_json(built, path, auto_unbox = TRUE, pretty = TRUE)

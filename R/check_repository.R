@@ -14,6 +14,7 @@
 #' @param entity_info A vector of variable names to go into making \code{entity_info.json}.
 #' @param attempt_repair Logical; if \code{TRUE}, will attempt to fix most warnings in data files.
 #' Use with caution, as this will often remove rows (given \code{NA}s) and rewrite the file.
+#' @param write_infos Logical; if \code{TRUE}, will save standardized and rendered versions of each measure info file.
 #' @param verbose Logical; If \code{FALSE}, will not print status messages or check results.
 #' @examples
 #' \dontrun{
@@ -111,7 +112,7 @@
 
 check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?$", exclude = NULL,
                              value = "value", value_name = "measure", id = "geoid", time = "year", dataset = "region_type",
-                             entity_info = c("region_type", "region_name"), attempt_repair = FALSE, verbose = TRUE) {
+                             entity_info = c("region_type", "region_name"), attempt_repair = FALSE, write_infos = FALSE, verbose = TRUE) {
   if (!dir.exists(dir)) cli_abort("{.path {dir}} does not exist")
   project_check <- check_template("repository", dir = dir)
   if (project_check$exists) {
@@ -129,10 +130,13 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   i <- 0
   if (verbose) cli_h1("measure info")
   meta <- list()
-  info_files <- list.files(dir, "^measure_info[^.]*\\.json$", full.names = TRUE, recursive = TRUE)
+  info_files <- sort(list.files(dir, "^measure_info[^.]*\\.json$", full.names = TRUE, recursive = TRUE), !write_infos)
+  info_files <- info_files[
+    !grepl("docs/data", info_files, fixed = TRUE) & !duplicated(sub("_rendered", "", info_files, fixed = TRUE))
+  ]
   results <- list(data = files, info = info_files)
   required_fields <- c(
-    "category", "long_name", "short_name", "long_description", "measure_type"
+    "category", "long_name", "short_name", "long_description", "aggregation_method", "data_type"
   )
   required_refs <- c("author", "year", "title")
   required_source <- c("name", "date_accessed")
@@ -148,7 +152,11 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   }
   all_issues <- list()
   for (f in info_files) {
-    m <- tryCatch(jsonlite::read_json(f), error = function(e) NULL)
+    m <- tryCatch(data_measure_info(
+      f,
+      render = !grepl("_rendered", f, fixed = TRUE), write = write_infos,
+      verbose = FALSE, open_after = FALSE
+    ), error = function(e) NULL)
     if (is.null(m)) cli_abort("measure info is malformed: {.file {f}}")
     i <- i + 1
     if (verbose) cli_progress_update()
@@ -297,7 +305,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
       results$info_invalid <- c(results$info_invalid, f)
     }
   }
-  rendered_names <- render_info_names(meta)
+  rendered_names <- names(meta)
   if (verbose) cli_progress_done()
   if (verbose && !length(meta)) cli_alert_danger("no valid measure info")
   if (length(flagged_references)) {

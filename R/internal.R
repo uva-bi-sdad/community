@@ -135,9 +135,11 @@ replace_equations <- function(info) {
 
 preprocess <- function(l) {
   if (!is.list(l)) l <- sapply(l, function(n) list())
-  for (n in names(l)) {
-    l[[n]]$name <- n
-    if (is.null(l[[n]]$default)) l[[n]]$default <- n
+  ns <- names(l)
+  for (i in seq_along(l)) {
+    name <- if (ns[i] == "blank") "" else ns[i]
+    l[[i]]$name <- name
+    if (is.null(l[[i]]$default)) l[[i]]$default <- name
   }
   l
 }
@@ -164,9 +166,13 @@ replace_dynamic <- function(e, p, s, v = NULL, default = "default") {
 }
 
 prepare_source <- function(o, s, p) {
-  lapply(o, function(e) {
-    if (is.character(e) && length(e) == 1) replace_dynamic(e, p, s) else e
-  })
+  if (length(o)) {
+    lapply(o, function(e) {
+      if (is.character(e) && length(e) == 1) replace_dynamic(e, p, s) else e
+    })
+  } else {
+    list(name = "", default = "")
+  }
 }
 
 render_info_names <- function(infos) {
@@ -193,7 +199,7 @@ render_info <- function(info, names_only = FALSE) {
   )), "|||", fixed = TRUE)
   for (var in vars) {
     cs <- if (var[1] == "") list() else categories[[var[1]]]
-    vs <- if (var[2] == "") list() else variants[[var[2]]]
+    vs <- if (length(var) == 1 || var[2] == "") list() else variants[[var[2]]]
     cs <- prepare_source(cs, vs, "\\{variants?(\\.[^}]+?)?\\}")
     vs <- prepare_source(vs, cs, "\\{categor(?:y|ies)(\\.[^}]+?)?\\}")
     s <- c(cs, vs[!names(vs) %in% names(cs)])
@@ -206,6 +212,7 @@ render_info <- function(info, names_only = FALSE) {
         structure(lapply(names(base), function(n) {
           e <- base[[n]]
           if (is.character(e) && length(e) == 1) e <- replace_dynamic(e, p, cs, vs, n)
+          e
         }), names = names(base)),
         s[!names(s) %in% c(
           "default",

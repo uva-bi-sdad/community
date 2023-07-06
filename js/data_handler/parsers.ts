@@ -25,7 +25,7 @@ function replace_dynamic(e: string, p: RegExp, s: UnparsedObject, v?: UnparsedOb
       }
     }
     const r = ss[k]
-    if (r && 'string' === typeof r) {
+    if ('string' === typeof r) {
       while (e.includes(m[0])) e = e.replace(m[0], r)
       p.lastIndex = 0
     }
@@ -34,6 +34,7 @@ function replace_dynamic(e: string, p: RegExp, s: UnparsedObject, v?: UnparsedOb
 }
 
 function prepare_source(name: string, o: UnparsedObject, s: UnparsedObject, p: RegExp): UnparsedObject {
+  if ('blank' === name) name = ''
   const r: UnparsedObject = {name: name}
   Object.keys(o).forEach(n => {
     const e = o[n]
@@ -54,7 +55,7 @@ export function measure_info(info: MeasureInfos): MeasureInfos {
         const cats: string[] = Array.isArray(base.categories) ? base.categories : Object.keys(categories)
         if (!cats.length) cats.push('')
         const vars: string[] = Array.isArray(base.variants) ? base.variants : Object.keys(variants)
-        if (!vars.length) cats.push('')
+        if (!vars.length) vars.push('')
         cats.forEach(cn => {
           vars.forEach(vn => {
             const cs = prepare_source(cn, categories[cn] || {}, variants[vn] || {}, ps.variant)

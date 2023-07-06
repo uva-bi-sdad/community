@@ -1297,7 +1297,7 @@
                 }
             }
             var r = ss[k];
-            if (r && 'string' === typeof r) {
+            if ('string' === typeof r) {
                 while (e.includes(m[0]))
                     e = e.replace(m[0], r);
                 p.lastIndex = 0;
@@ -1306,6 +1306,8 @@
         return e;
     }
     function prepare_source(name, o, s, p) {
+        if ('blank' === name)
+            name = '';
         var r = { name: name };
         Object.keys(o).forEach(function (n) {
             var e = o[n];
@@ -1328,7 +1330,7 @@
                         cats.push('');
                     var vars_1 = Array.isArray(base_1.variants) ? base_1.variants : Object.keys(variants_1);
                     if (!vars_1.length)
-                        cats.push('');
+                        vars_1.push('');
                     cats.forEach(function (cn) {
                         vars_1.forEach(function (vn) {
                             var cs = prepare_source(cn, categories_1[cn] || {}, variants_1[vn] || {}, ps.variant);
