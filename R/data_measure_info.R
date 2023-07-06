@@ -7,7 +7,7 @@
 #' @param info A list containing measurement information to be added.
 #' @param references A list containing citation entries. See the Reference Entries section.
 #' @param strict Logical; if \code{TRUE}, will only allow recognized entries and values.
-#' @param include_empty Logical; if \code{FLASE}, will omit entries that have not been provided.
+#' @param include_empty Logical; if \code{FALSE}, will omit entries that have not been provided.
 #' @param overwrite_entry Logical; if \code{TRUE}, will replace rather than add to an existing entry.
 #' @param render Path to save a version of \code{path} to, with dynamic entries expanded. See the
 #' Dynamic Entries section.
@@ -259,8 +259,9 @@ data_measure_info <- function(path, ..., info = list(), references = list(), str
         }
       )
     }
-    if (write && !identical(built, expanded)) {
-      built <- expanded
+    changed <- !identical(built, expanded)
+    built <- expanded
+    if (write && changed) {
       path <- if (is.character(render)) render else sub("\\.json", "_rendered.json", path, TRUE)
       if (verbose) cli_bullets(c(i = "writing rendered info to {.path {path}}"))
       jsonlite::write_json(built, path, auto_unbox = TRUE, pretty = TRUE)

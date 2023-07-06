@@ -20,7 +20,7 @@ data_measure_info(path, ..., info = list(), references = list(),
 
 \item{strict}{Logical; if \code{TRUE}, will only allow recognized entries and values.}
 
-\item{include_empty}{Logical; if \code{FLASE}, will omit entries that have not been provided.}
+\item{include_empty}{Logical; if \code{FALSE}, will omit entries that have not been provided.}
 
 \item{overwrite_entry}{Logical; if \code{TRUE}, will replace rather than add to an existing entry.}
 

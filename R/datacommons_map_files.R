@@ -82,7 +82,10 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
           fixed = TRUE
         )),
         function(f) {
-          tryCatch(lapply(jsonlite::read_json(f), function(m) m[m != ""]), error = function(e) {
+          tryCatch(data_measure_info(
+            f,
+            render = TRUE, write = FALSE, verbose = FALSE, open_after = FALSE, include_empty = FALSE
+          ), error = function(e) {
             cli_alert_warning("failed to read measure info: {.file {f}}")
             NULL
           })
