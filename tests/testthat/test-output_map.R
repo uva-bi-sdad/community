@@ -16,6 +16,6 @@ test_that("build environment is added to", {
   expect_identical(parts$content, content)
   expect_true(parts$uid == 1)
   expect_identical(parts$credits$provider, list(name = "provider", url = "example.com"))
-  expect_identical(names(parts$map$map0), c("shapes", "overlays", "options", "tiles"))
+  expect_identical(names(parts$map$map0), c("options", "tiles"))
   expect_identical(names(parts$dependencies), c("leaflet_style", "leaflet"))
 })

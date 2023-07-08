@@ -25,7 +25,6 @@ output_legend <- function(palette = "", variable = NULL, dataview = NULL, id = N
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   if (is.null(id)) id <- paste0("legend", caller$uid)
-  options <- list(palette = palette, subto = subto)
   r <- c(
     if (show_na) {
       c(
@@ -52,7 +51,7 @@ output_legend <- function(palette = "", variable = NULL, dataview = NULL, id = N
     if (show_na) "</div>"
   )
   if (building) {
-    caller$legend[[id]] <- options
+    caller$legend[[id]] <- list(palette = palette, subto = subto)
     caller$content <- c(caller$content, r)
     caller$uid <- caller$uid + 1
   }

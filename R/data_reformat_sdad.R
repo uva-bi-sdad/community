@@ -125,10 +125,9 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       spec <- spec[!su]
     }
     names <- c(names, list(colnames(d)))
-    gitconfig <- sub("(^.+repos/[^/]+/).*$", "\\1.git/config", f)
     remote <- get_git_remote(sub("(^.+repos/[^/]+/).*$", "\\1.git/config", f))
     if (length(remote)) d$file <- paste0(remote, sub("^.+repos/[^/]+", "", f))
-    if (is.null(d$file)) d$file <- sub("^.+repos/", "", f)
+    if ("file" %in% colnames(d)) d$file <- sub("^.+repos/", "", f)
     data <- c(data, list(d))
     names(data)[length(data)] <- f
   }

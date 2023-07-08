@@ -6,7 +6,7 @@
 \usage{
 output_info(title = NULL, body = NULL, row_style = "table",
   default = NULL, dataview = NULL, variable = NULL, subto = NULL,
-  id = NULL, variable_info = FALSE, floating = FALSE)
+  id = NULL, variable_info = TRUE, floating = FALSE)
 }
 \arguments{
 \item{title}{Title text, or the source of title text.}

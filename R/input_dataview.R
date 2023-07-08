@@ -47,7 +47,7 @@ input_dataview <- function(id = NULL, y = NULL, x = NULL, time = NULL, time_agg 
   if (!is.null(x)) r$x <- x
   if (!is.null(time)) r$time <- time
   if (!is.null(time_agg)) r$time_agg <- time_agg
-  if (!is.null(time_filters)) r$time_filters <- time_filters
+  if (!length(time_filters)) r$time_filters <- time_filters
   if (!is.null(dataset)) r$dataset <- dataset
   if (!is.null(ids)) r$ids <- ids
   if (!is.null(features)) r$features <- as.list(features)

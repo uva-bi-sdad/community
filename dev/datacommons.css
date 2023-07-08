@@ -50,7 +50,8 @@ div.toast,
   padding: 0 0.4em 0 0;
   width: 1px;
 }
-.modal-body ul {
+.modal-body ul,
+.info-issues p {
   list-style: none;
   padding: 0 0 0 0.5em;
 }
@@ -118,7 +119,7 @@ div.toast-header {
   border-radius: 15px;
   text-align: center;
   word-break: break-word;
-  z-index: 3;
+  z-index: 1100;
 }
 .hover-note p {
   padding: 0.5em;
@@ -299,6 +300,11 @@ button.entry-info-entry {
 span.entry-info-entry {
   margin: 0;
   color: var(--lowlight-text);
+}
+.info-issues span {
+  background-color: var(--background-secondary);
+  padding: 0 0.5em 0.3em 0.5em;
+  border-radius: 25px;
 }
 .entry-info {
   font-family: monospace;

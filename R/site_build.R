@@ -516,7 +516,6 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     if (!is.null(names(settings[[e]]))) settings[[e]] <- settings[[e]][!duplicated(names(settings[[e]]))]
   }
   if (!is.null(settings$map)) {
-    settings$map[["_raw"]] <- list()
     for (m in settings$map) {
       if (!is.null(m$shapes)) {
         for (s in m$shapes) {

@@ -19,7 +19,7 @@ test_that("mapping works", {
 test_that("find variables", {
   expect_identical(
     datacommons_find_variables("daycare", dir)[[1]]$variable,
-    paste0("daycare_", c("capacity", "min_drivetime", "per_1k"))
+    paste0("daycare_", c("capacity", "ratio", "min_drivetime"))
   )
 })
 

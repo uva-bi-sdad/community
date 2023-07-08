@@ -2,7 +2,12 @@ test_that("all issues are caught", {
   dir <- paste0(tempdir(), "/test_repo")
   init_repository(dir, "dataset", init_git = FALSE)
   info_file <- paste0(dir, "/dataset/data/distribution/measure_info.json")
-  jsonlite::write_json(list(measure = "m_int", measure_type = "integer"), info_file, auto_unbox = TRUE)
+  data_measure_info(
+    info_file,
+    m_int = list(data_type = "integer"),
+    m_perc = list(type = "percent"),
+    verbose = FALSE, open_after = FALSE
+  )
   data <- data.frame(
     geoid = c(NA, "10000", "516105003003", "511076110241", "1e10", "1e+10", NA),
     region_name = c(rep("region", 5), NA, "region"),
@@ -28,7 +33,7 @@ test_that("all issues are caught", {
     "data", "info", "not_considered", "summary", "info_incomplete",
     paste0("warn_", c(
       "compressed", "blank_colnames", "value_nas", "dataset_nas", "scientific", "id_nas", "value_name_nas",
-      "entity_info_nas", "missing_info", "bg_agg", "time_nas"
+      "entity_info_nas", "missing_info", "bg_agg", "time_nas", "double_ints", "small_percents"
     )),
     paste0("fail_", c("idlen_county", "rows", "time"))
   )))
@@ -76,6 +81,6 @@ test_that("all issues are caught", {
     "refs_missing", "refs_author_entry", "refs_year", "refs_title",
     "source_missing", "source_name", "citation", "incomplete", "layer_source",
     "layer_filter", "layer_source_url"
-  )))))
+  )), c("warn_double_ints", "warn_small_values"))))
   unlink(dir, TRUE)
 })

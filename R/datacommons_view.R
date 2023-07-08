@@ -279,13 +279,20 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
             m <- list(m)
             names(m) <- m[[1]]$measure
           }
+          remote <- paste0(get_git_remote(sub("(^.+repos/[^/]+/).*$", "\\1.git/config", f)), "/")
+          source_file <- sub("^/[^/]+/[^/]+/", remote, sub(commons, "", f, fixed = TRUE))
+          for (mn in names(m)) {
+            if (substring(mn, 1, 1) != "_") {
+              m[[mn]]$source_file <- source_file
+            }
+          }
           m
         })
         if (length(ri)) {
           ri <- unlist(ri, recursive = FALSE)
           nri <- names(ri)
           if (any(nri == "")) for (mname in which(nri == "")) names(ri)[mname] <- ri[[mname]]$measure
-          es <- nri[grepl("^_", nri) & !nri %in% view$variables]
+          es <- nri[substring(nri, 1, 1) == "_" & !nri %in% view$variables]
           if (length(es)) {
             for (e in es) {
               if (!is.null(names(ri[[e]]))) {

@@ -116,12 +116,12 @@ input_button <- function(label, target = "reset_selection", id = label, dataview
   caller <- parent.frame()
   if (!is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts") {
     if (length(target) == 1 && target %in% c("export", "copy")) {
-      caller$button[[id]] <- list(
+      caller$button[[id]] <- Filter(function(e) length(e) > 1 || (length(e) && (!is.logical(e) || e)), list(
         effects = target,
         dataview = dataview,
         query = query,
         api = from_api
-      )
+      ))
     } else if (!is.null(names(target))) caller$button[[id]] <- list(effects = target)
     caller$content <- c(caller$content, r)
   }

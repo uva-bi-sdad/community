@@ -84,7 +84,9 @@ output_map <- function(shapes = NULL, overlays = NULL, color = NULL, color_time 
         if (!is.null(snames[i])) overlays[[i]]$name <- snames[i]
       }
     }
-    caller$map[[id]] <- list(shapes = unname(shapes), overlays = unname(overlays), options = options, tiles = tiles)
+    caller$map[[id]] <- Filter(length, list(
+      shapes = unname(shapes), overlays = unname(overlays), options = options, tiles = tiles
+    ))
   }
   r <- paste(c(
     '<div class="auto-output leaflet"',

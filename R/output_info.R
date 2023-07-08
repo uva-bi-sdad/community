@@ -24,7 +24,7 @@
 #' @export
 
 output_info <- function(title = NULL, body = NULL, row_style = "table", default = NULL, dataview = NULL,
-                        variable = NULL, subto = NULL, id = NULL, variable_info = FALSE, floating = FALSE) {
+                        variable = NULL, subto = NULL, id = NULL, variable_info = TRUE, floating = FALSE) {
   caller <- parent.frame()
   building <- !is.null(attr(caller, "name")) && attr(caller, "name") == "community_site_parts"
   if (is.null(id)) id <- paste0("info", caller$uid)
@@ -37,18 +37,18 @@ output_info <- function(title = NULL, body = NULL, row_style = "table", default 
   row_style <- rep_len(row_style, length(body))
   if (building) {
     caller$content <- c(caller$content, r)
-    caller$info[[id]] <- list(
+    caller$info[[id]] <- Filter(function(e) length(e) > 1 || (length(e) && e != "" && !isFALSE(e)), list(
       title = if (is.null(title)) "" else title,
       body = lapply(seq_along(body), function(i) {
         list(name = if (is.null(names(body))) "" else names(body)[i], value = body[[i]], style = row_style[[i]])
       }),
       default = as.list(default),
       floating = floating
-    )
+    ))
     if (!is.null(dataview)) caller$info[[id]]$dataview <- dataview
     if (!is.null(variable)) caller$info[[id]]$variable <- variable
     if (!is.null(subto)) caller$info[[id]]$subto <- subto
-    if (!is.null(variable_info)) caller$info[[id]]$variable_info <- variable_info
+    if (variable_info) caller$info[[id]]$variable_info <- variable_info
     caller$uid <- caller$uid + 1
   }
   r

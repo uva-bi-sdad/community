@@ -7,8 +7,8 @@
 check_repository(dir = ".", search_pattern = "\\\\.csv(?:\\\\.[gbx]z2?)?$",
   exclude = NULL, value = "value", value_name = "measure",
   id = "geoid", time = "year", dataset = "region_type",
-  entity_info = c("region_type", "region_name"), attempt_repair = FALSE,
-  write_infos = FALSE, verbose = TRUE)
+  entity_info = c("region_type", "region_name"), check_values = TRUE,
+  attempt_repair = FALSE, write_infos = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{dir}{Root directory of the data repository.}

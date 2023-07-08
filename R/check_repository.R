@@ -112,7 +112,8 @@
 
 check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?$", exclude = NULL,
                              value = "value", value_name = "measure", id = "geoid", time = "year", dataset = "region_type",
-                             entity_info = c("region_type", "region_name"), attempt_repair = FALSE, write_infos = FALSE, verbose = TRUE) {
+                             entity_info = c("region_type", "region_name"), check_values = TRUE, attempt_repair = FALSE,
+                             write_infos = FALSE, verbose = TRUE) {
   if (!dir.exists(dir)) cli_abort("{.path {dir}} does not exist")
   project_check <- check_template("repository", dir = dir)
   if (project_check$exists) {
@@ -340,11 +341,6 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
       spinner = TRUE
     )
   }
-  adjustments <- data.frame(
-    min = c(1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4),
-    factor = c(1e9, 1e8, 1e7, 1e6, 1e5, 1e4),
-    type = paste("per", c("1b", "100m", "1m", "100k", "10k", "1k"))
-  )
   census_geolayers <- c(county = 5, tract = 11, "block group" = 12)
   required <- c(id, value_name, value)
   dataset_map <- NULL
@@ -378,6 +374,14 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
         results$fail_read <- c(results$fail_read, f)
       } else {
         if (nrow(d)) {
+          ck_values <- check_values && length(meta)
+          if (missing(check_values) && nrow(d) > 5e6) {
+            cli_alert_info(paste(
+              "skipping value checks for {.field {f}} due to size ({prettyNum(nrow(d), big.mark = ',')} rows);",
+              "set {.arg check_values} to {.pkg TRUE} to force checks"
+            ))
+            ck_values <- FALSE
+          }
           d[[id]] <- as.character(d[[id]])
           if (!time %in% cols) results$fail_time <- c(results$fail_time, f)
           all_entity_info <- all(entity_info %in% cols)
@@ -392,6 +396,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
             if (anyNA(d[[value]])) {
               d <- d[!is.na(d[[value]]), ]
               repairs <- c(repairs, "warn_value_nas")
+              if (ck_values) d[[value]][is.na(d[[value]])] <- 0
             }
             su <- grep("\\de[+-]?\\d", d[[id]])
             if (length(su)) {
@@ -432,6 +437,26 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
                 d <- d[rowSums(is.na(d[, entity_info, drop = FALSE])) == 0, ]
               }
             }
+            if (ck_values && nrow(d)) {
+              md <- split(d[[value]], d[[value_name]])
+              for (m in names(md)) {
+                mm <- meta[[m]]
+                mvs <- md[[m]]
+                if (!is.null(mm)) {
+                  type <- mm$aggregation_method
+                  if (is.null(type) || type == "") {
+                    type <- if (mm$measure_type == "") mm$type else mm$measure_type
+                    if (is.null(type)) type <- ""
+                  }
+                  if (grepl("percent", type, fixed = TRUE)) {
+                    if (any(mvs > 0) && !any(mvs > 1)) {
+                      d[[value]][d[[value_name]] == m] <- d[[value]][d[[value_name]] == m] * 100
+                      repairs <- c(repairs, "warn_small_percents")
+                    }
+                  }
+                }
+              }
+            }
             if (length(repairs)) {
               if (!nrow(d)) {
                 if (verbose) cli_alert_danger("{.strong attempting repairs ({repairs}) removed all rows of {.file {f}}}")
@@ -459,6 +484,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
             if (any(cols == "")) results$warn_blank_colnames <- c(results$warn_blank_colnames, f)
             if (anyNA(d[[value]])) {
               results$warn_value_nas <- c(results$warn_value_nas, f)
+              if (ck_values) d[[value]][is.na(d[[value]])] <- 0
             }
             if (anyNA(d[[id]])) {
               results$warn_id_nas <- c(results$warn_id_nas, f)
@@ -501,6 +527,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
             if (any(su)) results$warn_missing_info[[f]] <- c(results$warn_missing_info[[f]], measures[su])
 
             smids <- split(d[[id]], d[[value_name]])
+            if (ck_values) md <- split(d[[value]], d[[value_name]])
             for (m in measures) {
               mids <- smids[[m]]
               id_chars <- nchar(mids)
@@ -516,6 +543,34 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
                 su <- su[grep("[^0-9]", mids[su], invert = TRUE)]
                 if (length(su) && any(!unique(substring(mids[su], 1, 5)) %in% mids)) {
                   results$warn_tr_agg[[f]] <- c(results$warn_tr_agg[[f]], m)
+                }
+              }
+
+              if (ck_values) {
+                mm <- meta[[m]]
+                mvs <- md[[m]]
+                if (!is.null(mm)) {
+                  type <- mm$aggregation_method
+                  if (is.null(type) || type == "") {
+                    type <- if (mm$measure_type == "") mm$type else mm$measure_type
+                    if (is.null(type)) type <- ""
+                  }
+                  maxv <- max(mvs)
+                  if (grepl("percent", type, fixed = TRUE)) {
+                    if (maxv > 0 && !any(mvs > 1)) {
+                      results$warn_small_percents[[f]] <- c(results$warn_small_percents[[f]], m)
+                    }
+                  }
+                  if (!is.null(mm$data_type) && mm$data_type == "integer") {
+                    if (any(mvs %% 1 != 0)) {
+                      results$warn_double_ints[[f]] <- c(results$warn_double_ints[[f]], m)
+                    }
+                  } else {
+                    vm <- min(mvs)
+                    if (vm >= 0 && maxv < 1 && mean(mvs > 0 & mvs < 1e-4) > .4) {
+                      results$warn_small_values[[f]] <- c(results$warn_small_values[[f]], m)
+                    }
+                  }
                 }
               }
             }
@@ -584,7 +639,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
     sections <- list(
       warn_missing_info = "missing measure info entries:",
       warn_small_percents = "no values with a {.pkg percent} type are over 1",
-      warn_double_ints = "values with an {.pkg int*} type have decimals",
+      warn_double_ints = "values with an {.pkg integer} data_type have decimals",
       warn_small_values = "non-zero values are very small (under .00001) -- they will display as 0s",
       warn_bg_agg = "may have block groups that have not been aggregated to tracts:",
       warn_tr_agg = "may have tracts that have not been aggregated to counties:"
@@ -599,7 +654,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
             function(f) {
               vars <- results[[s]][[f]]
               paste0(
-                if (length(vars) > 50) {
+                if (length(vars) > 20) {
                   paste(prettyNum(length(vars), big.mark = ","), "variables")
                 } else {
                   sub("}, ([^}]+)}$", "}, and \\1}", paste0(paste0("{.pkg ", vars, "}"), vapply(vars, function(m) {
@@ -614,7 +669,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
             function(f) {
               vars <- results[[s]][[f]]
               paste0(
-                if (length(vars) > 50) {
+                if (length(vars) > 20) {
                   paste(prettyNum(length(vars), big.mark = ","), "variables")
                 } else {
                   paste0("{.pkg ", vars, "}", collapse = ", ")

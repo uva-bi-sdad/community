@@ -16,8 +16,5 @@ test_that("build environment is added to", {
   ), parts)
   expect_identical(parts$content, content)
   expect_true(parts$uid == 1)
-  expect_identical(parts$info$info0, list(
-    title = "", body = list(), default = list(), floating = FALSE,
-    variable_info = FALSE
-  ))
+  expect_identical(parts$info$info0, list(variable_info = TRUE))
 })

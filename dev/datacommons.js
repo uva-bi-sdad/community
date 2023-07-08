@@ -48,7 +48,7 @@ function DataCommons(definition, manifest, views) {
     warn_entity_info_nas: 'An entity info column contains NAs.',
     warn_scientific: 'IDs may have been converted to scientific notation.',
     warn_double_ints: 'A value marked as an integer is actually a double.',
-    warn_small_percent: 'A value is marked as a percent, but has a maximum under 1.',
+    warn_small_percents: 'A value is marked as a percent, but has a maximum under 1.',
     warn_small_value: 'A value has 40% of its entries under under .00001',
     warn_bg_agg:
       'The file contains apparent block group GEOIDs, but no higher-order aggregates for the given variables.',
@@ -90,6 +90,7 @@ function DataCommons(definition, manifest, views) {
       files: document.createElement('div'),
       dashboards: document.createElement('div'),
       measure_info: document.createElement('div'),
+      issues: document.createElement('div'),
     },
     views: {},
     repos: {},
@@ -138,6 +139,11 @@ function DataCommons(definition, manifest, views) {
   m.measure_info.lastElementChild.innerText = 'Measure Info'
   m.measure_info.appendChild(document.createElement('ul'))
   m.measure_info.appendChild(document.createElement('table'))
+  m.body.appendChild(m.issues)
+  m.issues.className = 'info-issues'
+  m.issues.appendChild(document.createElement('h4'))
+  m.issues.lastElementChild.innerText = 'Issues'
+  m.issues.appendChild(document.createElement('p'))
   !(() => {
     let e = document.createElement('div')
     this.page.tabs.variables.appendChild(e)
@@ -289,8 +295,8 @@ function DataCommons(definition, manifest, views) {
   e = this.page.tooltip
   e.className = 'hover-note hidden'
   e.appendChild(document.createElement('p'))
-  this.page.body.insertAdjacentElement('afterEnd', e)
-  this.page.body.parentElement.addEventListener('mouseover', e => {
+  document.body.appendChild(e)
+  document.body.addEventListener('mouseover', e => {
     const ontarget = e.target.getAttribute('aria-description'),
       note = ontarget || e.target.parentElement.getAttribute('aria-description')
     if (note) {
@@ -449,6 +455,13 @@ function DataCommons(definition, manifest, views) {
                   let c = i[file]
                   if (!f.issues[issue]) f.issues[issue] = []
                   if ('string' === typeof c) c = [c]
+                  c.forEach(variable => {
+                    const v = r.variables[variable]
+                    if (v) {
+                      v.issues[issue] = true
+                      v.nissues++
+                    }
+                  })
                   f.issues[issue].push(...c)
                   f.nissues++
                 }
@@ -471,6 +484,13 @@ function DataCommons(definition, manifest, views) {
                   if (!f.issues) f.issues = {}
                   if (!f.issues[issue]) f.issues[issue] = []
                   if ('string' === typeof c) c = [c]
+                  c.forEach(variable => {
+                    const v = r.variables[variable]
+                    if (v) {
+                      v.issues[issue] = true
+                      v.nissues++
+                    }
+                  })
                   f.issues[issue].push(...c)
                 }
               })
@@ -478,6 +498,7 @@ function DataCommons(definition, manifest, views) {
           }
         }
       })
+      this.variables.forEach(v => (v.string += ' ' + Object.keys(v.issues).join(' ')))
     }
     this.page.tabs.repos.appendChild(this.display_repo(k))
   })
@@ -868,7 +889,7 @@ DataCommons.prototype = {
             ee.className = p + '-file'
             f.local[p].display.appendChild(document.createElement('span'))
           }
-        if (f.inRepo.issues) {
+        if (f.inRepo && f.inRepo.issues) {
           e.appendChild((ee = document.createElement('div')))
           ee.className = 'file-issues'
           Object.keys(f.inRepo.issues).forEach(issue => {
@@ -880,7 +901,8 @@ DataCommons.prototype = {
             c.lastElementChild.innerText = this.patterns.fail.test(issue) ? 'FAIL' : 'WARN'
             c.appendChild(document.createElement('span'))
             c.lastElementChild.innerText =
-              issue.replace(this.patterns.pre_underscore, '') + (Array.isArray(v) ? ': ' + v.join(', ') : '')
+              issue.replace(this.patterns.pre_underscore, '') +
+              (Array.isArray(v) ? ': ' + (v.length > 20 ? v.length + ' variables' : v.join(', ')) : '')
             ee.appendChild(c)
           })
         }
@@ -899,21 +921,29 @@ DataCommons.prototype = {
         repos: [],
         info: {},
         info_files: [],
+        issues: {},
+        nissues: 0,
       }
       v.show = function (e, v) {
-        const s = v.info
-        this.page.modal.title.firstElementChild.innerText = s.short_name || s.long_name || v.name
-        this.page.modal.files.lastElementChild.innerHTML = ''
-        v.files.forEach(f => {
-          const li = document.createElement('li')
-          li.appendChild(document.createElement('a'))
-          li.lastElementChild.target = '_blank'
-          li.lastElementChild.rel = 'noreferrer'
-          li.lastElementChild.innerText = v.repos[0] + ': ' + f.content.name
-          li.lastElementChild.href = this.repos[v.repos[0]].base_url + '/' + f.content.name
-          this.page.modal.files.lastElementChild.appendChild(li)
-        })
-        this.page.modal.dashboards.lastElementChild.innerHTML = ''
+        const s = v.info,
+          m = this.page.modal
+        m.title.firstElementChild.innerText = s.short_name || s.long_name || v.name
+        m.files.lastElementChild.innerHTML = ''
+        if (v.files.length) {
+          m.files.classList.remove('hidden')
+          v.files.forEach(f => {
+            const li = document.createElement('li')
+            li.appendChild(document.createElement('a'))
+            li.lastElementChild.target = '_blank'
+            li.lastElementChild.rel = 'noreferrer'
+            li.lastElementChild.innerText = v.repos[0] + ': ' + f.content.name
+            li.lastElementChild.href = this.repos[v.repos[0]].base_url + '/' + f.content.name
+            m.files.lastElementChild.appendChild(li)
+          })
+        } else {
+          m.files.classList.add('hidden')
+        }
+        m.dashboards.lastElementChild.innerHTML = ''
         this.views.forEach(view => {
           if (v.name in view.variables) {
             const li = document.createElement('li')
@@ -922,23 +952,41 @@ DataCommons.prototype = {
             li.lastElementChild.rel = 'noreferrer'
             li.lastElementChild.href = view.view.url + '?selected_variable=' + v.name
             li.lastElementChild.innerText = view.name
-            this.page.modal.dashboards.lastElementChild.appendChild(li)
+            m.dashboards.lastElementChild.appendChild(li)
           }
         })
-        this.page.modal.measure_info.children[1].innerHTML = ''
-        v.info_files.forEach(f => {
-          const li = document.createElement('li')
-          li.appendChild(document.createElement('a'))
-          li.lastElementChild.target = '_blank'
-          li.lastElementChild.rel = 'noreferrer'
-          li.lastElementChild.innerText = f.repo + ': ' + f.name
-          li.lastElementChild.href = this.repos[f.repo].base_url + '/' + f.name
-          this.page.modal.measure_info.children[1].appendChild(li)
-        })
-        this.page.modal.measure_info.lastElementChild.innerHTML = ''
-        this.page.modal.measure_info.appendChild(
-          this.display_object({measure: v.name, ...s}, this.page.modal.measure_info.lastElementChild)
-        )
+        m.dashboards.classList[m.dashboards.lastElementChild.childElementCount ? 'remove' : 'add']('hidden')
+        m.measure_info.children[1].innerHTML = ''
+        if (v.info_files.length) {
+          m.measure_info.classList.remove('hidden')
+          v.info_files.forEach(f => {
+            const li = document.createElement('li')
+            li.appendChild(document.createElement('a'))
+            li.lastElementChild.target = '_blank'
+            li.lastElementChild.rel = 'noreferrer'
+            li.lastElementChild.innerText = f.repo + ': ' + f.name
+            li.lastElementChild.href = this.repos[f.repo].base_url + '/' + f.name
+            m.measure_info.children[1].appendChild(li)
+          })
+        } else {
+          m.measure_info.classList.add('hidden')
+        }
+        m.measure_info.lastElementChild.innerHTML = ''
+        m.measure_info.appendChild(this.display_object({measure: v.name, ...s}, m.measure_info.lastElementChild))
+        const il = m.issues.lastElementChild
+        il.innerHTML = ''
+        if (v.nissues) {
+          m.issues.classList.remove('hidden')
+          Object.keys(v.issues).forEach((issue, i) => {
+            if (0 !== i) il.appendChild(document.createTextNode(', '))
+            il.appendChild(document.createElement('span'))
+            il.lastElementChild.innerText = issue
+            if (issue in this.issue_descriptions)
+              il.lastElementChild.setAttribute('aria-description', this.issue_descriptions[issue])
+          })
+        } else {
+          m.issues.classList.add('hidden')
+        }
       }.bind(this, null, v)
       this.variables.set(variable, v)
       this.counts.variables++
@@ -1001,7 +1049,8 @@ DataCommons.prototype = {
         c.lastElementChild.innerText = 'info_invalid' === issue ? 'FAIL' : 'WARN'
         c.appendChild(document.createElement('span'))
         c.lastElementChild.innerText =
-          issue.replace(this.patterns.pre_underscore, '') + (Array.isArray(v) ? ': ' + v.join(', ') : '')
+          issue.replace(this.patterns.pre_underscore, '') +
+          (Array.isArray(v) ? ': ' + (v.length > 20 ? v.length + ' variables' : v.join(', ')) : '')
         ee.appendChild(c)
       })
     }

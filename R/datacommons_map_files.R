@@ -42,7 +42,7 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
   }
   commons <- jsonlite::read_json(paste0(dir, "commons.json"))
   all_files <- list.files(paste0(dir, c("cache", "repos")), search_pattern, full.names = TRUE, recursive = TRUE)
-  all_files <- all_files[!grepl("[/\\](?:working|original)[/\\]|variable_map", all_files)]
+  all_files <- all_files[!grepl("[/\\](?:code|docs|working|original)[/\\]|variable_map", all_files)]
   if (!length(all_files)) cli_abort("no files were found")
   res <- paste0(dir, "cache/", c("variable_map.csv", "id_map.rds"))
   if (overwrite) unlink(res)

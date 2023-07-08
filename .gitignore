@@ -11,3 +11,4 @@ node_modules
 .nyc_output
 .netlify
 ^dist
+Rplot.pdf
