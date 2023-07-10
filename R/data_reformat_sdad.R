@@ -36,9 +36,35 @@
 #' @param get_coverage Logical; if \code{FALSE}, will not calculate a summary of variable coverage (\code{coverage.csv}).
 #' @param verbose Logical; if \code{FALSE}, will not print status messages.
 #' @examples
-#' \dontrun{
-#' data_reformat_sdad("data/directory")
-#' }
+#' dir <- paste0(tempdir(), "/reformat_example")
+#' dir.create(dir, FALSE)
+#'
+#' # minimal example
+#' data <- data.frame(
+#'   geoid = 1:10,
+#'   value = 1
+#' )
+#' write.csv(data, paste0(dir, "/data.csv"), row.names = FALSE)
+#' (data_reformat_sdad(dir))
+#'
+#' # multiple variables
+#' data <- data.frame(
+#'   geoid = 1:10,
+#'   value = 1,
+#'   measure = paste0("v", 1:2)
+#' )
+#' write.csv(data, paste0(dir, "/data.csv"), row.names = FALSE)
+#' (data_reformat_sdad(dir))
+#'
+#' # multiple datasets
+#' data <- data.frame(
+#'   geoid = 1:10,
+#'   value = 1,
+#'   measure = paste0("v", 1:2),
+#'   region_type = rep(c("a", "b"), each = 5)
+#' )
+#' write.csv(data, paste0(dir, "/data.csv"), row.names = FALSE)
+#' (data_reformat_sdad(dir))
 #' @return An invisible list of the unified variable datasets, split into datasets.
 #' @export
 
@@ -127,7 +153,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     names <- c(names, list(colnames(d)))
     remote <- get_git_remote(sub("(^.+repos/[^/]+/).*$", "\\1.git/config", f))
     if (length(remote)) d$file <- paste0(remote, sub("^.+repos/[^/]+", "", f))
-    if ("file" %in% colnames(d)) d$file <- sub("^.+repos/", "", f)
+    if (!"file" %in% colnames(d)) d$file <- sub("^.+repos/", "", f)
     data <- c(data, list(d))
     names(data)[length(data)] <- f
   }
@@ -207,14 +233,17 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   }
   if (!dataset %in% vars) {
     dataset <- "dataset"
+    vars <- c(vars, dataset)
     data$dataset <- dataset
   }
   if (!time %in% vars) {
     time <- "time"
+    vars <- c(vars, time)
     data$time <- 1
   }
   if (!any(value_name %in% vars)) {
-    value_name <- "file"
+    vars <- c(vars, value_name)
+    data[[value_name]] <- sub("\\.[^.]+$", "", basename(data$file))
   }
   data[[dataset]] <- gsub("\\s+", "_", data[[dataset]])
   datasets <- sort(unique(data[[dataset]]))
@@ -229,16 +258,14 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   times <- sort(unique(data[[time]]))
   if (all(nchar(times) == 4)) times <- seq(min(times), max(times))
   n <- length(times)
-  if (!is.null(out)) {
-    files <- paste0(out, "/", gsub("\\s+", "_", tolower(datasets)), ".csv")
-    if (is.character(compression) && grepl("^[gbx]", compression, FALSE)) {
-      compression <- tolower(substr(compression, 1, 1))
-      files <- paste0(files, ".", c(g = "gz", b = "bz2", x = "xz")[[compression]])
-    } else {
-      compression <- FALSE
-    }
-    names(files) <- datasets
+  files <- paste0(out, "/", gsub("\\s+", "_", tolower(datasets)), ".csv")
+  if (is.character(compression) && grepl("^[gbx]", compression, FALSE)) {
+    compression <- tolower(substr(compression, 1, 1))
+    files <- paste0(files, ".", c(g = "gz", b = "bz2", x = "xz")[[compression]])
+  } else {
+    compression <- FALSE
   }
+  names(files) <- datasets
   write <- vapply(files, function(f) is.null(out) || overwrite || !file.exists(f) || max_age > file.mtime(f), TRUE)
   if (!is.null(out) && (is.list(entity_info) || is.character(entity_info))) {
     entity_info_file <- paste0(out, "/entity_info.json")
@@ -273,9 +300,13 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       }
     }
   }
-  data <- unique(data[, c(vars[1:5], dataset)])
+  svars <- c(id, value, value_name, time, "file", dataset)
+  data <- unique(data[, svars[svars %in% vars]])
   sets <- lapply(datasets, function(dn) {
-    if (write[[dn]]) {
+    if (read_existing && !is.null(out) && file.exists(files[[dn]]) && !write[[dn]]) {
+      if (verbose) cli_progress_step("reading in existing {dn} dataset", msg_done = "read existing {dn} dataset")
+      read.csv(gzfile(files[[dn]]), check.names = FALSE)
+    } else {
       d <- if (dataset %in% vars) data[data[[dataset]] == dn, ] else data
       dc <- list()
       ids <- unique(d[[id]])
@@ -299,6 +330,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
         }
       }
       sd <- split(d, d[[id]])
+      ssel <- c(time, value)
       for (i in seq_along(ids)) {
         if (verbose) cli_progress_update()
         e <- ids[[i]]
@@ -309,7 +341,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
         )
         if (all(c(value_name, value) %in% names(ed))) {
           ed <- ed[!is.na(ed[[value]]), ]
-          ed <- split(ed[, c(time, value)], ed[[value_name]])
+          ed <- split(ed[, ssel], ed[[value_name]])
           for (v in names(ed)) {
             vals <- ed[[v]]
             if (nrow(vals)) r[as.character(vals[[time]]), v] <- vals[[value]]
@@ -319,9 +351,6 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
         dc[[i]] <- r
       }
       do.call(rbind, dc)
-    } else if (read_existing && file.exists(files[[dn]])) {
-      if (verbose) cli_progress_step("reading in existing {dn} dataset", msg_done = "read existing {dn} dataset")
-      read.csv(gzfile(files[[dn]]), check.names = FALSE)
     }
   })
   names(sets) <- datasets

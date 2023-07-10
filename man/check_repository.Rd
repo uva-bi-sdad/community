@@ -30,6 +30,10 @@ of datasets, with \code{id}s as names, used to map IDs to datasets.}
 
 \item{entity_info}{A vector of variable names to go into making \code{entity_info.json}.}
 
+\item{check_values}{Logical; if \code{FALSE}, will perform more intensive checks on values.
+If not specified, these are skipped if there are more that 5 million rows in the given dataset,
+in which case \code{TRUE} will force checks.}
+
 \item{attempt_repair}{Logical; if \code{TRUE}, will attempt to fix most warnings in data files.
 Use with caution, as this will often remove rows (given \code{NA}s) and rewrite the file.}
 

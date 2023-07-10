@@ -47,6 +47,7 @@ init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_u
   if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = ".")')
   check <- check_template("datacommons", dir = dir)
   if (missing(refresh_after) && !check$exists) refresh_after <- TRUE
+  odir <- substitute(dir)
   dir <- normalizePath(paste0(dir, "/", check$spec$dir), "/", FALSE)
   dir.create(paste0(dir, "/repos"), FALSE, TRUE)
   dir.create(paste0(dir, "/manifest"), FALSE)
@@ -64,7 +65,7 @@ init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_u
     file.exists(paths[5]) && (!length(repos) ||
       (file.exists(paths[1]) && file.mtime(paths[5]) > file.mtime(paths[1])))
   ) {
-    repos <- readLines(paths[5], warn = FALSE)
+    repos <- unique(c(repos, readLines(paths[5], warn = FALSE)))
   }
   if (file.exists(paths[1])) {
     existing <- jsonlite::read_json(paths[1])
@@ -207,8 +208,8 @@ init_datacommons <- function(dir, name = "Data Commons", repos = NULL, default_u
       "*" = paste0("{.path ", normalizePath(dir, "/", FALSE), "}"),
       i = if (!length(repos)) {
         paste0(
-          "add repository names to {.file commons.json} or {.file scripts/repos.txt}, then use ",
-          '{.code datacommons_refresh("', dir, '")} to clone them'
+          "add repository names to {.file {paste0(dir, '/commons.json')}} or {.file {paste0(dir, '/scripts/repos.txt')}},",
+          " then use {.code datacommons_refresh(", odir, ")} to clone them"
         )
       }
     ))

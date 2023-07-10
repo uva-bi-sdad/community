@@ -8,6 +8,8 @@ navbar:
       - text: Examples
       - text: Build a Data Site
         href: articles/quickstart-site.html
+      - text: Build a Data Commons
+        href: articles/datacommons_projects.html
       - text: Illinois Arrests
         href: articles/casestudy-arrests.html
       - text: Other

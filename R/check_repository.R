@@ -12,6 +12,9 @@
 #' @param dataset Column name used to separate data into sets (such as by region), or a vector
 #' of datasets, with \code{id}s as names, used to map IDs to datasets.
 #' @param entity_info A vector of variable names to go into making \code{entity_info.json}.
+#' @param check_values Logical; if \code{FALSE}, will perform more intensive checks on values.
+#' If not specified, these are skipped if there are more that 5 million rows in the given dataset,
+#' in which case \code{TRUE} will force checks.
 #' @param attempt_repair Logical; if \code{TRUE}, will attempt to fix most warnings in data files.
 #' Use with caution, as this will often remove rows (given \code{NA}s) and rewrite the file.
 #' @param write_infos Logical; if \code{TRUE}, will save standardized and rendered versions of each measure info file.

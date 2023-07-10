@@ -71,7 +71,33 @@ For example (and generally), entities are (a) regions, with (b) smaller regions 
 and which (c1) have names, and (c2) population and demographic counts (d) between 2009 and 2019.
 }
 \examples{
-\dontrun{
-data_reformat_sdad("data/directory")
-}
+dir <- paste0(tempdir(), "/reformat_example")
+dir.create(dir, FALSE)
+
+# minimal example
+data <- data.frame(
+  geoid = 1:10,
+  value = 1
+)
+write.csv(data, paste0(dir, "/data.csv"), row.names = FALSE)
+(data_reformat_sdad(dir))
+
+# multiple variables
+data <- data.frame(
+  geoid = 1:10,
+  value = 1,
+  measure = paste0("v", 1:2)
+)
+write.csv(data, paste0(dir, "/data.csv"), row.names = FALSE)
+(data_reformat_sdad(dir))
+
+# multiple datasets
+data <- data.frame(
+  geoid = 1:10,
+  value = 1,
+  measure = paste0("v", 1:2),
+  region_type = rep(c("a", "b"), each = 5)
+)
+write.csv(data, paste0(dir, "/data.csv"), row.names = FALSE)
+(data_reformat_sdad(dir))
 }
