@@ -2738,7 +2738,11 @@
               }
               if (o.options.title) {
                 o.parts.title = parse_part(o, o.options.title);
-                if ('variables' in o.parts.title.parsed && patterns.measure_name.test(o.parts.title.parsed.variables)) {
+                if (
+                  o.options.variable_info &&
+                  'variables' in o.parts.title.parsed &&
+                  patterns.measure_name.test(o.parts.title.parsed.variables)
+                ) {
                   o.parts.title.base = document.createElement('button');
                   o.parts.title.base.type = 'button';
                   o.parts.title.base.setAttribute('data-bs-toggle', 'modal');
@@ -2762,7 +2766,7 @@
                 o.parts.title.base.classList.add('hidden');
                 o.parts.title.temp.classList.add('hidden');
               }
-              if (o.options.body) {
+              if (o.options.body || (o.has_default && o.options.default.body)) {
                 o.parts.body = {
                   base: document.createElement('div'),
                   temp: document.createElement('div'),
@@ -2775,50 +2779,51 @@
                     'info-body hidden';
                 if (o.has_default && o.options.default.body) o.parts.body.default.innerText = o.options.default.body;
                 let h = 0;
-                o.options.body.forEach((op, i) => {
-                  const p = {
-                    name: parse_part(o, op.name),
-                    value: parse_part(o, op.value),
-                  };
-                  o.parts.body.rows[i] = p;
-                  p.base = document.createElement('div');
-                  o.parts.body.base.appendChild(p.base);
-                  p.temp = document.createElement('div');
-                  o.parts.body.temp.appendChild(p.temp);
-                  p.temp.className = p.base.className = 'info-body-row-' + op.style;
-                  h += 24 + ('stack' === op.style ? 24 : 0);
-                  if (p.name) {
-                    if (
-                      o.options.variable_info &&
-                      'variables' in p.name.parsed &&
-                      patterns.measure_name.test(p.name.parsed.variables)
-                    ) {
-                      p.base.appendChild(document.createElement('button'));
-                      p.base.lastElementChild.type = 'button';
-                      p.base.lastElementChild.setAttribute('data-bs-toggle', 'modal');
-                      p.base.lastElementChild.setAttribute('data-bs-target', '#variable_info_display');
-                      p.base.lastElementChild.addEventListener('click', show_variable_info.bind(o));
-                    } else p.base.appendChild(document.createElement('div'));
-                    p.temp.appendChild(document.createElement('div'));
-                    p.temp.lastElementChild.className = p.base.lastElementChild.className = 'info-body-row-name';
-                    p.temp.lastElementChild.innerText = p.base.lastElementChild.innerText = p.name.get();
-                  }
-                  if (p.value) {
-                    p.base.appendChild(document.createElement('div'));
-                    p.temp.appendChild(document.createElement('div'));
-                    if ('summary' in p.value.parsed) {
-                      p.base.lastElementChild.appendChild(p.value.parsed.summary);
-                    } else if ('filter' in p.value.parsed) {
-                      p.base.lastElementChild.appendChild(p.value.parsed.filter);
-                    } else {
-                      p.temp.lastElementChild.className = p.base.lastElementChild.className =
-                        'info-body-row-value' + ('statement' === p.value.parsed.variables ? ' statement' : '');
-                      if (p.name.ref && 'value' === p.value.text) p.value.ref = true;
-                      if (!p.value.ref)
-                        p.temp.lastElementChild.innerText = p.base.lastElementChild.innerText = p.value.get();
+                o.options.body &&
+                  o.options.body.forEach((op, i) => {
+                    const p = {
+                      name: parse_part(o, op.name),
+                      value: parse_part(o, op.value),
+                    };
+                    o.parts.body.rows[i] = p;
+                    p.base = document.createElement('div');
+                    o.parts.body.base.appendChild(p.base);
+                    p.temp = document.createElement('div');
+                    o.parts.body.temp.appendChild(p.temp);
+                    p.temp.className = p.base.className = 'info-body-row-' + op.style;
+                    h += 24 + ('stack' === op.style ? 24 : 0);
+                    if (p.name) {
+                      if (
+                        o.options.variable_info &&
+                        'variables' in p.name.parsed &&
+                        patterns.measure_name.test(p.name.parsed.variables)
+                      ) {
+                        p.base.appendChild(document.createElement('button'));
+                        p.base.lastElementChild.type = 'button';
+                        p.base.lastElementChild.setAttribute('data-bs-toggle', 'modal');
+                        p.base.lastElementChild.setAttribute('data-bs-target', '#variable_info_display');
+                        p.base.lastElementChild.addEventListener('click', show_variable_info.bind(o));
+                      } else p.base.appendChild(document.createElement('div'));
+                      p.temp.appendChild(document.createElement('div'));
+                      p.temp.lastElementChild.className = p.base.lastElementChild.className = 'info-body-row-name';
+                      p.temp.lastElementChild.innerText = p.base.lastElementChild.innerText = p.name.get();
                     }
-                  }
-                });
+                    if (p.value) {
+                      p.base.appendChild(document.createElement('div'));
+                      p.temp.appendChild(document.createElement('div'));
+                      if ('summary' in p.value.parsed) {
+                        p.base.lastElementChild.appendChild(p.value.parsed.summary);
+                      } else if ('filter' in p.value.parsed) {
+                        p.base.lastElementChild.appendChild(p.value.parsed.filter);
+                      } else {
+                        p.temp.lastElementChild.className = p.base.lastElementChild.className =
+                          'info-body-row-value' + ('statement' === p.value.parsed.variables ? ' statement' : '');
+                        if (p.name.ref && 'value' === p.value.text) p.value.ref = true;
+                        if (!p.value.ref)
+                          p.temp.lastElementChild.innerText = p.base.lastElementChild.innerText = p.value.get();
+                      }
+                    }
+                  });
                 o.e.style.minHeight = h + 'px';
                 o.e.appendChild(o.parts.body.base);
                 o.e.appendChild(o.parts.body.default);
@@ -4991,6 +4996,10 @@
             l.appendChild(c);
           });
         } else page.modal.info.origin.classList.add('hidden');
+        if (info.source_file) {
+          page.modal.info.source_file.classList.remove('hidden');
+          page.modal.info.source_file.firstElementChild.href = info.source_file;
+        } else page.modal.info.source_file.classList.add('hidden');
       }
 
       function parse_variables(s, type, e, entity) {
@@ -5266,6 +5275,14 @@
         e.origin.firstElementChild.innerText = 'Origin';
         e.origin.appendChild((e = document.createElement('ul')));
         e.className = 'origin-list';
+
+        e = page.modal.info;
+        e.body.appendChild((e.source_file = document.createElement('div')));
+        e.source_file.className = 'info-source-file';
+        e.source_file.appendChild((e = document.createElement('a')));
+        e.innerText = 'measure_info.json';
+        e.target = '_blank';
+        e.rel = 'noreferrer';
 
         // set up filter's time range
         document.body.appendChild((e = page.modal.filter.e));

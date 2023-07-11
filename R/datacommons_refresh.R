@@ -73,7 +73,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
   dir.create(repo_dir, FALSE, TRUE)
   setwd(repo_dir)
   method <- if (clone_method == "ssh") "git@github.com:" else "https://github.com/"
-  if (include_distributions) dir.create("../cache", FALSE)
+  if (include_distributions) dir.create(paste0(dir, "/cache"), FALSE)
   manifest_file <- paste0(dir, "/manifest/repos.json")
   repo_manifest <- list()
   for (i in seq_along(repos)) {
@@ -119,7 +119,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
     )
     files <- normalizePath(files, "/")
     for (f in files) {
-      repo_manifest[[r]]$files[[sub(cr, "", f, fixed = TRUE)]] <- list(
+      repo_manifest[[r]]$files[[sub("^.*/repos/[^/]+/", "", f)]] <- list(
         size = file.size(f),
         sha = system2("git", c("hash-object", shQuote(f)), stdout = TRUE),
         md5 = md5sum(f)[[1]]
@@ -132,7 +132,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
         iul <- cli_ul()
         cli_li("including Dataverse distribution for {.emph {doi}}")
       }
-      meta_file <- paste0("../cache/", rn, "/dataverse_metadata.json")
+      meta_file <- paste0(dir, "/cache/", rn, "/dataverse_metadata.json")
       meta <- if (!refresh_distributions && file.exists(meta_file)) {
         jsonlite::read_json(meta_file, simplifyVector = TRUE)
       } else {
@@ -146,14 +146,14 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
         }
       } else {
         if (is.null(meta$latestVersion)) meta$latestVersion <- list(files = meta$files)
-        dir.create(paste0("../cache/", rn), FALSE)
+        dir.create(paste0(dir, "/cache/", rn), FALSE)
         jsonlite::write_json(meta, meta_file, auto_unbox = TRUE)
         repo_manifest[[r]]$distributions$dataverse$id <- meta$datasetId
         repo_manifest[[r]]$distributions$dataverse$server <- meta$server
         repo_manifest[[r]]$distributions$dataverse$files <- list()
         if (length(meta$latestVersion$files)) {
           for (f in meta$latestVersion$files) {
-            existing <- paste0("../cache/", rn, "/", f$dataFile$filename)
+            existing <- paste0(dir, "/cache/", rn, "/", f$dataFile$filename)
             if (file.exists(existing)) {
               if (verbose) cli_li("checking existing version of {.file {f$dataFile$filename}}")
               if (md5sum(existing) != f$dataFile$md5) unlink(existing)
@@ -161,7 +161,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
             if (!file.exists(existing)) {
               if (verbose) cli_li("downloading {.file {f$dataFile$filename}}")
               res <- tryCatch(download_dataverse_data(
-                doi, paste0("../cache/", rn),
+                doi, paste0(dir, "/cache/", rn),
                 files = f$label, load = FALSE, decompress = FALSE
               ), error = function(e) NULL)
               if (is.null(res)) {
@@ -171,7 +171,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
               }
             }
             if (file.exists(existing)) {
-              repo_manifest[[r]]$distributions$dataverse$files[[sub(cr, "", existing, fixed = TRUE)]] <- list(
+              repo_manifest[[r]]$distributions$dataverse$files[[sub("^.*/cache/[^/]+/", "", existing)]] <- list(
                 id = f$dataFile$id,
                 size = file.size(existing),
                 md5 = md5sum(existing)[[1]]

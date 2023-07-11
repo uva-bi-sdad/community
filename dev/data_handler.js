@@ -1306,15 +1306,13 @@
         return e;
     }
     function prepare_source(name, o, s, p) {
-        if ('blank' === name)
-            name = '';
-        var r = { name: name };
+        var r = { name: 'blank' === name ? '' : name };
         Object.keys(o).forEach(function (n) {
             var e = o[n];
             r[n] = 'string' === typeof e ? replace_dynamic(e, p, s) : e;
         });
         if (!('default' in r))
-            r.default = name;
+            r.default = r.name;
         return r;
     }
     function measure_info(info) {

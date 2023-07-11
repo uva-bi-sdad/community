@@ -1,4 +1,4 @@
-export const patterns: {[index: string]: RegExp} = {
+export const patterns = {
   seps: /[\s,/._-]+/g,
   period: /\./,
   all_periods: /\./g,

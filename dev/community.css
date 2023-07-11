@@ -567,6 +567,11 @@ button.dropdown-toggle {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.info-source-file {
+  display: flex;
+  flex-direction: row-reverse;
+  font-size: 0.8em;
+}
 .floating,
 .tooltip {
   position: absolute;

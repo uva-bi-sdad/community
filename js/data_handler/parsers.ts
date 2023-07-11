@@ -34,13 +34,12 @@ function replace_dynamic(e: string, p: RegExp, s: UnparsedObject, v?: UnparsedOb
 }
 
 function prepare_source(name: string, o: UnparsedObject, s: UnparsedObject, p: RegExp): UnparsedObject {
-  if ('blank' === name) name = ''
-  const r: UnparsedObject = {name: name}
+  const r: UnparsedObject = {name: 'blank' === name ? '' : name}
   Object.keys(o).forEach(n => {
     const e = o[n]
     r[n] = 'string' === typeof e ? replace_dynamic(e, p, s) : e
   })
-  if (!('default' in r)) r.default = name
+  if (!('default' in r)) r.default = r.name
   return r
 }
 
