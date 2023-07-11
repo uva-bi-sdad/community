@@ -5260,7 +5260,6 @@
         e.sources.appendChild(document.createElement('div'));
         e.sources.lastElementChild.className = 'sources-cards';
 
-        e = page.modal.info;
         e.body.appendChild((e.references = document.createElement('div')));
         e.references.appendChild(document.createElement('p'));
         e.references.firstElementChild.className = 'h3';
@@ -5280,7 +5279,7 @@
         e.body.appendChild((e.source_file = document.createElement('div')));
         e.source_file.className = 'info-source-file';
         e.source_file.appendChild((e = document.createElement('a')));
-        e.innerText = 'measure_info.json';
+        e.innerText = 'source';
         e.target = '_blank';
         e.rel = 'noreferrer';
 
