@@ -302,6 +302,10 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   }
   svars <- c(id, value, value_name, time, "file", dataset)
   data <- unique(data[, svars[svars %in% vars]])
+  if (length(measure_info)) {
+    dynamic_names <- render_info_names(measure_info)
+    dynamic_names <- structure(names(dynamic_names), names = dynamic_names)
+  }
   sets <- lapply(datasets, function(dn) {
     if (read_existing && !is.null(out) && file.exists(files[[dn]]) && !write[[dn]]) {
       if (verbose) cli_progress_step("reading in existing {dn} dataset", msg_done = "read existing {dn} dataset")
@@ -322,9 +326,10 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
         source <- unique(d[, c(value_name, "file")])
         source <- structure(source[[2]], names = source[[1]])
         for (measure in names(source)) {
-          if (length(measure_info[[measure]])) {
-            measure_info[[measure]]$origin <<- unique(c(
-              measure_info[[measure]]$origin, source[[measure]]
+          iname <- if (length(measure_info[[dynamic_names[measure]]])) dynamic_names[measure] else measure
+          if (length(measure_info[[iname]])) {
+            measure_info[[iname]]$origin <<- unique(c(
+              measure_info[[iname]]$origin, source[[measure]]
             ))
           }
         }
