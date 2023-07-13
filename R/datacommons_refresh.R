@@ -44,7 +44,7 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
   }
   dir <- normalizePath(dir, "/", FALSE)
   commons <- jsonlite::read_json(paste0(dir, "/commons.json"))
-  repos <- Filter(length, commons$repositories)
+  repos <- sort(unlist(Filter(length, commons$repositories)))
   if (!length(repos)) repos <- readLines(paste0(dir, "/scripts/repos.txt"))
   if (!length(repos)) cli_abort("no repositories are listed in {.file commons.json}.")
   repos <- gsub("^[\"']+|['\"]+$|^.*github\\.com/", "", repos)
@@ -113,10 +113,10 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
       } else if (!length(list.files(rn))) system2("rm", c("-rf", rn))
     }
     repo_manifest[[r]]$base_url <- get_git_remote(paste0(cr, ".git/config"))
-    files <- list.files(
+    files <- sort(list.files(
       cr, "\\.(?:csv|tsv|txt|dat|rda|rdata)(?:\\.[gbx]z2?)?$",
       full.names = TRUE, recursive = TRUE, ignore.case = TRUE
-    )
+    ))
     files <- normalizePath(files, "/")
     for (f in files) {
       repo_manifest[[r]]$files[[sub("^.*/repos/[^/]+/", "", f)]] <- list(

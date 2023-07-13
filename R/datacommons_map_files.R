@@ -42,7 +42,7 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
   }
   commons <- jsonlite::read_json(paste0(dir, "commons.json"))
   all_files <- list.files(paste0(dir, c("cache", "repos")), search_pattern, full.names = TRUE, recursive = TRUE)
-  all_files <- all_files[!grepl("[/\\](?:code|docs|working|original)[/\\]|variable_map", all_files)]
+  all_files <- sort(all_files[!grepl("[/\\](?:code|docs|working|original)[/\\]|variable_map", all_files)])
   if (!length(all_files)) cli_abort("no files were found")
   res <- paste0(dir, "cache/", c("variable_map.csv", "id_map.rds"))
   if (overwrite) unlink(res)
@@ -53,7 +53,7 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
   i <- 1
   map <- idmap <- list()
   noread <- novars <- noids <- empty <- NULL
-  repos <- commons$repositories
+  repos <- sort(unlist(commons$repositories))
   manifest <- measure_info <- list()
   if (verbose) {
     cli_progress_step(
@@ -64,16 +64,16 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
   for (i in seq_along(repos)) {
     r <- repos[[i]]
     manifest[[r]] <- list()
-    files <- list.files(
+    files <- sort(list.files(
       paste0(dir, c("repos", "cache"), "/", sub("^[^/]+/", "", r)), search_pattern,
       full.names = TRUE, recursive = TRUE, ignore.case = TRUE
-    )
+    ))
     measure_info_files <- sort(list.files(
       paste0(dir, "repos/", sub("^.+/", "", r)), "^measure_info[^.]*\\.json$",
       full.names = TRUE, recursive = TRUE
     ))
     measure_info_files <- measure_info_files[
-      !duplicated(sub("_rendered", "", measure_info_files, fixed = TRUE))
+      !duplicated(gsub("_rendered|/code/|/data/", "", measure_info_files))
     ]
     if (length(measure_info_files)) {
       measure_info <- c(measure_info, lapply(

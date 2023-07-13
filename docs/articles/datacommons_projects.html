@@ -141,9 +141,8 @@ function.</p>
 </h3>
 <p>The most basic requirement of a data repository is that it contain a
 data file in a tall format, as initially handled by <a href="https://uva-bi-sdad.github.io/community/reference/data_reformat_sdad.html">data_reformat_sdad</a>
-– these should at least have columns for <code>id</code> (default is
-<code>geoid</code>) and <code>value</code> (default is
-<code>value</code>).</p>
+– these should at least have columns containing IDs (default is
+<code>geoid</code>) and values (default is <code>value</code>).</p>
 <p>The <a href="https://uva-bi-sdad.github.io/community/reference/datacommons_map_files.html">datacommons_map_files</a>
 function searches for files in each repository to make an index, which
 is used to create the views.</p>
@@ -172,9 +171,8 @@ of the broader data commons.</p>
 function.</p>
 <p>The product of a view is a set of unified data files (containing the
 requested variables and IDs, if found), and a collected measures info
-file containing information found about any of the included variables
-found. These need to be directed to an <code>output</code>
-directory:</p>
+file containing information about any of the included variables found.
+These need to be directed to an <code>output</code> directory:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">output</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">dir</span>, <span class="st">"/view1"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/datacommons_view.html">datacommons_view</a></span><span class="op">(</span></span>
@@ -212,8 +210,8 @@ directory:</p>
 <span><span class="co">#&gt; 9 51059 2021         0.2870052</span></span></code></pre></div>
 <p>Usually the output would be a data site project, with a build script
 that documents the new datasets and rebuilds the site (such as <a href="https://github.com/uva-bi-sdad/community_example/blob/main/build.R" class="external-link">community_example/build.R</a>).
-Such a script can be set as the view’s <code>run_after</code> script, so
-after the datasets get rebuilt, the site is also rebuilt.</p>
+Such a script can be set as the view’s <code>run_after</code>, so after
+the datasets get rebuilt, the site is also rebuilt.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

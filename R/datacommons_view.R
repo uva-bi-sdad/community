@@ -268,7 +268,7 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
           full.names = TRUE, recursive = TRUE
         ))
         measure_info_files <- measure_info_files[
-          !duplicated(sub("_rendered", "", sub("/code/", "/data/", measure_info_files, fixed = TRUE), fixed = TRUE))
+          !duplicated(gsub("_rendered|/code/|/data/", "", measure_info_files))
         ]
         ri <- lapply(measure_info_files, function(f) {
           m <- tryCatch(jsonlite::read_json(f), error = function(e) {

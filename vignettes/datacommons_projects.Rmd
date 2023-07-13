@@ -66,7 +66,7 @@ datacommons_refresh(dir, verbose = FALSE)
 
 The most basic requirement of a data repository is that it contain a data file in a tall format, as
 initially handled by [data_reformat_sdad](https://uva-bi-sdad.github.io/community/reference/data_reformat_sdad.html) --
-these should at least have columns for `id` (default is `geoid`) and `value` (default is `value`).
+these should at least have columns containing IDs (default is `geoid`) and values (default is `value`).
 
 The [datacommons_map_files](https://uva-bi-sdad.github.io/community/reference/datacommons_map_files.html)
 function searches for files in each repository to make an index, which is used to create the views.
@@ -91,7 +91,7 @@ Views can be specified and run with the [datacommons_view](https://uva-bi-sdad.g
 function.
 
 The product of a view is a set of unified data files (containing the requested variables and IDs, if found),
-and a collected measures info file containing information found about any of the included variables found.
+and a collected measures info file containing information about any of the included variables found.
 These need to be directed to an `output` directory:
 
 ```{r}
@@ -113,5 +113,5 @@ read.csv(paste0(output, "/dataset.csv.xz"))
 
 Usually the output would be a data site project, with a build script that documents
 the new datasets and rebuilds the site (such as [community_example/build.R](https://github.com/uva-bi-sdad/community_example/blob/main/build.R)).
-Such a script can be set as the view's `run_after` script, so after the datasets get rebuilt,
+Such a script can be set as the view's `run_after`, so after the datasets get rebuilt,
 the site is also rebuilt.

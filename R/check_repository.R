@@ -125,18 +125,18 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
     }
   }
   files <- list.files(dir, search_pattern, recursive = TRUE, full.names = TRUE)
-  files <- files[!grepl(paste0(
+  files <- sort(files[!grepl(paste0(
     "[/\\](?:docs|code|working|original",
     if (length(exclude)) paste0("|", paste(exclude, collapse = "|")),
     ")[/\\]"
-  ), files, TRUE)]
+  ), files, TRUE)])
   if (!length(files)) cli_abort("no files found")
   i <- 0
   if (verbose) cli_h1("measure info")
   meta <- list()
-  info_files <- sort(list.files(dir, "^measure_info[^.]*\\.json$", full.names = TRUE, recursive = TRUE), !write_infos)
+  info_files <- sort(list.files(dir, "^measure_info[^.]*\\.json$", full.names = TRUE, recursive = TRUE))
   info_files <- info_files[
-    !grepl("docs/data", info_files, fixed = TRUE) & !duplicated(sub("_rendered", "", info_files, fixed = TRUE))
+    !grepl("docs/data", info_files, fixed = TRUE) & !duplicated(gsub("_rendered|/code/|/data/", "", info_files))
   ]
   results <- list(data = files, info = info_files)
   required_fields <- c(
@@ -158,8 +158,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   for (f in info_files) {
     m <- tryCatch(data_measure_info(
       f,
-      render = !grepl("_rendered", f, fixed = TRUE), write = write_infos,
-      verbose = FALSE, open_after = FALSE
+      render = TRUE, write = write_infos, verbose = FALSE, open_after = FALSE
     ), error = function(e) NULL)
     if (is.null(m)) cli_abort("measure info is malformed: {.file {f}}")
     i <- i + 1
@@ -219,7 +218,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
         }
       }
     }
-    for (n in names(m)) {
+    for (n in sort(names(m))) {
       if (!grepl("^_", n)) {
         cm <- Filter(function(e) length(e) && (length(e) > 1 || e != ""), m[[n]])
         entries <- names(cm)
@@ -313,7 +312,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
   if (verbose) cli_progress_done()
   if (verbose && !length(meta)) cli_alert_danger("no valid measure info")
   if (length(flagged_references)) {
-    for (r in names(flagged_references)) {
+    for (r in sort(names(flagged_references))) {
       su <- !flagged_references[[r]] %in% known_references
       if (any(su)) {
         f <- strsplit(r, ":::", fixed = TRUE)[[1]]
@@ -524,7 +523,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
             }
 
             measures <- unique(d[[value_name]])
-            measures <- measures[measures != "NA"]
+            measures <- sort(measures[measures != "NA"])
             su <- !measures %in% rendered_names
             if (any(su)) su[su] <- !make_full_name(f, measures[su]) %in% names(meta)
             if (any(su)) results$warn_missing_info[[f]] <- c(results$warn_missing_info[[f]], measures[su])
@@ -613,7 +612,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
     }
   }
 
-  warnings <- unique(unlist(lapply(grep("^warn_", names(results), value = TRUE), function(w) {
+  warnings <- unique(unlist(lapply(grep("^warn_", sort(names(results)), value = TRUE), function(w) {
     if (is.list(results[[w]])) names(results[[w]]) else results[[w]]
   }), use.names = FALSE))
   n_warn <- length(warnings)
