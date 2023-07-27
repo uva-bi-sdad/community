@@ -12,13 +12,12 @@ test_that("parse cases properly", {
         ),
         list(
           condition = list(
-            list(id = "c", type = "=", value = 1, any = FALSE)
+            list(id = "c", type = "=", value = 1)
           ),
           value = 1
         )
       ),
-      default = "",
-      display = list()
+      default = ""
     ),
     input_variable("variable", list(
       "!a || b" = 0,

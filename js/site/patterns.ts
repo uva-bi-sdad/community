@@ -37,6 +37,6 @@ export const patterns = {
   math_tags: /^(?:semantics|annotation|m|semantics)/,
   math_attributes: /^(?:xmlns|display|style|encoding|stretchy|alttext|scriptlevel|fence|math|separator)/,
   id_escapes: /(?<=#[^\s]+)([.[\](){}?*-])/g,
-  repo: /\.com\/([^\/]+\/[^\/]+)/,
+  repo: /\.com[/:]([^\/]+\/[^\/]+)/,
   basename: /^.*\//,
 }

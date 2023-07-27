@@ -73,7 +73,9 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
                                entity_info = c(type = "region_type", name = "region_name"), measure_info = list(),
                                metadata = NULL, formatters = NULL, compression = "xz", read_existing = TRUE,
                                overwrite = FALSE, get_coverage = TRUE, verbose = TRUE) {
+  base_dir <- "./"
   if (length(files) == 1 && dir.exists(files)) {
+    base_dir <- files
     files <- list.files(files, full.names = TRUE)
   }
   if (any(!file.exists(files))) {
@@ -151,11 +153,20 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       spec <- spec[!su]
     }
     names <- c(names, list(colnames(d)))
-    remote <- get_git_remote(sub("(^.+repos/[^/]+/).*$", "\\1.git/config", f))
-    if (length(remote)) d$file <- paste0(remote, sub("^.+repos/[^/]+", "", f))
-    if (!"file" %in% colnames(d)) d$file <- sub("^.+repos/", "", f)
+    if (grepl("repos/", f, fixed = TRUE)) {
+      remote <- get_git_remote(sub("(^.+repos/[^/]+/).*$", "\\1.git/config", f))
+      if (length(remote)) d$file <- paste0(remote, sub("^.+repos/[^/]+", "", f))
+      if (!"file" %in% colnames(d)) d$file <- sub("^.+repos/", "", f)
+    } else {
+      if (!grepl("/$", base_dir)) base_dir <- paste0(base_dir, "/")
+      remote <- get_git_remote(paste0(base_dir, ".git/config"))
+      d$file <- gsub("//+", "/", if (length(remote)) {
+        paste0(remote, "/", sub(base_dir, "", f, fixed = TRUE))
+      } else {
+        sub(base_dir, "", f, fixed = TRUE)
+      })
+    }
     data <- c(data, list(d))
-    names(data)[length(data)] <- f
   }
   if (verbose) cli_progress_done()
   common <- Reduce(intersect, names)
@@ -179,8 +190,8 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     check_variables <- TRUE
     variables <- unique(as.character(variables))
   }
-  data <- do.call(rbind, lapply(names(data), function(f) {
-    d <- data[[f]]
+  data <- do.call(rbind, lapply(seq_along(data), function(i) {
+    d <- data[[i]]
     mv <- vars[!vars %in% colnames(d)]
     if (length(mv)) d[, vars[!vars %in% colnames(d)]] <- ""
     d <- d[, vars]
@@ -190,7 +201,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       su <- !ovars %in% variables
       if (any(su)) {
         names(ovars) <- ovars
-        ovars[] <- make_full_name(f, ovars)
+        ovars[] <- make_full_name(d$file[[1]], ovars)
         su <- su & ovars %in% variables
         for (i in which(su)) d[[value_name]][d[[value_name]] == names(ovars)[i]] <- ovars[i]
       }
@@ -198,7 +209,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
     }
     d
   }))
-  if (!nrow(data)) cli_abort("no datasets contained selected variables and/or IDs")
+  if (is.null(data) || !nrow(data)) cli_abort("no datasets contained selected variables and/or IDs")
   cn <- colnames(data)
   if (!id %in% vars) {
     id <- "id"

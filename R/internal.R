@@ -10,7 +10,9 @@ parse_rule <- function(condition) {
   lapply(conds, function(co) {
     co <- strsplit(co, "\\s")[[1]]
     if (length(co) == 1) co <- c(sub("^!+", "", co), if (grepl("^!\\w", co)) "!" else "", "")
-    if (tolower(co[2]) %in% c("true", "false")) {
+    Filter(function(e) {
+      length(e) != 1 || if (is.logical(e)) e else TRUE
+    }, if (tolower(co[2]) %in% c("true", "false")) {
       list(
         id = co[1],
         type = if (tolower(co[2]) == "true") "" else "!",
@@ -27,7 +29,7 @@ parse_rule <- function(condition) {
         },
         any = comb_type
       )
-    }
+    })
   })
 }
 

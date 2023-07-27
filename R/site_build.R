@@ -312,7 +312,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
       }
     }
     if (length(info)) {
-      list(
+      Filter(length, list(
         url = if (is.null(parent)) "" else parent,
         package = sub(paste0(dir, "/docs/"), "", f, fixed = TRUE),
         datasets = if (length(meta$resources) == 1) list(names(info)) else names(info),
@@ -321,7 +321,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         measure_info = meta$measure_info,
         entity_info = ids_maps_paths,
         files = vapply(info, "[[", "", "filename")
-      )
+      ))
     }
   }
   path <- paste0(dir, "/docs/settings.json")

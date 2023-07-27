@@ -24,7 +24,7 @@ test_that("build environment is added to", {
   ), parts)
   expect_identical(parts$body, content)
   expect_identical(parts$rules, list(list(
-    condition = list(list(id = "input", type = "", value = "", any = FALSE)),
+    condition = list(list(id = "input", type = "", value = "")),
     effects = list(lock = "menu01")
   )))
 })

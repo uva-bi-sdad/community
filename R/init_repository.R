@@ -25,9 +25,6 @@ init_repository <- function(dir, datasets = NULL, init_data = TRUE, init_site = 
   if (missing(dir)) cli_abort('{.arg dir} must be speficied (e.g., dir = ".")')
   check <- check_template("repository", dir = dir)
   datasets_inited <- file.exists(paste0(dir, "/", datasets, "/data"))
-  if (!quiet && check$exists && all(datasets_inited) && !overwrite) {
-    cli_bullets(c(`!` = "repository files already exist", i = "add {.code overwrite = TRUE} to overwrite them"))
-  }
   dir <- normalizePath(paste0(dir, "/", check$spec$dir), "/", FALSE)
   dir.create(dir, FALSE, TRUE)
   dir.create(paste0(dir, "/docs"), FALSE)

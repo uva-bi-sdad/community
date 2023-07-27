@@ -29,7 +29,7 @@ test_that("buttons and expressions are parsed", {
       text = "b1"
     ),
     list(
-      condition = list(list(id = "input_id", type = "=", value = "value", any = FALSE)),
+      condition = list(list(id = "input_id", type = "=", value = "value")),
       text = "conditional text"
     )
   ))
