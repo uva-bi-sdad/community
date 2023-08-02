@@ -1,5 +1,7 @@
 import {patterns} from './patterns'
-import type {ActiveElement, RegisteredElements} from '../types'
+import type {RegisteredElements} from '../types'
+import {BaseInput} from './elements'
+import {Combobox} from './elements/combobox'
 
 type Actions = string[] | {[index: string]: string}
 type TutorialStep = {
@@ -45,7 +47,7 @@ export class TutorialManager {
   current_step = 0
   current_time = 0
   current_element: HTMLElement
-  current_site_element: ActiveElement
+  current_site_element: BaseInput | Combobox
   site_reset: Function
   constructor(tutorials: Tutorials, elements?: RegisteredElements, resetter?: Function) {
     this.tutorials = tutorials
@@ -263,7 +265,7 @@ export class TutorialManager {
             this.current_site_element.toggle &&
             action === this.current_site_element.id
           ) {
-            if (!this.current_site_element.expanded) this.current_site_element.toggle({target: this.current_element})
+            if (!this.current_site_element.expanded) this.current_site_element.toggle(void 0, this.current_element)
           } else {
             this.current_element && this.current_element.click()
           }

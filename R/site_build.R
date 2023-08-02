@@ -381,12 +381,12 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     if (stable) {
       list(
         base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.v1.min.css"),
-        base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.v1.min.js")
+        base = list(type = "script", loading = "defer", src = "https://uva-bi-sdad.github.io/community/dist/js/community.v1.min.js")
       )
     } else if (version == "dev") {
       list(
         base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.min.css"),
-        base = list(type = "script", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js")
+        base = list(type = "script", loading = "defer", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js")
       )
     } else {
       if (version == "local") version <- "http://localhost:8000"
@@ -397,7 +397,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
       }
       list(
         base_style = list(type = "stylesheet", src = paste0(version, "/community.css")),
-        base = list(type = "script", src = paste0(version, "/community.js"))
+        base = list(type = "script", loading = "defer", src = paste0(version, "/community.js"))
       )
     },
     c(
@@ -597,25 +597,11 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />',
     '<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />',
     '<meta name="viewport" content="width=device-width,initial-scale=1" />',
-    paste0(
-      '<script type="application/javascript">\nconst site = ',
-      jsonlite::toJSON(settings, auto_unbox = TRUE),
-      "\n</script>"
-    ),
     if (bundle_data) {
-      paste0(
-        '<script type="application/javascript">\nsite.data = {\n',
-        paste(
-          vapply(settings$metadata$datasets, function(f) {
-            paste0('"', f, '": ', paste(
-              readLines(paste0(dir, "/docs/", f, ".json"), warn = FALSE),
-              collapse = ""
-            ), ",\n")
-          }, ""),
-          collapse = ""
-        ),
-        "}\n</script>"
-      )
+      settings$data = structure(lapply(
+        settings$metadata$datasets,
+        function(f) jsonlite::read_json(paste0(dir, "/docs/", f, ".json"))
+      ), names = settings$metadata$datasets)
     },
     unlist(lapply(parts$dependencies[c(seq_along(parts$dependencies)[-last_deps], last_deps)], head_import, dir = dir)),
     paste0('<meta name="generator" content="community v', packageVersion("community"), '" />'),
@@ -636,6 +622,11 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
       "</div>",
       '<noscript style="width: 100%; text-align: center; padding: 5em">Please enable JavaScript to view this site.</noscript>',
       "</div>"
+    ),
+    paste0(
+      '<script type="application/javascript">\nconst site = ',
+      jsonlite::toJSON(settings, auto_unbox = TRUE),
+      "\nwindow.onload = () => new Community(site)\n</script>"
     ),
     parts$script,
     "</body>",

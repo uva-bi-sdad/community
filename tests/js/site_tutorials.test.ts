@@ -20,7 +20,7 @@ const _u: RegisteredElements = {
     set: function (value: string) {
       this.e.innerText = value
     },
-  },
+  } as any,
 }
 
 const example: Tutorials = {

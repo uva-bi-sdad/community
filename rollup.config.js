@@ -3,8 +3,9 @@ import serve from 'rollup-plugin-serve'
 
 export default [
   {
-    input: 'js/site/index.js',
+    input: 'js/site/index.ts',
     output: {
+      name: 'Community',
       file: 'dev/community.js',
       format: 'umd',
       sourcemap: true,

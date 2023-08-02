@@ -1,4 +1,9 @@
-type Generic = {[index: string]: string}
+import Community from './site'
+import {BaseInput} from './site/elements'
+import {ActiveCombobox, Combobox} from './site/elements/combobox'
+import {OutputPlotly} from './site/elements/plotly'
+
+export type Generic = {[index: string]: string}
 
 export type UnparsedObject = {
   [index: string]:
@@ -34,6 +39,21 @@ export type Filter = {
   value: string | string[]
   time_component: boolean
   check: Function
+}
+
+export type FilterParsed = {
+  e: HTMLElement
+  variable: string
+  component: string | number
+  time_component: string
+  operator: string
+  value: number
+  active: boolean
+  id: string
+  passed: number
+  failed: number
+  info: MeasureInfo
+  view: ActiveDataview
 }
 
 export type VectorSummary = {
@@ -126,7 +146,7 @@ export type LogicalObject = {[index: string]: number | boolean}
 
 type Time = {
   name: string
-  value: number | number[]
+  value: number[]
   range?: number[]
   n?: number
   is_single?: boolean
@@ -179,6 +199,18 @@ export type VariableFilter = {
   conditions: Filter[]
 }
 
+export type VariableFilterParsed = {
+  filter: FilterParsed
+  name: string
+  range: [number, number]
+  operator: string
+  value: number
+  value_type: string
+  component: string
+  active: boolean
+  comp_fun: Function
+}
+
 type EntityMeta = {time: Time; variables: VariableMeta}
 
 export type Data = {
@@ -217,6 +249,7 @@ export type ResourceField = {
   ids?: EntityFeatures
   table?: {[index: string]: number}
   order?: Order[]
+  levels?: {[index: string]: {id: string; name: string}}
 }
 
 export type ResourceFields = {[index: string]: ResourceField}
@@ -255,16 +288,21 @@ export type Metadata = {
 
 type DataviewSelection = {[index: string]: Entities}
 
-type DataView = {
-  state: string
-  get: {[index: string]: Function}
-  selection: DataviewSelection
-  n_selected: {[index: string]: number}
+export type DataViewParsed = {
+  dataset: string
+  ids: string
+  features: string
+  variables: string
+  time_filters: string
+  time_agg: number
+  id_source: string
+  variable_values: Map<string, VariableFilterParsed>
+  feature_values: {[index: string]: Filter}
 }
 
 export type Settings = {
   settings?: Generic
-  dataviews?: {[index: string]: DataView}
+  dataviews?: {[index: string]: SiteDataView}
   view_names?: string[]
   metadata?: Metadata
   entity_info?: EntityFeatureSet | Generic
@@ -326,13 +364,316 @@ export type DataMaps = {
   }
 }
 
-export type ActiveElement = {
+export interface ActiveElement {
   id: string
   e: HTMLElement
   update?: Function
   set?: Function
+  reset?: Function
   toggle?: Function
+  close?: Function
   expanded?: boolean
+  value?: Function
+  deferred?: boolean
+  input?: boolean
+  range?: number[]
+  default: string | number
+  state: string
+  dataset: string
+  view: string
+  site: Community
 }
 
-export type RegisteredElements = {[index: string]: ActiveElement}
+export interface ActiveDataview extends ActiveElement {
+  parsed: DataViewParsed
+  get: {
+    dataset: Function
+    ids: Function
+    features: Function
+    variables: Function
+    time_filters: Function
+  }
+  ids_check: Function
+  reparse: Function
+  checks: {
+    dataset: Function
+    ids: Function
+    features: Function
+    variables: Function
+  }
+  check: Function
+  time?: string
+  time_range: {
+    filtered: number[]
+    index: number[]
+    filtered_index: number[]
+    time: number[]
+    dataset: string
+    variable: string
+  }
+  times: boolean[]
+  palette: string
+  y?: string
+  x?: string
+  time_agg?: string
+  time_filters?: SiteConditions
+  ids?: string
+  features?: Generic
+  state: string
+  valid: boolean
+  selection: DataviewSelection
+  n_selected: {[index: string]: number}
+}
+
+export interface ActiveTable extends ActiveElement {
+  parsed: {
+    summary: {n: number}
+    order: Orders
+    time: number
+    color: string
+    dataset: string
+    time_index: {[index: number]: number}
+  }
+}
+
+export type RegisteredElements = {[index: string]: BaseInput}
+
+export type Conditionals = {
+  setting: Function
+  options: Function
+  set_current: Function
+  min: Function
+  max: Function
+  dataview: Function
+  time_filters: Function
+  time_range: Function
+  id_filter: Function
+}
+
+type SiteCondition = {
+  id: string
+  type: string
+  value: string
+  any: boolean
+  check: Function
+}
+type SiteConditions = SiteCondition[]
+
+type SiteRule = {
+  condition: SiteConditions
+  effects: {[index: string]: string}
+  parsed: {
+    lock?: Map<string, BaseInput>
+    display: {
+      e: HTMLElement
+      u: ActiveElement
+    }
+  }
+  default?: string
+}
+
+type SiteVariable = {
+  id: string
+  states: {
+    condition: SiteConditions
+    value: string
+  }[]
+  default: string
+  display: Generic
+}
+
+export type SiteDataView = {
+  palette: string
+  y?: string
+  x?: string
+  time_agg?: string
+  time_filters?: SiteConditions
+  dataset?: string
+  ids?: string
+  features?: Generic
+  state: string
+  valid: boolean
+  get: {[index: string]: Function}
+  selection: DataviewSelection
+  n_selected: {[index: string]: number}
+  parsed: DataViewParsed
+}
+
+type SiteInfoBody = {
+  name: string
+  value: string
+  style: string
+}
+
+type SiteInfo = {
+  title?: string
+  body?: SiteInfoBody[]
+  default?: {
+    title?: string
+    body?: string
+  }
+  floating?: boolean
+  dataview?: string
+  subto?: string[]
+  variable?: string
+  variable_info?: boolean
+}
+
+type SiteText = {
+  text: {
+    text: string | string[]
+    condition?: SiteConditions
+    button?: {
+      [index: string]: {
+        text: string[]
+        type: string
+        target: string
+      }
+    }
+  }[]
+  condition?: SiteConditions
+}
+
+type SiteCombobox = {
+  strict?: boolean
+  numeric?: boolean
+  search?: boolean
+  multi?: boolean
+  accordion?: boolean
+  group?: string
+  filters?: Generic
+}
+
+type SiteButton = {
+  effects: string | Generic
+  dataview?: string
+  query?: Query
+  api?: boolean
+}
+
+export type SitePlotly = {
+  layout: {[index: string]: any}
+  config: {[index: string]: any}
+  data: {[index: string]: any}
+  subto: string[]
+  u: OutputPlotly
+}
+
+type MapLayer = {
+  name: string
+  url: string
+  id_property: string
+  time?: number
+  retrieved?: boolean
+  property_summaries?: {
+    [index: string]: [number, number, number]
+  }
+}
+
+export type SiteMap = {
+  shapes: MapLayer[]
+  overlays?: {
+    variable: string
+    source?: {
+      name: string
+      url: string
+      time?: number
+    }[]
+    options: {[index: string]: boolean | number | string | (number | string)[]}
+    tiles: {
+      [index: string]: {
+        url: string
+        options?: {[index: string]: any}
+      }
+    }
+  }
+  u: BaseInput
+}
+
+type SiteLegend = {
+  palette: string
+  subto: string | string[]
+}
+
+type SiteCredits = {
+  name: string
+  url: string
+  description?: string
+  version?: string
+}
+
+export type SiteSpec = {
+  settings: Generic
+  metadata: Metadata
+  endpoint: string
+  aggregated: boolean
+  rules?: SiteRule[]
+  variables?: SiteVariable[]
+  dataviews?: {[index: string]: SiteDataView}
+  info?: {[index: string]: SiteInfo}
+  text?: {[index: string]: SiteText}
+  combobox?: {[index: string]: SiteCombobox}
+  button?: {[index: string]: SiteButton}
+  datatable?: {[index: string]: any}
+  plotly?: {[index: string]: SitePlotly}
+  map?: {
+    [index: string]: SiteMap | string[] | {[index: string]: MapLayer}
+    _queue?: {[index: string]: MapLayer}
+    _raw?: string[]
+  }
+  legend?: {[index: string]: SiteLegend}
+  credits?: {[index: string]: SiteCredits}
+  tag_id?: string
+}
+
+interface Modal {
+  init: boolean
+  e: HTMLElement
+  header: HTMLElement
+}
+
+export interface FilterUI extends Modal {
+  conditions: HTMLElement
+  variable_filters: HTMLElement
+  entity_filters: HTMLElement
+  entity_inputs: {[index: string]: Combobox}
+}
+
+export interface InfoUI extends Modal {
+  body: HTMLElement
+  title: HTMLElement
+  description: HTMLElement
+  name: HTMLElement
+  sources: HTMLElement
+  references: HTMLElement
+  origin: HTMLElement
+  source_file: HTMLElement
+}
+
+export type SitePage = {
+  load_screen: HTMLElement
+  wrap: HTMLElement
+  navbar: HTMLElement
+  content: HTMLElement
+  overlay: HTMLElement
+  menus: HTMLCollection
+  panels: HTMLCollection
+  elementCount: number
+  modal: {
+    info: InfoUI
+    filter: FilterUI
+  }
+  top_menu?: HTMLElement
+  right_menu?: HTMLElement
+  bottom_menu?: HTMLElement
+  left_menu?: HTMLElement
+  content_bounds: {
+    top: number
+    right: number
+    bottom: number
+    left: number
+    outer_right: number
+  }
+  resize: Function
+  script_style: HTMLStyleElement
+}
