@@ -120,7 +120,7 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
           manifest[[r]][[hash]]$providers <- c(manifest[[r]][[hash]]$provider, if (grepl("repos/", f, fixed = TRUE)) "github" else "dataverse")
           vars <- if (is.function(variable_location)) variable_location(d) else d[[variable_location]]
           if (length(vars)) {
-            vars <- unique(vars)
+            vars <- unique(vars[!is.na(vars)])
             map[[f]] <- data.frame(
               variable = vars,
               dir_name = paste0(gsub(paste0(dir, "|cache/|repos/|data/|distribution/"), "", paste0(dirname(f), "/")), vars),
