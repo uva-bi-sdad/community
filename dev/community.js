@@ -2725,34 +2725,267 @@
         },
     };
 
-    var Combobox = /** @class */ (function (_super) {
-        __extends(Combobox, _super);
-        function Combobox(e, site) {
-            var _this = _super.call(this, e, site) || this;
-            _this.hover_index = -1;
-            _this.cleared_selection = '';
-            _this.expanded = false;
-            _this.container = document.createElement('div');
-            _this.set_current = function () {
-                _this.values = _this.option_sets[_this.dataset].values;
-                _this.display = _this.option_sets[_this.dataset].display;
-                _this.options = _this.option_sets[_this.dataset].options;
-                _this.source = '';
-                _this.id in _this.site.url_options
-                    ? _this.set(_this.site.url_options[_this.id])
-                    : _this.state in _this.values
-                        ? _this.set(_this.state)
-                        : _this.reset();
-            };
-            _this.settings.use_display = _this.settings.search || _this.settings.multi;
-            _this.listbox = _this.e.parentElement.children[1];
-            _this.options = _this.listbox.querySelectorAll('.combobox-option');
-            if (_this.options.length) {
-                _this.values = {};
-                _this.display = {};
-                _this.options.forEach(function (e, i) {
-                    _this.values[e.dataset.value] = i;
-                    _this.display[e.innerText] = i;
+    var patterns = {
+        seps: /[\s,/._-]+/g,
+        period: /\./,
+        all_periods: /\./g,
+        word_start: /\b(\w)/g,
+        settings: /^settings?\./,
+        features: /^features?\./,
+        filter: /^filter\./,
+        data: /^data\./,
+        variables: /^variables?\./,
+        properties: /prop/,
+        palette: /^pal/,
+        datasets: /^dat/,
+        variable: /^var/,
+        levels: /^lev/,
+        ids: /^ids/,
+        minmax: /^m[inax]{2}$/,
+        int_types: /^(?:year|int|integer)$/,
+        end_punct: /[.?!]$/,
+        mustache: /\{(.*?)\}/g,
+        measure_name: /(?:^measure|_name)$/,
+        http: /^https?:\/\//,
+        bool: /^(?:true|false)$/,
+        number: /^[\d-][\d.,]*$/,
+        leading_zeros: /^0+/,
+        url_spaces: /%20/g,
+        hashes: /#/g,
+        embed_setting: /^(?:hide_|navcolor|close_menus)/,
+        median: /^med/i,
+        location_string: /^[^?]*/,
+        time_ref: /\{time\}/g,
+        pre_colon: /^[^:]*:/,
+        exclude_query: /^(?:features|time_range|id)$/,
+        space: /\s+/,
+        has_equation: /<math/,
+        bracket_content: /(?:^|>)[^<]*(?:<|$)/,
+        math_tags: /^(?:semantics|annotation|m|semantics)/,
+        math_attributes: /^(?:xmlns|display|style|encoding|stretchy|alttext|scriptlevel|fence|math|separator)/,
+        id_escapes: /(?<=#[^\s]+)([.[\](){}?*-])/g,
+        repo: /\.com[/:]([^\/]+\/[^\/]+)/,
+        basename: /^.*\//,
+    };
+
+    var value_types = {
+        percent: function (v) {
+            return v + '%';
+        },
+        minute: function (v) {
+            return v + ' minutes';
+        },
+        minutes: function (v) {
+            return v + ' minutes';
+        },
+        dollars: function (v) {
+            return '$' + v;
+        },
+        'Mb/s': function (v) {
+            return v + ' Mbps';
+        },
+    };
+
+    var defaults = {
+        time: 'time',
+        dataview: 'default_view',
+        palette: 'vik',
+        background_highlight: '#adadad',
+        border: '#7e7e7e',
+        border_highlight_true: '#ffffff',
+        border_highlight_false: '#000000',
+        missing: '#00000000',
+    };
+
+    var summary_levels = {
+        dataset: 'Overall',
+        filtered: 'Filtered',
+        children: 'Unfiltered selection',
+        all: 'Selection',
+    };
+
+    function set_description(e, info) {
+        var description = info.long_description || info.description || info.short_description || '';
+        var has_equation = patterns.has_equation.test(description);
+        if (has_equation) {
+            var tags = description.split(patterns.bracket_content);
+            for (var i = tags.length; i--;) {
+                var t = tags[i];
+                if (t && '/' !== t.substring(0, 1)) {
+                    var p = t.split(patterns.space), n = p.length;
+                    has_equation = patterns.math_tags.test(p[0]);
+                    if (!has_equation)
+                        break;
+                    for (var a = 1; a < n; a++) {
+                        has_equation = patterns.math_attributes.test(p[a]);
+                        if (!has_equation)
+                            break;
+                    }
+                    if (!has_equation)
+                        break;
+                }
+            }
+        }
+        e[has_equation ? 'innerHTML' : 'innerText'] = description;
+    }
+
+    var TutorialManager = /** @class */ (function () {
+        function TutorialManager(tutorials, elements, resetter) {
+            var _this = this;
+            this.container = document.createElement('div');
+            this.backdrop = document.createElement('div');
+            this.highlight = document.createElement('div');
+            this.menu = document.createElement('div');
+            this.frame = document.createElement('div');
+            this.header = document.createElement('p');
+            this.dialog = document.createElement('p');
+            this.timer = document.createElement('div');
+            this.progress = document.createElement('div');
+            this.continue = document.createElement('button');
+            this.in_progress = '';
+            this.waiting = false;
+            this.current_step = 0;
+            this.current_time = 0;
+            this.tutorials = tutorials;
+            this.site_elements = elements || {};
+            this.site_reset = resetter || (function () { });
+            this.start_tutorial = this.start_tutorial.bind(this);
+            this.progress_tutorial = this.progress_tutorial.bind(this);
+            this.execute_step = this.execute_step.bind(this);
+            this.end_tutorial = this.end_tutorial.bind(this);
+            // prepare menu
+            document.body.appendChild(this.menu);
+            this.menu.id = 'community_tutorials_menu';
+            this.menu.className = 'modal fade';
+            this.menu.tabIndex = -1;
+            var e = document.createElement('div');
+            this.menu.appendChild(e);
+            e.className = 'modal-dialog modal-dialog-scrollable';
+            e.appendChild((e = document.createElement('div')));
+            e.className = 'modal-content';
+            e.appendChild((e = document.createElement('div')));
+            e.className = 'modal-header';
+            e.appendChild((e = document.createElement('p')));
+            e.className = 'modal-title h5';
+            e.innerText = 'Tutorials';
+            var close = document.createElement('button');
+            e.insertAdjacentElement('afterend', close);
+            close.type = 'button';
+            close.className = 'btn-close';
+            close.setAttribute('data-bs-dismiss', 'modal');
+            close.setAttribute('aria-label', 'Close');
+            var l = document.createElement('div');
+            this.menu.lastElementChild.lastElementChild.appendChild(l);
+            l.className = 'modal-body';
+            Object.keys(tutorials).forEach(function (name) {
+                var t = tutorials[name], e = document.createElement('div'), description = document.createElement('div'), start = document.createElement('button');
+                t.manager = _this;
+                t.n_steps = t.steps.length;
+                var p = document.createElement('div');
+                l.appendChild(e);
+                e.className = 'tutorial-listing card';
+                e.appendChild(p);
+                p.className = 'card-header';
+                p.innerText = t.title || name;
+                e.appendChild((p = document.createElement('div')));
+                p.className = 'card-body';
+                p.appendChild(description);
+                description.appendChild(document.createElement('p'));
+                description.firstElementChild.innerText = t.description || '';
+                if (t.steps.length && t.steps[0].before && !Array.isArray(t.steps[0].before)) {
+                    var before_1 = t.steps[0].before, setting_display_1 = document.createElement('div'), header = document.createElement('span');
+                    setting_display_1.className = 'tutorial-initial-settings';
+                    setting_display_1.appendChild(header);
+                    header.innerText = 'Initial Settings';
+                    header.className = 'h6';
+                    Object.keys(t.steps[0].before).forEach(function (k, i) {
+                        var row = document.createElement('p');
+                        var part = document.createElement('span');
+                        part.className = 'syntax-variable';
+                        part.innerText = k.replace(patterns.settings, '');
+                        row.appendChild(part);
+                        part = document.createElement('span');
+                        part.className = 'syntax-operator';
+                        part.innerText = ' = ';
+                        row.appendChild(part);
+                        part = document.createElement('span');
+                        part.className = 'syntax-value';
+                        part.innerText = before_1[k];
+                        row.appendChild(part);
+                        setting_display_1.appendChild(row);
+                    });
+                    description.appendChild(setting_display_1);
+                }
+                p.appendChild(start);
+                start.type = 'button';
+                start.className = 'btn';
+                start.innerText = 'Start';
+                start.dataset.name = name;
+                start.addEventListener('click', _this.start_tutorial);
+            });
+            // prepare step display
+            document.body.appendChild(this.container);
+            this.container.appendChild(this.backdrop);
+            this.container.className = 'tutorial-container hidden';
+            this.container.addEventListener('keyup', this.progress_tutorial);
+            this.backdrop.addEventListener('click', this.progress_tutorial);
+            this.backdrop.className = 'tutorial-backdrop';
+            this.container.appendChild(this.highlight);
+            this.highlight.className = 'tutorial-highlight';
+            this.highlight.addEventListener('click', this.progress_tutorial);
+            this.container.appendChild(this.frame);
+            this.frame.className = 'tutorial-frame';
+            this.frame.style.left = '50%';
+            this.frame.tabIndex = -1;
+            this.frame.appendChild((e = document.createElement('div')));
+            this.frame.id = 'community_tutorial_frame';
+            this.frame.role = 'dialog';
+            this.frame.setAttribute('aria-labelledby', 'community_tutorial_description');
+            e.className = 'tutorial-step card';
+            e.appendChild((e = document.createElement('div')));
+            e.className = 'card-header';
+            e.appendChild(this.header);
+            this.header.className = 'card-title';
+            this.header.id = 'community_tutorial_title';
+            close = document.createElement('button');
+            e.appendChild(close);
+            close.type = 'button';
+            close.className = 'btn-close';
+            close.setAttribute('aria-label', 'Close Tutorial');
+            close.addEventListener('click', this.end_tutorial);
+            this.frame.firstElementChild.appendChild((e = document.createElement('div')));
+            e.className = 'card-body';
+            e.appendChild(this.dialog);
+            this.dialog.role = 'status';
+            this.dialog.id = 'community_tutorial_description';
+            this.dialog.setAttribute('aria-labelledby', 'community_tutorial_progress');
+            this.dialog.setAttribute('aria-live', 'polite');
+            e.lastElementChild.className = 'card-text';
+            this.frame.firstElementChild.appendChild((e = document.createElement('div')));
+            e.className = 'tutorial-footer card-footer';
+            e.appendChild(this.progress);
+            this.progress.role = 'progressbar';
+            this.progress.id = 'community_tutorial_progress';
+            e.appendChild(this.timer);
+            this.timer.role = 'timer';
+            e.appendChild(this.continue);
+            this.continue.addEventListener('click', this.progress_tutorial);
+            this.continue.type = 'button';
+            this.continue.className = 'btn';
+            this.continue.innerText = 'Next';
+            this.continue.setAttribute('aria-controls', 'community_tutorial_frame');
+        }
+        TutorialManager.prototype.retrieve_element = function (name) {
+            var e;
+            if (name in this.site_elements) {
+                this.current_site_element = this.site_elements[name];
+                e = this.current_site_element.e;
+            }
+            else if ('nav:' === name.substring(0, 4).toLowerCase()) {
+                var text_1 = name.replace(patterns.pre_colon, '');
+                document.querySelectorAll('.nav-item button').forEach(function (item) {
+                    if (text_1 === item.innerText)
+                        e = item;
                 });
                 var group = _this.listbox.querySelectorAll('.combobox-group');
                 if (group.length) {

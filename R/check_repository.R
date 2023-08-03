@@ -624,6 +624,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
       warn_blank_colnames = "contains blank column names:",
       warn_value_nas = "{.pkg {value}} column contains NAs (which are redundant):",
       warn_id_nas = "{.pkg {id}} column contains NAs:",
+      warn_scientific = "{.pkg {id}} column appears to contain values in scientific notation:",
       warn_value_name_nas = "{.pkg {value_name}} column contains NAs:",
       warn_dataset_nas = "{.pkg {dataset}} column contains NAs:",
       warn_time_nas = "{.pkg {time}} column contains NAs:",
