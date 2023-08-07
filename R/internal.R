@@ -235,8 +235,8 @@ get_git_remote <- function(config) {
     url <- grep("url =", conf, fixed = TRUE, value = TRUE)
     if (length(branch) && length(url)) {
       paste0(
-        gsub("^.+=\\s|\\.git", "", url), "/blob/",
-        gsub('^[^"]+"|"\\]', "", branch)
+        gsub("^.+=\\s|\\.git", "", url[[1]]), "/blob/",
+        gsub('^[^"]+"|"\\]', "", branch[[1]])
       )
     }
   }
