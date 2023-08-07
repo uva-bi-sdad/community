@@ -2083,7 +2083,7 @@ const community = function (window, document, site) {
                       const info = site.data.variables[this.parsed.data],
                         v = site.data.format_value(
                           entity.get_value(this.parsed.data, this.parent.time),
-                          info && info.type ? patterns.int_types.test(info.type) : true
+                          info && info.info[entity.group] && 'integer' === info.info[entity.group].type
                         )
                       let type = info.meta.unit || info.meta.type
                       if (info.meta.aggregation_method && !(type in value_types)) type = info.meta.aggregation_method
@@ -2720,7 +2720,8 @@ const community = function (window, document, site) {
                             variable: vn,
                             offset: this.parsed.time_range[0],
                             entity: v.selection.all[k],
-                            int: patterns.int_types.test(site.data.variables[vn].type),
+                            int:
+                              d in site.data.variables[vn].info && 'integer' === site.data.variables[vn].info[d].type,
                           })
                           this.rowIds[this.rows[k].selector.rows] = k
                         }
@@ -3198,10 +3199,7 @@ const community = function (window, document, site) {
             this.parsed.time = y
             this.parsed.color = variable
             if (summary && y < summary.n.length) {
-              this.integer =
-                site.data.variable_info[variable] && site.data.variable_info[variable].type
-                  ? patterns.int_types.test(site.data.variables[variable].type)
-                  : true
+              this.integer = d in var_info.info && 'integer' === var_info.info[d].type
               const refresh = site.settings.color_by_order !== this.parsed.rank,
                 bins = s.querySelectorAll('span'),
                 odd = palettes[pn].odd,
@@ -3927,7 +3925,7 @@ const community = function (window, document, site) {
       const v = site.data.variables[m.name]
       if (v && !v.is_time) {
         const l = site.data.format_label(m.name)
-        if (ck && !(k in current)) {
+        if (ck && !(m.name in current)) {
           u.sensitive = true
           ck = false
         }
@@ -4027,7 +4025,7 @@ const community = function (window, document, site) {
     }
     Object.keys(site.map._queue[source].property_summaries).forEach(v => {
       const l = site.data.format_label(v)
-      if (ck && !(k in current)) {
+      if (ck && !(v.name in current)) {
         u.sensitive = true
         ck = false
       }
@@ -4395,7 +4393,7 @@ const community = function (window, document, site) {
           v = entity
             ? site.data.format_value(
                 entity.get_value(e.v, e.time),
-                patterns.int_types.test(site.data.variables[e.v].type)
+                e.dataset in site.data.variables[e.v] && 'integer' === site.data.variables[e.v][e.dataset].type
               )
             : NaN
           const info = site.data.variable_info[e.v]

@@ -3333,11 +3333,3205 @@
         Combobox.prototype.value = function () {
             return this.source
                 ? this.settings.multi
-                    ? this.source
-                    : Array.isArray(this.source) && this.source.length
-                        ? this.source[0]
-                        : ''
-                : this.site.valueOf(this.default);
+                  ? this.source.length + ' of ' + this.options.length + ' selected'
+                  : this.source[0] in this.values
+                  ? this.options[this.values[this.source[0]]].firstChild.textContent
+                  : this.settings.strict || -1 === this.source[0]
+                  ? ''
+                  : this.source[0]
+                : '';
+              if (this.settings.use_display) {
+                this.selection.innerText = display;
+              } else {
+                this.input_element.value = display;
+              }
+              if (this.onchange) this.onchange();
+              if (update) request_queue(this.id);
+            },
+            adder: function (value, display, noadd, meta) {
+              const e = document.createElement('div');
+              e.id = this.id + '_' + value;
+              e.role = 'option';
+              e.setAttribute('aria-selected', 'false');
+              e.tabindex = '0';
+              e.className = 'combobox-option combobox-component';
+              e.dataset.value = value;
+              e.innerText = display || site.data.format_label(value);
+              if (meta && meta.info) {
+                e.appendChild(document.createElement('p'));
+                e.lastElementChild.className = 'combobox-option-description combobox-component';
+                e.lastElementChild.innerText = meta.info.description || meta.info.short_description || '';
+              }
+              if (!noadd) this.listbox.appendChild(e);
+              return e
+            },
+          },
+          plotly: {
+            init: function (o) {
+              o.previous_span = 1;
+              if (o.id in site.plotly) {
+                o.x = o.e.getAttribute('data-x');
+                o.y = o.e.getAttribute('data-y');
+                o.color = o.e.getAttribute('data-color');
+                o.time = o.e.getAttribute('data-colorTime');
+                o.click = o.e.getAttribute('data-click');
+                if (o.click in _u) o.clickto = _u[o.click];
+                o.parsed = {};
+                o.traces = {};
+                o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0;
+                if (o.tab) {
+                  document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
+                    'click',
+                    function () {
+                      if (!this.e.parentElement.classList.contains('active')) {
+                        setTimeout(this.update, 155);
+                        setTimeout(trigger_resize, 155);
+                      }
+                    }.bind(o)
+                  );
+                }
+                o.show = function (e) {
+                  o.revert();
+                  let trace = make_data_entry(
+                    this,
+                    e,
+                    0,
+                    0,
+                    'hover_line',
+                    defaults['border_highlight_' + site.settings.theme_dark]
+                  );
+                  if (trace) {
+                    trace.line.width = 4;
+                    trace.marker.size = 12;
+                    Plotly.addTraces(this.e, trace, this.e.data.length);
+                  }
+                };
+                o.revert = function () {
+                  if (this.e.data.length && 'hover_line' === this.e.data[this.e.data.length - 1].name)
+                    Plotly.deleteTraces(this.e, this.e.data.length - 1);
+                };
+                if (o.options) site.plotly[o.id].u = o;
+                site.plotly[o.id].data.forEach((p, i) => {
+                  Object.keys(p).forEach(k => {
+                    if (patterns.period.test(k)) {
+                      const es = k.split('.'),
+                        n = es.length - 1;
+                      let pl = null;
+                      es.forEach((e, ei) => {
+                        pl = pl ? (pl[e] = ei === n ? p[k] : {}) : (p[e] = {});
+                      });
+                    }
+                  });
+                  if (!('textfont' in p)) p.textfont = {};
+                  if (!('color' in p.textfont)) p.textfont.color = defaults.background_highlight;
+                  if (!('line' in p)) p.line = {};
+                  if (!('color' in p.line)) p.line.color = defaults.background_highlight;
+                  if (!('marker' in p)) p.marker = {};
+                  p.marker.size = 8;
+                  if (!('color' in p.marker)) p.marker.color = defaults.background_highlight;
+                  if (!('line' in p.marker)) p.marker.line = {};
+                  if (!('color' in p.marker.line)) p.marker.line.color = defaults.background_highlight;
+                  if (!('text' in p)) p.text = [];
+                  if (!('x' in p)) p.x = [];
+                  if ('box' === p.type) {
+                    p.hoverinfo = 'none';
+                  } else if (!('y' in p)) p.y = [];
+                  o.traces[p.type] = JSON.stringify(p);
+                  if (!i) {
+                    o.base_trace = p.type;
+                    if (o.base_trace in _u) add_dependency(o.base_trace, {type: 'update', id: o.id});
+                  }
+                });
+                if (o.x && !(o.x in site.data.variables)) {
+                  add_dependency(o.x, {type: 'update', id: o.id});
+                }
+                if (o.y && !(o.y in site.data.variables)) {
+                  add_dependency(o.y, {type: 'update', id: o.id});
+                }
+                if (o.color && !(o.color in site.data.variables)) {
+                  add_dependency(o.color, {type: 'update', id: o.id});
+                }
+                if (o.time in _u) {
+                  add_dependency(o.time, {type: 'update', id: o.id});
+                }
+                if (o.view) {
+                  add_dependency(o.view, {type: 'update', id: o.id});
+                  add_dependency(o.view + '_filter', {type: 'update', id: o.id});
+                  if (_u[o.view].time_agg in _u) add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id});
+                } else o.view = defaults.dataview;
+                o.queue = this.queue_init.bind(o)();
+              }
+            },
+            queue_init: function () {
+              const showing = this.deferred || !this.tab || this.tab.classList.contains('show');
+              if (showing && window.Plotly) {
+                Plotly.newPlot(this.e, this.options);
+                this.e
+                  .on('plotly_hover', elements.plotly.mouseover.bind(this))
+                  .on('plotly_unhover', elements.plotly.mouseout.bind(this))
+                  .on('plotly_click', elements.plotly.click.bind(this));
+                update_plot_theme(this);
+                this.update();
+              } else {
+                this.deferred = true;
+                setTimeout(this.queue, showing ? 0 : 2000);
+              }
+            },
+            mouseover: function (d) {
+              if (d.points && 1 === d.points.length && this.e.data[d.points[0].fullData.index]) {
+                Plotly.restyle(this.e, {'line.width': 5}, d.points[0].fullData.index);
+                update_subs(this.id, 'show', site.data.entities[d.points[0].data.id]);
+              }
+            },
+            mouseout: function (d) {
+              if (d.points && 1 === d.points.length && this.e.data[d.points[0].fullData.index]) {
+                Plotly.restyle(this.e, {'line.width': 2}, d.points[0].fullData.index);
+                update_subs(this.id, 'revert', site.data.entities[d.points[0].data.id]);
+              }
+            },
+            click: function (d) {
+              this.clickto && this.clickto.set(d.points[0].data.id);
+            },
+            update: async function (pass) {
+              if (this.queue > 0) clearTimeout(this.queue);
+              this.queue = -1;
+              if (!pass) {
+                if (!this.tab || this.tab.classList.contains('show')) this.queue = setTimeout(() => this.update(true), 50);
+              } else {
+                if (this.e.layout) {
+                  const v = _u[this.view],
+                    s = v.selection && v.selection.all,
+                    d = v.get.dataset(),
+                    y = _u[this.time || v.time_agg],
+                    parsed = this.parsed;
+                  if (site.data.inited[d] && s && v.time_range.filtered.length) {
+                    parsed.base_trace = valueOf(this.base_trace);
+                    parsed.x = valueOf(this.x);
+                    parsed.y = valueOf(this.y);
+                    parsed.color = valueOf(this.color || v.y || parsed.y);
+                    const varx = await site.data.get_variable(parsed.x, this.view),
+                      vary = await site.data.get_variable(parsed.y, this.view),
+                      varcol = await site.data.get_variable(parsed.color, this.view);
+                    parsed.x_range = varx.time_range[d];
+                    parsed.y_range = vary.time_range[d];
+                    parsed.view = v;
+                    parsed.dataset = d;
+                    parsed.palette = valueOf(v.palette) || site.settings.palette;
+                    if (!(parsed.palette in palettes)) parsed.palette = defaults.palette;
+                    parsed.time = (y ? y.value() - site.data.meta.times[d].range[0] : 0) - varcol.time_range[d][0];
+                    parsed.summary = varcol.views[this.view].summaries[d];
+                    const ns = parsed.summary.n,
+                      display_time = ns[parsed.time] ? parsed.time : 0,
+                      summary = vary.views[this.view].summaries[d],
+                      missing = parsed.summary.missing[display_time],
+                      n = ns[display_time],
+                      subset = n !== v.n_selected.dataset,
+                      rank = subset ? 'subset_rank' : 'rank',
+                      order = subset ? varcol.views[this.view].order[d][display_time] : varcol.info[d].order[display_time],
+                      traces = [];
+                    let i = parsed.summary.missing[display_time],
+                      k,
+                      b,
+                      fn = order ? order.length : 0,
+                      lim = site.settings.trace_limit || 0,
+                      jump,
+                      state =
+                        v.value() +
+                        v.get.time_filters() +
+                        d +
+                        parsed.x +
+                        parsed.y +
+                        parsed.time +
+                        parsed.palette +
+                        parsed.color +
+                        site.settings.summary_selection +
+                        site.settings.color_scale_center +
+                        site.settings.color_by_order +
+                        site.settings.trace_limit +
+                        site.settings.show_empty_times;
+                    lim = jump = lim && lim < n ? Math.ceil(Math.min(lim / 2, n / 2)) : 0;
+                    Object.keys(this.reference_options).forEach(k => (this.options[k] = valueOf(this.reference_options[k])));
+                    for (; i < fn; i++) {
+                      if (order[i][0] in s) {
+                        k = order[i][0];
+                        const e = s[k];
+                        state += k;
+                        traces.push(
+                          make_data_entry(this, e, e.views[this.view][rank][parsed.color][parsed.time] - missing, n)
+                        );
+                        if (lim && !--jump) break
+                      }
+                    }
+                    if (lim && i < fn) {
+                      for (jump = i, i = fn - 1; i > jump; i--) {
+                        if (order[i][0] in s) {
+                          k = order[i][0];
+                          const e = s[k];
+                          state += k;
+                          traces.push(
+                            make_data_entry(this, e, e.views[this.view][rank][parsed.color][parsed.time] - missing, n)
+                          );
+                          if (!--lim) break
+                        }
+                      }
+                    }
+                    state += traces.length && traces[0].type;
+                    if (site.settings.boxplots && 'box' in this.traces && s[k]) {
+                      state += 'box' + site.settings.iqr_box;
+                      b = JSON.parse(this.traces.box);
+                      traces.push(b);
+                      b.line.color = defaults.border;
+                      b.median = summary.median;
+                      b.q3 = summary.q3;
+                      b.q1 = summary.q1;
+                      if (site.settings.iqr_box) {
+                        b.upperfence = [];
+                        b.lowerfence = [];
+                        b.q1.forEach((q1, i) => {
+                          if (isNaN(b.median[i])) b.median[i] = 0;
+                          const n = (b.q3[i] - q1) * 1.5,
+                            med = b.median[i];
+                          b.q3[i] = isNaN(b.q3[i]) ? med : Math.max(med, b.q3[i]);
+                          b.upperfence[i] = b.q3[i] + n;
+                          b.q1[i] = isNaN(b.q1[i]) ? med : Math.min(med, q1);
+                          b.lowerfence[i] = q1 - n;
+                        });
+                      } else {
+                        b.upperfence = summary.max;
+                        b.lowerfence = summary.min;
+                      }
+                      if (site.settings.show_empty_times) {
+                        b.x = b.q1.map((_, i) => s[k].get_value(parsed.x, i + parsed.y_range[0]));
+                      } else {
+                        b.x = [];
+                        for (i = b.q1.length; i--; ) {
+                          if (ns[i]) {
+                            b.x[i] = s[k].get_value(parsed.x, i + parsed.y_range[0]);
+                          }
+                        }
+                      }
+                    }
+                    if (state !== this.state) {
+                      if ('boolean' !== typeof this.e.layout.yaxis.title)
+                        this.e.layout.yaxis.title =
+                          site.data.format_label(parsed.y) +
+                          (site.settings.trace_limit < v.n_selected.all
+                            ? ' (' + site.settings.trace_limit + ' extremes)'
+                            : '');
+                      if ('boolean' !== typeof this.e.layout.xaxis.title)
+                        this.e.layout.xaxis.title = site.data.format_label(parsed.x);
+                      this.e.layout.yaxis.autorange = false;
+                      this.e.layout.yaxis.range = [Infinity, -Infinity];
+                      if (!b) b = {upperfence: summary.max, lowerfence: summary.min};
+                      let any_skipped = false;
+                      summary.min.forEach((min, i) => {
+                        if (site.settings.show_empty_times || ns[i]) {
+                          const l = Math.min(b.lowerfence[i], min),
+                            u = Math.max(b.upperfence[i], summary.max[i]);
+                          if (this.e.layout.yaxis.range[0] > l) this.e.layout.yaxis.range[0] = l;
+                          if (this.e.layout.yaxis.range[1] < u) this.e.layout.yaxis.range[1] = u;
+                        } else any_skipped = true;
+                      });
+                      const r = (this.e.layout.yaxis.range[1] - this.e.layout.yaxis.range[0]) / 10;
+                      this.e.layout.yaxis.range[0] -= r;
+                      this.e.layout.yaxis.range[1] += r;
+                      if (this.e.layout.yaxis.range[1] > 100) {
+                        const yinfo = vary.info[d].info;
+                        if (yinfo && 'percent' === (yinfo.aggregation_method || yinfo.type))
+                          this.e.layout.yaxis.range[1] = 100;
+                      }
+                      if (site.data.variables[parsed.x].is_time) {
+                        const start = v.time_range.filtered[0],
+                          end = v.time_range.filtered[1],
+                          adj = any_skipped && end > start ? Math.log(end - start) : 0.5;
+                        if (this.e.layout.xaxis.autorange) {
+                          this.e.layout.xaxis.autorange = false;
+                          this.e.layout.xaxis.type = 'linear';
+                          this.e.layout.xaxis.dtick = 1;
+                          this.e.layout.xaxis.range = [start - adj, end + adj];
+                        } else {
+                          this.e.layout.xaxis.range[0] = start - adj;
+                          this.e.layout.xaxis.range[1] = end + adj;
+                        }
+                      }
+                      if (b.lowerfence.length < this.previous_span) {
+                        Plotly.newPlot(this.e, traces, this.e.layout, this.e.config);
+                        this.e
+                          .on('plotly_hover', elements.plotly.mouseover.bind(this))
+                          .on('plotly_unhover', elements.plotly.mouseout.bind(this))
+                          .on('plotly_click', elements.plotly.click.bind(this));
+                      } else {
+                        Plotly.react(this.e, traces, this.e.layout, this.e.config);
+                      }
+                      setTimeout(trigger_resize, 300);
+                      this.previous_span = b.lowerfence.length;
+                      this.state = state;
+                    }
+                  }
+                }
+              }
+            },
+          },
+          map: {
+            init: function (o) {
+              o.color = o.e.getAttribute('data-color');
+              o.time = o.e.getAttribute('data-colorTime');
+              o.click = o.e.getAttribute('data-click');
+              if (o.click && o.click in _u) o.clickto = _u[o.click];
+              o.parsed = {};
+              o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0;
+              o.show = function (e) {
+                if (e.layer && e.layer[this.id]) {
+                  const highlight_style = {
+                    color: 'var(--border-highlight)',
+                    weight: site.settings.polygon_outline + 1,
+                    fillOpacity: 1,
+                  };
+                  if (!site.data.inited[this.parsed.dataset + o.id]) {
+                    const time = site.map[this.id].match_time(
+                      site.data.meta.overall.value[
+                        site.data.variables[this.parsed.color].time_range[this.parsed.dataset][0] + this.parsed.time
+                      ]
+                    );
+                    if (e.layer[this.id][time]) e.layer[this.id][time].setStyle(highlight_style);
+                  } else if (e.layer[this.id].setStyle) {
+                    e.layer[this.id].setStyle(highlight_style);
+                  }
+                }
+              };
+              o.revert = function (e) {
+                if (e.layer && e.layer[this.id]) {
+                  const default_style = {
+                    color: 'var(--border)',
+                    weight: site.settings.polygon_outline,
+                    fillOpacity: 0.7,
+                  };
+                  if (!site.data.inited[this.parsed.dataset + this.id]) {
+                    const time = site.map[this.id].match_time(
+                      site.data.meta.overall.value[
+                        site.data.variables[this.parsed.color].time_range[this.parsed.dataset][0] + this.parsed.time
+                      ]
+                    );
+                    if (e.layer[this.id][time]) e.layer[this.id][time].setStyle(default_style);
+                  } else {
+                    e.layer[this.id].setStyle(default_style);
+                  }
+                }
+              };
+              const dep = {type: 'update', id: o.id};
+              if (o.view) {
+                if (_u[o.view].time_agg in _u) add_dependency(_u[o.view].time_agg, dep);
+                if (_u[o.view].y) add_dependency(_u[o.view].y, dep);
+              } else o.view = defaults.dataview;
+              add_dependency(o.view, dep);
+              if (o.color in _u) add_dependency(o.color, dep);
+              if (o.time) add_dependency(o.time, dep);
+              if (!o.e.style.height) o.e.style.height = o.options.height ? o.options.height : '400px';
+              if (o.options.overlays_from_measures && site.data.variable_info) {
+                if (!Array.isArray(site.map[o.id].overlays)) site.map[o.id].overlays = [];
+                const overlays = site.map[o.id].overlays;
+                Object.keys(site.data.variable_info).forEach(variable => {
+                  const info = site.data.variable_info[variable];
+                  if (info.layer && info.layer.source) {
+                    if ('string' === typeof info.layer.source && patterns.time_ref.test(info.layer.source)) {
+                      const temp = info.layer.source;
+                      info.layer.source = [];
+                      for (
+                        let range = site.data.meta.ranges[variable], y = range[0], max = range[1] + 1, time;
+                        y < max;
+                        y++
+                      ) {
+                        time = site.data.meta.overall.value[y];
+                        info.layer.source.push({url: temp.replace(patterns.time_ref, time), time: time});
+                      }
+                    }
+                    patterns.time_ref.lastIndex = 0;
+                    const layer = {variable: variable, source: info.layer.source};
+                    if (info.layer.filter && (Array.isArray(info.layer.filter) || info.layer.filter.feature))
+                      layer.filter = info.layer.filter;
+                    overlays.push(layer);
+                  }
+                });
+              }
+              o.queue = this.queue_init.bind(o)();
+            },
+            queue_init: function () {
+              const theme = site.settings.theme_dark ? 'dark' : 'light',
+                showing = this.deferred || !this.tab || this.tab.classList.contains('show');
+              if (showing && window.L) {
+                this.map = L.map(this.e, this.options);
+                this.options = this.map.options;
+                this.overlay = L.featureGroup().addTo(this.map);
+                this.displaying = L.featureGroup().addTo(this.map);
+                this.overlay_control = L.control
+                  .layers()
+                  .setPosition('topleft')
+                  .addOverlay(this.overlay, 'Overlay')
+                  .addTo(this.map);
+                this.tiles = {};
+                if (this.id in site.map) {
+                  const tiles = site.map[this.id].tiles;
+                  site.map[this.id].u = this;
+                  if (tiles) {
+                    if (tiles.url) {
+                      this.tiles[theme] = L.tileLayer(tiles.url, tiles.options);
+                      this.tiles[theme].addTo(this.map);
+                    } else {
+                      Object.keys(tiles).forEach(k => {
+                        this.tiles[k] = L.tileLayer(tiles[k].url, tiles[k].options);
+                        if (theme === k) this.tiles[k].addTo(this.map);
+                      });
+                    }
+                  }
+                  if (!('_raw' in site.map)) site.map._raw = {};
+                  if (!('_queue' in site.map)) site.map._queue = {};
+                  if (!('_layers' in site.map[this.id])) site.map[this.id]._layers = {};
+                  const time = site.data.meta.overall.value[_u[this.view].parsed.time_agg],
+                    by_time = [];
+                  site.map[this.id].shapes.forEach((shape, i) => {
+                    const has_time = 'time' in shape;
+                    if (has_time) {
+                      if (!site.map[this.id].has_time) {
+                        site.map[this.id].has_time = true;
+                        add_dependency(this.view, {type: 'update', id: this.id});
+                      }
+                      by_time.push(Number(shape.time));
+                    }
+                    let k = shape.name;
+                    if (!k) shape.name = k = site.metadata.datasets[i < site.metadata.datasets.length ? i : 0];
+                    const mapId = k + (has_time ? shape.time : '');
+                    if (!(mapId in site.map._queue)) site.map._queue[mapId] = shape;
+                    site.data.inited[mapId + this.id] = false;
+                    if (
+                      (site.data.loaded[k] || k === this.options.background_shapes) &&
+                      (k === mapId ||
+                        (time && site.map[this.id].match_time && shape.time == site.map[this.id].match_time(time)))
+                    )
+                      retrieve_layer(this, shape);
+                  });
+                  if (site.map[this.id].has_time) {
+                    by_time.sort();
+                    site.map[this.id].match_time = function (time) {
+                      let i = by_time.length;
+                      for (; i--; ) if (!i || by_time[i] <= time) break
+                      return by_time[i]
+                    }.bind(by_time);
+                  }
+                  site.map[this.id].triggers = {};
+                  site.map[this.id].overlay_summaries = {};
+                  if (Array.isArray(site.map[this.id].overlays)) {
+                    site.map[this.id].overlays.forEach(l => {
+                      if ('string' === typeof l.source) l.source = [{url: l.source}];
+                      const source = l.source;
+                      source.forEach(s => {
+                        s.processed = false;
+                        s.property_summaries = {};
+                        site.map._queue[s.url] = s;
+                      });
+                      site.map[this.id].triggers[l.variable] = {source};
+                      const fs = l.filter;
+                      if (fs) {
+                        const fa = Array.isArray(fs) ? fs : [fs];
+                        site.map[this.id].triggers[l.variable].filter = fa;
+                        fa.forEach(f => {
+                          f.check = DataHandler.checks[f.operator];
+                        });
+                      }
+                    });
+                  }
+                }
+              } else {
+                this.deferred = true;
+                setTimeout(this.queue, showing ? 0 : 2000);
+              }
+            },
+            mouseover: function (e) {
+              e.target.setStyle({
+                color: 'var(--border-highlight)',
+              });
+              update_subs(this.id, 'show', site.data.entities[e.target.feature.properties[e.target.source.id_property]]);
+            },
+            mouseout: function (e) {
+              update_subs(this.id, 'revert', site.data.entities[e.target.feature.properties[e.target.source.id_property]]);
+              e.target.setStyle({
+                color: 'var(--border)',
+              });
+            },
+            click: function (e) {
+              if (this.clickto) this.clickto.set(e.target.feature.properties[e.target.source.id_property]);
+            },
+            update: async function (entity, caller, pass) {
+              if (this.queue > 0) clearTimeout(this.queue);
+              this.queue = -1;
+              if (!pass) {
+                if (!this.tab || this.tab.classList.contains('show'))
+                  this.queue = setTimeout(() => this.update(void 0, void 0, true), 50);
+              } else {
+                if (this.view && this.displaying) {
+                  const parsed = this.parsed,
+                    view = site.dataviews[this.view],
+                    d = view.get.dataset(),
+                    time = valueOf(view.time_agg),
+                    map_time = site.map[this.id].has_time ? site.map[this.id].match_time(time) : '',
+                    inited = d + map_time + this.id in site.data.inited,
+                    mapId = inited ? d + map_time : d;
+                  if (site.map._queue && mapId in site.map._queue && !site.data.inited[mapId + this.id]) {
+                    if (!inited || null !== time)
+                      retrieve_layer(this, site.map._queue[mapId], () => this.update(void 0, void 0, true));
+                    return
+                  }
+                  if (!view.valid && site.data.inited[d]) {
+                    view.state = '';
+                    conditionals.dataview(view, void 0, true);
+                  }
+                  parsed.view = view;
+                  parsed.dataset = d;
+                  const vstate =
+                      view.value() +
+                      mapId +
+                      site.settings.background_shapes +
+                      site.settings.background_top +
+                      site.settings.background_polygon_outline +
+                      site.data.inited[this.options.background_shapes],
+                    a = view.selection.all,
+                    s = view.selection[site.settings.background_shapes && this.options.background_shapes ? 'ids' : 'all'],
+                    c = valueOf(this.color || view.y);
+                  if (site.settings.map_overlay && c in site.map[this.id].triggers) {
+                    show_overlay(this, site.map[this.id].triggers[c], site.data.meta.overall.value[view.parsed.time_agg]);
+                  } else {
+                    this.overlay_control.remove();
+                    this.overlay.clearLayers();
+                  }
+                  if (site.data.inited[mapId + this.id] && s && view.valid) {
+                    const ys = this.time
+                      ? _u[this.time]
+                      : view.time_agg
+                      ? view.time_agg in _u
+                        ? _u[view.time_agg]
+                        : parseInt(view.time_agg)
+                      : 0;
+                    parsed.palette = valueOf(view.palette) || site.settings.palette;
+                    if (!(parsed.palette in palettes)) parsed.palette = defaults.palette;
+                    const varc = await site.data.get_variable(c, this.view),
+                      summary = varc.views[this.view].summaries[d],
+                      time = (ys.parsed ? ys.value() - site.data.meta.times[d].range[0] : 0) - varc.time_range[d][0];
+                    parsed.summary = summary;
+                    parsed.time = time;
+                    parsed.color = c;
+                    const subset = summary.n[ys] === view.n_selected.dataset ? 'rank' : 'subset_rank';
+                    if (vstate !== this.vstate) {
+                      this.map._zoomAnimated = 'none' !== site.settings.map_animations;
+                      Object.keys(this.reference_options).forEach(k => {
+                        this.options[k] = valueOf(this.reference_options[k]);
+                        if ('zoomAnimation' === k) this.map._zoomAnimated = this.options[k];
+                      });
+                      this.displaying.clearLayers();
+                      this.fresh_shapes = true;
+                      this.vstate = false;
+                      let n = 0;
+                      Object.keys(s).forEach(k => {
+                        const skl = s[k].layer;
+                        if (skl && skl[this.id]) {
+                          const fg = k in a,
+                            cl = skl[this.id].has_time ? skl[this.id][map_time] : skl[this.id];
+                          if (cl && (fg || this.options.background_shapes === site.data.entities[k].group)) {
+                            n++;
+                            cl.options.interactive = fg;
+                            cl.addTo(this.displaying);
+                            if (fg) {
+                              if (site.settings.background_top) cl.bringToBack();
+                            } else {
+                              if (!site.settings.background_top) cl.bringToBack();
+                              cl.setStyle({
+                                fillOpacity: 0,
+                                color: 'var(--border-highlight)',
+                                weight: site.settings.background_polygon_outline,
+                              });
+                            }
+                            if (!this.vstate) this.vstate = vstate;
+                          }
+                        }
+                      });
+                      this.overlay.bringToFront();
+                      if (n)
+                        if ('fly' === site.settings.map_animations) {
+                          setTimeout(() => this.map.flyToBounds(this.displaying.getBounds()), 400);
+                        } else {
+                          this.map.fitBounds(this.displaying.getBounds());
+                        }
+                    }
+
+                    // coloring
+                    const k =
+                      c +
+                      this.vstate +
+                      parsed.palette +
+                      time +
+                      site.settings.polygon_outline +
+                      site.settings.color_by_order +
+                      site.settings.color_scale_center;
+                    if (k !== this.cstate) {
+                      this.cstate = k;
+                      if (site.map[this.id]) {
+                        const ls = this.displaying._layers;
+                        const n = summary.n[time];
+                        const missing = summary.missing[time];
+                        Object.keys(ls).forEach(id => {
+                          const lsi = ls[id];
+                          if (d === lsi.entity.group) {
+                            const e = a[lsi.entity.features.id],
+                              es = e && e.views[this.view][subset];
+                            lsi.setStyle({
+                              fillOpacity: 0.7,
+                              color: 'var(--border)',
+                              fillColor:
+                                e && c in es
+                                  ? pal(e.get_value(c, time), parsed.palette, summary, time, es[c][time] - missing, n)
+                                  : defaults.missing,
+                              weight: site.settings.polygon_outline,
+                            });
+                          }
+                        });
+                      } else {
+                        if (!('_waiting' in site.map)) site.map._waiting = {};
+                        if (!(d in site.map._waiting)) site.map._waiting[d] = [];
+                        if (-1 === site.map._waiting[d].indexOf(this.id)) site.map._waiting[d].push(this.id);
+                        if (-1 === site.map._waiting[d].indexOf(this.view)) site.map._waiting[d].push(this.view);
+                      }
+                    }
+                  }
+                }
+              }
+            },
+          },
+          info: {
+            init: function (o) {
+              o.depends = {};
+              o.has_default = o.options.default && (o.options.default.title || o.options.default.body);
+              add_subs(o.view, o);
+              if (o.options.floating) {
+                document.body.appendChild(o.e);
+                o.e.classList.add('hidden');
+                document.addEventListener('mousemove', function (e) {
+                  if (o.showing) {
+                    const f = page.content.getBoundingClientRect();
+                    o.e.style.top = (e.y > f.height / 2 ? e.y - o.e.getBoundingClientRect().height - 10 : e.y + 10) + 'px';
+                    o.e.style.left = (e.x > f.width / 2 ? e.x - o.e.getBoundingClientRect().width - 10 : e.x + 10) + 'px';
+                  }
+                });
+              }
+              o.show = function (e, u) {
+                this.update(e, u);
+                this.showing = true;
+                if (this.options.floating) this.e.classList.remove('hidden');
+                if (this.parts.title) {
+                  if (this.selection) {
+                    this.parts.title.base.classList.add('hidden');
+                  } else this.parts.title.default.classList.add('hidden');
+                  this.parts.title.temp.classList.remove('hidden');
+                }
+                if (this.parts.body) {
+                  if (this.selection) {
+                    this.parts.body.base.classList.add('hidden');
+                  } else this.parts.body.default.classList.add('hidden');
+                  this.parts.body.temp.classList.remove('hidden');
+                }
+              };
+              o.revert = function () {
+                this.showing = false;
+                if (this.options.floating) {
+                  this.e.classList.add('hidden');
+                } else {
+                  if (this.parts.title) {
+                    if (this.selection) {
+                      this.parts.title.base.classList.remove('hidden');
+                    } else if (this.has_default) this.parts.title.default.classList.remove('hidden');
+                    this.parts.title.temp.classList.add('hidden');
+                  }
+                  if (this.parts.body) {
+                    if (this.selection) {
+                      this.parts.body.base.classList.remove('hidden');
+                    } else if (this.has_default) this.parts.body.default.classList.remove('hidden');
+                    this.parts.body.temp.classList.add('hidden');
+                  }
+                }
+              };
+              o.parts = {};
+              function parse_part(o, t) {
+                const p = {
+                  parent: o,
+                  text: t,
+                  parsed: {},
+                  ref: true,
+                  selection: false,
+                  get: function (entity, caller) {
+                    if (this.ref) {
+                      if (entity)
+                        if ('features' in this.parsed) {
+                          return entity.features[this.parsed.features]
+                        } else if ('data' in this.parsed) {
+                          if ('value' === this.text) {
+                            this.parsed.data = valueOf(o.options.variable || caller.color || caller.y || _u[o.view].y);
+                          } else if (this.text in _u) this.parsed.data = valueOf(this.text);
+                          if (!(this.parsed.data in site.data.variables)) return this.parsed.data
+                          const info = site.data.variables[this.parsed.data],
+                            v = site.data.format_value(
+                              entity.get_value(this.parsed.data, this.parent.time),
+                              info && info.info[entity.group] && 'integer' === info.info[entity.group].type
+                            );
+                          let type = info.meta.unit || info.meta.type;
+                          if (info.meta.aggregation_method && !(type in value_types)) type = info.meta.aggregation_method;
+                          return NaN !== v && type in value_types ? value_types[type](v) : v
+                        }
+                      if ('data' in this.parsed) {
+                        return site.data.meta.times[this.parent.dataset].value[this.parent.time_agg]
+                      } else if (
+                        'variables' in this.parsed &&
+                        (this.value_source || this.parent.v in site.data.variable_info)
+                      ) {
+                        return site.data.variable_info[valueOf(this.value_source || this.parent.v)][this.parsed.variables]
+                      }
+                      return this.text
+                    } else return this.text
+                  },
+                };
+                if ('value' === t) {
+                  p.parsed.data = o.options.variable;
+                } else if ('summary' === t) {
+                  o.options.show_summary = true;
+                  p.parsed.summary = make_summary_table(o.e);
+                } else if ('filter' === t) {
+                  const e = document.createElement('table');
+                  e.className = 'info-filter';
+                  p.parsed.filter = e;
+                }
+                if (patterns.features.test(t)) {
+                  p.parsed.features = t.replace(patterns.features, '');
+                } else if (patterns.data.test(t)) {
+                  p.parsed.data = t.replace(patterns.data, '');
+                } else if (patterns.variables.test(t)) {
+                  p.parsed.variables = t.replace(patterns.variables, '');
+                } else p.ref = false;
+                return p
+              }
+              if (o.options.title) {
+                o.parts.title = parse_part(o, o.options.title);
+                if (
+                  o.options.variable_info &&
+                  'variables' in o.parts.title.parsed &&
+                  patterns.measure_name.test(o.parts.title.parsed.variables)
+                ) {
+                  o.parts.title.base = document.createElement('button');
+                  o.parts.title.base.type = 'button';
+                  o.parts.title.base.setAttribute('data-bs-toggle', 'modal');
+                  o.parts.title.base.setAttribute('data-bs-target', '#variable_info_display');
+                  o.parts.title.base.addEventListener('click', show_variable_info.bind(o));
+                } else o.parts.title.base = document.createElement('p');
+                o.parts.title.base.appendChild(document.createElement('span'));
+                o.parts.title.temp = document.createElement('p');
+                o.parts.title.default = document.createElement('p');
+                o.parts.title.temp.className =
+                  o.parts.title.base.className =
+                  o.parts.title.default.className =
+                    'info-title hidden';
+                if (o.has_default && o.options.default.title) {
+                  o.e.appendChild(o.parts.title.default);
+                  o.parts.title.default.innerText = o.options.default.title;
+                }
+                if (!o.parts.title.ref) o.parts.title.base.firstElementChild.innerText = o.parts.title.get();
+                o.e.appendChild(o.parts.title.base);
+                o.e.appendChild(o.parts.title.temp);
+                o.parts.title.base.classList.add('hidden');
+                o.parts.title.temp.classList.add('hidden');
+              }
+              if (o.options.body || (o.has_default && o.options.default.body)) {
+                o.parts.body = {
+                  base: document.createElement('div'),
+                  temp: document.createElement('div'),
+                  default: document.createElement('div'),
+                  rows: [],
+                };
+                o.parts.body.temp.className =
+                  o.parts.body.base.className =
+                  o.parts.body.default.className =
+                    'info-body hidden';
+                if (o.has_default && o.options.default.body) o.parts.body.default.innerText = o.options.default.body;
+                let h = 0;
+                o.options.body &&
+                  o.options.body.forEach((op, i) => {
+                    const p = {
+                      name: parse_part(o, op.name),
+                      value: parse_part(o, op.value),
+                    };
+                    o.parts.body.rows[i] = p;
+                    p.base = document.createElement('div');
+                    o.parts.body.base.appendChild(p.base);
+                    p.temp = document.createElement('div');
+                    o.parts.body.temp.appendChild(p.temp);
+                    p.temp.className = p.base.className = 'info-body-row-' + op.style;
+                    h += 24 + ('stack' === op.style ? 24 : 0);
+                    if (p.name) {
+                      if (
+                        o.options.variable_info &&
+                        'variables' in p.name.parsed &&
+                        patterns.measure_name.test(p.name.parsed.variables)
+                      ) {
+                        p.base.appendChild(document.createElement('button'));
+                        p.base.lastElementChild.type = 'button';
+                        p.base.lastElementChild.setAttribute('data-bs-toggle', 'modal');
+                        p.base.lastElementChild.setAttribute('data-bs-target', '#variable_info_display');
+                        p.base.lastElementChild.addEventListener('click', show_variable_info.bind(o));
+                      } else p.base.appendChild(document.createElement('div'));
+                      p.temp.appendChild(document.createElement('div'));
+                      p.temp.lastElementChild.className = p.base.lastElementChild.className = 'info-body-row-name';
+                      p.temp.lastElementChild.innerText = p.base.lastElementChild.innerText = p.name.get();
+                    }
+                    if (p.value) {
+                      p.base.appendChild(document.createElement('div'));
+                      p.temp.appendChild(document.createElement('div'));
+                      if ('summary' in p.value.parsed) {
+                        p.base.lastElementChild.appendChild(p.value.parsed.summary);
+                      } else if ('filter' in p.value.parsed) {
+                        p.base.lastElementChild.appendChild(p.value.parsed.filter);
+                      } else {
+                        p.temp.lastElementChild.className = p.base.lastElementChild.className =
+                          'info-body-row-value' + ('statement' === p.value.parsed.variables ? ' statement' : '');
+                        if (p.name.ref && 'value' === p.value.text) p.value.ref = true;
+                        if (!p.value.ref)
+                          p.temp.lastElementChild.innerText = p.base.lastElementChild.innerText = p.value.get();
+                      }
+                    }
+                  });
+                o.e.style.minHeight = h + 'px';
+                o.e.appendChild(o.parts.body.base);
+                o.e.appendChild(o.parts.body.default);
+                o.e.appendChild(o.parts.body.temp);
+              }
+              o.update();
+            },
+            update: async function (entity, caller, pass) {
+              const v = site.dataviews[this.view];
+              const y = _u[v.time_agg];
+              this.v = valueOf(this.options.variable || (caller && (caller.color || caller.y)) || v.y);
+              this.dataset = v.get.dataset();
+              if (y && !(this.dataset in site.data.meta.times)) {
+                if (!(this.id in site.data.data_queue[this.dataset]))
+                  site.data.data_queue[this.dataset][this.id] = this.update;
+                return
+              }
+              this.time_agg = y ? y.value() - site.data.meta.times[this.dataset].range[0] : 0;
+              const time_range = this.v in site.data.variables && site.data.variables[this.v].time_range[this.dataset];
+              this.time = time_range ? this.time_agg - time_range[0] : 0;
+              if (this.options.show_summary) {
+                this.var = this.v && (await site.data.get_variable(this.v, this.view));
+                this.summary = this.view in this.var.views && this.var.views[this.view].summaries[this.dataset];
+              }
+              if (!this.processed) {
+                this.processed = true;
+                if (!this.options.floating) {
+                  add_dependency(this.view, {type: 'update', id: this.id});
+                  if (v.y in _u) add_dependency(v.y, {type: 'update', id: this.id});
+                  if (y) add_dependency(v.time_agg, {type: 'update', id: this.id});
+                  if (this.options.variable in _u) add_dependency(this.options.variable, {type: 'update', id: this.id});
+                }
+                if (this.parts.body)
+                  this.parts.body.rows.forEach(p => {
+                    if (!p.value.ref && p.value.text in _u && 'variables' in p.name.parsed) {
+                      p.name.value_source = p.value.value_source = p.value.text;
+                      p.value.ref = true;
+                      p.value.parsed.data = '';
+                    }
+                  });
+              }
+              if (entity) {
+                // hover information
+                if (this.parts.title) {
+                  this.parts.title.temp.innerText = this.parts.title.get(entity, caller);
+                }
+                if (this.parts.body) {
+                  this.parts.body.rows.forEach(p => {
+                    if (p.name.ref) {
+                      if (p.name.value_source) p.name.value_source = p.value.text;
+                      e = p.name.get(entity, caller);
+                      if ('object' !== typeof e) {
+                        p.temp.firstElementChild.innerText = parse_variables(e, p.value.parsed.variables, this, entity);
+                      }
+                    }
+                    if (p.value.ref) {
+                      if (p.value.value_source) p.value.value_source = p.value.text;
+                      e = p.value.get(entity, caller);
+                      if ('object' !== typeof e) {
+                        p.temp.lastElementChild.innerText = parse_variables(e, p.value.parsed.variables, this, entity);
+                      }
+                    }
+                  });
+                }
+              } else if (!this.options.floating) {
+                if (this.queue > 0) clearTimeout(this.queue);
+                this.queue = -1;
+                if (!pass) {
+                  if (!this.tab || this.tab.classList.contains('show'))
+                    this.queue = setTimeout(() => this.update(void 0, void 0, true), 50);
+                } else {
+                  // base information
+                  entity = site.data.entities[v.get.ids(true)];
+                  if (entity) {
+                    // when showing a selected region
+                    this.selection = true;
+                    if (this.parts.title) {
+                      if (this.parts.title.value_source) p.title.value_source = p.value.text;
+                      this.parts.title.base.classList.remove('hidden');
+                      this.parts.title.default.classList.add('hidden');
+                    }
+                    if (this.parts.body && this.has_default) this.parts.body.default.classList.add('hidden');
+                  } else {
+                    // when no ID is selected
+                    this.selection = false;
+                    if (this.parts.title) {
+                      if (this.has_default) {
+                        this.parts.title.base.classList.add('hidden');
+                        this.parts.title.default.classList.remove('hidden');
+                      } else if (!this.parts.title.ref || !('features' in this.parts.title.parsed))
+                        this.parts.title.base.classList.remove('hidden');
+                    }
+                    if (this.parts.body) {
+                      this.parts.body.base.classList.add('hidden');
+                      if (this.has_default) this.parts.body.default.classList.remove('hidden');
+                    }
+                  }
+                  if (this.parts.title) {
+                    this.parts.title.base.firstElementChild.innerText = this.parts.title.get(entity, caller);
+                  }
+                  if (this.parts.body) {
+                    if (!this.options.subto) this.parts.body.base.classList.remove('hidden');
+                    this.parts.body.rows.forEach(p => {
+                      if ('summary' in p.value.parsed) {
+                        fill_summary_table(p.value.parsed.summary, this.summary, this.time);
+                      } else if ('filter' in p.value.parsed) {
+                        const e = p.value.parsed.filter;
+                        let n = 0;
+                        e.innerHTML = '';
+                        if (_u._entity_filter.selected.length) {
+                          n++;
+                          const s = document.createElement('tr');
+                          s.className = 'filter-display';
+                          let ss = document.createElement('td');
+                          s.appendChild(ss);
+                          ss.appendChild(document.createElement('span'));
+                          ss.lastElementChild.className = 'syntax-variable';
+                          ss.lastElementChild.innerText = 'Select Entities';
+                          ss = document.createElement('td');
+                          s.appendChild(ss);
+                          ss.appendChild(document.createElement('span'));
+                          ss.lastElementChild.className = 'syntax-operator';
+                          ss.lastElementChild.innerText = ':';
+                          ss = document.createElement('td');
+                          s.appendChild(ss);
+                          ss.setAttribute('colspan', 2);
+                          ss.appendChild(document.createElement('span'));
+                          ss.lastElementChild.className = 'syntax-value';
+                          let ids = '';
+                          _u._entity_filter.selected.forEach(id => {
+                            const entity = site.data.entities[id];
+                            ids += (ids ? ', ' : '') + (entity && entity.features ? entity.features.name : id);
+                          });
+                          ss.lastElementChild.innerText = ids;
+                          e.appendChild(s);
+                        }
+                        _u._base_filter.c.forEach(f => {
+                          const checked = f.passed + f.failed;
+                          if (f.active && checked) {
+                            const result = f.passed + '/' + checked;
+                            f.e.children[1].lastElementChild.innerText = result;
+                            n++;
+                            const s = document.createElement('tr'),
+                              info = site.data.variable_info[f.variable];
+                            s.className = 'filter-display';
+                            let ss = document.createElement('td');
+                            s.appendChild(ss);
+                            ss.appendChild(document.createElement('span'));
+                            ss.lastElementChild.className = 'syntax-variable';
+                            ss.lastElementChild.title = f.variable;
+                            ss.lastElementChild.innerText = info.short_name;
+                            ss.appendChild(document.createElement('span'));
+                            ss.lastElementChild.innerText = ' (';
+                            ss.appendChild(document.createElement('span'));
+                            ss.lastElementChild.className = 'syntax-component';
+                            ss.lastElementChild.innerText = f.component;
+                            ss.appendChild(document.createElement('span'));
+                            ss.lastElementChild.innerText = ')';
+                            ss = document.createElement('td');
+                            s.appendChild(ss);
+                            ss.appendChild(document.createElement('span'));
+                            ss.lastElementChild.className = 'syntax-operator';
+                            ss.lastElementChild.innerText = f.operator;
+                            ss = document.createElement('td');
+                            s.appendChild(ss);
+                            ss.appendChild(document.createElement('span'));
+                            ss.lastElementChild.className = 'syntax-value';
+                            ss.lastElementChild.innerText =
+                              'number' === typeof f.value ? site.data.format_value(f.value) : f.value;
+                            ss = document.createElement('td');
+                            s.appendChild(ss);
+                            ss.appendChild(document.createElement('span'));
+                            ss.lastElementChild.innerText =
+                              '(' + (f.value_source ? f.value_source + '; ' : '') + result + ')';
+                            e.appendChild(s);
+                          }
+                        });
+                        this.e.classList[n ? 'remove' : 'add']('hidden');
+                      }
+                      if (('variables' in p.value.parsed || 'summary' in p.value.parsed) && !(v.y in this.depends)) {
+                        this.depends[v.y] = true;
+                        add_dependency(v.y, {type: 'update', id: this.id});
+                      } else if ('filter' in p.value.parsed && !('_base_filter' in this.depends)) {
+                        this.depends._base_filter = true;
+                        add_dependency('_base_filter', {type: 'update', id: this.id});
+                      }
+                      if (p.name.ref) {
+                        if (p.name.value_source) p.name.value_source = p.value.text;
+                        const e = p.name.get(entity, caller);
+                        if ('object' !== typeof e) {
+                          p.base.firstElementChild.innerText = e;
+                        }
+                      }
+                      if (p.value.ref) {
+                        const e = p.value.get(entity, caller);
+                        if ('object' === typeof e) {
+                          if (Array.isArray(e) && 'sources' === p.value.parsed.variables) {
+                            p.base.innerHTML = '';
+                            p.base.appendChild(document.createElement('table'));
+                            p.base.lastElementChild.className = 'source-table';
+                            p.base.firstElementChild.appendChild(document.createElement('thead'));
+                            p.base.firstElementChild.firstElementChild.appendChild(document.createElement('tr'));
+                            p.base.firstElementChild.firstElementChild.firstElementChild.appendChild(
+                              document.createElement('th')
+                            );
+                            p.base.firstElementChild.firstElementChild.firstElementChild.appendChild(
+                              document.createElement('th')
+                            );
+                            p.base.firstElementChild.firstElementChild.firstElementChild.firstElementChild.innerText =
+                              'Source';
+                            p.base.firstElementChild.firstElementChild.firstElementChild.lastElementChild.innerText =
+                              'Accessed';
+                            p.base.firstElementChild.appendChild(document.createElement('tbody'));
+                            e.forEach(ei => {
+                              p.base.firstElementChild.lastElementChild.appendChild(make_variable_source(ei, true));
+                            });
+                          }
+                        } else {
+                          p.base.lastElementChild.innerText = parse_variables(e, p.value.parsed.variables, this, entity);
+                        }
+                      }
+                    });
+                  }
+                }
+              }
+              this.revert();
+            },
+          },
+          datatable: {
+            init: function (o) {
+              o.e.appendChild(document.createElement('thead'));
+              o.e.appendChild(document.createElement('tbody'));
+              o.click = o.e.getAttribute('data-click');
+              o.features = o.options.features;
+              o.parsed = {summary: {}, order: [], time: -1, color: '', dataset: _u[o.view].get.dataset(), time_index: {}};
+              o.header = [];
+              o.rows = {};
+              o.rowIds = {};
+              o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0;
+              const time = site.data.meta.times[o.parsed.dataset];
+              o.style = document.head.appendChild(document.createElement('style'));
+              if (o.tab) {
+                document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
+                  'click',
+                  function () {
+                    if (!this.e.parentElement.classList.contains('active')) {
+                      setTimeout(this.update, 155);
+                      setTimeout(trigger_resize, 155);
+                    }
+                  }.bind(o)
+                );
+              }
+              o.e.addEventListener('mouseover', elements.datatable.mouseover.bind(o));
+              o.e.addEventListener('mouseout', elements.datatable.mouseout.bind(o));
+              if (o.click) {
+                if (o.click in _u) o.clickto = _u[o.click];
+                o.e.addEventListener('click', elements.datatable.click.bind(o));
+              }
+              o.show = function (e) {
+                if (e.features && e.features.id in this.rows) {
+                  if (site.settings.table_autoscroll) {
+                    this.rows[e.features.id].scrollTo('smooth' === site.settings.table_scroll_behavior);
+                  }
+                  if (this.pending > 0) clearTimeout(this.pending);
+                  this.pending = -1;
+                  const row = this.rows[e.features.id].node();
+                  if (row) {
+                    row.classList.add('highlighted');
+                  } else {
+                    this.pending = setTimeout(
+                      function () {
+                        const row = this.node();
+                        if (row) row.classList.add('highlighted');
+                      }.bind(this.rows[e.features.id]),
+                      0
+                    );
+                  }
+                }
+              };
+              o.revert = function () {
+                if (this.pending > 0) clearTimeout(this.pending);
+                this.e.querySelectorAll('tr.highlighted').forEach(e => e.classList.remove('highlighted'));
+              };
+              o.options.variable_source = o.options.variables;
+              if (o.options.variables) {
+                if ('string' === typeof o.options.variables) {
+                  if (o.options.variables in _u) {
+                    add_dependency(o.options.variables, {type: 'update', id: o.id});
+                    o.options.variables = valueOf(o.options.variables);
+                    o.options.single_variable = 'string' === typeof o.options.variables;
+                  } else if (!o.options.single_variable) {
+                    o.options.single_variable = [{name: o.options.single_variable}];
+                  }
+                }
+              } else o.options.variables = Object.keys(site.data.variables);
+              if (
+                'string' !== typeof o.options.variables &&
+                o.options.variables.length &&
+                'string' === o.options.variables[0]
+              ) {
+                o.options.variables = o.options.variables.map(v => {
+                });
+              }
+              if (o.options.single_variable) {
+                const c = o.options.variables,
+                  k = c.name || c;
+                o.header.push({title: 'Name', data: 'entity.features.name'});
+                if (time && time.is_single) o.variable_header = true;
+                const t = k in site.data.variables && site.data.variables[k].time_range[o.parsed.dataset];
+                if (t)
+                  for (let n = t[1] - t[0] + 1; n--; ) {
+                    o.header[n + 1] = {
+                      title: o.variable_header ? c.title || site.data.format_label(k) : time.value[n + t[0]] + '',
+                      data: site.data.get_value,
+                      render: DataHandler.retrievers.row_time.bind({
+                        i: n,
+                        o: t[0],
+                        format_value: site.data.format_value.bind(site.data),
+                      }),
+                    };
+                  }
+                o.options.order = [[o.header.length - 1, 'dsc']];
+              } else if (o.options.wide) {
+                if (o.features) {
+                  if ('string' === typeof o.features) o.features = [{name: o.features}];
+                  o.features.forEach(f => {
+                    o.header.push({
+                      title: f.title || f.name,
+                      data: 'entity.features.' + f.name.replace(patterns.all_periods, '\\.'),
+                    });
+                  });
+                }
+                for (let i = o.options.variables.length; i--; ) {
+                  if ('string' === typeof o.options.variables[i]) o.options.variables[i] = {name: o.options.variables[i]};
+                  const c = o.options.variables[i];
+                  if (!c.source) c.source = c.name in site.data.variables ? 'data' : 'features';
+                  o.header.push(
+                    'features' === c.source
+                      ? {
+                          title: c.title || site.data.format_label(c.name),
+                          data: 'entity.features.' + c.name.toLowerCase().replace(patterns.all_periods, '\\.'),
+                        }
+                      : {
+                          title: c.title || site.data.format_label(c.name),
+                          render: async function (d, type, row) {
+                            if ('data' === this.c.source) {
+                              if (this.c.name in site.data.variables) {
+                                const v = await site.data.get_variable(this.c.name, this.o.view);
+                                const i = row.time - v.time_range[this.o.parsed.dataset][0];
+                                return i < 0 ? NaN : row.entity.get_value(this.c.name, i)
+                              } else return NaN
+                            } else
+                              return this.c.source in row.entity && this.c.name in row.entity[this.c.source]
+                                ? row.entity[this.c.source][this.c.name]
+                                : NaN
+                          }.bind({o, c}),
+                        }
+                  );
+                }
+              } else {
+                o.filters = o.options.filters;
+                o.current_filter = {};
+                if (!time.is_single) {
+                  o.header.push({
+                    title: 'Year',
+                    data: 'entity.time.value',
+                    render: function (d, type, row) {
+                      const t = row.time + row.offset;
+                      return d && t >= 0 && t < d.length ? d[t] : NaN
+                    },
+                  });
+                }
+                if (o.features) {
+                  if ('string' === typeof o.features) o.features = [{name: o.features}];
+                  o.features.forEach(f => {
+                    o.header.splice(0, 0, {
+                      title: f.title || f.name,
+                      data: 'entity.features.' + f.name.replace(patterns.all_periods, '\\.'),
+                    });
+                  });
+                }
+                o.header.push({
+                  title: 'Variable',
+                  data: function (row) {
+                    return row.variable in row.entity.variables
+                      ? row.entity.variables[row.variable].meta.short_name
+                      : row.variable
+                  },
+                });
+                o.header.push({
+                  title: 'Value',
+                  data: site.data.get_value,
+                  render: function (d, type, row) {
+                    return d
+                      ? 'number' === typeof d[row.time]
+                        ? site.data.format_value(d[row.time], row.int)
+                        : d[row.time]
+                      : ''
+                  },
+                });
+              }
+              if (o.view) {
+                add_dependency(o.view, {type: 'update', id: o.id});
+                add_dependency(o.view + '_filter', {type: 'update', id: o.id});
+                add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id});
+              } else o.view = defaults.dataview;
+              o.queue = this.queue_init.bind(o)();
+            },
+            queue_init: function () {
+              const showing = this.deferred || !this.tab || this.tab.classList.contains('show');
+              if (showing && window.jQuery && window.DataTable && 'get' in site.dataviews[this.view]) {
+                this.options.columns = this.header;
+                this.table = $(this.e).DataTable(this.options);
+                this.update();
+              } else {
+                this.deferred = true;
+                setTimeout(this.queue, showing ? 0 : 2000);
+              }
+            },
+            update: async function (pass) {
+              if (this.queue > 0) clearTimeout(this.queue);
+              this.queue = -1;
+              if (!pass) {
+                if (!this.tab || this.tab.classList.contains('show')) this.queue = setTimeout(() => this.update(true), 50);
+              } else {
+                if (this.table) {
+                  let vn =
+                    this.options.variable_source &&
+                    valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.');
+                  const v = _u[this.view],
+                    d = v.get.dataset();
+                  if (!site.data.inited[d]) return
+                  const times = site.data.meta.times[d],
+                    state =
+                      d +
+                      v.value() +
+                      v.get.time_filters() +
+                      site.settings.digits +
+                      vn +
+                      site.settings.theme_dark +
+                      site.settings.show_empty_times,
+                    update = state !== this.state,
+                    time = valueOf(v.time_agg),
+                    variable = await site.data.get_variable(vn, this.view);
+                  this.parsed.time_range = variable ? variable.time_range[d] : times.info.time_range[d];
+                  this.parsed.time = ('number' === typeof time ? time - times.range[0] : 0) - this.parsed.time_range[0];
+                  if (update) {
+                    this.rows = {};
+                    this.rowIds = {};
+                    this.table.clear();
+                    if (v.valid) {
+                      this.state = state;
+                      Object.keys(this.reference_options).forEach(
+                        k => (this.options[k] = valueOf(this.reference_options[k]))
+                      );
+                      if (this.options.single_variable) {
+                        this.parsed.time_index = {};
+                        this.parsed.dataset = d;
+                        this.parsed.color = vn;
+                        this.parsed.summary = this.view in variable.views ? variable.views[this.view].summaries[d] : false;
+                        this.parsed.order =
+                          this.view in variable.views ? variable.views[this.view].order[d][this.parsed.time] : false;
+                        if (this.header.length < 2 || d !== this.header[1].dataset || vn !== this.header[1].variable) {
+                          this.table.destroy();
+                          $(this.e).empty();
+                          this.header = [{title: 'Name', data: 'entity.features.name', type: 'string'}];
+                          if (-1 !== this.parsed.time_range[0]) {
+                            for (let n = this.parsed.time_range[2]; n--; ) {
+                              this.header[n + 1] = {
+                                dataset: d,
+                                variable: vn,
+                                type: 'string' === variable.type ? 'string' : 'num',
+                                title: this.variable_header
+                                  ? this.options.variables.title || site.data.format_label(vn)
+                                  : times.value[n + this.parsed.time_range[0]] + '',
+                                data: site.data.get_value,
+                                render: DataHandler.retrievers.row_time.bind({
+                                  i: n,
+                                  o: this.parsed.time_range[0],
+                                  format_value: site.data.format_value.bind(site.data),
+                                }),
+                              };
+                            }
+                          } else this.state = '';
+                          this.options.order[0][0] = this.header.length - 1;
+                          this.options.columns = this.header;
+                          this.table = $(this.e).DataTable(this.options);
+                        }
+                        const n = this.header.length,
+                          ns = this.parsed.summary.n;
+                        let reset;
+                        for (let i = 1, show = false, nshowing = 0; i < n; i++) {
+                          show = v.times[i - 1 + this.parsed.time_range[0]] && (site.settings.show_empty_times || ns[i - 1]);
+                          this.table.column(i).visible(show, false);
+                          if (show) {
+                            this.parsed.time_index[times.value[i - 1 + this.parsed.time_range[0]]] = ++nshowing;
+                            reset = false;
+                          }
+                        }
+                        if (reset) this.state = '';
+                      }
+                      if (this.options.wide) {
+                        Object.keys(v.selection.all).forEach(k => {
+                          if (vn) {
+                            if (vn in v.selection.all[k].views[this.view].summary) {
+                              this.rows[k] = this.table.row.add({
+                                dataset: d,
+                                variable: vn,
+                                offset: this.parsed.time_range[0],
+                                entity: v.selection.all[k],
+                                int:
+                                  d in site.data.variables[vn].info && 'integer' === site.data.variables[vn].info[d].type,
+                              });
+                              this.rowIds[this.rows[k].selector.rows] = k;
+                            }
+                          } else {
+                            for (let i = times.n; i--; ) {
+                              this.rows[k] = this.table.row.add({
+                                time: i,
+                                entity: v.selection.all[k],
+                              });
+                              this.rowIds[this.rows[k].selector.rows] = k;
+                            }
+                          }
+                        });
+                      } else {
+                        if (this.filters)
+                          Object.keys(this.filters).forEach(f => {
+                            this.current_filter[c] = valueOf(f);
+                          });
+                        const va = [];
+                        let varstate = '' + this.parsed.dataset + v.get.ids(true) + v.get.features() + site.settings.digits;
+                        for (let i = this.options.variables.length; i--; ) {
+                          vn = this.options.variables[i].name || this.options.variables[i];
+                          pass = !this.filters;
+                          const variable = await site.data.get_variable(vn, this.view);
+                          if (vn in site.data.variables && 'meta' in variable) {
+                            if (this.options.filters) {
+                              for (const c in this.current_filter)
+                                if (c in variable.meta) {
+                                  pass = variable.meta[c] === this.current_filter[c];
+                                  if (!pass) break
+                                }
+                            } else pass = true;
+                          }
+                          if (pass) {
+                            varstate += vn;
+                            va.push({
+                              variable: vn,
+                              int: patterns.int_types.test(site.data.variables[vn].type),
+                              time_range: variable.time_range[d],
+                              renderer: function (o, s) {
+                                const k = s.features.id,
+                                  r = this.time_range,
+                                  n = r[1];
+                                for (let i = r[0]; i <= n; i++) {
+                                  o.rows[k] = o.table.row.add({
+                                    offset: this.time_range[0],
+                                    time: i - this.time_range[0],
+                                    dataset: d,
+                                    variable: this.variable,
+                                    entity: s,
+                                    int: this.int,
+                                  });
+                                  o.rowIds[o.rows[k].selector.rows] = k;
+                                }
+                              },
+                            });
+                          }
+                        }
+                        if (varstate === this.varstate) return void 0
+                        this.varstate = varstate;
+                        Object.keys(v.selection.all).forEach(k => {
+                          const e = v.selection.all[k];
+                          if (this.options.single_variable) {
+                            if (vn in e[v].summary && variable.code in e.data) {
+                              this.rows[k] = this.table.row.add({
+                                offset: this.parsed.time_range[0],
+                                dataset: d,
+                                variable: vn,
+                                entity: e,
+                                int: patterns.int_types.test(site.data.variables[vn].type),
+                              });
+                              this.rowIds[this.rows[k].selector.rows] = k;
+                            }
+                          } else {
+                            va.forEach(v => {
+                              if (site.data.variables[v.variable].code in e.data) v.renderer(this, e);
+                            });
+                          }
+                        });
+                      }
+                    }
+                    this.table.draw() ;
+                  }
+                  if (this.parsed.time > -1 && this.header.length > 1 && v.time_range.filtered_index) {
+                    this.dark_highlight = site.settings.theme_dark;
+                    if (this.style.sheet.rules.length) this.style.sheet.removeRule(0);
+                    if (this.parsed.time_index[time])
+                      this.style.sheet.insertRule(
+                        '#' +
+                          this.id +
+                          ' td:nth-child(' +
+                          (this.parsed.time_index[time] + 1) +
+                          '){background-color: var(--background-highlight)}',
+                        0
+                      );
+                    if (!update && site.settings.table_autosort) {
+                      this.table.order([this.parsed.time + 1, 'dsc']).draw();
+                    }
+                    if (site.settings.table_autoscroll) {
+                      const w = this.e.parentElement.getBoundingClientRect().width,
+                        col = this.table.column(this.parsed.time + 1),
+                        h = col.header().getBoundingClientRect();
+                      if (h)
+                        this.e.parentElement.scroll({
+                          left: h.x - this.e.getBoundingClientRect().x + h.width + 16 - w,
+                          behavior: site.settings.table_scroll_behavior || 'smooth',
+                        });
+                    }
+                  }
+                }
+              }
+            },
+            mouseover: function (e) {
+              if (e.target._DT_CellIndex && e.target._DT_CellIndex.row in this.rowIds) {
+                const id = this.rowIds[e.target._DT_CellIndex.row],
+                  row = this.rows[id].node();
+                if (row) row.classList.add('highlighted');
+                if (id in site.data.entities) {
+                  update_subs(this.id, 'show', site.data.entities[id]);
+                }
+              }
+            },
+            mouseout: function (e) {
+              if (e.target._DT_CellIndex && e.target._DT_CellIndex.row in this.rowIds) {
+                const id = this.rowIds[e.target._DT_CellIndex.row],
+                  row = this.rows[id].node();
+                if (row) row.classList.remove('highlighted');
+                if (id in site.data.entities) {
+                  update_subs(this.id, 'revert', site.data.entities[id]);
+                }
+              }
+            },
+            click: function (e) {
+              if (this.clickto && e.target._DT_CellIndex && e.target._DT_CellIndex.row in this.rowIds) {
+                const id = this.rowIds[e.target._DT_CellIndex.row];
+                if (id in site.data.entities) this.clickto.set(id);
+              }
+            },
+          },
+          table: {
+            init: function (o) {
+              o.click = o.e.getAttribute('data-click');
+              o.features = o.options.features;
+              o.parsed = {summary: {}, order: [], time: 0, color: '', dataset: defaults.dataview, time_index: {}};
+              o.header = [];
+              o.rows = {};
+              o.parts = {
+                head: document.createElement('thead'),
+                body: document.createElement('tbody'),
+              };
+              o.parts.head.appendChild(document.createElement('tr'));
+              o.e.appendChild(o.parts.head);
+              o.e.appendChild(o.parts.body);
+              if (o.click) o.e.classList.add('interactive');
+              o.options.variable_source = o.options.variables;
+              if (o.options.variables in _u) add_dependency(o.options.variables, {type: 'update', id: o.id});
+              o.tab = 'tabpanel' === o.e.parentElement.getAttribute('role') ? o.e.parentElement : void 0;
+              if (o.tab) {
+                document.getElementById(o.e.parentElement.getAttribute('aria-labelledby')).addEventListener(
+                  'click',
+                  function () {
+                    if (!this.e.parentElement.classList.contains('active')) {
+                      setTimeout(this.update, 155);
+                      setTimeout(trigger_resize, 155);
+                    }
+                  }.bind(o)
+                );
+              }
+              o.e.addEventListener('mouseover', elements.table.mouseover.bind(o));
+              o.e.addEventListener('mouseout', elements.table.mouseout.bind(o));
+              if (o.click) {
+                if (o.click in _u) o.clickto = _u[o.click];
+                o.e.addEventListener('click', elements.table.click.bind(o));
+              }
+              o.show = function (e) {
+                if (e.features) {
+                  const row = this.rows[e.features.id];
+                  if (row && row.parentElement) {
+                    row.classList.add('highlighted');
+                    if (site.settings.table_autoscroll) {
+                      const h = this.e.parentElement.getBoundingClientRect().height,
+                        top = row.getBoundingClientRect().y - row.parentElement.getBoundingClientRect().y;
+                      this.e.parentElement.scroll({
+                        top: h > this.e.scrollHeight - top ? this.e.parentElement.scrollHeight : top,
+                        behavior: site.settings.table_scroll_behavior || 'smooth',
+                      });
+                    }
+                  }
+                }
+              }.bind(o);
+              o.revert = function (e) {
+                if (e.features && e.features.id in this.rows) {
+                  this.rows[e.features.id].classList.remove('highlighted');
+                }
+              }.bind(o);
+              o.createHeader = function (v) {
+                const dataset = this.parsed.dataset,
+                  time = site.data.meta.times[dataset],
+                  tr = this.parts.head.firstElementChild,
+                  range = this.parsed.variable.time_range[dataset],
+                  start = range[0],
+                  end = range[1] + 1,
+                  ns = this.parsed.summary.n;
+                this.parsed.time_index = {};
+                tr.innerHTML = '';
+                tr.appendChild(document.createElement('th'));
+                tr.lastElementChild.appendChild(document.createElement('span'));
+                tr.firstElementChild.lastElementChild.innerText = 'Name';
+                for (let i = start, nshowing = 0; i < end; i++) {
+                  if (v.times[i] && (site.settings.show_empty_times || ns[i - start])) {
+                    this.parsed.time_index[time.value[i]] = nshowing++;
+                    tr.appendChild(document.createElement('th'));
+                    tr.lastElementChild.appendChild(document.createElement('span'));
+                    tr.lastElementChild.lastElementChild.innerText = time.value[i];
+                  }
+                }
+              }.bind(o);
+              o.appendRows = function (v) {
+                const es = this.parsed.order,
+                  variable = this.parsed.variable,
+                  times = site.data.meta.times[this.parsed.dataset].value,
+                  range = variable.time_range[this.parsed.dataset],
+                  start = range[0],
+                  dn = range[1] - start + 1,
+                  selection = v.selection.all;
+                this.current_variable = variable.code + this.parsed.dataset;
+                this.parts.body.innerHTML = '';
+                for (let n = es.length; n--; ) {
+                  const id = es[n][0];
+                  if (id in selection) {
+                    const e = site.data.entities[id],
+                      d = e.data[variable.code],
+                      tr = document.createElement('tr');
+                    this.rows[id] = tr;
+                    tr.setAttribute('data-entityId', id);
+                    let td = document.createElement('td');
+                    td.innerText = e.features.name;
+                    tr.appendChild(td);
+                    if (1 === dn) {
+                      tr.appendChild((td = document.createElement('td')));
+                      td.innerText = site.data.format_value(d);
+                      td.setAttribute('data-entityId', id);
+                      td.classList.add('highlighted');
+                    } else {
+                      for (let i = 0; i < dn; i++) {
+                        if (v.times[i + start] && times[i + start] in this.parsed.time_index) {
+                          tr.appendChild((td = document.createElement('td')));
+                          td.innerText = site.data.format_value(d[i]);
+                          if (i === this.parsed.time) td.classList.add('highlighted');
+                        }
+                      }
+                    }
+                    this.parts.body.appendChild(tr);
+                  }
+                }
+                if (
+                  site.settings.table_autoscroll &&
+                  this.parts.head.firstElementChild.childElementCount > 2 &&
+                  this.parts.head.firstElementChild.childElementCount > this.parsed.time + 1
+                ) {
+                  const w = this.e.parentElement.getBoundingClientRect().width,
+                    col = this.parts.head.firstElementChild.children[this.parsed.time + 1].getBoundingClientRect();
+                  this.e.parentElement.scroll({
+                    left: col.x - this.e.getBoundingClientRect().x + col.width + 16 - w,
+                    behavior: site.settings.table_scroll_behavior || 'smooth',
+                  });
+                }
+              }.bind(o);
+              if (o.view) {
+                add_dependency(o.view, {type: 'update', id: o.id});
+                add_dependency(o.view + '_filter', {type: 'update', id: o.id});
+                add_dependency(_u[o.view].time_agg, {type: 'update', id: o.id});
+              } else o.view = defaults.dataview;
+              o.update();
+            },
+            update: async function (pass) {
+              if (this.queue > 0) clearTimeout(this.queue);
+              this.queue = -1;
+              if (!pass) {
+                if (!this.tab || this.tab.classList.contains('show')) this.queue = setTimeout(() => this.update(true), 50);
+              } else {
+                let vn =
+                  this.options.variable_source && valueOf(this.options.variable_source).replace(patterns.all_periods, '\\.');
+                const v = _u[this.view],
+                  d = v.get.dataset(),
+                  time = valueOf(v.time_agg),
+                  state =
+                    d + v.value() + v.get.time_filters() + site.settings.digits + vn + time + site.settings.show_empty_times;
+                if (!site.data.inited[d]) return void 0
+                if (state !== this.state) {
+                  this.state = state;
+                  Object.keys(this.reference_options).forEach(k => (this.options[k] = valueOf(this.reference_options[k])));
+                  const variable = await site.data.get_variable(vn, this.view);
+                  this.parsed.dataset = d;
+                  this.parsed.color = vn;
+                  this.parsed.variable = variable;
+                  this.parsed.time_range = variable.time_range[d];
+                  this.parsed.time =
+                    ('number' === typeof time ? time - site.data.meta.times[d].range[0] : 0) - this.parsed.time_range[0];
+                  this.parsed.summary = variable.views[this.view].summaries[d];
+                  this.parsed.order = variable.views[this.view].order[d][this.parsed.time];
+                  this.createHeader(v);
+                  this.appendRows(v);
+                }
+              }
+            },
+            mouseover: function (e) {
+              const row = 'TD' === e.target.tagName ? e.target.parentElement : e.target,
+                id = row.getAttribute('data-entityId');
+              if (id) {
+                row.classList.add('highlighted');
+                update_subs(this.id, 'show', site.data.entities[id]);
+              }
+            },
+            mouseout: function (e) {
+              const row = 'TD' === e.target.tagName ? e.target.parentElement : e.target,
+                id = row.getAttribute('data-entityId');
+              if (id) {
+                row.classList.remove('highlighted');
+                update_subs(this.id, 'revert', site.data.entities[id]);
+              }
+            },
+            click: function (e) {
+              const row = 'TD' === e.target.tagName ? e.target.parentElement : e.target,
+                id = row.getAttribute('data-entityId');
+              if (this.clickto && id) this.clickto.set(id);
+            },
+          },
+          legend: {
+            init: function (o) {
+              add_dependency(o.view, {type: 'update', id: o.id});
+              const view = _u[o.view];
+              if (view.time_agg in _u) add_dependency(view.time_agg, {type: 'update', id: o.id});
+              if (!o.palette) {
+                if (view.palette) {
+                  o.palette = view.palette;
+                  if (view.palette in _u) add_dependency(view.palette, {type: 'update', id: o.id});
+                } else {
+                  o.palette = 'settings.palette' in _u ? 'settings.palette' : site.settings.palette;
+                }
+              }
+              o.variable = o.e.getAttribute('data-variable');
+              if (o.variable) {
+                if (o.variable in _u) add_dependency(o.variable, {type: 'update', id: o.id});
+              } else if (view.y in _u) add_dependency(view.y, {type: 'update', id: o.id});
+              if (o.palette in _u) {
+                const palette = _u[o.palette];
+                if (palette.e) {
+                  palette.e.addEventListener('change', o.update);
+                }
+              }
+              o.parsed = {summary: {}, order: [], selection: {}, time: 0, color: '', rank: false};
+              o.state = '';
+              o.queue = {
+                lock: false,
+                cooldown: -1,
+                trigger: function () {
+                  this.mouseover(this.queue.e);
+                }.bind(o),
+              };
+              o.queue.reset = function () {
+                this.lock = false;
+              }.bind(o.queue);
+              o.parts = {
+                ticks: o.e.querySelector('.legend-ticks'),
+                scale: o.e.querySelector('.legend-scale'),
+                summary: o.e.querySelector('.legend-summary'),
+              };
+              o.parts.ticks.setAttribute('data-of', o.id);
+              o.parts.scale.setAttribute('data-of', o.id);
+              o.parts.summary.setAttribute('data-of', o.id);
+              o.mouseover = elements.legend.mouseover.bind(o);
+              o.e.addEventListener('mousemove', o.mouseover);
+              o.e.addEventListener('mouseout', elements.legend.mouseout.bind(o));
+              o.e.addEventListener('click', elements.legend.click.bind(o));
+              o.click = o.e.getAttribute('data-click');
+              if (o.click in _u) o.clickto = _u[o.click];
+              o.ticks = {
+                center: o.parts.summary.appendChild(document.createElement('div')),
+                min: o.parts.summary.appendChild(document.createElement('div')),
+                max: o.parts.summary.appendChild(document.createElement('div')),
+                entity: o.parts.ticks.appendChild(document.createElement('div')),
+              };
+              Object.keys(o.ticks).forEach(t => {
+                o.ticks[t].setAttribute('data-of', o.id);
+                o.ticks[t].className = 'legend-tick';
+                o.ticks[t].appendChild((e = document.createElement('div')));
+                e.setAttribute('data-of', o.id);
+                e.appendChild(document.createElement('p'));
+                e.lastElementChild.setAttribute('data-of', o.id);
+                if ('m' !== t.substring(0, 1)) {
+                  e.appendChild(document.createElement('p'));
+                  e.lastElementChild.setAttribute('data-of', o.id);
+                  e.appendChild(document.createElement('p'));
+                  e.lastElementChild.setAttribute('data-of', o.id);
+                  if ('entity' === t) {
+                    o.ticks[t].firstElementChild.lastElementChild.classList.add('entity');
+                  } else {
+                    o.ticks[t].firstElementChild.firstElementChild.classList.add('summary');
+                  }
+                }
+              });
+              o.ticks.entity.firstElementChild.classList.add('hidden');
+              o.ticks.max.className = 'legend-tick-end max';
+              o.ticks.min.className = 'legend-tick-end min';
+              o.ticks.center.style.left = '50%';
+              o.show = function (e, c) {
+                if (e && 'parsed' in c && e.features.name) {
+                  const view = _u[this.view],
+                    summary = c.parsed.summary,
+                    string = summary && 'string' === summary.type,
+                    min = summary && !string ? summary.min[c.parsed.time] : 0,
+                    range = summary ? (string ? summary.levels.length - min : summary.range[c.parsed.time]) : 1,
+                    n = summary.n[c.parsed.time],
+                    subset = n === view.n_selected.dataset ? 'rank' : 'subset_rank',
+                    es = site.data.entities[e.features.id].views[this.view],
+                    value = e.get_value(c.parsed.color, c.parsed.time),
+                    p =
+                      ((string ? value in summary.level_ids : 'number' === typeof value)
+                        ? site.settings.color_by_order
+                          ? NaN
+                          : Math.max(
+                              0,
+                              Math.min(1, range ? ((string ? summary.level_ids[value] : value) - min) / range : 0.5)
+                            )
+                        : NaN) * 100,
+                    container = this.ticks.entity,
+                    t = container.firstElementChild.children[1];
+                  if (isFinite(p)) {
+                    t.parentElement.classList.remove('hidden');
+                    t.innerText = site.data.format_value(value, this.integer);
+                    container.style.left = p + '%';
+                    container.firstElementChild.firstElementChild.innerText =
+                      (p > 96 || p < 4) && e.features.name.length > 13
+                        ? e.features.name.substring(0, 12) + '…'
+                        : e.features.name;
+                  } else if (site.settings.color_by_order && c.parsed.color in es[subset]) {
+                    const i = es[subset][c.parsed.color][c.parsed.time],
+                      po = n > 1 ? (i / (n - 1)) * 100 : 0;
+                    container.firstElementChild.firstElementChild.innerText =
+                      i > -1 && (po > 96 || po < 4) && e.features.name.length > 13
+                        ? e.features.name.substring(0, 12) + '…'
+                        : e.features.name;
+                    if (i > -1) {
+                      t.parentElement.classList.remove('hidden');
+                      t.innerText = '# ' + (n - i);
+                      container.style.left = po + '%';
+                    }
+                  }
+                  container.style.marginLeft = -container.getBoundingClientRect().width / 2 + 'px';
+                }
+              };
+              o.revert = function () {
+                this.ticks.entity.firstElementChild.classList.add('hidden');
+              };
+              o.update();
+            },
+            update: async function () {
+              const view = _u[this.view],
+                variable = valueOf(this.variable || view.y),
+                d = view.get.dataset(),
+                var_info = await site.data.get_variable(variable, this.view),
+                time = valueOf(view.time_agg);
+              if (null !== time && view.valid && var_info && this.view in var_info.views) {
+                const y =
+                    ('number' === typeof time ? time - site.data.meta.times[d].range[0] : 0) - var_info.time_range[d][0],
+                  summary = var_info.views[this.view].summaries[d],
+                  ep = valueOf(this.palette).toLowerCase(),
+                  pn = ep in palettes ? ep : site.settings.palette in palettes ? site.settings.palette : defaults.palette,
+                  p = palettes[pn].colors,
+                  s = this.parts.scale,
+                  ticks = this.ticks;
+                this.parsed.summary = summary;
+                this.parsed.order = var_info.views[this.view].order[d][y];
+                this.parsed.time = y;
+                this.parsed.color = variable;
+                if (summary && y < summary.n.length) {
+                  this.integer = d in var_info.info && 'integer' === var_info.info[d].type;
+                  const refresh = site.settings.color_by_order !== this.parsed.rank,
+                    bins = s.querySelectorAll('span'),
+                    odd = palettes[pn].odd,
+                    remake =
+                      'discrete' === palettes[pn].type
+                        ? p.length !== bins.length - odd
+                        : !s.firstElementChild || 'SPAN' !== s.firstElementChild.tagName;
+                  if (pn + site.settings.color_scale_center !== this.current_palette || refresh) {
+                    this.current_palette = pn + site.settings.color_scale_center;
+                    this.parsed.rank = site.settings.color_by_order;
+                    if (remake) s.innerHTML = '';
+                    if ('discrete' === palettes[pn].type) {
+                      let i = 0,
+                        n = Math.ceil(p.length / 2),
+                        e;
+                      if (remake) {
+                        s.appendChild((e = document.createElement('div')));
+                        e.dataset.of = this.id;
+                        e.style.left = 0;
+                        const prop = (1 / (n - odd / 2)) * 100 + '%';
+                        for (; i < n; i++) {
+                          e.appendChild(document.createElement('span'));
+                          e.lastElementChild.dataset.of = this.id;
+                          e.lastElementChild.style.backgroundColor = p[i];
+                          e.lastElementChild.style.width = prop;
+                        }
+                        if (odd) e.lastElementChild.style.width = ((1 / (n - odd / 2)) * 100) / 2 + '%';
+                        s.appendChild((e = document.createElement('div')));
+                        e.dataset.of = this.id;
+                        e.style.right = 0;
+                        for (i = Math.floor(p.length / 2), n = p.length; i < n; i++) {
+                          e.appendChild(document.createElement('span'));
+                          e.lastElementChild.dataset.of = this.id;
+                          e.lastElementChild.style.backgroundColor = p[i];
+                          e.lastElementChild.style.width = prop;
+                        }
+                        if (odd) e.firstElementChild.style.width = ((1 / (n - odd / 2)) * 100) / 2 + '%';
+                      } else {
+                        for (; i < n; i++) {
+                          bins[i].style.backgroundColor = p[i];
+                        }
+                        for (i = Math.floor(p.length / 2), n = p.length; i < n; i++) {
+                          bins[i + odd].style.backgroundColor = p[i];
+                        }
+                      }
+                    } else {
+                      if (remake) {
+                        s.appendChild(document.createElement('span'));
+                        s.appendChild(document.createElement('span'));
+                      }
+                      s.firstElementChild.style.background =
+                        'linear-gradient(0.25turn, rgb(' +
+                        p[2][0][0] +
+                        ', ' +
+                        p[2][0][1] +
+                        ', ' +
+                        p[2][0][2] +
+                        '), rgb(' +
+                        p[1][0] +
+                        ', ' +
+                        p[1][1] +
+                        ', ' +
+                        p[1][2] +
+                        '))';
+                      s.lastElementChild.style.background =
+                        'linear-gradient(0.25turn, rgb(' +
+                        p[1][0] +
+                        ', ' +
+                        p[1][1] +
+                        ', ' +
+                        p[1][2] +
+                        '), rgb(' +
+                        p[0][0][0] +
+                        ', ' +
+                        p[0][0][1] +
+                        ', ' +
+                        p[0][0][2] +
+                        '))';
+                    }
+                  }
+                  if ('string' === var_info.type) {
+                    ticks.center.classList.remove('hidden');
+                    ticks.min.firstElementChild.firstElementChild.innerText = var_info.levels[0];
+                    ticks.max.firstElementChild.firstElementChild.innerText = var_info.levels[var_info.levels.length - 1];
+                  } else if (site.settings.color_by_order) {
+                    ticks.center.classList.add('hidden');
+                    ticks.min.firstElementChild.firstElementChild.innerText = '# ' + (summary.n[y] ? summary.n[y] : 0);
+                    ticks.max.firstElementChild.firstElementChild.innerText = '# ' + (summary.n[y] ? 1 : 0);
+                  } else {
+                    const state =
+                      '' +
+                      summary.n[y] +
+                      summary.min[y] +
+                      summary.max[y] +
+                      site.settings.digits +
+                      site.settings.color_scale_center +
+                      site.settings.summary_selection;
+                    if (remake || refresh || state !== this.state) {
+                      this.state = state;
+                      ticks.center.classList.remove('hidden');
+                      ticks.min.firstElementChild.firstElementChild.innerText = summary.n[y]
+                        ? isFinite(summary.min[y])
+                          ? site.data.format_value(summary.min[y], this.integer)
+                          : NaN
+                        : NaN;
+                      ticks.max.firstElementChild.firstElementChild.innerText = summary.n[y]
+                        ? isFinite(summary.max[y])
+                          ? site.data.format_value(summary.max[y], this.integer)
+                          : NaN
+                        : NaN;
+                      if ('none' === site.settings.color_scale_center) {
+                        ticks.center.firstElementChild.lastElementChild.innerText =
+                          summary_levels[site.settings.summary_selection] + ' median';
+                        ticks.center.firstElementChild.children[1].innerText = site.data.format_value(summary.median[y]);
+                        ticks.center.style.left = summary.norm_median[y] * 100 + '%';
+                      } else {
+                        ticks.center.firstElementChild.lastElementChild.innerText =
+                          summary_levels[site.settings.summary_selection] + ' ' + site.settings.color_scale_center;
+                        ticks.center.firstElementChild.children[1].innerText = site.data.format_value(
+                          summary[site.settings.color_scale_center][y]
+                        );
+                        ticks.center.style.left = summary['norm_' + site.settings.color_scale_center][y] * 100 + '%';
+                      }
+                      ticks.center.style.marginLeft = -ticks.center.getBoundingClientRect().width / 2 + 'px';
+                    }
+                  }
+                  if (site.settings.color_by_order || 'none' === site.settings.color_scale_center) {
+                    s.firstElementChild.style.width = '50%';
+                    s.lastElementChild.style.width = '50%';
+                  } else {
+                    s.firstElementChild.style.width = summary['norm_' + site.settings.color_scale_center][y] * 100 + '%';
+                    s.lastElementChild.style.width =
+                      100 - summary['norm_' + site.settings.color_scale_center][y] * 100 + '%';
+                  }
+                }
+              }
+            },
+            mouseover: function (e) {
+              if (!this.queue.lock) {
+                this.queue.lock = true;
+                const s = this.parts.scale.getBoundingClientRect(),
+                  p = (Math.max(s.x, Math.min(s.x + s.width, e.clientX)) - s.x) / s.width;
+                let entity = false;
+                if (site.settings.color_by_order) {
+                  if (this.parsed.order && this.parsed.order.length)
+                    entity =
+                      site.data.entities[
+                        this.parsed.order[
+                          Math.max(
+                            this.parsed.summary.missing[this.parsed.time],
+                            Math.min(this.parsed.order.length - 1, Math.floor((this.parsed.order.length - 1) * p))
+                          )
+                        ][0]
+                      ];
+                } else if ('min' in this.parsed.summary) {
+                  const min = this.parsed.summary.min[this.parsed.time],
+                    max = this.parsed.summary.max[this.parsed.time],
+                    tv = min + p * (max - min);
+                  let i, n;
+                  if (this.parsed.order && this.parsed.order.length) {
+                    n = this.parsed.summary.missing[this.parsed.time];
+                    if (n < this.parsed.order.length) {
+                      if (1 === this.parsed.order.length || !p) {
+                        entity = site.data.entities[this.parsed.order[n][0]];
+                      } else {
+                        for (i = this.parsed.order.length - 2; i >= n; --i) {
+                          if ((this.parsed.order[i][1] + this.parsed.order[i + 1][1]) / 2 <= tv) break
+                        }
+                        i++;
+                        entity = site.data.entities[this.parsed.order[i][0]];
+                      }
+                    }
+                  }
+                }
+                if (entity) {
+                  this.show(entity, this);
+                  if (!this.entity || entity.features.id !== this.entity.features.id) {
+                    if (!this.entity) {
+                      this.entity = entity;
+                    } else update_subs(this.id, 'revert', this.entity);
+                    update_subs(this.id, 'show', entity);
+                    this.entity = entity;
+                  }
+                }
+                setTimeout(this.queue.reset, 200);
+              } else {
+                if (this.queue.cooldown > 0) clearTimeout(this.queue.cooldown);
+                this.queue.e = e;
+                this.queue.cooldown = setTimeout(this.queue.trigger, 100);
+              }
+            },
+            mouseout: function (e) {
+              if (e.relatedTarget && this.id !== e.relatedTarget.getAttribute('data-of')) {
+                if (this.queue.cooldown > 0) clearTimeout(this.queue.cooldown);
+                this.queue.cooldown = -1;
+                this.revert();
+                if (this.entity) {
+                  update_subs(this.id, 'revert', this.entity);
+                  this.entity = false;
+                }
+              }
+            },
+            click: function () {
+              if (this.clickto && this.entity) {
+                this.revert();
+                this.clickto.set(this.entity.features.id);
+              }
+            },
+          },
+          credits: {
+            init: function (o) {
+              const s = site.credit_output && site.credit_output[o.id];
+              o.exclude = (s && s.exclude) || [];
+              o.add = (s && s.add) || {};
+              o.e.appendChild(document.createElement('ul'));
+              o.credits = {...site.credits, ...o.add};
+              Object.keys(o.credits).forEach(k => {
+                if (-1 === o.exclude.indexOf(k)) {
+                  const c = o.credits[k];
+                  let e;
+                  o.e.lastElementChild.appendChild((e = document.createElement('li')));
+                  if ('url' in c) {
+                    e.appendChild((e = document.createElement('a')));
+                    e.href = c.url;
+                    e.target = '_blank';
+                    e.rel = 'noreferrer';
+                  }
+                  e.innerText = c.name;
+                  if ('version' in c) {
+                    e.appendChild(document.createElement('span'));
+                    e.lastElementChild.className = 'version-tag';
+                    e.lastElementChild.innerText = c.version;
+                  }
+                  if ('description' in c) {
+                    e.parentElement.appendChild(document.createElement('p'));
+                    e.parentElement.lastElementChild.innerText = c.description;
+                  }
+                }
+              });
+            },
+          },
+          init_input: function (e) {
+            const o = {
+              type: e.getAttribute('data-autoType'),
+              source: void 0,
+              value: function () {
+                const v = valueOf(this.source);
+                return 'undefined' === typeof v ? valueOf(this.default) : v
+              },
+              default: e.getAttribute('data-default'),
+              optionSource: e.getAttribute('data-optionSource'),
+              depends: e.getAttribute('data-depends'),
+              variable: e.getAttribute('data-variable'),
+              dataset: e.getAttribute('data-dataset'),
+              view: e.getAttribute('data-view'),
+              id: e.id || e.optionSource || 'ui' + page.elementCount++,
+              note: e.getAttribute('aria-description') || '',
+              current_index: -1,
+              previous: '',
+              e: e,
+              values: [],
+              display: [],
+              data: [],
+              input: true,
+            };
+            o.settings = o.type in site && o.id in site[o.type] ? site[o.type][o.id] : {};
+            o.wrapper = o.e.parentElement.classList.contains('wrapper')
+              ? o.e.parentElement
+              : o.e.parentElement.parentElement;
+            if (o.wrapper) {
+              if (o.note) o.wrapper.classList.add('has-note');
+              o.wrapper.setAttribute('data-of', o.id)
+              ;['div', 'span', 'label', 'fieldset', 'legend', 'input', 'button'].forEach(type => {
+                const c = o.wrapper.querySelectorAll(type);
+                if (c.length) c.forEach(ci => ci.setAttribute('data-of', o.id));
+              });
+            }
+            if (o.note) {
+              o.wrapper.addEventListener('mouseover', tooltip_trigger.bind(o));
+              const p = 'DIV' !== o.e.tagName ? o.e : o.e.querySelector('input');
+              if (p) {
+                p.addEventListener('focus', tooltip_trigger.bind(o));
+                p.addEventListener('blur', tooltip_clear);
+              }
+            }
+            if (patterns.number.test(o.default)) o.default = Number(o.default);
+            if (o.type in elements) {
+              const p = elements[o.type];
+              if (p.setter) {
+                o.set = p.setter.bind(o);
+                o.reset = function () {
+                  this.set(valueOf(this.default));
+                }.bind(o);
+              }
+              if (p.retrieve) o.get = p.retrieve.bind(o);
+              if (p.adder) o.add = p.adder.bind(o);
+              if (p.listener) o.listen = p.listener.bind(o);
+              if (p.init) p.init(o);
+              if (!o.options) o.options = o.e.querySelectorAll('select' === o.type ? 'option' : 'input');
+              if (o.optionSource && patterns.ids.test(o.optionSource)) {
+                o.loader = function () {
+                  if (!this.e.classList.contains('locked')) {
+                    this.deferred = false;
+                    this.e.removeEventListener('click', this.loader);
+                    request_queue(this.id);
+                  }
+                }.bind(o);
+                o.e.addEventListener('click', o.loader);
+                o.deferred = true;
+              } else if (
+                'number' === typeof o.default &&
+                o.default > -1 &&
+                o.options &&
+                o.options.length &&
+                o.default < o.options.length
+              )
+                o.default = o.options[o.default].value || o.options[o.default].dataset.value;
+              _u[o.id] = o;
+            }
+          },
+          init_output: function (e, i) {
+            const o = {
+              type: e.getAttribute('data-autoType'),
+              view: e.getAttribute('data-view') || defaults.dataview,
+              id: e.id || 'out' + i,
+              note: e.getAttribute('aria-description') || '',
+              reference_options: {},
+              e: e,
+            };
+            if (o.note) o.e.addEventListener('mouseover', tooltip_trigger.bind(o));
+            o.options = o.type in site ? site[o.type][o.id] : void 0;
+            if (o.options && o.options.dataview) o.view = o.options.dataview;
+            if (o.type in elements && 'update' in elements[o.type]) o.update = elements[o.type].update.bind(o);
+            if (o.options) {
+              if ('options' in o.options) o.options = o.options.options;
+              Object.keys(o.options).forEach(k => {
+                if (o.options[k] in _u) o.reference_options[k] = o.options[k];
+              });
+              if ('subto' in o.options) {
+                if ('string' === typeof o.options.subto) o.options.subto = [o.options.subto];
+                if (Array.isArray(o.options.subto)) o.options.subto.forEach(v => add_subs(v, o));
+              }
+            }
+            _u[o.id] = o;
+            if (o.type in elements && 'init' in elements[o.type]) {
+              if (!o.view || _u[o.view].parsed.dataset in site.data.inited) {
+                elements[o.type].init(o);
+              } else {
+                site.data.data_queue[_u[o.view].parsed.dataset][o.id] = elements[o.type].init.bind(null, o);
+              }
+            }
+          },
+        },
+        storage = {
+          name: window.location.pathname || 'default',
+          perm: window.localStorage || {
+            setItem: function () {},
+            getItem: function () {},
+            removeItem: function () {},
+          },
+          set: function (opt, value) {
+            const s = JSON.parse(this.perm.getItem(this.name)) || {};
+            s[opt] = value;
+            this.perm.setItem(this.name, JSON.stringify(s));
+          },
+          get: function (opt) {
+            const s = JSON.parse(this.perm.getItem(this.name));
+            return s ? (opt ? s[opt] : s) : undefined
+          },
+        },
+        keymap = {
+          Enter: 'select',
+          NumpadEnter: 'select',
+          ArrowUp: 'move',
+          Home: 'move',
+          ArrowDown: 'move',
+          End: 'move',
+          Escape: 'close',
+          Tab: 'close',
+        },
+        filter_components = {
+          Time: ['first', 'selected', 'last'],
+          summary: ['missing', 'min', 'q1', 'mean', 'median', 'q3', 'max'],
+        },
+        time_funs = {
+          number: function (v) {
+            return this - v.range[0]
+          },
+          first: function (v) {
+            return 0
+          },
+          selected: function (v, p) {
+            return p.time_agg - v.range[0]
+          },
+          last: function (v) {
+            return v.range[1] - v.range[0]
+          },
+        },
+        page = {
+          load_screen: document.getElementById('load_screen'),
+          wrap: document.getElementById('site_wrap'),
+          navbar: document.querySelector('.navbar'),
+          content: document.querySelector('.content'),
+          overlay: document.createElement('div'),
+          menus: document.getElementsByClassName('menu-wrapper'),
+          panels: document.getElementsByClassName('panel'),
+          elementCount: 0,
+        },
+        queue = {_timeout: 0},
+        meta = {
+          retain_state: true,
+        },
+        subs = {},
+        rule_conditions = {},
+        keys = {},
+        _u = {
+          _entity_filter: {
+            id: '_entity_filter',
+            registered: {},
+            entities: new Map(),
+            selected: [],
+            select_ids: {},
+            value: function (q, agg) {
+              return Object.keys(this.select_ids).join(',')
+            },
+          },
+          _base_filter: {
+            id: '_base_filter',
+            c: new Map(),
+            value: function (q, agg) {
+              const as_state = !q;
+              if (as_state) q = [];
+              _u._base_filter.c.forEach(f => {
+                const component =
+                  'selected' === f.component
+                    ? site.data.meta.overall.value['undefined' === typeof agg ? _u[defaults.dataview].parsed.time_agg : agg]
+                    : f.time_component
+                    ? site.data.meta.overall.value[f.component]
+                    : f.component;
+                if (f.value) q.push(f.variable + '[' + component + ']' + f.operator + f.value + (as_state ? f.active : ''));
+              });
+              return q.join('&')
+            },
+          },
+        },
+        _c = {},
+        tree = {};
+
+      page.overlay.className = 'content-overlay';
+      document.body.appendChild(page.overlay);
+      document.body.className = storage.get('theme_dark') || site.settings.theme_dark ? 'dark-theme' : 'light-theme';
+      if (page.content) {
+        let i = page.menus.length,
+          h = page.navbar ? page.navbar.getBoundingClientRect().height : 0;
+        for (; i--; )
+          if (page.menus[i].classList.contains('menu-top')) {
+            h = page.menus[i].getBoundingClientRect().height;
+            break
+          }
+        page.content.style.top = h + 'px';
+      }
+      if (!window.dataLayer) window.dataLayer = [];
+
+      function pal(value, which, summary, index, rank, total) {
+        if (isNaN(value)) return defaults.missing
+        const centered = 'none' !== site.settings.color_scale_center && !site.settings.color_by_order,
+          fixed = 'discrete' === palettes[which].type,
+          colors = palettes[which].colors,
+          odd = palettes[which].odd,
+          string = 'string' === summary.type,
+          min = !string ? summary.min[index] : 0,
+          range = string ? summary.levels.length - min : summary.range[index],
+          center_source =
+            'none' === site.settings.color_scale_center || patterns.median.test(site.settings.color_scale_center)
+              ? 'median'
+              : 'mean',
+          center = site.settings.color_by_order
+            ? centered
+              ? summary['break_' + center_source][index] / total
+              : 0.5
+            : isNaN(summary['norm_' + center_source][index])
+            ? 0.5
+            : summary['norm_' + center_source][index],
+          r = fixed
+            ? centered && !site.settings.color_by_order
+              ? Math.ceil(colors.length / 2) - odd / 2
+              : colors.length
+            : 1,
+          p = site.settings.color_by_order
+            ? rank / total
+            : range
+            ? ((string ? summary.level_ids[value] : value) - min) / range
+            : 0.5,
+          upper = p > (centered ? center : 0.5);
+        let v = centered
+          ? range
+            ? upper
+              ? (p - center - summary['upper_' + center_source + '_min'][index]) /
+                summary['upper_' + center_source + '_range'][index]
+              : (p + center - summary['lower_' + center_source + '_min'][index]) /
+                summary['lower_' + center_source + '_range'][index]
+            : 1
+          : p;
+        if (!fixed) {
+          v = Math.max(0, Math.min(1, v));
+          if (upper) v = 1 - v;
+          if (!centered) v *= 2;
+        }
+        return (string ? value in summary.level_ids : 'number' === typeof value)
+          ? fixed
+            ? colors[Math.max(0, Math.min(colors.length - 1, Math.floor(centered ? (upper ? r + r * v : r * v) : r * v)))]
+            : 'rgb(' +
+              (upper
+                ? colors[0][0][0] +
+                  v * colors[0][1][0] +
+                  ', ' +
+                  (colors[0][0][1] + v * colors[0][1][1]) +
+                  ', ' +
+                  (colors[0][0][2] + v * colors[0][1][2])
+                : colors[2][0][0] +
+                  v * colors[2][1][0] +
+                  ', ' +
+                  (colors[2][0][1] + v * colors[2][1][1]) +
+                  ', ' +
+                  (colors[2][0][2] + v * colors[2][1][2])) +
+              ')'
+          : defaults.missing
+      }
+
+      function init_text(o, text) {
+        if (!('button' in text)) text.button = {};
+        if ('string' === typeof text.text) text.text = [text.text];
+        text.parts = document.createElement('span');
+        text.text.forEach(k => {
+          if (k in text.button) {
+            const p = text.button[k];
+            text.parts.appendChild(document.createElement('button'));
+            text.parts.lastElementChild.type = 'button';
+            p.trigger = tooltip_trigger.bind({id: o.id + p.text, note: p.target, wrapper: text.parts.lastElementChild});
+            if ('note' === p.type) {
+              text.parts.lastElementChild.setAttribute('aria-description', p.target);
+              text.parts.lastElementChild.setAttribute('data-of', o.id + p.text);
+              text.parts.lastElementChild.className = 'has-note';
+              text.parts.lastElementChild.addEventListener('mouseover', p.trigger);
+              text.parts.lastElementChild.addEventListener('focus', p.trigger);
+              text.parts.lastElementChild.addEventListener('blur', tooltip_clear);
+            } else {
+              text.parts.lastElementChild.className = 'btn btn-link';
+              if (!Array.isArray(p.target)) p.target = [p.target];
+              const m = new Map();
+              p.target.forEach(t => {
+                const u = _u[t];
+                if (u && 'function' === typeof u[p.type]) m.set(t, u[p.type]);
+              });
+              if (m.size) {
+                text.parts.lastElementChild.setAttribute('aria-label', p.text.join(''));
+                text.parts.lastElementChild.addEventListener(
+                  'click',
+                  function () {
+                    this.forEach(f => f());
+                  }.bind(m)
+                );
+              }
+            }
+          } else {
+            text.parts.appendChild(document.createElement('span'));
+          }
+          if (k in _u) o.depends.set(k, {id: k, u: _u[k], parsed: ''});
+        });
+        if ('condition' in text) {
+          for (let i = text.condition.length; i--; ) {
+            const c = text.condition[i];
+            if (c.id) {
+              if ('default' === c.id) {
+                c.check = function () {
+                  return true
+                };
+              } else {
+                o.depends.set(c.id, c);
+                c.check = function () {
+                  return 'default' === this.id || DataHandler.checks[this.type](valueOf(this.id), valueOf(this.value))
+                }.bind(c);
+              }
+            }
+          }
+        }
+      }
+
+      function fill_ids_options(u, d, out, onend) {
+        if (!(d in site.data.sets)) {
+          site.data.data_queue[d][u.id] = function () {
+            u.e.removeEventListener('click', u.loader);
+            fill_ids_options(u, d, out, onend);
+            u.set_current();
+            u.current_set = d;
+            return
+          };
+          return
+        }
+        out[d] = {options: [], values: {}, display: {}};
+        const current = u.values,
+          s = out[d].options,
+          values = out[d].values,
+          disp = out[d].display,
+          combobox = 'combobox' === u.type;
+        let ck = !u.sensitive && !!u.current_set,
+          n = 0;
+        if (u.settings.group) {
+          u.groups = {e: [], by_name: {}};
+          if (combobox && u.settings.accordion) {
+            u.listbox.classList.add('accordion');
+            u.listbox.id = u.id + '-listbox';
+          }
+        }
+        Object.keys(site.data.entities).forEach(k => {
+          const entity = site.data.entities[k];
+          if (d === entity.group) {
+            if (ck && !(k in current)) {
+              u.sensitive = true;
+              ck = false;
+            }
+            if (u.groups) {
+              let groups = entity.features[u.settings.group] || ['No Group'];
+              if (!Array.isArray(groups)) groups = [groups];
+              for (let g = groups.length; g--; ) {
+                const group = groups[g];
+                if (!(group in u.groups.by_name)) {
+                  const e = document.createElement(combobox ? 'div' : 'optgroup');
+                  if (combobox) {
+                    const id = u.id + '_' + group.replace(patterns.seps, '-');
+                    let ee;
+                    if (u.settings.accordion) {
+                      e.setAttribute('data-group', group);
+                      e.className = 'combobox-group accordion-item combobox-component';
+                      e.appendChild((ee = document.createElement('div')));
+                      ee.className = 'accordion-header combobox-component';
+                      ee.appendChild((ee = document.createElement('button')));
+                      ee.id = id + '-label';
+                      ee.innerText = group;
+                      ee.type = 'button';
+                      ee.className = 'accordion-button combobox-component collapsed';
+                      ee.setAttribute('data-bs-toggle', 'collapse');
+                      ee.setAttribute('data-bs-target', '#' + id);
+                      ee.setAttribute('aria-expanded', 'false');
+                      ee.setAttribute('aria-controls', id);
+                      e.appendChild((ee = document.createElement('div')));
+                      ee.id = id;
+                      ee.className = 'combobox-component accordion-collapse collapse';
+                      ee.setAttribute('data-bs-parent', '#' + u.id + '-listbox');
+                      ee.appendChild((ee = document.createElement('div')));
+                      ee.className = 'accordion-body combobox-component';
+                      ee.role = 'group';
+                      ee.setAttribute('aria-labelledby', id + '-label');
+                    } else {
+                      e.className = 'combobox-group combobox-component';
+                      e.id = id;
+                      e.role = 'group';
+                      e.appendChild((ee = document.createElement('div')));
+                      ee.appendChild((ee = document.createElement('label')));
+                      ee.for = id;
+                      ee.innerText = group;
+                      ee.id = id + '-label';
+                      ee.for = id;
+                      ee.className = 'combobox-group-label combobox-component';
+                    }
+                  } else {
+                    e.label = group;
+                  }
+                  u.groups.by_name[group] = e;
+                  u.groups.e.push(e);
+                }
+                const o = u.add(k, entity.features.name, true);
+                o.setAttribute('data-group', group);
+                if (combobox && u.settings.accordion) {
+                  u.groups.by_name[group].lastElementChild.lastElementChild.appendChild(o);
+                } else {
+                  u.groups.by_name[group].appendChild(o);
+                }
+              }
+            } else {
+              s.push(u.add(k, entity.features.name));
+              values[k] = n;
+              disp[entity.features.name] = n++;
+            }
+          }
+        });
+        if (u.settings.group) {
+          n = 0;
+          Object.keys(u.groups.by_name).forEach(g => {
+            u.groups.by_name[g].querySelectorAll(combobox ? '.combobox-option' : 'option').forEach(c => {
+              s.push(c);
+              values[combobox ? c.dataset.value : c.value] = n;
+              disp[c.innerText] = n++;
+            });
+          });
+        }
+        onend && onend();
+      }
+
+      function fill_variables_options(u, d, out) {
+        out[d] = {options: [], values: {}, display: {}};
+        const current = u.values,
+          s = out[d].options,
+          values = out[d].values,
+          disp = out[d].display,
+          combobox = 'combobox' === u.type;
+        let ck = !u.sensitive && !!u.current_set,
+          n = 0;
+        if (u.settings.group) {
+          u.groups = {e: [], by_name: {}};
+          if (combobox && u.settings.accordion) {
+            u.listbox.classList.add('accordion');
+            u.listbox.id = u.id + '-listbox';
+          }
+        }
+        const url_set = site.url_options[u.id];
+        let ck_suffix = false;
+        if (url_set && !(url_set in site.data.variables)) {
+          site.url_options[u.id] = url_set.replace(patterns.pre_colon, '');
+          if (!(site.url_options[u.id] in site.data.variables)) ck_suffix = true;
+        }
+        site.data.info[d].schema.fields.forEach(m => {
+          const v = site.data.variables[m.name];
+          if (v && !v.is_time) {
+            const l = site.data.format_label(m.name);
+            if (ck && !(m.name in current)) {
+              u.sensitive = true;
+              ck = false;
+            }
+            if (u.groups) {
+              let groups = (m.info && m.info[u.settings.group]) || ['No Group'];
+              if (!Array.isArray(groups)) groups = [groups];
+              for (let g = groups.length; g--; ) {
+                const group = groups[g];
+                if (!(group in u.groups.by_name)) {
+                  const e = document.createElement(combobox ? 'div' : 'optgroup');
+                  if (combobox) {
+                    const id = u.id + '_' + group.replace(patterns.seps, '-');
+                    let ee;
+                    if (u.settings.accordion) {
+                      e.setAttribute('data-group', group);
+                      e.className = 'combobox-group accordion-item combobox-component';
+                      e.appendChild((ee = document.createElement('div')));
+                      ee.className = 'accordion-header combobox-component';
+                      ee.appendChild((ee = document.createElement('button')));
+                      ee.id = id + '-label';
+                      ee.innerText = group;
+                      ee.type = 'button';
+                      ee.className = 'accordion-button combobox-component collapsed';
+                      ee.setAttribute('data-bs-toggle', 'collapse');
+                      ee.setAttribute('data-bs-target', '#' + id);
+                      ee.setAttribute('aria-expanded', 'false');
+                      ee.setAttribute('aria-controls', id);
+                      e.appendChild((ee = document.createElement('div')));
+                      ee.id = id;
+                      ee.className = 'combobox-component accordion-collapse collapse';
+                      ee.setAttribute('data-bs-parent', '#' + u.id + '-listbox');
+                      ee.appendChild((ee = document.createElement('div')));
+                      ee.className = 'accordion-body combobox-component';
+                      ee.role = 'group';
+                      ee.setAttribute('aria-labelledby', id + '-label');
+                    } else {
+                      e.className = 'combobox-group combobox-component';
+                      e.role = 'group';
+                      e.appendChild((ee = document.createElement('div')));
+                      ee.appendChild((ee = document.createElement('label')));
+                      ee.for = id;
+                      ee.innerText = group;
+                      ee.id = id;
+                      ee.className = 'combobox-group-label combobox-component';
+                    }
+                  } else {
+                    e.label = group;
+                  }
+                  u.groups.by_name[group] = e;
+                  u.groups.e.push(e);
+                }
+                const o = u.add(m.name, l, true, m);
+                o.setAttribute('data-group', group);
+                if (combobox && u.settings.accordion) {
+                  u.groups.by_name[group].lastElementChild.lastElementChild.appendChild(o);
+                } else {
+                  u.groups.by_name[group].appendChild(o);
+                }
+              }
+            } else {
+              s.push(u.add(m.name, l, true, m));
+              s[n].id = u.id + '-option' + n;
+              values[m.name] = n;
+              disp[l] = n++;
+            }
+            if (ck_suffix && url_set === m.name.replace(patterns.pre_colon, '')) {
+              site.url_options[u.id] = m.name;
+              ck_suffix = false;
+            }
+          }
+        });
+        if (u.settings.group) {
+          n = 0;
+          Object.keys(u.groups.by_name).forEach(g => {
+            u.groups.by_name[g].querySelectorAll(combobox ? '.combobox-option' : 'option').forEach(c => {
+              s.push(c);
+              s[n].id = u.id + '-option' + n;
+              values[combobox ? c.dataset.value : c.value] = n;
+              disp[(c.firstChild && c.firstChild.textContent) || c.innerText] = n++;
+            });
+          });
+        }
+        if (!u.settings.clearable && !(u.default in site.data.variables)) u.default = defaults.variable;
+      }
+
+      function fill_overlay_properties_options(u, source, out) {
+        out[source] = {options: [], values: {}, display: {}};
+        const current = u.values,
+          s = out[source].options,
+          values = out[source].values,
+          disp = out[source].display;
+          'combobox' === u.type;
+        let ck = !u.sensitive && !!u.current_set,
+          n = 0;
+        if (u.settings.group) {
+          u.groups = {e: [], by_name: {}};
+        }
+        Object.keys(site.map._queue[source].property_summaries).forEach(v => {
+          const l = site.data.format_label(v);
+          if (ck && !(v.name in current)) {
+            u.sensitive = true;
+            ck = false;
+          }
+          s.push(u.add(v, l));
+          s[n].id = u.id + '-option' + n;
+          values[v] = n;
+          disp[l] = n++;
+        });
+      }
+
+      function fill_levels_options(u, d, v, out) {
+        const m = site.data.variables[v].info[d],
+          t = 'string' === m.type ? 'levels' : 'ids',
+          l = m[t];
+        if (l) {
+          const k = d + v;
+          out[k] = {options: [], values: {}, display: {}};
+          const current = u.values,
+            s = out[k].options,
+            values = out[k].values,
+            disp = out[k].display;
+          let ck = !u.sensitive && !!u.current_set,
+            n = 0;
+          Object.keys(l).forEach(k => {
+            const lk = l[k];
+            if (ck && !(k in current)) {
+              u.sensitive = true;
+              ck = false;
+            }
+            s.push(u.add(lk.id, lk.name, true));
+            values[lk.id] = n;
+            disp[lk.name] = n++;
+          });
+        } else if ('ids' === t) {
+          site.data.data_queue[d][u.id] = function () {
+            return fill_levels_options(u, d, v, out)
+          };
+        }
+      }
+
+      function toggle_input(u, enable) {
+        if (enable && !u.e.classList.contains('locked')) {
+          u.e.removeAttribute('disabled');
+          u.e.classList.remove('disabled');
+          if (u.input_element) u.input_element.removeAttribute('disabled');
+        } else {
+          u.e.setAttribute('disabled', 'true');
+          u.e.classList.add('disabled');
+          if (u.input_element) u.input_element.setAttribute('disabled', 'true');
+        }
+      }
+
+      function sort_tree_children(a, b) {
+        return !(a.id in tree) || !(b.id in tree) ? -Infinity : tree[a.id]._n.children - tree[b.id]._n.children
+      }
+
+      function add_dependency(id, o) {
+        if (!(id in _c)) _c[id] = [];
+        if (!o.uid) o.uid = JSON.stringify(o);
+        const c = _c[id];
+        for (let i = c.length; i--; ) if (o.uid === c[i].uid) return void 0
+        c.push(o);
+        if (!(id in tree)) tree[id] = {_n: {children: 0, parents: 0}, children: {}, parents: {}};
+        if (!(o.id in tree)) tree[o.id] = {_n: {children: 0, parents: 0}, children: {}, parents: {}};
+        tree[id].children[o.id] = tree[o.id];
+        tree[id]._n.children++;
+        tree[o.id].parents[id] = tree[id];
+        tree[o.id]._n.parents++;
+        c.sort(sort_tree_children);
+        request_queue(id);
+      }
+
+      function add_subs(id, o) {
+        if (!(id in subs)) subs[id] = [];
+        subs[id].push(o);
+      }
+
+      function update_subs(id, fun, e) {
+        if (id in subs) {
+          for (let i = subs[id].length; i--; ) {
+            if (fun in subs[id][i]) subs[id][i][fun](e, _u[id]);
+          }
+        }
+      }
+
+      function update_plot_theme(u) {
+        if (u.dark_theme !== site.settings.theme_dark) {
+          u.dark_theme = site.settings.theme_dark;
+          const s = getComputedStyle(document.body);
+          if (!('style' in u)) {
+            u.style = u.options.layout;
+            if (!('font' in u.style)) u.style.font = {};
+            if (!('modebar' in u.style)) u.style.modebar = {};
+            if (!('font' in u.style.xaxis)) u.style.xaxis.font = {};
+            if (!('font' in u.style.yaxis)) u.style.yaxis.font = {};
+          }
+          u.style.paper_bgcolor = s.backgroundColor;
+          u.style.plot_bgcolor = s.backgroundColor;
+          u.style.font.color = s.color;
+          u.style.modebar.bgcolor = s.backgroundColor;
+          u.style.modebar.color = s.color;
+          if (u.e._fullLayout.xaxis.showgrid) u.style.xaxis.gridcolor = s.borderColor;
+          if (u.e._fullLayout.yaxis.showgrid) u.style.yaxis.gridcolor = s.borderColor;
+          u.style.xaxis.font.color = s.color;
+          u.style.yaxis.font.color = s.color;
+          Plotly.relayout(u.e, u.options.layout);
+        }
+      }
+
+      function make_data_entry(u, e, rank, total, name, color) {
+        if (e.data && u.parsed.x in site.data.variables) {
+          const x = site.data.get_value({variable: u.parsed.x, entity: e}),
+            y = site.data.get_value({variable: u.parsed.y, entity: e}),
+            t = JSON.parse(u.traces[u.base_trace]),
+            yr = site.data.variables[u.parsed.y].time_range[u.parsed.dataset],
+            xr = site.data.variables[u.parsed.x].time_range[u.parsed.dataset],
+            n = Math.min(yr[1], xr[1]) + 1,
+            ns = u.parsed.summary.n;
+          for (let i = Math.max(yr[0], xr[0]); i < n; i++) {
+            if (site.settings.show_empty_times || ns[i - u.parsed.y_range[0]]) {
+              t.text.push(e.features.name);
+              t.x.push(u.parsed.x_range[0] <= i && i <= u.parsed.x_range[1] ? x[i - u.parsed.x_range[0]] : NaN);
+              t.y.push(u.parsed.y_range[0] <= i && i <= u.parsed.y_range[1] ? y[i - u.parsed.y_range[0]] : NaN);
+            }
+          }
+          t.type = u.parsed.base_trace;
+          t.color =
+            t.line.color =
+            t.marker.color =
+            t.textfont.color =
+              color ||
+              pal(
+                e.get_value(u.parsed.color, u.parsed.time),
+                u.parsed.palette,
+                u.parsed.summary,
+                u.parsed.time,
+                rank,
+                total
+              ) ||
+              defaults.border;
+          if ('bar' === t.type) t.marker.line.width = 0;
+          t.name = name || e.features.name;
+          t.id = e.features.id;
+          return t
+        }
+      }
+
+      function make_summary_table(parent, summary, additional) {
+        parent.classList.add('info-summary-wrapper');
+        const e = document.createElement('table');
+        e.className = 'info-summary';
+        e.appendChild(document.createElement('tr'));
+        e.appendChild(document.createElement('tr'));
+        if (additional) {
+          Object.keys(additional).forEach(h => {
+            e.firstElementChild.appendChild(document.createElement('th'));
+            e.firstElementChild.lastElementChild.innerText = h;
+            e.lastElementChild.appendChild(document.createElement('td'));
+            e.lastElementChild.lastElementChild.innerText = additional[h];
+          });
+        }
+    ['NAs', 'Min', 'Q1', 'Mean', 'Median', 'Q3', 'Max'].forEach(h => {
+          const lower = h.toLowerCase();
+          if (!summary || lower in summary) {
+            e.firstElementChild.appendChild(document.createElement('th'));
+            e.firstElementChild.lastElementChild.innerText = h;
+            e.lastElementChild.appendChild(document.createElement('td'));
+            e.lastElementChild.lastElementChild.innerText = summary ? site.data.format_value(summary[lower]) : 'NA';
+          }
+        });
+        parent.appendChild(e);
+        return e
+      }
+
+      function fill_summary_table(table, summary, time) {
+        const e = table.lastElementChild.children;
+        filter_components.summary.forEach((c, i) => {
+          e[i].innerText = site.data.format_value(summary[c][time], 0 === i);
+        });
+      }
+
+      function make_variable_reference(c) {
+        if (!Array.isArray(c.author)) c.author = [c.author];
+        const e = document.createElement('li'),
+          n = c.author.length;
+        let s = '',
+          j = 1 === n ? '' : 2 === n ? ' & ' : ', & ';
+        for (let i = n; i--; ) {
+          const a = c.author[i];
+          s =
+            (i ? j : '') +
+            ('string' === typeof a ? a : a.family) +
+            (a.given ? ', ' + a.given.substring(0, 1) + '.' : '') +
+            s;
+          j = ', ';
+        }
+        e.innerHTML =
+          s +
+          ' (' +
+          c.year +
+          '). ' +
+          c.title +
+          '.' +
+          (c.journal
+            ? ' <em>' + c.journal + (c.volume ? ', ' + c.volume : '') + '</em>' + (c.page ? ', ' + c.page : '') + '.'
+            : '') +
+          (c.version ? ' Version ' + c.version + '.' : '') +
+          (c.doi || c.url
+            ? (c.doi ? ' doi: ' : ' url: ') +
+              (c.doi || c.url
+                ? '<a rel="noreferrer" target="_blank" href="' +
+                  (c.doi ? 'https://doi.org/' + c.doi : c.url) +
+                  '">' +
+                  (c.doi || c.url.replace(patterns.http, '')) +
+                  '</a>'
+                : '')
+            : '');
+        return e
+      }
+
+      function make_variable_source(s, table) {
+        const e = document.createElement(table ? 'tr' : 'div');
+        let ee;
+        if (table) {
+          if (s.name) {
+            e.appendChild((ee = document.createElement('td')));
+            if (s.url) {
+              ee.appendChild((ee = document.createElement('a')));
+              ee.target = '_blank';
+              ee.rel = 'noreferrer';
+              ee.href = s.url;
+            } else {
+              ee.appendChild(document.createElement('span'));
+            }
+            e.firstElementChild.firstElementChild.innerText = s.name;
+          }
+          if (s.date_accessed) {
+            e.appendChild((ee = document.createElement('td')));
+            ee.appendChild(document.createElement('span'));
+            ee.firstElementChild.innerText = s.date_accessed;
+          }
+        } else {
+          e.className = 'card';
+          if (s.name) {
+            e.appendChild((ee = document.createElement('div')));
+            ee.className = 'card-header';
+            if (s.url) {
+              ee.appendChild((ee = document.createElement('a')));
+              ee.target = '_blank';
+              ee.rel = 'noreferrer';
+              ee.href = s.url;
+            } else {
+              ee.appendChild(document.createElement('span'));
+            }
+            e.firstElementChild.firstElementChild.innerText = s.name;
+          }
+          e.appendChild(document.createElement('div'));
+          e.lastElementChild.className = 'card-body';
+          if (s.location) {
+            e.lastElementChild.appendChild((ee = document.createElement('p')));
+            ee.appendChild(document.createElement('span'));
+            ee.lastElementChild.innerText = 'Location: ';
+            ee.appendChild(document.createElement('span'));
+            if (s.location_url) {
+              ee.lastElementChild.appendChild((ee = document.createElement('a')));
+              ee.target = '_blank';
+              ee.rel = 'noreferrer';
+              ee.href = s.location_url;
+              ee.innerText = s.location;
+            } else {
+              ee.lastElementChild.innerText = s.location;
+            }
+          }
+          if (s.date_accessed) {
+            e.lastElementChild.appendChild((ee = document.createElement('p')));
+            ee.appendChild(document.createElement('span'));
+            ee.lastElementChild.innerText = 'Date Accessed: ';
+            ee.appendChild(document.createElement('span'));
+            ee.lastElementChild.innerText = s.date_accessed;
+          }
+        }
+        return e
+      }
+
+      function show_variable_info() {
+        const v = _u[this.view],
+          name = valueOf(this.v || v.y),
+          info = site.data.variable_info[name];
+        page.modal.info.header.firstElementChild.innerText = info.short_name;
+        page.modal.info.title.innerText = info.long_name;
+        set_description(page.modal.info.description, info);
+        page.modal.info.name.lastElementChild.innerText = name;
+        page.modal.info.type.lastElementChild.innerText = info.unit || info.aggregation_method || info.type || '';
+        if (info.sources && info.sources.length) {
+          page.modal.info.sources.lastElementChild.innerHTML = '';
+          page.modal.info.sources.classList.remove('hidden');
+          info.sources.forEach(s => {
+            page.modal.info.sources.lastElementChild.appendChild(make_variable_source(s));
+          });
+        } else page.modal.info.sources.classList.add('hidden');
+        if (info.citations && info.citations.length) {
+          page.modal.info.references.lastElementChild.innerHTML = '';
+          page.modal.info.references.classList.remove('hidden');
+          if ('string' === typeof info.citations) info.citations = [info.citations];
+          if ('references' in site.data) {
+            delete site.data.variable_info._references;
+            delete site.data.references;
+          }
+          if (!('_references' in site.data.variable_info)) {
+            const r = {};
+            site.data.variable_info._references = r;
+            Object.keys(site.data.info).forEach(d => {
+              const m = site.data.info[d];
+              if ('_references' in m) {
+                Object.keys(m._references).forEach(t => {
+                  if (!(t in r))
+                    r[t] = {
+                      reference: m._references[t],
+                      element: make_variable_reference(m._references[t]),
+                    };
+                });
+              }
+            });
+          }
+          const r = site.data.variable_info._references;
+          info.citations.forEach(c => {
+            if (c in r) page.modal.info.references.lastElementChild.appendChild(r[c].element);
+          });
+        } else page.modal.info.references.classList.add('hidden');
+        if ('origin' in info) {
+          page.modal.info.origin.classList.remove('hidden');
+          const l = page.modal.info.origin.lastElementChild;
+          l.innerHTML = '';
+          if ('string' === typeof info.origin) info.origin = [info.origin];
+          info.origin.forEach(url => {
+            const c = document.createElement('li'),
+              repo = patterns.repo.exec(url)[1];
+            let link = document.createElement('a');
+            link.href = 'https://github.com/' + repo;
+            link.target = '_blank';
+            link.rel = 'noreferrer';
+            link.innerText = repo;
+            c.appendChild(link);
+            c.appendChild(document.createElement('span'));
+            c.lastElementChild.innerText = ' / ';
+            link = document.createElement('a');
+            link.href = url;
+            link.target = '_blank';
+            link.rel = 'noreferrer';
+            link.innerText = url.replace(patterns.basename, '');
+            c.appendChild(link);
+            l.appendChild(c);
+          });
+        } else page.modal.info.origin.classList.add('hidden');
+        if (info.source_file) {
+          page.modal.info.source_file.classList.remove('hidden');
+          page.modal.info.source_file.firstElementChild.href = info.source_file;
+        } else page.modal.info.source_file.classList.add('hidden');
+      }
+
+      function parse_variables(s, type, e, entity) {
+        if ('statement' === type) {
+          for (let m, v; (m = patterns.mustache.exec(s)); ) {
+            if ('value' === m[1]) {
+              v = entity
+                ? site.data.format_value(
+                    entity.get_value(e.v, e.time),
+                    e.dataset in site.data.variables[e.v] && 'integer' === site.data.variables[e.v][e.dataset].type
+                  )
+                : NaN;
+              const info = site.data.variable_info[e.v];
+              let type = info.unit || info.type;
+              if (info.aggregation_method && !(type in value_types)) type = info.aggregation_method;
+              s = s.replace(m[0], NaN !== v && type in value_types ? value_types[type](v) : v);
+              patterns.mustache.lastIndex = 0;
+            } else if (entity) {
+              if ('region_name' === m[1]) {
+                s = s.replace(m[0], entity.features.name);
+                patterns.mustache.lastIndex = 0;
+              } else if (patterns.features.test(m[1])) {
+                s = s.replace(m[0], entity.features[m[1].replace(patterns.features, '')]);
+                patterns.mustache.lastIndex = 0;
+              } else if (patterns.variables.test(m[1])) {
+                s = s.replace(m[0], entity.variables[e.v][m[1].replace(patterns.variables, '')]);
+                patterns.mustache.lastIndex = 0;
+              } else if (patterns.data.test(m[1])) {
+                s = s.replace(m[0], entity.get_value(m[1].replace(patterns.data, ''), e.time));
+                patterns.mustache.lastIndex = 0;
+              }
+            }
+          }
+        }
+        return s
+      }
+
+      let k, i, e, ee, c;
+      // get options from url
+      site.query = k = window.location.search.replace('?', '');
+      site.url_options = {};
+      if (k) {
+        e = k.split('&');
+        for (i = e.length; i--; ) {
+          c = e[i].split('=');
+          if (c.length < 2) c.push('true');
+          c[1] = patterns.bool.test(c[1]) ? !!c[1] || 'true' === c[1] : c[1].replace(patterns.url_spaces, ' ');
+          site.url_options[c[0]] = c[1];
+          if (patterns.settings.test(c[0])) storage.set(c[0].replace(patterns.settings, ''), c[1]);
+        }
+      }
+
+      // prepare embedded view
+      if ('embedded' in site.url_options || 'hide_navbar' in site.url_options) {
+        if (!('hide_logo' in site.url_options)) site.url_options.hide_logo = true;
+        if (!('hide_title' in site.url_options)) site.url_options.hide_title = true;
+        if (!('hide_navcontent' in site.url_options)) site.url_options.hide_navcontent = true;
+        if (!('hide_panels' in site.url_options)) site.url_options.hide_panels = true;
+        if ('embedded' in site.url_options && !('close_menus' in site.url_options)) site.url_options.close_menus = true;
+      }
+      e = page.navbar;
+      if (e) {
+        e.querySelectorAll('button').forEach(b => {
+          const panel = document.querySelector(b.getAttribute('data-bs-target'));
+          if (panel && 'false' === panel.getAttribute('data-bs-backdrop')) {
+            panel.addEventListener('show.bs.offcanvas', function () {
+              page.content_bounds.outer_right = panel.getBoundingClientRect().width;
+              content_resize(void 0, true);
+              setTimeout(trigger_resize, 200);
+            });
+            panel.addEventListener('hide.bs.offcanvas', function () {
+              page.content_bounds.outer_right = 0;
+              content_resize(void 0, true);
+              setTimeout(trigger_resize, 200);
+            });
+          }
+        });
+        if ('navcolor' in site.url_options) {
+          if ('' === site.url_options.navcolor) site.url_options.navcolor = window.location.hash;
+          e.style.backgroundColor = site.url_options.navcolor.replace('%23', '#');
+        }
+        if (site.url_options.hide_logo && site.url_options.hide_title && site.url_options.hide_navcontent) {
+          e.classList.add('hidden');
+        } else {
+          e = document.querySelector('.navbar-brand');
+          if (e) {
+            if (site.url_options.hide_logo && 'IMG' === e.firstElementChild.tagName)
+              e.firstElementChild.classList.add('hidden');
+            if (site.url_options.hide_title && 'IMG' !== e.lastElementChild.tagName)
+              e.lastElementChild.classList.add('hidden');
+          }
+          if (site.url_options.hide_navcontent) {
+            document.querySelector('.navbar-toggler').classList.add('hidden');
+            e = document.querySelector('.navbar-nav');
+            if (e) e.classList.add('hidden');
+          }
+        }
+        if (site.url_options.hide_panels && page.panels.length) {
+          for (i = page.panels.length; i--; ) {
+            page.panels[i].classList.add('hidden');
+          }
+        }
+      }
+
+      // check for stored settings
+      storage.copy = storage.get();
+      if (storage.copy)
+        for (const k in site.settings) {
+          if (k in storage.copy) {
+            let c = storage.copy[k];
+            if (patterns.bool.test(c)) {
+              c = !!c || 'true' === c;
+            } else if (patterns.number.test(c)) c = parseFloat(c);
+            site.settings[k] = c;
+          }
+        }
+
+      // preprocess polynomial palettes
+      function poly_channel(ch, pos, coefs) {
+        const n = coefs.length;
+        let v = coefs[0][ch] + pos * coefs[1][ch],
+          i = 2;
+        for (; i < n; i++) {
+          v += Math.pow(pos, i) * coefs[i][ch];
+        }
+        return Math.max(0, Math.min(255, v))
+      }
+      Object.keys(palettes).forEach(k => {
+        const n = 255,
+          p = palettes[k];
+        if ('continuous-polynomial' === p.type) {
+          const c = p.colors;
+          p.type = 'discrete';
+          p.colors = [];
+          for (let i = 0; i < n; i++) {
+            const v = i / n;
+            p.colors.push(
+              'rgb(' + poly_channel(0, v, c) + ', ' + poly_channel(1, v, c) + ', ' + poly_channel(2, v, c) + ')'
+            );
+          }
+        }
+        p.odd = p.colors.length % 2;
+      });
+
+      window.onload = function () {
+        page.navbar = document.querySelector('.navbar');
+        page.navbar = page.navbar ? page.navbar.getBoundingClientRect() : {height: 0};
+        page.content = document.querySelector('.content');
+        page.menus = document.querySelectorAll('.menu-wrapper');
+        page.panels = document.querySelectorAll('.panel');
+        page.content_bounds = {
+          top: page.navbar.height,
+          right: 0,
+          bottom: 0,
+          left: 0,
+          outer_right: 0,
         };
         Combobox.prototype.close = function (e) {
             if (this.expanded &&
