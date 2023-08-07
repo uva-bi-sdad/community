@@ -135,7 +135,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       l <- !colnames(d) %in% vars & lcols %in% vars
       colnames(d)[l] <- lcols[l]
     }
-    d[[id]] <- as.character(d[[id]])
+    d[[id]] <- gsub("^\\s+|\\s+$", "", d[[id]])
     if (check_ids) {
       su <- grepl("\\de[+-]\\d", d[[id]], perl = TRUE)
       if (any(su)) {
