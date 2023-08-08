@@ -109,10 +109,9 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
         cols <- scan(f, "", nlines = 1, sep = sep, quiet = TRUE)
         types <- rep("?", length(cols))
         types[cols == id] <- "c"
-        col_types <- paste(types, collapse = "")
         read_delim_arrow(
           gzfile(f), sep,
-          col_names = cols, col_types = col_types, skip = 1
+          col_names = cols, col_types = paste(types, collapse = ""), skip = 1
         )
       },
       error = function(e) NULL
@@ -325,7 +324,6 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
   data <- unique(data[, svars[svars %in% vars]])
   if (length(measure_info)) {
     dynamic_names <- render_info_names(measure_info)
-    dynamic_names <- structure(names(dynamic_names), names = dynamic_names)
   }
   sets <- lapply(datasets, function(dn) {
     if (read_existing && !is.null(out) && file.exists(files[[dn]]) && !write[[dn]]) {

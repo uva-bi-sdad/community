@@ -179,7 +179,7 @@ prepare_source <- function(o, s, p) {
 
 render_info_names <- function(infos) {
   r <- lapply(names(infos), function(n) render_info(infos[n], TRUE))
-  structure(unlist(r), names = rep(names(infos), vapply(r, length, 0)))
+  structure(rep(names(infos), vapply(r, length, 0)), names = unlist(r))
 }
 
 render_info <- function(info, names_only = FALSE) {
