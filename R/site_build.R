@@ -367,7 +367,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
       }), use.names = FALSE)
     })
     if (length(have_metadata)) {
-      if (!is.null(measure_info)) have_metadata <- unique(c(have_metadata, render_info_names(measure_info)))
+      if (!is.null(measure_info)) have_metadata <- unique(c(have_metadata, names(render_info_names(measure_info))))
       metadata_bin <- structure(numeric(nrow(coverage)), names = rownames(coverage))
       metadata_bin[have_metadata[have_metadata %in% names(metadata_bin)]] <- 1
       if (is.null(coverage$metadata) || !all(coverage$metadata == metadata_bin)) {

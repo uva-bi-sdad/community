@@ -317,7 +317,11 @@ datacommons_view <- function(commons, name, output = NULL, ..., variables = NULL
             nri <- names(ri)
           }
           rendered_names <- render_info_names(ri)
-          ri <- ri[(if (length(view$variables)) rendered_names[nri] %in% view$variables else TRUE) & !nri %in% names(measure_info)]
+          ri <- ri[(if (length(view$variables)) {
+            nri %in% rendered_names[names(rendered_names) %in% view$variables]
+          } else {
+            TRUE
+          }) & !nri %in% names(measure_info)]
           if (length(ri)) {
             measure_info[names(ri)] <- lapply(
               ri, function(e) if (is.null(names(e)) && !is.null(names(e[[1]]))) e[[1]] else e
