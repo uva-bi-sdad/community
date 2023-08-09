@@ -241,3 +241,19 @@ get_git_remote <- function(config) {
     }
   }
 }
+
+attempt_read <- function(file, id_col) {
+  tryCatch(
+    {
+      sep <- if (grepl(".csv", file, fixed = TRUE)) "," else "\t"
+      cols <- scan(file, "", nlines = 1, sep = sep, quiet = TRUE)
+      types <- rep("?", length(cols))
+      types[cols == id_col] <- "c"
+      read_delim_arrow(
+        gzfile(file), sep,
+        col_names = cols, col_types = paste(types, collapse = ""), skip = 1
+      )
+    },
+    error = function(e) NULL
+  )
+}

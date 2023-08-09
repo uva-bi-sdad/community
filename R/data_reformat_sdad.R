@@ -103,19 +103,7 @@ data_reformat_sdad <- function(files, out = NULL, variables = NULL, ids = NULL, 
       i <- i + 1
       cli_progress_update()
     }
-    d <- tryCatch(
-      {
-        sep <- if (grepl(".csv", f, fixed = TRUE)) "," else "\t"
-        cols <- scan(f, "", nlines = 1, sep = sep, quiet = TRUE)
-        types <- rep("?", length(cols))
-        types[cols == id] <- "c"
-        read_delim_arrow(
-          gzfile(f), sep,
-          col_names = cols, col_types = paste(types, collapse = ""), skip = 1
-        )
-      },
-      error = function(e) NULL
-    )
+    d <- attempt_read(f, id)
     if (is.null(d)) {
       if (verbose) cli_warn("failed to read in file: {f}")
       next

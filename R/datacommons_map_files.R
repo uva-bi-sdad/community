@@ -94,19 +94,7 @@ datacommons_map_files <- function(dir, search_pattern = "\\.csv(?:\\.[gbx]z2?)?$
     }
     files <- files[files %in% all_files]
     for (f in files) {
-      d <- tryCatch(
-        {
-          sep <- if (grepl(".csv", f, fixed = TRUE)) "," else "\t"
-          cols <- scan(f, "", nlines = 1, sep = sep, quiet = TRUE)
-          types <- rep("?", length(cols))
-          types[cols == id_location] <- "c"
-          read_delim_arrow(
-            gzfile(f), sep,
-            col_names = cols, col_types = paste(types, collapse = ""), skip = 1
-          )
-        },
-        error = function(e) NULL
-      )
+      d <- attempt_read(f, id_location)
       if (!is.null(d)) {
         if (nrow(d)) {
           lcols <- tolower(colnames(d))
