@@ -96,23 +96,6 @@ data_add <- function(filename, meta = list(), packagename = "datapackage.json", 
     if (is.na(format)) format <- "rds"
     info <- file.info(f)
     metas <- list()
-    data <- tryCatch(
-      if (format == "rds") {
-        readRDS(f)
-      } else {
-        read_delim_arrow(
-          gzfile(f), if (grepl("csv", format, fixed = TRUE)) "," else "\t"
-        )
-      },
-      error = function(e) NULL
-    )
-    if (is.null(data)) {
-      cli_abort(c(
-        paste0("failed to read in the data file ({.file {f}})"),
-        i = "check that it is in a compatible format"
-      ))
-    }
-    if (!all(rownames(data) == seq_len(nrow(data)))) data <- cbind(`_row` = rownames(data), data)
     unpack_meta <- function(n) {
       if (!length(m[[n]])) list() else if (is.list(m[[n]][[1]])) m[[n]] else list(m[[n]])
     }
@@ -128,6 +111,18 @@ data_add <- function(filename, meta = list(), packagename = "datapackage.json", 
       }
       if (!ids[[i]]$variable %in% idvars) idvars <- c(idvars, ids[[i]]$variable)
     }
+    data <- if (format == "rds") {
+      tryCatch(readRDS(f), error = function(e) NULL)
+    } else {
+      attempt_read(f, if (length(idvars)) idvars[1] else "")
+    }
+    if (is.null(data)) {
+      cli_abort(c(
+        paste0("failed to read in the data file ({.file {f}})"),
+        i = "check that it is in a compatible format"
+      ))
+    }
+    if (!all(rownames(data) == seq_len(nrow(data)))) data <- cbind(`_row` = rownames(data), data)
     timevar <- unlist(unpack_meta("time"))
     times <- if (is.null(timevar)) rep(1, nrow(data)) else data[[timevar]]
     if (!single_meta) {
@@ -162,7 +157,7 @@ data_add <- function(filename, meta = list(), packagename = "datapackage.json", 
       source = unpack_meta("source"),
       ids = ids,
       id_length = if (length(idvars)) {
-        id_lengths <- nchar(as.character(data[[idvars[1]]]))
+        id_lengths <- nchar(data[[idvars[1]]])
         if (all(id_lengths == id_lengths[1])) id_lengths[1] else 0
       } else {
         0
