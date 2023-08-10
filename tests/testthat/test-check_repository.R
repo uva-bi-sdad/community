@@ -77,7 +77,7 @@ test_that("all issues are caught", {
   write.csv(data, paste0(dir, "/dataset/data/distribution/data_min.csv"))
   unlink(paste0(dir, "/dataset/data/distribution/data_", c("skip", "invalid"), ".csv"))
   res <- check_repository(dir, attempt_repair = TRUE)
-  expect_identical(sort(names(res)), sort(c("data", "info", "summary", paste0("info_", c(
+  expect_identical(sort(names(res)), sort(c("data", "fail_idlen_county", "info", "summary", paste0("info_", c(
     "refs_missing", "refs_author_entry", "refs_year", "refs_title",
     "source_missing", "source_name", "citation", "incomplete", "layer_source",
     "layer_filter", "layer_source_url"

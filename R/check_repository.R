@@ -384,7 +384,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
             ))
             ck_values <- FALSE
           }
-          d[[id]] <- as.character(d[[id]])
+          d[[id]] <- sub("^\\s+|\\s+$", "", d[[id]])
           if (!time %in% cols) results$fail_time <- c(results$fail_time, f)
           all_entity_info <- all(entity_info %in% cols)
 
@@ -536,14 +536,14 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
               su <- which(id_chars == 12)
               if (length(su)) {
                 su <- su[grep("[^0-9]", mids[su], invert = TRUE)]
-                if (length(su) && any(!unique(substring(mids[su], 1, 11)) %in% mids)) {
+                if (length(su) && !any(unique(substring(mids[su], 1, 11)) %in% mids)) {
                   results$warn_bg_agg[[f]] <- c(results$warn_bg_agg[[f]], m)
                 }
               }
               su <- which(id_chars == 11)
               if (length(su)) {
                 su <- su[grep("[^0-9]", mids[su], invert = TRUE)]
-                if (length(su) && any(!unique(substring(mids[su], 1, 5)) %in% mids)) {
+                if (length(su) && !any(unique(substring(mids[su], 1, 5)) %in% mids)) {
                   results$warn_tr_agg[[f]] <- c(results$warn_tr_agg[[f]], m)
                 }
               }
