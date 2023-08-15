@@ -3307,11 +3307,456 @@
                         this.close();
                 }
                 else {
-                    if (this.site.spec.combobox)
-                        Object.keys(this.site.spec.combobox).forEach(function (id) {
-                            if (id !== _this.id) {
-                                var ou = _this.site.inputs[id];
-                                ou.expanded && ou.close();
+                    this.timer.innerText = '';
+                }
+                this.progress.innerText = 'Step ' + (this.current_step + 1) + ' of ' + t.n_steps;
+                this.dialog.innerText = step.description;
+                this.current_step++;
+                this.waiting = false;
+                this.focuser = setTimeout(function () { return _this.continue.focus(); }, 0);
+            }
+        };
+        TutorialManager.prototype.end_tutorial = function () {
+            this.in_progress = '';
+            this.current_step = 0;
+            this.container.classList.add('hidden');
+            this.waiting = false;
+            clearTimeout(this.focuser);
+        };
+        return TutorialManager;
+    }());
+
+    const community = function (window, document, site) {
+      const tooltip_icon_rule =
+          'button.has-note::after,.button-wrapper.has-note button::before,.has-note legend::before,.has-note label::before,.wrapper.has-note > div > label::before{display:none}',
+        conditionals = {
+          setting: function (u) {
+            const v = u.value(),
+              theme = v ? 'dark' : 'light';
+            if (v !== site.settings[u.setting]) {
+              site.settings[u.setting] = v;
+              if ('theme_dark' === u.setting) {
+                v
+                  ? document.body.classList.replace('light-theme', 'dark-theme')
+                  : document.body.classList.replace('dark-theme', 'light-theme');
+                if (site.plotly) Object.keys(site.plotly).forEach(k => update_plot_theme(site.plotly[k].u));
+                if (site.map)
+                  Object.keys(site.map).forEach(k => {
+                    const u = site.map[k].u;
+                    if (u && theme in u.tiles) {
+                      Object.keys(u.tiles).forEach(l => {
+                        if (theme !== l) u.tiles[l].removeFrom(u.map);
+                      });
+                      u.tiles[theme].addTo(u.map);
+                    }
+                  });
+              } else if ('hide_url_parameters' === u.setting) {
+                window.history.replaceState(
+                  Date.now(),
+                  '',
+                  site.settings.hide_url_parameters
+                    ? window.location.protocol + '//' + window.location.host + window.location.pathname
+                    : get_options_url()
+                );
+              } else if ('hide_tooltips' === u.setting) {
+                v ? page.script_style.sheet.insertRule(tooltip_icon_rule, 0) : page.script_style.sheet.removeRule(0);
+              } else if ('map_overlay' === u.setting) {
+                Object.keys(site.map).forEach(id => {
+                  if ('_' !== id[0]) {
+                    if (v) {
+                      site.map[id].u.update();
+                    } else {
+                      site.map[id].u.overlay.clearLayers();
+                      site.map[id].u.overlay_control.remove();
+                    }
+                  }
+                });
+              } else if ('tracking' === u.setting) {
+                if (v && site.tag_id && !dataLayer.length) {
+                  gtag('js', new Date());
+                  gtag('config', site.tag_id);
+                  gtag('consent', 'default', {analytics_storage: 'denied'});
+                }
+                gtag('consent', 'update', {analytics_storage: v ? 'granted' : 'denied'});
+              } else {
+                global_update();
+              }
+              gtag('event', 'setting', {event_category: u.setting, event_label: v});
+              storage.set(u.setting, site.settings[u.setting]);
+            }
+          },
+          options: function (u) {
+            const no_view = !u.view || !site.dataviews[u.view].selection,
+              d = valueOf(u.dataset || no_view || site.dataviews[u.view].dataset) || defaults.dataset,
+              va = valueOf(u.variable),
+              k = d + (va ? va : ''),
+              combobox = 'combobox' === u.type;
+            if (!(k in u.option_sets)) {
+              if (patterns.variable.test(u.optionSource)) {
+                if (-1 === u.default) u.default = defaults.variable;
+                fill_variables_options(u, d, u.option_sets);
+              } else if (patterns.levels.test(u.optionSource)) {
+                fill_levels_options(u, d, va, u.option_sets);
+              } else if (patterns.ids.test(u.optionSource)) {
+                fill_ids_options(u, d, u.option_sets);
+              }
+            }
+            if (k in u.option_sets) {
+              const fresh = k !== u.current_set && (u.sensitive || !u.current_set),
+                c = u[combobox ? 'listbox' : 'e'];
+              if (fresh || u.filter || u.selection_subset) {
+                if (fresh) {
+                  c.innerHTML = '';
+                  if (u.option_sets[k].groups) u.groups = u.option_sets[k].groups;
+                  u.values = u.option_sets[k].values;
+                  u.display = u.option_sets[k].display;
+                  u.options = u.option_sets[k].options;
+                }
+                let ns = 0;
+                if ('ID' === u.variable || patterns.ids.test(u.optionSource)) {
+                  const value = u.value();
+                  let selection = -1 === value || '' === value ? u.subset : u.selection_subset,
+                    v = {};
+                  if (!no_view) {
+                    if (selection in _u) selection = valueOf(selection);
+                    if ('siblings' === selection) {
+                      const rel = site.data.entity_tree && site.data.entity_tree[value];
+                      if (rel) {
+                        const parents = Object.keys(rel.parents);
+                        if (parents.length) {
+                          v = {};
+                          parents.forEach(id => {
+                            v = {...v, ...site.data.entity_tree[id].children};
+                          });
+                        }
+                      }
+                    } else {
+                      v = site.dataviews[u.view].selection[selection];
+                    }
+                  }
+                  u.options.forEach(si => {
+                    if (fresh && !u.groups) c.appendChild(si);
+                    if (no_view || (si.value || si.dataset.value) in v) {
+                      si.classList.remove('hidden');
+                      ns++;
+                    } else {
+                      si.classList.add('hidden');
+                    }
+                  });
+                } else if (fresh) {
+                  u.options.forEach(si => {
+                    si.classList.remove('hidden');
+                    if (!u.groups) c.appendChild(si);
+                    ns++;
+                  });
+                } else ns++;
+                if (fresh && u.groups) u.groups.e.forEach(e => c.appendChild(e));
+                toggle_input(u, ns);
+                u.current_set = k;
+                if (fresh) {
+                  if (combobox) {
+                    u.source = [];
+                  } else {
+                    u.e.selectedIndex = -1;
+                    u.source = '';
+                  }
+                  u.id in site.url_options
+                    ? u.set(site.url_options[u.id])
+                    : u.state in u.values
+                    ? u.set(u.state)
+                    : u.reset();
+                }
+                if (u.filter) u.filter();
+              }
+            }
+          },
+          set_current: function () {
+            this.values = this.option_sets[this.dataset].values;
+            this.display = this.option_sets[this.dataset].display;
+            this.options = this.option_sets[this.dataset].options;
+            this.source = '';
+            this.id in site.url_options
+              ? this.set(site.url_options[this.id])
+              : this.state in this.values
+              ? this.set(this.state)
+              : this.reset();
+          },
+          min: async function (u, c) {
+            let cv = c.value(),
+              uv = u.value(),
+              v = _u[u.view || c.view],
+              variable;
+            if (patterns.minmax.test(cv)) cv = c.parsed.min;
+            if (v && v.y) {
+              variable = valueOf(v.y);
+              if (variable in site.data.variables) {
+                if (!v.time_range.time.length) await conditionals.time_range(v, u, true);
+                cv = Math.max(v.time_range.time[0], parseFloat(cv));
+              }
+              u.update();
+            }
+            u.e.min = 'undefined' === typeof u.parsed.min ? parseFloat(cv) : Math.max(u.parsed.min, parseFloat(cv));
+            if (!u.e.value) {
+              u.reset();
+            } else if ('number' === typeof uv && isFinite(uv) && uv < cv) {
+              u.set(cv);
+            }
+            if (u.min_indicator) u.min_indicator.firstElementChild.innerText = cv;
+          },
+          max: async function (u, c) {
+            let cv = c.value(),
+              uv = u.value(),
+              v = _u[u.view || c.view],
+              variable;
+            if (patterns.minmax.test(cv)) cv = c.parsed.max;
+            if (v && v.y) {
+              variable = valueOf(v.y);
+              if (variable in site.data.variables) {
+                if (!v.time_range.time.length) await conditionals.time_range(v, u, true);
+                cv = Math.min(v.time_range.time[1], parseFloat(cv));
+              }
+              u.update();
+            }
+            u.e.max = 'undefined' === typeof u.parsed.max ? parseFloat(cv) : Math.min(u.parsed.max, parseFloat(cv));
+            if (!u.e.value) {
+              u.reset();
+            } else if ('number' === typeof uv && isFinite(uv) && uv > cv) {
+              u.set(cv);
+            }
+            if (u.max_indicator) u.max_indicator.firstElementChild.innerText = cv;
+          },
+          dataview: function (f) {
+            f = f || _u[defaults.dataview];
+            const state = f.value();
+            if (state !== f.state && _u._entity_filter.registered[f.parsed.dataset]) {
+              if (site.data.inited[f.parsed.dataset]) {
+                f.valid = true;
+                f.n_selected.ids = 0;
+                f.n_selected.children = 0;
+                f.n_selected.features = 0;
+                f.n_selected.variables = 0;
+                f.n_selected.dataset = 0;
+                f.n_selected.filtered = 0;
+                f.n_selected.full_filter = 0;
+                f.n_selected.all = 0;
+                f.selection.ids = {};
+                f.selection.children = {};
+                f.selection.features = {};
+                f.selection.variables = {};
+                f.selection.dataset = {};
+                f.selection.filtered = {};
+                f.selection.full_filter = {};
+                f.selection.all = {};
+                _u._base_filter.c.forEach(f => {
+                  f.passed = 0;
+                  f.failed = 0;
+                });
+                _u._entity_filter.entities.forEach(e => {
+                  const c = f.check(e),
+                    id = e.features.id;
+                  c.all = 0;
+                  if (c.ids) {
+                    f.selection.ids[id] = e;
+                    f.n_selected.ids++;
+                    c.all++;
+                  }
+                  if (c.features) {
+                    f.selection.features[id] = e;
+                    f.n_selected.features++;
+                    c.all++;
+                  }
+                  if (c.variables) {
+                    f.selection.variables[id] = e;
+                    f.n_selected.variables++;
+                    c.all++;
+                  }
+                  if (c.dataset) {
+                    f.selection.dataset[id] = e;
+                    f.n_selected.dataset++;
+                    c.all++;
+                  }
+                  if (c.dataset && c.ids) {
+                    f.selection.children[id] = e;
+                    f.n_selected.children++;
+                  }
+                  if (c.features && c.variables) {
+                    f.selection.full_filter[id] = e;
+                    f.n_selected.full_filter++;
+                  }
+                  if (c.variables && c.features && c.ids) {
+                    f.selection.filtered[id] = e;
+                    f.n_selected.filtered++;
+                  }
+                  if (4 === c.all) {
+                    f.selection.all[id] = e;
+                    f.n_selected.all++;
+                  }
+                });
+                request_queue(f.id);
+              } else {
+                f.valid = false;
+                site.data.data_queue[f.parsed.dataset][f.id] = function () {
+                  return conditionals.dataview(f)
+                };
+              }
+            }
+          },
+          time_filters: function (u) {
+            u.time_range.filtered[0] = Infinity;
+            u.time_range.filtered[1] = -Infinity;
+            const d = u.get.dataset(),
+              time = site.data.meta.times[d],
+              current = u.time_range.filtered_index + '';
+            if (!site.data.inited[d]) return
+            for (let i = time.n; i--; ) {
+              let pass = false;
+              if (i >= u.time_range.index[0] && i <= u.time_range.index[1]) {
+                for (let f = u.time_filters.length; f--; ) {
+                  const v = {},
+                    tf = u.time_filters[f];
+                  if (!(tf.value in v)) v[tf.value] = valueOf(tf.value);
+                  pass = DataHandler.checks[tf.type](time.value[i], v[tf.value]);
+                  if (!pass) break
+                }
+              }
+              u.times[i] = pass;
+              if (pass) {
+                if (u.time_range.filtered[0] > time.value[i]) u.time_range.filtered[0] = time.value[i];
+                if (u.time_range.filtered[1] < time.value[i]) u.time_range.filtered[1] = time.value[i];
+              }
+            }
+            u.time_range.filtered_index = [
+              u.time_range.index[0] + u.time_range.filtered[0] - u.time_range.time[0],
+              u.time_range.index[1] + u.time_range.filtered[1] - u.time_range.time[1],
+            ];
+            if (current !== u.time_range.filtered_index + '') {
+              const c = _c[u.id + '_filter'];
+              if (c)
+                c.forEach(ci => {
+                  if ('update' === ci.type) {
+                    _u[ci.id].update();
+                  } else if (ci.type in conditionals) {
+                    conditionals[ci.type](_u[ci.id], u);
+                  }
+                });
+            }
+          },
+          time_range: async function (u, c, passive) {
+            const v = c && c.value(),
+              d = u.get.dataset(),
+              tv = u.time ? valueOf(u.time) : defaults.time,
+              t = tv in site.data.variables ? site.data.variables[tv].info[d].min : 1,
+              s = _c[u.id + '_time'],
+              variable = v in site.data.variables ? v : valueOf(u.y);
+            let r = variable && (await site.data.get_variable(variable, u.id));
+            if (r) {
+              const reset = d + variable != u.time_range.dataset + u.time_range.variable;
+              r = r.time_range[d];
+              if (-1 !== r[0]) {
+                u.time_range.dataset = d;
+                u.time_range.variable = variable;
+                u.time_range.index[0] = r[0];
+                u.time_range.time[0] = u.time_range.filtered[0] = t + r[0];
+                u.time_range.index[1] = r[1];
+                u.time_range.time[1] = u.time_range.filtered[1] = t + r[1];
+              }
+              if (!passive && s) {
+                s.forEach(si => {
+                  const su = _u[si.id],
+                    value = su.value();
+                  if ('min' === si.type) {
+                    if (reset || (isFinite(u.time_range.time[0]) && parseFloat(su.e.min) !== u.time_range.time[0])) {
+                      su.e.min = u.time_range.time[0];
+                      if (reset || !meta.retain_state || u.time_range.time[0] > value) {
+                        su.current_default = u.time_range.time[0];
+                        su.set(su.current_default);
+                      }
+                    }
+                  } else if ('max' === si.type) {
+                    if (reset || (isFinite(u.time_range.time[1]) && parseFloat(su.e.max) !== u.time_range.time[1])) {
+                      su.e.max = u.time_range.time[1];
+                      if (reset || !meta.retain_state || u.time_range.time[1] < value || value < u.time_range.time[0]) {
+                        su.current_default = u.time_range.time[1];
+                        su.set(su.current_default);
+                      }
+                    }
+                  }
+                });
+                conditionals.time_filters(u);
+              }
+            } else {
+              u.time_range.dataset = d;
+              u.time_range.index[0] = 0;
+              u.time_range.time[0] = u.time_range.filtered[0] = 1;
+              u.time_range.index[1] = 0;
+              u.time_range.time[1] = u.time_range.filtered[1] = 1;
+            }
+          },
+          id_filter: function () {
+            const ids = {};
+            _u._entity_filter.selected = [];
+            _u._entity_filter.select_ids = ids;
+            if (site.metadata.datasets) {
+              site.metadata.datasets.forEach(d => {
+                if (d in page.modal.filter.entity_inputs) {
+                  const s = page.modal.filter.entity_inputs[d].value(),
+                    cs = [];
+                  if (s && s.length) {
+                    s.forEach(id => {
+                      const e = site.data.entities[id];
+                      if (e) {
+                        cs.push(id);
+                        _u._entity_filter.selected.push(id);
+                        ids[id] = true;
+                        if (e.relations) {
+                          Object.keys(e.relations.parents).forEach(k => (ids[k] = true));
+                          Object.keys(e.relations.children).forEach(k => (ids[k] = true));
+                        }
+                      }
+                    });
+                    page.modal.filter.entity_inputs[d].source = cs;
+                  }
+                }
+              });
+            }
+          },
+        },
+        elements = {
+          button: {
+            init: function (o) {
+              o.target = o.e.getAttribute('data-target');
+              if ('copy' === o.target) o.settings.endpoint = site.endpoint;
+              if ('filter' === o.target) {
+                o.e.setAttribute('data-bs-toggle', 'modal');
+                o.e.setAttribute('data-bs-target', '#filter_display');
+                o.notification = document.createElement('span');
+                o.notification.className = 'filter-notification hidden';
+                o.e.parentElement.appendChild(o.notification);
+                add_dependency('_base_filter', {type: 'update', id: o.id});
+                add_dependency('_entity_filter', {type: 'update', id: o.id});
+                o.update = elements.button.update.bind(o);
+                if (site.data) o.update();
+              } else
+                o.e.addEventListener(
+                  'click',
+                  o.settings.effects
+                    ? 'export' === o.target || 'copy' === o.target
+                      ? function () {
+                          const f = {},
+                            s = this.settings,
+                            v = _u[s.dataview],
+                            d = v && v.parsed.dataset;
+                          Object.keys(s.query).forEach(k => (f[k] = valueOf(s.query[k])));
+                          if (v) {
+                            if (!('include' in f) && v.y) f.include = valueOf(v.y);
+                            if (!('id' in f) && v.ids) f.id = valueOf(v.ids);
+                          }
+                          if ('copy' === this.target || this.api) {
+                            let q = [];
+                            if ('id' in f && '' !== f.id && -1 != f.id) {
+                              q.push('id=' + f.id);
+                            } else {
+                              if (_u._entity_filter.selected.length) q.push('id=' + _u._entity_filter.selected.join(','));
                             }
                         });
                     this.container.classList.remove('hidden');
@@ -5800,12 +6245,13 @@
         let ck = !u.sensitive && !!u.current_set,
           n = 0;
         if (u.settings.group) {
-          u.groups = {e: [], by_name: {}};
+          out[d].groups = {e: [], by_name: {}};
           if (combobox && u.settings.accordion) {
             u.listbox.classList.add('accordion');
             u.listbox.id = u.id + '-listbox';
           }
         }
+        const ugroup = out[d].groups;
         Object.keys(site.data.entities).forEach(k => {
           const entity = site.data.entities[k];
           if (d === entity.group) {
@@ -5813,12 +6259,12 @@
               u.sensitive = true;
               ck = false;
             }
-            if (u.groups) {
+            if (ugroup) {
               let groups = entity.features[u.settings.group] || ['No Group'];
               if (!Array.isArray(groups)) groups = [groups];
               for (let g = groups.length; g--; ) {
                 const group = groups[g];
-                if (!(group in u.groups.by_name)) {
+                if (!(group in ugroup.by_name)) {
                   const e = document.createElement(combobox ? 'div' : 'optgroup');
                   if (combobox) {
                     const id = u.id + '_' + group.replace(patterns.seps, '-');
@@ -5860,15 +6306,15 @@
                   } else {
                     e.label = group;
                   }
-                  u.groups.by_name[group] = e;
-                  u.groups.e.push(e);
+                  ugroup.by_name[group] = e;
+                  ugroup.e.push(e);
                 }
                 const o = u.add(k, entity.features.name, true);
                 o.setAttribute('data-group', group);
                 if (combobox && u.settings.accordion) {
-                  u.groups.by_name[group].lastElementChild.lastElementChild.appendChild(o);
+                  ugroup.by_name[group].lastElementChild.lastElementChild.appendChild(o);
                 } else {
-                  u.groups.by_name[group].appendChild(o);
+                  ugroup.by_name[group].appendChild(o);
                 }
               }
             } else {
@@ -5880,8 +6326,8 @@
         });
         if (u.settings.group) {
           n = 0;
-          Object.keys(u.groups.by_name).forEach(g => {
-            u.groups.by_name[g].querySelectorAll(combobox ? '.combobox-option' : 'option').forEach(c => {
+          Object.keys(ugroup.by_name).forEach(g => {
+            ugroup.by_name[g].querySelectorAll(combobox ? '.combobox-option' : 'option').forEach(c => {
               s.push(c);
               values[combobox ? c.dataset.value : c.value] = n;
               disp[c.innerText] = n++;
@@ -5901,13 +6347,14 @@
         let ck = !u.sensitive && !!u.current_set,
           n = 0;
         if (u.settings.group) {
-          u.groups = {e: [], by_name: {}};
+          out[d].groups = {e: [], by_name: {}};
           if (combobox && u.settings.accordion) {
             u.listbox.classList.add('accordion');
             u.listbox.id = u.id + '-listbox';
           }
         }
-        const url_set = site.url_options[u.id];
+        const url_set = site.url_options[u.id],
+          ugroup = out[d].groups;
         let ck_suffix = false;
         if (url_set && !(url_set in site.data.variables)) {
           site.url_options[u.id] = url_set.replace(patterns.pre_colon, '');
@@ -5921,12 +6368,12 @@
               u.sensitive = true;
               ck = false;
             }
-            if (u.groups) {
+            if (ugroup) {
               let groups = (m.info && m.info[u.settings.group]) || ['No Group'];
               if (!Array.isArray(groups)) groups = [groups];
               for (let g = groups.length; g--; ) {
                 const group = groups[g];
-                if (!(group in u.groups.by_name)) {
+                if (!(group in ugroup.by_name)) {
                   const e = document.createElement(combobox ? 'div' : 'optgroup');
                   if (combobox) {
                     const id = u.id + '_' + group.replace(patterns.seps, '-');
@@ -5966,15 +6413,15 @@
                   } else {
                     e.label = group;
                   }
-                  u.groups.by_name[group] = e;
-                  u.groups.e.push(e);
+                  ugroup.by_name[group] = e;
+                  ugroup.e.push(e);
                 }
                 const o = u.add(m.name, l, true, m);
                 o.setAttribute('data-group', group);
                 if (combobox && u.settings.accordion) {
-                  u.groups.by_name[group].lastElementChild.lastElementChild.appendChild(o);
+                  ugroup.by_name[group].lastElementChild.lastElementChild.appendChild(o);
                 } else {
-                  u.groups.by_name[group].appendChild(o);
+                  ugroup.by_name[group].appendChild(o);
                 }
               }
             } else {
@@ -5991,8 +6438,8 @@
         });
         if (u.settings.group) {
           n = 0;
-          Object.keys(u.groups.by_name).forEach(g => {
-            u.groups.by_name[g].querySelectorAll(combobox ? '.combobox-option' : 'option').forEach(c => {
+          Object.keys(ugroup.by_name).forEach(g => {
+            ugroup.by_name[g].querySelectorAll(combobox ? '.combobox-option' : 'option').forEach(c => {
               s.push(c);
               s[n].id = u.id + '-option' + n;
               values[combobox ? c.dataset.value : c.value] = n;
@@ -6013,7 +6460,7 @@
         let ck = !u.sensitive && !!u.current_set,
           n = 0;
         if (u.settings.group) {
-          u.groups = {e: [], by_name: {}};
+          out[source].groups = {e: [], by_name: {}};
         }
         Object.keys(site.map._queue[source].property_summaries).forEach(v => {
           const l = site.data.format_label(v);
