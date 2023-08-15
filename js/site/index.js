@@ -87,6 +87,7 @@ const community = function (window, document, site) {
           if (fresh || u.filter || u.selection_subset) {
             if (fresh) {
               c.innerHTML = ''
+              if (u.option_sets[k].groups) u.groups = u.option_sets[k].groups
               u.values = u.option_sets[k].values
               u.display = u.option_sets[k].display
               u.options = u.option_sets[k].options
@@ -3808,12 +3809,13 @@ const community = function (window, document, site) {
     let ck = !u.sensitive && !!u.current_set,
       n = 0
     if (u.settings.group) {
-      u.groups = {e: [], by_name: {}}
+      out[d].groups = {e: [], by_name: {}}
       if (combobox && u.settings.accordion) {
         u.listbox.classList.add('accordion')
         u.listbox.id = u.id + '-listbox'
       }
     }
+    const ugroup = out[d].groups
     Object.keys(site.data.entities).forEach(k => {
       const entity = site.data.entities[k]
       if (d === entity.group) {
@@ -3821,12 +3823,12 @@ const community = function (window, document, site) {
           u.sensitive = true
           ck = false
         }
-        if (u.groups) {
+        if (ugroup) {
           let groups = entity.features[u.settings.group] || ['No Group']
           if (!Array.isArray(groups)) groups = [groups]
           for (let g = groups.length; g--; ) {
             const group = groups[g]
-            if (!(group in u.groups.by_name)) {
+            if (!(group in ugroup.by_name)) {
               const e = document.createElement(combobox ? 'div' : 'optgroup')
               if (combobox) {
                 const id = u.id + '_' + group.replace(patterns.seps, '-')
@@ -3868,15 +3870,15 @@ const community = function (window, document, site) {
               } else {
                 e.label = group
               }
-              u.groups.by_name[group] = e
-              u.groups.e.push(e)
+              ugroup.by_name[group] = e
+              ugroup.e.push(e)
             }
             const o = u.add(k, entity.features.name, true)
             o.setAttribute('data-group', group)
             if (combobox && u.settings.accordion) {
-              u.groups.by_name[group].lastElementChild.lastElementChild.appendChild(o)
+              ugroup.by_name[group].lastElementChild.lastElementChild.appendChild(o)
             } else {
-              u.groups.by_name[group].appendChild(o)
+              ugroup.by_name[group].appendChild(o)
             }
           }
         } else {
@@ -3888,8 +3890,8 @@ const community = function (window, document, site) {
     })
     if (u.settings.group) {
       n = 0
-      Object.keys(u.groups.by_name).forEach(g => {
-        u.groups.by_name[g].querySelectorAll(combobox ? '.combobox-option' : 'option').forEach(c => {
+      Object.keys(ugroup.by_name).forEach(g => {
+        ugroup.by_name[g].querySelectorAll(combobox ? '.combobox-option' : 'option').forEach(c => {
           s.push(c)
           values[combobox ? c.dataset.value : c.value] = n
           disp[c.innerText] = n++
@@ -3909,13 +3911,14 @@ const community = function (window, document, site) {
     let ck = !u.sensitive && !!u.current_set,
       n = 0
     if (u.settings.group) {
-      u.groups = {e: [], by_name: {}}
+      out[d].groups = {e: [], by_name: {}}
       if (combobox && u.settings.accordion) {
         u.listbox.classList.add('accordion')
         u.listbox.id = u.id + '-listbox'
       }
     }
-    const url_set = site.url_options[u.id]
+    const url_set = site.url_options[u.id],
+      ugroup = out[d].groups
     let ck_suffix = false
     if (url_set && !(url_set in site.data.variables)) {
       site.url_options[u.id] = url_set.replace(patterns.pre_colon, '')
@@ -3929,12 +3932,12 @@ const community = function (window, document, site) {
           u.sensitive = true
           ck = false
         }
-        if (u.groups) {
+        if (ugroup) {
           let groups = (m.info && m.info[u.settings.group]) || ['No Group']
           if (!Array.isArray(groups)) groups = [groups]
           for (let g = groups.length; g--; ) {
             const group = groups[g]
-            if (!(group in u.groups.by_name)) {
+            if (!(group in ugroup.by_name)) {
               const e = document.createElement(combobox ? 'div' : 'optgroup')
               if (combobox) {
                 const id = u.id + '_' + group.replace(patterns.seps, '-')
@@ -3974,15 +3977,15 @@ const community = function (window, document, site) {
               } else {
                 e.label = group
               }
-              u.groups.by_name[group] = e
-              u.groups.e.push(e)
+              ugroup.by_name[group] = e
+              ugroup.e.push(e)
             }
             const o = u.add(m.name, l, true, m)
             o.setAttribute('data-group', group)
             if (combobox && u.settings.accordion) {
-              u.groups.by_name[group].lastElementChild.lastElementChild.appendChild(o)
+              ugroup.by_name[group].lastElementChild.lastElementChild.appendChild(o)
             } else {
-              u.groups.by_name[group].appendChild(o)
+              ugroup.by_name[group].appendChild(o)
             }
           }
         } else {
@@ -3999,8 +4002,8 @@ const community = function (window, document, site) {
     })
     if (u.settings.group) {
       n = 0
-      Object.keys(u.groups.by_name).forEach(g => {
-        u.groups.by_name[g].querySelectorAll(combobox ? '.combobox-option' : 'option').forEach(c => {
+      Object.keys(ugroup.by_name).forEach(g => {
+        ugroup.by_name[g].querySelectorAll(combobox ? '.combobox-option' : 'option').forEach(c => {
           s.push(c)
           s[n].id = u.id + '-option' + n
           values[combobox ? c.dataset.value : c.value] = n
@@ -4021,7 +4024,7 @@ const community = function (window, document, site) {
     let ck = !u.sensitive && !!u.current_set,
       n = 0
     if (u.settings.group) {
-      u.groups = {e: [], by_name: {}}
+      out[source].groups = {e: [], by_name: {}}
     }
     Object.keys(site.map._queue[source].property_summaries).forEach(v => {
       const l = site.data.format_label(v)
