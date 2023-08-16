@@ -1,7 +1,16 @@
-import DataHandler from '../data_handler'
-import {ActiveDataview, Conditionals, DataSets, RegisteredElements, SitePage, SiteSpec} from '../types'
+import DataHandler from '../data_handler/index'
+import {
+  ActiveDataview,
+  Conditionals,
+  DataSets,
+  MapInfo,
+  RegisteredElements,
+  SiteElement,
+  SitePage,
+  SiteSpec,
+} from '../types'
 import {defaults} from './defaults'
-import {BaseInput} from './elements'
+import BaseInput from './elements/index'
 import {GlobalView} from './global_view'
 import {patterns} from './patterns'
 import {storage} from './storage'
@@ -10,6 +19,9 @@ import * as conditionals from './conditionals'
 import * as utils from './utils'
 import {palettes} from './palettes'
 import {init} from './initialize'
+import {Select} from './elements/select'
+import {Combobox} from './elements/combobox'
+import {InputNumber} from './elements/number'
 
 type Queue = {
   timeout: NodeJS.Timer | number
@@ -18,7 +30,7 @@ type Queue = {
 
 type Dependency = {
   id: string
-  type: 'rule' | keyof Conditionals | keyof BaseInput
+  type: 'rule' | 'update' | keyof Conditionals | keyof BaseInput
   conditional?: keyof Conditionals
   uid?: string
   rule?: number
@@ -28,6 +40,12 @@ type Tree = {
   _n: {children: number; parents: number}
   children: {[index: string]: Tree}
   parents: {[index: string]: Tree}
+}
+
+const elements = {
+  combobox: Combobox,
+  select: Select,
+  number: InputNumber,
 }
 
 export default class Community {
@@ -41,7 +59,7 @@ export default class Community {
   page: SitePage
   view: GlobalView
   subs: Subscriptions
-  registered_elements: Map<string, BaseInput> = new Map()
+  registered_elements: Map<string, SiteElement> = new Map()
   defaults = defaults
   dataviews: {[index: string]: ActiveDataview} = {}
   inputs: RegisteredElements = {}
@@ -49,11 +67,17 @@ export default class Community {
   url_options: {[index: string]: boolean | string} = {}
   queue: Queue = {timeout: 0, elements: new Map()}
   tree: {[index: string]: Tree} = {}
+  maps: MapInfo = {
+    queue: {},
+    waiting: {},
+    overlay_property_selectors: [],
+  }
   meta = {
     retain_state: true,
     lock_after: '',
   }
   state = ''
+  endpoint?: string
   constructor(spec: SiteSpec) {
     this.spec = spec
     this.page = {
@@ -88,6 +112,10 @@ export default class Community {
           entity_filters: document.createElement('div'),
           entity_inputs: {},
         },
+      },
+      tooltip: {
+        showing: '',
+        e: document.createElement('div'),
       },
       content_bounds: {
         top: 0,
@@ -131,27 +159,50 @@ export default class Community {
           'px'
       },
     }
-    window.onload = () => {
-      this.data = new DataHandler(this.spec, defaults, this.data as unknown as DataSets, {
-        init: this.init,
-        onload: function () {
-          if (this.data.inited) clearTimeout(this.data.inited.load_screen)
-          setTimeout(this.drop_load_screen, 600)
-          delete this.onload
-        },
-        data_load: function (this: Community) {
-          Object.keys(this.dependencies).forEach(this.request_queue)
-        }.bind(this),
-      })
-      this.subs = new Subscriptions(this.inputs)
-      this.view = new GlobalView(this)
-    }
+    // register input elements
+    console.log('loaded')
+    document.querySelectorAll('.auto-input').forEach((e: HTMLElement) => {
+      if (e.dataset.autoType in elements) {
+        const u = new elements[e.dataset.autoType as keyof typeof elements](e, this)
+      }
+    })
+    this.data = new DataHandler(this.spec, defaults, this.data as unknown as DataSets, {
+      init: this.init,
+      onload: () => {
+        if (this.data.inited) clearTimeout(this.data.inited.load_screen as NodeJS.Timeout)
+        setTimeout(this.drop_load_screen.bind(this), 600)
+        delete this.data.onload
+      },
+      data_load: () => {
+        Object.keys(this.dependencies).forEach(this.request_queue)
+      },
+    })
+    this.subs = new Subscriptions(this.inputs)
+    this.view = new GlobalView(this)
   }
   global_update() {
     this.meta.retain_state = false
     this.queue.elements.forEach(this.request_queue)
   }
-  request_queue(waiting: boolean, id: string) {
+  global_reset() {
+    this.meta.retain_state = false
+    this.registered_elements.forEach((u, k) => {
+      if (!u.setting && u.reset) {
+        u.reset()
+        this.request_queue(k)
+      }
+    })
+  }
+  clear_storage() {
+    if (window.localStorage) storage.perm.removeItem(storage.name)
+    window.location.reload()
+  }
+  request_queue(waiting: boolean | string | number, id?: string | number) {
+    if ('boolean' !== typeof waiting) {
+      id = waiting
+      waiting = false
+    }
+    id = id + ''
     if (!waiting) {
       this.queue.elements.set(id, true)
       if (this.queue.timeout !== 0) clearTimeout(this.queue.timeout)
@@ -207,9 +258,7 @@ export default class Community {
             this.conditionals[di.conditional](this.inputs[di.id], c)
           } else {
             const fun = this.inputs[di.id][di.type as keyof BaseInput]
-            if ('function' === typeof fun) {
-              fun()
-            }
+            if ('function' === typeof fun) (fun as Function)()
           }
         })
         r.forEach(i => {
@@ -226,12 +275,12 @@ export default class Community {
               if ('display' === k) {
                 ri.parsed[k].e.classList.remove('hidden')
               } else if ('lock' === k) {
-                ri.parsed[k].forEach(u => {
+                ri.parsed[k].forEach((u: Select) => {
                   u.e.classList.remove('locked')
                   utils.toggle_input(u, true)
                 })
               } else if (k in this.inputs) {
-                this.inputs[k].set(this.valueOf(ri.effects[k]))
+                this.inputs[k].set(this.valueOf(ri.effects[k]) as string)
               }
             } else if ('display' === k) {
               const e = ri.parsed[k]
@@ -244,13 +293,13 @@ export default class Community {
                 })
               }
             } else if ('lock' === k) {
-              ri.parsed[k].forEach(u => {
+              ri.parsed[k].forEach((u: Select) => {
                 u.e.classList.add('locked')
                 utils.toggle_input(u)
               })
             } else if ('default' in ri) {
               if (k in this.inputs) {
-                this.inputs[k].set(this.valueOf(ri.default))
+                this.inputs[k].set(this.valueOf(ri.default) as string)
               }
             }
           })
@@ -270,13 +319,13 @@ export default class Community {
     let s = ''
     this.registered_elements.forEach((u, k) => {
       if (u.input && !patterns.settings.test(k)) {
-        if (!u.range || u.range[0] !== u.range[1]) {
-          let v = u.value()
-          if ('off_default' in u ? u.off_default : v !== u.default) {
-            if (Array.isArray(v)) v = v.join(',')
-            if ('' !== v && null != v && '-1' != v) s += (s ? '&' : '?') + k + '=' + v
-          }
-        }
+        // if (!u.range || u.range[0] !== u.range[1]) {
+        //   let v = u.value()
+        //   if ('off_default' in u ? u.off_default : v !== u.default) {
+        //     if (Array.isArray(v)) v = v.join(',')
+        //     if ('' !== v && null != v && '-1' != v) s += (s ? '&' : '?') + k + '=' + v
+        //   }
+        // }
       }
     })
     if (this.data && this.view.filters.size) s += (s ? '&' : '?') + this.view.filter_state([])
@@ -284,6 +333,19 @@ export default class Community {
   }
   gtag(...args: any) {
     if (this.spec.settings.tracking) (window as any).dataLayer.push(arguments)
+  }
+  drop_load_screen() {
+    if (!this.data || this.data.inited) clearTimeout(+this.data.inited.load_screen)
+    this.page.wrap.style.visibility = 'visible'
+    this.page.load_screen.style.display = 'none'
+    if (this.spec.tutorials && 'tutorial' in this.url_options) {
+      setTimeout(
+        this.page.tutorials.start_tutorial.bind(this.page.tutorials, {
+          target: {dataset: {name: this.url_options.tutorial}},
+        }),
+        0
+      )
+    }
   }
   add_dependency(id: string, o: Dependency): void {
     if (!(id in this.dependencies)) this.dependencies[id] = []

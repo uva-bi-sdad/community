@@ -2,7 +2,7 @@ import {patterns} from './patterns'
 import {Filter, MeasureInfo, MeasureInfos, Query, UnparsedObject} from '../types'
 import * as params from './export_params'
 import {group_checks} from './checks'
-import DataHandler from '.'
+import DataHandler from './index'
 
 const ps = {
   any: /\{(?:categor|variant)/,

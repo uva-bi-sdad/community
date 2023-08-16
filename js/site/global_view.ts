@@ -1,4 +1,4 @@
-import Community from '.'
+import Community from './index'
 import {DataViewParsed, Entities, Entity, FilterParsed} from '../types'
 
 export class GlobalView {

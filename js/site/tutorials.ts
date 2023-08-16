@@ -1,6 +1,5 @@
 import {patterns} from './patterns'
-import type {RegisteredElements} from '../types'
-import {BaseInput} from './elements'
+import type {RegisteredElements, SiteElement} from '../types'
 import {Combobox} from './elements/combobox'
 
 type Actions = string[] | {[index: string]: string}
@@ -47,7 +46,7 @@ export class TutorialManager {
   current_step = 0
   current_time = 0
   current_element: HTMLElement
-  current_site_element: BaseInput | Combobox
+  current_site_element: SiteElement
   site_reset: Function
   constructor(tutorials: Tutorials, elements?: RegisteredElements, resetter?: Function) {
     this.tutorials = tutorials
@@ -244,7 +243,7 @@ export class TutorialManager {
       }
       const set_value = (value: string | string[]) => {
         if (this.current_site_element && this.current_site_element.set) {
-          this.current_site_element.set(value)
+          this.current_site_element.set(value as string)
         } else {
           const input =
             'value' in this.current_element ? this.current_element : this.current_element.querySelector('input')
@@ -260,14 +259,13 @@ export class TutorialManager {
         if ('set' === action) {
           if ('option' in step) set_value(step.option)
         } else if ('click' === action) {
-          if (
-            this.current_site_element &&
-            this.current_site_element.toggle &&
-            action === this.current_site_element.id
-          ) {
-            if (!this.current_site_element.expanded) this.current_site_element.toggle(void 0, this.current_element)
-          } else {
-            this.current_element && this.current_element.click()
+          const u = this.current_site_element
+          if (u) {
+            if (action === u.id && 'toggle' in u) {
+              if (!u.expanded) u.toggle(void 0, u.e)
+            } else {
+              u.e.click()
+            }
           }
         } else if ('close' === action) {
           document.querySelectorAll('[data-bs-dismiss]').forEach((close: HTMLButtonElement) => close.click())

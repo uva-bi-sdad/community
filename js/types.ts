@@ -1,9 +1,13 @@
-import Community from './site'
-import {BaseInput} from './site/elements'
-import {ActiveCombobox, Combobox} from './site/elements/combobox'
+import Community from './site/index'
+import {Combobox, ComboboxSpec} from './site/elements/combobox'
 import {OutputPlotly} from './site/elements/plotly'
+import {Select, SelectSpec} from './site/elements/select'
+import {TutorialManager, Tutorials} from './site/tutorials'
+import {InputNumber, NumberSpec} from './site/elements/number'
+import {InputButton} from './site/elements/button'
 
 export type Generic = {[index: string]: string}
+export type ObjectIndex = {[index: string]: number}
 
 export type UnparsedObject = {
   [index: string]:
@@ -436,7 +440,8 @@ export interface ActiveTable extends ActiveElement {
   }
 }
 
-export type RegisteredElements = {[index: string]: BaseInput}
+export type SiteElement = Combobox | Select | InputNumber | InputButton
+export type RegisteredElements = {[index: string]: SiteElement}
 
 export type Conditionals = {
   setting: Function
@@ -463,7 +468,7 @@ type SiteRule = {
   condition: SiteConditions
   effects: {[index: string]: string}
   parsed: {
-    lock?: Map<string, BaseInput>
+    lock?: Map<string, SiteElement>
     display: {
       e: HTMLElement
       u: ActiveElement
@@ -534,16 +539,6 @@ type SiteText = {
   condition?: SiteConditions
 }
 
-type SiteCombobox = {
-  strict?: boolean
-  numeric?: boolean
-  search?: boolean
-  multi?: boolean
-  accordion?: boolean
-  group?: string
-  filters?: Generic
-}
-
 type SiteButton = {
   effects: string | Generic
   dataview?: string
@@ -587,7 +582,7 @@ export type SiteMap = {
       }
     }
   }
-  u: BaseInput
+  u: SiteElement
 }
 
 type SiteLegend = {
@@ -612,18 +607,26 @@ export type SiteSpec = {
   dataviews?: {[index: string]: SiteDataView}
   info?: {[index: string]: SiteInfo}
   text?: {[index: string]: SiteText}
-  combobox?: {[index: string]: SiteCombobox}
+  combobox?: {[index: string]: ComboboxSpec}
+  select?: {[index: string]: SelectSpec}
   button?: {[index: string]: SiteButton}
   datatable?: {[index: string]: any}
   plotly?: {[index: string]: SitePlotly}
   map?: {
-    [index: string]: SiteMap | string[] | {[index: string]: MapLayer}
-    _queue?: {[index: string]: MapLayer}
+    [index: string]: SiteMap | string[]
     _raw?: string[]
   }
   legend?: {[index: string]: SiteLegend}
   credits?: {[index: string]: SiteCredits}
+  tutorials?: Tutorials
   tag_id?: string
+  number?: NumberSpec
+}
+
+export type MapInfo = {
+  queue: {[index: string]: MapLayer}
+  waiting: {[index: string]: string[]}
+  overlay_property_selectors: SiteElement[]
 }
 
 interface Modal {
@@ -667,6 +670,7 @@ export type SitePage = {
   right_menu?: HTMLElement
   bottom_menu?: HTMLElement
   left_menu?: HTMLElement
+  tutorials?: TutorialManager
   content_bounds: {
     top: number
     right: number
@@ -676,4 +680,16 @@ export type SitePage = {
   }
   resize: Function
   script_style: HTMLStyleElement
+  tooltip: {
+    showing: string
+    e: HTMLElement
+  }
+}
+
+export type OptionSets = {
+  [index: string]: {
+    options: HTMLOptionElement[]
+    values: ObjectIndex
+    display: ObjectIndex
+  }
 }

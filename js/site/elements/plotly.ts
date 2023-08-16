@@ -1,5 +1,5 @@
-import {BaseInput} from '.'
-import Community from '..'
+import BaseInput from './index'
+import Community from '../index'
 import {SitePlotly} from '../../types'
 
 declare namespace Plotly {

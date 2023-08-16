@@ -1,6 +1,6 @@
-import {MeasureInfo, SitePage} from '../types'
-import {BaseInput, OptionSets} from './elements'
-import {Combobox} from './elements/combobox'
+import {MeasureInfo, SitePage, OptionSets, SiteElement} from '../types'
+import type {Combobox} from './elements/combobox'
+import type {Select} from './elements/select'
 import {patterns} from './patterns'
 
 export function set_description(e: HTMLElement, info: MeasureInfo) {
@@ -26,15 +26,15 @@ export function set_description(e: HTMLElement, info: MeasureInfo) {
   e[has_equation ? 'innerHTML' : 'innerText'] = description
 }
 
-export function toggle_input(u: BaseInput, enable?: boolean) {
+export function toggle_input(u: Combobox | Select, enable?: boolean) {
   if (enable && !u.e.classList.contains('locked')) {
     u.e.removeAttribute('disabled')
     u.e.classList.remove('disabled')
-    if (u.input_element) u.input_element.removeAttribute('disabled')
+    // if (u instanceof Combobox) u.input_element.removeAttribute('disabled')
   } else {
     u.e.setAttribute('disabled', 'true')
     u.e.classList.add('disabled')
-    if (u.input_element) u.input_element.setAttribute('disabled', 'true')
+    // if (u instanceof Combobox) u.input_element.setAttribute('disabled', 'true')
   }
 }
 
@@ -76,7 +76,7 @@ export function content_resize(this: SitePage, e?: Event | boolean) {
     'px'
 }
 
-export function fill_ids_options(u: Combobox, d: string, out: OptionSets, onend?: Function) {
+export function fill_ids_options(u: Combobox | Select, d: string, out: OptionSets, onend?: Function) {
   if (!(d in u.site.data.sets)) {
     u.site.data.data_queue[d][u.id] = () => {
       u.loader && u.e.removeEventListener('click', u.loader)
@@ -166,7 +166,7 @@ export function fill_ids_options(u: Combobox, d: string, out: OptionSets, onend?
           }
         }
       } else {
-        s.push(u.add(k, entity.features.name))
+        s.push(u.add(k, entity.features.name) as HTMLOptionElement)
         values[k] = n
         disp[entity.features.name] = n++
       }
@@ -185,7 +185,7 @@ export function fill_ids_options(u: Combobox, d: string, out: OptionSets, onend?
   onend && onend()
 }
 
-export function fill_variables_options(u: Combobox, d: string, out: OptionSets) {
+export function fill_variables_options(u: Combobox | Select, d: string, out: OptionSets) {
   out[d] = {options: [], values: {}, display: {}}
   const current = u.values,
     s = out[d].options as HTMLOptionElement[],
@@ -272,7 +272,7 @@ export function fill_variables_options(u: Combobox, d: string, out: OptionSets) 
           }
         }
       } else {
-        s.push(u.add(m.name, l, true, m))
+        s.push(u.add(m.name, l, true, m) as HTMLOptionElement)
         s[n].id = u.id + '-option' + n
         values[m.name] = n
         disp[l] = n++
@@ -297,7 +297,7 @@ export function fill_variables_options(u: Combobox, d: string, out: OptionSets) 
   if (!u.settings.clearable && !(u.default in u.site.data.variables)) u.default = u.site.defaults.variable
 }
 
-export function fill_overlay_properties_options(u: Combobox, source: string, out: OptionSets) {
+export function fill_overlay_properties_options(u: Combobox | Select, source: string, out: OptionSets) {
   out[source] = {options: [], values: {}, display: {}}
   const current = u.values,
     s = out[source].options as HTMLOptionElement[],
@@ -309,20 +309,20 @@ export function fill_overlay_properties_options(u: Combobox, source: string, out
   if (u.settings.group) {
     u.groups = {e: [], by_name: {}}
   }
-  Object.keys(u.site.spec.map._queue[source].property_summaries).forEach(v => {
+  Object.keys(u.site.maps.queue[source].property_summaries).forEach(v => {
     const l = u.site.data.format_label(v)
     if (ck && !(l in current)) {
       u.sensitive = true
       ck = false
     }
-    s.push(u.add(v, l))
+    s.push(u.add(v, l) as HTMLOptionElement)
     s[n].id = u.id + '-option' + n
     values[v] = n
     disp[l] = n++
   })
 }
 
-export function fill_levels_options(u: Combobox, d: string, v: string, out: OptionSets) {
+export function fill_levels_options(u: Combobox | Select, d: string, v: string, out: OptionSets) {
   const m = u.site.data.variables[v].info[d],
     t = 'string' === m.type ? 'levels' : 'ids',
     l = m[t]
@@ -341,7 +341,7 @@ export function fill_levels_options(u: Combobox, d: string, v: string, out: Opti
         u.sensitive = true
         ck = false
       }
-      s.push(u.add(lk.id, lk.name, true))
+      s.push(u.add(lk.id, lk.name, true) as HTMLOptionElement)
       values[lk.id] = n
       disp[lk.name] = n++
     })
@@ -349,5 +349,28 @@ export function fill_levels_options(u: Combobox, d: string, v: string, out: Opti
     u.site.data.data_queue[d][u.id] = function () {
       return fill_levels_options(u, d, v, out)
     }
+  }
+}
+
+export function tooltip_trigger(this: SiteElement): void {
+  if (this.site.spec.settings.hide_tooltips || this.id === this.site.page.tooltip.showing) return void 0
+  const tooltip = this.site.page.tooltip
+  tooltip.showing = this.id
+  ;(tooltip.e.firstElementChild as HTMLElement).innerText = this.note
+  tooltip.e.classList.remove('hidden')
+  const p = this.wrapper.getBoundingClientRect(),
+    t = tooltip.e.getBoundingClientRect()
+  tooltip.e.style.left = Math.max(0, Math.min(p.x, p.x + p.width / 2 - t.width / 2)) + 'px'
+  tooltip.e.style.top = p.y + (p.y < t.height ? p.height + 5 : -t.height - 5) + 'px'
+}
+
+export function tooltip_clear(this: SiteElement, e: MouseEvent) {
+  const target = e.target as HTMLElement
+  if (
+    this.site.page.tooltip.showing &&
+    ('blur' === e.type || this.site.page.tooltip.showing !== (target.dataset.of || target.id))
+  ) {
+    this.site.page.tooltip.showing = ''
+    this.site.page.tooltip.e.classList.add('hidden')
   }
 }

@@ -1,7 +1,7 @@
-import Community from '.'
-import DataHandler from '../data_handler'
+import Community from './index'
+import DataHandler from '../data_handler/index'
 import {ActiveDataview, DataViewParsed, SiteMap} from '../types'
-import {BaseInput} from './elements'
+import BaseInput from './elements/index'
 import {Combobox} from './elements/combobox'
 import {InputNumber} from './elements/number'
 import {tooltip_icon_rule} from './static_refs'
@@ -21,12 +21,12 @@ export function setting(this: Community, u: BaseInput) {
       if (this.spec.map)
         Object.keys(this.spec.map).forEach(k => {
           const u = (this.spec.map[k] as SiteMap).u
-          if (u && theme in u.tiles) {
-            Object.keys(u.tiles).forEach(l => {
-              if (theme !== l) u.tiles[l].removeFrom(u.map)
-            })
-            u.tiles[theme].addTo(u.map)
-          }
+          // if (u && theme in u.tiles) {
+          //   Object.keys(u.tiles).forEach(l => {
+          //     if (theme !== l) u.tiles[l].removeFrom(u.map)
+          //   })
+          //   u.tiles[theme].addTo(u.map)
+          // }
         })
     } else if ('hide_url_parameters' === u.setting) {
       window.history.replaceState(
@@ -42,12 +42,12 @@ export function setting(this: Community, u: BaseInput) {
       Object.keys(this.spec.map).forEach(id => {
         if ('_' !== id[0]) {
           const mu = (this.spec.map[id] as SiteMap).u
-          if (v) {
-            mu.update()
-          } else {
-            mu.overlay.clearLayers()
-            mu.overlay_control.remove()
-          }
+          // if (v) {
+          //   mu.update()
+          // } else {
+          //   mu.overlay.clearLayers()
+          //   mu.overlay_control.remove()
+          // }
         }
       })
     } else if ('tracking' === u.setting) {
@@ -139,7 +139,11 @@ export function options(this: Community, u: Combobox) {
           ;(u.e as HTMLSelectElement).selectedIndex = -1
           u.source = ''
         }
-        u.id in this.url_options ? u.set(this.url_options[u.id]) : u.state in u.values ? u.set(u.state) : u.reset()
+        u.id in this.url_options
+          ? u.set(this.url_options[u.id] as string | number)
+          : u.state in u.values
+          ? u.set(u.state)
+          : u.reset()
       }
       if (u.filter) u.filter()
     }
@@ -151,7 +155,7 @@ export function set_current(this: Combobox) {
   this.options = this.option_sets[this.dataset].options
   this.source = ''
   this.id in this.site.url_options
-    ? this.set(this.site.url_options[this.id])
+    ? this.set(this.site.url_options[this.id] as string | number)
     : this.state in this.values
     ? this.set(this.state)
     : this.reset()
@@ -313,7 +317,7 @@ export function time_filters(this: Community, u: ActiveDataview) {
     if (c)
       c.forEach(ci => {
         if ('update' === ci.type) {
-          this.inputs[ci.id].update()
+          ;(this.inputs[ci.id] as InputNumber).update()
         } else if (ci.type in this.conditionals) {
           this.conditionals[ci.type as keyof typeof this.conditionals](this.inputs[ci.id], u)
         }

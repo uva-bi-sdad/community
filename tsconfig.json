@@ -2,7 +2,7 @@
   "compilerOptions": {
     "outDir": "dev",
     "allowJs": true,
-    "target": "ES5",
+    "target": "es2015",
     "noImplicitAny": true,
     "noImplicitThis": true
   },

@@ -1,14 +1,21 @@
-import {BaseInput, Options} from '.'
-import Community from '..'
-import {ActiveElement, Generic, ResourceField} from '../../types'
+import BaseInput from './index'
+import Community from '../index'
+import {Generic, ObjectIndex, OptionSets, ResourceField} from '../../types'
 import {patterns} from '../patterns'
 import {keymap} from '../static_refs'
 
-export interface ActiveCombobox extends ActiveElement {
-  parsed: {}
+export type ComboboxSpec = {
+  strict?: boolean
+  numeric?: boolean
+  search?: boolean
+  multi?: boolean
+  accordion?: boolean
+  group?: string
+  filters?: Generic
 }
 
 export class Combobox extends BaseInput {
+  type: 'combobox'
   hover_index = -1
   cleared_selection = ''
   expanded = false
@@ -22,28 +29,20 @@ export class Combobox extends BaseInput {
   value_type: string
   subset?: string
   selection_subset?: string
-  set_current = () => {
-    this.values = this.option_sets[this.dataset].values
-    this.display = this.option_sets[this.dataset].display
-    this.options = this.option_sets[this.dataset].options
-    this.source = ''
-    this.id in this.site.url_options
-      ? this.set(this.site.url_options[this.id])
-      : this.state in this.values
-      ? this.set(this.state)
-      : this.reset()
-  }
+  values: ObjectIndex = {}
+  display: ObjectIndex = {}
+  options: HTMLElement[] = []
+  option_sets: OptionSets = {}
+  current_set = ''
+  sensitive = false
   loader?: (...args: any) => void
   filter?: Function
-  options: Options
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
     this.settings.use_display = this.settings.search || this.settings.multi
     this.listbox = this.e.parentElement.children[1] as HTMLElement
-    this.options = this.listbox.querySelectorAll('.combobox-option')
+    this.options = [...this.listbox.querySelectorAll('.combobox-option')] as HTMLElement[]
     if (this.options.length) {
-      this.values = {}
-      this.display = {}
       this.options.forEach((e, i) => {
         this.values[e.dataset.value] = i
         this.display[e.innerText] = i
@@ -156,119 +155,17 @@ export class Combobox extends BaseInput {
         }
       }.bind(this)
     )
-    this.set = function (
-      v?: MouseEvent | KeyboardEvent | string | number | (string | number)[],
-      toggle?: boolean
-    ): void {
-      if (!v) v = this.input_element.value
-      let update = false,
-        i = -1
-      if (!Array.isArray(v) && 'object' === typeof v) {
-        const t = v.target as HTMLElement
-        if ((this.settings.accordion ? 'BUTTON' : 'LABEL') === t.tagName) return void 0
-        i = this.hover_index
-        if (
-          -1 !== i &&
-          (this.options[i].classList.contains('hidden') || this.options[i].classList.contains('filter-hidden'))
-        )
-          i = -1
-        v =
-          -1 === i
-            ? 'INPUT' === t.tagName
-              ? this.input_element.value
-              : t.dataset.value || t.innerText
-            : this.options[i].dataset.value || this.options[i].innerText
-        toggle = this.settings.multi
-      }
-      this.filter_reset()
-      if (Array.isArray(v)) {
-        if (this.settings.multi) {
-          this.listbox.querySelectorAll('.selected').forEach(e => {
-            e.classList.remove('selected')
-            e.setAttribute('aria-selected', 'false')
-          })
-          this.source = -1 === v[0] ? [] : v
-          v.forEach(this.set_selected)
-          update = true
-        } else v = v[0]
-      }
-      if (!Array.isArray(this.source)) this.source = []
-      if (!Array.isArray(v)) {
-        if (this.settings.strict && 'string' === typeof v && !(v in this.values) && patterns.number.test(v)) v = +v
-        if ('number' !== this.value_type && 'number' === typeof v && this.options[v]) {
-          v = this.options[v].dataset.value
-        }
-        if ('string' === typeof v && v in this.display) v = this.options[this.display[v]].dataset.value
-        if (this.settings.strict && !(v in this.values)) v = this.default
-        i = this.source.indexOf(v)
-        if (-1 === i) {
-          update = true
-          if (-1 === v || '' === v) {
-            this.source = []
-          } else {
-            if (this.settings.multi) {
-              this.source.push(v)
-            } else this.source[0] = v
-          }
-          if (v in this.values) {
-            if (!this.settings.multi) {
-              const selected = this.listbox.querySelector('.selected')
-              if (selected) {
-                selected.classList.remove('selected')
-                selected.setAttribute('aria-selected', 'false')
-              }
-            }
-            this.set_selected(v)
-          }
-        } else if (toggle) {
-          update = true
-          this.source.splice(i, 1)
-          if (v in this.values) {
-            const selection = this.options[this.values[v]]
-            selection.classList.remove('selected')
-            selection.setAttribute('aria-selected', 'false')
-          }
-        }
-      }
-      if (!this.settings.multi && this.expanded) {
-        this.input_element.focus()
-        this.close()
-        this.filter_reset()
-      }
-      const display = this.source.length
-        ? this.settings.multi
-          ? this.source.length + ' of ' + this.options.length + ' selected'
-          : this.source[0] in this.values
-          ? this.options[this.values[this.source[0]]].firstChild.textContent
-          : this.settings.strict || -1 === this.source[0]
-          ? ''
-          : this.source[0] + ''
-        : ''
-      if (this.settings.use_display) {
-        this.selection.innerText = display
-      } else {
-        this.input_element.value = display
-      }
-      if (this.onchange) this.onchange()
-      if (update) this.site.request_queue(false, this.id)
-    }
-    this.add = function (value: string, display: string, noadd: boolean, meta: ResourceField) {
-      const e = document.createElement('div')
-      e.id = this.id + '_' + value
-      e.role = 'option'
-      e.setAttribute('aria-selected', 'false')
-      e.tabIndex = 0
-      e.className = 'combobox-option combobox-component'
-      e.dataset.value = value
-      e.innerText = display || this.site.data.format_label(value)
-      if (meta && meta.info) {
-        e.appendChild(document.createElement('p'))
-        e.lastElementChild.className = 'combobox-option-description combobox-component'
-        ;(e.lastElementChild as HTMLElement).innerText = meta.info.description || meta.info.short_description || ''
-      }
-      if (!noadd) this.listbox.appendChild(e)
-      return e
-    }
+  }
+  set_current = () => {
+    this.values = this.option_sets[this.dataset].values
+    this.display = this.option_sets[this.dataset].display
+    this.options = this.option_sets[this.dataset].options
+    this.source = ''
+    this.id in this.site.url_options
+      ? this.set(this.site.url_options[this.id] as string)
+      : this.state in this.values
+      ? this.set(this.state)
+      : this.reset()
   }
   filterer() {
     const q = this.input_element.value.toLowerCase()
@@ -527,10 +424,120 @@ export class Combobox extends BaseInput {
       }
     return u
   }
-  retrieve() {
+  get() {
     const s: string[] = []
     this.listbox.querySelectorAll('.selected').forEach((o: HTMLElement) => s.push(o.dataset.value))
     this.source = s
     this.site.request_queue(false, this.id)
+  }
+  set(v?: MouseEvent | KeyboardEvent | string | number | (string | number)[], toggle?: boolean): void {
+    if (!v) v = this.input_element.value
+    let update = false,
+      i = -1
+    if (!Array.isArray(v) && 'object' === typeof v) {
+      const t = v.target as HTMLElement
+      if ((this.settings.accordion ? 'BUTTON' : 'LABEL') === t.tagName) return void 0
+      i = this.hover_index
+      if (
+        -1 !== i &&
+        (this.options[i].classList.contains('hidden') || this.options[i].classList.contains('filter-hidden'))
+      )
+        i = -1
+      v =
+        -1 === i
+          ? 'INPUT' === t.tagName
+            ? this.input_element.value
+            : t.dataset.value || t.innerText
+          : this.options[i].dataset.value || this.options[i].innerText
+      toggle = this.settings.multi
+    }
+    this.filter_reset()
+    if (Array.isArray(v)) {
+      if (this.settings.multi) {
+        this.listbox.querySelectorAll('.selected').forEach(e => {
+          e.classList.remove('selected')
+          e.setAttribute('aria-selected', 'false')
+        })
+        this.source = -1 === v[0] ? [] : v
+        v.forEach(this.set_selected)
+        update = true
+      } else v = v[0]
+    }
+    if (!Array.isArray(this.source)) this.source = []
+    if (!Array.isArray(v)) {
+      if (this.settings.strict && 'string' === typeof v && !(v in this.values) && patterns.number.test(v)) v = +v
+      if ('number' !== this.value_type && 'number' === typeof v && this.options[v]) {
+        v = this.options[v].dataset.value
+      }
+      if ('string' === typeof v && v in this.display) v = this.options[this.display[v]].dataset.value
+      if (this.settings.strict && !(v in this.values)) v = this.default
+      i = this.source.indexOf(v)
+      if (-1 === i) {
+        update = true
+        if (-1 === v || '' === v) {
+          this.source = []
+        } else {
+          if (this.settings.multi) {
+            this.source.push(v)
+          } else this.source[0] = v
+        }
+        if (v in this.values) {
+          if (!this.settings.multi) {
+            const selected = this.listbox.querySelector('.selected')
+            if (selected) {
+              selected.classList.remove('selected')
+              selected.setAttribute('aria-selected', 'false')
+            }
+          }
+          this.set_selected(v)
+        }
+      } else if (toggle) {
+        update = true
+        this.source.splice(i, 1)
+        if (v in this.values) {
+          const selection = this.options[this.values[v]]
+          selection.classList.remove('selected')
+          selection.setAttribute('aria-selected', 'false')
+        }
+      }
+    }
+    if (!this.settings.multi && this.expanded) {
+      this.input_element.focus()
+      this.close()
+      this.filter_reset()
+    }
+    const display = this.source.length
+      ? this.settings.multi
+        ? this.source.length + ' of ' + this.options.length + ' selected'
+        : this.source[0] in this.values
+        ? this.options[this.values[this.source[0]]].firstChild.textContent
+        : this.settings.strict || -1 === this.source[0]
+        ? ''
+        : this.source[0] + ''
+      : ''
+    if (this.settings.use_display) {
+      this.selection.innerText = display
+    } else {
+      this.input_element.value = display
+    }
+    if (this.onchange) this.onchange()
+    if (update) this.site.request_queue(false, this.id)
+  }
+  add(value: string, display?: string, noadd?: boolean, meta?: ResourceField) {
+    const e = document.createElement('div')
+    e.id = this.id + '_' + value
+    e.role = 'option'
+    e.setAttribute('aria-selected', 'false')
+    e.tabIndex = 0
+    e.className = 'combobox-option combobox-component'
+    e.dataset.value = value
+    e.innerText = display || this.site.data.format_label(value)
+    if (meta && meta.info) {
+      e.appendChild(document.createElement('p'))
+      e.lastElementChild.className = 'combobox-option-description combobox-component'
+      ;(e.lastElementChild as HTMLElement).innerText = meta.info.description || meta.info.short_description || ''
+    }
+    if (!noadd) this.listbox.appendChild(e)
+    return e
   }
 }

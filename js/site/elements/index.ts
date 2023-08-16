@@ -1,62 +1,38 @@
-import Community from '..'
-import {SitePlotly} from '../../types'
-import {Combobox} from './combobox'
+import {LogicalObject} from '../../types'
+import Community from '../index'
+import {patterns} from '../patterns'
+import {tooltip_clear, tooltip_trigger} from '../utils'
 
-export const elements = {
-  combobox: Combobox,
-  select: Combobox,
-}
-export type Options = NodeListOf<HTMLElement> | HTMLElement[]
-type OptionIndex = {[index: string]: number}
-export type OptionSets = {
-  [index: string]: {
-    options: Options
-    values: OptionIndex
-    display: OptionIndex
-  }
+const elements = {
+  combobox: true,
+  select: true,
+  number: true,
 }
 
-export class BaseInput {
+export default abstract class BaseInput {
   type: keyof typeof elements
-  source: string | number | (string | number)[]
+  input = true
+  site: Community
+  e: HTMLElement
+  wrapper: HTMLElement
+  id: string
+  settings: {[index: string]: any} = {}
   default: string | number
+  source: string | number | (string | number)[]
   optionSource: string
-  depends: string
+  depends: string | LogicalObject
   variable: string
   dataset: string
   view: string
-  id: string
   note: string
   current_index = -1
-  previous = ''
-  e: HTMLElement
-  settings: {[index: string]: any} = {}
-  input = true
-  site: Community
-  range?: number[]
-  input_element?: HTMLInputElement
-  state?: string
-  deferred?: boolean
-  set?: (value?: any) => void
-  reset?: Function
-  add?: Function
+  previous: string | number = ''
+  state = ''
   setting?: string
-  tiles?: {[index: string]: any}
-  overlay?: any
-  overlay_control?: any
-  map?: {[index: string]: any}
-  update?: Function
-  options?: Options | SitePlotly
-  values?: OptionIndex
-  display?: OptionIndex
-  option_sets?: OptionSets
-  current_set?: string
-  sensitive?: boolean
-  expanded?: boolean
+  deferred?: boolean
   constructor(e: HTMLElement, site: Community) {
-    this.site = site
     this.e = e
-    this.type = e.dataset.autoType as keyof typeof elements
+    this.site = site
     this.default = e.dataset.default
     this.optionSource = e.dataset.optionSource
     this.depends = e.dataset.depends
@@ -65,12 +41,37 @@ export class BaseInput {
     this.view = e.dataset.view
     this.id = e.id || this.optionSource || 'ui' + site.page.elementCount++
     this.note = e.getAttribute('aria-description') || ''
-    if (this.type in site.spec && this.id in site.spec[this.type]) this.settings = site.spec[this.type][this.id]
+    this.type = e.dataset.autoType as keyof typeof elements
+    if (this.type in site.spec && this.id in site.spec[this.type])
+      this.settings = (site.spec[this.type] as any)[this.id]
+    this.wrapper = e.parentElement.classList.contains('wrapper') ? e.parentElement : e.parentElement.parentElement
+    if (this.wrapper) {
+      if (this.note) this.wrapper.classList.add('has-note')
+      this.wrapper.setAttribute('data-of', this.id)
+      ;['div', 'span', 'label', 'fieldset', 'legend', 'input', 'button'].forEach(type => {
+        const c = this.wrapper.querySelectorAll(type)
+        if (c.length) c.forEach(ci => ci.setAttribute('data-of', this.id))
+      })
+    }
+    if (this.note) {
+      this.wrapper.addEventListener('mouseover', tooltip_trigger.bind(this))
+      const p = 'DIV' !== e.tagName ? e : e.querySelector('input')
+      if (p) {
+        p.addEventListener('focus', tooltip_trigger.bind(this))
+        p.addEventListener('blur', tooltip_clear.bind(this))
+      }
+    }
+    if (patterns.number.test(this.default)) this.default = +this.default
   }
   value() {
     if (Array.isArray(this.source)) return this.source
     const v = this.site.valueOf(this.source)
     return 'undefined' === typeof v ? this.site.valueOf(this.default) : v
   }
-  toggle() {}
+  set(v: any) {
+    this.source = v
+  }
+  reset() {
+    this.set(this.site.valueOf(this.default))
+  }
 }

@@ -146,7 +146,8 @@ export default class DataHandler {
     },
   }
   loaded: LogicalObject = {}
-  inited: LogicalObject = {}
+  onload: () => {}
+  inited: {[index: string]: number | NodeJS.Timeout | boolean} = {}
   inited_summary: Promises = {}
   summary_ready: {[index: string]: Function} = {}
   entity_features: EntityFeatureSet = {}
