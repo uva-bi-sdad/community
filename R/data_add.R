@@ -78,7 +78,7 @@ data_add <- function(filename, meta = list(), packagename = "datapackage.json", 
         packagename <- package
         jsonlite::read_json(package)
       } else {
-        init_data(filename[[1]], dir = dir)
+        init_data(if (!is.null(setnames)) setnames[[1]] else filename[[1]], dir = dir)
       }
     }
     if (!is.list(package)) {
@@ -211,8 +211,8 @@ data_add <- function(filename, meta = list(), packagename = "datapackage.json", 
   }
   single_meta <- FALSE
   metas <- if (!is.null(names(meta))) {
-    if (!is.null(names(filename)) && all(names(filename) %in% names(meta))) {
-      meta[names(filename)]
+    if (!is.null(setnames) && all(setnames %in% names(meta))) {
+      meta[setnames]
     } else {
       single_meta <- TRUE
       if (length(meta$variables) == 1 && is.character(meta$variables)) {
@@ -244,10 +244,13 @@ data_add <- function(filename, meta = list(), packagename = "datapackage.json", 
   }
   if (write) {
     packagename <- if (is.character(packagename)) packagename else "datapackage.json"
-    jsonlite::write_json(package, packagename, auto_unbox = TRUE, digits = 6)
+    jsonlite::write_json(
+      package, if (file.exists(packagename)) packagename else paste0(dir, "/", packagename),
+      auto_unbox = TRUE, digits = 6
+    )
     if (interactive()) {
       cli_bullets(c(v = paste(
-        if (refresh) "updated resource in" else "added resource to", "{.file datapackage.json}:"
+        if (refresh) "updated resource in" else "added resource to", "datapackage.json:"
       ), "*" = paste0("{.path ", packagename, "}")))
       if (open_after) navigateToFile(packagename)
     }
