@@ -164,7 +164,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
     i <- i + 1
     if (verbose) cli_progress_update()
     issues <- NULL
-    if (!is.null(m$measure_type) && !is.null(m$measure)) {
+    if (!is.null(m$unit) && !is.null(m$short_name)) {
       issues <- "recoverably malformed (should be an object with named entries for each measure)"
       results$info_malformed <- c(results$info_malformed, f)
       m <- list(m)
@@ -447,7 +447,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
                 if (!is.null(mm)) {
                   type <- mm$aggregation_method
                   if (is.null(type) || type == "") {
-                    type <- if (mm$measure_type == "") mm$type else mm$measure_type
+                    type <- if (!is.null(mm$measure_type) && mm$measure_type == "") mm$type else mm$measure_type
                     if (is.null(type)) type <- ""
                   }
                   if (grepl("percent", type, fixed = TRUE)) {
@@ -554,7 +554,7 @@ check_repository <- function(dir = ".", search_pattern = "\\.csv(?:\\.[gbx]z2?)?
                 if (!is.null(mm)) {
                   type <- mm$aggregation_method
                   if (is.null(type) || type == "") {
-                    type <- if (mm$measure_type == "") mm$type else mm$measure_type
+                    type <- if (!is.null(mm$measure_type) && mm$measure_type == "") mm$type else mm$measure_type
                     if (is.null(type)) type <- ""
                   }
                   maxv <- max(mvs)
