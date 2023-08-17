@@ -107,22 +107,21 @@ replace_equations <- function(info) {
     descriptions <- grep("description", names(e), fixed = TRUE)
     if (length(descriptions)) {
       for (d in descriptions) {
-        p <- gregexec(
+        p <- gregexpr(
           "(?:\\$|\\\\\\[|\\\\\\(|\\\\begin\\{math\\})(.+?)(?:\\$|\\\\\\]|\\\\\\)|\\\\end\\{math\\})(?=\\s|$)",
           e[[d]],
           perl = TRUE
         )[[1]]
-        if (length(p) > 1) {
-          ml <- attr(p, "match.length")
+        if (p[[1]] != -1) {
           re <- paste("", e[[d]], "")
-          for (i in seq_len(ncol(p))) {
-            mp <- p[2, i]
-            eq <- substring(e[[d]], mp, mp + ml[2, i] - 1)
+          fm <- regmatches(e[[d]], p)
+          for (i in seq_along(p)) {
+            mp <- attr(p, "capture.start")[i, ]
+            eq <- substring(e[[d]], mp, mp + attr(p, "capture.length")[i, ] - 1)
             parsed <- tryCatch(katex_mathml(eq), error = function(e) NULL)
             if (!is.null(parsed)) {
-              mp <- p[1, i]
               re <- paste(
-                strsplit(re, substring(e[[d]], mp, mp + ml[1, i] - 1), fixed = TRUE)[[1]],
+                strsplit(re, fm[[i]], fixed = TRUE)[[1]],
                 collapse = sub("^<[^>]*>", "", sub("<[^>]*>$", "", parsed))
               )
             }
@@ -131,6 +130,8 @@ replace_equations <- function(info) {
         }
       }
     }
+    if (is.list(e$categories)) e$categories <- replace_equations(e$categories)
+    if (is.list(e$variants)) e$variants <- replace_equations(e$variants)
     e
   })
 }
@@ -147,10 +148,10 @@ preprocess <- function(l) {
 }
 
 replace_dynamic <- function(e, p, s, v = NULL, default = "default") {
-  m <- gregexec(p, e)
+  m <- gregexpr(p, e)
   if (m[[1]][[1]] != -1) {
     t <- regmatches(e, m)[[1]]
-    tm <- structure(substring(t[2, ], 2), names = t[1, ])
+    tm <- structure(gsub("\\{[^.]+\\.?|\\}", "", t), names = t)
     tm <- tm[!duplicated(names(tm))]
     tm[tm == ""] <- default
     for (tar in names(tm)) {
@@ -202,10 +203,10 @@ render_info <- function(info, names_only = FALSE) {
   for (var in vars) {
     cs <- if (var[1] == "") list() else categories[[var[1]]]
     vs <- if (length(var) == 1 || var[2] == "") list() else variants[[var[2]]]
-    cs <- prepare_source(cs, vs, "\\{variants?(\\.[^}]+?)?\\}")
-    vs <- prepare_source(vs, cs, "\\{categor(?:y|ies)(\\.[^}]+?)?\\}")
+    cs <- prepare_source(cs, vs, "\\{variants?(?:\\.[^}]+?)?\\}")
+    vs <- prepare_source(vs, cs, "\\{categor(?:y|ies)(?:\\.[^}]+?)?\\}")
     s <- c(cs, vs[!names(vs) %in% names(cs)])
-    p <- "\\{(?:categor(?:y|ies)|variants?)(\\.[^}]+?)?\\}"
+    p <- "\\{(?:categor(?:y|ies)|variants?)(?:\\.[^}]+?)?\\}"
     key <- replace_dynamic(base_name, p, cs, vs)
     if (names_only) {
       expanded <- c(expanded, key)

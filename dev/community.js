@@ -2556,7 +2556,7 @@
         time_range: time_range
     });
 
-    var palettes = {
+    const palettes = {
         // discrete palettes from https://colorbrewer2.org
         rdylbu7: {
             name: 'Red-Yellow-Blue (7)',
@@ -2725,7 +2725,7 @@
         },
     };
 
-    var patterns = {
+    const patterns = {
         seps: /[\s,/._-]+/g,
         period: /\./,
         all_periods: /\./g,
@@ -2768,7 +2768,7 @@
         basename: /^.*\//,
     };
 
-    var value_types = {
+    const value_types = {
         percent: function (v) {
             return v + '%';
         },
@@ -2786,7 +2786,7 @@
         },
     };
 
-    var defaults = {
+    const defaults = {
         time: 'time',
         dataview: 'default_view',
         palette: 'vik',
@@ -2797,7 +2797,7 @@
         missing: '#00000000',
     };
 
-    var summary_levels = {
+    const summary_levels = {
         dataset: 'Overall',
         filtered: 'Filtered',
         children: 'Unfiltered selection',
@@ -2805,18 +2805,18 @@
     };
 
     function set_description(e, info) {
-        var description = info.long_description || info.description || info.short_description || '';
-        var has_equation = patterns.has_equation.test(description);
+        const description = info.long_description || info.description || info.short_description || '';
+        let has_equation = patterns.has_equation.test(description);
         if (has_equation) {
-            var tags = description.split(patterns.bracket_content);
-            for (var i = tags.length; i--;) {
-                var t = tags[i];
+            const tags = description.split(patterns.bracket_content);
+            for (let i = tags.length; i--;) {
+                const t = tags[i];
                 if (t && '/' !== t.substring(0, 1)) {
-                    var p = t.split(patterns.space), n = p.length;
+                    const p = t.split(patterns.space), n = p.length;
                     has_equation = patterns.math_tags.test(p[0]);
                     if (!has_equation)
                         break;
-                    for (var a = 1; a < n; a++) {
+                    for (let a = 1; a < n; a++) {
                         has_equation = patterns.math_attributes.test(p[a]);
                         if (!has_equation)
                             break;
@@ -2829,9 +2829,8 @@
         e[has_equation ? 'innerHTML' : 'innerText'] = description;
     }
 
-    var TutorialManager = /** @class */ (function () {
-        function TutorialManager(tutorials, elements, resetter) {
-            var _this = this;
+    class TutorialManager {
+        constructor(tutorials, elements, resetter) {
             this.container = document.createElement('div');
             this.backdrop = document.createElement('div');
             this.highlight = document.createElement('div');
@@ -2848,7 +2847,7 @@
             this.current_time = 0;
             this.tutorials = tutorials;
             this.site_elements = elements || {};
-            this.site_reset = resetter || (function () { });
+            this.site_reset = resetter || (() => { });
             this.start_tutorial = this.start_tutorial.bind(this);
             this.progress_tutorial = this.progress_tutorial.bind(this);
             this.execute_step = this.execute_step.bind(this);
@@ -2858,7 +2857,7 @@
             this.menu.id = 'community_tutorials_menu';
             this.menu.className = 'modal fade';
             this.menu.tabIndex = -1;
-            var e = document.createElement('div');
+            let e = document.createElement('div');
             this.menu.appendChild(e);
             e.className = 'modal-dialog modal-dialog-scrollable';
             e.appendChild((e = document.createElement('div')));
@@ -2868,20 +2867,20 @@
             e.appendChild((e = document.createElement('p')));
             e.className = 'modal-title h5';
             e.innerText = 'Tutorials';
-            var close = document.createElement('button');
+            let close = document.createElement('button');
             e.insertAdjacentElement('afterend', close);
             close.type = 'button';
             close.className = 'btn-close';
             close.setAttribute('data-bs-dismiss', 'modal');
             close.setAttribute('aria-label', 'Close');
-            var l = document.createElement('div');
+            const l = document.createElement('div');
             this.menu.lastElementChild.lastElementChild.appendChild(l);
             l.className = 'modal-body';
-            Object.keys(tutorials).forEach(function (name) {
-                var t = tutorials[name], e = document.createElement('div'), description = document.createElement('div'), start = document.createElement('button');
-                t.manager = _this;
+            Object.keys(tutorials).forEach(name => {
+                const t = tutorials[name], e = document.createElement('div'), description = document.createElement('div'), start = document.createElement('button');
+                t.manager = this;
                 t.n_steps = t.steps.length;
-                var p = document.createElement('div');
+                let p = document.createElement('div');
                 l.appendChild(e);
                 e.className = 'tutorial-listing card';
                 e.appendChild(p);
@@ -2893,14 +2892,14 @@
                 description.appendChild(document.createElement('p'));
                 description.firstElementChild.innerText = t.description || '';
                 if (t.steps.length && t.steps[0].before && !Array.isArray(t.steps[0].before)) {
-                    var before_1 = t.steps[0].before, setting_display_1 = document.createElement('div'), header = document.createElement('span');
-                    setting_display_1.className = 'tutorial-initial-settings';
-                    setting_display_1.appendChild(header);
+                    const before = t.steps[0].before, setting_display = document.createElement('div'), header = document.createElement('span');
+                    setting_display.className = 'tutorial-initial-settings';
+                    setting_display.appendChild(header);
                     header.innerText = 'Initial Settings';
                     header.className = 'h6';
-                    Object.keys(t.steps[0].before).forEach(function (k, i) {
-                        var row = document.createElement('p');
-                        var part = document.createElement('span');
+                    Object.keys(t.steps[0].before).forEach((k, i) => {
+                        const row = document.createElement('p');
+                        let part = document.createElement('span');
                         part.className = 'syntax-variable';
                         part.innerText = k.replace(patterns.settings, '');
                         row.appendChild(part);
@@ -2910,18 +2909,18 @@
                         row.appendChild(part);
                         part = document.createElement('span');
                         part.className = 'syntax-value';
-                        part.innerText = before_1[k];
+                        part.innerText = before[k];
                         row.appendChild(part);
-                        setting_display_1.appendChild(row);
+                        setting_display.appendChild(row);
                     });
-                    description.appendChild(setting_display_1);
+                    description.appendChild(setting_display);
                 }
                 p.appendChild(start);
                 start.type = 'button';
                 start.className = 'btn';
                 start.innerText = 'Start';
                 start.dataset.name = name;
-                start.addEventListener('click', _this.start_tutorial);
+                start.addEventListener('click', this.start_tutorial);
             });
             // prepare step display
             document.body.appendChild(this.container);
@@ -2975,16 +2974,16 @@
             this.continue.innerText = 'Next';
             this.continue.setAttribute('aria-controls', 'community_tutorial_frame');
         }
-        TutorialManager.prototype.retrieve_element = function (name) {
-            var e;
+        retrieve_element(name) {
+            let e;
             if (name in this.site_elements) {
                 this.current_site_element = this.site_elements[name];
                 e = this.current_site_element.e;
             }
             else if ('nav:' === name.substring(0, 4).toLowerCase()) {
-                var text_1 = name.replace(patterns.pre_colon, '');
-                document.querySelectorAll('.nav-item button').forEach(function (item) {
-                    if (text_1 === item.innerText)
+                const text = name.replace(patterns.pre_colon, '');
+                document.querySelectorAll('.nav-item button').forEach((item) => {
+                    if (text === item.innerText)
                         e = item;
                 });
                 var group = _this.listbox.querySelectorAll('.combobox-group');
@@ -2997,92 +2996,101 @@
                     });
                 }
             }
-            _this.container.className = 'combobox-options-container combobox-component hidden';
-            _this.site.page.overlay.appendChild(_this.container);
-            _this.container.appendChild(_this.listbox);
-            _this.selection = _this.e.firstElementChild.firstElementChild;
-            _this.input_element = _this.e.firstElementChild.lastElementChild;
-            if (2 === _this.e.childElementCount) {
-                _this.e.lastElementChild.addEventListener('click', function () {
-                    if (!this.e.classList.contains('locked')) {
-                        this.cleared_selection = '';
-                        this.set([]);
-                        this.input_element.focus();
-                    }
-                }.bind(_this));
+            return e;
+        }
+        start_tutorial(event, name) {
+            this.end_tutorial();
+            document.querySelectorAll('[data-bs-dismiss]').forEach((close) => close.click());
+            this.in_progress = name ? name : event.target.dataset.name;
+            if (!(this.in_progress in this.tutorials)) {
+                console.error('tutorial does not exist:', this.in_progress);
+                this.in_progress = '';
+                return;
             }
-            _this.input_element.addEventListener('focus', function () {
-                this.e.classList.add('focused');
-            }.bind(_this));
-            _this.input_element.addEventListener('blur', function () {
-                this.e.classList.remove('focused');
-            }.bind(_this));
-            _this.listbox.addEventListener('click', _this.set);
-            window.addEventListener('resize', _this.resize);
-            _this.e.addEventListener('mousedown', _this.toggle);
-            _this.listbox.addEventListener('mouseover', _this.highlight);
-            if (_this.settings.accordion) {
-                _this.listbox.addEventListener('show.bs.collapse', function (e) {
-                    var group = _this.hover_index === -1 ? '' : _this.options[_this.hover_index].getAttribute('data-group');
-                    var et = e.target;
-                    if (group !== et.getAttribute('data-group')) {
-                        et.firstElementChild.firstElementChild.dispatchEvent(new MouseEvent('mouseover'));
-                        _this.input_element.focus();
-                    }
-                });
-            }
-            if (_this.settings.search) {
-                _this.input_element.addEventListener('keyup', _this.filterer);
-            }
-            _this.input_element.addEventListener('keydown', function (e) {
-                var action = keymap[e.code];
-                if (action) {
-                    if ('close' === action) {
-                        this.close();
-                    }
-                    else if ('select' === action) {
-                        if (!this.expanded)
-                            return this.toggle(void 0, this.input_element);
-                        this.set(e);
-                    }
-                    else if ('move' === action) {
-                        var value = this.input_element.value;
-                        if (this.settings.strict || (this.expanded && '' === value)) {
-                            e.preventDefault();
-                            if ('ArrowUp' === e.code) {
-                                if (this.filter_index && this.filter_index.length) {
-                                    this.hover_index = this.filter_index.indexOf(this.hover_index) - 1;
-                                    this.hover_index = this.filter_index[0 > this.hover_index ? 0 : this.hover_index];
-                                }
-                                else {
-                                    this.hover_index = Math.max(0, this.hover_index - 1);
-                                }
-                            }
-                            else if ('ArrowDown' === e.code) {
-                                if (this.filter_index && this.filter_index.length) {
-                                    this.hover_index = this.filter_index.indexOf(this.hover_index) + 1;
-                                    this.hover_index =
-                                        this.filter_index[this.filter_index.length - 1 < this.hover_index ? this.filter_index.length - 1 : this.hover_index];
-                                }
-                                else {
-                                    this.hover_index = Math.min(this.options.length - 1, this.hover_index + 1);
-                                }
-                            }
-                            else if ('Home' === e.code) {
-                                this.hover_index = 0;
-                            }
-                            else if ('End' === e.code) {
-                                this.hover_index = this.options.length - 1;
-                            }
-                            if (this.expanded) {
-                                this.highlight();
-                            }
-                            else {
-                                this.set(this.hover_index);
+            this.container.classList.remove('hidden');
+            this.header.innerText = this.tutorials[this.in_progress].title || this.in_progress;
+            this.current_step = 0;
+            this.current_time = 0;
+            this.dialog.innerText = 'Starting tutorial ' + this.header.innerText;
+            this.timer.innerText = '';
+            this.continue.innerText = 'Next';
+            if (this.tutorials[this.in_progress].reset)
+                this.site_reset();
+            this.progress_tutorial();
+        }
+        progress_tutorial(event) {
+            const isClick = !event || !event.code;
+            if (!isClick && 'Escape' === event.code)
+                this.end_tutorial();
+            if (this.in_progress && !this.waiting && (isClick || 'Enter' === event.code || 'ArrowRight' === event.code)) {
+                this.waiting = true;
+                clearTimeout(this.focuser);
+                clearInterval(this.running_timer);
+                const t = this.tutorials[this.in_progress];
+                let step;
+                const handle_object = (obj) => {
+                    Object.keys(obj).forEach(k => {
+                        if (patterns.number.test(k)) {
+                            do_action(obj[k]);
+                        }
+                        else {
+                            if (k in this.site_elements && this.site_elements[k].set) {
+                                this.site_elements[k].set(obj[k]);
                             }
                         }
-                        else if (patterns.number.test(value)) {
-                            this.set(Number(value) + ('ArrowUp' === e.code ? 1 : -1));
+                    });
+                };
+                const set_value = (value) => {
+                    if (this.current_site_element && this.current_site_element.set) {
+                        this.current_site_element.set(value);
+                    }
+                    else {
+                        const input = 'value' in this.current_element ? this.current_element : this.current_element.querySelector('input');
+                        if (input) {
+                            input.value = value;
+                            input.dispatchEvent(new Event('change'));
+                            input.dispatchEvent(new KeyboardEvent('keydown', { code: 'Enter' }));
+                        }
+                    }
+                };
+                const do_action = (action) => {
+                    action = String(action);
+                    if ('set' === action) {
+                        if ('option' in step)
+                            set_value(step.option);
+                    }
+                    else if ('click' === action) {
+                        if (this.current_site_element &&
+                            this.current_site_element.toggle &&
+                            action === this.current_site_element.id) {
+                            if (!this.current_site_element.expanded)
+                                this.current_site_element.toggle({ target: this.current_element });
+                        }
+                        else {
+                            this.current_element && this.current_element.click();
+                        }
+                    }
+                    else if ('close' === action) {
+                        document.querySelectorAll('[data-bs-dismiss]').forEach((close) => close.click());
+                    }
+                    else if ('value' === action.substring(0, 5)) {
+                        set_value(action.replace(patterns.pre_colon, '').trimStart());
+                    }
+                    else {
+                        const e = this.retrieve_element(action);
+                        if (e)
+                            e.click();
+                    }
+                };
+                // handle previous step's after action
+                if (this.current_step > 0) {
+                    step = t.steps[this.current_step - 1];
+                    if ('after' in step) {
+                        if (Array.isArray(step.after)) {
+                            step.after.forEach(do_action);
+                        }
+                        else {
+                            handle_object(step.after);
                         }
                     }
                 }
@@ -3090,221 +3098,62 @@
                     this.toggle(void 0, this.input_element);
                 }
                 else {
-                    this.clear_highlight();
-                }
-            }.bind(_this));
-            _this.set = function (v, toggle) {
-                if (!v)
-                    v = this.input_element.value;
-                var update = false, i = -1;
-                if (!Array.isArray(v) && 'object' === typeof v) {
-                    var t = v.target;
-                    if ((this.settings.accordion ? 'BUTTON' : 'LABEL') === t.tagName)
-                        return void 0;
-                    i = this.hover_index;
-                    if (-1 !== i &&
-                        (this.options[i].classList.contains('hidden') || this.options[i].classList.contains('filter-hidden')))
-                        i = -1;
-                    v =
-                        -1 === i
-                            ? 'INPUT' === t.tagName
-                                ? this.input_element.value
-                                : t.dataset.value || t.innerText
-                            : this.options[i].dataset.value || this.options[i].innerText;
-                    toggle = this.settings.multi;
-                }
-                this.filter_reset();
-                if (Array.isArray(v)) {
-                    if (this.settings.multi) {
-                        this.listbox.querySelectorAll('.selected').forEach(function (e) {
-                            e.classList.remove('selected');
-                            e.setAttribute('aria-selected', 'false');
-                        });
-                        this.source = -1 === v[0] ? [] : v;
-                        v.forEach(this.set_selected);
-                        update = true;
-                    }
-                    else
-                        v = v[0];
-                }
-                if (!Array.isArray(this.source))
-                    this.source = [];
-                if (!Array.isArray(v)) {
-                    if (this.settings.strict && 'string' === typeof v && !(v in this.values) && patterns.number.test(v))
-                        v = +v;
-                    if ('number' !== this.value_type && 'number' === typeof v && this.options[v]) {
-                        v = this.options[v].dataset.value;
-                    }
-                    if ('string' === typeof v && v in this.display)
-                        v = this.options[this.display[v]].dataset.value;
-                    if (this.settings.strict && !(v in this.values))
-                        v = this.default;
-                    i = this.source.indexOf(v);
-                    if (-1 === i) {
-                        update = true;
-                        if (-1 === v || '' === v) {
-                            this.source = [];
+                    this.current_site_element = void 0;
+                    // handle current step's before action
+                    step = t.steps[this.current_step];
+                    this.current_element = this.retrieve_element(step.focus);
+                    if ('before' in step) {
+                        if (Array.isArray(step.before)) {
+                            step.before.forEach(do_action);
                         }
                         else {
-                            if (this.settings.multi) {
-                                this.source.push(v);
-                            }
-                            else
-                                this.source[0] = v;
-                        }
-                        if (v in this.values) {
-                            if (!this.settings.multi) {
-                                var selected = this.listbox.querySelector('.selected');
-                                if (selected) {
-                                    selected.classList.remove('selected');
-                                    selected.setAttribute('aria-selected', 'false');
-                                }
-                            }
-                            this.set_selected(v);
+                            handle_object(step.before);
                         }
                     }
-                    else if (toggle) {
-                        update = true;
-                        this.source.splice(i, 1);
-                        if (v in this.values) {
-                            var selection = this.options[this.values[v]];
-                            selection.classList.remove('selected');
-                            selection.setAttribute('aria-selected', 'false');
-                        }
-                    }
+                    if (this.current_step === t.n_steps - 1)
+                        this.continue.innerText = 'Finish';
+                    if (this.current_element && this.current_element.scrollIntoView)
+                        this.current_element.scrollIntoView();
+                    // execute current step after actions have resolved
+                    setTimeout(this.execute_step, 'wait' in step ? step.wait : 400);
                 }
-                if (!this.settings.multi && this.expanded) {
-                    this.input_element.focus();
-                    this.close();
-                    this.filter_reset();
-                }
-                var display = this.source.length
-                    ? this.settings.multi
-                        ? this.source.length + ' of ' + this.options.length + ' selected'
-                        : this.source[0] in this.values
-                            ? this.options[this.values[this.source[0]]].firstChild.textContent
-                            : this.settings.strict || -1 === this.source[0]
-                                ? ''
-                                : this.source[0] + ''
-                    : '';
-                if (this.settings.use_display) {
-                    this.selection.innerText = display;
-                }
-                else {
-                    this.input_element.value = display;
-                }
-                if (this.onchange)
-                    this.onchange();
-                if (update)
-                    this.site.request_queue(false, this.id);
-            };
-            _this.add = function (value, display, noadd, meta) {
-                var e = document.createElement('div');
-                e.id = this.id + '_' + value;
-                e.role = 'option';
-                e.setAttribute('aria-selected', 'false');
-                e.tabIndex = 0;
-                e.className = 'combobox-option combobox-component';
-                e.dataset.value = value;
-                e.innerText = display || this.site.data.format_label(value);
-                if (meta && meta.info) {
-                    e.appendChild(document.createElement('p'));
-                    e.lastElementChild.className = 'combobox-option-description combobox-component';
-                    e.lastElementChild.innerText = meta.info.description || meta.info.short_description || '';
-                }
-                if (!noadd)
-                    this.listbox.appendChild(e);
-                return e;
-            };
-            return _this;
+            }
         }
-        Combobox.prototype.filterer = function () {
-            var _this = this;
-            var q = this.input_element.value.toLowerCase();
-            if ('' === q) {
-                this.filter_reset();
-            }
-            else {
-                this.filter_index = [];
-                if (this.groups) {
-                    this.groups.e.forEach(function (g) { return g.firstElementChild.firstElementChild.classList.add('hidden'); });
-                }
-                this.options.forEach(function (o, i) {
-                    if (!o.classList.contains('hidden') && o.innerText.toLowerCase().includes(q)) {
-                        o.classList.remove('filter-hidden');
-                        _this.filter_index.push(i);
-                        var group = o.getAttribute('data-group');
-                        if (group) {
-                            _this.groups.by_name[group].firstElementChild.firstElementChild.classList.remove('hidden');
-                            if (_this.settings.accordion) {
-                                var g = _this.groups.by_name[group];
-                                g.firstElementChild.nextElementSibling.classList.add('show');
-                                g.firstElementChild.firstElementChild.classList.remove('collapsed');
-                                g.firstElementChild.firstElementChild.setAttribute('aria-expanded', 'true');
-                            }
-                        }
+        execute_step() {
+            if (this.in_progress) {
+                const t = this.tutorials[this.in_progress];
+                const step = t.steps[this.current_step];
+                if (!this.current_element) {
+                    const e = this.retrieve_element(step.focus);
+                    if (!e) {
+                        console.error('failed to retrieve element', step.focus);
+                        return this.end_tutorial();
                     }
-                    else {
-                        o.classList.add('filter-hidden');
-                    }
-                });
-            }
-        };
-        Combobox.prototype.highlight = function (e, target) {
-            if (e && !target)
-                target = e.target;
-            if (!target || target.dataset.value in this.values) {
-                if (!this.groups)
-                    this.settings.accordion = false;
-                if (target && target.dataset.value) {
-                    this.hover_index = this.values[target.dataset.value];
+                    this.current_element = e;
+                    if (e.scrollIntoView)
+                        e.scrollIntoView();
+                    setTimeout(this.execute_step, 0);
+                    return;
                 }
-                else if (-1 === this.hover_index && Array.isArray(this.source)) {
-                    this.hover_index = this.values[this.source[0]];
-                }
-                if ('undefined' === typeof this.hover_index)
-                    this.hover_index = -1;
-                var o = this.options[this.hover_index];
-                if (o) {
-                    var previous = this.listbox.querySelector('.highlighted');
-                    if (previous)
-                        previous.classList.remove('highlighted');
-                    if (e && 'mouseover' === e.type) {
-                        target.classList.add('highlighted');
-                    }
-                    else {
-                        o.classList.add('highlighted');
-                        if (this.settings.accordion) {
-                            var c = o.parentElement.parentElement;
-                            if (!c.classList.contains('show')) {
-                                c.classList.add('show');
-                                c.previousElementSibling.firstElementChild.classList.remove('collapsed');
-                                c.previousElementSibling.firstElementChild.setAttribute('aria-expanded', 'true');
-                            }
+                this.continue.disabled = !!step.disable_continue;
+                const b = this.current_element.getBoundingClientRect(), f = this.frame.getBoundingClientRect();
+                this.highlight.style.top = b.top + 'px';
+                this.highlight.style.left = b.left + 'px';
+                this.highlight.style.width = b.width + 'px';
+                this.highlight.style.height = b.height + 'px';
+                this.frame.style.top = (b.y < screen.availHeight / 2 ? b.y + b.height + 10 : b.y - f.height - 10) + 'px';
+                this.frame.style.marginLeft = -f.width / 2 + 'px';
+                if (step.time) {
+                    this.current_time = step.time;
+                    this.timer.innerText = step.time + '';
+                    this.running_timer = setInterval(() => {
+                        this.current_time--;
+                        this.timer.innerText = this.current_time + '';
+                        if (this.current_time <= 0) {
+                            clearInterval(this.running_timer);
+                            this.progress_tutorial();
                         }
-                        this.input_element.setAttribute('aria-activedescendant', o.id);
-                        var port = this.container.getBoundingClientRect(), item = o.getBoundingClientRect();
-                        var top_1 = port.top;
-                        if (this.groups && o.getAttribute('data-group'))
-                            top_1 += this.groups.by_name[o.getAttribute('data-group')].firstElementChild.getBoundingClientRect().height;
-                        if (top_1 > item.top) {
-                            this.container.scrollTo(0, this.container.scrollTop + item.top - top_1);
-                        }
-                        else if (port.bottom < item.bottom) {
-                            this.container.scrollTo(0, this.container.scrollTop + item.bottom - port.bottom);
-                        }
-                    }
-                }
-            }
-        };
-        Combobox.prototype.toggle = function (e, target) {
-            var _this = this;
-            if (e && !target)
-                target = e.target;
-            if (target && !e.button && !this.e.classList.contains('disabled') && 'BUTTON' !== target.tagName) {
-                if (this.expanded) {
-                    if (target !== this.input_element)
-                        this.close();
+                    }, 1e3);
                 }
                 else {
                     this.timer.innerText = '';
@@ -3313,18 +3162,17 @@
                 this.dialog.innerText = step.description;
                 this.current_step++;
                 this.waiting = false;
-                this.focuser = setTimeout(function () { return _this.continue.focus(); }, 0);
+                this.focuser = setTimeout(() => this.continue.focus(), 0);
             }
-        };
-        TutorialManager.prototype.end_tutorial = function () {
+        }
+        end_tutorial() {
             this.in_progress = '';
             this.current_step = 0;
             this.container.classList.add('hidden');
             this.waiting = false;
             clearTimeout(this.focuser);
-        };
-        return TutorialManager;
-    }());
+        }
+    }
 
     const community = function (window, document, site) {
       const tooltip_icon_rule =
@@ -7503,26 +7351,25 @@
             });
         }); });
         // initialize dataviews
-        Object.keys(this.spec.dataviews).forEach(function (k) {
-            var e = _this.spec.dataviews[k];
-            _u[k] = e;
-            e.id = k;
-            e.value = function () {
-                if (this.get) {
-                    this.reparse();
-                    return ('' +
-                        this.parsed.dataset +
-                        _u._entity_filter.entities.size +
-                        this.data.inited[this.parsed.dataset] +
-                        this.parsed.id_source +
-                        Object.keys(this.parsed.ids) +
-                        this.parsed.features +
-                        this.parsed.variables +
-                        this.spec.settings.summary_selection);
-                }
-            }.bind(e);
-            if ('string' === typeof e.palette && e.palette in _u) {
-                _this.add_dependency(e.palette, { type: 'dataview', id: k });
+        Object.keys(site.dataviews).forEach(k => {
+          const e = site.dataviews[k];
+          _u[k] = e;
+          e.id = k;
+          e.value = function () {
+            if (this.get) {
+              this.reparse();
+              return (
+                '' +
+                this.parsed.dataset +
+                _u._entity_filter.entities.size +
+                site.data.inited[this.parsed.dataset] +
+                this.parsed.id_source +
+                Object.keys(this.parsed.ids) +
+                this.parsed.features +
+                this.parsed.variables +
+                this.parsed.palette +
+                site.settings.summary_selection
+              )
             }
             if ('string' === typeof e.dataset && e.dataset in _u) {
                 _this.add_dependency(e.dataset, { type: 'dataview', id: k });
@@ -7876,13 +7723,389 @@
         ee.className = 'note';
         ee.innerText = 'Summaries are across time within each unfiltered dataset.';
         keys._u = Object.keys(_u);
-        if (this.spec.query) {
-            this.spec.parsed_query = this.data.parse_query(this.spec.query);
-            if (this.spec.parsed_query.variables.conditions.length) {
-                this.spec.parsed_query.variables.conditions.forEach(function (f) {
-                    var info = _this.data.variable_info[f.name];
-                    if (info)
-                        add_filter_condition(f.name, f);
+        if (site.query) {
+          site.parsed_query = site.data.parse_query(site.query);
+          if (site.parsed_query.variables.conditions.length) {
+            site.parsed_query.variables.conditions.forEach(f => {
+              const info = site.data.variable_info[f.name];
+              if (info) add_filter_condition(f.name, f);
+            });
+          }
+        }
+      }
+
+      function gtag() {
+        if (site.settings.tracking) window.dataLayer.push(arguments);
+      }
+
+      function valueOf(v) {
+        if (v in _u) v = _u[v];
+        if (v && v.value) v = valueOf(v.value());
+        return v
+      }
+
+      function tooltip_trigger() {
+        if (site.settings.hide_tooltips || this.id === page.tooltip.showing) return void 0
+        page.tooltip.showing = this.id;
+        page.tooltip.e.firstElementChild.innerText = this.note;
+        page.tooltip.e.classList.remove('hidden');
+        const p = this.wrapper.getBoundingClientRect(),
+          t = page.tooltip.e.getBoundingClientRect();
+        page.tooltip.e.style.left = Math.max(0, Math.min(p.x, p.x + p.width / 2 - t.width / 2)) + 'px';
+        page.tooltip.e.style.top = p.y + (p.y < t.height ? p.height + 5 : -t.height - 5) + 'px';
+      }
+
+      function tooltip_clear(e) {
+        if (
+          page.tooltip.showing &&
+          ('blur' === e.type || page.tooltip.showing !== (e.target.getAttribute('data-of') || e.target.id))
+        ) {
+          page.tooltip.showing = '';
+          page.tooltip.e.classList.add('hidden');
+        }
+      }
+
+      async function retrieve_layer(u, source, callback) {
+        const mapId = source.name ? source.name + (source.time || '') : source.url;
+        if (source.url in site.map._raw) {
+          process_layer(source, u);
+          site.map._queue[mapId].retrieved = true;
+          callback && callback();
+        } else {
+          if (site.map._queue[mapId] && 'retrieved' in site.map._queue[mapId]) {
+            if (callback) {
+              if (!site.map._queue[mapId].callbacks) site.map._queue[mapId].callbacks = [];
+              site.map._queue[mapId].callbacks.push(callback);
+            }
+          } else {
+            site.map._queue[mapId].retrieved = false;
+            const f = new window.XMLHttpRequest();
+            f.onreadystatechange = () => {
+              if (4 === f.readyState && 200 === f.status) {
+                site.map._raw[source.url] = f.responseText;
+                if (source.name) {
+                  site.map._queue[mapId].retrieved = true;
+                }
+                if (site.map._queue[mapId].callbacks) {
+                  if (callback) site.map._queue[mapId].callbacks.push(callback);
+                  site.map._queue[mapId].callbacks.forEach(f => f());
+                } else callback && callback();
+              }
+            };
+            f.open('GET', source.url, true);
+            f.send();
+          }
+        }
+      }
+
+      function process_layer(source, u) {
+        let p, id;
+        const has_time = 'time' in source,
+          layerId = source.name + (has_time ? source.time : '');
+        site.map[u.id]._layers[layerId] = L.geoJSON(JSON.parse(site.map._raw[source.url]), {
+          onEachFeature: (f, l) => {
+            l.on({
+              mouseover: elements.map.mouseover.bind(u),
+              mouseout: elements.map.mouseout.bind(u),
+              click: elements.map.click.bind(u),
+            });
+            l.setStyle({weight: 0, fillOpacity: 0});
+            l.source = source;
+            p = l.feature.properties;
+            id = p[source.id_property];
+            if (!(id in site.data.entities) && patterns.leading_zeros.test(id))
+              id = p[source.id_property] = id.replace(patterns.leading_zeros, '');
+            if (id in site.data.entities) {
+              if (!('layer' in site.data.entities[id])) site.data.entities[id].layer = {};
+            } else {
+              site.data.entities[id] = {layer: {}, features: {id: id}};
+            }
+            if (has_time) {
+              if (!(u.id in site.data.entities[id].layer)) site.data.entities[id].layer[u.id] = {has_time: true};
+              site.data.entities[id].layer[u.id][source.time] = l;
+            } else site.data.entities[id].layer[u.id] = l;
+            l.entity = site.data.entities[id];
+            if (site.data.entities[id].features)
+              Object.keys(p).forEach(f => {
+                if (!(f in site.data.entities[id].features)) {
+                  if (
+                    'name' === f.toLowerCase() &&
+                    (!('name' in site.data.entities[id].features) ||
+                      site.data.entities[id].features.id === site.data.entities[id].features.name)
+                  ) {
+                    site.data.entities[id].features[f.toLowerCase()] = p[f];
+                  } else {
+                    site.data.entities[id].features[f] = p[f];
+                  }
+                }
+              });
+          },
+        });
+        site.data.inited[layerId + u.id] = true;
+        if (site.map._waiting && site.map._waiting[source.name]) {
+          for (let i = site.map._waiting[source.name].length; i--; ) {
+            request_queue(site.map._waiting[source.name][i]);
+          }
+        }
+      }
+
+      function show_overlay(u, o, time) {
+        let i = 0,
+          source = 'string' === typeof o.source ? o.source : '';
+        if (!source && o.source) {
+          for (i = o.source.length; i--; ) {
+            if (!o.source[i].time || time === o.source[i].time) {
+              if (o.source[i].name) delete o.source[i].name;
+              source = o.source[i].url;
+              break
+            }
+          }
+        }
+        if (source) {
+          if (source in site.map._raw) {
+            if (!(source in site.map[u.id]._layers)) {
+              const s = {};
+              if (!site.map._queue[source].processed) {
+                site.map._queue[source].property_summaries = s;
+              }
+              site.map[u.id]._layers[source] = L.geoJSON(JSON.parse(site.map._raw[source]), {
+                pointToLayer: (point, coords) => L.circleMarker(coords),
+                onEachFeature: l => {
+                  const props = l.properties;
+                  if (props) {
+                    Object.keys(props).forEach(f => {
+                      const v = props[f];
+                      if ('number' === typeof v) {
+                        if (!(f in s)) s[f] = [Infinity, -Infinity];
+                        if (v < s[f][0]) s[f][0] = v;
+                        if (v > s[f][1]) s[f][1] = v;
+                      }
+                    });
+                  }
+                },
+              }).on('mouseover', l => {
+                const layer = l.layer;
+                if (layer && !layer._tooltip) {
+                  const props = layer.feature && layer.feature.properties;
+                  if (props) {
+                    const e = document.createElement('table');
+                    Object.keys(props).forEach(f => {
+                      const v = props[f],
+                        r = document.createElement('tr');
+                      r.appendChild(document.createElement('td'));
+                      r.appendChild(document.createElement('td'));
+                      r.firstElementChild.innerText = f;
+                      r.lastElementChild.innerText = v;
+                      e.appendChild(r);
+                    });
+                    layer.bindTooltip(e);
+                    layer.openTooltip();
+                  }
+                }
+              });
+              Object.keys(s).forEach(f => {
+                s[f].push(s[f][1] - s[f][0]);
+                if (!s[f][2]) delete s[f];
+              });
+              site.map._overlay_property_selectors.forEach(u => {
+                if (!(source in u.option_sets)) {
+                  fill_overlay_properties_options(u, source, u.option_sets);
+                  u.dataset = source;
+                  u.variable = '';
+                }
+              });
+            }
+            site.map._overlay_property_selectors.forEach(u => {
+              u.dataset = source;
+              conditionals.options(u);
+            });
+            u.overlay.clearLayers();
+            let n = 0;
+            const summaries = site.settings.circle_property && site.map._queue[source].property_summaries,
+              prop_summary = summaries && summaries[site.settings.circle_property];
+            site.map[u.id]._layers[source].eachLayer(l => {
+              if (o.filter) {
+                for (let i = o.filter.length; i--; ) {
+                  if (!o.filter[i].check(l.feature.properties[o.filter[i].feature], o.filter[i].value)) return
+                }
+              }
+              n++;
+              l.setRadius(
+                prop_summary
+                  ? ((l.feature.properties[site.settings.circle_property] - prop_summary[0]) / prop_summary[2] + 0.5) *
+                      site.settings.circle_radius
+                  : site.settings.circle_radius
+              ).setStyle({
+                weight: site.settings.polygon_outline,
+                color: 'white',
+                opacity: 0.5,
+                fillOpacity: 0.5,
+                fillColor: 'black',
+              });
+              l.addTo(u.overlay);
+            });
+            if (n) u.overlay_control.addTo(u.map);
+          } else return retrieve_layer(u, o.source[i], show_overlay.bind(null, u, o, time))
+        }
+      }
+      function component_fun(c) {
+        if ('string' === typeof c && patterns.number.test(c)) {
+          c = site.data.meta.overall.value.indexOf(Number(c));
+          if (-1 === c)
+            return function () {
+              return NaN
+            }
+        }
+        return 'number' === typeof c
+          ? time_funs.number.bind(c)
+          : c in time_funs
+          ? time_funs[c]
+          : function () {
+              return NaN
+            }
+      }
+      function compile_dataview(v) {
+        v.times = [];
+        if (v.time_filters) {
+          v.time_filters = [
+            {variable: defaults.time, type: '>=', value: 'filter.time_min'},
+            {variable: defaults.time, type: '<=', value: 'filter.time_max'},
+          ];
+          add_dependency(v.id + '_time', {type: 'min', id: 'filter.time_min'});
+          add_dependency(v.id + '_time', {type: 'max', id: 'filter.time_max'});
+          v.time_filters.forEach(f => {
+            if (f.value in _u) {
+              add_dependency(f.value, {type: 'time_filters', id: v.id});
+            }
+          });
+        }
+        v.selection = {ids: {}, features: {}, variables: [], dataset: {}, filtered: {}, full_filter: {}, all: {}};
+        v.n_selected = {ids: 0, features: 0, variables: 0, dataset: 0, filtered: 0, full_filter: 0, all: 0};
+        v.get = {
+          dataset: function () {
+            let d = defaults.dataset;
+            if ('string' === typeof v.dataset && v.dataset in _u) {
+              d = valueOf(_u[v.dataset].value());
+              if (!(d in site.data.data_queue)) {
+                d = defaults.dataset;
+                _u[v.dataset].set(d);
+              }
+            } else {
+              d = valueOf(v.dataset);
+            }
+            return d in site.data.data_queue ? d : defaults.dataset
+          },
+          ids: function (single) {
+            const id = valueOf('string' === typeof v.ids && v.ids in _u ? _u[v.ids].value() : v.ids);
+            if ('' !== id && -1 != id) {
+              if (single) return id
+              const ids = {},
+                e = site.data.entities[id];
+              ids[id] = true;
+              if (e && e.relations) Object.keys(e.relations.children).forEach(k => (ids[k] = true));
+              return ids
+            } else if (!single && _u._entity_filter.selected.length) {
+              return _u._entity_filter.select_ids
+            }
+            return false
+          },
+          features: function () {
+            let s = '';
+            v.features &&
+              Object.keys(v.features).forEach(k => {
+                s += k + valueOf(v.features[k]);
+              });
+            return s
+          },
+          variables: function () {
+            if (v.variables || _u._base_filter.c.size) {
+              if (!v.parsed.variable_values.size) v.reparse();
+              let s = '';
+              v.parsed.variable_values.forEach(vi => {
+                vi.filter.summary.update();
+                s += vi.name + vi.operator + vi.component + vi.value + vi.active;
+              });
+              return s
+            } else return ''
+          },
+          time_filters: function () {
+            let s = '';
+            v.time_filters &&
+              v.time_filters.forEach(f => {
+                s += f.value in _u ? valueOf(f.value) : f.value;
+              });
+            return s
+          },
+        };
+        v.ids_check = function (a, b) {
+          return !a || b in a
+        };
+        v.parsed = {
+          dataset: '',
+          ids: '',
+          features: '',
+          variables: '',
+          time_filters: '',
+          time_agg: 0,
+          id_source: '',
+          palette: '',
+          variable_values: new Map(),
+          feature_values: {},
+        };
+        v.reparse = function () {
+          this.parsed.dataset = this.get.dataset();
+          this.parsed.ids = this.get.ids();
+          this.parsed.time_filters = this.get.time_filters();
+          this.parsed.time_agg =
+            this.parsed.dataset in site.data.meta.times
+              ? valueOf(this.time_agg) - site.data.meta.times[this.parsed.dataset].range[0]
+              : 0;
+          if (
+            'string' === typeof this.ids &&
+            this.ids in _u &&
+            (('virtual' === _u[this.ids].type && _u[this.ids].source in _u) ||
+              ('depends' in _u[this.ids] && _u[this.ids].depends in _u))
+          ) {
+            this.parsed.id_source =
+              'virtual' === _u[this.ids].type ? valueOf(_u[_u[this.ids].source].dataset) : _u[_u[this.ids].depends].value();
+          }
+          if (this.palette) this.parsed.palette = valueOf(this.palette);
+          if (this.features) {
+            this.parsed.feature_values = {};
+            for (let k in this.features)
+              if (k in this.features) {
+                this.parsed.feature_values[k] = {value: valueOf(this.features[k])};
+                this.parsed.feature_values[k].operator =
+                  'string' === typeof this.parsed.feature_values[k].value ? 'equals' : 'includes';
+              }
+            this.parsed.features = this.get.features();
+          } else this.parsed.features = '';
+          this.parsed.variable_values.clear();
+          if (_u._base_filter.c.size)
+            _u._base_filter.c.forEach(f => {
+              this.parsed.variable_values.set(f.id, {
+                filter: f,
+                name: f.variable,
+                range: site.data.variables[f.variable].info[this.parsed.dataset].time_range,
+                operator: f.operator,
+                value: f.value ? Number(f.value) : NaN,
+                value_type: 'number',
+                component: f.component,
+                active: f.active,
+                comp_fun: component_fun(f.component),
+              });
+            });
+          if (this.variables || this.parsed.variable_values.size) {
+            if (this.variables)
+              this.variables.forEach(v => {
+                const value = valueOf(v.value);
+                this.parsed.variable_values.set(this.parsed.variable_values.size, {
+                  name: v.variable,
+                  operator: v.operator,
+                  value: value,
+                  component: v.component,
+                  active: true,
+                  comp_fun: component_fun(v.component),
                 });
             }
         }

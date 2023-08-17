@@ -125,6 +125,7 @@ data_add <- function(filename, meta = list(), packagename = "datapackage.json", 
     if (!all(rownames(data) == seq_len(nrow(data)))) data <- cbind(`_row` = rownames(data), data)
     timevar <- unlist(unpack_meta("time"))
     times <- if (is.null(timevar)) rep(1, nrow(data)) else data[[timevar]]
+    times_unique <- unique(times)
     if (!single_meta) {
       varinf <- unpack_meta("variables")
       if (length(varinf) == 1 && is.character(varinf[[1]])) {
@@ -181,13 +182,18 @@ data_add <- function(filename, meta = list(), packagename = "datapackage.json", 
             }
             r$info <- r$info[r$info != ""]
           }
-          r$time_range <- which(unname(tapply(v, times, function(v) any(!is.na(v))))) - 1
-          r$time_range <- if (length(r$time_range)) r$time_range[c(1, length(r$time_range))] else c(-1, -1)
+          su <- !is.na(v)
+          if (any(su)) {
+            r$time_range <- which(times_unique %in% range(times[su])) - 1
+            r$time_range <- if (length(r$time_range)) r$time_range[c(1, length(r$time_range))] else c(-1, -1)
+          } else {
+            r$time_range <- c(-1, -1)
+          }
           if (!is.character(v) && all(invalid)) {
             r$type <- "unknown"
             r$missing <- length(v)
           } else if (is.numeric(v)) {
-            r$type <- if (all(invalid | v %% 1 == 0)) "integer" else "float"
+            r$type <- if (all(invalid | as.integer(v) == v)) "integer" else "float"
             r$missing <- sum(invalid)
             r$mean <- round(mean(v, na.rm = TRUE), 6)
             r$sd <- round(sd(v, na.rm = TRUE), 6)
