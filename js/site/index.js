@@ -5370,6 +5370,7 @@ const community = function (window, document, site) {
             Object.keys(this.parsed.ids) +
             this.parsed.features +
             this.parsed.variables +
+            this.parsed.palette +
             site.settings.summary_selection
           )
         }
@@ -6068,6 +6069,7 @@ const community = function (window, document, site) {
       time_filters: '',
       time_agg: 0,
       id_source: '',
+      palette: '',
       variable_values: new Map(),
       feature_values: {},
     }
@@ -6088,6 +6090,7 @@ const community = function (window, document, site) {
         this.parsed.id_source =
           'virtual' === _u[this.ids].type ? valueOf(_u[_u[this.ids].source].dataset) : _u[_u[this.ids].depends].value()
       }
+      if (this.palette) this.parsed.palette = valueOf(this.palette)
       if (this.features) {
         this.parsed.feature_values = {}
         for (let k in this.features)

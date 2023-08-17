@@ -3,7 +3,7 @@
     factory();
 })((function () { 'use strict';
 
-    var palettes = {
+    const palettes = {
         // discrete palettes from https://colorbrewer2.org
         rdylbu7: {
             name: 'Red-Yellow-Blue (7)',
@@ -172,7 +172,7 @@
         },
     };
 
-    var patterns = {
+    const patterns = {
         seps: /[\s,/._-]+/g,
         period: /\./,
         all_periods: /\./g,
@@ -215,7 +215,7 @@
         basename: /^.*\//,
     };
 
-    var value_types = {
+    const value_types = {
         percent: function (v) {
             return v + '%';
         },
@@ -233,7 +233,7 @@
         },
     };
 
-    var defaults = {
+    const defaults = {
         time: 'time',
         dataview: 'default_view',
         palette: 'vik',
@@ -244,7 +244,7 @@
         missing: '#00000000',
     };
 
-    var summary_levels = {
+    const summary_levels = {
         dataset: 'Overall',
         filtered: 'Filtered',
         children: 'Unfiltered selection',
@@ -252,18 +252,18 @@
     };
 
     function set_description(e, info) {
-        var description = info.long_description || info.description || info.short_description || '';
-        var has_equation = patterns.has_equation.test(description);
+        const description = info.long_description || info.description || info.short_description || '';
+        let has_equation = patterns.has_equation.test(description);
         if (has_equation) {
-            var tags = description.split(patterns.bracket_content);
-            for (var i = tags.length; i--;) {
-                var t = tags[i];
+            const tags = description.split(patterns.bracket_content);
+            for (let i = tags.length; i--;) {
+                const t = tags[i];
                 if (t && '/' !== t.substring(0, 1)) {
-                    var p = t.split(patterns.space), n = p.length;
+                    const p = t.split(patterns.space), n = p.length;
                     has_equation = patterns.math_tags.test(p[0]);
                     if (!has_equation)
                         break;
-                    for (var a = 1; a < n; a++) {
+                    for (let a = 1; a < n; a++) {
                         has_equation = patterns.math_attributes.test(p[a]);
                         if (!has_equation)
                             break;
@@ -276,9 +276,8 @@
         e[has_equation ? 'innerHTML' : 'innerText'] = description;
     }
 
-    var TutorialManager = /** @class */ (function () {
-        function TutorialManager(tutorials, elements, resetter) {
-            var _this = this;
+    class TutorialManager {
+        constructor(tutorials, elements, resetter) {
             this.container = document.createElement('div');
             this.backdrop = document.createElement('div');
             this.highlight = document.createElement('div');
@@ -295,7 +294,7 @@
             this.current_time = 0;
             this.tutorials = tutorials;
             this.site_elements = elements || {};
-            this.site_reset = resetter || (function () { });
+            this.site_reset = resetter || (() => { });
             this.start_tutorial = this.start_tutorial.bind(this);
             this.progress_tutorial = this.progress_tutorial.bind(this);
             this.execute_step = this.execute_step.bind(this);
@@ -305,7 +304,7 @@
             this.menu.id = 'community_tutorials_menu';
             this.menu.className = 'modal fade';
             this.menu.tabIndex = -1;
-            var e = document.createElement('div');
+            let e = document.createElement('div');
             this.menu.appendChild(e);
             e.className = 'modal-dialog modal-dialog-scrollable';
             e.appendChild((e = document.createElement('div')));
@@ -315,20 +314,20 @@
             e.appendChild((e = document.createElement('p')));
             e.className = 'modal-title h5';
             e.innerText = 'Tutorials';
-            var close = document.createElement('button');
+            let close = document.createElement('button');
             e.insertAdjacentElement('afterend', close);
             close.type = 'button';
             close.className = 'btn-close';
             close.setAttribute('data-bs-dismiss', 'modal');
             close.setAttribute('aria-label', 'Close');
-            var l = document.createElement('div');
+            const l = document.createElement('div');
             this.menu.lastElementChild.lastElementChild.appendChild(l);
             l.className = 'modal-body';
-            Object.keys(tutorials).forEach(function (name) {
-                var t = tutorials[name], e = document.createElement('div'), description = document.createElement('div'), start = document.createElement('button');
-                t.manager = _this;
+            Object.keys(tutorials).forEach(name => {
+                const t = tutorials[name], e = document.createElement('div'), description = document.createElement('div'), start = document.createElement('button');
+                t.manager = this;
                 t.n_steps = t.steps.length;
-                var p = document.createElement('div');
+                let p = document.createElement('div');
                 l.appendChild(e);
                 e.className = 'tutorial-listing card';
                 e.appendChild(p);
@@ -340,14 +339,14 @@
                 description.appendChild(document.createElement('p'));
                 description.firstElementChild.innerText = t.description || '';
                 if (t.steps.length && t.steps[0].before && !Array.isArray(t.steps[0].before)) {
-                    var before_1 = t.steps[0].before, setting_display_1 = document.createElement('div'), header = document.createElement('span');
-                    setting_display_1.className = 'tutorial-initial-settings';
-                    setting_display_1.appendChild(header);
+                    const before = t.steps[0].before, setting_display = document.createElement('div'), header = document.createElement('span');
+                    setting_display.className = 'tutorial-initial-settings';
+                    setting_display.appendChild(header);
                     header.innerText = 'Initial Settings';
                     header.className = 'h6';
-                    Object.keys(t.steps[0].before).forEach(function (k, i) {
-                        var row = document.createElement('p');
-                        var part = document.createElement('span');
+                    Object.keys(t.steps[0].before).forEach((k, i) => {
+                        const row = document.createElement('p');
+                        let part = document.createElement('span');
                         part.className = 'syntax-variable';
                         part.innerText = k.replace(patterns.settings, '');
                         row.appendChild(part);
@@ -357,18 +356,18 @@
                         row.appendChild(part);
                         part = document.createElement('span');
                         part.className = 'syntax-value';
-                        part.innerText = before_1[k];
+                        part.innerText = before[k];
                         row.appendChild(part);
-                        setting_display_1.appendChild(row);
+                        setting_display.appendChild(row);
                     });
-                    description.appendChild(setting_display_1);
+                    description.appendChild(setting_display);
                 }
                 p.appendChild(start);
                 start.type = 'button';
                 start.className = 'btn';
                 start.innerText = 'Start';
                 start.dataset.name = name;
-                start.addEventListener('click', _this.start_tutorial);
+                start.addEventListener('click', this.start_tutorial);
             });
             // prepare step display
             document.body.appendChild(this.container);
@@ -422,16 +421,16 @@
             this.continue.innerText = 'Next';
             this.continue.setAttribute('aria-controls', 'community_tutorial_frame');
         }
-        TutorialManager.prototype.retrieve_element = function (name) {
-            var e;
+        retrieve_element(name) {
+            let e;
             if (name in this.site_elements) {
                 this.current_site_element = this.site_elements[name];
                 e = this.current_site_element.e;
             }
             else if ('nav:' === name.substring(0, 4).toLowerCase()) {
-                var text_1 = name.replace(patterns.pre_colon, '');
-                document.querySelectorAll('.nav-item button').forEach(function (item) {
-                    if (text_1 === item.innerText)
+                const text = name.replace(patterns.pre_colon, '');
+                document.querySelectorAll('.nav-item button').forEach((item) => {
+                    if (text === item.innerText)
                         e = item;
                 });
             }
@@ -442,10 +441,10 @@
                 catch (error) { }
             }
             return e;
-        };
-        TutorialManager.prototype.start_tutorial = function (event, name) {
+        }
+        start_tutorial(event, name) {
             this.end_tutorial();
-            document.querySelectorAll('[data-bs-dismiss]').forEach(function (close) { return close.click(); });
+            document.querySelectorAll('[data-bs-dismiss]').forEach((close) => close.click());
             this.in_progress = name ? name : event.target.dataset.name;
             if (!(this.in_progress in this.tutorials)) {
                 console.error('tutorial does not exist:', this.in_progress);
@@ -462,36 +461,35 @@
             if (this.tutorials[this.in_progress].reset)
                 this.site_reset();
             this.progress_tutorial();
-        };
-        TutorialManager.prototype.progress_tutorial = function (event) {
-            var _this = this;
-            var isClick = !event || !event.code;
+        }
+        progress_tutorial(event) {
+            const isClick = !event || !event.code;
             if (!isClick && 'Escape' === event.code)
                 this.end_tutorial();
             if (this.in_progress && !this.waiting && (isClick || 'Enter' === event.code || 'ArrowRight' === event.code)) {
                 this.waiting = true;
                 clearTimeout(this.focuser);
                 clearInterval(this.running_timer);
-                var t = this.tutorials[this.in_progress];
-                var step_1;
-                var handle_object = function (obj) {
-                    Object.keys(obj).forEach(function (k) {
+                const t = this.tutorials[this.in_progress];
+                let step;
+                const handle_object = (obj) => {
+                    Object.keys(obj).forEach(k => {
                         if (patterns.number.test(k)) {
-                            do_action_1(obj[k]);
+                            do_action(obj[k]);
                         }
                         else {
-                            if (k in _this.site_elements && _this.site_elements[k].set) {
-                                _this.site_elements[k].set(obj[k]);
+                            if (k in this.site_elements && this.site_elements[k].set) {
+                                this.site_elements[k].set(obj[k]);
                             }
                         }
                     });
                 };
-                var set_value_1 = function (value) {
-                    if (_this.current_site_element && _this.current_site_element.set) {
-                        _this.current_site_element.set(value);
+                const set_value = (value) => {
+                    if (this.current_site_element && this.current_site_element.set) {
+                        this.current_site_element.set(value);
                     }
                     else {
-                        var input = 'value' in _this.current_element ? _this.current_element : _this.current_element.querySelector('input');
+                        const input = 'value' in this.current_element ? this.current_element : this.current_element.querySelector('input');
                         if (input) {
                             input.value = value;
                             input.dispatchEvent(new Event('change'));
@@ -499,44 +497,44 @@
                         }
                     }
                 };
-                var do_action_1 = function (action) {
+                const do_action = (action) => {
                     action = String(action);
                     if ('set' === action) {
-                        if ('option' in step_1)
-                            set_value_1(step_1.option);
+                        if ('option' in step)
+                            set_value(step.option);
                     }
                     else if ('click' === action) {
-                        if (_this.current_site_element &&
-                            _this.current_site_element.toggle &&
-                            action === _this.current_site_element.id) {
-                            if (!_this.current_site_element.expanded)
-                                _this.current_site_element.toggle({ target: _this.current_element });
+                        if (this.current_site_element &&
+                            this.current_site_element.toggle &&
+                            action === this.current_site_element.id) {
+                            if (!this.current_site_element.expanded)
+                                this.current_site_element.toggle({ target: this.current_element });
                         }
                         else {
-                            _this.current_element && _this.current_element.click();
+                            this.current_element && this.current_element.click();
                         }
                     }
                     else if ('close' === action) {
-                        document.querySelectorAll('[data-bs-dismiss]').forEach(function (close) { return close.click(); });
+                        document.querySelectorAll('[data-bs-dismiss]').forEach((close) => close.click());
                     }
                     else if ('value' === action.substring(0, 5)) {
-                        set_value_1(action.replace(patterns.pre_colon, '').trimStart());
+                        set_value(action.replace(patterns.pre_colon, '').trimStart());
                     }
                     else {
-                        var e = _this.retrieve_element(action);
+                        const e = this.retrieve_element(action);
                         if (e)
                             e.click();
                     }
                 };
                 // handle previous step's after action
                 if (this.current_step > 0) {
-                    step_1 = t.steps[this.current_step - 1];
-                    if ('after' in step_1) {
-                        if (Array.isArray(step_1.after)) {
-                            step_1.after.forEach(do_action_1);
+                    step = t.steps[this.current_step - 1];
+                    if ('after' in step) {
+                        if (Array.isArray(step.after)) {
+                            step.after.forEach(do_action);
                         }
                         else {
-                            handle_object(step_1.after);
+                            handle_object(step.after);
                         }
                     }
                 }
@@ -546,14 +544,14 @@
                 else {
                     this.current_site_element = void 0;
                     // handle current step's before action
-                    step_1 = t.steps[this.current_step];
-                    this.current_element = this.retrieve_element(step_1.focus);
-                    if ('before' in step_1) {
-                        if (Array.isArray(step_1.before)) {
-                            step_1.before.forEach(do_action_1);
+                    step = t.steps[this.current_step];
+                    this.current_element = this.retrieve_element(step.focus);
+                    if ('before' in step) {
+                        if (Array.isArray(step.before)) {
+                            step.before.forEach(do_action);
                         }
                         else {
-                            handle_object(step_1.before);
+                            handle_object(step.before);
                         }
                     }
                     if (this.current_step === t.n_steps - 1)
@@ -561,17 +559,16 @@
                     if (this.current_element && this.current_element.scrollIntoView)
                         this.current_element.scrollIntoView();
                     // execute current step after actions have resolved
-                    setTimeout(this.execute_step, 'wait' in step_1 ? step_1.wait : 400);
+                    setTimeout(this.execute_step, 'wait' in step ? step.wait : 400);
                 }
             }
-        };
-        TutorialManager.prototype.execute_step = function () {
-            var _this = this;
+        }
+        execute_step() {
             if (this.in_progress) {
-                var t = this.tutorials[this.in_progress];
-                var step = t.steps[this.current_step];
+                const t = this.tutorials[this.in_progress];
+                const step = t.steps[this.current_step];
                 if (!this.current_element) {
-                    var e = this.retrieve_element(step.focus);
+                    const e = this.retrieve_element(step.focus);
                     if (!e) {
                         console.error('failed to retrieve element', step.focus);
                         return this.end_tutorial();
@@ -583,7 +580,7 @@
                     return;
                 }
                 this.continue.disabled = !!step.disable_continue;
-                var b = this.current_element.getBoundingClientRect(), f = this.frame.getBoundingClientRect();
+                const b = this.current_element.getBoundingClientRect(), f = this.frame.getBoundingClientRect();
                 this.highlight.style.top = b.top + 'px';
                 this.highlight.style.left = b.left + 'px';
                 this.highlight.style.width = b.width + 'px';
@@ -593,12 +590,12 @@
                 if (step.time) {
                     this.current_time = step.time;
                     this.timer.innerText = step.time + '';
-                    this.running_timer = setInterval(function () {
-                        _this.current_time--;
-                        _this.timer.innerText = _this.current_time + '';
-                        if (_this.current_time <= 0) {
-                            clearInterval(_this.running_timer);
-                            _this.progress_tutorial();
+                    this.running_timer = setInterval(() => {
+                        this.current_time--;
+                        this.timer.innerText = this.current_time + '';
+                        if (this.current_time <= 0) {
+                            clearInterval(this.running_timer);
+                            this.progress_tutorial();
                         }
                     }, 1e3);
                 }
@@ -609,18 +606,17 @@
                 this.dialog.innerText = step.description;
                 this.current_step++;
                 this.waiting = false;
-                this.focuser = setTimeout(function () { return _this.continue.focus(); }, 0);
+                this.focuser = setTimeout(() => this.continue.focus(), 0);
             }
-        };
-        TutorialManager.prototype.end_tutorial = function () {
+        }
+        end_tutorial() {
             this.in_progress = '';
             this.current_step = 0;
             this.container.classList.add('hidden');
             this.waiting = false;
             clearTimeout(this.focuser);
-        };
-        return TutorialManager;
-    }());
+        }
+    }
 
     const community = function (window, document, site) {
       const tooltip_icon_rule =
@@ -5984,6 +5980,7 @@
                 Object.keys(this.parsed.ids) +
                 this.parsed.features +
                 this.parsed.variables +
+                this.parsed.palette +
                 site.settings.summary_selection
               )
             }
@@ -6682,6 +6679,7 @@
           time_filters: '',
           time_agg: 0,
           id_source: '',
+          palette: '',
           variable_values: new Map(),
           feature_values: {},
         };
@@ -6702,6 +6700,7 @@
             this.parsed.id_source =
               'virtual' === _u[this.ids].type ? valueOf(_u[_u[this.ids].source].dataset) : _u[_u[this.ids].depends].value();
           }
+          if (this.palette) this.parsed.palette = valueOf(this.palette);
           if (this.features) {
             this.parsed.feature_values = {};
             for (let k in this.features)

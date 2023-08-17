@@ -392,6 +392,11 @@ div[class^='col-'] {
 p.compact {
   margin: 0;
 }
+fieldset.compact legend,
+fieldset.compact .form-check {
+  font-size: 0.95em;
+  margin: 0;
+}
 button.btn-danger {
   background-color: var(--warning);
 }
