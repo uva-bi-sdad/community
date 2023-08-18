@@ -1,4 +1,4 @@
-import DataHandler from '.'
+import DataHandler from './index'
 import type {Entity, EntityData, IdMap, MeasureInfo, ResourceField, ResourceFields, Variable} from '../types'
 
 export function variables(this: DataHandler) {

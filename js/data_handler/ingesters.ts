@@ -1,4 +1,4 @@
-import DataHandler from '.'
+import DataHandler from './index'
 import type {Data, EntityFeatureSet, EntityFeatures, IdMap} from '../types'
 
 export function data(this: DataHandler, d: Data, name: string) {

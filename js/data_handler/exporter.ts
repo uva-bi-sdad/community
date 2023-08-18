@@ -4,7 +4,7 @@ import {passes_filter, passes_feature_filter} from './filter_check'
 import {patterns} from './patterns'
 import * as row_writers from './row_writers'
 import type {Query, Entity, Features, Entities, RawQuery} from '../types'
-import DataHandler from '.'
+import DataHandler from './index'
 
 export async function exporter(
   this: DataHandler,
