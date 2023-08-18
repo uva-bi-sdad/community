@@ -3692,7 +3692,7 @@ const community = function (window, document, site) {
           : colors.length
         : 1,
       p = site.settings.color_by_order
-        ? rank / total
+        ? (rank + 0.5) / total
         : range
         ? ((string ? summary.level_ids[value] : value) - min) / range
         : 0.5,
