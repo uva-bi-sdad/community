@@ -5358,7 +5358,7 @@
                   palette.e.addEventListener('change', o.update);
                 }
               }
-              o.parsed = {summary: {}, order: [], selection: {}, time: 0, color: '', rank: false};
+              o.parsed = {summary: {}, order: [], selection: {}, time: 0, color: '', bins: 0, rank: false};
               o.state = '';
               o.queue = {
                 lock: false,
@@ -5490,8 +5490,9 @@
                     odd = palettes[pn].odd,
                     remake =
                       'discrete' === palettes[pn].type
-                        ? p.length !== bins.length - odd
+                        ? !bins.length || p.length !== this.parsed.bins
                         : !s.firstElementChild || 'SPAN' !== s.firstElementChild.tagName;
+                  this.parsed.bins = p.length;
                   if (pn + site.settings.color_scale_center !== this.current_palette || refresh) {
                     this.current_palette = pn + site.settings.color_scale_center;
                     this.parsed.rank = site.settings.color_by_order;
@@ -5521,7 +5522,8 @@
                           e.lastElementChild.style.backgroundColor = p[i];
                           e.lastElementChild.style.width = prop;
                         }
-                        if (odd) e.firstElementChild.style.width = ((1 / (n - odd / 2)) * 100) / 2 + '%';
+                        if (odd)
+                          e.firstElementChild.style.width = ((1 / (Math.ceil(p.length / 2) - odd / 2)) * 100) / 2 + '%';
                       } else {
                         for (; i < n; i++) {
                           bins[i].style.backgroundColor = p[i];
@@ -5974,7 +5976,7 @@
               : colors.length
             : 1,
           p = site.settings.color_by_order
-            ? rank / total
+            ? (rank + 0.5) / total
             : range
             ? ((string ? summary.level_ids[value] : value) - min) / range
             : 0.5,
