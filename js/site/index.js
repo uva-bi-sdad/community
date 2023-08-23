@@ -1530,7 +1530,6 @@ const community = function (window, document, site) {
                 const ns = parsed.summary.n,
                   display_time = ns[parsed.time] ? parsed.time : 0,
                   summary = vary.views[this.view].summaries[d],
-                  missing = parsed.summary.missing[display_time],
                   n = ns[display_time],
                   subset = n !== v.n_selected.dataset,
                   rank = subset ? 'subset_rank' : 'rank',
@@ -1563,9 +1562,7 @@ const community = function (window, document, site) {
                     k = order[i][0]
                     const e = s[k]
                     state += k
-                    traces.push(
-                      make_data_entry(this, e, e.views[this.view][rank][parsed.color][parsed.time] - missing, n)
-                    )
+                    traces.push(make_data_entry(this, e, e.views[this.view][rank][parsed.color][parsed.time], n))
                     if (lim && !--jump) break
                   }
                 }
@@ -1575,9 +1572,7 @@ const community = function (window, document, site) {
                       k = order[i][0]
                       const e = s[k]
                       state += k
-                      traces.push(
-                        make_data_entry(this, e, e.views[this.view][rank][parsed.color][parsed.time] - missing, n)
-                      )
+                      traces.push(make_data_entry(this, e, e.views[this.view][rank][parsed.color][parsed.time], n))
                       if (!--lim) break
                     }
                   }
@@ -1982,7 +1977,6 @@ const community = function (window, document, site) {
                   if (site.map[this.id]) {
                     const ls = this.displaying._layers
                     const n = summary.n[time]
-                    const missing = summary.missing[time]
                     Object.keys(ls).forEach(id => {
                       const lsi = ls[id]
                       if (d === lsi.entity.group) {
@@ -1993,7 +1987,7 @@ const community = function (window, document, site) {
                           color: 'var(--border)',
                           fillColor:
                             e && c in es
-                              ? pal(e.get_value(c, time), parsed.palette, summary, time, es[c][time] - missing, n)
+                              ? pal(e.get_value(c, time), parsed.palette, summary, time, es[c][time], n)
                               : defaults.missing,
                           weight: site.settings.polygon_outline,
                         })
