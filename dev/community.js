@@ -191,7 +191,7 @@
         minmax: /^m[inax]{2}$/,
         int_types: /^(?:year|int|integer)$/,
         end_punct: /[.?!]$/,
-        mustache: /\{(.*?)\}/g,
+        mustache: /\{([^}]+)\}/g,
         measure_name: /(?:^measure|_name)$/,
         http: /^https?:\/\//,
         bool: /^(?:true|false)$/,
@@ -206,10 +206,11 @@
         pre_colon: /^[^:]*:/,
         exclude_query: /^(?:features|time_range|id)$/,
         space: /\s+/,
-        has_equation: /<math/,
+        has_html: /<(?:math|a|br)[/\s>]/,
+        href: /\\(?:href|url)\{([^}]+)\}(?:\{([^}]+)\})?/g,
         bracket_content: /(?:^|>)[^<]*(?:<|$)/,
-        math_tags: /^(?:semantics|annotation|m|semantics)/,
-        math_attributes: /^(?:xmlns|display|style|encoding|stretchy|alttext|scriptlevel|fence|math|separator)/,
+        html_tags: /^(?:semantics|m|a|br)/,
+        html_attributes: /^(?:xmlns|display|style|encoding|stretchy|alttext|scriptlevel|fence|math|separator|href|rel|target)/,
         id_escapes: /(?<=#[^\s]+)([.[\](){}?*-])/g,
         repo: /\.com[/:]([^\/]+\/[^\/]+)/,
         basename: /^.*\//,
@@ -252,28 +253,37 @@
     };
 
     function set_description(e, info) {
-        const description = info.long_description || info.description || info.short_description || '';
-        let has_equation = patterns.has_equation.test(description);
-        if (has_equation) {
+        let description = info.long_description || info.description || info.short_description || '';
+        const subs = new Map();
+        for (let l; (l = patterns.href.exec(description));) {
+            subs.set(l[0], '<a href="' + l[1] + '" target="_blank" rel="noreferrer">' + (l.length > 2 ? l[2] : l[1]) + '</a>');
+        }
+        if (subs.size) {
+            subs.forEach((f, r) => {
+                description = description.replace(r, f);
+            });
+        }
+        let has_html = patterns.has_html.test(description);
+        if (has_html) {
             const tags = description.split(patterns.bracket_content);
             for (let i = tags.length; i--;) {
                 const t = tags[i];
                 if (t && '/' !== t.substring(0, 1)) {
                     const p = t.split(patterns.space), n = p.length;
-                    has_equation = patterns.math_tags.test(p[0]);
-                    if (!has_equation)
+                    has_html = patterns.html_tags.test(p[0]);
+                    if (!has_html)
                         break;
                     for (let a = 1; a < n; a++) {
-                        has_equation = patterns.math_attributes.test(p[a]);
-                        if (!has_equation)
+                        has_html = patterns.html_attributes.test(p[a]);
+                        if (!has_html)
                             break;
                     }
-                    if (!has_equation)
+                    if (!has_html)
                         break;
                 }
             }
         }
-        e[has_equation ? 'innerHTML' : 'innerText'] = description;
+        e[has_html ? 'innerHTML' : 'innerText'] = description;
     }
 
     class TutorialManager {
