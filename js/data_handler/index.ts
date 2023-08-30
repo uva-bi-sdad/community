@@ -28,6 +28,7 @@ import type {
   EntityFeatureSet,
   Entity,
 } from '../types'
+import {SiteDataView} from '../site/elements/dataview'
 
 export default class DataHandler {
   constructor(
@@ -184,7 +185,7 @@ export default class DataHandler {
   map_entities = mapper.entities
   parse_query = parser.query
   export = exporter
-  get_variable = async function (this: DataHandler, variable: string, view: string): Promise<Variable> {
+  get_variable = async function (this: DataHandler, variable: string, view: SiteDataView): Promise<Variable> {
     if (variable in this.variables) await this.calculate_summary(variable, view, true)
     return this.variables[variable]
   }

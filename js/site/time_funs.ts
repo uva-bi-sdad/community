@@ -1,5 +1,6 @@
-import Community from '.'
-import {DataViewParsed, VariableFilterParsed} from '../types'
+import {VariableFilterParsed} from '../types'
+import {DataViewParsed} from './elements/dataview'
+import {patterns} from './patterns'
 
 type TimeFuns = {
   number: Function
@@ -23,9 +24,9 @@ const time_funs = {
   },
 }
 
-export function component_fun(this: Community, c: string | number): Function {
-  if ('string' === typeof c && this.patterns.number.test(c)) {
-    c = this.data.meta.overall.value.indexOf(Number(c))
+export function component_fun(times: number[], c: string | number): Function {
+  if ('string' === typeof c && patterns.number.test(c)) {
+    c = times.indexOf(+c)
     if (-1 === c)
       return function () {
         return NaN

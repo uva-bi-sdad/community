@@ -1,16 +1,12 @@
-import {LogicalObject} from '../../types'
+import {LogicalObject, SiteElement, SiteSpec} from '../../types'
 import Community from '../index'
 import {patterns} from '../patterns'
 import {tooltip_clear, tooltip_trigger} from '../utils'
 
-const elements = {
-  combobox: true,
-  select: true,
-  number: true,
-}
+type types = 'number' | 'button' | 'select' | 'combobox' | 'plotly' | 'virtual'
 
 export default abstract class BaseInput {
-  type: keyof typeof elements
+  type: types
   input = true
   site: Community
   e: HTMLElement
@@ -41,9 +37,11 @@ export default abstract class BaseInput {
     this.view = e.dataset.view
     this.id = e.id || this.optionSource || 'ui' + site.page.elementCount++
     this.note = e.getAttribute('aria-description') || ''
-    this.type = e.dataset.autoType as keyof typeof elements
-    if (this.type in site.spec && this.id in site.spec[this.type])
-      this.settings = (site.spec[this.type] as any)[this.id]
+    this.type = e.dataset.autotype as types
+    if (this.type in site.spec) {
+      const spec = site.spec[this.type as keyof SiteSpec] as SiteElement
+      if (this.id in spec) this.settings = (spec as any)[this.id]
+    }
     this.wrapper = e.parentElement.classList.contains('wrapper') ? e.parentElement : e.parentElement.parentElement
     if (this.wrapper) {
       if (this.note) this.wrapper.classList.add('has-note')

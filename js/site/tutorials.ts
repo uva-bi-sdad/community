@@ -1,6 +1,5 @@
 import {patterns} from './patterns'
 import type {RegisteredElements, SiteElement} from '../types'
-import {Combobox} from './elements/combobox'
 
 type Actions = string[] | {[index: string]: string}
 type TutorialStep = {

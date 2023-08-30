@@ -2,11 +2,12 @@ import Community from './site/index'
 import {Combobox, ComboboxSpec} from './site/elements/combobox'
 import {OutputPlotly} from './site/elements/plotly'
 import {Select, SelectSpec} from './site/elements/select'
-import {TutorialManager, Tutorials} from './site/tutorials'
+import {Tutorials} from './site/tutorials'
 import {InputNumber, NumberSpec} from './site/elements/number'
 import {InputButton} from './site/elements/button'
+import {DataViewSpec, SiteDataView} from './site/elements/dataview'
 
-export type Generic = {[index: string]: string}
+export type Generic = {[index: string]: boolean | string | number}
 export type ObjectIndex = {[index: string]: number}
 
 export type UnparsedObject = {
@@ -37,27 +38,41 @@ export type UnparsedObject = {
 }
 
 export type Filter = {
-  name: string
-  component: string | number
+  name?: string
+  component?: string | number
   operator: string
   value: string | string[]
-  time_component: boolean
-  check: Function
+  time_component?: boolean
+  check?: Function
 }
 
 export type FilterParsed = {
   e: HTMLElement
   variable: string
   component: string | number
-  time_component: string
+  time_component?: string
   operator: string
-  value: number
+  value: number | string
+  value_type?: string
+  value_source?: number | string
   active: boolean
   id: string
   passed: number
   failed: number
-  info: MeasureInfo
-  view: ActiveDataview
+  info: ResourceFields
+  view: SiteDataView
+  summary?: {
+    add: {
+      Dataset: string
+      First: string
+      Last: string
+    }
+    f: FilterParsed
+    table: HTMLTableElement
+    update: () => void
+    times: number[]
+    format: (v: number, int?: boolean) => string | number
+  }
 }
 
 export type VectorSummary = {
@@ -204,15 +219,15 @@ export type VariableFilter = {
 }
 
 export type VariableFilterParsed = {
-  filter: FilterParsed
-  name: string
-  range: [number, number]
+  filter?: FilterParsed
+  name?: string
+  range?: [number, number]
   operator: string
-  value: number
-  value_type: string
-  component: string
-  active: boolean
-  comp_fun: Function
+  value: string | number
+  value_type?: string
+  component?: string | number
+  active?: boolean
+  comp_fun?: Function
 }
 
 type EntityMeta = {time: Time; variables: VariableMeta}
@@ -290,23 +305,9 @@ export type Metadata = {
   measure_info?: MeasureInfos
 }
 
-type DataviewSelection = {[index: string]: Entities}
-
-export type DataViewParsed = {
-  dataset: string
-  ids: string
-  features: string
-  variables: string
-  time_filters: string
-  time_agg: number
-  id_source: string
-  variable_values: Map<string, VariableFilterParsed>
-  feature_values: {[index: string]: Filter}
-}
-
 export type Settings = {
   settings?: Generic
-  dataviews?: {[index: string]: SiteDataView}
+  dataviews?: {[index: string]: DataViewSpec}
   view_names?: string[]
   metadata?: Metadata
   entity_info?: EntityFeatureSet | Generic
@@ -318,20 +319,20 @@ type Reference = {
 
 export type References = {[index: string]: Reference}
 
-export type RawQuery = string | {[index: string]: string | Generic}
+export type RawQuery = boolean | string | number | {[index: string]: boolean | string | number | Generic}
 
 type FileFormats = 'csv' | 'tsv'
 type TableFormats = 'tall' | 'mixed' | 'wide'
 export type Query = {
-  dataset: Filter
-  feature_conditions: Filter[]
-  variables: VariableFilter
-  time_range: [number, number]
-  file_format: FileFormats
-  table_format: TableFormats
-  features: Features
-  include: string | string[]
-  exclude: string | string[]
+  dataset?: Filter
+  feature_conditions?: Filter[]
+  variables?: VariableFilter
+  time_range?: [number, number]
+  file_format?: FileFormats
+  table_format?: TableFormats
+  features?: Features
+  include?: string | string[]
+  exclude?: string | string[]
 }
 
 export type Order = [string, number][]
@@ -388,47 +389,6 @@ export interface ActiveElement {
   site: Community
 }
 
-export interface ActiveDataview extends ActiveElement {
-  parsed: DataViewParsed
-  get: {
-    dataset: Function
-    ids: Function
-    features: Function
-    variables: Function
-    time_filters: Function
-  }
-  ids_check: Function
-  reparse: Function
-  checks: {
-    dataset: Function
-    ids: Function
-    features: Function
-    variables: Function
-  }
-  check: Function
-  time?: string
-  time_range: {
-    filtered: number[]
-    index: number[]
-    filtered_index: number[]
-    time: number[]
-    dataset: string
-    variable: string
-  }
-  times: boolean[]
-  palette: string
-  y?: string
-  x?: string
-  time_agg?: string
-  time_filters?: SiteConditions
-  ids?: string
-  features?: Generic
-  state: string
-  valid: boolean
-  selection: DataviewSelection
-  n_selected: {[index: string]: number}
-}
-
 export interface ActiveTable extends ActiveElement {
   parsed: {
     summary: {n: number}
@@ -462,7 +422,7 @@ type SiteCondition = {
   any: boolean
   check: Function
 }
-type SiteConditions = SiteCondition[]
+export type SiteConditions = SiteCondition[]
 
 type SiteRule = {
   condition: SiteConditions
@@ -485,23 +445,6 @@ type SiteVariable = {
   }[]
   default: string
   display: Generic
-}
-
-export type SiteDataView = {
-  palette: string
-  y?: string
-  x?: string
-  time_agg?: string
-  time_filters?: SiteConditions
-  dataset?: string
-  ids?: string
-  features?: Generic
-  state: string
-  valid: boolean
-  get: {[index: string]: Function}
-  selection: DataviewSelection
-  n_selected: {[index: string]: number}
-  parsed: DataViewParsed
 }
 
 type SiteInfoBody = {
@@ -604,7 +547,7 @@ export type SiteSpec = {
   aggregated: boolean
   rules?: SiteRule[]
   variables?: SiteVariable[]
-  dataviews?: {[index: string]: SiteDataView}
+  dataviews?: {[index: string]: DataViewSpec}
   info?: {[index: string]: SiteInfo}
   text?: {[index: string]: SiteText}
   combobox?: {[index: string]: ComboboxSpec}
@@ -621,69 +564,13 @@ export type SiteSpec = {
   tutorials?: Tutorials
   tag_id?: string
   number?: NumberSpec
+  active?: Community
 }
 
 export type MapInfo = {
   queue: {[index: string]: MapLayer}
   waiting: {[index: string]: string[]}
   overlay_property_selectors: SiteElement[]
-}
-
-interface Modal {
-  init: boolean
-  e: HTMLElement
-  header: HTMLElement
-}
-
-export interface FilterUI extends Modal {
-  conditions: HTMLElement
-  variable_filters: HTMLElement
-  entity_filters: HTMLElement
-  entity_inputs: {[index: string]: Combobox}
-}
-
-export interface InfoUI extends Modal {
-  body: HTMLElement
-  title: HTMLElement
-  description: HTMLElement
-  name: HTMLElement
-  sources: HTMLElement
-  references: HTMLElement
-  origin: HTMLElement
-  source_file: HTMLElement
-}
-
-export type SitePage = {
-  load_screen: HTMLElement
-  wrap: HTMLElement
-  navbar: HTMLElement
-  content: HTMLElement
-  overlay: HTMLElement
-  menus: HTMLCollection
-  panels: HTMLCollection
-  elementCount: number
-  modal: {
-    info: InfoUI
-    filter: FilterUI
-  }
-  top_menu?: HTMLElement
-  right_menu?: HTMLElement
-  bottom_menu?: HTMLElement
-  left_menu?: HTMLElement
-  tutorials?: TutorialManager
-  content_bounds: {
-    top: number
-    right: number
-    bottom: number
-    left: number
-    outer_right: number
-  }
-  resize: Function
-  script_style: HTMLStyleElement
-  tooltip: {
-    showing: string
-    e: HTMLElement
-  }
 }
 
 export type OptionSets = {

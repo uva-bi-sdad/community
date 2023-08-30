@@ -1,14 +1,5 @@
 import DataHandler from '../data_handler/index'
-import {
-  ActiveDataview,
-  Conditionals,
-  DataSets,
-  MapInfo,
-  RegisteredElements,
-  SiteElement,
-  SitePage,
-  SiteSpec,
-} from '../types'
+import {Conditionals, DataSets, MapInfo, Query, RegisteredElements, SiteElement, SiteSpec} from '../types'
 import {defaults} from './defaults'
 import BaseInput from './elements/index'
 import {GlobalView} from './global_view'
@@ -18,10 +9,11 @@ import {Subscriptions} from './subscriptions'
 import * as conditionals from './conditionals'
 import * as utils from './utils'
 import {palettes} from './palettes'
-import {init} from './initialize'
 import {Select} from './elements/select'
 import {Combobox} from './elements/combobox'
 import {InputNumber} from './elements/number'
+import {SiteDataView} from './elements/dataview'
+import {Page} from './page'
 
 type Queue = {
   timeout: NodeJS.Timer | number
@@ -46,6 +38,7 @@ const elements = {
   combobox: Combobox,
   select: Select,
   number: InputNumber,
+  virtual: InputNumber,
 }
 
 export default class Community {
@@ -53,15 +46,14 @@ export default class Community {
   storage = storage
   patterns = patterns
   palettes = palettes
-  conditionals = conditionals as Conditionals
-  init = init
+  conditionals: Conditionals
   data: DataHandler
-  page: SitePage
+  page: Page
   view: GlobalView
   subs: Subscriptions
   registered_elements: Map<string, SiteElement> = new Map()
   defaults = defaults
-  dataviews: {[index: string]: ActiveDataview} = {}
+  dataviews: {[index: string]: SiteDataView} = {}
   inputs: RegisteredElements = {}
   dependencies: {[index: string]: Dependency[]} = {}
   url_options: {[index: string]: boolean | string} = {}
@@ -77,97 +69,32 @@ export default class Community {
     lock_after: '',
   }
   state = ''
+  query = ''
+  parsed_query: Query = {}
   endpoint?: string
   constructor(spec: SiteSpec) {
-    this.spec = spec
-    this.page = {
-      load_screen: document.getElementById('load_screen'),
-      wrap: document.getElementById('site_wrap'),
-      navbar: document.querySelector('.navbar'),
-      content: document.querySelector('.content'),
-      overlay: document.createElement('div'),
-      menus: document.getElementsByClassName('menu-wrapper'),
-      panels: document.getElementsByClassName('panel'),
-      script_style: document.createElement('style'),
-      modal: {
-        info: {
-          init: false,
-          e: document.createElement('div'),
-          header: document.createElement('div'),
-          body: document.createElement('div'),
-          title: document.createElement('div'),
-          description: document.createElement('div'),
-          name: document.createElement('tr'),
-          sources: document.createElement('div'),
-          references: document.createElement('div'),
-          origin: document.createElement('div'),
-          source_file: document.createElement('div'),
-        },
-        filter: {
-          init: false,
-          e: document.createElement('div'),
-          header: document.createElement('div'),
-          conditions: document.createElement('div'),
-          variable_filters: document.createElement('div'),
-          entity_filters: document.createElement('div'),
-          entity_inputs: {},
-        },
-      },
-      tooltip: {
-        showing: '',
-        e: document.createElement('div'),
-      },
-      content_bounds: {
-        top: 0,
-        right: 0,
-        bottom: 0,
-        left: 0,
-        outer_right: 0,
-      },
-      elementCount: 0,
-      resize: function (e?: Event | boolean) {
-        const full = e && 'boolean' === typeof e,
-          f = this[full ? 'wrap' : 'content']
-        if (!full) {
-          f.style.top =
-            (this.top_menu && 'open' === this.top_menu.dataset.state
-              ? this.top_menu.getBoundingClientRect().height
-              : this.content_bounds.top +
-                ((!this.top_menu && !this.left_menu && !this.right_menu) ||
-                (this.right_menu && 'open' === this.right_menu.dataset.state) ||
-                (this.left_menu && 'open' === this.left_menu.dataset.state)
-                  ? 0
-                  : 40)) + 'px'
-          f.style.bottom =
-            this.content_bounds.bottom +
-            (!this.bottom_menu || 'closed' === this.bottom_menu.dataset.state
-              ? 0
-              : this.bottom_menu.getBoundingClientRect().height) +
-            'px'
-          f.style.left =
-            this.content_bounds.left +
-            (!this.left_menu || 'closed' === this.left_menu.dataset.state
-              ? 0
-              : this.left_menu.getBoundingClientRect().width) +
-            'px'
-        }
-        f.style.right =
-          this.content_bounds[full ? 'outer_right' : 'right'] +
-          (!this.right_menu || 'closed' === this.right_menu.dataset.state
-            ? 0
-            : this.right_menu.getBoundingClientRect().width) +
-          'px'
-      },
+    if (spec) {
+      this.spec = spec
+      spec.active = this
     }
+    this.query = window.location.search.replace('?', '')
+    const bound_conditionals: any = {}
+    Object.keys(conditionals).forEach(
+      k => (bound_conditionals[k] = conditionals[k as keyof typeof conditionals].bind(this))
+    )
+    this.conditionals = bound_conditionals
     // register input elements
     console.log('loaded')
-    document.querySelectorAll('.auto-input').forEach((e: HTMLElement) => {
-      if (e.dataset.autoType in elements) {
-        const u = new elements[e.dataset.autoType as keyof typeof elements](e, this)
-      }
-    })
+    if (this.spec.dataviews) {
+      this.defaults.dataview = Object.keys(this.spec.dataviews)[0]
+    } else {
+      this.spec.dataviews = {}
+      this.spec.dataviews[this.defaults.dataview] = {}
+    }
+    this.init = this.init.bind(this)
+    this.run_queue = this.run_queue.bind(this)
     this.data = new DataHandler(this.spec, defaults, this.data as unknown as DataSets, {
-      init: this.init,
+      init: this.init.bind(this),
       onload: () => {
         if (this.data.inited) clearTimeout(this.data.inited.load_screen as NodeJS.Timeout)
         setTimeout(this.drop_load_screen.bind(this), 600)
@@ -177,8 +104,25 @@ export default class Community {
         Object.keys(this.dependencies).forEach(this.request_queue)
       },
     })
+  }
+  init() {
     this.subs = new Subscriptions(this.inputs)
     this.view = new GlobalView(this)
+    Object.keys(this.spec.dataviews).forEach(id => new SiteDataView(this, id, this.spec.dataviews[id]))
+    new Page(this)
+    if (this.data.variables) {
+      const variable = Object.keys(this.data.variables)
+      this.defaults.variable = variable[variable.length - 1]
+    }
+    if (!this.spec.map) this.spec.map = {}
+    if (!this.spec.map._overlay_property_selectors) this.spec.map._overlay_property_selectors = []
+    document.querySelectorAll('.auto-input').forEach((e: HTMLElement) => {
+      if (e.dataset.autotype in elements) {
+        const u = new elements[e.dataset.autotype as keyof typeof elements](e, this)
+        this.registered_elements.set(u.id, u)
+        this.inputs[u.id] = u
+      }
+    })
   }
   global_update() {
     this.meta.retain_state = false
@@ -214,7 +158,7 @@ export default class Community {
     if (this.queue.timeout !== 0) clearTimeout(this.queue.timeout)
     this.queue.timeout = -1
     this.queue.elements.forEach((_, k) => {
-      const d = this.refresh_conditions(k)
+      const d = this.refresh_conditions(k) as string
       if (d) {
         if (!(k in this.data.data_queue[d])) this.data.data_queue[d][k] = this.run_queue
         return false
@@ -243,7 +187,7 @@ export default class Community {
         v = c && c.value() + ''
       if (c && (!this.meta.retain_state || c.state !== v)) {
         const view = this.dataviews[c.view],
-          dd = c.dataset ? this.valueOf(c.dataset) : view ? view.get.dataset() : v
+          dd = c.dataset ? (this.valueOf(c.dataset) as string) : view ? view.get.dataset() : v
         if (this.data.info && dd in this.data.loaded && !this.data.loaded[dd]) {
           if (!c.deferred) this.data.retrieve(dd, this.data.info[dd].site_file)
           return dd
@@ -308,7 +252,7 @@ export default class Community {
       }
     }
   }
-  valueOf(v: string | number | (string | number)[]): string | number | (string | number)[] {
+  valueOf(v: boolean | string | number | (string | number)[]): boolean | string | number | (string | number)[] {
     if ('string' === typeof v && v in this.inputs) {
       const u = this.inputs[v]
       if (u.value) v = this.valueOf(u.value())

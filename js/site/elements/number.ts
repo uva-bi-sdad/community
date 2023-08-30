@@ -71,7 +71,7 @@ export class InputNumber extends BaseInput {
     const view = this.site.dataviews[this.view],
       variable = this.site.valueOf(this.variable || view.y) as string
     // if (!view.time_range) view.time_range = {time: []}
-    let d = view.get ? view.get.dataset() : this.site.valueOf(this.dataset),
+    let d = view.get ? view.get.dataset() : (this.site.valueOf(this.dataset) as string),
       min = (this.site.valueOf(this.min) || view.time) as string | number | undefined,
       max = (this.site.valueOf(this.max) || view.time) as string | number | undefined
     if ('string' === typeof min && patterns.minmax.test(min)) min = (this.site.inputs[this.min] as InputNumber).min

@@ -8,11 +8,11 @@ declare namespace Plotly {
 
 export class OutputPlotly extends BaseInput {
   style: {[index: string]: any}
-  dark_theme: string
+  dark_theme: boolean
   options: SitePlotly
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
-    this.dark_theme = site.spec.settings.theme_dark
+    this.dark_theme = site.spec.settings.theme_dark as boolean
     this.style = this.options.layout
     if (!('font' in this.style)) this.style.font = {}
     if (!('modebar' in this.style)) this.style.modebar = {}
@@ -20,7 +20,7 @@ export class OutputPlotly extends BaseInput {
   }
   update_theme() {
     if (this.dark_theme !== this.site.spec.settings.theme_dark) {
-      this.dark_theme = this.site.spec.settings.theme_dark
+      this.dark_theme = this.site.spec.settings.theme_dark as boolean
       const s = getComputedStyle(document.body)
       this.style.paper_bgcolor = s.backgroundColor
       this.style.plot_bgcolor = s.backgroundColor

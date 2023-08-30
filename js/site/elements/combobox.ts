@@ -39,6 +39,11 @@ export class Combobox extends BaseInput {
   filter?: Function
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
+    this.set_current = this.set_current.bind(this)
+    this.set = this.set.bind(this)
+    this.resize = this.resize.bind(this)
+    this.toggle = this.toggle.bind(this)
+    this.highlight = this.highlight.bind(this)
     this.settings.use_display = this.settings.search || this.settings.multi
     this.listbox = this.e.parentElement.children[1] as HTMLElement
     this.options = [...this.listbox.querySelectorAll('.combobox-option')] as HTMLElement[]
@@ -327,8 +332,14 @@ export class Combobox extends BaseInput {
       option.setAttribute('aria-selected', 'true')
     }
   }
-  create(label: string, options: string[] | {[index: string]: string[]}, settings: Generic, id: string) {
-    id = id || 'created_combobox_' + ++this.site.page.elementCount
+  static create(
+    site: Community,
+    label: string,
+    options?: string[] | {[index: string]: string[]},
+    settings?: Generic,
+    id?: string
+  ) {
+    id = id || 'created_combobox_' + ++site.page.elementCount
     const main = document.createElement('div')
     let e = document.createElement('div'),
       div = document.createElement('div'),
@@ -336,8 +347,8 @@ export class Combobox extends BaseInput {
       button = document.createElement('button'),
       lab = document.createElement('label')
     if (settings) {
-      if (!this.site.spec.combobox) this.site.spec.combobox = {}
-      this.site.spec.combobox[id] = settings
+      if (!site.spec.combobox) site.spec.combobox = {}
+      site.spec.combobox[id] = settings
     }
     e.className = 'wrapper combobox-wrapper'
     if (settings && settings.floating) {
@@ -348,7 +359,7 @@ export class Combobox extends BaseInput {
     }
     e.appendChild(main)
     main.id = id
-    main.setAttribute('data-autoType', 'combobox')
+    main.dataset.autotype = 'combobox'
     main.className = 'auto-input form-select combobox combobox-component'
     main.role = 'combobox'
     main.appendChild((div = document.createElement('div')))
@@ -383,15 +394,15 @@ export class Combobox extends BaseInput {
     lab.id = id + '-label'
     lab.innerText = label
     lab.setAttribute('for', id + '-input')
-    const u = new Combobox(main, this.site)
-    this.site.inputs[id] = u
+    const u = new Combobox(main, site)
+    site.inputs[id] = u
     let n = 0
     const opts: HTMLElement[] = []
     u.options = opts
     if (options)
       if (Array.isArray(options)) {
         options.forEach(o => {
-          const l = this.site.data.format_label(o)
+          const l = site.data.format_label(o)
           u.display[l] = n
           u.values[o] = n++
           opts.push(u.add(o, l))

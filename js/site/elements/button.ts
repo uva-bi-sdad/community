@@ -6,6 +6,7 @@ import {Generic} from '../../types'
 export type NumberSpec = {}
 
 export class InputButton extends BaseInput {
+  type: 'button'
   e: HTMLButtonElement
   target: string
   text: string
@@ -30,7 +31,7 @@ export class InputButton extends BaseInput {
         this.settings.effects
           ? 'export' === this.target || 'copy' === this.target
             ? () => {
-                const f: {[index: string]: string | number | (string | number)[]} = {},
+                const f: {[index: string]: boolean | string | number | (string | number)[]} = {},
                   s = this.settings,
                   v = site.dataviews[s.dataview],
                   d = v && v.parsed.dataset

@@ -2,13 +2,13 @@ import DataHandler from './index'
 import {Settings} from '../types'
 import {patterns} from './patterns'
 
-export function value(this: {settings: Settings}, v: null | number, int: boolean): number | string {
+export function value(this: {settings: Settings}, v: null | number, int?: boolean): number | string {
   if (null === v || isNaN(v)) {
     return NaN
   } else if (int) {
     return v
   } else {
-    return 'string' === typeof this.settings.settings.digits
+    return 'number' !== typeof this.settings.settings.digits
       ? v
       : v.toFixed(this.settings.settings.digits > 0 ? this.settings.settings.digits : 0)
   }

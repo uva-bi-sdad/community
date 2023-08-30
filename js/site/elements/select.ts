@@ -21,6 +21,7 @@ export class Select extends BaseInput {
   deferred = false
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
+    this.set_current = this.set_current.bind(this)
     this.options = [...e.querySelectorAll('option')]
     if (this.optionSource && patterns.ids.test(this.optionSource)) {
       e.addEventListener('click', this.loader)

@@ -1,11 +1,12 @@
 import Community from './index'
 import DataHandler from '../data_handler/index'
-import {ActiveDataview, DataViewParsed, SiteMap} from '../types'
+import {SiteMap} from '../types'
 import BaseInput from './elements/index'
 import {Combobox} from './elements/combobox'
 import {InputNumber} from './elements/number'
 import {tooltip_icon_rule} from './static_refs'
 import {fill_ids_options, fill_levels_options, fill_variables_options, toggle_input} from './utils'
+import {SiteDataView} from './elements/dataview'
 
 export function setting(this: Community, u: BaseInput) {
   const current = this.spec.settings[u.setting],
@@ -110,7 +111,7 @@ export function options(this: Community, u: Combobox) {
               }
             }
           } else {
-            v = this.spec.dataviews[u.view].selection[selection]
+            v = this.dataviews[u.view].selection[selection]
           }
         }
         u.options.forEach((si: HTMLOptionElement) => {
@@ -208,7 +209,7 @@ export async function max(this: Community, u: InputNumber, c: InputNumber) {
   }
   if (u.max_indicator) (u.max_indicator.firstElementChild as HTMLElement).innerText = cv + ''
 }
-export function dataview(this: Community, f?: ActiveDataview) {
+export function dataview(this: Community, f?: SiteDataView) {
   f = f || this.dataviews[this.defaults.dataview]
   const state = f.value()
   if (state !== f.state && this.view.registered[f.parsed.dataset]) {
@@ -284,7 +285,7 @@ export function dataview(this: Community, f?: ActiveDataview) {
     }
   }
 }
-export function time_filters(this: Community, u: ActiveDataview) {
+export function time_filters(this: Community, u: SiteDataView) {
   u.time_range.filtered[0] = Infinity
   u.time_range.filtered[1] = -Infinity
   const d = u.get.dataset(),
@@ -324,14 +325,14 @@ export function time_filters(this: Community, u: ActiveDataview) {
       })
   }
 }
-export async function time_range(this: Community, u: ActiveDataview, c?: BaseInput, passive?: boolean) {
+export async function time_range(this: Community, u: SiteDataView, c?: BaseInput, passive?: boolean) {
   const v = c && (c.value() as string),
     d = u.get.dataset(),
     tv = u.time ? (this.valueOf(u.time) as string) : this.defaults.time,
     t = tv in this.data.variables ? this.data.variables[tv].info[d].min : 1,
     s = this.dependencies[u.id + '_time'],
     variable = v in this.data.variables ? v : (this.valueOf(u.y) as string)
-  let r = variable && (await this.data.get_variable(variable, u.id))
+  let r = variable && (await this.data.get_variable(variable, u))
   if (r) {
     const reset = d + variable != u.time_range.dataset + u.time_range.variable
     const range = r.time_range[d]

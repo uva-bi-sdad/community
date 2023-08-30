@@ -1,6 +1,7 @@
-import {MeasureInfo, SitePage, OptionSets, SiteElement} from '../types'
+import {MeasureInfo, OptionSets, ResourceField, SiteElement} from '../types'
 import type {Combobox} from './elements/combobox'
 import type {Select} from './elements/select'
+import type {Page} from './page'
 import {patterns} from './patterns'
 
 export function set_description(e: HTMLElement, info: MeasureInfo) {
@@ -39,11 +40,11 @@ export function toggle_input(u: Combobox | Select, enable?: boolean) {
   if (enable && !u.e.classList.contains('locked')) {
     u.e.removeAttribute('disabled')
     u.e.classList.remove('disabled')
-    // if (u instanceof Combobox) u.input_element.removeAttribute('disabled')
+    if ('combobox' === u.type) u.input_element.removeAttribute('disabled')
   } else {
     u.e.setAttribute('disabled', 'true')
     u.e.classList.add('disabled')
-    // if (u instanceof Combobox) u.input_element.setAttribute('disabled', 'true')
+    if ('combobox' === u.type) u.input_element.setAttribute('disabled', 'true')
   }
 }
 
@@ -51,7 +52,7 @@ export function trigger_resize() {
   window.dispatchEvent(new Event('resize'))
 }
 
-export function content_resize(this: SitePage, e?: Event | boolean) {
+export function content_resize(this: Page, e?: Event | boolean) {
   const full = e && 'boolean' === typeof e,
     f = this[full ? 'wrap' : 'content']
   if (!full) {
@@ -382,4 +383,40 @@ export function tooltip_clear(this: SiteElement, e: MouseEvent) {
     this.site.page.tooltip.showing = ''
     this.site.page.tooltip.e.classList.add('hidden')
   }
+}
+
+export function make_summary_table(
+  formatter: (v: number) => string | number,
+  parent: HTMLElement,
+  summary?: ResourceField,
+  additional?: {[index: string]: string}
+) {
+  parent.classList.add('info-summary-wrapper')
+  const e = document.createElement('table')
+  e.className = 'info-summary'
+  e.appendChild(document.createElement('tr'))
+  e.appendChild(document.createElement('tr'))
+  if (additional) {
+    Object.keys(additional).forEach(h => {
+      const th = document.createElement('th'),
+        td = document.createElement('td')
+      e.firstElementChild.appendChild(th)
+      th.innerText = h
+      e.lastElementChild.appendChild(td)
+      td.innerText = additional[h]
+    })
+  }
+  ;['NAs', 'Min', 'Q1', 'Mean', 'Median', 'Q3', 'Max'].forEach(h => {
+    const lower = h.toLowerCase() as keyof ResourceField
+    if (!summary || lower in summary) {
+      const th = document.createElement('th'),
+        td = document.createElement('td')
+      e.firstElementChild.appendChild(th)
+      th.innerText = h
+      e.lastElementChild.appendChild(td)
+      td.innerText = summary ? formatter(summary[lower] as number) + '' : 'NA'
+    }
+  })
+  parent.appendChild(e)
+  return e
 }
