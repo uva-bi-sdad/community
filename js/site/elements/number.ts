@@ -6,6 +6,7 @@ import {LogicalObject} from '../../types'
 export type NumberSpec = {}
 
 export class InputNumber extends BaseInput {
+  type: 'number'
   e: HTMLInputElement
   source: number
   parsed: {min: number; max: number}

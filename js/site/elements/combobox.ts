@@ -150,7 +150,7 @@ export class Combobox extends BaseInput {
                 this.set(this.hover_index)
               }
             } else if (patterns.number.test(value)) {
-              this.set(Number(value) + ('ArrowUp' === e.code ? 1 : -1))
+              this.set(+value + ('ArrowUp' === e.code ? 1 : -1))
             }
           }
         } else if (!this.expanded) {

@@ -14,6 +14,7 @@ import {Combobox} from './elements/combobox'
 import {InputNumber} from './elements/number'
 import {SiteDataView} from './elements/dataview'
 import {Page} from './page'
+import {Virtual} from './elements/virtual'
 
 type Queue = {
   timeout: NodeJS.Timer | number
@@ -91,10 +92,69 @@ export default class Community {
       this.spec.dataviews = {}
       this.spec.dataviews[this.defaults.dataview] = {}
     }
+    if (!this.spec.map) this.spec.map = {}
+    if (!this.spec.map._overlay_property_selectors) this.spec.map._overlay_property_selectors = []
+    this.view = new GlobalView(this)
+    this.page = new Page(this)
+    document.querySelectorAll('.auto-input').forEach((e: HTMLElement) => {
+      if (e.dataset.autotype in elements) {
+        const u = new elements[e.dataset.autotype as keyof typeof elements](e, this)
+        this.registered_elements.set(u.id, u)
+        this.inputs[u.id] = u
+      }
+    })
+    if (spec.variables && spec.variables.length)
+      spec.variables.forEach(v => {
+        const u = new Virtual(this)
+        this.registered_elements.set(v.id, u)
+        this.inputs[v.id] = u
+      })
+    this.defaults.dataset = this.spec.dataviews[defaults.dataview].dataset
+    const sets = this.spec.metadata.datasets
+    if (sets.length && -1 === sets.indexOf(this.defaults.dataset)) {
+      if (1 === sets.length) {
+        this.defaults.dataset = this.spec.metadata.datasets[0]
+      } else {
+        this.registered_elements.forEach(u => {
+          if (!this.defaults.dataset) {
+            const d = u.default
+            if (-1 !== sets.indexOf(u.dataset)) {
+              this.defaults.dataset = u.dataset
+            } else if ('string' === typeof d && -1 !== sets.indexOf(d)) {
+              this.defaults.dataset = d
+            } else if (
+              'select' === u.type &&
+              'number' === typeof d &&
+              u.options[d] &&
+              -1 !== sets.indexOf(u.options[d].value)
+            ) {
+              this.defaults.dataset = u.options[d].value
+            } else if (
+              ('select' === u.type || 'combobox' === u.type) &&
+              Array.isArray(u.values) &&
+              u.values[u.default] &&
+              -1 !== sets.indexOf(u.values[u.default])
+            ) {
+              this.defaults.dataset = u.values[u.default]
+            }
+          }
+        })
+        if (!this.defaults.dataset)
+          defaults.dataset = this.spec.metadata.datasets[this.spec.metadata.datasets.length - 1]
+      }
+      this.registered_elements.forEach(u => {
+        if (!u.dataset) u.dataset = defaults.dataset
+      })
+      this.spec.dataviews[defaults.dataview].dataset = defaults.dataset
+    }
     this.init = this.init.bind(this)
     this.run_queue = this.run_queue.bind(this)
+    const dataset = this.valueOf(this.spec.dataviews[defaults.dataview].dataset) as string | number
+    this.defaults.dataset = 'number' === typeof dataset ? this.spec.metadata.datasets[dataset] : dataset
+    if (-1 === this.spec.metadata.datasets.indexOf(this.defaults.dataset))
+      this.defaults.dataset = this.spec.metadata.datasets[0]
     this.data = new DataHandler(this.spec, defaults, this.data as unknown as DataSets, {
-      init: this.init.bind(this),
+      init: this.init,
       onload: () => {
         if (this.data.inited) clearTimeout(this.data.inited.load_screen as NodeJS.Timeout)
         setTimeout(this.drop_load_screen.bind(this), 600)
@@ -107,22 +167,13 @@ export default class Community {
   }
   init() {
     this.subs = new Subscriptions(this.inputs)
-    this.view = new GlobalView(this)
     Object.keys(this.spec.dataviews).forEach(id => new SiteDataView(this, id, this.spec.dataviews[id]))
-    new Page(this)
     if (this.data.variables) {
       const variable = Object.keys(this.data.variables)
       this.defaults.variable = variable[variable.length - 1]
     }
-    if (!this.spec.map) this.spec.map = {}
-    if (!this.spec.map._overlay_property_selectors) this.spec.map._overlay_property_selectors = []
-    document.querySelectorAll('.auto-input').forEach((e: HTMLElement) => {
-      if (e.dataset.autotype in elements) {
-        const u = new elements[e.dataset.autotype as keyof typeof elements](e, this)
-        this.registered_elements.set(u.id, u)
-        this.inputs[u.id] = u
-      }
-    })
+    this.view.init()
+    this.page.init()
   }
   global_update() {
     this.meta.retain_state = false

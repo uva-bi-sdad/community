@@ -1,8 +1,9 @@
-import Community from './index'
+import type Community from './index'
 import {Entities, Entity, FilterParsed, LogicalObject} from '../types'
 import {DataViewParsed} from './elements/dataview'
 
 export class GlobalView {
+  site: Community
   registered: LogicalObject = {}
   selection: Entities = {}
   entities: Map<string, Entity> = new Map()
@@ -12,8 +13,11 @@ export class GlobalView {
   times: number[]
   dataview: DataViewParsed
   constructor(site: Community) {
-    this.times = site.data.meta.overall.value
-    // this.dataview = site.dataviews[site.defaults.dataview].parsed
+    this.site = site
+  }
+  init() {
+    this.times = this.site.data.meta.overall.value
+    this.dataview = this.site.dataviews[this.site.defaults.dataview].parsed
   }
   filter_state(q: string[], agg?: number) {
     const as_state = !q

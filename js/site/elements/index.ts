@@ -3,10 +3,10 @@ import Community from '../index'
 import {patterns} from '../patterns'
 import {tooltip_clear, tooltip_trigger} from '../utils'
 
-type types = 'number' | 'button' | 'select' | 'combobox' | 'plotly' | 'virtual'
+export type ElementTypes = 'number' | 'button' | 'select' | 'combobox' | 'plotly' | 'virtual'
 
 export default abstract class BaseInput {
-  type: types
+  type: ElementTypes
   input = true
   site: Community
   e: HTMLElement
@@ -14,7 +14,7 @@ export default abstract class BaseInput {
   id: string
   settings: {[index: string]: any} = {}
   default: string | number
-  source: string | number | (string | number)[]
+  source: boolean | string | number | (string | number)[]
   optionSource: string
   depends: string | LogicalObject
   variable: string
@@ -22,7 +22,7 @@ export default abstract class BaseInput {
   view: string
   note: string
   current_index = -1
-  previous: string | number = ''
+  previous: boolean | string | number | (string | number)[] = ''
   state = ''
   setting?: string
   deferred?: boolean
@@ -37,12 +37,13 @@ export default abstract class BaseInput {
     this.view = e.dataset.view
     this.id = e.id || this.optionSource || 'ui' + site.page.elementCount++
     this.note = e.getAttribute('aria-description') || ''
-    this.type = e.dataset.autotype as types
+    this.type = e.dataset.autotype as ElementTypes
     if (this.type in site.spec) {
       const spec = site.spec[this.type as keyof SiteSpec] as SiteElement
       if (this.id in spec) this.settings = (spec as any)[this.id]
     }
-    this.wrapper = e.parentElement.classList.contains('wrapper') ? e.parentElement : e.parentElement.parentElement
+    if (e.parentElement)
+      this.wrapper = e.parentElement.classList.contains('wrapper') ? e.parentElement : e.parentElement.parentElement
     if (this.wrapper) {
       if (this.note) this.wrapper.classList.add('has-note')
       this.wrapper.setAttribute('data-of', this.id)

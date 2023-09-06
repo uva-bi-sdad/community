@@ -6,6 +6,7 @@ import {Tutorials} from './site/tutorials'
 import {InputNumber, NumberSpec} from './site/elements/number'
 import {InputButton} from './site/elements/button'
 import {DataViewSpec, SiteDataView} from './site/elements/dataview'
+import {Virtual} from './site/elements/virtual'
 
 export type Generic = {[index: string]: boolean | string | number}
 export type ObjectIndex = {[index: string]: number}
@@ -400,7 +401,7 @@ export interface ActiveTable extends ActiveElement {
   }
 }
 
-export type SiteElement = Combobox | Select | InputNumber | InputButton
+export type SiteElement = Combobox | Select | InputNumber | InputButton | Virtual
 export type RegisteredElements = {[index: string]: SiteElement}
 
 export type Conditionals = {

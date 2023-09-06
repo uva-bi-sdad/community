@@ -84,7 +84,6 @@ export class Page {
   left_menu?: HTMLElement
   tutorials?: TutorialManager
   constructor(site: Community) {
-    site.page = this
     this.site = site
     this.load_screen = document.getElementById('load_screen')
     this.wrap = document.getElementById('site_wrap')
@@ -93,11 +92,146 @@ export class Page {
     this.menus = document.querySelectorAll('menu-wrapper')
     this.panels = document.querySelectorAll('panel')
     this.resize = this.resize.bind(this)
-    this.init_entity_filter()
     this.tooltip.e.className = 'tooltip hidden'
     this.tooltip.e.appendChild(document.createElement('p'))
     document.body.appendChild(this.tooltip.e)
     document.body.addEventListener('mouseover', tooltip_clear.bind(this))
+  }
+  init() {
+    const e = this.modal.filter
+    let p = document.createElement('p'),
+      span = document.createElement('span'),
+      div = document.createElement('div'),
+      tr = document.createElement('tr')
+    e.body.className = 'filter-dialog'
+    // entity filter
+    e.body.appendChild(e.entity_filters)
+    e.entity_filters.appendChild(e.header)
+    e.header.className = 'h6'
+    e.header.innerText = 'Select Entities'
+    span.className = 'note'
+    span.innerText = '(click disabled selectors to load)'
+    e.header.appendChild(span)
+    e.entity_filters.appendChild(div)
+    div.className = 'row'
+    e.entity_inputs = {}
+    Object.keys(this.site.data.loaded)
+      .reverse()
+      .forEach(d => {
+        const u = Combobox.create(this.site, d, void 0, {search: true, multi: true, clearable: true}, 'filter.' + d)
+        e.entity_inputs[d] = u
+        e.entity_filters.lastElementChild.appendChild((div = document.createElement('div')))
+        div.className = 'col-sm'
+        div.appendChild(u.e.parentElement)
+        u.e.parentElement.classList.add('form-floating')
+        u.listbox.classList.add('multi')
+        u.option_sets = {}
+        u.dataset = d
+        u.loader = () => {
+          u.site.data.retrieve(u.dataset, u.site.data.info[u.dataset].site_file)
+          u.e.removeEventListener('click', u.loader)
+        }
+        if (!u.site.data.loaded[d]) {
+          u.e.addEventListener('click', u.loader)
+        }
+        u.onchange = () => {
+          this.site.conditionals.id_filter()
+          this.site.request_queue('_entity_filter')
+        }
+        fill_ids_options(u, d, u.option_sets, () => {
+          u.set_current()
+          toggle_input(u, !!u.options.length)
+          Object.keys(u.values).forEach(id => {
+            u.site.view.entities.set(id, u.site.data.entities[id])
+          })
+          u.site.view.registered[d] = true
+          u.set(u.id in u.site.url_options ? (u.site.url_options[u.id] as string).split(',') : -1)
+        })
+        toggle_input(u, !!u.options.length)
+      })
+
+    e.body.appendChild(e.variable_filters)
+    e.variable_filters.appendChild(p)
+    p.className = 'h6'
+    p.innerText = 'Variable Conditions'
+    // variable filter dropdown
+    e.variable_filters.appendChild((div = document.createElement('div')))
+    div.className = 'row'
+    div.appendChild((div = document.createElement('div')))
+    div.className = 'col'
+    div.appendChild((div = document.createElement('div')))
+    const filter_select = Combobox.create(
+      this.site,
+      'Add Variable Condition',
+      void 0,
+      {strict: true, search: true, clearable: true, floating: true, accordion: true, group: 'category'},
+      'filter_variable_dropdown'
+    )
+    filter_select.input = false
+    filter_select.settings.filter_table = document.querySelector('.filter-body')
+    filter_select.onchange = () => {
+      const value = filter_select.value() as string
+      if (value in this.site.data.variables) {
+        this.add_filter_condition(value)
+        this.selection.innerText = ''
+        const input = document.querySelectorAll('.filter-body .combobox-input') as NodeListOf<HTMLElement>
+        if (input && input.length) input[input.length - 1].focus()
+      }
+    }
+    filter_select.view = this.site.defaults.dataview
+    filter_select.option_sets = {}
+    filter_select.optionSource = 'variables'
+    this.site.add_dependency(this.site.defaults.dataview, {type: 'options', id: filter_select.id})
+    e.variable_filters.firstElementChild.appendChild(filter_select.e.parentElement)
+    // variable filter table
+    e.variable_filters.appendChild((div = document.createElement('div')))
+    div.className = 'hidden'
+    div.appendChild(e.conditions)
+    e.conditions.className = 'table'
+    e.conditions.appendChild(document.createElement('thead'))
+    e.conditions.lastElementChild.className = 'filter-header'
+    e.conditions.lastElementChild.appendChild(document.createElement('tbody'))
+    e.conditions.lastElementChild.className = 'filter-body'
+    e.conditions.firstElementChild.appendChild(tr)
+    ;['Variable', 'Result', 'Active', 'Component', 'Operator', 'Value', 'Remove'].forEach(h => {
+      const th = document.createElement('th')
+      tr.appendChild(th)
+      if ('Component' === h || 'Result' === h) {
+        const l =
+          'Component' === h
+            ? {
+                wrapper: document.createElement('label'),
+                id: 'filter_component_header',
+                note: 'Component refers to which single value to filter on for each entity; select a dynamic time reference, or enter a time.',
+              }
+            : {
+                wrapper: document.createElement('label'),
+                id: 'filter_result_header',
+                note: 'Passing / total entities across loaded datasets.',
+              }
+        th.appendChild(l.wrapper)
+        th.className = 'has-note'
+        l.wrapper.innerText = h
+        l.wrapper.id = l.id
+        l.wrapper.setAttribute('data-of', l.id)
+        l.wrapper.setAttribute('aria-description', l.note)
+        th.addEventListener('mouseover', tooltip_trigger.bind(l))
+      } else {
+        th.innerText = h
+      }
+    })
+    e.variable_filters.lastElementChild.appendChild((p = document.createElement('p')))
+    p.className = 'note'
+    p.innerText = 'Summaries are across time within each unfiltered dataset.'
+    if (this.site.query) {
+      this.site.parsed_query = this.site.data.parse_query(this.site.query)
+      if (this.site.parsed_query.variables.conditions.length) {
+        this.site.parsed_query.variables.conditions.forEach(f => {
+          const info = this.site.data.variable_info[f.name]
+          if (info) this.add_filter_condition(f.name, f)
+        })
+      }
+    }
   }
   resize(e?: Event | boolean) {
     const full = e && 'boolean' === typeof e,
@@ -321,141 +455,5 @@ export class Page {
     this.site.request_queue('_base_filter')
     this.site.page.modal.filter.conditions.lastElementChild.appendChild(tr)
     this.site.page.modal.filter.variable_filters.lastElementChild.classList.remove('hidden')
-  }
-  init_entity_filter() {
-    const e = this.modal.filter
-    let p = document.createElement('p'),
-      span = document.createElement('span'),
-      div = document.createElement('div'),
-      tr = document.createElement('tr')
-    e.body.className = 'filter-dialog'
-    // entity filter
-    e.body.appendChild(e.entity_filters)
-    e.entity_filters.appendChild(e.header)
-    e.header.className = 'h6'
-    e.header.innerText = 'Select Entities'
-    span.className = 'note'
-    span.innerText = '(click disabled selectors to load)'
-    e.header.appendChild(span)
-    e.entity_filters.appendChild(div)
-    div.className = 'row'
-    e.entity_inputs = {}
-    Object.keys(this.site.data.loaded)
-      .reverse()
-      .forEach(d => {
-        const u = Combobox.create(this.site, d, void 0, {search: true, multi: true, clearable: true}, 'filter.' + d)
-        e.entity_inputs[d] = u
-        e.entity_filters.lastElementChild.appendChild((div = document.createElement('div')))
-        div.className = 'col-sm'
-        div.appendChild(u.e.parentElement)
-        u.e.parentElement.classList.add('form-floating')
-        u.listbox.classList.add('multi')
-        u.option_sets = {}
-        u.dataset = d
-        u.loader = () => {
-          u.site.data.retrieve(u.dataset, u.site.data.info[u.dataset].site_file)
-          u.e.removeEventListener('click', u.loader)
-        }
-        if (!u.site.data.loaded[d]) {
-          u.e.addEventListener('click', u.loader)
-        }
-        u.onchange = () => {
-          this.site.conditionals.id_filter()
-          this.site.request_queue('_entity_filter')
-        }
-        fill_ids_options(u, d, u.option_sets, () => {
-          u.set_current()
-          toggle_input(u, !!u.options.length)
-          Object.keys(u.values).forEach(id => {
-            u.site.view.entities.set(id, u.site.data.entities[id])
-          })
-          u.site.view.registered[d] = true
-          u.set(u.id in u.site.url_options ? (u.site.url_options[u.id] as string).split(',') : -1)
-        })
-        toggle_input(u, !!u.options.length)
-      })
-
-    e.body.appendChild(e.variable_filters)
-    e.variable_filters.appendChild(p)
-    p.className = 'h6'
-    p.innerText = 'Variable Conditions'
-    // variable filter dropdown
-    e.variable_filters.appendChild((div = document.createElement('div')))
-    div.className = 'row'
-    div.appendChild((div = document.createElement('div')))
-    div.className = 'col'
-    div.appendChild((div = document.createElement('div')))
-    const filter_select = Combobox.create(
-      this.site,
-      'Add Variable Condition',
-      void 0,
-      {strict: true, search: true, clearable: true, floating: true, accordion: true, group: 'category'},
-      'filter_variable_dropdown'
-    )
-    filter_select.input = false
-    filter_select.settings.filter_table = document.querySelector('.filter-body')
-    filter_select.onchange = () => {
-      const value = filter_select.value() as string
-      if (value in this.site.data.variables) {
-        this.add_filter_condition(value)
-        this.selection.innerText = ''
-        const input = document.querySelectorAll('.filter-body .combobox-input') as NodeListOf<HTMLElement>
-        if (input && input.length) input[input.length - 1].focus()
-      }
-    }
-    filter_select.view = this.site.defaults.dataview
-    filter_select.option_sets = {}
-    filter_select.optionSource = 'variables'
-    this.site.add_dependency(this.site.defaults.dataview, {type: 'options', id: filter_select.id})
-    e.variable_filters.firstElementChild.appendChild(filter_select.e.parentElement)
-    // variable filter table
-    e.variable_filters.appendChild((div = document.createElement('div')))
-    div.className = 'hidden'
-    div.appendChild(e.conditions)
-    e.conditions.className = 'table'
-    e.conditions.appendChild(document.createElement('thead'))
-    e.conditions.lastElementChild.className = 'filter-header'
-    e.conditions.lastElementChild.appendChild(document.createElement('tbody'))
-    e.conditions.lastElementChild.className = 'filter-body'
-    e.conditions.firstElementChild.appendChild(tr)
-    ;['Variable', 'Result', 'Active', 'Component', 'Operator', 'Value', 'Remove'].forEach(h => {
-      const th = document.createElement('th')
-      tr.appendChild(th)
-      if ('Component' === h || 'Result' === h) {
-        const l =
-          'Component' === h
-            ? {
-                wrapper: document.createElement('label'),
-                id: 'filter_component_header',
-                note: 'Component refers to which single value to filter on for each entity; select a dynamic time reference, or enter a time.',
-              }
-            : {
-                wrapper: document.createElement('label'),
-                id: 'filter_result_header',
-                note: 'Passing / total entities across loaded datasets.',
-              }
-        th.appendChild(l.wrapper)
-        th.className = 'has-note'
-        l.wrapper.innerText = h
-        l.wrapper.id = l.id
-        l.wrapper.setAttribute('data-of', l.id)
-        l.wrapper.setAttribute('aria-description', l.note)
-        th.addEventListener('mouseover', tooltip_trigger.bind(l))
-      } else {
-        th.innerText = h
-      }
-    })
-    e.variable_filters.lastElementChild.appendChild((p = document.createElement('p')))
-    p.className = 'note'
-    p.innerText = 'Summaries are across time within each unfiltered dataset.'
-    if (this.site.query) {
-      this.site.parsed_query = this.site.data.parse_query(this.site.query)
-      if (this.site.parsed_query.variables.conditions.length) {
-        this.site.parsed_query.variables.conditions.forEach(f => {
-          const info = this.site.data.variable_info[f.name]
-          if (info) this.add_filter_condition(f.name, f)
-        })
-      }
-    }
   }
 }
