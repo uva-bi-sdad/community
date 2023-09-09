@@ -1,5 +1,16 @@
 import DataHandler from '../data_handler/index'
-import {Conditionals, DataSets, MapInfo, Query, RegisteredElements, SiteElement, SiteSpec} from '../types'
+import {
+  Conditionals,
+  DataSets,
+  Generic,
+  MapInfo,
+  Query,
+  RegisteredElements,
+  SiteCondition,
+  SiteElement,
+  SiteRule,
+  SiteSpec,
+} from '../types'
 import {defaults} from './defaults'
 import BaseInput from './elements/index'
 import {GlobalView} from './global_view'
@@ -25,6 +36,7 @@ type Dependency = {
   id: string
   type: 'rule' | 'update' | keyof Conditionals | keyof BaseInput
   conditional?: keyof Conditionals
+  condition?: SiteCondition
   uid?: string
   rule?: number
 }
@@ -73,19 +85,61 @@ export default class Community {
   query = ''
   parsed_query: Query = {}
   endpoint?: string
+  rule_conditions: {[index: string]: SiteRule[]} = {}
   constructor(spec: SiteSpec) {
     if (spec) {
       this.spec = spec
       spec.active = this
     }
+    if (!(window as any).dataLayer) (window as any).dataLayer = []
+    storage.copy = storage.get() as Generic
+    if (storage.copy)
+      for (const k in spec.settings) {
+        if (k in storage.copy) {
+          let c = storage.copy[k]
+          if ('string' === typeof c) {
+            if (patterns.bool.test(c)) {
+              c = !!c || 'true' === c
+            } else if (patterns.number.test(c)) c = parseFloat(c)
+          }
+          spec.settings[k] = c
+        }
+      }
+    function poly_channel(ch: number, pos: number, coefs: number[][]) {
+      const n = coefs.length
+      let v = coefs[0][ch] + pos * coefs[1][ch],
+        i = 2
+      for (; i < n; i++) {
+        v += Math.pow(pos, i) * coefs[i][ch]
+      }
+      return Math.max(0, Math.min(255, v))
+    }
+    Object.keys(palettes).forEach(k => {
+      const n = 255,
+        p = palettes[k],
+        unpacked: string[] = []
+      if ('continuous-polynomial' === p.type) {
+        const c = p.colors as number[][]
+        p.type = 'discrete'
+        for (let i = 0; i < n; i++) {
+          const v = i / n
+          unpacked.push(
+            'rgb(' + poly_channel(0, v, c) + ', ' + poly_channel(1, v, c) + ', ' + poly_channel(2, v, c) + ')'
+          )
+        }
+      }
+      p.colors = unpacked
+      p.odd = p.colors.length % 2
+    })
     this.query = window.location.search.replace('?', '')
+    this.init = this.init.bind(this)
+    this.request_queue = this.request_queue.bind(this)
+    this.run_queue = this.run_queue.bind(this)
     const bound_conditionals: any = {}
     Object.keys(conditionals).forEach(
       k => (bound_conditionals[k] = conditionals[k as keyof typeof conditionals].bind(this))
     )
     this.conditionals = bound_conditionals
-    // register input elements
-    console.log('loaded')
     if (this.spec.dataviews) {
       this.defaults.dataview = Object.keys(this.spec.dataviews)[0]
     } else {
@@ -111,59 +165,102 @@ export default class Community {
       })
     this.defaults.dataset = this.spec.dataviews[defaults.dataview].dataset
     const sets = this.spec.metadata.datasets
-    if (sets.length && -1 === sets.indexOf(this.defaults.dataset)) {
-      if (1 === sets.length) {
-        this.defaults.dataset = this.spec.metadata.datasets[0]
-      } else {
+    if (!sets || !sets.length) {
+      this.drop_load_screen()
+    } else {
+      if (sets.length && -1 === sets.indexOf(this.defaults.dataset)) {
+        this.defaults.dataset = ''
+        if (1 === sets.length) {
+          this.defaults.dataset = sets[0]
+        } else {
+          this.registered_elements.forEach(u => {
+            if (!this.defaults.dataset) {
+              const d = u.default
+              if (-1 !== sets.indexOf(u.dataset)) {
+                this.defaults.dataset = u.dataset
+              } else if ('string' === typeof d && -1 !== sets.indexOf(d)) {
+                this.defaults.dataset = d
+              } else if (
+                'select' === u.type &&
+                'number' === typeof d &&
+                u.options[d] &&
+                -1 !== sets.indexOf(u.options[d].value)
+              ) {
+                this.defaults.dataset = u.options[d].value
+              } else if (
+                ('select' === u.type || 'combobox' === u.type) &&
+                Array.isArray(u.values) &&
+                u.values[u.default] &&
+                -1 !== sets.indexOf(u.values[u.default])
+              ) {
+                this.defaults.dataset = u.values[u.default]
+              }
+            }
+          })
+          if (!this.defaults.dataset) this.defaults.dataset = sets[sets.length - 1]
+        }
         this.registered_elements.forEach(u => {
-          if (!this.defaults.dataset) {
-            const d = u.default
-            if (-1 !== sets.indexOf(u.dataset)) {
-              this.defaults.dataset = u.dataset
-            } else if ('string' === typeof d && -1 !== sets.indexOf(d)) {
-              this.defaults.dataset = d
-            } else if (
-              'select' === u.type &&
-              'number' === typeof d &&
-              u.options[d] &&
-              -1 !== sets.indexOf(u.options[d].value)
-            ) {
-              this.defaults.dataset = u.options[d].value
-            } else if (
-              ('select' === u.type || 'combobox' === u.type) &&
-              Array.isArray(u.values) &&
-              u.values[u.default] &&
-              -1 !== sets.indexOf(u.values[u.default])
-            ) {
-              this.defaults.dataset = u.values[u.default]
+          if (!u.dataset) u.dataset = this.defaults.dataset
+        })
+        this.spec.dataviews[defaults.dataview].dataset = this.defaults.dataset
+      }
+      if (spec.rules && spec.rules.length) {
+        spec.rules.forEach((r, i) => {
+          r.parsed = {}
+          if ('display' in r.effects) {
+            r.parsed.display = {e: document.getElementById(r.effects.display)}
+            const e = r.parsed.display.e.querySelector('.auto-input')
+            if (e) {
+              const u = this.inputs[e.id]
+              u.rule = r
+              r.parsed.display.u = u
             }
           }
+          if ('lock' in r.effects) {
+            const us = new Map()
+            document
+              .querySelectorAll('#' + r.parsed.lock + ' .auto-input')
+              .forEach(e => us.set(e.id, this.inputs[e.id]))
+            r.parsed.lock = us
+          }
+          r.condition.forEach(c => {
+            if (c.type in DataHandler.checks) {
+              c.check = function (this: {c: SiteCondition; site: Community}) {
+                return DataHandler.checks[this.c.type](this.site.valueOf(this.c.id), this.site.valueOf(this.c.value))
+              }.bind({c, site: this})
+              if (c.id in this.inputs) {
+                this.add_dependency(c.id, {type: 'rule', id: c.id, condition: c, rule: i})
+                if (!(c.id in this.rule_conditions)) this.rule_conditions[c.id] = []
+                this.rule_conditions[c.id][i] = r
+              }
+              if (c.check()) {
+                Object.keys(r.effects).forEach(k => {
+                  if (k in this.inputs) this.inputs[k].set(this.valueOf(r.effects[k]) as string)
+                })
+              } else if (c.default) {
+                Object.keys(r.effects).forEach(k => {
+                  if (k in this.inputs) this.inputs[k].set(this.valueOf(c.default) as string)
+                })
+              }
+            }
+          })
         })
-        if (!this.defaults.dataset)
-          defaults.dataset = this.spec.metadata.datasets[this.spec.metadata.datasets.length - 1]
       }
-      this.registered_elements.forEach(u => {
-        if (!u.dataset) u.dataset = defaults.dataset
+      const dataset = this.valueOf(this.spec.dataviews[defaults.dataview].dataset) as string | number
+      this.defaults.dataset = 'number' === typeof dataset ? sets[dataset] : dataset
+      if (-1 === sets.indexOf(this.defaults.dataset)) this.defaults.dataset = sets[0]
+      this.data = new DataHandler(this.spec, defaults, this.data as unknown as DataSets, {
+        init: this.init,
+        onload: () => {
+          if (this.data.inited) clearTimeout(this.data.inited.load_screen as NodeJS.Timeout)
+          setTimeout(this.drop_load_screen.bind(this), 600)
+          delete this.data.onload
+        },
+        data_load: () => {
+          Object.keys(this.dependencies).forEach(this.request_queue)
+        },
       })
-      this.spec.dataviews[defaults.dataview].dataset = defaults.dataset
     }
-    this.init = this.init.bind(this)
-    this.run_queue = this.run_queue.bind(this)
-    const dataset = this.valueOf(this.spec.dataviews[defaults.dataview].dataset) as string | number
-    this.defaults.dataset = 'number' === typeof dataset ? this.spec.metadata.datasets[dataset] : dataset
-    if (-1 === this.spec.metadata.datasets.indexOf(this.defaults.dataset))
-      this.defaults.dataset = this.spec.metadata.datasets[0]
-    this.data = new DataHandler(this.spec, defaults, this.data as unknown as DataSets, {
-      init: this.init,
-      onload: () => {
-        if (this.data.inited) clearTimeout(this.data.inited.load_screen as NodeJS.Timeout)
-        setTimeout(this.drop_load_screen.bind(this), 600)
-        delete this.data.onload
-      },
-      data_load: () => {
-        Object.keys(this.dependencies).forEach(this.request_queue)
-      },
-    })
   }
   init() {
     this.subs = new Subscriptions(this.inputs)

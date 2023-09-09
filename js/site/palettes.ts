@@ -1,4 +1,8 @@
-export const palettes: {[index: string]: {name: string; type: string; colors: string[] | (number[] | number[][])[]}} = {
+type SitePalette = {
+  [index: string]: {name: string; type: string; colors: string[] | (number[] | number[][])[]; odd?: number}
+}
+
+export const palettes: SitePalette = {
   // discrete palettes from https://colorbrewer2.org
   rdylbu7: {
     name: 'Red-Yellow-Blue (7)',

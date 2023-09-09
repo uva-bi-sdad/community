@@ -381,12 +381,12 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     if (stable) {
       list(
         base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.v1.min.css"),
-        base = list(type = "script", loading = "defer", src = "https://uva-bi-sdad.github.io/community/dist/js/community.v1.min.js")
+        base = list(type = "script", loading = "", src = "https://uva-bi-sdad.github.io/community/dist/js/community.v1.min.js")
       )
     } else if (version == "dev") {
       list(
         base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.min.css"),
-        base = list(type = "script", loading = "defer", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js")
+        base = list(type = "script", loading = "", src = "https://uva-bi-sdad.github.io/community/dist/js/community.min.js")
       )
     } else {
       if (version == "local") version <- "http://localhost:8000"
@@ -397,7 +397,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
       }
       list(
         base_style = list(type = "stylesheet", src = paste0(version, "/community.css")),
-        base = list(type = "script", loading = "defer", src = paste0(version, "/community.js"))
+        base = list(type = "script", loading = "", src = paste0(version, "/community.js"))
       )
     },
     c(
@@ -626,7 +626,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     paste0(
       '<script type="application/javascript">\nconst site = ',
       jsonlite::toJSON(settings, auto_unbox = TRUE),
-      "\nwindow.onload = () => new Community(site)\n</script>"
+      "\nnew Community(site)\n</script>"
     ),
     parts$script,
     "</body>",

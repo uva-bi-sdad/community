@@ -1,4 +1,4 @@
-import {LogicalObject, SiteElement, SiteSpec} from '../../types'
+import {LogicalObject, SiteElement, SiteRule, SiteSpec} from '../../types'
 import Community from '../index'
 import {patterns} from '../patterns'
 import {tooltip_clear, tooltip_trigger} from '../utils'
@@ -26,6 +26,7 @@ export default abstract class BaseInput {
   state = ''
   setting?: string
   deferred?: boolean
+  rule?: SiteRule
   constructor(e: HTMLElement, site: Community) {
     this.e = e
     this.site = site

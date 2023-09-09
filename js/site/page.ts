@@ -30,17 +30,102 @@ export interface InfoUI extends Modal {
   source_file: HTMLElement
 }
 
+type Side = 'top' | 'left' | 'bottom' | 'right'
+class PageMenu {
+  e: HTMLElement
+  wrapper: HTMLElement
+  toggler?: HTMLButtonElement
+  side: Side
+  page: Page
+  timeout: number | NodeJS.Timeout = -1
+  constructor(e: HTMLElement, page: Page) {
+    this.e = e
+    this.wrapper = e.parentElement
+    this.page = page
+    this.hide = this.hide.bind(this)
+    this.toggle = this.toggle.bind(this)
+    const has_toggler = e.lastElementChild.tagName === 'BUTTON'
+    if (has_toggler) this.toggler = e.lastElementChild as HTMLButtonElement
+    if (e.classList.contains('menu-top')) {
+      this.side = 'top'
+      page.top_menu = this
+      e.style.left = page.content_bounds.left + 'px'
+      e.style.right = page.content_bounds.right + 'px'
+      if (has_toggler) {
+        this.toggler.addEventListener('click', this.toggle)
+        this.toggler.style.top = page.content_bounds.top + 'px'
+      }
+    } else if (e.classList.contains('menu-right')) {
+      this.side = 'right'
+      page.right_menu = this
+      e.style.right = page.content_bounds.right + 'px'
+      if (has_toggler) {
+        this.toggler.addEventListener('click', this.toggle)
+        this.toggler.style.top = page.content_bounds.top + 'px'
+      }
+    } else if (e.classList.contains('menu-bottom')) {
+      this.side = 'bottom'
+      page.bottom_menu = this
+      page.content_bounds.bottom = 40
+      page.bottom_menu.e.style.left = page.content_bounds.left + 'px'
+      page.bottom_menu.e.style.right = page.content_bounds.right + 'px'
+      if (has_toggler) {
+        this.toggler.addEventListener('click', this.toggle)
+      }
+    } else if (e.classList.contains('menu-left')) {
+      this.side = 'left'
+      page.left_menu = this
+      e.style.left = page.content_bounds.left + 'px'
+      if (has_toggler) {
+        this.toggler.addEventListener('click', this.toggle)
+        this.toggler.style.top = page.content_bounds.top + 'px'
+      }
+    }
+  }
+  hide() {
+    this.timeout = -1
+    this.e.firstElementChild.classList.add('hidden')
+    this.page.resize()
+  }
+  toggle() {
+    if (this.timeout !== -1) clearTimeout(this.timeout)
+    this.timeout = -1
+    if ('closed' === this.e.dataset.state) {
+      this.e.dataset.state = 'open'
+      this.e.firstElementChild.classList.remove('hidden')
+      this.e.style[this.side] = '0px'
+      this.page.content.style[this.side] =
+        this.e.getBoundingClientRect()['left' === this.side || 'right' === this.side ? 'width' : 'height'] + 'px'
+      if ('top' === this.side || 'bottom' === this.side)
+        this.toggler.style[this.side] = this.page.content_bounds[this.side] + 'px'
+      setTimeout(this.page.trigger_resize, 300)
+    } else {
+      this.e.dataset.state = 'closed'
+      if ('left' === this.side || 'right' === this.side) {
+        this.e.style[this.side] = -this.e.getBoundingClientRect().width + 'px'
+        this.page.content.style[this.side] = this.page.content_bounds[this.side] + 'px'
+      } else {
+        const b = this.e.getBoundingClientRect()
+        this.page.content.style[this.side] = this.page.content_bounds[this.side] + ('top' === this.side ? 40 : 0) + 'px'
+        this.e.style[this.side] = -b.height + ('top' === this.side ? this.page.content_bounds.top : 0) + 'px'
+        if ('top' === this.side || 'bottom' === this.side) this.toggler.style[this.side] = b.height + 'px'
+      }
+      this.timeout = setTimeout(this.hide, 300)
+    }
+  }
+}
+
 export class Page {
   site: Community
   load_screen: HTMLElement
   wrap: HTMLElement
-  navbar: HTMLElement
+  navbar: DOMRect | {height: number}
   content: HTMLElement
-  menus: NodeListOf<HTMLElement>
+  menus: PageMenu[] = []
   panels: NodeListOf<HTMLElement>
-  overlay: HTMLElement = document.createElement('div')
-  selection: HTMLElement = document.createElement('span')
-  script_style: HTMLStyleElement = document.createElement('style')
+  overlay = document.createElement('div')
+  selection = document.createElement('span')
+  script_style = document.createElement('style')
   modal: {info: InfoUI; filter: FilterUI} = {
     info: {
       init: false,
@@ -78,24 +163,39 @@ export class Page {
     outer_right: 0,
   }
   elementCount = 0
-  top_menu?: HTMLElement
-  right_menu?: HTMLElement
-  bottom_menu?: HTMLElement
-  left_menu?: HTMLElement
+  top_menu?: PageMenu
+  right_menu?: PageMenu
+  bottom_menu?: PageMenu
+  left_menu?: PageMenu
   tutorials?: TutorialManager
   constructor(site: Community) {
     this.site = site
     this.load_screen = document.getElementById('load_screen')
     this.wrap = document.getElementById('site_wrap')
-    this.navbar = document.querySelector('.navbar')
+    const navbar = document.querySelector('.navbar')
+    this.navbar = navbar ? navbar.getBoundingClientRect() : {height: 0}
     this.content = document.querySelector('.content')
-    this.menus = document.querySelectorAll('menu-wrapper')
     this.panels = document.querySelectorAll('panel')
     this.resize = this.resize.bind(this)
+    window.addEventListener('resize', this.resize)
     this.tooltip.e.className = 'tooltip hidden'
     this.tooltip.e.appendChild(document.createElement('p'))
     document.body.appendChild(this.tooltip.e)
     document.body.addEventListener('mouseover', tooltip_clear.bind(this))
+    this.overlay.className = 'content-overlay'
+    document.body.appendChild(this.overlay)
+    document.body.className =
+      site.storage.get('theme_dark') || site.spec.settings.theme_dark ? 'dark-theme' : 'light-theme'
+    this.content_bounds.top = this.navbar.height
+    document.querySelectorAll('.menu-wrapper').forEach((m: HTMLElement) => {
+      const menu = new PageMenu(m, this)
+      this.menus.push(menu)
+      if (site.url_options.close_menus && 'open' === menu.wrapper.dataset.state) menu.toggler.click()
+    })
+    if (this.content) {
+      this.content.style.top =
+        (this.top_menu ? this.top_menu.e.getBoundingClientRect().height : this.navbar.height) + 'px'
+    }
   }
   init() {
     const e = this.modal.filter
@@ -238,32 +338,32 @@ export class Page {
       f = this[full ? 'wrap' : 'content']
     if (!full) {
       f.style.top =
-        (this.top_menu && 'open' === this.top_menu.dataset.state
-          ? this.top_menu.getBoundingClientRect().height
+        (this.top_menu && 'open' === this.top_menu.e.dataset.state
+          ? this.top_menu.e.getBoundingClientRect().height
           : this.content_bounds.top +
             ((!this.top_menu && !this.left_menu && !this.right_menu) ||
-            (this.right_menu && 'open' === this.right_menu.dataset.state) ||
-            (this.left_menu && 'open' === this.left_menu.dataset.state)
+            (this.right_menu && 'open' === this.right_menu.e.dataset.state) ||
+            (this.left_menu && 'open' === this.left_menu.e.dataset.state)
               ? 0
               : 40)) + 'px'
       f.style.bottom =
         this.content_bounds.bottom +
-        (!this.bottom_menu || 'closed' === this.bottom_menu.dataset.state
+        (!this.bottom_menu || 'closed' === this.bottom_menu.e.dataset.state
           ? 0
-          : this.bottom_menu.getBoundingClientRect().height) +
+          : this.bottom_menu.e.getBoundingClientRect().height) +
         'px'
       f.style.left =
         this.content_bounds.left +
-        (!this.left_menu || 'closed' === this.left_menu.dataset.state
+        (!this.left_menu || 'closed' === this.left_menu.e.dataset.state
           ? 0
-          : this.left_menu.getBoundingClientRect().width) +
+          : this.left_menu.e.getBoundingClientRect().width) +
         'px'
     }
     f.style.right =
       this.content_bounds[full ? 'outer_right' : 'right'] +
-      (!this.right_menu || 'closed' === this.right_menu.dataset.state
+      (!this.right_menu || 'closed' === this.right_menu.e.dataset.state
         ? 0
-        : this.right_menu.getBoundingClientRect().width) +
+        : this.right_menu.e.getBoundingClientRect().width) +
       'px'
   }
   add_filter_condition(variable: string, presets?: VariableFilterParsed | Filter) {
@@ -455,5 +555,8 @@ export class Page {
     this.site.request_queue('_base_filter')
     this.site.page.modal.filter.conditions.lastElementChild.appendChild(tr)
     this.site.page.modal.filter.variable_filters.lastElementChild.classList.remove('hidden')
+  }
+  trigger_resize() {
+    window.dispatchEvent(new Event('resize'))
   }
 }

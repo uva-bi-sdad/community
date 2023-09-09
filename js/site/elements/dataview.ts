@@ -1,5 +1,5 @@
 import DataHandler from '../../data_handler/index'
-import {Entities, Entity, Filter, Generic, SiteConditions, VariableFilterParsed} from '../../types'
+import {Entities, Entity, Filter, Generic, VariableFilterParsed} from '../../types'
 import {defaults} from '../defaults'
 import Community from '../index'
 import {component_fun} from '../time_funs'

@@ -1,7 +1,6 @@
 import {MeasureInfo, OptionSets, ResourceField, SiteElement} from '../types'
 import type {Combobox} from './elements/combobox'
 import type {Select} from './elements/select'
-import type {Page} from './page'
 import {patterns} from './patterns'
 
 export function set_description(e: HTMLElement, info: MeasureInfo) {
@@ -46,44 +45,6 @@ export function toggle_input(u: Combobox | Select, enable?: boolean) {
     u.e.classList.add('disabled')
     if ('combobox' === u.type) u.input_element.setAttribute('disabled', 'true')
   }
-}
-
-export function trigger_resize() {
-  window.dispatchEvent(new Event('resize'))
-}
-
-export function content_resize(this: Page, e?: Event | boolean) {
-  const full = e && 'boolean' === typeof e,
-    f = this[full ? 'wrap' : 'content']
-  if (!full) {
-    f.style.top =
-      (this.top_menu && 'open' === this.top_menu.dataset.state
-        ? this.top_menu.getBoundingClientRect().height
-        : this.content_bounds.top +
-          ((!this.top_menu && !this.left_menu && !this.right_menu) ||
-          (this.right_menu && 'open' === this.right_menu.dataset.state) ||
-          (this.left_menu && 'open' === this.left_menu.dataset.state)
-            ? 0
-            : 40)) + 'px'
-    f.style.bottom =
-      this.content_bounds.bottom +
-      (!this.bottom_menu || 'closed' === this.bottom_menu.dataset.state
-        ? 0
-        : this.bottom_menu.getBoundingClientRect().height) +
-      'px'
-    f.style.left =
-      this.content_bounds.left +
-      (!this.left_menu || 'closed' === this.left_menu.dataset.state
-        ? 0
-        : this.left_menu.getBoundingClientRect().width) +
-      'px'
-  }
-  f.style.right =
-    this.content_bounds[full ? 'outer_right' : 'right'] +
-    (!this.right_menu || 'closed' === this.right_menu.dataset.state
-      ? 0
-      : this.right_menu.getBoundingClientRect().width) +
-    'px'
 }
 
 export function fill_ids_options(u: Combobox | Select, d: string, out: OptionSets, onend?: Function) {

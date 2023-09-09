@@ -1,12 +1,12 @@
 import DataHandler from '../../data_handler/index'
-import {SiteConditions} from '../../types'
+import {SiteCondition} from '../../types'
 import Community from '../index'
 import BaseInput from './index'
 
 export class Virtual extends BaseInput {
   type: 'virtual'
   states: {
-    condition: SiteConditions
+    condition: SiteCondition[]
     value: string | number
   }[] = []
   source: string | number

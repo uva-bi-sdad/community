@@ -416,23 +416,23 @@ export type Conditionals = {
   id_filter: Function
 }
 
-type SiteCondition = {
+export type SiteCondition = {
   id: string
   type: string
   value: string
   any: boolean
   check: Function
+  default?: string
 }
-export type SiteConditions = SiteCondition[]
 
-type SiteRule = {
-  condition: SiteConditions
+export type SiteRule = {
+  condition: SiteCondition[]
   effects: {[index: string]: string}
   parsed: {
     lock?: Map<string, SiteElement>
-    display: {
+    display?: {
       e: HTMLElement
-      u: ActiveElement
+      u?: ActiveElement
     }
   }
   default?: string
@@ -441,7 +441,7 @@ type SiteRule = {
 type SiteVariable = {
   id: string
   states: {
-    condition: SiteConditions
+    condition: SiteCondition[]
     value: string
   }[]
   default: string
@@ -471,7 +471,7 @@ type SiteInfo = {
 type SiteText = {
   text: {
     text: string | string[]
-    condition?: SiteConditions
+    condition?: SiteCondition[]
     button?: {
       [index: string]: {
         text: string[]
@@ -480,7 +480,7 @@ type SiteText = {
       }
     }
   }[]
-  condition?: SiteConditions
+  condition?: SiteCondition[]
 }
 
 type SiteButton = {

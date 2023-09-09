@@ -90,7 +90,9 @@ head_import <- function(d, dir = ".") {
           ' onload="this.onload=null;this.rel=\'stylesheet\'"'
         )
       },
-      if (d$type == "script") c(" ", if (!is.null(d$loading)) d$loading else "async"), ">", if (d$type == "script") "</script>"
+      if (d$type == "script") if (is.null(d$loading)) " async" else{
+        if (d$loading == "") "" else c(" ", d$loading)
+      }, ">", if (d$type == "script") "</script>"
     ), collapse = "")
   }
 }
