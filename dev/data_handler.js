@@ -382,12 +382,16 @@
                 vars.forEach(vi => {
                     const tr = this.meta.ranges[vi], yn = Math.min(query.time_range[1], tr[1]) + 1;
                     for (let y = Math.max(query.time_range[0], tr[0]); y < yn; y++) {
-                        rows[0] += sep + vi + '_' + this.meta.overall.value[y];
+                        rows[0] += sep + '"' + vi + '_' + this.meta.overall.value[y] + '"';
                     }
                 });
             }
             else
-                rows[0] += sep + 'time' + sep + ('mixed' === query.table_format ? vars : ['variable', 'value']).join(sep);
+                rows[0] +=
+                    sep +
+                        'time' +
+                        sep +
+                        ('mixed' === query.table_format ? vars.map(n => '"' + n + '"') : ['variable', 'value']).join(sep);
             let first_entity = '';
             Object.keys(entities).forEach(k => {
                 const e = entities[k];
