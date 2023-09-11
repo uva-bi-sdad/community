@@ -54,7 +54,7 @@ describe('when exporting data...', function () {
       'attachment; filename=export_2010-2011_2-variables_8x5.csv'
     )
     expect(res.body).toStrictEqual(
-      'ID,Name,time,variable_name1,variable_name2\n' +
+      'ID,Name,time,"variable_name1","variable_name2"\n' +
         '"id1a","id1a",2010,1,NA\n' +
         '"id1a","id1a",2011,2,5\n' +
         '"id2a","id2a",2010,2,NA\n' +
@@ -67,7 +67,7 @@ describe('when exporting data...', function () {
   })
   test('variable selection works', async function () {
     const target =
-        'ID,Name,time,variable_name1\n' +
+        'ID,Name,time,"variable_name1"\n' +
         '"id1a","id1a",2010,1\n' +
         '"id1a","id1a",2011,2\n' +
         '"id2a","id2a",2010,2\n' +
@@ -103,7 +103,7 @@ describe('when exporting data...', function () {
   test('variable filtering works', async function () {
     const res = await data.export('variable_name2[mean]>=40')
     expect(res.body).toEqual(
-      'ID,Name,time,variable_name1,variable_name2\n' +
+      'ID,Name,time,"variable_name1","variable_name2"\n' +
         '"id1b","id1b",2010,10,NA\n' +
         '"id1b","id1b",2011,20,50\n' +
         '"id2b","id2b",2010,20,NA\n' +
@@ -113,7 +113,7 @@ describe('when exporting data...', function () {
   test('variable filtering with a time component works ', async function () {
     const res = await data.export('variable_name2[2011]<10')
     expect(res.body).toEqual(
-      'ID,Name,time,variable_name1,variable_name2\n' +
+      'ID,Name,time,"variable_name1","variable_name2"\n' +
         '"id1a","id1a",2010,1,NA\n' +
         '"id1a","id1a",2011,2,5\n' +
         '"id2a","id2a",2010,2,NA\n' +
@@ -123,7 +123,7 @@ describe('when exporting data...', function () {
   test('dataset filtering works', async function () {
     const res = await data.export('dataset=b')
     expect(res.body).toEqual(
-      'ID,Name,time,variable_name1,variable_name2\n' +
+      'ID,Name,time,"variable_name1","variable_name2"\n' +
         '"id1b","id1b",2010,10,NA\n' +
         '"id1b","id1b",2011,20,50\n' +
         '"id2b","id2b",2010,20,NA\n' +
@@ -133,7 +133,7 @@ describe('when exporting data...', function () {
   test('feature filtering works', async function () {
     const res = await data.export('id=id1b,id2b')
     expect(res.body).toEqual(
-      'ID,Name,time,variable_name1,variable_name2\n' +
+      'ID,Name,time,"variable_name1","variable_name2"\n' +
         '"id1b","id1b",2010,10,NA\n' +
         '"id1b","id1b",2011,20,50\n' +
         '"id2b","id2b",2010,20,NA\n' +
@@ -153,7 +153,7 @@ describe('when exporting data...', function () {
   test('time filtering with mixed format works', async function () {
     var res = await data.export('time_range=2010')
     expect(res.body).toEqual(
-      'ID,Name,time,variable_name1,variable_name2\n' +
+      'ID,Name,time,"variable_name1","variable_name2"\n' +
         '"id1a","id1a",2010,1,NA\n' +
         '"id2a","id2a",2010,2,NA\n' +
         '"id1b","id1b",2010,10,NA\n' +
@@ -163,7 +163,7 @@ describe('when exporting data...', function () {
   test('time filtering with wide format works', async function () {
     var res = await data.export('table_format=wide&time_range=2011')
     expect(res.body).toEqual(
-      'ID,Name,variable_name1_2011,variable_name2_2011\n' +
+      'ID,Name,"variable_name1_2011","variable_name2_2011"\n' +
         '"id1a","id1a",2,5\n' +
         '"id2a","id2a",3,4\n' +
         '"id1b","id1b",20,50\n' +

@@ -335,14 +335,24 @@
                 body: 'Invalid Request',
             }, inc = query.include && query.include.length
                 ? 'string' === typeof query.include
-                    ? query.include.split(',')
+                    ? query.include in this.variables
+                        ? [query.include]
+                        : query.include.split(',')
                     : query.include
                 : Object.keys(this.variables), exc = query.exclude || [], vars = [], feats = query.features || JSON.parse(JSON.stringify(defaults.features)), rows = [], range = [Infinity, -Infinity], sep = 'csv' === query.file_format ? ',' : '\t', rw = row_writers[query.table_format].bind(this), no_filter = !query.variables.filter_by.length, no_feature_filter = !query.feature_conditions.length, in_group = !('dataset' in query)
                 ? () => true
                 : group_checks[query.dataset.operator].bind(query.dataset.value);
-            inc.forEach((ii) => {
+            let malformed = '';
+            inc.forEach(ii => {
                 if (ii in this.features && !(ii in feats)) {
                     feats[ii] = this.format_label(ii);
+                }
+                else if (!(ii in this.variables)) {
+                    malformed += ii + ',';
+                    if (malformed in this.variables) {
+                        inc.push(malformed);
+                        malformed = '';
+                    }
                 }
             });
             for (const k in export_checks)
@@ -353,7 +363,7 @@
                         return res;
                     }
                 }
-            Object.keys(this.variable_codes).forEach((k) => {
+            Object.keys(this.variable_codes).forEach(k => {
                 if (-1 !== inc.indexOf(this.variable_codes[k].name) && -1 === exc.indexOf(this.variable_codes[k].name)) {
                     vars.push(this.variable_codes[k].name);
                     const tr = this.meta.ranges[this.variable_codes[k].name];
@@ -369,17 +379,21 @@
                 query.time_range[1] = range[1];
             rows.push(Object.keys(feats).join(sep));
             if ('wide' === query.table_format) {
-                vars.forEach((vi) => {
+                vars.forEach(vi => {
                     const tr = this.meta.ranges[vi], yn = Math.min(query.time_range[1], tr[1]) + 1;
                     for (let y = Math.max(query.time_range[0], tr[0]); y < yn; y++) {
-                        rows[0] += sep + vi + '_' + this.meta.overall.value[y];
+                        rows[0] += sep + '"' + vi + '_' + this.meta.overall.value[y] + '"';
                     }
                 });
             }
             else
-                rows[0] += sep + 'time' + sep + ('mixed' === query.table_format ? vars : ['variable', 'value']).join(sep);
+                rows[0] +=
+                    sep +
+                        'time' +
+                        sep +
+                        ('mixed' === query.table_format ? vars.map(n => '"' + n + '"') : ['variable', 'value']).join(sep);
             let first_entity = '';
-            Object.keys(entities).forEach((k) => {
+            Object.keys(entities).forEach(k => {
                 const e = entities[k];
                 if (in_group(e.group) &&
                     (no_feature_filter || passes_feature_filter(entities, k, query.feature_conditions)) &&
@@ -1293,7 +1307,7 @@
                         name: k.replace(patterns.greater, '>').replace(patterns.less, '<'),
                         component: 'mean',
                         operator: '=',
-                        value: patterns.number.test(q[k]) ? Number(q[k]) : q[k],
+                        value: patterns.number.test(q[k]) ? +q[k] : q[k],
                         time_component: false,
                         check: () => false,
                     };
@@ -1312,7 +1326,7 @@
                             tf.name = aq[1];
                         }
                         else if (patterns.number.test(aq[2])) {
-                            const time = Number(aq[2]);
+                            const time = +aq[2];
                             const i = time > 0 && time < this.meta.overall.value.length ? time : this.meta.overall.value.indexOf(time);
                             if (-1 !== i) {
                                 tf.time_component = true;
@@ -1339,12 +1353,12 @@
                     if ('time_range' === tf.name) {
                         if (Array.isArray(tf.value)) {
                             f.time_range = [
-                                this.meta.overall.value.indexOf(Number(tf.value[0])),
-                                this.meta.overall.value.indexOf(Number(tf.value[1])),
+                                this.meta.overall.value.indexOf(+tf.value[0]),
+                                this.meta.overall.value.indexOf(+tf.value[1]),
                             ];
                         }
                         else {
-                            const i = this.meta.overall.value.indexOf(Number(tf.value));
+                            const i = this.meta.overall.value.indexOf(+tf.value);
                             f.time_range =
                                 '=' === tf.operator ? [i, i] : '>' === tf.operator ? [i, this.meta.overall.value.length - 1] : [0, i];
                         }
@@ -1358,7 +1372,7 @@
                     }
                     else if (tf.name in this.features) {
                         if ('id' === tf.name && !tf.value)
-                            tf.value = String(tf.value).split(',');
+                            tf.value = (tf.value + '').split(',');
                         tf.check = group_checks[tf.operator].bind(tf.value);
                         f.feature_conditions.push(tf);
                     }

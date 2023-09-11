@@ -114,7 +114,7 @@ export function query(this: DataHandler, q: any): Query {
             name: k.replace(patterns.greater, '>').replace(patterns.less, '<'),
             component: 'mean',
             operator: '=',
-            value: patterns.number.test(q[k]) ? Number(q[k]) : q[k],
+            value: patterns.number.test(q[k]) ? +q[k] : q[k],
             time_component: false,
             check: () => false,
           }
@@ -129,7 +129,7 @@ export function query(this: DataHandler, q: any): Query {
             tf.component = aq[2]
             tf.name = aq[1]
           } else if (patterns.number.test(aq[2])) {
-            const time = Number(aq[2])
+            const time = +aq[2]
             const i = time > 0 && time < this.meta.overall.value.length ? time : this.meta.overall.value.indexOf(time)
             if (-1 !== i) {
               tf.time_component = true
@@ -155,11 +155,11 @@ export function query(this: DataHandler, q: any): Query {
         if ('time_range' === tf.name) {
           if (Array.isArray(tf.value)) {
             f.time_range = [
-              this.meta.overall.value.indexOf(Number(tf.value[0])),
-              this.meta.overall.value.indexOf(Number(tf.value[1])),
+              this.meta.overall.value.indexOf(+tf.value[0]),
+              this.meta.overall.value.indexOf(+tf.value[1]),
             ]
           } else {
-            const i = this.meta.overall.value.indexOf(Number(tf.value))
+            const i = this.meta.overall.value.indexOf(+tf.value)
             f.time_range =
               '=' === tf.operator ? [i, i] : '>' === tf.operator ? [i, this.meta.overall.value.length - 1] : [0, i]
           }
@@ -169,7 +169,7 @@ export function query(this: DataHandler, q: any): Query {
         } else if ('dataset' === tf.name) {
           f.dataset = tf
         } else if (tf.name in this.features) {
-          if ('id' === tf.name && !tf.value) tf.value = String(tf.value).split(',')
+          if ('id' === tf.name && !tf.value) tf.value = (tf.value + '').split(',')
           tf.check = group_checks[tf.operator].bind(tf.value)
           f.feature_conditions.push(tf)
         } else if (tf.name in this.variables) {

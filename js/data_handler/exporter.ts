@@ -26,7 +26,9 @@ export async function exporter(
     inc: string[] =
       query.include && query.include.length
         ? 'string' === typeof query.include
-          ? query.include.split(',')
+          ? query.include in this.variables
+            ? [query.include]
+            : query.include.split(',')
           : query.include
         : Object.keys(this.variables),
     exc = query.exclude || [],
@@ -41,9 +43,16 @@ export async function exporter(
     in_group: Function = !('dataset' in query)
       ? () => true
       : group_checks[query.dataset.operator].bind(query.dataset.value)
-  inc.forEach((ii: string) => {
+  let malformed = ''
+  inc.forEach(ii => {
     if (ii in this.features && !(ii in feats)) {
       feats[ii] = this.format_label(ii)
+    } else if (!(ii in this.variables)) {
+      malformed += ii + ','
+      if (malformed in this.variables) {
+        inc.push(malformed)
+        malformed = ''
+      }
     }
   })
   for (const k in export_checks)
@@ -54,7 +63,7 @@ export async function exporter(
         return res
       }
     }
-  Object.keys(this.variable_codes).forEach((k: string) => {
+  Object.keys(this.variable_codes).forEach(k => {
     if (-1 !== inc.indexOf(this.variable_codes[k].name) && -1 === exc.indexOf(this.variable_codes[k].name)) {
       vars.push(this.variable_codes[k].name)
       const tr: [number, number] = this.meta.ranges[this.variable_codes[k].name]
@@ -66,16 +75,21 @@ export async function exporter(
   if (query.time_range[1] > range[1]) query.time_range[1] = range[1]
   rows.push(Object.keys(feats).join(sep))
   if ('wide' === query.table_format) {
-    vars.forEach((vi: string) => {
+    vars.forEach(vi => {
       const tr: [number, number] = this.meta.ranges[vi],
         yn = Math.min(query.time_range[1], tr[1]) + 1
       for (let y = Math.max(query.time_range[0], tr[0]); y < yn; y++) {
-        rows[0] += sep + vi + '_' + this.meta.overall.value[y]
+        rows[0] += sep + '"' + vi + '_' + this.meta.overall.value[y] + '"'
       }
     })
-  } else rows[0] += sep + 'time' + sep + ('mixed' === query.table_format ? vars : ['variable', 'value']).join(sep)
+  } else
+    rows[0] +=
+      sep +
+      'time' +
+      sep +
+      ('mixed' === query.table_format ? vars.map(n => '"' + n + '"') : ['variable', 'value']).join(sep)
   let first_entity = ''
-  Object.keys(entities).forEach((k: string) => {
+  Object.keys(entities).forEach(k => {
     const e: Entity = entities[k]
     if (
       in_group(e.group) &&
