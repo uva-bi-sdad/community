@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">57.93% </span>
+                <span class="strong">57.04% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>84/145</span>
+                <span class='fraction'>81/142</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">18.51% </span>
+                <span class="strong">18.86% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>10/54</span>
+                <span class='fraction'>10/53</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">31.57% </span>
+                <span class="strong">27.77% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>6/19</span>
+                <span class='fraction'>5/18</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">63.28% </span>
+                <span class="strong">62.69% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>81/128</span>
+                <span class='fraction'>79/126</span>
             </div>
         
             
@@ -297,7 +297,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -466,7 +466,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">'use strict'
 import {value_checks} from './checks'
 import {exporter} from './exporter'
@@ -524,7 +524,7 @@ export default class DataHandler {
 <span class="cstat-no" title="statement not covered" >        this.metadata.datasets.forEach(<span class="fstat-no" title="function not covered" >(d</span>: string) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >          <span class="missing-if-branch" title="if path not taken" >I</span>if (info._references) <span class="cstat-no" title="statement not covered" >this.info[d]._references = info._references</span></span>
           const v = <span class="cstat-no" title="statement not covered" >this.info[d].schema.fields</span>
-<span class="cstat-no" title="statement not covered" >          v.forEach(<span class="fstat-no" title="function not covered" >e </span>=&gt; <span class="cstat-no" title="statement not covered" >(e.name in info ? (e.info = info[e.name] as MeasureInfo) : ''))</span></span>
+<span class="cstat-no" title="statement not covered" >          v.forEach(<span class="fstat-no" title="function not covered" >e </span>=&gt; (<span class="cstat-no" title="statement not covered" >e.name in info ? (e.info = info[e.name] as MeasureInfo) : '')</span>)</span>
         })
       }
       this.map_variables()
@@ -555,24 +555,24 @@ export default class DataHandler {
 <span class="cstat-no" title="statement not covered" >            r.on('data', <span class="fstat-no" title="function not covered" >(d</span>: string) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >              c.push(d)</span>
             })
-<span class="cstat-no" title="statement not covered" >            r.on('end', <span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >            r.on('end', <span class="fstat-no" title="function not covered" >() =</span>&gt; {</span>
 <span class="cstat-no" title="statement not covered" >              this.info = {}</span>
               const dp: DataPackage = <span class="cstat-no" title="statement not covered" >JSON.parse(c.join(''))</span>
 <span class="cstat-no" title="statement not covered" >              <span class="missing-if-branch" title="if path not taken" >I</span>if (dp.measure_info) <span class="cstat-no" title="statement not covered" >this.metadata.measure_info = dp.measure_info</span></span>
-<span class="cstat-no" title="statement not covered" >              dp.resources.forEach(<span class="fstat-no" title="function not covered" >(r</span>: DataResource) =&gt; <span class="cstat-no" title="statement not covered" >(this.info[r.name] = r))</span></span>
+<span class="cstat-no" title="statement not covered" >              dp.resources.forEach(<span class="fstat-no" title="function not covered" >(r</span>: DataResource) =&gt; (<span class="cstat-no" title="statement not covered" >this.info[r.name] = r)</span>)</span>
 <span class="cstat-no" title="statement not covered" >              init()</span>
             })
           })
           .end()
       } else {
         const f = <span class="cstat-no" title="statement not covered" >new window.XMLHttpRequest()</span>
-<span class="cstat-no" title="statement not covered" >        f.onreadystatechange = <span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >        f.onreadystatechange = <span class="fstat-no" title="function not covered" >() =</span>&gt; {</span>
 <span class="cstat-no" title="statement not covered" >          <span class="missing-if-branch" title="if path not taken" >I</span>if (4 === f.readyState) {</span>
 <span class="cstat-no" title="statement not covered" >            if (200 === f.status) {</span>
 <span class="cstat-no" title="statement not covered" >              this.info = {}</span>
               const dp = <span class="cstat-no" title="statement not covered" >JSON.parse(f.responseText)</span>
 <span class="cstat-no" title="statement not covered" >              <span class="missing-if-branch" title="if path not taken" >I</span>if (dp.measure_info) <span class="cstat-no" title="statement not covered" >this.metadata.measure_info = dp.measure_info</span></span>
-<span class="cstat-no" title="statement not covered" >              dp.resources.forEach(<span class="fstat-no" title="function not covered" >(r</span>: DataResource) =&gt; <span class="cstat-no" title="statement not covered" >(this.info[r.name] = r))</span></span>
+<span class="cstat-no" title="statement not covered" >              dp.resources.forEach(<span class="fstat-no" title="function not covered" >(r</span>: DataResource) =&gt; (<span class="cstat-no" title="statement not covered" >this.info[r.name] = r)</span>)</span>
 <span class="cstat-no" title="statement not covered" >              init()</span>
             } else {
 <span class="cstat-no" title="statement not covered" >              throw new Error('failed to load datapackage: ' + f.responseText)</span>
@@ -594,7 +594,7 @@ export default class DataHandler {
   info: {[index: string]: DataResource} = {}
   sets: DataSets = {}
   dynamic_load = false
-  all_data_ready: Function = <span class="fstat-no" title="function not covered" >() =&gt; <span class="cstat-no" title="statement not covered" >f</span>alse</span>
+  all_data_ready: Function = <span class="fstat-no" title="function not covered" >() =</span>&gt; <span class="cstat-no" title="statement not covered" >false</span>
   data_ready: Promise&lt;void&gt; = new Promise(resolve =&gt; {
     this.all_data_ready = resolve
   })
@@ -627,8 +627,8 @@ export default class DataHandler {
   retrieve = <span class="fstat-no" title="function not covered" >async function (this: DataHandler, n</span>ame: string, url: string) {
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!this.load_requests[name]) {</span>
 <span class="cstat-no" title="statement not covered" >      this.load_requests[name] = url</span>
-      const <span class="cstat-no" title="statement not covered" >f = new window.XMLHttpRequest()</span>
-<span class="cstat-no" title="statement not covered" >      f.onreadystatechange = <span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+      const f = <span class="cstat-no" title="statement not covered" >new window.XMLHttpRequest()</span>
+<span class="cstat-no" title="statement not covered" >      f.onreadystatechange = <span class="fstat-no" title="function not covered" >() =</span>&gt; {</span>
 <span class="cstat-no" title="statement not covered" >        <span class="missing-if-branch" title="if path not taken" >I</span>if (4 === f.readyState) {</span>
 <span class="cstat-no" title="statement not covered" >          if (200 === f.status) {</span>
 <span class="cstat-no" title="statement not covered" >            this.ingest_data(JSON.parse(f.responseText), name)</span>
@@ -653,8 +653,8 @@ export default class DataHandler {
   parse_query = parser.query
   export = exporter
   get_variable = <span class="fstat-no" title="function not covered" >async function (this: DataHandler, v</span>ariable: string, view: string): Promise&lt;Variable&gt; {
-    if (<span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="if path not taken" >I</span>variable </span>in this.variables) <span class="cstat-no" title="statement not covered" >await this.calculate_summary(variable, view, true)</span>
-<span class="cstat-no" title="statement not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >    return this.variables[variable]</span></span>
+<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (variable in this.variables) <span class="cstat-no" title="statement not covered" >await this.calculate_summary(variable, view, true)</span></span>
+<span class="cstat-no" title="statement not covered" >    return this.variables[variable]</span>
   }
   get_value = function <span class="fstat-no" title="function not covered" >vector(</span>this: DataHandler, r: {variable: string; entity: Entity}): number[] {
 <span class="cstat-no" title="statement not covered" >    if (this.variables[r.variable].is_time) {</span>
@@ -676,7 +676,7 @@ export default class DataHandler {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-07-06T19:20:56.807Z
+                at 2023-09-11T21:36:32.024Z
             </div>
         <script src="../prettify.js"></script>
         <script>
