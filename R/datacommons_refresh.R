@@ -44,8 +44,9 @@ datacommons_refresh <- function(dir, clone_method = "http", include_distribution
   }
   dir <- normalizePath(dir, "/", FALSE)
   commons <- jsonlite::read_json(paste0(dir, "/commons.json"))
-  repos <- sort(unlist(Filter(length, commons$repositories)))
-  if (!length(repos)) repos <- readLines(paste0(dir, "/scripts/repos.txt"))
+  repos <- sort(unique(unlist(Filter(length, c(
+    commons$repositories, readLines(paste0(dir, "/scripts/repos.txt"))
+  )))))
   if (!length(repos)) cli_abort("no repositories are listed in {.file commons.json}.")
   repos <- gsub("^[\"']+|['\"]+$|^.*github\\.com/", "", repos)
   su <- !grepl("/", repos, fixed = TRUE)
