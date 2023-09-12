@@ -17,6 +17,7 @@ export interface FilterUI extends Modal {
   variable_filters: HTMLElement
   entity_filters: HTMLElement
   entity_inputs: {[index: string]: Combobox}
+  time_range: HTMLElement
 }
 
 export interface InfoUI extends Modal {
@@ -24,6 +25,7 @@ export interface InfoUI extends Modal {
   title: HTMLElement
   description: HTMLElement
   name: HTMLElement
+  type: HTMLElement
   sources: HTMLElement
   references: HTMLElement
   origin: HTMLElement
@@ -135,6 +137,7 @@ export class Page {
       title: document.createElement('div'),
       description: document.createElement('div'),
       name: document.createElement('tr'),
+      type: document.createElement('tr'),
       sources: document.createElement('div'),
       references: document.createElement('div'),
       origin: document.createElement('div'),
@@ -143,12 +146,13 @@ export class Page {
     filter: {
       init: false,
       e: document.createElement('div'),
-      header: document.createElement('p'),
+      header: document.createElement('div'),
       body: document.createElement('div'),
       conditions: document.createElement('div'),
       variable_filters: document.createElement('div'),
       entity_filters: document.createElement('div'),
       entity_inputs: {},
+      time_range: document.createElement('div'),
     },
   }
   tooltip = {
@@ -175,7 +179,8 @@ export class Page {
     const navbar = document.querySelector('.navbar')
     this.navbar = navbar ? navbar.getBoundingClientRect() : {height: 0}
     this.content = document.querySelector('.content')
-    this.panels = document.querySelectorAll('panel')
+    this.panels = document.querySelectorAll('.panel')
+    this.init_panel = this.init_panel.bind(this)
     this.resize = this.resize.bind(this)
     window.addEventListener('resize', this.resize)
     this.tooltip.e.className = 'tooltip hidden'
@@ -187,32 +192,200 @@ export class Page {
     document.body.className =
       site.storage.get('theme_dark') || site.spec.settings.theme_dark ? 'dark-theme' : 'light-theme'
     this.content_bounds.top = this.navbar.height
+  }
+  init() {
+    this.panels.length && this.panels.forEach(this.init_panel)
     document.querySelectorAll('.menu-wrapper').forEach((m: HTMLElement) => {
       const menu = new PageMenu(m, this)
       this.menus.push(menu)
-      if (site.url_options.close_menus && 'open' === menu.wrapper.dataset.state) menu.toggler.click()
+      if (this.site.url_options.close_menus && 'open' === menu.wrapper.dataset.state) menu.toggler.click()
     })
     if (this.content) {
       this.content.style.top =
         (this.top_menu ? this.top_menu.e.getBoundingClientRect().height : this.navbar.height) + 'px'
     }
+    this.init_variable_info()
+    this.init_filter()
   }
-  init() {
-    const e = this.modal.filter
-    let p = document.createElement('p'),
-      span = document.createElement('span'),
+  init_panel(p: HTMLElement) {
+    const side = p.classList.contains('panel-left') ? 'left' : 'right'
+    this.content_bounds[side] = p.getBoundingClientRect().width
+    p.style.marginTop = this.content_bounds.top + 'px'
+    p.lastElementChild.addEventListener('click', () => {
+      const w = p.getBoundingClientRect().width,
+        bw = p.lastElementChild.getBoundingClientRect().width
+      if ('true' === p.lastElementChild.getAttribute('aria-expanded')) {
+        this.content_bounds[side] = bw
+        if (this.top_menu) this.top_menu.e.style[side] = bw + 'px'
+        if (this.bottom_menu) this.bottom_menu.e.style[side] = bw + 'px'
+        p.style[side] = -w + bw + 'px'
+        p.lastElementChild.setAttribute('aria-expanded', 'false')
+      } else {
+        this.content_bounds[side] = w
+        if (this.top_menu) this.top_menu.e.style[side] = w + 'px'
+        if (this.bottom_menu) this.bottom_menu.e.style[side] = w + 'px'
+        p.style[side] = '0px'
+        p.lastElementChild.setAttribute('aria-expanded', 'true')
+      }
+      this.resize()
+      setTimeout(this.trigger_resize, 200)
+    })
+  }
+  init_variable_info() {
+    const e = this.modal.info,
+      button = document.createElement('button'),
+      a = document.createElement('a')
+    let th = document.createElement('th'),
+      p = document.createElement('p'),
       div = document.createElement('div'),
+      ul = document.createElement('ul')
+    document.body.appendChild(e.e)
+    this.modal.info.init = true
+    e.e.id = 'variable_info_display'
+    e.e.className = 'modal fade'
+    e.e.setAttribute('tabindex', '-1')
+    e.e.setAttribute('aria-labelledby', 'variable_info_title')
+    e.e.setAttribute('aria-hidden', 'true')
+    e.e.appendChild(div)
+    div.className = 'modal-dialog modal-dialog-scrollable'
+    div.appendChild((div = document.createElement('div')))
+    div.className = 'modal-content'
+    div.appendChild(e.header)
+    e.header.className = 'modal-header'
+    e.header.appendChild(document.createElement('p'))
+    e.header.firstElementChild.className = 'h5 modal-title'
+    e.header.firstElementChild.id = 'variable_info_title'
+    e.header.appendChild(button)
+    button.type = 'button'
+    button.className = 'btn-close'
+    button.setAttribute('data-bs-dismiss', 'modal')
+    button.title = 'close'
+    e.header.insertAdjacentElement('afterend', e.body)
+    e.body.className = 'modal-body'
+    e.body.appendChild((e.title = document.createElement('p')))
+    e.title.className = 'h4'
+    e.body.appendChild((e.description = document.createElement('p')))
+
+    e.body.appendChild(document.createElement('table'))
+    e.body.lastElementChild.className = 'info-feature-table'
+
+    e.body.lastElementChild.appendChild((e.name = document.createElement('tr')))
+    e.name.appendChild(th)
+    th.innerText = 'Name'
+    e.name.appendChild(document.createElement('td'))
+
+    e.body.lastElementChild.appendChild((e.type = document.createElement('tr')))
+    e.type.appendChild((th = document.createElement('th')))
+    th.innerText = 'Type'
+    e.type.appendChild(document.createElement('td'))
+
+    e.body.appendChild(e.sources)
+    e.sources.appendChild(p)
+    p.innerText = 'Sources'
+    p.className = 'h3'
+    e.sources.appendChild((div = document.createElement('div')))
+    div.className = 'sources-cards'
+
+    e.body.appendChild(e.references)
+    e.references.appendChild((p = document.createElement('p')))
+    p.className = 'h3'
+    p.innerText = 'References'
+    e.references.appendChild(ul)
+    ul.className = 'reference-list'
+
+    e.body.appendChild(e.origin)
+    e.origin.appendChild((p = document.createElement('p')))
+    p.className = 'h3'
+    p.innerText = 'Origin'
+    e.origin.appendChild((ul = document.createElement('ul')))
+    ul.className = 'origin-list'
+
+    e.body.appendChild(e.source_file)
+    e.source_file.className = 'info-source-file'
+    e.source_file.appendChild(a)
+    a.innerText = 'source'
+    a.target = '_blank'
+    a.rel = 'noreferrer'
+  }
+  init_filter() {
+    // set up filter's time range
+    const e = this.modal.filter,
+      button = document.createElement('button')
+    let p = document.createElement('p'),
+      div = document.createElement('div'),
+      input = document.createElement('input'),
+      label = document.createElement('label'),
+      span = document.createElement('span'),
       tr = document.createElement('tr')
-    e.body.className = 'filter-dialog'
+    document.body.appendChild(e.e)
+    this.modal.filter.init = true
+    e.e.id = 'filter_display'
+    e.e.className = 'modal fade'
+    e.e.setAttribute('aria-labelledby', 'filter_title')
+    e.e.setAttribute('aria-hidden', 'true')
+    e.e.appendChild(div)
+    div.className = 'modal-dialog'
+    div.appendChild((div = document.createElement('div')))
+    div.className = 'modal-content'
+    div.appendChild(e.header)
+
+    e.header.className = 'modal-header'
+    e.header.appendChild(p)
+    p.className = 'h5 modal-title'
+    p.id = 'filter_title'
+    p.innerText = 'Filter'
+    e.header.appendChild(button)
+    button.type = 'button'
+    button.className = 'btn-close'
+    button.setAttribute('data-bs-dismiss', 'modal')
+    button.title = 'close'
+    e.header.insertAdjacentElement('afterend', e.body)
+    e.body.className = 'modal-body filter-dialog'
+    e.body.appendChild((p = document.createElement('p')))
+    p.className = 'h6'
+    p.innerText = 'Time Range'
+
+    e.body.appendChild(e.time_range)
+    e.time_range.className = 'row'
+
+    e.time_range.appendChild((div = document.createElement('div')))
+    div.className = 'col'
+    div.appendChild((div = document.createElement('div')))
+    div.className = 'form-floating text-wrapper wrapper'
+    div.appendChild(input)
+    input.className = 'form-control auto-input'
+    input.setAttribute('data-autoType', 'number')
+    input.setAttribute('data-default', 'min')
+    input.max = 'filter.time_max'
+    input.type = 'number'
+    input.id = 'filter.time_min'
+    input.appendChild(label)
+    label.innerText = 'First Time'
+    label.setAttribute('for', 'filter.time_min')
+    e.time_range.appendChild((div = document.createElement('div')))
+    div.className = 'col'
+    div.appendChild((div = document.createElement('div')))
+    div.className = 'form-floating text-wrapper wrapper'
+    div.appendChild((input = document.createElement('input')))
+    input.className = 'form-control auto-input'
+    input.setAttribute('data-autoType', 'number')
+    input.setAttribute('data-default', 'max')
+    input.min = 'filter.time_min'
+    input.type = 'number'
+    input.id = 'filter.time_max'
+    div.appendChild((label = document.createElement('label')))
+    label.innerText = 'Last Time'
+    label.setAttribute('for', 'filter.time_max')
+
     // entity filter
     e.body.appendChild(e.entity_filters)
-    e.entity_filters.appendChild(e.header)
-    e.header.className = 'h6'
-    e.header.innerText = 'Select Entities'
+    e.entity_filters.appendChild((p = document.createElement('p')))
+    p.className = 'h6'
+    p.innerText = 'Select Entities'
     span.className = 'note'
     span.innerText = '(click disabled selectors to load)'
-    e.header.appendChild(span)
-    e.entity_filters.appendChild(div)
+    p.appendChild(span)
+    e.entity_filters.appendChild((div = document.createElement('div')))
     div.className = 'row'
     e.entity_inputs = {}
     Object.keys(this.site.data.loaded)
@@ -251,7 +424,7 @@ export class Page {
       })
 
     e.body.appendChild(e.variable_filters)
-    e.variable_filters.appendChild(p)
+    e.variable_filters.appendChild((p = document.createElement('p')))
     p.className = 'h6'
     p.innerText = 'Variable Conditions'
     // variable filter dropdown

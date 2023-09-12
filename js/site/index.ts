@@ -26,6 +26,7 @@ import {InputNumber} from './elements/number'
 import {SiteDataView} from './elements/dataview'
 import {Page} from './page'
 import {Virtual} from './elements/virtual'
+import {InputButton} from './elements/button'
 
 type Queue = {
   timeout: NodeJS.Timer | number
@@ -48,6 +49,7 @@ type Tree = {
 }
 
 const elements = {
+  button: InputButton,
   combobox: Combobox,
   select: Select,
   number: InputNumber,
