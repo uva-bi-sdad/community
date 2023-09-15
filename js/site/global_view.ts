@@ -12,6 +12,10 @@ export class GlobalView {
   filters: Map<string, FilterParsed> = new Map()
   times: number[]
   dataview: DataViewParsed
+  states = {
+    id_state: '',
+    filter_state: '',
+  }
   constructor(site: Community) {
     this.site = site
   }
@@ -19,7 +23,7 @@ export class GlobalView {
     this.times = this.site.data.meta.overall.value
     this.dataview = this.site.dataviews[this.site.defaults.dataview].parsed
   }
-  filter_state(q: string[], agg?: number) {
+  filter_state(q?: string[], agg?: number) {
     const as_state = !q
     if (as_state) q = []
     this.filters.forEach(f => {
@@ -35,5 +39,34 @@ export class GlobalView {
   }
   id_state() {
     return Object.keys(this.select_ids).join(',')
+  }
+  id_filter() {
+    const ids: {[index: string]: boolean} = {}
+    this.selected = []
+    this.select_ids = ids
+    if (this.site.data.metadata.datasets) {
+      const inputs = this.site.page.modal.filter.entity_inputs
+      this.site.data.metadata.datasets.forEach(d => {
+        if (d in inputs) {
+          const s = inputs[d].value() as string | string[],
+            cs: string[] = []
+          if (Array.isArray(s)) {
+            s.forEach(id => {
+              const e = this.site.data.entities[id]
+              if (e) {
+                cs.push(id)
+                this.site.view.selected.push(id)
+                ids[id] = true
+                if (e.relations) {
+                  Object.keys(e.relations.parents).forEach(k => (ids[k] = true))
+                  Object.keys(e.relations.children).forEach(k => (ids[k] = true))
+                }
+              }
+            })
+            inputs[d].source = cs
+          }
+        }
+      })
+    }
   }
 }

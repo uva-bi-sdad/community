@@ -16,6 +16,8 @@ export default abstract class BaseInput {
   default: string | number
   source: boolean | string | number | (string | number)[]
   optionSource: string
+  subset: string
+  selection_subset: string
   depends: string | LogicalObject
   variable: string
   dataset: string
@@ -31,7 +33,9 @@ export default abstract class BaseInput {
     this.e = e
     this.site = site
     this.default = e.dataset.default
-    this.optionSource = e.dataset.optionSource
+    this.optionSource = e.dataset.optionsource
+    this.subset = e.dataset.subset || 'all'
+    this.selection_subset = e.dataset.selectionsubset || this.subset
     this.depends = e.dataset.depends
     this.variable = e.dataset.variable
     this.dataset = e.dataset.dataset

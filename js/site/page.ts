@@ -174,6 +174,7 @@ export class Page {
   tutorials?: TutorialManager
   constructor(site: Community) {
     this.site = site
+    site.page = this
     this.load_screen = document.getElementById('load_screen')
     this.wrap = document.getElementById('site_wrap')
     const navbar = document.querySelector('.navbar')
@@ -192,6 +193,8 @@ export class Page {
     document.body.className =
       site.storage.get('theme_dark') || site.spec.settings.theme_dark ? 'dark-theme' : 'light-theme'
     this.content_bounds.top = this.navbar.height
+    this.init_variable_info()
+    this.init_filter()
   }
   init() {
     this.panels.length && this.panels.forEach(this.init_panel)
@@ -204,8 +207,41 @@ export class Page {
       this.content.style.top =
         (this.top_menu ? this.top_menu.e.getBoundingClientRect().height : this.navbar.height) + 'px'
     }
-    this.init_variable_info()
-    this.init_filter()
+    Object.keys(this.site.data.loaded)
+      .reverse()
+      .forEach(d => {
+        const u = Combobox.create(this.site, d, void 0, {search: true, multi: true, clearable: true}, 'filter.' + d),
+          div = document.createElement('div')
+        this.modal.filter.entity_inputs[d] = u
+        this.modal.filter.entity_filters.lastElementChild.appendChild(div)
+        div.className = 'col-sm'
+        div.appendChild(u.e.parentElement)
+        u.e.parentElement.classList.add('form-floating')
+        u.listbox.classList.add('multi')
+        u.option_sets = {}
+        u.dataset = d
+        u.loader = () => {
+          u.site.data.retrieve(u.dataset, u.site.data.info[u.dataset].site_file)
+          u.e.removeEventListener('click', u.loader)
+        }
+        if (!u.site.data.loaded[d]) {
+          u.e.addEventListener('click', u.loader)
+        }
+        u.onchange = () => {
+          this.site.view.id_filter()
+          this.site.request_queue('view.id')
+        }
+        fill_ids_options(u, d, u.option_sets, () => {
+          u.set_current()
+          toggle_input(u, !!u.options.length)
+          Object.keys(u.values).forEach(id => {
+            u.site.view.entities.set(id, u.site.data.entities[id])
+          })
+          u.site.view.registered[d] = true
+          u.set(u.id in u.site.url_options ? (u.site.url_options[u.id] as string).split(',') : -1)
+        })
+        toggle_input(u, !!u.options.length)
+      })
   }
   init_panel(p: HTMLElement) {
     const side = p.classList.contains('panel-left') ? 'left' : 'right'
@@ -359,7 +395,7 @@ export class Page {
     input.max = 'filter.time_max'
     input.type = 'number'
     input.id = 'filter.time_min'
-    input.appendChild(label)
+    div.appendChild(label)
     label.innerText = 'First Time'
     label.setAttribute('for', 'filter.time_min')
     e.time_range.appendChild((div = document.createElement('div')))
@@ -388,40 +424,6 @@ export class Page {
     e.entity_filters.appendChild((div = document.createElement('div')))
     div.className = 'row'
     e.entity_inputs = {}
-    Object.keys(this.site.data.loaded)
-      .reverse()
-      .forEach(d => {
-        const u = Combobox.create(this.site, d, void 0, {search: true, multi: true, clearable: true}, 'filter.' + d)
-        e.entity_inputs[d] = u
-        e.entity_filters.lastElementChild.appendChild((div = document.createElement('div')))
-        div.className = 'col-sm'
-        div.appendChild(u.e.parentElement)
-        u.e.parentElement.classList.add('form-floating')
-        u.listbox.classList.add('multi')
-        u.option_sets = {}
-        u.dataset = d
-        u.loader = () => {
-          u.site.data.retrieve(u.dataset, u.site.data.info[u.dataset].site_file)
-          u.e.removeEventListener('click', u.loader)
-        }
-        if (!u.site.data.loaded[d]) {
-          u.e.addEventListener('click', u.loader)
-        }
-        u.onchange = () => {
-          this.site.conditionals.id_filter()
-          this.site.request_queue('_entity_filter')
-        }
-        fill_ids_options(u, d, u.option_sets, () => {
-          u.set_current()
-          toggle_input(u, !!u.options.length)
-          Object.keys(u.values).forEach(id => {
-            u.site.view.entities.set(id, u.site.data.entities[id])
-          })
-          u.site.view.registered[d] = true
-          u.set(u.id in u.site.url_options ? (u.site.url_options[u.id] as string).split(',') : -1)
-        })
-        toggle_input(u, !!u.options.length)
-      })
 
     e.body.appendChild(e.variable_filters)
     e.variable_filters.appendChild((p = document.createElement('p')))
@@ -437,7 +439,7 @@ export class Page {
       this.site,
       'Add Variable Condition',
       void 0,
-      {strict: true, search: true, clearable: true, floating: true, accordion: true, group: 'category'},
+      {strict: true, search: true, clearable: true, floating: true, accordion: true},
       'filter_variable_dropdown'
     )
     filter_select.input = false
@@ -446,7 +448,7 @@ export class Page {
       const value = filter_select.value() as string
       if (value in this.site.data.variables) {
         this.add_filter_condition(value)
-        this.selection.innerText = ''
+        filter_select.selection.innerText = ''
         const input = document.querySelectorAll('.filter-body .combobox-input') as NodeListOf<HTMLElement>
         if (input && input.length) input[input.length - 1].focus()
       }
@@ -455,7 +457,7 @@ export class Page {
     filter_select.option_sets = {}
     filter_select.optionSource = 'variables'
     this.site.add_dependency(this.site.defaults.dataview, {type: 'options', id: filter_select.id})
-    e.variable_filters.firstElementChild.appendChild(filter_select.e.parentElement)
+    div.appendChild(filter_select.e.parentElement)
     // variable filter table
     e.variable_filters.appendChild((div = document.createElement('div')))
     div.className = 'hidden'
@@ -496,15 +498,6 @@ export class Page {
     e.variable_filters.lastElementChild.appendChild((p = document.createElement('p')))
     p.className = 'note'
     p.innerText = 'Summaries are across time within each unfiltered dataset.'
-    if (this.site.query) {
-      this.site.parsed_query = this.site.data.parse_query(this.site.query)
-      if (this.site.parsed_query.variables.conditions.length) {
-        this.site.parsed_query.variables.conditions.forEach(f => {
-          const info = this.site.data.variable_info[f.name]
-          if (info) this.add_filter_condition(f.name, f)
-        })
-      }
-    }
   }
   resize(e?: Event | boolean) {
     const full = e && 'boolean' === typeof e,
@@ -624,7 +617,7 @@ export class Page {
     input.checked = true
     input.addEventListener('change', () => {
       f.active = !f.active
-      this.site.request_queue('_base_filter')
+      this.site.request_queue('view.filter')
     })
     // component combobox
     tr.appendChild((td = document.createElement('td')))
@@ -644,7 +637,7 @@ export class Page {
     comp_select.listbox.setAttribute('aria-labelledby', f.id + '_component')
     comp_select.onchange = () => {
       f.component = comp_select.value() as string
-      this.site.request_queue('_base_filter')
+      this.site.request_queue('view.filter')
     }
     // operator select
     tr.appendChild((td = document.createElement('td')))
@@ -658,7 +651,7 @@ export class Page {
     select.setAttribute('aria-describedby', f.id)
     select.addEventListener('change', e => {
       f.operator = (e.target as HTMLSelectElement).selectedOptions[0].value
-      this.site.request_queue('_base_filter')
+      this.site.request_queue('view.filter')
     })
     ;['>=', '=', '!=', '<='].forEach(k => {
       const option = document.createElement('option')
@@ -700,7 +693,7 @@ export class Page {
           f.value = (s[k] as (number | string)[])[time]
         }
       }
-      this.site.request_queue('_base_filter')
+      this.site.request_queue('view.filter')
     }.bind(value_select, f)
     // remove button
     tr.appendChild((td = document.createElement('td')))
@@ -721,11 +714,11 @@ export class Page {
           this.site.view.filters.delete(this.filter.id)
           if (!this.site.view.filters.size)
             this.site.page.modal.filter.variable_filters.lastElementChild.classList.add('hidden')
-          this.site.request_queue('_base_filter')
+          this.site.request_queue('view.filter')
         }
       }.bind({filter: f, site: this.site})
     )
-    this.site.request_queue('_base_filter')
+    this.site.request_queue('view.filter')
     this.site.page.modal.filter.conditions.lastElementChild.appendChild(tr)
     this.site.page.modal.filter.variable_filters.lastElementChild.classList.remove('hidden')
   }

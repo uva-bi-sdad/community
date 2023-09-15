@@ -14,6 +14,7 @@ export class InputButton extends BaseInput {
   notification: HTMLElement
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
+    this.update = this.update.bind(this)
     this.target = this.e.dataset.target
     if ('copy' === this.target) this.settings.endpoint = site.endpoint
     if ('filter' === this.target) {
@@ -22,8 +23,8 @@ export class InputButton extends BaseInput {
       this.notification = document.createElement('span')
       this.notification.className = 'filter-notification hidden'
       e.parentElement.appendChild(this.notification)
-      site.add_dependency('_base_filter', {type: 'update', id: this.id})
-      site.add_dependency('_entity_filter', {type: 'update', id: this.id})
+      site.add_dependency('view.filter', {type: 'update', id: this.id})
+      site.add_dependency('view.id', {type: 'update', id: this.id})
       if (site.data) this.update()
     } else
       e.addEventListener(

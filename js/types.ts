@@ -576,7 +576,7 @@ export type MapInfo = {
 
 export type OptionSets = {
   [index: string]: {
-    options: HTMLOptionElement[]
+    options: (HTMLOptionElement | HTMLDivElement)[]
     values: ObjectIndex
     display: ObjectIndex
   }

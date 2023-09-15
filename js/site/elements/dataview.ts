@@ -111,7 +111,7 @@ export class SiteDataView {
     site.dataviews[id] = this
     if (spec)
       Object.keys(spec).forEach((k: keyof DataViewSpec) => {
-        if (k in this) this[k] = spec[k]
+        this[k] = spec[k]
       })
     if ('string' === typeof this.palette && this.palette in this.site.inputs) {
       this.site.add_dependency(this.palette, {type: 'dataview', id: id})
@@ -123,8 +123,8 @@ export class SiteDataView {
       this.site.add_dependency(this.ids, {type: 'dataview', id: id})
     }
     this.site.add_dependency(id, {type: 'time_range', id: id})
-    this.site.add_dependency('_base_filter', {type: 'dataview', id: id})
-    this.site.add_dependency('_entity_filter', {type: 'dataview', id: id})
+    this.site.add_dependency('view.filter', {type: 'dataview', id: id})
+    this.site.add_dependency('view.id', {type: 'dataview', id: id})
     if (this.x in this.site.inputs) this.site.add_dependency(this.x, {type: 'time_range', id: id})
     if (this.y in this.site.inputs) this.site.add_dependency(this.y, {type: 'time_range', id: id})
     if (this.features) {
@@ -171,7 +171,7 @@ export class SiteDataView {
   }
   update() {
     const state = this.value()
-    if (state !== this.state && this.site.dataviews[this.parsed.dataset]) {
+    if (state !== this.state) {
       if (this.site.data.inited[this.parsed.dataset]) {
         this.valid = true
         this.n_selected.ids = 0
@@ -234,6 +234,7 @@ export class SiteDataView {
             this.n_selected.all++
           }
         })
+        this.state = state
         this.site.request_queue(this.id)
       } else {
         this.valid = false
@@ -398,11 +399,12 @@ export class SiteDataView {
     if (this.palette) this.parsed.palette = this.site.valueOf(this.palette) as string
     if (this.features) {
       this.parsed.feature_values = {}
-      for (let k in this.features)
+      for (const k in this.features)
         if (k in this.features) {
+          const value = this.site.valueOf(this.features[k]) as string | string[]
           this.parsed.feature_values[k] = {
-            value: this.site.valueOf(this.features[k]) as string | string[],
-            operator: 'string' === typeof this.parsed.feature_values[k].value ? 'equals' : 'includes',
+            value: value,
+            operator: 'string' === typeof value ? 'equals' : 'includes',
           }
         }
       this.parsed.features = this.get.features()

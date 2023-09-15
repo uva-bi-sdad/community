@@ -9,15 +9,16 @@ export class InputNumber extends BaseInput {
   type: 'number'
   e: HTMLInputElement
   source: number
-  parsed: {min: number; max: number}
+  parsed = {min: -Infinity, max: Infinity}
   min: string | number
-  default_min: number
+  default_min: boolean
   min_ref: number
   min_indicator?: HTMLElement
   max: string | number
-  default_max: number
+  default_max: boolean
   max_ref: number
   max_indicator?: HTMLElement
+  step?: number
   current_default: number
   previous: number
   off_default: boolean
@@ -27,6 +28,7 @@ export class InputNumber extends BaseInput {
   depends: LogicalObject
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
+    this.update = this.update.bind(this)
     const up = e.parentElement.parentElement.querySelector('.number-up')
     const down = e.parentElement.parentElement.querySelector('.number-down')
     if (down) {

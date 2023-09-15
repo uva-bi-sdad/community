@@ -90,7 +90,7 @@ export function options(this: Community, u: Combobox) {
         c.innerHTML = ''
         u.values = u.option_sets[k].values
         u.display = u.option_sets[k].display
-        u.options = u.option_sets[k].options
+        u.options = u.option_sets[k].options as HTMLDivElement[]
       }
       let ns = 0
       if ('ID' === u.variable || this.patterns.ids.test(u.optionSource)) {
@@ -114,9 +114,9 @@ export function options(this: Community, u: Combobox) {
             v = this.dataviews[u.view].selection[selection]
           }
         }
-        u.options.forEach((si: HTMLOptionElement) => {
+        u.options.forEach((si: HTMLDivElement) => {
           if (fresh && !u.groups) c.appendChild(si)
-          if (no_view || (si.value || si.dataset.value) in v) {
+          if (no_view || si.dataset.value in v) {
             si.classList.remove('hidden')
             ns++
           } else {
@@ -149,17 +149,6 @@ export function options(this: Community, u: Combobox) {
       if (u.filter) u.filter()
     }
   }
-}
-export function set_current(this: Combobox) {
-  this.values = this.option_sets[this.dataset].values
-  this.display = this.option_sets[this.dataset].display
-  this.options = this.option_sets[this.dataset].options
-  this.source = ''
-  this.id in this.site.url_options
-    ? this.set(this.site.url_options[this.id] as string | number)
-    : this.state in this.values
-    ? this.set(this.state)
-    : this.reset()
 }
 export async function min(this: Community, u: InputNumber, c: InputNumber) {
   let cv = c.value() as string | number,
@@ -208,82 +197,6 @@ export async function max(this: Community, u: InputNumber, c: InputNumber) {
     u.set(cv)
   }
   if (u.max_indicator) (u.max_indicator.firstElementChild as HTMLElement).innerText = cv + ''
-}
-export function dataview(this: Community, f?: SiteDataView) {
-  f = f || this.dataviews[this.defaults.dataview]
-  const state = f.value()
-  if (state !== f.state && this.view.registered[f.parsed.dataset]) {
-    if (this.data.inited[f.parsed.dataset]) {
-      f.valid = true
-      f.n_selected.ids = 0
-      f.n_selected.children = 0
-      f.n_selected.features = 0
-      f.n_selected.variables = 0
-      f.n_selected.dataset = 0
-      f.n_selected.filtered = 0
-      f.n_selected.full_filter = 0
-      f.n_selected.all = 0
-      f.selection.ids = {}
-      f.selection.children = {}
-      f.selection.features = {}
-      f.selection.variables = {}
-      f.selection.dataset = {}
-      f.selection.filtered = {}
-      f.selection.full_filter = {}
-      f.selection.all = {}
-      this.view.filters.forEach(f => {
-        f.passed = 0
-        f.failed = 0
-      })
-      this.view.entities.forEach(e => {
-        const c = f.check(e),
-          id = e.features.id
-        c.all = 0
-        if (c.ids) {
-          f.selection.ids[id] = e
-          f.n_selected.ids++
-          c.all++
-        }
-        if (c.features) {
-          f.selection.features[id] = e
-          f.n_selected.features++
-          c.all++
-        }
-        if (c.variables) {
-          f.selection.variables[id] = e
-          f.n_selected.variables++
-          c.all++
-        }
-        if (c.dataset) {
-          f.selection.dataset[id] = e
-          f.n_selected.dataset++
-          c.all++
-        }
-        if (c.dataset && c.ids) {
-          f.selection.children[id] = e
-          f.n_selected.children++
-        }
-        if (c.features && c.variables) {
-          f.selection.full_filter[id] = e
-          f.n_selected.full_filter++
-        }
-        if (c.variables && c.features && c.ids) {
-          f.selection.filtered[id] = e
-          f.n_selected.filtered++
-        }
-        if (4 === c.all) {
-          f.selection.all[id] = e
-          f.n_selected.all++
-        }
-      })
-      this.request_queue(false, f.id)
-    } else {
-      f.valid = false
-      this.data.data_queue[f.parsed.dataset][f.id] = () => {
-        return this.conditionals.dataview(f)
-      }
-    }
-  }
 }
 export function time_filters(this: Community, u: SiteDataView) {
   u.time_range.filtered[0] = Infinity
@@ -374,33 +287,5 @@ export async function time_range(this: Community, u: SiteDataView, c?: BaseInput
     u.time_range.time[0] = u.time_range.filtered[0] = 1
     u.time_range.index[1] = 0
     u.time_range.time[1] = u.time_range.filtered[1] = 1
-  }
-}
-export function id_filter(this: Community) {
-  const ids: {[index: string]: boolean} = {}
-  this.view.selected = []
-  this.view.select_ids = ids
-  if (this.data.metadata.datasets) {
-    this.data.metadata.datasets.forEach(d => {
-      if (d in this.page.modal.filter.entity_inputs) {
-        const s = this.page.modal.filter.entity_inputs[d].value() as string | string[],
-          cs: string[] = []
-        if (Array.isArray(s)) {
-          s.forEach(id => {
-            const e = this.data.entities[id]
-            if (e) {
-              cs.push(id)
-              this.view.selected.push(id)
-              ids[id] = true
-              if (e.relations) {
-                Object.keys(e.relations.parents).forEach(k => (ids[k] = true))
-                Object.keys(e.relations.children).forEach(k => (ids[k] = true))
-              }
-            }
-          })
-          this.page.modal.filter.entity_inputs[d].source = cs
-        }
-      }
-    })
   }
 }

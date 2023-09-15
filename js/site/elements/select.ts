@@ -2,6 +2,7 @@ import BaseInput from './index'
 import Community from '../index'
 import {Generic, ObjectIndex, OptionSets, ResourceField} from '../../types'
 import {patterns} from '../patterns'
+import {options_filter, set_current_options} from '../common_methods'
 
 export type SelectSpec = {
   group?: string
@@ -11,17 +12,18 @@ export type SelectSpec = {
 export class Select extends BaseInput {
   type: 'select'
   e: HTMLSelectElement
+  current_filter: {[index: string]: string} = {}
   groups: {e: HTMLElement[]; by_name: {[index: string]: HTMLElement}}
   options: HTMLOptionElement[]
-  values: ObjectIndex
-  display: ObjectIndex
+  values: ObjectIndex = {}
+  display: ObjectIndex = {}
   option_sets: OptionSets
   current_set = ''
   sensitive = false
   deferred = false
+  filter = options_filter
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
-    this.set_current = this.set_current.bind(this)
     this.options = [...e.querySelectorAll('option')]
     if (this.optionSource && patterns.ids.test(this.optionSource)) {
       e.addEventListener('click', this.loader)
@@ -36,17 +38,7 @@ export class Select extends BaseInput {
       this.default = this.options[this.default].value || this.options[this.default].dataset.value
     }
   }
-  set_current = () => {
-    this.values = this.option_sets[this.dataset].values
-    this.display = this.option_sets[this.dataset].display
-    this.options = this.option_sets[this.dataset].options
-    this.source = ''
-    this.id in this.site.url_options
-      ? this.set(this.site.url_options[this.id] as string)
-      : this.state in this.values
-      ? this.set(this.state)
-      : this.reset()
-  }
+  set_current = set_current_options
   get() {
     this.set(this.e.selectedIndex)
   }
@@ -71,6 +63,7 @@ export class Select extends BaseInput {
       e.title = (meta.info.description || meta.info.short_description) as string
     }
     if (!noadd) this.e.appendChild(e)
+    this.options.push(e)
     return e
   }
   loader() {

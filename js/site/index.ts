@@ -35,7 +35,7 @@ type Queue = {
 
 type Dependency = {
   id: string
-  type: 'rule' | 'update' | keyof Conditionals | keyof BaseInput
+  type: 'rule' | 'update' | 'filter' | keyof Conditionals | keyof BaseInput
   conditional?: keyof Conditionals
   condition?: SiteCondition
   uid?: string
@@ -93,7 +93,7 @@ export default class Community {
       this.spec = spec
       spec.active = this
     }
-    if (!(window as any).dataLayer) (window as any).dataLayer = []
+    // if (!(window as any).dataLayer) (window as any).dataLayer = []
     storage.copy = storage.get() as Generic
     if (storage.copy)
       for (const k in spec.settings) {
@@ -151,7 +151,7 @@ export default class Community {
     if (!this.spec.map) this.spec.map = {}
     if (!this.spec.map._overlay_property_selectors) this.spec.map._overlay_property_selectors = []
     this.view = new GlobalView(this)
-    this.page = new Page(this)
+    new Page(this)
     document.querySelectorAll('.auto-input').forEach((e: HTMLElement) => {
       if (e.dataset.autotype in elements) {
         const u = new elements[e.dataset.autotype as keyof typeof elements](e, this)
@@ -273,6 +273,171 @@ export default class Community {
     }
     this.view.init()
     this.page.init()
+    if (this.query) {
+      this.parsed_query = this.data.parse_query(this.query)
+      if (this.parsed_query.variables.conditions.length) {
+        this.parsed_query.variables.conditions.forEach(f => {
+          const info = this.data.variable_info[f.name]
+          if (info) this.page.add_filter_condition(f.name, f)
+        })
+      }
+    }
+    this.registered_elements.forEach(async o => {
+      const combobox = 'combobox' === o.type
+      if (o.optionSource && 'options' in o) {
+        if (patterns.palette.test(o.optionSource)) {
+          o.options = []
+          Object.keys(palettes).forEach(v => o.add(v, palettes[v].name))
+          if (-1 === o.default) o.default = defaults.palette
+        } else if (patterns.datasets.test(o.optionSource)) {
+          if (-1 === o.default) o.default = defaults.dataset
+          o.options = []
+          this.spec.metadata.datasets.forEach(d => o.add(d))
+        } else {
+          o.sensitive = false
+          o.option_sets = {}
+          if (o.depends) this.add_dependency(o.depends as string, {type: 'options', id: o.id})
+          if (o.dataset in this.inputs) this.add_dependency(o.dataset, {type: 'options', id: o.id})
+          if (o.view) this.add_dependency(o.view, {type: 'options', id: o.id})
+          const v = this.valueOf(o.dataset) || defaults.dataset
+          if ('string' === typeof v) {
+            if (!o.dataset) o.dataset = v
+            if (v in this.data.info) this.conditionals.options(o)
+          }
+        }
+      }
+      if (combobox || 'select' === o.type) {
+        // resolve options
+        if (Array.isArray(o.values)) {
+          o.values = {}
+          o.display = {}
+          let new_display = true
+          const select = 'select' === o.type
+          o.options.forEach(e => {
+            if (select) e.dataset.value = (e as HTMLOptionElement).value
+            if (new_display) new_display = e.dataset.value === e.innerText
+          })
+          o.options.forEach((e, i) => {
+            o.values[e.dataset.value] = i
+            if (new_display) e.innerText = this.data.format_label(e.dataset.value)
+            o.display[e.innerText] = i
+          })
+          if (!(o.default in o.values) && !(o.default in this.inputs)) {
+            o.default = Number(o.default)
+            if (isNaN(o.default)) o.default = -1
+            if (-1 !== o.default && o.default < o.options.length) {
+              o.default = o.options[o.default].dataset.value
+            } else {
+              o.default = -1
+            }
+          }
+          o.source = ''
+          o.id in this.url_options ? o.set(this.url_options[o.id] as string) : o.reset()
+        }
+        o.subset = o.e.getAttribute('data-subset') || 'all'
+        o.selection_subset = o.e.getAttribute('data-selectionSubset') || o.subset
+        if (o.type in this.spec && o.id in this.spec[o.type]) {
+          o.settings = this.spec[o.type][o.id]
+          if (o.settings.filters) {
+            Object.keys(o.settings.filters).forEach(f => {
+              this.add_dependency(o.settings.filters[f], {type: 'filter', id: o.id})
+            })
+          }
+        }
+      } else if ('number' === o.type) {
+        // retrieve option values
+        o.min = o.e.getAttribute('min')
+        o.min_ref = parseFloat(o.min)
+        o.min_indicator = o.e.parentElement.parentElement.querySelector('.indicator-min')
+        if (o.min_indicator) {
+          o.min_indicator.addEventListener(
+            'click',
+            function (this: InputNumber) {
+              this.set(this.parsed.min)
+            }.bind(o)
+          )
+        }
+        o.max = o.e.getAttribute('max')
+        o.max_ref = parseFloat(o.max)
+        o.max_indicator = o.e.parentElement.parentElement.querySelector('.indicator-max')
+        if (o.max_indicator) {
+          o.max_indicator.addEventListener(
+            'click',
+            function (this: InputNumber) {
+              this.set(this.parsed.max)
+            }.bind(o)
+          )
+        }
+        o.ref = isNaN(o.min_ref) || isNaN(o.max_ref)
+        o.range = [o.min_ref, o.max_ref]
+        o.step = parseFloat(o.e.step) || 1
+        o.parsed = {min: undefined, max: undefined}
+        o.depends = {}
+        o.default_max = 'max' === o.default || 'last' === o.default
+        o.default_min = 'min' === o.default || 'first' === o.default
+        if (o.view) this.add_dependency(o.view, {type: 'update', id: o.id})
+        if (!(o.max in this.data.variables)) {
+          if (o.max in this.inputs) {
+            this.add_dependency(o.max, {type: 'max', id: o.id})
+          } else o.e.max = o.max
+        } else if (o.view) {
+          this.add_dependency(o.view + '_time', {type: 'max', id: o.id})
+        }
+        if (!(o.min in this.data.variables)) {
+          if (o.min in this.inputs) {
+            this.add_dependency(o.min, {type: 'min', id: o.id})
+          } else o.e.min = o.min
+        } else if (o.view) {
+          this.add_dependency(o.view + '_time', {type: 'min', id: o.id})
+        }
+        if ('undefined' !== typeof o.default) {
+          if (patterns.number.test(o.default as string)) {
+            o.default = +o.default
+          } else
+            o.reset = o.default_max
+              ? function (this: InputNumber) {
+                  if (this.range) {
+                    this.current_default = this.site.valueOf(this.range[1]) as number
+                    this.set(this.current_default)
+                  }
+                }.bind(o)
+              : o.default_max
+              ? function (this: InputNumber) {
+                  if (this.range) {
+                    this.current_default = this.site.valueOf(this.range[0]) as number
+                    this.set(this.current_default)
+                  }
+                }.bind(o)
+              : o.default in this.inputs
+              ? function (this: InputNumber) {
+                  this.current_default = this.site.valueOf(this.default) as number
+                  this.set(this.current_default)
+                }.bind(o)
+              : function () {}
+        }
+        if (o.variable) {
+          const d = -1 === this.spec.metadata.datasets.indexOf(o.dataset) ? defaults.dataset : o.dataset
+          if (o.variable in this.inputs) {
+            this.add_dependency(o.variable, {type: 'update', id: o.id})
+          } else if (o.variable in this.data.variables) {
+            o.min = o.parsed.min = o.range[0] = this.data.variables[o.variable].info[d].min
+            o.e.min = o.min + ''
+            o.max = o.parsed.max = o.range[1] = this.data.variables[o.variable].info[d].max
+            o.e.max = o.max + ''
+          }
+        }
+      }
+      if (patterns.settings.test(o.id)) {
+        o.setting = o.id.replace(patterns.settings, '')
+        if (null == o.default && o.setting in this.spec.settings) o.default = this.spec.settings[o.setting] as string
+        this.add_dependency(o.id, {type: 'setting', id: o.id})
+      }
+      if (!o.view) o.view = defaults.dataview
+      const v = this.url_options[o.id] || storage.get(o.id.replace(patterns.settings, ''))
+      if (v) {
+        o.set(v as string)
+      } else o.reset && o.reset()
+    })
   }
   global_update() {
     this.meta.retain_state = false
@@ -331,25 +496,35 @@ export default class Community {
   }
   refresh_conditions(id: string) {
     if (id in this.dependencies) {
-      const c = this.inputs[id],
-        d = this.dependencies[id],
+      const d = this.dependencies[id],
         r: number[] = [],
-        v = c && c.value() + ''
-      if (c && (!this.meta.retain_state || c.state !== v)) {
-        const view = this.dataviews[c.view],
-          dd = c.dataset ? (this.valueOf(c.dataset) as string) : view ? view.get.dataset() : v
-        if (this.data.info && dd in this.data.loaded && !this.data.loaded[dd]) {
-          if (!c.deferred) this.data.retrieve(dd, this.data.info[dd].site_file)
-          return dd
+        c = 'view' === id.substring(0, 4) ? this.view : id in this.dataviews ? this.dataviews[id] : this.inputs[id],
+        is_view = c instanceof SiteDataView,
+        is_global = c instanceof GlobalView,
+        part = 'id' === id.substring(5) ? 'id_state' : 'filter_state',
+        v = is_global ? c[part]() : c && c.value() + '',
+        state = is_global ? c.states[part] : c && c.state
+      if (c && (!this.meta.retain_state || state !== v)) {
+        if (is_global) {
+          c.states[part] = v
+        } else if (!is_view) {
+          const view = this.dataviews[c.view],
+            dd = c.dataset ? (this.valueOf(c.dataset) as string) : view ? view.get.dataset() : v
+          if (this.data.info && dd in this.data.loaded && !this.data.loaded[dd]) {
+            if (!c.deferred) this.data.retrieve(dd, this.data.info[dd].site_file)
+            return dd
+          }
+          c.state = v
         }
-        c.state = v
         d.forEach(di => {
           if ('rule' === di.type) {
             if (-1 === r.indexOf(di.rule)) {
               r.push(di.rule)
             }
+          } else if ('dataview' === di.type) {
+            this.dataviews[di.id].update()
           } else if (di.conditional) {
-            this.conditionals[di.conditional](this.inputs[di.id], c)
+            this.conditionals[di.conditional](di.id in this.dataviews ? this.dataviews[di.id] : this.inputs[di.id], c)
           } else {
             const fun = this.inputs[di.id][di.type as keyof BaseInput]
             if ('function' === typeof fun) (fun as Function)()
@@ -398,8 +573,8 @@ export default class Community {
             }
           })
         })
-        if (id === this.meta.lock_after) this.meta.retain_state = true
       }
+      if (id === this.meta.lock_after) this.meta.retain_state = true
     }
   }
   valueOf(v: boolean | string | number | (string | number)[]): boolean | string | number | (string | number)[] {

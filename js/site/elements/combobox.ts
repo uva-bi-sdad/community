@@ -3,6 +3,7 @@ import Community from '../index'
 import {Generic, ObjectIndex, OptionSets, ResourceField} from '../../types'
 import {patterns} from '../patterns'
 import {keymap} from '../static_refs'
+import {options_filter, set_current_options} from '../common_methods'
 
 export type ComboboxSpec = {
   strict?: boolean
@@ -25,28 +26,26 @@ export class Combobox extends BaseInput {
   selection: HTMLElement
   input_element: HTMLInputElement
   filter_index: number[]
+  current_filter: {[index: string]: string} = {}
   onchange: Function
   value_type: string
-  subset?: string
-  selection_subset?: string
   values: ObjectIndex = {}
   display: ObjectIndex = {}
-  options: HTMLElement[] = []
+  options: HTMLDivElement[] = []
   option_sets: OptionSets = {}
   current_set = ''
   sensitive = false
   loader?: (...args: any) => void
-  filter?: Function
+  filter = options_filter
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
-    this.set_current = this.set_current.bind(this)
     this.set = this.set.bind(this)
     this.resize = this.resize.bind(this)
     this.toggle = this.toggle.bind(this)
     this.highlight = this.highlight.bind(this)
     this.settings.use_display = this.settings.search || this.settings.multi
     this.listbox = this.e.parentElement.children[1] as HTMLElement
-    this.options = [...this.listbox.querySelectorAll('.combobox-option')] as HTMLElement[]
+    this.options = [...this.listbox.querySelectorAll('.combobox-option')] as HTMLDivElement[]
     if (this.options.length) {
       this.options.forEach((e, i) => {
         this.values[e.dataset.value] = i
@@ -161,17 +160,8 @@ export class Combobox extends BaseInput {
       }.bind(this)
     )
   }
-  set_current = () => {
-    this.values = this.option_sets[this.dataset].values
-    this.display = this.option_sets[this.dataset].display
-    this.options = this.option_sets[this.dataset].options
-    this.source = ''
-    this.id in this.site.url_options
-      ? this.set(this.site.url_options[this.id] as string)
-      : this.state in this.values
-      ? this.set(this.state)
-      : this.reset()
-  }
+  init() {}
+  set_current = set_current_options
   filterer() {
     const q = this.input_element.value.toLowerCase()
     if ('' === q) {
@@ -397,7 +387,7 @@ export class Combobox extends BaseInput {
     const u = new Combobox(main, site)
     site.inputs[id] = u
     let n = 0
-    const opts: HTMLElement[] = []
+    const opts: HTMLDivElement[] = []
     u.options = opts
     if (options)
       if (Array.isArray(options)) {
@@ -549,6 +539,7 @@ export class Combobox extends BaseInput {
       ;(e.lastElementChild as HTMLElement).innerText = meta.info.description || meta.info.short_description || ''
     }
     if (!noadd) this.listbox.appendChild(e)
+    this.options.push(e)
     return e
   }
 }
