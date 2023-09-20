@@ -1,5 +1,5 @@
+import {RegisteredElements, SiteElement} from './elements/index'
 import {patterns} from './patterns'
-import type {RegisteredElements, SiteElement} from '../types'
 
 type Actions = string[] | {[index: string]: string}
 type TutorialStep = {

@@ -1,4 +1,4 @@
-import BaseInput from './index'
+import {BaseInput} from './index'
 import Community from '../index'
 import {patterns} from '../patterns'
 import {LogicalObject} from '../../types'
@@ -21,7 +21,7 @@ export class InputNumber extends BaseInput {
   step?: number
   current_default: number
   previous: number
-  off_default: boolean
+  off_default?: boolean
   value: () => number
   ref: boolean
   range: [number, number]

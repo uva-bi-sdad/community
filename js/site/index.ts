@@ -1,18 +1,7 @@
 import DataHandler from '../data_handler/index'
-import {
-  Conditionals,
-  DataSets,
-  Generic,
-  MapInfo,
-  Query,
-  RegisteredElements,
-  SiteCondition,
-  SiteElement,
-  SiteRule,
-  SiteSpec,
-} from '../types'
+import {Conditionals, DataSets, Generic, MapInfo, Query, SiteCondition, SiteRule, SiteSpec} from '../types'
 import {defaults} from './defaults'
-import BaseInput from './elements/index'
+import {BaseInput, RegisteredElements, RegisteredOutputs, SiteElement} from './elements/index'
 import {GlobalView} from './global_view'
 import {patterns} from './patterns'
 import {storage} from './storage'
@@ -27,6 +16,7 @@ import {SiteDataView} from './elements/dataview'
 import {Page} from './page'
 import {Virtual} from './elements/virtual'
 import {InputButton} from './elements/button'
+import {OutputInfo} from './elements/info'
 
 type Queue = {
   timeout: NodeJS.Timer | number
@@ -56,6 +46,10 @@ const elements = {
   virtual: InputNumber,
 }
 
+const outputs = {
+  info: OutputInfo,
+}
+
 export default class Community {
   spec: SiteSpec
   storage = storage
@@ -70,6 +64,7 @@ export default class Community {
   defaults = defaults
   dataviews: {[index: string]: SiteDataView} = {}
   inputs: RegisteredElements = {}
+  outputs: RegisteredOutputs = {}
   dependencies: {[index: string]: Dependency[]} = {}
   url_options: {[index: string]: boolean | string} = {}
   queue: Queue = {timeout: 0, elements: new Map()}
@@ -150,6 +145,7 @@ export default class Community {
     }
     if (!this.spec.map) this.spec.map = {}
     if (!this.spec.map._overlay_property_selectors) this.spec.map._overlay_property_selectors = []
+    this.subs = new Subscriptions(this.inputs)
     this.view = new GlobalView(this)
     new Page(this)
     document.querySelectorAll('.auto-input').forEach((e: HTMLElement) => {
@@ -157,6 +153,12 @@ export default class Community {
         const u = new elements[e.dataset.autotype as keyof typeof elements](e, this)
         this.registered_elements.set(u.id, u)
         this.inputs[u.id] = u
+      }
+    })
+    document.querySelectorAll('.auto-output').forEach((e: HTMLElement) => {
+      if (e.dataset.autotype in outputs) {
+        const u = new outputs[e.dataset.autotype as keyof typeof outputs](e, this)
+        this.outputs[u.id] = u
       }
     })
     if (spec.variables && spec.variables.length)
@@ -265,7 +267,6 @@ export default class Community {
     }
   }
   init() {
-    this.subs = new Subscriptions(this.inputs)
     Object.keys(this.spec.dataviews).forEach(id => new SiteDataView(this, id, this.spec.dataviews[id]))
     if (this.data.variables) {
       const variable = Object.keys(this.data.variables)
@@ -587,14 +588,14 @@ export default class Community {
   get_options_url() {
     let s = ''
     this.registered_elements.forEach((u, k) => {
-      if (u.input && !patterns.settings.test(k)) {
-        // if (!u.range || u.range[0] !== u.range[1]) {
-        //   let v = u.value()
-        //   if ('off_default' in u ? u.off_default : v !== u.default) {
-        //     if (Array.isArray(v)) v = v.join(',')
-        //     if ('' !== v && null != v && '-1' != v) s += (s ? '&' : '?') + k + '=' + v
-        //   }
-        // }
+      if (u.input && !patterns.settings.test(k) && 'range' in u) {
+        if (!u.range || u.range[0] !== u.range[1]) {
+          let v: number | string | string[] = u.value()
+          if ('off_default' in u ? u.off_default : v !== u.default) {
+            if (Array.isArray(v)) v = v.join(',')
+            if ('' !== v && null != v && '-1' != v) s += (s ? '&' : '?') + k + '=' + v
+          }
+        }
       }
     })
     if (this.data && this.view.filters.size) s += (s ? '&' : '?') + this.view.filter_state([])

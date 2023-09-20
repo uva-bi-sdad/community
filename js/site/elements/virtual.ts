@@ -1,7 +1,7 @@
 import DataHandler from '../../data_handler/index'
 import {SiteCondition} from '../../types'
 import Community from '../index'
-import BaseInput from './index'
+import {BaseInput} from './index'
 
 export class Virtual extends BaseInput {
   type: 'virtual'

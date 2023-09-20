@@ -1,11 +1,22 @@
-import {LogicalObject, SiteElement, SiteRule, SiteSpec} from '../../types'
+import {Generic, LogicalObject, SiteRule, SiteSpec} from '../../types'
 import Community from '../index'
 import {patterns} from '../patterns'
 import {tooltip_clear, tooltip_trigger} from '../utils'
+import {InputButton} from './button'
+import {Combobox} from './combobox'
+import {OutputInfo} from './info'
+import {InputNumber} from './number'
+import {Select} from './select'
+import {Virtual} from './virtual'
 
 export type ElementTypes = 'number' | 'button' | 'select' | 'combobox' | 'plotly' | 'virtual'
+export type SiteElement = Combobox | Select | InputNumber | InputButton | Virtual
+export type RegisteredElements = {[index: string]: SiteElement}
+export type OutputTypes = 'info'
+export type SiteOutputs = OutputInfo
+export type RegisteredOutputs = {[index: string]: SiteOutputs}
 
-export default abstract class BaseInput {
+export abstract class BaseInput {
   type: ElementTypes
   input = true
   site: Community
@@ -77,5 +88,34 @@ export default abstract class BaseInput {
   }
   reset() {
     this.set(this.site.valueOf(this.default))
+  }
+}
+
+export abstract class BaseOutput {
+  type: OutputTypes
+  input = false
+  site: Community
+  view: string
+  e: HTMLElement
+  tab?: HTMLElement
+  id: string
+  note: string
+  color?: string
+  x?: string
+  y?: string
+  reference_options: Generic = {}
+  options: {[index: string]: any} = {}
+  constructor(e: HTMLElement, site: Community) {
+    this.e = e
+    this.tab = 'tabpanel' === e.parentElement.getAttribute('role') ? e.parentElement : void 0
+    this.site = site
+    this.view = e.dataset.view
+    this.id = e.id || 'ui' + site.page.elementCount++
+    this.note = e.getAttribute('aria-description') || ''
+    this.type = e.dataset.autotype as OutputTypes
+    if (this.type in site.spec) {
+      const spec = site.spec[this.type as keyof SiteSpec] as SiteElement
+      if (this.id in spec) this.options = (spec as any)[this.id]
+    }
   }
 }

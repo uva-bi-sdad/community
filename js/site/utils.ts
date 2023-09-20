@@ -1,5 +1,6 @@
-import {MeasureInfo, OptionSets, ResourceField, SiteElement} from '../types'
+import {MeasureInfo, MeasureSource, OptionSets, ResourceField} from '../types'
 import type {Combobox} from './elements/combobox'
+import {SiteElement} from './elements/index'
 import type {Select} from './elements/select'
 import {patterns} from './patterns'
 
@@ -190,7 +191,7 @@ export function fill_variables_options(u: Combobox | Select, d: string, out: Opt
         let groups = (m.info && m.info[u.settings.group as keyof MeasureInfo]) || ['No Group']
         if (!Array.isArray(groups)) groups = [groups as string]
         for (let g = groups.length; g--; ) {
-          const group: string = groups[g]
+          const group = groups[g] as string
           if (!(group in u.groups.by_name)) {
             const e = document.createElement(combobox ? 'div' : 'optgroup')
             if (combobox) {
@@ -379,5 +380,75 @@ export function make_summary_table(
     }
   })
   parent.appendChild(e)
+  return e
+}
+
+export function make_variable_source(s: MeasureSource, table?: boolean) {
+  const e = document.createElement(table ? 'tr' : 'div')
+  let div = document.createElement('div'),
+    a = document.createElement('a'),
+    span = document.createElement('span'),
+    td = document.createElement('td'),
+    p = document.createElement('p')
+  if (table) {
+    if (s.name) {
+      e.appendChild(td)
+      if (s.url) {
+        td.appendChild(a)
+        a.target = '_blank'
+        a.rel = 'noreferrer'
+        a.href = s.url
+        a.innerText = s.name
+      } else {
+        td.appendChild(span)
+        span.innerText = s.name
+      }
+    }
+    if (s.date_accessed) {
+      e.appendChild((td = document.createElement('td')))
+      td.appendChild((span = document.createElement('span')))
+      span.innerText = s.date_accessed
+    }
+  } else {
+    e.className = 'card'
+    if (s.name) {
+      e.appendChild(div)
+      div.className = 'card-header'
+      if (s.url) {
+        div.appendChild(a)
+        a.target = '_blank'
+        a.rel = 'noreferrer'
+        a.href = s.url
+        a.innerText = s.name
+      } else {
+        div.appendChild(span)
+        span.innerText = s.name
+      }
+    }
+    e.appendChild(document.createElement('div'))
+    e.lastElementChild.className = 'card-body'
+    if (s.location) {
+      e.lastElementChild.appendChild(p)
+      p.appendChild((span = document.createElement('span')))
+      span.innerText = 'Location: '
+      p.appendChild((span = document.createElement('span')))
+      if (s.location_url) {
+        span.appendChild((a = document.createElement('a')))
+        a.target = '_blank'
+        a.rel = 'noreferrer'
+        a.href = s.location_url
+        a.innerText = s.location
+      } else {
+        span.innerText = s.location
+      }
+    }
+    if (s.date_accessed) {
+      e.lastElementChild.appendChild((p = document.createElement('p')))
+      p.appendChild((span = document.createElement('span')))
+      span.innerText = 'Date Accessed: '
+      p.appendChild((span = document.createElement('span')))
+      span.innerText = s.date_accessed
+    }
+  }
   return e
 }

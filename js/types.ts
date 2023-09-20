@@ -1,12 +1,11 @@
 import Community from './site/index'
-import {Combobox, ComboboxSpec} from './site/elements/combobox'
+import {ComboboxSpec} from './site/elements/combobox'
 import {OutputPlotly} from './site/elements/plotly'
-import {Select, SelectSpec} from './site/elements/select'
 import {Tutorials} from './site/tutorials'
-import {InputNumber, NumberSpec} from './site/elements/number'
-import {InputButton} from './site/elements/button'
+import {NumberSpec} from './site/elements/number'
 import {DataViewSpec, SiteDataView} from './site/elements/dataview'
-import {Virtual} from './site/elements/virtual'
+import {SiteElement} from './site/elements/index'
+import {SelectSpec} from './site/elements/select'
 
 export type Generic = {[index: string]: boolean | string | number}
 export type ObjectIndex = {[index: string]: number}
@@ -121,6 +120,8 @@ type Summaries = {[index: string]: Summary}
 export type MeasureInfo = {
   full_name?: string
   type?: string
+  unit?: string
+  aggregation_method?: string
   measure?: string
   name?: string
   default?: string
@@ -130,14 +131,20 @@ export type MeasureInfo = {
   long_description?: string
   short_description?: string
   levels?: string[]
-  source?: Generic | {[index: string]: Generic}
+  sources?: MeasureSource[]
+  citations?: string | string[]
   categories?: string[] | MeasureInfos
   variants?: string[] | MeasureInfos
+  origin?: string[]
+  source_file?: string
 }
+
+export type ReferencesParsed = {[index: string]: {reference: Reference; element: HTMLLIElement}}
 
 export type MeasureInfos = {
   [index: string]: MeasureInfo | References | undefined
   _references?: References
+  _references_parsed?: ReferencesParsed
 }
 
 export type Variable = {
@@ -150,7 +157,7 @@ export type Variable = {
   levels?: string[]
   level_ids?: {[index: string]: number}
   table?: Generic
-  meta?: MeasureInfo | UnparsedObject
+  meta?: MeasureInfo
   order?: Order[]
   is_time?: boolean
   views: {[index: string]: VariableView}
@@ -314,8 +321,16 @@ export type Settings = {
   entity_info?: EntityFeatureSet | Generic
 }
 
-type Reference = {
+export type Reference = {
   title: string
+  author: string | (string | {family: string; given?: string})[]
+  year: string
+  journal?: string
+  volume?: string
+  page?: string
+  version?: string
+  doi?: string
+  url?: string
 }
 
 export type References = {[index: string]: Reference}
@@ -400,9 +415,6 @@ export interface ActiveTable extends ActiveElement {
     time_index: {[index: number]: number}
   }
 }
-
-export type SiteElement = Combobox | Select | InputNumber | InputButton | Virtual
-export type RegisteredElements = {[index: string]: SiteElement}
 
 export type Conditionals = {
   setting: Function
@@ -509,15 +521,19 @@ type MapLayer = {
   }
 }
 
+export type MeasureSource = {
+  name: string
+  url: string
+  date_accessed?: string
+  location?: string
+  location_url?: string
+}
+
 export type SiteMap = {
   shapes: MapLayer[]
   overlays?: {
     variable: string
-    source?: {
-      name: string
-      url: string
-      time?: number
-    }[]
+    source?: MeasureSource[]
     options: {[index: string]: boolean | number | string | (number | string)[]}
     tiles: {
       [index: string]: {

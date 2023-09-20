@@ -1,9 +1,27 @@
-import {Filter, FilterParsed, ResourceField, Summary, VariableFilterParsed} from '../types'
+import {
+  Filter,
+  FilterParsed,
+  MeasureInfo,
+  Reference,
+  ReferencesParsed,
+  ResourceField,
+  Summary,
+  VariableFilterParsed,
+} from '../types'
 import {Combobox} from './elements/combobox'
 import type Community from './index'
+import {patterns} from './patterns'
 import {filter_components} from './static_refs'
 import type {TutorialManager} from './tutorials'
-import {fill_ids_options, make_summary_table, toggle_input, tooltip_clear, tooltip_trigger} from './utils'
+import {
+  fill_ids_options,
+  make_summary_table,
+  make_variable_source,
+  set_description,
+  toggle_input,
+  tooltip_clear,
+  tooltip_trigger,
+} from './utils'
 
 interface Modal {
   init: boolean
@@ -33,6 +51,45 @@ export interface InfoUI extends Modal {
 }
 
 type Side = 'top' | 'left' | 'bottom' | 'right'
+
+function make_variable_reference(c: Reference) {
+  if (!Array.isArray(c.author)) c.author = [c.author]
+  const e = document.createElement('li'),
+    n = c.author.length
+  let s = '',
+    j = 1 === n ? '' : 2 === n ? ' & ' : ', & ',
+    span = document.createElement('span')
+  for (let i = n; i--; ) {
+    const a = c.author[i]
+    s =
+      (i ? j : '') + ('string' === typeof a ? a : a.family + (a.given ? ', ' + a.given.substring(0, 1) + '.' : '')) + s
+    j = ', '
+  }
+  e.innerText = s + ' (' + c.year + '). ' + c.title + '.'
+  if (c.journal) {
+    e.appendChild(span)
+    span.innerText = c.journal + (c.volume ? ', ' + c.volume : '')
+    span.style.fontStyle = 'italic'
+    e.appendChild((span = document.createElement('span')))
+    span.innerText = (c.page ? ', ' + c.page : '') + '.'
+  }
+  if (c.version) {
+    e.appendChild((span = document.createElement('span')))
+    span.innerText = ' Version ' + c.version + '.'
+  }
+  if (c.doi || c.url) {
+    e.appendChild((span = document.createElement('span')))
+    span.innerText = c.doi ? ' doi: ' : ' url: '
+    const a = document.createElement('a')
+    e.appendChild(a)
+    a.rel = 'noreferrer'
+    a.target = '_blank'
+    a.href = c.doi ? 'https://doi.org/' + c.doi : c.url
+    a.innerText = c.doi || c.url.replace(patterns.http, '')
+  }
+  return e
+}
+
 class PageMenu {
   e: HTMLElement
   wrapper: HTMLElement
@@ -174,7 +231,7 @@ export class Page {
   tutorials?: TutorialManager
   constructor(site: Community) {
     this.site = site
-    site.page = this
+    this.site.page = this
     this.load_screen = document.getElementById('load_screen')
     this.wrap = document.getElementById('site_wrap')
     const navbar = document.querySelector('.navbar')
@@ -191,7 +248,7 @@ export class Page {
     this.overlay.className = 'content-overlay'
     document.body.appendChild(this.overlay)
     document.body.className =
-      site.storage.get('theme_dark') || site.spec.settings.theme_dark ? 'dark-theme' : 'light-theme'
+      this.site.storage.get('theme_dark') || this.site.spec.settings.theme_dark ? 'dark-theme' : 'light-theme'
     this.content_bounds.top = this.navbar.height
     this.init_variable_info()
     this.init_filter()
@@ -342,6 +399,82 @@ export class Page {
     a.innerText = 'source'
     a.target = '_blank'
     a.rel = 'noreferrer'
+  }
+  show_variable_info(e: MouseEvent) {
+    const v = this.site.dataviews[this.site.defaults.view],
+      name = this.site.valueOf((e.target && (e.target as HTMLButtonElement).dataset.variable) || v.y) as string,
+      info = this.site.data.variable_info[name] as MeasureInfo
+    ;(this.modal.info.header.firstElementChild as HTMLElement).innerText = info.short_name
+    this.modal.info.title.innerText = info.long_name
+    set_description(this.modal.info.description, info)
+    ;(this.modal.info.name.lastElementChild as HTMLElement).innerText = name
+    ;(this.modal.info.type.lastElementChild as HTMLElement).innerText =
+      info.unit || info.aggregation_method || info.type || ''
+    if (info.sources && info.sources.length) {
+      this.modal.info.sources.lastElementChild.innerHTML = ''
+      this.modal.info.sources.classList.remove('hidden')
+      info.sources.forEach(s => {
+        this.modal.info.sources.lastElementChild.appendChild(make_variable_source(s))
+      })
+    } else this.modal.info.sources.classList.add('hidden')
+    if (info.citations && info.citations.length) {
+      this.modal.info.references.lastElementChild.innerHTML = ''
+      this.modal.info.references.classList.remove('hidden')
+      if ('string' === typeof info.citations) info.citations = [info.citations]
+      if ('references' in this.site.data) {
+        delete this.site.data.variable_info._references
+        delete this.site.data.references
+      }
+      if (!('_references' in this.site.data.variable_info)) {
+        const r: ReferencesParsed = {}
+        this.site.data.variable_info._references_parsed = r
+        Object.keys(this.site.data.info).forEach(d => {
+          const m = this.site.data.info[d]
+          if ('_references' in m) {
+            Object.keys(m._references).forEach(t => {
+              if (!(t in r))
+                r[t] = {
+                  reference: m._references[t],
+                  element: make_variable_reference(m._references[t]),
+                }
+            })
+          }
+        })
+      }
+      const r = this.site.data.variable_info._references_parsed
+      info.citations.forEach(c => {
+        if (c in r) this.modal.info.references.lastElementChild.appendChild(r[c].element)
+      })
+    } else this.modal.info.references.classList.add('hidden')
+    if ('origin' in info) {
+      this.modal.info.origin.classList.remove('hidden')
+      const l = this.modal.info.origin.lastElementChild
+      l.innerHTML = ''
+      if ('string' === typeof info.origin) info.origin = [info.origin]
+      info.origin.forEach(url => {
+        const c = document.createElement('li'),
+          repo = patterns.repo.exec(url)[1]
+        let link = document.createElement('a')
+        link.href = 'https://github.com/' + repo
+        link.target = '_blank'
+        link.rel = 'noreferrer'
+        link.innerText = repo
+        c.appendChild(link)
+        c.appendChild(document.createElement('span'))
+        ;(c.lastElementChild as HTMLElement).innerText = ' / '
+        link = document.createElement('a')
+        link.href = url
+        link.target = '_blank'
+        link.rel = 'noreferrer'
+        link.innerText = url.replace(patterns.basename, '')
+        c.appendChild(link)
+        l.appendChild(c)
+      })
+    } else this.modal.info.origin.classList.add('hidden')
+    if (info.source_file) {
+      this.modal.info.source_file.classList.remove('hidden')
+      ;(this.modal.info.source_file.firstElementChild as HTMLLinkElement).href = info.source_file
+    } else this.modal.info.source_file.classList.add('hidden')
   }
   init_filter() {
     // set up filter's time range

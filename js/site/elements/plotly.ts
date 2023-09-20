@@ -1,4 +1,4 @@
-import BaseInput from './index'
+import {BaseInput} from './index'
 import Community from '../index'
 import {SitePlotly} from '../../types'
 

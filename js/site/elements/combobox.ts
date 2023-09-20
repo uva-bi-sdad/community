@@ -1,4 +1,4 @@
-import BaseInput from './index'
+import {BaseInput} from './index'
 import Community from '../index'
 import {Generic, ObjectIndex, OptionSets, ResourceField} from '../../types'
 import {patterns} from '../patterns'
