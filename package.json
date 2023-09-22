@@ -30,6 +30,7 @@
     "@rollup/plugin-terser": "latest",
     "@rollup/plugin-typescript": "latest",
     "@types/jest": "latest",
+    "@types/leaflet": "latest",
     "csso": "latest",
     "jest": "latest",
     "jest-environment-jsdom": "latest",

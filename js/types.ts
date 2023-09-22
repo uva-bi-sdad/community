@@ -1,11 +1,13 @@
-import Community from './site/index'
-import {ComboboxSpec} from './site/elements/combobox'
-import {OutputPlotly} from './site/elements/plotly'
-import {Tutorials} from './site/tutorials'
-import {NumberSpec} from './site/elements/number'
-import {DataViewSpec, SiteDataView} from './site/elements/dataview'
-import {SiteElement} from './site/elements/index'
-import {SelectSpec} from './site/elements/select'
+import type Community from './site/index'
+import type {Combobox, ComboboxSpec} from './site/elements/combobox'
+import type {OutputPlotly} from './site/elements/plotly'
+import type {Tutorials} from './site/tutorials'
+import type {NumberSpec} from './site/elements/number'
+import type {DataViewSpec, SiteDataView} from './site/elements/dataview'
+import type {SiteElement} from './site/elements/index'
+import type {Select, SelectSpec} from './site/elements/select'
+import type {MapLayer, MapSpec, MeasureLayer} from './site/elements/map'
+import type {FeatureGroup, GeoJSONEvent, GeoJSONOptions, Layer} from 'leaflet'
 
 export type Generic = {[index: string]: boolean | string | number}
 export type ObjectIndex = {[index: string]: number}
@@ -117,6 +119,14 @@ export interface Summary {
 
 type Summaries = {[index: string]: Summary}
 
+export type MeasureSource = {
+  name: string
+  url: string
+  date_accessed?: string
+  location?: string
+  location_url?: string
+}
+
 export type MeasureInfo = {
   full_name?: string
   type?: string
@@ -137,6 +147,7 @@ export type MeasureInfo = {
   variants?: string[] | MeasureInfos
   origin?: string[]
   source_file?: string
+  layer?: MeasureLayer
 }
 
 export type ReferencesParsed = {[index: string]: {reference: Reference; element: HTMLLIElement}}
@@ -212,7 +223,14 @@ export type Entity = {
   data: EntityData
   features: Features
   get_value: Function
-  layer: {[index: string]: Object}
+  layer: {
+    [index: string]:
+      | FeatureGroup
+      | {
+          [index: string]: FeatureGroup | boolean
+          has_time: boolean
+        }
+  }
   relations: Relations
   time: Time
   variables: Variables
@@ -510,41 +528,6 @@ export type SitePlotly = {
   u: OutputPlotly
 }
 
-type MapLayer = {
-  name: string
-  url: string
-  id_property: string
-  time?: number
-  retrieved?: boolean
-  property_summaries?: {
-    [index: string]: [number, number, number]
-  }
-}
-
-export type MeasureSource = {
-  name: string
-  url: string
-  date_accessed?: string
-  location?: string
-  location_url?: string
-}
-
-export type SiteMap = {
-  shapes: MapLayer[]
-  overlays?: {
-    variable: string
-    source?: MeasureSource[]
-    options: {[index: string]: boolean | number | string | (number | string)[]}
-    tiles: {
-      [index: string]: {
-        url: string
-        options?: {[index: string]: any}
-      }
-    }
-  }
-  u: SiteElement
-}
-
 type SiteLegend = {
   palette: string
   subto: string | string[]
@@ -573,8 +556,8 @@ export type SiteSpec = {
   datatable?: {[index: string]: any}
   plotly?: {[index: string]: SitePlotly}
   map?: {
-    [index: string]: SiteMap | string[]
-    _raw?: string[]
+    [index: string]: MapSpec | {[index: string]: string}
+    _raw?: {[index: string]: string}
   }
   legend?: {[index: string]: SiteLegend}
   credits?: {[index: string]: SiteCredits}
@@ -587,7 +570,7 @@ export type SiteSpec = {
 export type MapInfo = {
   queue: {[index: string]: MapLayer}
   waiting: {[index: string]: string[]}
-  overlay_property_selectors: SiteElement[]
+  overlay_property_selectors: (Select | Combobox)[]
 }
 
 export type OptionSets = {

@@ -5,6 +5,7 @@ import {tooltip_clear, tooltip_trigger} from '../utils'
 import {InputButton} from './button'
 import {Combobox} from './combobox'
 import {OutputInfo} from './info'
+import {OutputMap} from './map'
 import {InputNumber} from './number'
 import {Select} from './select'
 import {Virtual} from './virtual'
@@ -12,8 +13,8 @@ import {Virtual} from './virtual'
 export type ElementTypes = 'number' | 'button' | 'select' | 'combobox' | 'plotly' | 'virtual'
 export type SiteElement = Combobox | Select | InputNumber | InputButton | Virtual
 export type RegisteredElements = {[index: string]: SiteElement}
-export type OutputTypes = 'info'
-export type SiteOutputs = OutputInfo
+export type OutputTypes = 'info' | 'map'
+export type SiteOutputs = OutputInfo | OutputMap
 export type RegisteredOutputs = {[index: string]: SiteOutputs}
 
 export abstract class BaseInput {
@@ -104,7 +105,8 @@ export abstract class BaseOutput {
   x?: string
   y?: string
   reference_options: Generic = {}
-  options: {[index: string]: any} = {}
+  spec: {[index: string]: any} = {}
+  deferred = false
   constructor(e: HTMLElement, site: Community) {
     this.e = e
     this.tab = 'tabpanel' === e.parentElement.getAttribute('role') ? e.parentElement : void 0
@@ -115,7 +117,7 @@ export abstract class BaseOutput {
     this.type = e.dataset.autotype as OutputTypes
     if (this.type in site.spec) {
       const spec = site.spec[this.type as keyof SiteSpec] as SiteElement
-      if (this.id in spec) this.options = (spec as any)[this.id]
+      if (this.id in spec) this.spec = (spec as any)[this.id]
     }
   }
 }

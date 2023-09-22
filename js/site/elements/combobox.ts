@@ -160,7 +160,6 @@ export class Combobox extends BaseInput {
       }.bind(this)
     )
   }
-  init() {}
   set_current = set_current_options
   filterer() {
     const q = this.input_element.value.toLowerCase()

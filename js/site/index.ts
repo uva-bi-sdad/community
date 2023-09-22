@@ -1,7 +1,7 @@
 import DataHandler from '../data_handler/index'
 import {Conditionals, DataSets, Generic, MapInfo, Query, SiteCondition, SiteRule, SiteSpec} from '../types'
 import {defaults} from './defaults'
-import {BaseInput, RegisteredElements, RegisteredOutputs, SiteElement} from './elements/index'
+import {BaseInput, RegisteredElements, RegisteredOutputs, SiteElement, SiteOutputs} from './elements/index'
 import {GlobalView} from './global_view'
 import {patterns} from './patterns'
 import {storage} from './storage'
@@ -17,13 +17,14 @@ import {Page} from './page'
 import {Virtual} from './elements/virtual'
 import {InputButton} from './elements/button'
 import {OutputInfo} from './elements/info'
+import {OutputMap} from './elements/map'
 
 type Queue = {
   timeout: NodeJS.Timer | number
   elements: Map<string, boolean>
 }
 
-type Dependency = {
+export type Dependency = {
   id: string
   type: 'rule' | 'update' | 'filter' | keyof Conditionals | keyof BaseInput
   conditional?: keyof Conditionals
@@ -48,6 +49,7 @@ const elements = {
 
 const outputs = {
   info: OutputInfo,
+  map: OutputMap,
 }
 
 export default class Community {
@@ -61,6 +63,7 @@ export default class Community {
   view: GlobalView
   subs: Subscriptions
   registered_elements: Map<string, SiteElement> = new Map()
+  registered_outputs: Map<string, SiteOutputs> = new Map()
   defaults = defaults
   dataviews: {[index: string]: SiteDataView} = {}
   inputs: RegisteredElements = {}
@@ -143,9 +146,7 @@ export default class Community {
       this.spec.dataviews = {}
       this.spec.dataviews[this.defaults.dataview] = {}
     }
-    if (!this.spec.map) this.spec.map = {}
-    if (!this.spec.map._overlay_property_selectors) this.spec.map._overlay_property_selectors = []
-    this.subs = new Subscriptions(this.inputs)
+    if (!this.maps.overlay_property_selectors) this.maps.overlay_property_selectors = []
     this.view = new GlobalView(this)
     new Page(this)
     document.querySelectorAll('.auto-input').forEach((e: HTMLElement) => {
@@ -155,9 +156,11 @@ export default class Community {
         this.inputs[u.id] = u
       }
     })
+    this.subs = new Subscriptions(this.inputs)
     document.querySelectorAll('.auto-output').forEach((e: HTMLElement) => {
       if (e.dataset.autotype in outputs) {
         const u = new outputs[e.dataset.autotype as keyof typeof outputs](e, this)
+        this.registered_outputs.set(u.id, u)
         this.outputs[u.id] = u
       }
     })
@@ -435,9 +438,13 @@ export default class Community {
       }
       if (!o.view) o.view = defaults.dataview
       const v = this.url_options[o.id] || storage.get(o.id.replace(patterns.settings, ''))
+      if ('init' in o) o.init()
       if (v) {
         o.set(v as string)
       } else o.reset && o.reset()
+    })
+    this.registered_outputs.forEach(o => {
+      if ('init' in o) o.init()
     })
   }
   global_update() {
@@ -526,9 +533,12 @@ export default class Community {
             this.dataviews[di.id].update()
           } else if (di.conditional) {
             this.conditionals[di.conditional](di.id in this.dataviews ? this.dataviews[di.id] : this.inputs[di.id], c)
-          } else {
-            const fun = this.inputs[di.id][di.type as keyof BaseInput]
-            if ('function' === typeof fun) (fun as Function)()
+          } else if (di.id in this.inputs) {
+            const du = this.inputs[di.id]
+            di.type in du && (du[di.type as keyof BaseInput] as Function)()
+          } else if (di.id in this.outputs) {
+            const du = this.outputs[di.id]
+            di.type in du && du[di.type as 'update']()
           }
         })
         r.forEach(i => {

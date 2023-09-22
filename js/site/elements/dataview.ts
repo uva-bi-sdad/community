@@ -151,7 +151,7 @@ export class SiteDataView {
       })
     }
     this.compile()
-    this.reparse()
+    // this.reparse()
   }
   value() {
     if (this.get) {

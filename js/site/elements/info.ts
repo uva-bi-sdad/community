@@ -3,8 +3,7 @@ import Community from '../index'
 import {filter_components} from '../static_refs'
 import {make_summary_table, make_variable_source} from '../utils'
 import {value_types} from '../value_types'
-import {SiteDataView} from './dataview'
-import {BaseOutput, SiteElement, SiteOutputs} from './index'
+import {BaseOutput, SiteOutputs} from './index'
 
 type InfoSpec = {
   title?: string
@@ -41,10 +40,9 @@ export class InfoPart {
     this.parent = parent
     this.text = text
     if ('value' === text) {
-      this.parsed.data = parent.options.variable
+      this.parsed.data = parent.spec.variable
     } else if ('summary' === text) {
-      parent.options.show_summary = true
-      // this.parsed.summary = make_summary_table(parent.site.data.format_value, this.parent.e)
+      parent.spec.show_summary = true
     } else if ('filter' === text) {
       const e = document.createElement('table')
       e.className = 'info-filter'
@@ -67,7 +65,7 @@ export class InfoPart {
         } else if ('data' in this.parsed) {
           if ('value' === this.text) {
             this.parsed.data = this.parent.site.valueOf(
-              this.parent.options.variable || caller.color || caller.y || this.parent.site.dataviews[this.parent.view].y
+              this.parent.spec.variable || caller.color || caller.y || this.parent.site.dataviews[this.parent.view].y
             ) as string
           } else if (this.text in this.parent.site.inputs)
             this.parsed.data = this.parent.site.valueOf(this.text) as string
@@ -120,9 +118,9 @@ export class OutputInfo extends BaseOutput {
   queue: number | NodeJS.Timeout
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
-    this.has_default = this.options.default && (!!this.options.default.title || !!this.options.default.body)
+    this.has_default = this.spec.default && (!!this.spec.default.title || !!this.spec.default.body)
     this.site.subs.add(this.view, this)
-    if (this.options.floating) {
+    if (this.spec.floating) {
       document.body.appendChild(this.e)
       this.e.classList.add('hidden')
       document.addEventListener(
@@ -136,10 +134,10 @@ export class OutputInfo extends BaseOutput {
         }.bind(this)
       )
     }
-    if (this.options.title) {
-      this.parts.title = new InfoPart(this, this.options.title)
+    if (this.spec.title) {
+      this.parts.title = new InfoPart(this, this.spec.title)
       if (
-        this.options.variable_info &&
+        this.spec.variable_info &&
         'variables' in this.parts.title.parsed &&
         this.site.patterns.measure_name.test(this.parts.title.parsed.variables)
       ) {
@@ -156,9 +154,9 @@ export class OutputInfo extends BaseOutput {
         this.parts.title.base.className =
         this.parts.title.default.className =
           'info-title hidden'
-      if (this.has_default && this.options.default.title) {
+      if (this.has_default && this.spec.default.title) {
         this.e.appendChild(this.parts.title.default)
-        this.parts.title.default.innerText = this.options.default.title
+        this.parts.title.default.innerText = this.spec.default.title
       }
       if (!this.parts.title.ref)
         (this.parts.title.base.firstElementChild as HTMLElement).innerText = this.parts.title.get()
@@ -167,7 +165,7 @@ export class OutputInfo extends BaseOutput {
       this.parts.title.base.classList.add('hidden')
       this.parts.title.temp.classList.add('hidden')
     }
-    if (this.options.body || (this.has_default && this.options.default.body)) {
+    if (this.spec.body || (this.has_default && this.spec.default.body)) {
       this.parts.body = {
         base: document.createElement('div'),
         temp: document.createElement('div'),
@@ -178,12 +176,12 @@ export class OutputInfo extends BaseOutput {
         this.parts.body.base.className =
         this.parts.body.default.className =
           'info-body hidden'
-      if (this.has_default && this.options.default.body) this.parts.body.default.innerText = this.options.default.body
+      if (this.has_default && this.spec.default.body) this.parts.body.default.innerText = this.spec.default.body
       let h = 0,
         base = document.createElement('div'),
         temp = document.createElement('div')
-      this.options.body &&
-        (this.options.body as {name: string; value: string; style: string}[]).forEach((op, i) => {
+      this.spec.body &&
+        (this.spec.body as {name: string; value: string; style: string}[]).forEach((op, i) => {
           const p = {
             name: new InfoPart(this, op.name),
             value: new InfoPart(this, op.value),
@@ -197,7 +195,7 @@ export class OutputInfo extends BaseOutput {
           h += 24 + ('stack' === op.style ? 24 : 0)
           if (p.name) {
             if (
-              this.options.variable_info &&
+              this.spec.variable_info &&
               'variables' in p.name.parsed &&
               this.site.patterns.measure_name.test(p.name.parsed.variables)
             ) {
@@ -231,10 +229,9 @@ export class OutputInfo extends BaseOutput {
       this.e.appendChild(this.parts.body.default)
       this.e.appendChild(this.parts.body.temp)
     }
-    this.update()
   }
   init() {
-    if (this.options.title && 'summary' === this.options.title) {
+    if (this.spec.title && 'summary' === this.spec.title) {
       this.parts.title.parsed.summary = make_summary_table(this.site.data.format_value, this.e)
     }
     if (this.parts.body && this.parts.body.rows)
@@ -244,11 +241,12 @@ export class OutputInfo extends BaseOutput {
         if (r.value && 'summary' === r.value.text)
           r.value.parsed.summary = make_summary_table(this.site.data.format_value, this.e)
       })
+    this.update()
   }
   show(e: Entity, u: SiteOutputs) {
     this.update(e, u)
     this.showing = true
-    if (this.options.floating) this.e.classList.remove('hidden')
+    if (this.spec.floating) this.e.classList.remove('hidden')
     if (this.parts.title) {
       if (this.selection) {
         this.parts.title.base.classList.add('hidden')
@@ -264,7 +262,7 @@ export class OutputInfo extends BaseOutput {
   }
   revert() {
     this.showing = false
-    if (this.options.floating) {
+    if (this.spec.floating) {
       this.e.classList.add('hidden')
     } else {
       if (this.parts.title) {
@@ -285,7 +283,7 @@ export class OutputInfo extends BaseOutput {
     const v = this.site.dataviews[this.view]
     if (!v) return
     const y = this.site.inputs[v.time_agg]
-    this.v = this.site.valueOf(this.options.variable || (caller && (caller.color || caller.y)) || v.y) as string
+    this.v = this.site.valueOf(this.spec.variable || (caller && (caller.color || caller.y)) || v.y) as string
     this.dataset = v.get.dataset()
     if (y && !(this.dataset in this.site.data.meta.times)) {
       if (!(this.id in this.site.data.data_queue[this.dataset]))
@@ -295,18 +293,18 @@ export class OutputInfo extends BaseOutput {
     this.time_agg = y ? (y.value() as number) - this.site.data.meta.times[this.dataset].range[0] : 0
     const time_range = this.v in this.site.data.variables && this.site.data.variables[this.v].time_range[this.dataset]
     this.time = time_range ? this.time_agg - time_range[0] : 0
-    if (this.options.show_summary) {
+    if (this.spec.show_summary) {
       this.var = this.v && (await this.site.data.get_variable(this.v, this.site.dataviews[this.view]))
       this.summary = this.view in this.var.views && this.var.views[this.view].summaries[this.dataset]
     }
     if (!this.processed) {
       this.processed = true
-      if (!this.options.floating) {
+      if (!this.spec.floating) {
         this.site.add_dependency(this.view, {type: 'update', id: this.id})
         if (v.y in this.site.inputs) this.site.add_dependency(v.y, {type: 'update', id: this.id})
         if (y) this.site.add_dependency(v.time_agg as string, {type: 'update', id: this.id})
-        if (this.options.variable in this.site.inputs)
-          this.site.add_dependency(this.options.variable, {type: 'update', id: this.id})
+        if (this.spec.variable in this.site.inputs)
+          this.site.add_dependency(this.spec.variable, {type: 'update', id: this.id})
       }
       if (this.parts.body)
         this.parts.body.rows.forEach(p => {
@@ -348,7 +346,7 @@ export class OutputInfo extends BaseOutput {
           }
         })
       }
-    } else if (!this.options.floating) {
+    } else if (!this.spec.floating) {
       if ((this.queue as number) > 0) clearTimeout(this.queue)
       this.queue = -1
       if (!pass) {
@@ -384,7 +382,7 @@ export class OutputInfo extends BaseOutput {
           ;(this.parts.title.base.firstElementChild as HTMLElement).innerText = this.parts.title.get(entity, caller)
         }
         if (this.parts.body) {
-          if (!this.options.subto) this.parts.body.base.classList.remove('hidden')
+          if (!this.spec.subto) this.parts.body.base.classList.remove('hidden')
           this.parts.body.rows.forEach(p => {
             if ('summary' in p.value.parsed) {
               this.fill_summary_table(p.value.parsed.summary, this.summary, this.time)
