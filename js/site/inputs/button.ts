@@ -1,9 +1,7 @@
 import {BaseInput} from './index'
-import Community from '../index'
+import type Community from '../index'
 import {patterns} from '../patterns'
-import {Generic} from '../../types'
-
-export type NumberSpec = {}
+import type {Generic} from '../../types'
 
 export class InputButton extends BaseInput {
   type: 'button'

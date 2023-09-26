@@ -1,9 +1,19 @@
 import DataHandler from '../../data_handler/index'
-import {SiteCondition} from '../../types'
-import Community from '../index'
+import type {Generic, SiteCondition} from '../../types'
+import type Community from '../index'
 import {BaseInput} from './index'
 
-export class Virtual extends BaseInput {
+export type VirtualSpec = {
+  id: string
+  states: {
+    condition: SiteCondition[]
+    value: string
+  }[]
+  default: string
+  display: Generic
+}
+
+export class InputVirtual extends BaseInput {
   type: 'virtual'
   states: {
     condition: SiteCondition[]
@@ -11,16 +21,16 @@ export class Virtual extends BaseInput {
   }[] = []
   source: string | number
   values: (string | number)[] = []
-  constructor(site: Community) {
-    super(document.createElement('input'), site)
+  constructor(spec: VirtualSpec, site: Community) {
+    const e = document.createElement('input')
+    e.id = spec.id
+    super(e, site)
+    this.settings = spec
     if (this.settings.source) {
       this.source = this.default = this.settings.source
     }
     if (this.source) this.values.push(this.source)
-    if (this.settings.id) this.id = this.settings.id
-    if (this.settings.states) this.id = this.settings.states
-  }
-  init() {
+    if (this.settings.states) this.states = this.settings.states
     const p: {[index: string]: {type: 'update'; id: string}} = {}
     this.states.forEach(si => {
       this.values.push(si.value)
@@ -29,6 +39,8 @@ export class Virtual extends BaseInput {
         this.site.add_dependency(c.id, p[c.id])
       })
     })
+  }
+  init() {
     this.values.forEach(id => {
       if ('string' === typeof id && id in this.site.inputs) this.site.add_dependency(id, {type: 'update', id: this.id})
     })

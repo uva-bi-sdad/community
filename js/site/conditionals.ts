@@ -1,12 +1,14 @@
-import Community from './index'
+import type Community from './index'
 import DataHandler from '../data_handler/index'
-import {SiteMap} from '../types'
-import {BaseInput} from './elements/index'
-import {Combobox} from './elements/combobox'
-import {InputNumber} from './elements/number'
+import type {BaseInput} from './inputs/index'
+import type {Combobox} from './inputs/combobox'
+import type {InputNumber} from './inputs/number'
 import {tooltip_icon_rule} from './static_refs'
 import {fill_ids_options, fill_levels_options, fill_variables_options, toggle_input} from './utils'
-import {SiteDataView} from './elements/dataview'
+import type {SiteDataView} from './dataview'
+import type {OutputInfo} from './outputs/info'
+import type {OutputPlotly} from './outputs/plotly'
+import type {OutputMap} from './outputs/map'
 
 export function setting(this: Community, u: BaseInput) {
   const current = this.spec.settings[u.setting],
@@ -18,16 +20,16 @@ export function setting(this: Community, u: BaseInput) {
       v
         ? document.body.classList.replace('light-theme', 'dark-theme')
         : document.body.classList.replace('dark-theme', 'light-theme')
-      if (this.spec.plotly) Object.keys(this.spec.plotly).forEach(k => this.spec.plotly[k].u.update_theme())
+      if (this.spec.plotly) Object.keys(this.spec.plotly).forEach(k => (this.outputs[k] as OutputPlotly).update_theme())
       if (this.spec.map)
         Object.keys(this.spec.map).forEach(k => {
-          const u = (this.spec.map[k] as SiteMap).u
-          // if (u && theme in u.tiles) {
-          //   Object.keys(u.tiles).forEach(l => {
-          //     if (theme !== l) u.tiles[l].removeFrom(u.map)
-          //   })
-          //   u.tiles[theme].addTo(u.map)
-          // }
+          const u = this.outputs[k] as OutputMap
+          if (u && theme in u.tiles) {
+            Object.keys(u.tiles).forEach(l => {
+              if (theme !== l) u.tiles[l].removeFrom(u.map)
+            })
+            u.tiles[theme].addTo(u.map)
+          }
         })
     } else if ('hide_url_parameters' === u.setting) {
       window.history.replaceState(
@@ -42,13 +44,13 @@ export function setting(this: Community, u: BaseInput) {
     } else if ('map_overlay' === u.setting) {
       Object.keys(this.spec.map).forEach(id => {
         if ('_' !== id[0]) {
-          const mu = (this.spec.map[id] as SiteMap).u
-          // if (v) {
-          //   mu.update()
-          // } else {
-          //   mu.overlay.clearLayers()
-          //   mu.overlay_control.remove()
-          // }
+          const mu = this.outputs[id] as OutputMap
+          if (v) {
+            mu.update()
+          } else {
+            mu.overlay.clearLayers()
+            mu.overlay_control.remove()
+          }
         }
       })
     } else if ('tracking' === u.setting) {
@@ -231,7 +233,11 @@ export function time_filters(this: Community, u: SiteDataView) {
     if (c)
       c.forEach(ci => {
         if ('update' === ci.type) {
-          ;(this.inputs[ci.id] as InputNumber).update()
+          if (ci.id in this.inputs) {
+            ;(this.inputs[ci.id] as InputNumber).update()
+          } else {
+            ;(this.outputs[ci.id] as OutputInfo).update()
+          }
         } else if (ci.type in this.conditionals) {
           this.conditionals[ci.type as keyof typeof this.conditionals](this.inputs[ci.id], u)
         }

@@ -1,8 +1,8 @@
-import DataHandler from '../../data_handler/index'
-import {Entities, Entity, Filter, Generic, VariableFilterParsed} from '../../types'
-import {defaults} from '../defaults'
-import Community from '../index'
-import {component_fun} from '../time_funs'
+import DataHandler from '../data_handler/index'
+import type {Entities, Entity, Filter, Generic, VariableFilterParsed} from '../types'
+import {defaults} from './defaults'
+import Community from './index'
+import {component_fun} from './time_funs'
 
 export type DataViewSpec = {
   palette?: string
@@ -17,7 +17,7 @@ export type DataViewSpec = {
 
 export type DataViewParsed = {
   dataset: string
-  ids: EntitySelection
+  ids: EntitySelection | false
   features: string
   variables: string
   time_filters: string
@@ -61,7 +61,7 @@ export class SiteDataView {
   get: {
     dataset: () => string
     single_id: () => string
-    ids: () => EntitySelection
+    ids: () => EntitySelection | false
     features: () => string
     variables: () => string
     time_filters: () => string
@@ -75,7 +75,7 @@ export class SiteDataView {
   site: Community
   parsed: DataViewParsed = {
     dataset: '',
-    ids: {},
+    ids: false,
     features: '',
     variables: '',
     time_filters: '',
@@ -289,10 +289,10 @@ export class SiteDataView {
           ids[id] = true
           if (e && e.relations) Object.keys(e.relations.children).forEach(k => (ids[k] = true))
           return ids
-        } else if (this.site.view.entities.size) {
+        } else if (this.site.view.selected.length) {
           return this.site.view.selection
         }
-        return {}
+        return false
       },
       features: () => {
         let s = ''
@@ -337,7 +337,7 @@ export class SiteDataView {
           for (k in this.parsed.feature_values) {
             if (k in this.parsed.feature_values) {
               v = this.parsed.feature_values[k]
-              pass = DataHandler.checks[v.operator](this.value, this.site.valueOf(e.features[k]))
+              pass = DataHandler.checks[v.operator](v.value, this.site.valueOf(e.features[k]))
               if (!pass) break
             }
           }
@@ -362,7 +362,7 @@ export class SiteDataView {
       },
     }
   }
-  ids_check(a: EntitySelection, b: string) {
+  ids_check(a: EntitySelection | false, b: string) {
     return !a || b in a
   }
   check(e: Entity) {
@@ -399,14 +399,13 @@ export class SiteDataView {
     if (this.palette) this.parsed.palette = this.site.valueOf(this.palette) as string
     if (this.features) {
       this.parsed.feature_values = {}
-      for (const k in this.features)
-        if (k in this.features) {
-          const value = this.site.valueOf(this.features[k]) as string | string[]
-          this.parsed.feature_values[k] = {
-            value: value,
-            operator: 'string' === typeof value ? 'equals' : 'includes',
-          }
+      Object.keys(this.features).forEach(k => {
+        const value = this.site.valueOf(this.features[k]) as string | string[]
+        this.parsed.feature_values[k] = {
+          value: value,
+          operator: 'string' === typeof value ? 'equals' : 'includes',
         }
+      })
       this.parsed.features = this.get.features()
     } else this.parsed.features = ''
     this.parsed.variable_values.clear()

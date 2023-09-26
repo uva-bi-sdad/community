@@ -1,4 +1,4 @@
-import {RegisteredElements, SiteElement} from './elements/index'
+import type {RegisteredInputs, SiteInputs} from './inputs/index'
 import {patterns} from './patterns'
 
 type Actions = string[] | {[index: string]: string}
@@ -27,7 +27,7 @@ export type Tutorials = {[index: string]: Tutorial}
 
 export class TutorialManager {
   tutorials: Tutorials
-  site_elements: RegisteredElements
+  site_elements: RegisteredInputs
   container = document.createElement('div')
   backdrop = document.createElement('div')
   highlight = document.createElement('div')
@@ -45,9 +45,9 @@ export class TutorialManager {
   current_step = 0
   current_time = 0
   current_element: HTMLElement
-  current_site_element: SiteElement
+  current_site_element: SiteInputs
   site_reset: Function
-  constructor(tutorials: Tutorials, elements?: RegisteredElements, resetter?: Function) {
+  constructor(tutorials: Tutorials, elements?: RegisteredInputs, resetter?: Function) {
     this.tutorials = tutorials
     this.site_elements = elements || {}
     this.site_reset = resetter || (() => {})

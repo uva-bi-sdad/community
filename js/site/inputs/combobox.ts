@@ -1,9 +1,9 @@
 import {BaseInput} from './index'
-import Community from '../index'
-import {Generic, ObjectIndex, OptionSets, ResourceField} from '../../types'
-import {patterns} from '../patterns'
+import type Community from '../index'
+import type {Generic, ObjectIndex, OptionSets, ResourceField} from '../../types'
 import {keymap} from '../static_refs'
 import {options_filter, set_current_options} from '../common_methods'
+import {patterns} from '../patterns'
 
 export type ComboboxSpec = {
   strict?: boolean
@@ -15,7 +15,7 @@ export type ComboboxSpec = {
   filters?: Generic
 }
 
-export class Combobox extends BaseInput {
+export class InputCombobox extends BaseInput {
   type: 'combobox'
   hover_index = -1
   cleared_selection = ''
@@ -69,7 +69,7 @@ export class Combobox extends BaseInput {
     if (2 === this.e.childElementCount) {
       this.e.lastElementChild.addEventListener(
         'click',
-        function (this: Combobox) {
+        function (this: InputCombobox) {
           if (!this.e.classList.contains('locked')) {
             this.cleared_selection = ''
             this.set([])
@@ -80,13 +80,13 @@ export class Combobox extends BaseInput {
     }
     this.input_element.addEventListener(
       'focus',
-      function (this: Combobox) {
+      function (this: InputCombobox) {
         this.e.classList.add('focused')
       }.bind(this)
     )
     this.input_element.addEventListener(
       'blur',
-      function (this: Combobox) {
+      function (this: InputCombobox) {
         this.e.classList.remove('focused')
       }.bind(this)
     )
@@ -109,7 +109,7 @@ export class Combobox extends BaseInput {
     }
     this.input_element.addEventListener(
       'keydown',
-      function (this: Combobox, e: KeyboardEvent) {
+      function (this: InputCombobox, e: KeyboardEvent) {
         const action = keymap[e.code as keyof typeof keymap]
         if (action) {
           if ('close' === action) {
@@ -148,7 +148,7 @@ export class Combobox extends BaseInput {
               } else {
                 this.set(this.hover_index)
               }
-            } else if (patterns.number.test(value)) {
+            } else if (this.site.patterns.number.test(value)) {
               this.set(+value + ('ArrowUp' === e.code ? 1 : -1))
             }
           }
@@ -240,7 +240,7 @@ export class Combobox extends BaseInput {
         if (this.site.spec.combobox)
           Object.keys(this.site.spec.combobox).forEach(id => {
             if (id !== this.id) {
-              const ou = this.site.inputs[id] as Combobox
+              const ou = this.site.inputs[id] as InputCombobox
               ou.expanded && ou.close()
             }
           })
@@ -383,7 +383,7 @@ export class Combobox extends BaseInput {
     lab.id = id + '-label'
     lab.innerText = label
     lab.setAttribute('for', id + '-input')
-    const u = new Combobox(main, site)
+    const u = new InputCombobox(main, site)
     site.inputs[id] = u
     let n = 0
     const opts: HTMLDivElement[] = []
@@ -465,7 +465,8 @@ export class Combobox extends BaseInput {
     }
     if (!Array.isArray(this.source)) this.source = []
     if (!Array.isArray(v)) {
-      if (this.settings.strict && 'string' === typeof v && !(v in this.values) && patterns.number.test(v)) v = +v
+      if (this.settings.strict && 'string' === typeof v && !(v in this.values) && this.site.patterns.number.test(v))
+        v = +v
       if ('number' !== this.value_type && 'number' === typeof v && this.options[v]) {
         v = this.options[v].dataset.value
       }

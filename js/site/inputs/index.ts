@@ -1,21 +1,40 @@
-import {Generic, LogicalObject, SiteRule, SiteSpec} from '../../types'
-import Community from '../index'
-import {patterns} from '../patterns'
 import {tooltip_clear, tooltip_trigger} from '../utils'
-import {InputButton} from './button'
-import {Combobox} from './combobox'
-import {OutputInfo} from './info'
-import {OutputMap} from './map'
-import {InputNumber} from './number'
-import {Select} from './select'
-import {Virtual} from './virtual'
+import type {LogicalObject, SiteRule, SiteSpec} from '../../types'
+import type Community from '../index'
+import type {InputButton} from './button'
+import type {InputButtonGroup} from './buttongroup'
+import type {InputCheckbox} from './checkbox'
+import type {InputCombobox} from './combobox'
+import type {InputNumber} from './number'
+import type {InputRadio} from './radio'
+import type {InputSelect} from './select'
+import type {InputVirtual} from './virtual'
+import type {InputSwitch} from './switch'
+import type {InputText} from './text'
 
-export type ElementTypes = 'number' | 'button' | 'select' | 'combobox' | 'plotly' | 'virtual'
-export type SiteElement = Combobox | Select | InputNumber | InputButton | Virtual
-export type RegisteredElements = {[index: string]: SiteElement}
-export type OutputTypes = 'info' | 'map'
-export type SiteOutputs = OutputInfo | OutputMap
-export type RegisteredOutputs = {[index: string]: SiteOutputs}
+export type ElementTypes =
+  | 'number'
+  | 'radio'
+  | 'switch'
+  | 'checkbox'
+  | 'button'
+  | 'text'
+  | 'buttongroup'
+  | 'select'
+  | 'combobox'
+  | 'virtual'
+export type SiteInputs =
+  | InputCombobox
+  | InputSelect
+  | InputNumber
+  | InputButton
+  | InputVirtual
+  | InputRadio
+  | InputText
+  | InputSwitch
+  | InputCheckbox
+  | InputButtonGroup
+export type RegisteredInputs = {[index: string]: SiteInputs}
 
 export abstract class BaseInput {
   type: ElementTypes
@@ -35,7 +54,7 @@ export abstract class BaseInput {
   dataset: string
   view: string
   note: string
-  current_index = -1
+  current_index: number | number[] = -1
   previous: boolean | string | number | (string | number)[] = ''
   state = ''
   setting?: string
@@ -56,7 +75,7 @@ export abstract class BaseInput {
     this.note = e.getAttribute('aria-description') || ''
     this.type = e.dataset.autotype as ElementTypes
     if (this.type in site.spec) {
-      const spec = site.spec[this.type as keyof SiteSpec] as SiteElement
+      const spec = site.spec[this.type as keyof SiteSpec] as SiteInputs
       if (this.id in spec) this.settings = (spec as any)[this.id]
     }
     if (e.parentElement)
@@ -77,7 +96,7 @@ export abstract class BaseInput {
         p.addEventListener('blur', tooltip_clear.bind(this))
       }
     }
-    if (patterns.number.test(this.default)) this.default = +this.default
+    if (site.patterns.number.test(this.default)) this.default = +this.default
   }
   value() {
     if (Array.isArray(this.source)) return this.source
@@ -89,35 +108,5 @@ export abstract class BaseInput {
   }
   reset() {
     this.set(this.site.valueOf(this.default))
-  }
-}
-
-export abstract class BaseOutput {
-  type: OutputTypes
-  input = false
-  site: Community
-  view: string
-  e: HTMLElement
-  tab?: HTMLElement
-  id: string
-  note: string
-  color?: string
-  x?: string
-  y?: string
-  reference_options: Generic = {}
-  spec: {[index: string]: any} = {}
-  deferred = false
-  constructor(e: HTMLElement, site: Community) {
-    this.e = e
-    this.tab = 'tabpanel' === e.parentElement.getAttribute('role') ? e.parentElement : void 0
-    this.site = site
-    this.view = e.dataset.view
-    this.id = e.id || 'ui' + site.page.elementCount++
-    this.note = e.getAttribute('aria-description') || ''
-    this.type = e.dataset.autotype as OutputTypes
-    if (this.type in site.spec) {
-      const spec = site.spec[this.type as keyof SiteSpec] as SiteElement
-      if (this.id in spec) this.spec = (spec as any)[this.id]
-    }
   }
 }

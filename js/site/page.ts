@@ -1,4 +1,4 @@
-import {
+import type {
   Filter,
   FilterParsed,
   MeasureInfo,
@@ -8,7 +8,7 @@ import {
   Summary,
   VariableFilterParsed,
 } from '../types'
-import {Combobox} from './elements/combobox'
+import {InputCombobox} from './inputs/combobox'
 import type Community from './index'
 import {patterns} from './patterns'
 import {filter_components} from './static_refs'
@@ -34,7 +34,7 @@ export interface FilterUI extends Modal {
   conditions: HTMLElement
   variable_filters: HTMLElement
   entity_filters: HTMLElement
-  entity_inputs: {[index: string]: Combobox}
+  entity_inputs: {[index: string]: InputCombobox}
   time_range: HTMLElement
 }
 
@@ -231,6 +231,8 @@ export class Page {
   tutorials?: TutorialManager
   constructor(site: Community) {
     this.site = site
+    this.render_credits = this.render_credits.bind(this)
+    this.show_variable_info = this.show_variable_info.bind(this)
     this.site.page = this
     this.load_screen = document.getElementById('load_screen')
     this.wrap = document.getElementById('site_wrap')
@@ -252,6 +254,7 @@ export class Page {
     this.content_bounds.top = this.navbar.height
     this.init_variable_info()
     this.init_filter()
+    document.querySelectorAll('[data-autotype=credits]').forEach(this.render_credits)
   }
   init() {
     this.panels.length && this.panels.forEach(this.init_panel)
@@ -267,7 +270,13 @@ export class Page {
     Object.keys(this.site.data.loaded)
       .reverse()
       .forEach(d => {
-        const u = Combobox.create(this.site, d, void 0, {search: true, multi: true, clearable: true}, 'filter.' + d),
+        const u = InputCombobox.create(
+            this.site,
+            d,
+            void 0,
+            {search: true, multi: true, clearable: true},
+            'filter.' + d
+          ),
           div = document.createElement('div')
         this.modal.filter.entity_inputs[d] = u
         this.modal.filter.entity_filters.lastElementChild.appendChild(div)
@@ -401,7 +410,7 @@ export class Page {
     a.rel = 'noreferrer'
   }
   show_variable_info(e: MouseEvent) {
-    const v = this.site.dataviews[this.site.defaults.view],
+    const v = this.site.dataviews[this.site.defaults.dataview],
       name = this.site.valueOf((e.target && (e.target as HTMLButtonElement).dataset.variable) || v.y) as string,
       info = this.site.data.variable_info[name] as MeasureInfo
     ;(this.modal.info.header.firstElementChild as HTMLElement).innerText = info.short_name
@@ -568,7 +577,7 @@ export class Page {
     div.appendChild((div = document.createElement('div')))
     div.className = 'col'
     div.appendChild((div = document.createElement('div')))
-    const filter_select = Combobox.create(
+    const filter_select = InputCombobox.create(
       this.site,
       'Add Variable Condition',
       void 0,
@@ -758,7 +767,7 @@ export class Page {
     label.innerText = 'Component'
     label.className = 'filter-label'
     label.id = f.id + '_component'
-    const comp_select = Combobox.create(this.site, 'component', filter_components.Time)
+    const comp_select = InputCombobox.create(this.site, 'component', filter_components.Time)
     comp_select.default = f.component
     comp_select.set(f.component)
     tr.lastElementChild.appendChild(comp_select.e.parentElement)
@@ -798,7 +807,7 @@ export class Page {
     label.innerText = 'Value'
     label.className = 'filter-label'
     label.id = f.id + '_value'
-    const value_select = Combobox.create(this.site, 'component', ['min', 'q1', 'median', 'mean', 'q3', 'max'])
+    const value_select = InputCombobox.create(this.site, 'component', ['min', 'q1', 'median', 'mean', 'q3', 'max'])
     value_select.value_type = 'number'
     value_select.default = f.value
     value_select.set(f.value)
@@ -809,7 +818,7 @@ export class Page {
     value_select.input_element.setAttribute('aria-labelledby', f.id + '_value')
     value_select.input_element.setAttribute('aria-describedby', f.id)
     value_select.listbox.setAttribute('aria-labelledby', f.id + '_value')
-    value_select.onchange = async function (this: Combobox, f: FilterParsed) {
+    value_select.onchange = async function (this: InputCombobox, f: FilterParsed) {
       f.value = this.value() as number | string
       if (this.site.patterns.number.test(f.value + '')) {
         f.value = +f.value
@@ -857,5 +866,40 @@ export class Page {
   }
   trigger_resize() {
     window.dispatchEvent(new Event('resize'))
+  }
+  render_credits(e: HTMLElement) {
+    const s = this.site.spec.credit_output && this.site.spec.credit_output[e.id],
+      exclude = (s && s.exclude) || [],
+      add = (s && s.add) || {},
+      credits = {...this.site.spec.credits, ...add}
+    e.appendChild(document.createElement('ul'))
+    Object.keys(credits).forEach(k => {
+      if (-1 === exclude.indexOf(k)) {
+        const c = credits[k],
+          li = document.createElement('li')
+        e.lastElementChild.appendChild(li)
+        if ('url' in c) {
+          const a = document.createElement('a')
+          li.appendChild(a)
+          a.href = c.url
+          a.target = '_blank'
+          a.rel = 'noreferrer'
+          a.innerText = c.name
+        } else {
+          li.innerText = c.name
+        }
+        if ('version' in c) {
+          const span = document.createElement('span')
+          li.appendChild(span)
+          span.className = 'version-tag'
+          span.innerText = c.version
+        }
+        if ('description' in c) {
+          const p = document.createElement('p')
+          li.parentElement.appendChild(p)
+          p.innerText = c.description
+        }
+      }
+    })
   }
 }

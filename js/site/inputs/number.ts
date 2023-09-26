@@ -1,7 +1,6 @@
 import {BaseInput} from './index'
-import Community from '../index'
-import {patterns} from '../patterns'
-import {LogicalObject} from '../../types'
+import type Community from '../index'
+import type {LogicalObject} from '../../types'
 
 export type NumberSpec = {}
 
@@ -77,8 +76,10 @@ export class InputNumber extends BaseInput {
     let d = view.get ? view.get.dataset() : (this.site.valueOf(this.dataset) as string),
       min = (this.site.valueOf(this.min) || view.time) as string | number | undefined,
       max = (this.site.valueOf(this.max) || view.time) as string | number | undefined
-    if ('string' === typeof min && patterns.minmax.test(min)) min = (this.site.inputs[this.min] as InputNumber).min
-    if ('string' === typeof max && patterns.minmax.test(max)) max = (this.site.inputs[this.max] as InputNumber).max
+    if ('string' === typeof min && this.site.patterns.minmax.test(min))
+      min = (this.site.inputs[this.min] as InputNumber).min
+    if ('string' === typeof max && this.site.patterns.minmax.test(max))
+      max = (this.site.inputs[this.max] as InputNumber).max
     this.parsed.min = isNaN(this.min_ref)
       ? 'undefined' === typeof min
         ? view.time_range.time[0]

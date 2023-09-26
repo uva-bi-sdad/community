@@ -1,6 +1,6 @@
 import type Community from './index'
-import {Entities, Entity, FilterParsed, LogicalObject} from '../types'
-import {DataViewParsed} from './elements/dataview'
+import type {Entities, Entity, FilterParsed, LogicalObject} from '../types'
+import type {DataViewParsed} from './dataview'
 
 export class GlobalView {
   site: Community

@@ -1,6 +1,6 @@
-import {MeasureInfo} from '../types'
-import {Combobox} from './elements/combobox'
-import {Select} from './elements/select'
+import type {MeasureInfo} from '../types'
+import type {Combobox} from './inputs/combobox'
+import type {Select} from './inputs/select'
 
 export function options_filter(this: Combobox | Select) {
   if (this.settings.filters) {

@@ -10,13 +10,14 @@ import type {
   Polygon,
 } from 'leaflet'
 import DataHandler from '../../data_handler/index'
-import {Entity, MeasureInfo, Summary} from '../../types'
+import type {Entity, Generic, MeasureInfo, Summary} from '../../types'
 import Community, {Dependency} from '../index'
-import {BaseOutput, SiteElement} from './index'
-import {SiteDataView} from './dataview'
+import {BaseOutput} from './index'
+import type {SiteDataView} from '../dataview'
 import {palettes} from '../palettes'
-import {InputNumber} from './number'
+import type {InputNumber} from '../inputs/number'
 import {fill_overlay_properties_options} from '../utils'
+import type {SiteInputs} from '../inputs/index'
 
 export type LayerSource = {
   name?: string
@@ -30,7 +31,7 @@ export type MapLayer = {
   name?: string
   url: string
   id_property?: string
-  time?: number
+  time?: number | string
   retrieved?: boolean
   processed?: boolean
   property_summaries?: {
@@ -75,7 +76,7 @@ type MapParsed = {
 export class OutputMap extends BaseOutput {
   time: string
   parsed: MapParsed = {}
-  clickto?: SiteElement
+  clickto?: SiteInputs
   layers: {[index: string]: FeatureGroup} = {}
   overlays: Overlay[] = []
   map: Map
@@ -92,16 +93,21 @@ export class OutputMap extends BaseOutput {
   triggers: {[index: string]: MeasureLayer} = {}
   vstate = ''
   cstate = ''
+  reference_options: Generic = {}
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
     this.queue_init = this.queue_init.bind(this)
     this.mouseover = this.mouseover.bind(this)
     this.mouseout = this.mouseout.bind(this)
     this.click = this.click.bind(this)
-    this.color = this.e.getAttribute('data-color')
-    const click_ref = this.e.getAttribute('data-click')
+    this.color = this.e.dataset.color
+    const click_ref = this.e.dataset.click
     if (click_ref in site.inputs) this.clickto = site.inputs[click_ref]
     this.options = this.spec.options
+    Object.keys(this.options).forEach(k => {
+      const opt = this.options[k]
+      if ('string' === typeof opt && opt in site.inputs) this.reference_options[k] = opt
+    })
     const dep: Dependency = {type: 'update', id: this.id},
       view = site.dataviews[this.view]
     if (view) {
@@ -227,7 +233,7 @@ export class OutputMap extends BaseOutput {
               this.site.data.variables[this.parsed.color].time_range[this.parsed.dataset][0] + this.parsed.time
             ]
           )
-          if (layer[time]) (layer[time] as FeatureGroup).setStyle(highlight_style)
+          if (layer[time]) (layer[time] as Polygon).setStyle(highlight_style)
         }
       } else if (layer.setStyle) {
         layer.setStyle(highlight_style)
@@ -249,7 +255,7 @@ export class OutputMap extends BaseOutput {
               this.site.data.variables[this.parsed.color].time_range[this.parsed.dataset][0] + this.parsed.time
             ]
           )
-          if (layer[time]) (layer[time] as FeatureGroup).setStyle(default_style)
+          if (layer[time]) (layer[time] as Polygon).setStyle(default_style)
         }
       } else {
         layer.setStyle(default_style)
@@ -279,7 +285,7 @@ export class OutputMap extends BaseOutput {
   click(e: LeafletEvent) {
     if (this.clickto) this.clickto.set(e.target.feature.properties[e.target.source.id_property])
   }
-  async update(entity?: Entity, caller?: SiteElement, pass?: boolean) {
+  async update(entity?: Entity, caller?: SiteInputs, pass?: boolean) {
     if ((this.queue as number) > 0) clearTimeout(this.queue)
     this.queue = -1
     if (!pass) {
@@ -356,7 +362,7 @@ export class OutputMap extends BaseOutput {
               const skl = s[k].layer && s[k].layer[this.id]
               if (skl) {
                 const fg = k in a,
-                  cl = 'has_time' in skl ? (skl[map_time] as FeatureGroup) : skl
+                  cl = 'has_time' in skl ? (skl[map_time] as Polygon) : skl
                 if (cl && (fg || this.options.background_shapes === this.site.data.entities[k].group)) {
                   n++
                   ;(cl.options as GeoJSONOptions).interactive = fg
@@ -395,30 +401,24 @@ export class OutputMap extends BaseOutput {
             this.site.spec.settings.color_scale_center
           if (k !== this.cstate) {
             this.cstate = k
-            if (this.id in this.site.maps) {
-              const ls = (this.displaying as any)._layers
-              const n = summary.n[time]
-              Object.keys(ls).forEach(id => {
-                const lsi = ls[id]
-                if (d === lsi.entity.group) {
-                  const e = a[lsi.entity.features.id],
-                    es = e && e.views[this.view][subset]
-                  lsi.setStyle({
-                    fillOpacity: 0.7,
-                    color: 'var(--border)',
-                    fillColor:
-                      e && c in es
-                        ? pal(e.get_value(c, time), parsed.palette, summary, time, es[c][time], n)
-                        : this.site.defaults.missing,
-                    weight: this.site.spec.settings.polygon_outline,
-                  })
-                }
-              })
-            } else {
-              if (!(d in this.site.maps.waiting)) this.site.maps.waiting[d] = []
-              if (-1 === this.site.maps.waiting[d].indexOf(this.id)) this.site.maps.waiting[d].push(this.id)
-              if (-1 === this.site.maps.waiting[d].indexOf(this.view)) this.site.maps.waiting[d].push(this.view)
-            }
+            const ls = (this.displaying as any)._layers
+            const n = summary.n[time]
+            Object.keys(ls).forEach(id => {
+              const lsi = ls[id]
+              if (d === lsi.entity.group) {
+                const e = a[lsi.entity.features.id],
+                  es = e && e.views[this.view][subset]
+                lsi.setStyle({
+                  fillOpacity: 0.7,
+                  color: 'var(--border)',
+                  fillColor:
+                    e && c in es
+                      ? this.site.get_color(e.get_value(c, time), parsed.palette, summary, time, es[c][time], n)
+                      : this.site.defaults.missing,
+                  weight: this.site.spec.settings.polygon_outline,
+                })
+              }
+            })
           }
         }
       }
@@ -473,28 +473,26 @@ export class OutputMap extends BaseOutput {
         let id = p[source.id_property]
         if (!(id in this.site.data.entities) && this.site.patterns.leading_zeros.test(id))
           id = p[source.id_property] = id.replace(this.site.patterns.leading_zeros, '')
-        if (id in this.site.data.entities) {
-          if (!('layer' in this.site.data.entities[id])) this.site.data.entities[id].layer = {}
-        } else {
+        if (!(id in this.site.data.entities)) {
           this.site.data.entities[id] = {layer: {}, features: {id: id}}
         }
+        const entity = this.site.data.entities[id]
+        if (!('layer' in entity)) entity.layer = {}
         if (has_time) {
-          if (!(this.id in this.site.data.entities[id].layer))
-            this.site.data.entities[id].layer[this.id] = {has_time: true}
-          this.site.data.entities[id].layer[this.id][source.time] = l
-        } else this.site.data.entities[id].layer[this.id] = l
-        ;(l as any).entity = this.site.data.entities[id]
-        if (this.site.data.entities[id].features)
+          if (!(this.id in entity.layer)) entity.layer[this.id] = {has_time: true}
+          ;(entity.layer[this.id] as {[index: string]: Polygon})[source.time as string] = l
+        } else entity.layer[this.id] = l
+        ;(l as any).entity = entity
+        if (entity.features)
           Object.keys(p).forEach(f => {
-            if (!(f in this.site.data.entities[id].features)) {
+            if (!(f in entity.features)) {
               if (
                 'name' === f.toLowerCase() &&
-                (!('name' in this.site.data.entities[id].features) ||
-                  this.site.data.entities[id].features.id === this.site.data.entities[id].features.name)
+                (!('name' in entity.features) || entity.features.id === entity.features.name)
               ) {
-                this.site.data.entities[id].features[f.toLowerCase()] = p[f]
+                entity.features[f.toLowerCase()] = p[f]
               } else {
-                this.site.data.entities[id].features[f] = p[f]
+                entity.features[f] = p[f]
               }
             }
           })

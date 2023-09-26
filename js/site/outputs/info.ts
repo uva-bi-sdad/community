@@ -1,5 +1,5 @@
-import {Entity, LogicalObject, MeasureInfo, Summary, Variable} from '../../types'
-import Community from '../index'
+import type {Entity, LogicalObject, MeasureInfo, Summary, Variable} from '../../types'
+import type Community from '../index'
 import {filter_components} from '../static_refs'
 import {make_summary_table, make_variable_source} from '../utils'
 import {value_types} from '../value_types'

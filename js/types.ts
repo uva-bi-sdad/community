@@ -1,13 +1,14 @@
 import type Community from './site/index'
-import type {Combobox, ComboboxSpec} from './site/elements/combobox'
-import type {OutputPlotly} from './site/elements/plotly'
+import type {InputCombobox, ComboboxSpec} from './site/inputs/combobox'
+import type {PlotlySpec} from './site/outputs/plotly'
 import type {Tutorials} from './site/tutorials'
-import type {NumberSpec} from './site/elements/number'
-import type {DataViewSpec, SiteDataView} from './site/elements/dataview'
-import type {SiteElement} from './site/elements/index'
-import type {Select, SelectSpec} from './site/elements/select'
-import type {MapLayer, MapSpec, MeasureLayer} from './site/elements/map'
-import type {FeatureGroup, GeoJSONEvent, GeoJSONOptions, Layer} from 'leaflet'
+import type {NumberSpec} from './site/inputs/number'
+import type {DataViewSpec, SiteDataView} from './site/dataview'
+import type {SiteInputs} from './site/inputs/index'
+import type {InputSelect, SelectSpec} from './site/inputs/select'
+import type {MapLayer, MapSpec, MeasureLayer} from './site/outputs/map'
+import type {Polygon} from 'leaflet'
+import type {VirtualSpec} from './site/inputs/virtual'
 
 export type Generic = {[index: string]: boolean | string | number}
 export type ObjectIndex = {[index: string]: number}
@@ -219,22 +220,22 @@ type EntityView = {
 }
 
 export type Entity = {
-  group: string
-  data: EntityData
+  group?: string
+  data?: EntityData
   features: Features
-  get_value: Function
-  layer: {
+  get_value?: Function
+  layer?: {
     [index: string]:
-      | FeatureGroup
+      | Polygon
       | {
-          [index: string]: FeatureGroup | boolean
+          [index: string]: Polygon | boolean
           has_time: boolean
         }
   }
-  relations: Relations
-  time: Time
-  variables: Variables
-  views: {[index: string]: EntityView}
+  relations?: Relations
+  time?: Time
+  variables?: Variables
+  views?: {[index: string]: EntityView}
 }
 
 export type Entities = {[index: string]: Entity}
@@ -450,32 +451,24 @@ export type SiteCondition = {
   id: string
   type: string
   value: string
-  any: boolean
   check: Function
+  any?: boolean
   default?: string
+  parsed?: string
+  site?: Community
 }
 
 export type SiteRule = {
   condition: SiteCondition[]
   effects: {[index: string]: string}
   parsed: {
-    lock?: Map<string, SiteElement>
+    lock?: Map<string, SiteInputs>
     display?: {
       e: HTMLElement
       u?: ActiveElement
     }
   }
   default?: string
-}
-
-type SiteVariable = {
-  id: string
-  states: {
-    condition: SiteCondition[]
-    value: string
-  }[]
-  default: string
-  display: Generic
 }
 
 type SiteInfoBody = {
@@ -520,14 +513,6 @@ type SiteButton = {
   api?: boolean
 }
 
-export type SitePlotly = {
-  layout: {[index: string]: any}
-  config: {[index: string]: any}
-  data: {[index: string]: any}
-  subto: string[]
-  u: OutputPlotly
-}
-
 type SiteLegend = {
   palette: string
   subto: string | string[]
@@ -535,7 +520,7 @@ type SiteLegend = {
 
 type SiteCredits = {
   name: string
-  url: string
+  url?: string
   description?: string
   version?: string
 }
@@ -546,7 +531,7 @@ export type SiteSpec = {
   endpoint: string
   aggregated: boolean
   rules?: SiteRule[]
-  variables?: SiteVariable[]
+  variables?: VirtualSpec[]
   dataviews?: {[index: string]: DataViewSpec}
   info?: {[index: string]: SiteInfo}
   text?: {[index: string]: SiteText}
@@ -554,13 +539,14 @@ export type SiteSpec = {
   select?: {[index: string]: SelectSpec}
   button?: {[index: string]: SiteButton}
   datatable?: {[index: string]: any}
-  plotly?: {[index: string]: SitePlotly}
+  plotly?: {[index: string]: PlotlySpec}
   map?: {
     [index: string]: MapSpec | {[index: string]: string}
     _raw?: {[index: string]: string}
   }
   legend?: {[index: string]: SiteLegend}
   credits?: {[index: string]: SiteCredits}
+  credit_output?: {[index: string]: {add?: {[index: string]: SiteCredits}; exclude?: string[]}}
   tutorials?: Tutorials
   tag_id?: string
   number?: NumberSpec
@@ -570,7 +556,7 @@ export type SiteSpec = {
 export type MapInfo = {
   queue: {[index: string]: MapLayer}
   waiting: {[index: string]: string[]}
-  overlay_property_selectors: (Select | Combobox)[]
+  overlay_property_selectors: (InputSelect | InputCombobox)[]
 }
 
 export type OptionSets = {

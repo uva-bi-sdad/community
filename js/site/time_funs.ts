@@ -1,5 +1,5 @@
-import {VariableFilterParsed} from '../types'
-import {DataViewParsed} from './elements/dataview'
+import type {VariableFilterParsed} from '../types'
+import type {DataViewParsed} from './dataview'
 import {patterns} from './patterns'
 
 type TimeFuns = {

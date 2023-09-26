@@ -1,7 +1,6 @@
 import {BaseInput} from './index'
-import Community from '../index'
-import {Generic, ObjectIndex, OptionSets, ResourceField} from '../../types'
-import {patterns} from '../patterns'
+import type Community from '../index'
+import type {Generic, ObjectIndex, OptionSets, ResourceField} from '../../types'
 import {options_filter, set_current_options} from '../common_methods'
 
 export type SelectSpec = {
@@ -9,7 +8,7 @@ export type SelectSpec = {
   filters?: Generic
 }
 
-export class Select extends BaseInput {
+export class InputSelect extends BaseInput {
   type: 'select'
   e: HTMLSelectElement
   current_filter: {[index: string]: string} = {}
@@ -25,17 +24,31 @@ export class Select extends BaseInput {
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
     this.options = [...e.querySelectorAll('option')]
-    if (this.optionSource && patterns.ids.test(this.optionSource)) {
+    if (this.optionSource && this.site.patterns.ids.test(this.optionSource)) {
       e.addEventListener('click', this.loader)
       this.deferred = true
     } else if (
       'number' === typeof this.default &&
       this.default > -1 &&
-      this.options &&
       this.options.length &&
       this.default < this.options.length
     ) {
       this.default = this.options[this.default].value || this.options[this.default].dataset.value
+    }
+    if (this.options.length) {
+      this.options.forEach((e, i) => {
+        this.values[e.value] = i
+        this.display[e.innerText] = i
+      })
+      const group: NodeListOf<HTMLOptGroupElement> = e.querySelectorAll('optgroup')
+      if (group.length) {
+        this.groups = {e: [], by_name: {}}
+        group.forEach(e => {
+          const name = e.dataset.group
+          this.groups.e.push(e)
+          this.groups.by_name[name] = e
+        })
+      }
     }
   }
   set_current = set_current_options
@@ -43,7 +56,7 @@ export class Select extends BaseInput {
     this.set(this.e.selectedIndex)
   }
   set(v: string | number) {
-    if ('string' === typeof v && !(v in this.values) && patterns.number.test(v)) v = +v
+    if ('string' === typeof v && !(v in this.values) && this.site.patterns.number.test(v)) v = +v
     if ('number' === typeof v) v = this.options[v] ? this.options[v].value : v
     if (!(v in this.values) && v in this.display) v = this.options[this.display[v]].value
     if (v !== this.source) {

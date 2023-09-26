@@ -28,7 +28,7 @@ import type {
   EntityFeatureSet,
   Entity,
 } from '../types'
-import {SiteDataView} from '../site/elements/dataview'
+import {SiteDataView} from '../site/dataview'
 
 export default class DataHandler {
   constructor(

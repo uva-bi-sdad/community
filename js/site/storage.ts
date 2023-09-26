@@ -1,4 +1,4 @@
-import {Generic} from '../types'
+import type {Generic} from '../types'
 
 export const storage: {
   name: string

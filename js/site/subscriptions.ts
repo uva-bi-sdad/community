@@ -1,10 +1,11 @@
-import {Entity} from '../types'
-import {RegisteredElements, SiteOutputs} from './elements/index'
+import type {Entity} from '../types'
+import type {RegisteredInputs} from './inputs/index'
+import type {SiteOutputs} from './outputs/index'
 
 export class Subscriptions {
-  elements: RegisteredElements
+  elements: RegisteredInputs
   subs: {[index: string]: Map<string, SiteOutputs>}
-  constructor(elements: RegisteredElements) {
+  constructor(elements: RegisteredInputs) {
     this.elements = elements
     this.subs = {}
   }

@@ -1,32 +1,72 @@
 import DataHandler from '../data_handler/index'
-import {Conditionals, DataSets, Generic, MapInfo, Query, SiteCondition, SiteRule, SiteSpec} from '../types'
+import type {
+  Conditionals,
+  DataSets,
+  Generic,
+  MapInfo,
+  Query,
+  SiteCondition,
+  SiteRule,
+  SiteSpec,
+  Summary,
+} from '../types'
 import {defaults} from './defaults'
-import {BaseInput, RegisteredElements, RegisteredOutputs, SiteElement, SiteOutputs} from './elements/index'
+import type {BaseInput, RegisteredInputs, SiteInputs} from './inputs/index'
+import type {RegisteredOutputs, SiteOutputs} from './outputs/index'
 import {GlobalView} from './global_view'
 import {patterns} from './patterns'
 import {storage} from './storage'
 import {Subscriptions} from './subscriptions'
 import * as conditionals from './conditionals'
 import * as utils from './utils'
-import {palettes} from './palettes'
-import {Select} from './elements/select'
-import {Combobox} from './elements/combobox'
-import {InputNumber} from './elements/number'
-import {SiteDataView} from './elements/dataview'
+import {DiscretePalette, palettes} from './palettes'
+import {InputSelect} from './inputs/select'
+import {InputNumber} from './inputs/number'
+import {SiteDataView} from './dataview'
 import {Page} from './page'
-import {Virtual} from './elements/virtual'
-import {InputButton} from './elements/button'
-import {OutputInfo} from './elements/info'
-import {OutputMap} from './elements/map'
+import {InputVirtual} from './inputs/virtual'
+import {InputButton} from './inputs/button'
+import {InputCombobox} from './inputs/combobox'
+import {InputRadio} from './inputs/radio'
+import {InputCheckbox} from './inputs/checkbox'
+import {OutputInfo} from './outputs/info'
+import {OutputMap} from './outputs/map'
+import {OutputPlotly} from './outputs/plotly'
+import {InputButtonGroup} from './inputs/buttongroup'
+import {InputSwitch} from './inputs/switch'
+import {InputText} from './inputs/text'
+import {OutputDataTable} from './outputs/datatables'
+import {OutputTable} from './outputs/table'
+import {OutputLegend} from './outputs/legend'
 
 type Queue = {
   timeout: NodeJS.Timer | number
   elements: Map<string, boolean>
 }
 
+const inputs = {
+  button: InputButton,
+  buttongroup: InputButtonGroup,
+  combobox: InputCombobox,
+  select: InputSelect,
+  number: InputNumber,
+  radio: InputRadio,
+  switch: InputSwitch,
+  checkbox: InputCheckbox,
+  text: InputText,
+}
+const outputs = {
+  info: OutputInfo,
+  map: OutputMap,
+  plotly: OutputPlotly,
+  datatable: OutputDataTable,
+  table: OutputTable,
+  legend: OutputLegend,
+}
+
 export type Dependency = {
   id: string
-  type: 'rule' | 'update' | 'filter' | keyof Conditionals | keyof BaseInput
+  type: 'rule' | 'update' | 'filter' | 'display' | keyof Conditionals | keyof BaseInput
   conditional?: keyof Conditionals
   condition?: SiteCondition
   uid?: string
@@ -39,19 +79,6 @@ type Tree = {
   parents: {[index: string]: Tree}
 }
 
-const elements = {
-  button: InputButton,
-  combobox: Combobox,
-  select: Select,
-  number: InputNumber,
-  virtual: InputNumber,
-}
-
-const outputs = {
-  info: OutputInfo,
-  map: OutputMap,
-}
-
 export default class Community {
   spec: SiteSpec
   storage = storage
@@ -62,11 +89,11 @@ export default class Community {
   page: Page
   view: GlobalView
   subs: Subscriptions
-  registered_elements: Map<string, SiteElement> = new Map()
+  registered_elements: Map<string, SiteInputs> = new Map()
   registered_outputs: Map<string, SiteOutputs> = new Map()
   defaults = defaults
   dataviews: {[index: string]: SiteDataView} = {}
-  inputs: RegisteredElements = {}
+  inputs: RegisteredInputs = {}
   outputs: RegisteredOutputs = {}
   dependencies: {[index: string]: Dependency[]} = {}
   url_options: {[index: string]: boolean | string} = {}
@@ -115,20 +142,19 @@ export default class Community {
       return Math.max(0, Math.min(255, v))
     }
     Object.keys(palettes).forEach(k => {
-      const n = 255,
-        p = palettes[k],
-        unpacked: string[] = []
+      const n = 255
+      let p = palettes[k]
       if ('continuous-polynomial' === p.type) {
-        const c = p.colors as number[][]
-        p.type = 'discrete'
+        const c = p.colors as number[][],
+          r: DiscretePalette = {name: k, type: 'discrete', colors: []}
         for (let i = 0; i < n; i++) {
           const v = i / n
-          unpacked.push(
+          r.colors.push(
             'rgb(' + poly_channel(0, v, c) + ', ' + poly_channel(1, v, c) + ', ' + poly_channel(2, v, c) + ')'
           )
         }
+        p = palettes[k] = r
       }
-      p.colors = unpacked
       p.odd = p.colors.length % 2
     })
     this.query = window.location.search.replace('?', '')
@@ -150,8 +176,8 @@ export default class Community {
     this.view = new GlobalView(this)
     new Page(this)
     document.querySelectorAll('.auto-input').forEach((e: HTMLElement) => {
-      if (e.dataset.autotype in elements) {
-        const u = new elements[e.dataset.autotype as keyof typeof elements](e, this)
+      if (e.dataset.autotype in inputs) {
+        const u = new inputs[e.dataset.autotype as keyof typeof inputs](e, this)
         this.registered_elements.set(u.id, u)
         this.inputs[u.id] = u
       }
@@ -166,7 +192,7 @@ export default class Community {
     })
     if (spec.variables && spec.variables.length)
       spec.variables.forEach(v => {
-        const u = new Virtual(this)
+        const u = new InputVirtual(v, this)
         this.registered_elements.set(v.id, u)
         this.inputs[v.id] = u
       })
@@ -253,10 +279,10 @@ export default class Community {
           })
         })
       }
-      const dataset = this.valueOf(this.spec.dataviews[defaults.dataview].dataset) as string | number
+      const dataset = this.valueOf(this.spec.dataviews[this.defaults.dataview].dataset) as string | number
       this.defaults.dataset = 'number' === typeof dataset ? sets[dataset] : dataset
       if (-1 === sets.indexOf(this.defaults.dataset)) this.defaults.dataset = sets[0]
-      this.data = new DataHandler(this.spec, defaults, this.data as unknown as DataSets, {
+      this.data = new DataHandler(this.spec, this.defaults, this.data as unknown as DataSets, {
         init: this.init,
         onload: () => {
           if (this.data.inited) clearTimeout(this.data.inited.load_screen as NodeJS.Timeout)
@@ -297,7 +323,7 @@ export default class Community {
           if (-1 === o.default) o.default = defaults.dataset
           o.options = []
           this.spec.metadata.datasets.forEach(d => o.add(d))
-        } else {
+        } else if ('option_sets' in o) {
           o.sensitive = false
           o.option_sets = {}
           if (o.depends) this.add_dependency(o.depends as string, {type: 'options', id: o.id})
@@ -441,7 +467,9 @@ export default class Community {
       if ('init' in o) o.init()
       if (v) {
         o.set(v as string)
-      } else o.reset && o.reset()
+      } else {
+        o.reset()
+      }
     })
     this.registered_outputs.forEach(o => {
       if ('init' in o) o.init()
@@ -555,7 +583,7 @@ export default class Community {
               if ('display' === k) {
                 ri.parsed[k].e.classList.remove('hidden')
               } else if ('lock' === k) {
-                ri.parsed[k].forEach((u: Select) => {
+                ri.parsed[k].forEach((u: InputSelect) => {
                   u.e.classList.remove('locked')
                   utils.toggle_input(u, true)
                 })
@@ -573,7 +601,7 @@ export default class Community {
                 })
               }
             } else if ('lock' === k) {
-              ri.parsed[k].forEach((u: Select) => {
+              ri.parsed[k].forEach((u: InputSelect) => {
                 u.e.classList.add('locked')
                 utils.toggle_input(u)
               })
@@ -589,11 +617,7 @@ export default class Community {
     }
   }
   valueOf(v: boolean | string | number | (string | number)[]): boolean | string | number | (string | number)[] {
-    if ('string' === typeof v && v in this.inputs) {
-      const u = this.inputs[v]
-      if (u.value) v = this.valueOf(u.value())
-    }
-    return v
+    return 'string' === typeof v && v in this.inputs ? this.valueOf(this.inputs[v].value()) : v
   }
   get_options_url() {
     let s = ''
@@ -648,5 +672,68 @@ export default class Community {
         : this.tree[a.id]._n.children - this.tree[b.id]._n.children
     })
     this.request_queue(false, id)
+  }
+  get_color(value: number, which: string, summary: Summary, index: number, rank: number, total: number) {
+    const pal = palettes[which]
+    if (isNaN(value) || 'continuous-polynomial' === pal.type) return this.defaults.missing
+    const settings = this.spec.settings,
+      centered = 'none' !== settings.color_scale_center && !settings.color_by_order,
+      fixed = 'discrete' === pal.type,
+      string = 'string' === summary.type,
+      min = !string ? summary.min[index] : 0,
+      range = string ? summary.levels.length - min : summary.range[index],
+      stat =
+        'none' === settings.color_scale_center || patterns.median.test(settings.color_scale_center as string)
+          ? 'median'
+          : 'mean',
+      center_source = ((settings.color_by_order ? 'break_' : 'norm_') + stat) as 'break_mean',
+      center = settings.color_by_order
+        ? centered
+          ? summary[center_source][index] / total
+          : 0.5
+        : isNaN(summary[center_source][index])
+        ? 0.5
+        : summary[center_source][index],
+      r = fixed
+        ? centered && !settings.color_by_order
+          ? Math.ceil(pal.colors.length / 2) - pal.odd / 2
+          : pal.colors.length
+        : 1,
+      p = settings.color_by_order
+        ? (rank + 0.5) / total
+        : range
+        ? ((string ? summary.level_ids[value] : value) - min) / range
+        : 0.5,
+      upper = p > (centered ? center : 0.5),
+      bound_ref = upper ? 'upper_' : 'lower_',
+      value_min = (bound_ref + centered + '_min') as 'upper_mean_min',
+      value_range = (bound_ref + centered + '_range') as 'upper_mean_range'
+    let v = centered ? (range ? (p + center - summary[value_min][index]) / summary[value_range][index] : 1) : p
+    if (!fixed) {
+      v = Math.max(0, Math.min(1, v))
+      if (upper) v = 1 - v
+      if (!centered) v *= 2
+    }
+    return (string ? value in summary.level_ids : 'number' === typeof value)
+      ? fixed
+        ? pal.colors[
+            Math.max(0, Math.min(pal.colors.length - 1, Math.floor(centered ? (upper ? r + r * v : r * v) : r * v)))
+          ]
+        : 'rgb(' +
+          (upper
+            ? pal.colors[0][0][0] +
+              v * pal.colors[0][1][0] +
+              ', ' +
+              (pal.colors[0][0][1] + v * pal.colors[0][1][1]) +
+              ', ' +
+              (pal.colors[0][0][2] + v * pal.colors[0][1][2])
+            : pal.colors[2][0][0] +
+              v * pal.colors[2][1][0] +
+              ', ' +
+              (pal.colors[2][0][1] + v * pal.colors[2][1][1]) +
+              ', ' +
+              (pal.colors[2][0][2] + v * pal.colors[2][1][2])) +
+          ')'
+      : defaults.missing
   }
 }

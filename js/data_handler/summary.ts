@@ -1,6 +1,6 @@
 import DataHandler from './index'
 import type {Order, Data, Variable, VariableView, EntityData, Summary, MeasureInfo} from '../types'
-import {SiteDataView} from '../site/elements/dataview'
+import {SiteDataView} from '../site/dataview'
 
 function sort_a1(a: [string, number], b: [string, number]): number {
   return isNaN(a[1]) ? (isNaN(b[1]) ? 0 : -1) : isNaN(b[1]) ? 1 : a[1] - b[1]

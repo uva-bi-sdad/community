@@ -1,7 +1,7 @@
-import {MeasureInfo, MeasureSource, OptionSets, ResourceField} from '../types'
-import type {Combobox} from './elements/combobox'
-import {SiteElement} from './elements/index'
-import type {Select} from './elements/select'
+import type {MeasureInfo, MeasureSource, OptionSets, ResourceField} from '../types'
+import type {InputCombobox} from './inputs/combobox'
+import type {SiteInputs} from './inputs/index'
+import type {InputSelect} from './inputs/select'
 import {patterns} from './patterns'
 
 export function set_description(e: HTMLElement, info: MeasureInfo) {
@@ -36,7 +36,7 @@ export function set_description(e: HTMLElement, info: MeasureInfo) {
   e[has_html ? 'innerHTML' : 'innerText'] = description
 }
 
-export function toggle_input(u: Combobox | Select, enable?: boolean) {
+export function toggle_input(u: InputCombobox | InputSelect, enable?: boolean) {
   if (enable && !u.e.classList.contains('locked')) {
     u.e.removeAttribute('disabled')
     u.e.classList.remove('disabled')
@@ -48,7 +48,7 @@ export function toggle_input(u: Combobox | Select, enable?: boolean) {
   }
 }
 
-export function fill_ids_options(u: Combobox | Select, d: string, out: OptionSets, onend?: Function) {
+export function fill_ids_options(u: InputCombobox | InputSelect, d: string, out: OptionSets, onend?: Function) {
   if (!(d in u.site.data.sets)) {
     u.site.data.data_queue[d][u.id] = () => {
       u.loader && u.e.removeEventListener('click', u.loader)
@@ -157,7 +157,7 @@ export function fill_ids_options(u: Combobox | Select, d: string, out: OptionSet
   onend && onend()
 }
 
-export function fill_variables_options(u: Combobox | Select, d: string, out: OptionSets) {
+export function fill_variables_options(u: InputCombobox | InputSelect, d: string, out: OptionSets) {
   out[d] = {options: [], values: {}, display: {}}
   const current = u.values,
     s = out[d].options as HTMLOptionElement[],
@@ -269,7 +269,7 @@ export function fill_variables_options(u: Combobox | Select, d: string, out: Opt
   if (!u.settings.clearable && !(u.default in u.site.data.variables)) u.default = u.site.defaults.variable
 }
 
-export function fill_overlay_properties_options(u: Combobox | Select, source: string, out: OptionSets) {
+export function fill_overlay_properties_options(u: InputCombobox | InputSelect, source: string, out: OptionSets) {
   out[source] = {options: [], values: {}, display: {}}
   const current = u.values,
     s = out[source].options as HTMLOptionElement[],
@@ -294,7 +294,7 @@ export function fill_overlay_properties_options(u: Combobox | Select, source: st
   })
 }
 
-export function fill_levels_options(u: Combobox | Select, d: string, v: string, out: OptionSets) {
+export function fill_levels_options(u: InputCombobox | InputSelect, d: string, v: string, out: OptionSets) {
   const m = u.site.data.variables[v].info[d],
     t = 'string' === m.type ? 'levels' : 'ids',
     l = m[t]
@@ -324,7 +324,7 @@ export function fill_levels_options(u: Combobox | Select, d: string, v: string, 
   }
 }
 
-export function tooltip_trigger(this: SiteElement): void {
+export function tooltip_trigger(this: SiteInputs): void {
   if (this.site.spec.settings.hide_tooltips || this.id === this.site.page.tooltip.showing) return void 0
   const tooltip = this.site.page.tooltip
   tooltip.showing = this.id
@@ -336,7 +336,7 @@ export function tooltip_trigger(this: SiteElement): void {
   tooltip.e.style.top = p.y + (p.y < t.height ? p.height + 5 : -t.height - 5) + 'px'
 }
 
-export function tooltip_clear(this: SiteElement, e: MouseEvent) {
+export function tooltip_clear(this: SiteInputs, e: MouseEvent) {
   const target = e.target as HTMLElement
   if (
     this.site.page.tooltip.showing &&
