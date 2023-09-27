@@ -15,6 +15,7 @@ export type VirtualSpec = {
 
 export class InputVirtual extends BaseInput {
   type: 'virtual'
+  settings: VirtualSpec
   states: {
     condition: SiteCondition[]
     value: string | number
@@ -26,9 +27,7 @@ export class InputVirtual extends BaseInput {
     e.id = spec.id
     super(e, site)
     this.settings = spec
-    if (this.settings.source) {
-      this.source = this.default = this.settings.source
-    }
+    this.default = spec.default
     if (this.source) this.values.push(this.source)
     if (this.settings.states) this.states = this.settings.states
     const p: {[index: string]: {type: 'update'; id: string}} = {}
@@ -39,6 +38,7 @@ export class InputVirtual extends BaseInput {
         this.site.add_dependency(c.id, p[c.id])
       })
     })
+    this.update()
   }
   init() {
     this.values.forEach(id => {
@@ -63,7 +63,7 @@ export class InputVirtual extends BaseInput {
         break
       }
     }
-    if (!this.source) this.source = this.default
+    if (!this.source) this.source = this.default as string
     if (this.source !== this.previous) {
       this.previous = this.source
       this.site.request_queue(this.id)
@@ -82,7 +82,7 @@ export class InputVirtual extends BaseInput {
     if (-1 !== this.values.indexOf(v)) {
       this.previous = this.source
       this.source = v
-    } else if (this.source) {
+    } else if (this.source in this.site.inputs) {
       const c = this.site.inputs[this.source]
       if (
         'values' in c &&

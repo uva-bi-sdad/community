@@ -463,9 +463,9 @@ export class OutputInfo extends BaseOutput {
             if (('variables' in p.value.parsed || 'summary' in p.value.parsed) && !(v.y in this.depends)) {
               this.depends[v.y] = true
               this.site.add_dependency(v.y, {type: 'update', id: this.id})
-            } else if ('filter' in p.value.parsed && !('_base_filter' in this.depends)) {
-              this.depends._base_filter = true
-              this.site.add_dependency('_base_filter', {type: 'update', id: this.id})
+            } else if ('filter' in p.value.parsed && !('viewFilter' in this.depends)) {
+              this.depends.viewFilter = true
+              this.site.add_dependency('view.filter', {type: 'update', id: this.id})
             }
             if (p.name.ref) {
               if (p.name.value_source) p.name.value_source = p.value.text

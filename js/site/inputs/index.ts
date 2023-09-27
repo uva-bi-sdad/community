@@ -44,7 +44,7 @@ export abstract class BaseInput {
   wrapper: HTMLElement
   id: string
   settings: {[index: string]: any} = {}
-  default: string | number
+  default: string | string[] | number
   source: boolean | string | number | (string | number)[]
   optionSource: string
   subset: string

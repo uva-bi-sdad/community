@@ -307,7 +307,7 @@ export class OutputMap extends BaseOutput {
         }
         if (!view.valid && this.site.data.inited[d]) {
           view.state = ''
-          this.site.conditionals.dataview(view, void 0, true)
+          view.update()
         }
         parsed.view = view
         parsed.dataset = d

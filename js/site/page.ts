@@ -245,6 +245,7 @@ export class Page {
     window.addEventListener('resize', this.resize)
     this.tooltip.e.className = 'tooltip hidden'
     this.tooltip.e.appendChild(document.createElement('p'))
+    document.head.appendChild(this.script_style)
     document.body.appendChild(this.tooltip.e)
     document.body.addEventListener('mouseover', tooltip_clear.bind(this))
     this.overlay.className = 'content-overlay'
@@ -632,7 +633,7 @@ export class Page {
         l.wrapper.id = l.id
         l.wrapper.setAttribute('data-of', l.id)
         l.wrapper.setAttribute('aria-description', l.note)
-        th.addEventListener('mouseover', tooltip_trigger.bind(l))
+        th.addEventListener('mouseover', tooltip_trigger.bind(filter_select))
       } else {
         th.innerText = h
       }
@@ -699,7 +700,8 @@ export class Page {
       },
       d = f.view.get.dataset(),
       range = f.info[d].time_range,
-      times = this.site.data.meta.overall.value
+      times = this.site.data.meta.overall.value,
+      formatter = this.site.data.format_value.bind(this.site.data)
     this.site.view.filters.set(f.id, f)
     if ('number' === typeof f.component) f.component = times[f.component] + ''
     // variable name
@@ -711,7 +713,6 @@ export class Page {
     tr.lastElementChild.appendChild(document.createElement('p'))
     f.summary = {
       f,
-      table: make_summary_table(this.site.data.format_value, tr, f.info[d], f.summary.add),
       update: function () {
         const d = f.view.get.dataset(),
           range = f.info[d].time_range
@@ -734,8 +735,9 @@ export class Page {
         Last: times[range[1]] + '' || 'NA',
       },
       times: this.site.data.meta.overall.value,
-      format: this.site.data.format_value,
+      format: formatter,
     }
+    f.summary.table = make_summary_table(formatter, tr, f.info[d], f.summary.add)
     // filter result
     tr.appendChild(td)
     td.appendChild((p = document.createElement('p')))

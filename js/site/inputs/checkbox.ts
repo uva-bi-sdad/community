@@ -10,7 +10,14 @@ export class InputCheckbox extends BaseInput {
   off_default: boolean
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
+    this.listen = this.listen.bind(this)
     this.options = e.querySelectorAll('input')
+    this.options.forEach(o => {
+      this.values.push(o.value)
+      o.addEventListener('click', this.listen)
+    })
+    if ('string' === typeof this.default) this.default = this.default.split(',')
+    this.get()
   }
   get() {
     this.source = []

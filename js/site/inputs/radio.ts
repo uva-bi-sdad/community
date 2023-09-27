@@ -8,7 +8,12 @@ export class InputRadio extends BaseInput {
   source: string | number
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
+    this.listen = this.listen.bind(this)
     this.options = e.querySelectorAll('input')
+    this.options.forEach(o => {
+      this.values.push(o.value)
+      o.addEventListener('click', this.listen)
+    })
   }
   get() {
     for (let i = this.options.length; i--; ) {

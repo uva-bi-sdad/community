@@ -1,7 +1,7 @@
 import type Community from './index'
 import DataHandler from '../data_handler/index'
 import type {BaseInput} from './inputs/index'
-import type {Combobox} from './inputs/combobox'
+import type {InputCombobox} from './inputs/combobox'
 import type {InputNumber} from './inputs/number'
 import {tooltip_icon_rule} from './static_refs'
 import {fill_ids_options, fill_levels_options, fill_variables_options, toggle_input} from './utils'
@@ -67,7 +67,7 @@ export function setting(this: Community, u: BaseInput) {
     this.storage.set(u.setting, this.spec.settings[u.setting])
   }
 }
-export function options(this: Community, u: Combobox) {
+export function options(this: Community, u: InputCombobox) {
   const no_view = !u.view || !this.dataviews[u.view].selection,
     d = (this.valueOf(u.dataset || no_view ? '' : this.spec.dataviews[u.view].dataset) ||
       this.defaults.dataset) as string,

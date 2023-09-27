@@ -8,6 +8,8 @@ export class InputButtonGroup extends BaseInput {
   source: string | number
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
+    this.listen = this.listen.bind(this)
+    e.addEventListener('click', this.listen)
     this.options = e.querySelectorAll('input')
   }
   get() {

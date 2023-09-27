@@ -7,6 +7,8 @@ export class InputSwitch extends BaseInput {
   source: boolean
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
+    this.listen = this.listen.bind(this)
+    e.addEventListener('change', this.listen)
   }
   get() {
     this.set(this.e.checked)

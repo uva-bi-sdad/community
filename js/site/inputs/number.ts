@@ -7,6 +7,7 @@ export type NumberSpec = {}
 export class InputNumber extends BaseInput {
   type: 'number'
   e: HTMLInputElement
+  default: string | number
   source: number
   parsed = {min: -Infinity, max: Infinity}
   min: string | number
@@ -27,6 +28,8 @@ export class InputNumber extends BaseInput {
   depends: LogicalObject
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
+    this.listen = this.listen.bind(this)
+    e.addEventListener('change', this.listen)
     this.update = this.update.bind(this)
     const up = e.parentElement.parentElement.querySelector('.number-up')
     const down = e.parentElement.parentElement.querySelector('.number-down')

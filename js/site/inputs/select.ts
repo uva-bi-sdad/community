@@ -11,6 +11,7 @@ export type SelectSpec = {
 export class InputSelect extends BaseInput {
   type: 'select'
   e: HTMLSelectElement
+  default: string | number
   current_filter: {[index: string]: string} = {}
   groups: {e: HTMLElement[]; by_name: {[index: string]: HTMLElement}}
   options: HTMLOptionElement[]
@@ -23,6 +24,8 @@ export class InputSelect extends BaseInput {
   filter = options_filter
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
+    this.listen = this.listen.bind(this)
+    e.addEventListener('change', this.listen)
     this.options = [...e.querySelectorAll('option')]
     if (this.optionSource && this.site.patterns.ids.test(this.optionSource)) {
       e.addEventListener('click', this.loader)

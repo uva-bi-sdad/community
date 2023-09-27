@@ -19,6 +19,7 @@ export class InputCombobox extends BaseInput {
   type: 'combobox'
   hover_index = -1
   cleared_selection = ''
+  default: string | number
   expanded = false
   listbox: HTMLElement
   groups: {e: HTMLElement[]; by_name: {[index: string]: HTMLElement}}

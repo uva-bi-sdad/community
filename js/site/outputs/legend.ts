@@ -18,14 +18,19 @@ export class OutputLegend extends BaseOutput {
     bins: number
     rank: boolean
   } = {time: 0, color: '', bins: 0, rank: false}
-  queue: {lock: boolean; cooldown: number | NodeJS.Timeout; reset: () => void; e?: HTMLElement; trigger?: () => void} =
-    {
-      lock: false,
-      cooldown: -1,
-      reset: function () {
-        this.lock = false
-      },
-    }
+  queue: {
+    e?: HTMLElement
+    lock: boolean
+    cooldown: number | NodeJS.Timeout
+    reset: () => void
+    trigger?: () => void
+  } = {
+    lock: false,
+    cooldown: -1,
+    reset: function () {
+      this.lock = false
+    },
+  }
   integer = false
   entity: Entity
   parts: {
@@ -184,6 +189,7 @@ export class OutputLegend extends BaseOutput {
             ? (this.site.spec.settings.palette as string)
             : this.site.defaults.palette,
         p = palettes[pn],
+        nc = p.colors.length,
         s = this.parts.scale,
         ticks = this.ticks
       this.parsed.summary = summary
@@ -197,16 +203,16 @@ export class OutputLegend extends BaseOutput {
           odd = p.odd,
           remake =
             'discrete' === p.type
-              ? !bins.length || p.colors.length !== this.parsed.bins
+              ? !bins.length || nc !== this.parsed.bins
               : !s.firstElementChild || 'SPAN' !== s.firstElementChild.tagName
-        this.parsed.bins = p.colors.length
+        this.parsed.bins = nc
         if (pn + this.site.spec.settings.color_scale_center !== this.current_palette || refresh) {
           this.current_palette = pn + this.site.spec.settings.color_scale_center
           this.parsed.rank = this.site.spec.settings.color_by_order as boolean
           if (remake) s.innerHTML = ''
           if ('discrete' === p.type) {
+            const n = Math.ceil(nc / 2)
             let i = 0,
-              n = Math.ceil(p.colors.length / 2),
               div = document.createElement('div'),
               span = document.createElement('span')
             if (remake) {
@@ -224,18 +230,18 @@ export class OutputLegend extends BaseOutput {
               s.appendChild((div = document.createElement('div')))
               div.dataset.of = this.id
               div.style.right = '0px'
-              for (i = Math.floor(p.colors.length / 2), n = p.colors.length; i < n; i++) {
+              for (i = Math.floor(nc / 2); i < nc; i++) {
                 div.appendChild((span = document.createElement('span')))
                 span.dataset.of = this.id
                 span.style.backgroundColor = p.colors[i]
                 span.style.width = prop
               }
-              if (odd) span.style.width = ((1 / (Math.ceil(p.colors.length / 2) - odd / 2)) * 100) / 2 + '%'
+              if (odd) span.style.width = ((1 / (Math.ceil(nc / 2) - odd / 2)) * 100) / 2 + '%'
             } else {
               for (; i < n; i++) {
                 bins[i].style.backgroundColor = p.colors[i]
               }
-              for (i = Math.floor(p.colors.length / 2), n = p.colors.length; i < n; i++) {
+              for (i = Math.floor(nc / 2); i < nc; i++) {
                 bins[i + odd].style.backgroundColor = p.colors[i]
               }
             }

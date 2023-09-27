@@ -1,15 +1,5 @@
 import DataHandler from '../data_handler/index'
-import type {
-  Conditionals,
-  DataSets,
-  Generic,
-  MapInfo,
-  Query,
-  SiteCondition,
-  SiteRule,
-  SiteSpec,
-  Summary,
-} from '../types'
+import type {DataSets, Generic, MapInfo, Query, SiteCondition, SiteRule, SiteSpec, Summary} from '../types'
 import {defaults} from './defaults'
 import type {BaseInput, RegisteredInputs, SiteInputs} from './inputs/index'
 import type {RegisteredOutputs, SiteOutputs} from './outputs/index'
@@ -66,8 +56,8 @@ const outputs = {
 
 export type Dependency = {
   id: string
-  type: 'rule' | 'update' | 'filter' | 'display' | keyof Conditionals | keyof BaseInput
-  conditional?: keyof Conditionals
+  type: 'rule' | 'update' | 'filter' | 'display' | 'dataview' | keyof typeof conditionals | keyof BaseInput
+  conditional?: keyof typeof conditionals
   condition?: SiteCondition
   uid?: string
   rule?: number
@@ -84,12 +74,12 @@ export default class Community {
   storage = storage
   patterns = patterns
   palettes = palettes
-  conditionals: Conditionals
+  conditionals: {[index: string]: Function} = {}
   data: DataHandler
   page: Page
   view: GlobalView
   subs: Subscriptions
-  registered_elements: Map<string, SiteInputs> = new Map()
+  registered_inputs: Map<string, SiteInputs> = new Map()
   registered_outputs: Map<string, SiteOutputs> = new Map()
   defaults = defaults
   dataviews: {[index: string]: SiteDataView} = {}
@@ -161,11 +151,9 @@ export default class Community {
     this.init = this.init.bind(this)
     this.request_queue = this.request_queue.bind(this)
     this.run_queue = this.run_queue.bind(this)
-    const bound_conditionals: any = {}
     Object.keys(conditionals).forEach(
-      k => (bound_conditionals[k] = conditionals[k as keyof typeof conditionals].bind(this))
+      (k: keyof typeof conditionals) => (this.conditionals[k] = conditionals[k].bind(this))
     )
-    this.conditionals = bound_conditionals
     if (this.spec.dataviews) {
       this.defaults.dataview = Object.keys(this.spec.dataviews)[0]
     } else {
@@ -176,24 +164,28 @@ export default class Community {
     this.view = new GlobalView(this)
     new Page(this)
     document.querySelectorAll('.auto-input').forEach((e: HTMLElement) => {
-      if (e.dataset.autotype in inputs) {
+      if (e.dataset.autotype in inputs && !(e.id in this.inputs)) {
         const u = new inputs[e.dataset.autotype as keyof typeof inputs](e, this)
-        this.registered_elements.set(u.id, u)
+        this.registered_inputs.set(u.id, u)
         this.inputs[u.id] = u
       }
     })
     this.subs = new Subscriptions(this.inputs)
     document.querySelectorAll('.auto-output').forEach((e: HTMLElement) => {
-      if (e.dataset.autotype in outputs) {
+      if (e.dataset.autotype in outputs && !(e.id in this.outputs)) {
         const u = new outputs[e.dataset.autotype as keyof typeof outputs](e, this)
         this.registered_outputs.set(u.id, u)
         this.outputs[u.id] = u
+        if ('subto' in u.spec) {
+          if ('string' === typeof u.spec.subto) u.spec.subto = [u.spec.subto]
+          if (Array.isArray(u.spec.subto)) u.spec.subto.forEach(v => this.subs.add(v, u))
+        }
       }
     })
     if (spec.variables && spec.variables.length)
       spec.variables.forEach(v => {
         const u = new InputVirtual(v, this)
-        this.registered_elements.set(v.id, u)
+        this.registered_inputs.set(v.id, u)
         this.inputs[v.id] = u
       })
     this.defaults.dataset = this.spec.dataviews[defaults.dataview].dataset
@@ -202,11 +194,10 @@ export default class Community {
       this.drop_load_screen()
     } else {
       if (sets.length && -1 === sets.indexOf(this.defaults.dataset)) {
-        this.defaults.dataset = ''
         if (1 === sets.length) {
           this.defaults.dataset = sets[0]
         } else {
-          this.registered_elements.forEach(u => {
+          this.registered_inputs.forEach(u => {
             if (!this.defaults.dataset) {
               const d = u.default
               if (-1 !== sets.indexOf(u.dataset)) {
@@ -232,10 +223,13 @@ export default class Community {
           })
           if (!this.defaults.dataset) this.defaults.dataset = sets[sets.length - 1]
         }
-        this.registered_elements.forEach(u => {
+        this.defaults.dataset = this.valueOf(this.defaults.dataset) as string
+        if (-1 === sets.indexOf(this.defaults.dataset)) this.defaults.dataset = sets[0]
+        this.registered_inputs.forEach(u => {
           if (!u.dataset) u.dataset = this.defaults.dataset
         })
-        this.spec.dataviews[defaults.dataview].dataset = this.defaults.dataset
+        if (!this.spec.dataviews[defaults.dataview].dataset)
+          this.spec.dataviews[defaults.dataview].dataset = this.defaults.dataset
       }
       if (spec.rules && spec.rules.length) {
         spec.rules.forEach((r, i) => {
@@ -312,7 +306,7 @@ export default class Community {
         })
       }
     }
-    this.registered_elements.forEach(async o => {
+    this.registered_inputs.forEach(async o => {
       const combobox = 'combobox' === o.type
       if (o.optionSource && 'options' in o) {
         if (patterns.palette.test(o.optionSource)) {
@@ -481,7 +475,7 @@ export default class Community {
   }
   global_reset() {
     this.meta.retain_state = false
-    this.registered_elements.forEach((u, k) => {
+    this.registered_inputs.forEach((u, k) => {
       if (!u.setting && u.reset) {
         u.reset()
         this.request_queue(k)
@@ -500,13 +494,13 @@ export default class Community {
     id = id + ''
     if (!waiting) {
       this.queue.elements.set(id, true)
-      if (this.queue.timeout !== 0) clearTimeout(this.queue.timeout)
+      if (this.queue.timeout !== 0) clearTimeout(this.queue.timeout as number)
       this.queue.timeout = setTimeout(this.run_queue, 20)
       this.meta.lock_after = id
     }
   }
   run_queue() {
-    if (this.queue.timeout !== 0) clearTimeout(this.queue.timeout)
+    if (this.queue.timeout !== 0) clearTimeout(this.queue.timeout as number)
     this.queue.timeout = -1
     this.queue.elements.forEach((_, k) => {
       const d = this.refresh_conditions(k) as string
@@ -621,7 +615,7 @@ export default class Community {
   }
   get_options_url() {
     let s = ''
-    this.registered_elements.forEach((u, k) => {
+    this.registered_inputs.forEach((u, k) => {
       if (u.input && !patterns.settings.test(k) && 'range' in u) {
         if (!u.range || u.range[0] !== u.range[1]) {
           let v: number | string | string[] = u.value()
@@ -655,7 +649,7 @@ export default class Community {
     if (!(id in this.dependencies)) this.dependencies[id] = []
     if (!o.uid) o.uid = JSON.stringify(o)
     if (o.type in this.conditionals) {
-      o.conditional = o.type as keyof Conditionals
+      o.conditional = o.type as keyof typeof conditionals
     }
     const c = this.dependencies[id]
     for (let i = c.length; i--; ) if (o.uid === c[i].uid) return void 0

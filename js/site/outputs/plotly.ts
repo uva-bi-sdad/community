@@ -45,7 +45,7 @@ export class OutputPlotly extends BaseOutput {
     x_range?: number[]
     view?: SiteDataView
   } = {}
-  style: Layout
+  style?: Layout
   time: string
   spec: PlotlySpec
   queue: number | NodeJS.Timeout = -1
@@ -57,11 +57,6 @@ export class OutputPlotly extends BaseOutput {
     this.mouseover = this.mouseover.bind(this)
     this.mouseout = this.mouseout.bind(this)
     this.click = this.click.bind(this)
-    this.dark_theme = site.spec.settings.theme_dark as boolean
-    this.style = this.spec.layout
-    if (!('font' in this.style)) this.style.font = {}
-    if (!('modebar' in this.style)) this.style.modebar = {}
-    if (!('font' in this.style.xaxis)) this.style.xaxis.font = {}
     this.x = e.dataset.x
     this.y = e.dataset.y
     this.color = e.dataset.color
@@ -400,6 +395,13 @@ export class OutputPlotly extends BaseOutput {
     if (this.dark_theme !== this.site.spec.settings.theme_dark) {
       this.dark_theme = this.site.spec.settings.theme_dark as boolean
       const s = getComputedStyle(document.body)
+      if (!('style' in this)) {
+        this.style = this.spec.layout
+        if (!('font' in this.style)) this.style.font = {}
+        if (!('modebar' in this.style)) this.style.modebar = {}
+        if (!('font' in this.style.xaxis)) this.style.xaxis.font = {}
+        if (!('font' in this.style.yaxis)) this.style.yaxis.font = {}
+      }
       this.style.paper_bgcolor = s.backgroundColor
       this.style.plot_bgcolor = s.backgroundColor
       this.style.font.color = s.color

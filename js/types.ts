@@ -4,7 +4,7 @@ import type {PlotlySpec} from './site/outputs/plotly'
 import type {Tutorials} from './site/tutorials'
 import type {NumberSpec} from './site/inputs/number'
 import type {DataViewSpec, SiteDataView} from './site/dataview'
-import type {SiteInputs} from './site/inputs/index'
+import type {BaseInput, SiteInputs} from './site/inputs/index'
 import type {InputSelect, SelectSpec} from './site/inputs/select'
 import type {MapLayer, MapSpec, MeasureLayer} from './site/outputs/map'
 import type {Polygon} from 'leaflet'
@@ -71,7 +71,7 @@ export type FilterParsed = {
       Last: string
     }
     f: FilterParsed
-    table: HTMLTableElement
+    table?: HTMLTableElement
     update: () => void
     times: number[]
     format: (v: number, int?: boolean) => string | number
@@ -404,49 +404,6 @@ export type DataMaps = {
   }
 }
 
-export interface ActiveElement {
-  id: string
-  e: HTMLElement
-  update?: Function
-  set?: Function
-  reset?: Function
-  toggle?: Function
-  close?: Function
-  expanded?: boolean
-  value?: Function
-  deferred?: boolean
-  input?: boolean
-  range?: number[]
-  default: string | number
-  state: string
-  dataset: string
-  view: string
-  site: Community
-}
-
-export interface ActiveTable extends ActiveElement {
-  parsed: {
-    summary: {n: number}
-    order: Orders
-    time: number
-    color: string
-    dataset: string
-    time_index: {[index: number]: number}
-  }
-}
-
-export type Conditionals = {
-  setting: Function
-  options: Function
-  set_current: Function
-  min: Function
-  max: Function
-  dataview: Function
-  time_filters: Function
-  time_range: Function
-  id_filter: Function
-}
-
 export type SiteCondition = {
   id: string
   type: string
@@ -465,7 +422,7 @@ export type SiteRule = {
     lock?: Map<string, SiteInputs>
     display?: {
       e: HTMLElement
-      u?: ActiveElement
+      u?: BaseInput
     }
   }
   default?: string

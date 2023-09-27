@@ -1,6 +1,5 @@
 import DataHandler from '../data_handler/index'
 import type {Entities, Entity, Filter, Generic, VariableFilterParsed} from '../types'
-import {defaults} from './defaults'
 import Community from './index'
 import {component_fun} from './time_funs'
 
@@ -235,6 +234,7 @@ export class SiteDataView {
           }
         })
         this.state = state
+        console.log(this.id, state, this.state)
         this.site.request_queue(this.id)
       } else {
         this.valid = false
@@ -248,8 +248,8 @@ export class SiteDataView {
     this.times = []
     if (this.time_filters) {
       this.time_filters = [
-        {variable: defaults.time, type: '>=', value: 'filter.time_min'},
-        {variable: defaults.time, type: '<=', value: 'filter.time_max'},
+        {variable: this.site.defaults.time, type: '>=', value: 'filter.time_min'},
+        {variable: this.site.defaults.time, type: '<=', value: 'filter.time_max'},
       ]
       this.site.add_dependency(this.id + '_time', {type: 'min', id: 'filter.time_min'})
       this.site.add_dependency(this.id + '_time', {type: 'max', id: 'filter.time_max'})
@@ -261,17 +261,17 @@ export class SiteDataView {
     }
     this.get = {
       dataset: () => {
-        let d = defaults.dataset
+        let d = this.site.defaults.dataset
         if ('string' === typeof this.dataset && this.dataset in this.site.inputs) {
           d = this.site.valueOf(this.site.inputs[this.dataset].value()) as string
           if (!(d in this.site.data.data_queue)) {
-            d = defaults.dataset
+            d = this.site.defaults.dataset
             this.site.inputs[this.dataset].set(d)
           }
         } else {
           d = this.site.valueOf(this.dataset) as string
         }
-        return d in this.site.data.data_queue ? d : defaults.dataset
+        return d in this.site.data.data_queue ? d : this.site.defaults.dataset
       },
       single_id: () => {
         const id = this.site.valueOf(
