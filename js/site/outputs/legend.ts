@@ -214,14 +214,14 @@ export class OutputLegend extends BaseOutput {
             const n = Math.ceil(nc / 2)
             let i = 0,
               div = document.createElement('div'),
-              span = document.createElement('span')
+              span: HTMLSpanElement
             if (remake) {
               s.appendChild(div)
               div.dataset.of = this.id
-              div.style.left = '0px'
+              div.style.left = '0'
               const prop = (1 / (n - odd / 2)) * 100 + '%'
               for (; i < n; i++) {
-                div.appendChild(span)
+                div.appendChild((span = document.createElement('span')))
                 span.dataset.of = this.id
                 span.style.backgroundColor = p.colors[i]
                 span.style.width = prop
@@ -229,14 +229,16 @@ export class OutputLegend extends BaseOutput {
               if (odd) span.style.width = ((1 / (n - odd / 2)) * 100) / 2 + '%'
               s.appendChild((div = document.createElement('div')))
               div.dataset.of = this.id
-              div.style.right = '0px'
+              div.style.right = '0'
               for (i = Math.floor(nc / 2); i < nc; i++) {
                 div.appendChild((span = document.createElement('span')))
                 span.dataset.of = this.id
                 span.style.backgroundColor = p.colors[i]
                 span.style.width = prop
               }
-              if (odd) span.style.width = ((1 / (Math.ceil(nc / 2) - odd / 2)) * 100) / 2 + '%'
+              if (odd)
+                (div.firstElementChild as HTMLElement).style.width =
+                  ((1 / (Math.ceil(nc / 2) - odd / 2)) * 100) / 2 + '%'
             } else {
               for (; i < n; i++) {
                 bins[i].style.backgroundColor = p.colors[i]

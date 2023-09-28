@@ -43,23 +43,20 @@ export class OutputTable extends BaseOutput {
     this.mouseout = this.mouseout.bind(this)
     this.click = this.click.bind(this)
     this.parts.head.appendChild(document.createElement('tr'))
-    this.e.appendChild(this.parts.head)
-    this.e.appendChild(this.parts.body)
-    if (this.click) this.e.classList.add('interactive')
+    e.appendChild(this.parts.head)
+    e.appendChild(this.parts.body)
     if ('string' === typeof this.spec.variables) this.spec.variable_source = this.spec.variables
-    const click_ref = e.dataset.click
-    if (click_ref in this.site.inputs) this.clickto = this.site.inputs[click_ref]
     Object.keys(this.spec).forEach(k => {
       const opt = this.spec[k]
       if ('string' === typeof opt && opt in site.inputs) this.reference_options[k] = opt
     })
-    this.e.addEventListener('mouseover', this.mouseover)
-    this.e.addEventListener('mouseout', this.mouseout)
+    e.addEventListener('mouseover', this.mouseover)
+    e.addEventListener('mouseout', this.mouseout)
     if (this.tab) {
       document.getElementById(e.parentElement.getAttribute('aria-labelledby')).addEventListener(
         'click',
         function (this: OutputTable) {
-          if (!this.e.parentElement.classList.contains('active')) {
+          if (!e.parentElement.classList.contains('active')) {
             setTimeout(this.update, 155)
             setTimeout(this.site.page.trigger_resize, 155)
           }
@@ -75,6 +72,12 @@ export class OutputTable extends BaseOutput {
       this.site.add_dependency(this.view + '_filter', {type: 'update', id: this.id})
       this.site.add_dependency(this.site.dataviews[this.view].time_agg as string, {type: 'update', id: this.id})
     } else this.view = this.site.defaults.dataview
+    const click_ref = this.e.dataset.click
+    if (click_ref in this.site.inputs) {
+      if (this.e.dataset.click) this.e.classList.add('interactive')
+      this.clickto = this.site.inputs[click_ref]
+      this.e.addEventListener('click', this.click)
+    }
     this.update()
   }
   show(e: Entity) {

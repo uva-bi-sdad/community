@@ -225,8 +225,8 @@ export class TutorialManager {
     if (!isClick && 'Escape' === event.code) this.end_tutorial()
     if (this.in_progress && !this.waiting && (isClick || 'Enter' === event.code || 'ArrowRight' === event.code)) {
       this.waiting = true
-      clearTimeout(this.focuser)
-      clearInterval(this.running_timer)
+      clearTimeout(this.focuser as number)
+      clearInterval(this.running_timer as number)
       const t = this.tutorials[this.in_progress]
       let step: TutorialStep
       const handle_object = (obj: {[index: string]: string}) => {
@@ -338,7 +338,7 @@ export class TutorialManager {
           this.current_time--
           this.timer.innerText = this.current_time + ''
           if (this.current_time <= 0) {
-            clearInterval(this.running_timer)
+            clearInterval(this.running_timer as number)
             this.progress_tutorial()
           }
         }, 1e3)
@@ -357,6 +357,6 @@ export class TutorialManager {
     this.current_step = 0
     this.container.classList.add('hidden')
     this.waiting = false
-    clearTimeout(this.focuser)
+    clearTimeout(this.focuser as number)
   }
 }

@@ -19,7 +19,7 @@ import type {InputNumber} from '../inputs/number'
 import {fill_overlay_properties_options} from '../utils'
 import type {SiteInputs} from '../inputs/index'
 
-export type LayerSource = {
+type LayerSource = {
   name?: string
   url: string
   time?: number
@@ -41,7 +41,7 @@ export type MapLayer = {
 }
 type Tiles = {url: string; options?: {[index: string]: any}}
 type Options = {[index: string]: boolean | number | string | (number | string)[]}
-export type LayerFilter = {
+type LayerFilter = {
   feature: string
   operator: string
   value: string
@@ -101,22 +101,11 @@ export class OutputMap extends BaseOutput {
     this.mouseout = this.mouseout.bind(this)
     this.click = this.click.bind(this)
     this.color = this.e.dataset.color
-    const click_ref = this.e.dataset.click
-    if (click_ref in site.inputs) this.clickto = site.inputs[click_ref]
     this.options = this.spec.options
     Object.keys(this.options).forEach(k => {
       const opt = this.options[k]
       if ('string' === typeof opt && opt in site.inputs) this.reference_options[k] = opt
     })
-    const dep: Dependency = {type: 'update', id: this.id},
-      view = site.dataviews[this.view]
-    if (view) {
-      if (view.time_agg in site.inputs) site.add_dependency(view.time_agg as string, dep)
-      if (view.y) site.add_dependency(view.y, dep)
-    } else this.view = site.defaults.dataview
-    site.add_dependency(this.view, dep)
-    if (this.color in site.inputs) site.add_dependency(this.color, dep)
-    if (this.time) site.add_dependency(this.time, dep)
     if (!this.e.style.height) this.e.style.height = this.options.height ? (this.options.height as string) : '400px'
     if (site.spec.settings.overlays_from_measures && site.data.variable_info) {
       if (!Array.isArray(this.spec.overlays)) this.spec.overlays = []
@@ -140,6 +129,17 @@ export class OutputMap extends BaseOutput {
     }
   }
   init() {
+    const dep: Dependency = {type: 'update', id: this.id},
+      view = this.site.dataviews[this.view]
+    if (view) {
+      if (view.time_agg in this.site.inputs) this.site.add_dependency(view.time_agg as string, dep)
+      if (view.y) this.site.add_dependency(view.y, dep)
+    } else this.view = this.site.defaults.dataview
+    this.site.add_dependency(this.view, dep)
+    if (this.color in this.site.inputs) this.site.add_dependency(this.color, dep)
+    if (this.time) this.site.add_dependency(this.time, dep)
+    const click_ref = this.e.dataset.click
+    if (click_ref in this.site.inputs) this.clickto = this.site.inputs[click_ref]
     this.queue_init()
   }
   queue_init() {
@@ -297,7 +297,7 @@ export class OutputMap extends BaseOutput {
           view = this.site.dataviews[this.view],
           d = view.get.dataset(),
           time = this.site.valueOf(view.time_agg),
-          map_time = this.options.has_time ? this.match_time(time as number) : '',
+          map_time = this.has_time ? this.match_time(time as number) : '',
           inited = d + map_time + this.id in this.site.data.inited,
           mapId = inited ? d + map_time : d
         if (this.site.maps.queue && mapId in this.site.maps.queue && !this.site.data.inited[mapId + this.id]) {

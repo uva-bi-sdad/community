@@ -12,7 +12,7 @@ import type {InputVirtual} from './virtual'
 import type {InputSwitch} from './switch'
 import type {InputText} from './text'
 
-export type ElementTypes =
+type InputTypes =
   | 'number'
   | 'radio'
   | 'switch'
@@ -37,7 +37,7 @@ export type SiteInputs =
 export type RegisteredInputs = {[index: string]: SiteInputs}
 
 export abstract class BaseInput {
-  type: ElementTypes
+  type: InputTypes
   input = true
   site: Community
   e: HTMLElement
@@ -73,7 +73,7 @@ export abstract class BaseInput {
     this.view = e.dataset.view
     this.id = e.id || this.optionSource || 'ui' + site.page.elementCount++
     this.note = e.getAttribute('aria-description') || ''
-    this.type = e.dataset.autotype as ElementTypes
+    this.type = e.dataset.autotype as InputTypes
     if (this.type in site.spec) {
       const spec = site.spec[this.type as keyof SiteSpec] as SiteInputs
       if (this.id in spec) this.settings = (spec as any)[this.id]

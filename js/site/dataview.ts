@@ -107,6 +107,7 @@ export class SiteDataView {
   constructor(site: Community, id: string, spec?: DataViewSpec) {
     this.site = site
     this.id = id
+    this.update = this.update.bind(this)
     site.dataviews[id] = this
     if (spec)
       Object.keys(spec).forEach((k: keyof DataViewSpec) => {
@@ -233,14 +234,10 @@ export class SiteDataView {
             this.n_selected.all++
           }
         })
-        this.state = state
-        console.log(this.id, state, this.state)
         this.site.request_queue(this.id)
       } else {
         this.valid = false
-        this.site.data.data_queue[this.parsed.dataset][this.id] = () => {
-          return this.update
-        }
+        this.site.data.data_queue[this.parsed.dataset][this.id] = this.update
       }
     }
   }

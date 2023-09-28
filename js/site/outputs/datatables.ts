@@ -66,9 +66,9 @@ export class OutputDataTable extends BaseOutput {
     time: number
     color: string
     dataset?: string
-    time_index?: ObjectIndex
+    time_index: ObjectIndex
     time_range?: number[]
-  } = {time: 0, color: ''}
+  } = {time: 0, color: '', time_index: {}}
   time: string
   queue: number | NodeJS.Timeout = -1
   pending: number | NodeJS.Timeout = -1
@@ -100,8 +100,6 @@ export class OutputDataTable extends BaseOutput {
     e.addEventListener('mouseover', this.mouseover)
     e.addEventListener('mouseout', this.mouseout)
     if ('string' === typeof this.spec.variables) this.spec.variable_source = this.spec.variables
-    const click_ref = e.dataset.click
-    if (click_ref in this.site.inputs) this.clickto = this.site.inputs[click_ref]
     Object.keys(this.spec).forEach(k => {
       const opt = this.spec[k]
       if ('string' === typeof opt && opt in site.inputs) this.reference_options[k] = opt
@@ -249,6 +247,11 @@ export class OutputDataTable extends BaseOutput {
       this.site.add_dependency(this.view + '_filter', {type: 'update', id: this.id})
       this.site.add_dependency(this.site.dataviews[this.view].time_agg as string, {type: 'update', id: this.id})
     } else this.view = this.site.defaults.dataview
+    const click_ref = this.e.dataset.click
+    if (click_ref in this.site.inputs) {
+      this.clickto = this.site.inputs[click_ref]
+      this.e.addEventListener('click', this.click)
+    }
     this.queue_init()
   }
   show(e: Entity) {

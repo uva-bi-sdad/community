@@ -30,7 +30,7 @@ interface Modal {
   body: HTMLElement
 }
 
-export interface FilterUI extends Modal {
+interface FilterUI extends Modal {
   conditions: HTMLElement
   variable_filters: HTMLElement
   entity_filters: HTMLElement
@@ -38,7 +38,7 @@ export interface FilterUI extends Modal {
   time_range: HTMLElement
 }
 
-export interface InfoUI extends Modal {
+interface InfoUI extends Modal {
   body: HTMLElement
   title: HTMLElement
   description: HTMLElement

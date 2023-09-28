@@ -44,6 +44,8 @@ export class InputCombobox extends BaseInput {
     this.resize = this.resize.bind(this)
     this.toggle = this.toggle.bind(this)
     this.highlight = this.highlight.bind(this)
+    this.filterer = this.filterer.bind(this)
+    this.close = this.close.bind(this)
     this.settings.use_display = this.settings.search || this.settings.multi
     this.listbox = this.e.parentElement.children[1] as HTMLElement
     this.options = [...this.listbox.querySelectorAll('.combobox-option')] as HTMLDivElement[]
@@ -81,15 +83,15 @@ export class InputCombobox extends BaseInput {
     }
     this.input_element.addEventListener(
       'focus',
-      function (this: InputCombobox) {
-        this.e.classList.add('focused')
-      }.bind(this)
+      function (this: HTMLElement) {
+        this.classList.add('focused')
+      }.bind(this.e)
     )
     this.input_element.addEventListener(
       'blur',
-      function (this: InputCombobox) {
-        this.e.classList.remove('focused')
-      }.bind(this)
+      function (this: HTMLElement) {
+        this.classList.remove('focused')
+      }.bind(this.e)
     )
     this.listbox.addEventListener('click', this.set)
     window.addEventListener('resize', this.resize)
@@ -97,9 +99,9 @@ export class InputCombobox extends BaseInput {
     this.listbox.addEventListener('mouseover', this.highlight)
     if (this.settings.accordion) {
       this.listbox.addEventListener('show.bs.collapse', e => {
-        const group = this.hover_index === -1 ? '' : this.options[this.hover_index].getAttribute('data-group')
+        const group = this.hover_index === -1 ? '' : this.options[this.hover_index].dataset.group
         const et = e.target as HTMLElement
-        if (group !== et.getAttribute('data-group')) {
+        if (group !== et.dataset.group) {
           et.firstElementChild.firstElementChild.dispatchEvent(new MouseEvent('mouseover'))
           this.input_element.focus()
         }
@@ -175,7 +177,7 @@ export class InputCombobox extends BaseInput {
         if (!o.classList.contains('hidden') && o.innerText.toLowerCase().includes(q)) {
           o.classList.remove('filter-hidden')
           this.filter_index.push(i)
-          const group = o.getAttribute('data-group')
+          const group = o.dataset.group
           if (group) {
             this.groups.by_name[group].firstElementChild.firstElementChild.classList.remove('hidden')
             if (this.settings.accordion) {
@@ -221,8 +223,8 @@ export class InputCombobox extends BaseInput {
           const port = this.container.getBoundingClientRect(),
             item = o.getBoundingClientRect()
           let top = port.top
-          if (this.groups && o.getAttribute('data-group'))
-            top += this.groups.by_name[o.getAttribute('data-group')].firstElementChild.getBoundingClientRect().height
+          if (this.groups && o.dataset.group)
+            top += this.groups.by_name[o.dataset.group].firstElementChild.getBoundingClientRect().height
           if (top > item.top) {
             this.container.scrollTo(0, this.container.scrollTop + item.top - top)
           } else if (port.bottom < item.bottom) {
@@ -234,7 +236,7 @@ export class InputCombobox extends BaseInput {
   }
   toggle(e?: MouseEvent, target?: HTMLElement) {
     if (e && !target) target = e.target as HTMLElement
-    if (target && !e.button && !this.e.classList.contains('disabled') && 'BUTTON' !== target.tagName) {
+    if (target && (!e || !e.button) && !this.e.classList.contains('disabled') && 'BUTTON' !== target.tagName) {
       if (this.expanded) {
         if (target !== this.input_element) this.close()
       } else {

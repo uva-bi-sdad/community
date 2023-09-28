@@ -1,8 +1,8 @@
 import type {MeasureInfo} from '../types'
-import type {Combobox} from './inputs/combobox'
-import type {Select} from './inputs/select'
+import type {InputCombobox} from './inputs/combobox'
+import type {InputSelect} from './inputs/select'
 
-export function options_filter(this: Combobox | Select) {
+export function options_filter(this: InputCombobox | InputSelect) {
   if (this.settings.filters) {
     Object.keys(this.settings.filters).forEach(f => {
       this.current_filter[f] = this.site.valueOf(this.settings.filters[f]) as keyof MeasureInfo
@@ -28,7 +28,7 @@ export function options_filter(this: Combobox | Select) {
   }
 }
 
-export function set_current_options(this: Combobox | Select) {
+export function set_current_options(this: InputCombobox | InputSelect) {
   this.values = this.option_sets[this.dataset].values
   this.display = this.option_sets[this.dataset].display
   this.options = this.option_sets[this.dataset].options as typeof this.options

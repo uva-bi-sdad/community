@@ -61,8 +61,6 @@ export class OutputPlotly extends BaseOutput {
     this.y = e.dataset.y
     this.color = e.dataset.color
     this.time = e.dataset.colorTime
-    const click_ref = e.dataset.click
-    if (click_ref in this.site.inputs) this.clickto = this.site.inputs[click_ref]
     Object.keys(this.spec).forEach(k => {
       const opt = this.spec[k]
       if ('string' === typeof opt && opt in site.inputs) this.reference_options[k] = opt
@@ -130,6 +128,8 @@ export class OutputPlotly extends BaseOutput {
           this.site.add_dependency(this.base_trace, {type: 'update', id: this.id})
       }
     })
+    const click_ref = this.e.dataset.click
+    if (click_ref in this.site.inputs) this.clickto = this.site.inputs[click_ref]
     this.queue_init()
   }
   show(e: Entity) {

@@ -25,7 +25,7 @@ type Parsed = {
   filter?: HTMLTableElement
 }
 
-export class InfoPart {
+class InfoPart {
   parent: OutputInfo
   text: string
   value_source: string
@@ -83,9 +83,9 @@ export class InfoPart {
       if ('data' in this.parsed) {
         return this.parent.site.data.meta.times[this.parent.dataset].value[this.parent.time_agg] + ''
       } else if ('variables' in this.parsed && (this.value_source || this.parent.v in info)) {
-        return (info[this.parent.site.valueOf(this.value_source || this.parent.v) as string] as MeasureInfo)[
-          this.parsed.variables as keyof MeasureInfo
-        ] as string
+        const v = this.parent.site.valueOf(this.value_source || this.parent.v) as string,
+          i = info[v] as MeasureInfo
+        return (this.parsed.variables in i ? i[this.parsed.variables as keyof MeasureInfo] : this.text) as string
       }
       return this.text
     } else return this.text
@@ -118,6 +118,7 @@ export class OutputInfo extends BaseOutput {
   queue: number | NodeJS.Timeout
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
+    this.update = this.update.bind(this)
     this.has_default = this.spec.default && (!!this.spec.default.title || !!this.spec.default.body)
     this.site.subs.add(this.view, this)
     if (this.spec.floating) {
@@ -177,17 +178,17 @@ export class OutputInfo extends BaseOutput {
         this.parts.body.default.className =
           'info-body hidden'
       if (this.has_default && this.spec.default.body) this.parts.body.default.innerText = this.spec.default.body
-      let h = 0,
-        base = document.createElement('div'),
-        temp = document.createElement('div')
+      let h = 0
       this.spec.body &&
         (this.spec.body as {name: string; value: string; style: string}[]).forEach((op, i) => {
           const p = {
-            name: new InfoPart(this, op.name),
-            value: new InfoPart(this, op.value),
-            base: document.createElement('div'),
-            temp: document.createElement('div'),
-          }
+              name: new InfoPart(this, op.name),
+              value: new InfoPart(this, op.value),
+              base: document.createElement('div'),
+              temp: document.createElement('div'),
+            },
+            base = document.createElement('div'),
+            temp = document.createElement('div')
           this.parts.body.rows[i] = p
           this.parts.body.base.appendChild(p.base)
           this.parts.body.temp.appendChild(p.temp)
@@ -210,18 +211,8 @@ export class OutputInfo extends BaseOutput {
             base.innerText = temp.innerText = p.name.get()
           }
           if (p.value) {
-            p.base.appendChild((base = document.createElement('div')))
-            p.temp.appendChild((temp = document.createElement('div')))
-            if ('summary' in p.value.parsed) {
-              p.base.lastElementChild.appendChild(p.value.parsed.summary)
-            } else if ('filter' in p.value.parsed) {
-              p.base.lastElementChild.appendChild(p.value.parsed.filter)
-            } else {
-              temp.className = base.className =
-                'info-body-row-value' + ('statement' === p.value.parsed.variables ? ' statement' : '')
-              if (p.name.ref && 'value' === p.value.text) p.value.ref = true
-              if (!p.value.ref) temp.innerText = base.innerText = p.value.get()
-            }
+            p.base.appendChild(document.createElement('div'))
+            p.temp.appendChild(document.createElement('div'))
           }
         })
       this.e.style.minHeight = h + 'px'
@@ -238,8 +229,21 @@ export class OutputInfo extends BaseOutput {
       this.parts.body.rows.forEach(r => {
         if (r.name && 'summary' === r.name.text)
           r.name.parsed.summary = make_summary_table(this.site.data.format_value, this.e)
-        if (r.value && 'summary' === r.value.text)
-          r.value.parsed.summary = make_summary_table(this.site.data.format_value, this.e)
+        if (r.value) {
+          if ('summary' === r.value.text) {
+            r.value.parsed.summary = make_summary_table(this.site.data.format_value, this.e)
+            r.base.lastElementChild.appendChild(r.value.parsed.summary)
+          } else if ('filter' in r.value.parsed) {
+            r.base.lastElementChild.appendChild(r.value.parsed.filter)
+          } else {
+            const base = r.base.lastElementChild as HTMLElement,
+              temp = r.temp.lastElementChild as HTMLElement
+            temp.className = base.className =
+              'info-body-row-value' + ('statement' === r.value.parsed.variables ? ' statement' : '')
+            if (r.name.ref && 'value' === r.value.text) r.value.ref = true
+            if (!r.value.ref) temp.innerText = base.innerText = r.value.get()
+          }
+        }
       })
     this.update()
   }
@@ -326,7 +330,7 @@ export class OutputInfo extends BaseOutput {
             if (p.name.value_source) p.name.value_source = p.value.text
             const e = p.name.get(entity, caller)
             if ('object' !== typeof e) {
-              ;(p.temp.lastElementChild as HTMLElement).innerText = this.parse_variables(
+              ;(p.temp.firstElementChild as HTMLElement).innerText = this.parse_variables(
                 e,
                 p.value.parsed.variables,
                 entity

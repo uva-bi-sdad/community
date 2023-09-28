@@ -284,7 +284,7 @@ export default class Community {
           delete this.data.onload
         },
         data_load: () => {
-          Object.keys(this.dependencies).forEach(this.request_queue)
+          Object.keys(this.dependencies).forEach(k => this.request_queue(false, k))
         },
       })
     }
@@ -358,8 +358,8 @@ export default class Community {
           o.source = ''
           o.id in this.url_options ? o.set(this.url_options[o.id] as string) : o.reset()
         }
-        o.subset = o.e.getAttribute('data-subset') || 'all'
-        o.selection_subset = o.e.getAttribute('data-selectionSubset') || o.subset
+        o.subset = o.e.dataset.subset || 'all'
+        o.selection_subset = o.e.dataset.selectionSubset || o.subset
         if (o.type in this.spec && o.id in this.spec[o.type]) {
           o.settings = this.spec[o.type][o.id]
           if (o.settings.filters) {
@@ -486,29 +486,30 @@ export default class Community {
     if (window.localStorage) storage.perm.removeItem(storage.name)
     window.location.reload()
   }
-  request_queue(waiting: boolean | string | number, id?: string | number) {
+  request_queue(waiting: boolean | string, id?: string) {
     if ('boolean' !== typeof waiting) {
-      id = waiting
+      id = waiting as string
       waiting = false
     }
-    id = id + ''
-    if (!waiting) {
+    if (!waiting && !this.queue.elements.get(id)) {
       this.queue.elements.set(id, true)
-      if (this.queue.timeout !== 0) clearTimeout(this.queue.timeout as number)
+      if ((this.queue.timeout as number) > 0) clearTimeout(this.queue.timeout as number)
       this.queue.timeout = setTimeout(this.run_queue, 20)
       this.meta.lock_after = id
     }
   }
   run_queue() {
-    if (this.queue.timeout !== 0) clearTimeout(this.queue.timeout as number)
+    if ((this.queue.timeout as number) > 0) clearTimeout(this.queue.timeout as number)
     this.queue.timeout = -1
-    this.queue.elements.forEach((_, k) => {
-      const d = this.refresh_conditions(k) as string
-      if (d) {
-        if (!(k in this.data.data_queue[d])) this.data.data_queue[d][k] = this.run_queue
-        return false
+    this.queue.elements.forEach((fire, k) => {
+      if (fire) {
+        const d = this.refresh_conditions(k) as string
+        if (d) {
+          if (!(k in this.data.data_queue[d])) this.data.data_queue[d][k] = this.run_queue
+          return false
+        }
+        this.queue.elements.set(k, false)
       }
-      this.queue.elements.set(k, false)
     })
     let k = this.get_options_url()
     if (this.data.inited.first && k !== this.state) {
@@ -539,11 +540,14 @@ export default class Community {
           c.states[part] = v
         } else if (!is_view) {
           const view = this.dataviews[c.view],
-            dd = c.dataset ? (this.valueOf(c.dataset) as string) : view ? view.get.dataset() : v
+            dd =
+              v in this.data.loaded ? v : c.dataset ? (this.valueOf(c.dataset) as string) : view && view.get.dataset()
           if (this.data.info && dd in this.data.loaded && !this.data.loaded[dd]) {
             if (!c.deferred) this.data.retrieve(dd, this.data.info[dd].site_file)
             return dd
           }
+          c.state = v
+        } else {
           c.state = v
         }
         d.forEach(di => {

@@ -8,7 +8,7 @@ import type {OutputPlotly} from './plotly'
 import type {OutputTable} from './table'
 import type {OutputText} from './text'
 
-export type OutputTypes = 'info' | 'map' | 'plotly' | 'text' | 'datatable' | 'table' | 'legend'
+type OutputTypes = 'info' | 'map' | 'plotly' | 'text' | 'datatable' | 'table' | 'legend'
 export type SiteOutputs =
   | OutputInfo
   | OutputMap
