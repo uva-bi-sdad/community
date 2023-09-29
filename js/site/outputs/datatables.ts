@@ -55,7 +55,7 @@ interface DataTablesMouseEvent extends MouseEvent {
 }
 
 export class OutputDataTable extends BaseOutput {
-  type: 'datatable'
+  type: 'datatable' = 'datatable'
   table: DataTables.Api
   style: HTMLStyleElement
   clickto?: SiteInputs
@@ -99,11 +99,11 @@ export class OutputDataTable extends BaseOutput {
     this.style = document.head.appendChild(document.createElement('style'))
     e.addEventListener('mouseover', this.mouseover)
     e.addEventListener('mouseout', this.mouseout)
-    if ('string' === typeof this.spec.variables) this.spec.variable_source = this.spec.variables
     Object.keys(this.spec).forEach(k => {
       const opt = this.spec[k]
       if ('string' === typeof opt && opt in site.inputs) this.reference_options[k] = opt
     })
+    if ('string' === typeof this.spec.variables) this.spec.variable_source = this.spec.variables
     if (this.tab) {
       document.getElementById(e.parentElement.getAttribute('aria-labelledby')).addEventListener(
         'click',
@@ -472,12 +472,12 @@ export class OutputDataTable extends BaseOutput {
         }
         if (this.parsed.time > -1 && this.header.length > 1 && v.time_range.filtered_index) {
           if (this.style.sheet.cssRules.length) this.style.sheet.deleteRule(0)
-          if (this.parsed.time_index[v.parsed.time_agg])
+          if (this.parsed.time_index[time as number])
             this.style.sheet.insertRule(
               '#' +
                 this.id +
                 ' td:nth-child(' +
-                (this.parsed.time_index[v.parsed.time_agg] + 1) +
+                (this.parsed.time_index[time as number] + 1) +
                 '){background-color: var(--background-highlight)}',
               0
             )

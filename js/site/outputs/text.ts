@@ -1,7 +1,7 @@
 import DataHandler from '../../data_handler/index'
 import type {SiteCondition} from '../../types'
 import type Community from '../index'
-import {tooltip_clear, tooltip_trigger} from '../utils'
+import {tooltip_trigger} from '../utils'
 import {BaseOutput} from './index'
 
 type Text = {
@@ -16,15 +16,17 @@ type TextSpec = {
 }
 
 export class OutputText extends BaseOutput {
-  type: 'text'
+  type: 'text' = 'text'
   spec: TextSpec
   text: Text[] | Text[][]
   condition: SiteCondition[]
-  depends: Map<string, SiteCondition> = new Map()
+  depends: Map<string, {id: string; parsed?: string}> = new Map()
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
+    this.update = this.update.bind(this)
+    this.prep = this.prep.bind(this)
     this.text = this.spec.text
-    this.condition = this.spec.condition
+    this.condition = this.spec.condition || []
   }
   init() {
     this.text.forEach(oi => {
@@ -45,8 +47,16 @@ export class OutputText extends BaseOutput {
   update() {
     this.depends.forEach(d => {
       d.parsed = this.site.valueOf(d.id) as string
-      if (d.parsed in this.site.data.entities) {
-        d.parsed = this.site.data.entities[d.parsed].features.name
+      const u = this.site.inputs[d.id]
+      if (u) {
+        if ('values' in u && 'options' in u && !Array.isArray(u.values) && d.parsed in u.values) {
+          d.parsed = u.options[u.values[d.parsed]].innerText
+        } else {
+          d.parsed =
+            'display' in u && d.parsed in u.display
+              ? (u.display[d.parsed] as string)
+              : this.site.data.format_label(d.parsed)
+        }
       }
     })
     this.text.forEach((o, i) => {
@@ -99,7 +109,13 @@ export class OutputText extends BaseOutput {
           this.e.children[i].innerHTML = ''
           this.e.children[i].appendChild(s.parts)
         } else s.parts.classList.remove('hidden')
-      } else s.parts.classList.add('hidden')
+      } else {
+        if (Array.isArray(o)) {
+          o.forEach(p => p.parts.classList.add('hidden'))
+        } else {
+          o.parts.classList.add('hidden')
+        }
+      }
     })
   }
   prep(text: Text) {
@@ -115,11 +131,11 @@ export class OutputText extends BaseOutput {
         p.trigger = tooltip_trigger.bind({id: this.id + p.text, note: p.target, wrapper: button})
         if ('note' === p.type) {
           button.setAttribute('aria-description', p.target as string)
-          button.setAttribute('data-of', this.id + p.text)
+          button.dataset.of = this.id + p.text
           button.className = 'has-note'
           button.addEventListener('mouseover', p.trigger)
           button.addEventListener('focus', p.trigger)
-          button.addEventListener('blur', tooltip_clear)
+          button.addEventListener('blur', this.site.page.tooltip_clear)
         } else {
           button.className = 'btn btn-link'
           if (!Array.isArray(p.target)) p.target = [p.target]
@@ -142,7 +158,7 @@ export class OutputText extends BaseOutput {
       } else {
         text.parts.appendChild(document.createElement('span'))
       }
-      // if (k in this.site.inputs) this.depends.set(k, {id: k, u: this.site.inputs[k], parsed: ''})
+      if (k in this.site.inputs) this.depends.set(k, {id: k, parsed: ''})
     })
     if ('condition' in text) {
       for (let i = text.condition.length; i--; ) {

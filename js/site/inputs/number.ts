@@ -5,7 +5,7 @@ import type {LogicalObject} from '../../types'
 export type NumberSpec = {}
 
 export class InputNumber extends BaseInput {
-  type: 'number'
+  type: 'number' = 'number'
   e: HTMLInputElement
   default: string | number
   source: number

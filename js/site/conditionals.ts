@@ -5,7 +5,7 @@ import type {InputCombobox} from './inputs/combobox'
 import type {InputNumber} from './inputs/number'
 import {tooltip_icon_rule} from './static_refs'
 import {fill_ids_options, fill_levels_options, fill_variables_options, toggle_input} from './utils'
-import type {SiteDataView} from './dataview'
+import type {DataViewSelection, SiteDataView} from './dataview'
 import type {OutputInfo} from './outputs/info'
 import type {OutputPlotly} from './outputs/plotly'
 import type {OutputMap} from './outputs/map'
@@ -90,6 +90,7 @@ export function options(this: Community, u: InputCombobox) {
     if (fresh || u.filter || u.selection_subset) {
       if (fresh) {
         c.innerHTML = ''
+        if (u.option_sets[k].groups) u.groups = u.option_sets[k].groups
         u.values = u.option_sets[k].values
         u.display = u.option_sets[k].display
         u.options = u.option_sets[k].options as HTMLDivElement[]
@@ -113,7 +114,7 @@ export function options(this: Community, u: InputCombobox) {
               }
             }
           } else {
-            v = this.dataviews[u.view].selection[selection]
+            v = this.dataviews[u.view].selection[selection as keyof DataViewSelection]
           }
         }
         u.options.forEach((si: HTMLDivElement) => {

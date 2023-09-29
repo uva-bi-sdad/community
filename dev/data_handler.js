@@ -18,7 +18,7 @@
     OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
     PERFORMANCE OF THIS SOFTWARE.
     ***************************************************************************** */
-    /* global Reflect, Promise */
+    /* global Reflect, Promise, SuppressedError, Symbol */
 
 
     function __awaiter(thisArg, _arguments, P, generator) {
@@ -30,6 +30,11 @@
             step((generator = generator.apply(thisArg, _arguments || [])).next());
         });
     }
+
+    typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+        var e = new Error(message);
+        return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+    };
 
     const defaults = {
         file_format: 'csv',
@@ -487,7 +492,7 @@
             return v;
         }
         else {
-            return 'string' === typeof this.settings.settings.digits
+            return 'number' !== typeof this.settings.settings.digits
                 ? v
                 : v.toFixed(this.settings.settings.digits > 0 ? this.settings.settings.digits : 0);
         }
@@ -852,9 +857,9 @@
         const a = p * (n - 1), ap = a % 1, bp = 1 - ap, b = o + Math.ceil(a), i = o + Math.floor(a);
         return x[i][1] * ap + x[b][1] * bp;
     }
-    function calculate(measure, view, full) {
+    function calculate(measure, v, full) {
         return __awaiter(this, void 0, void 0, function* () {
-            const v = this.settings.dataviews[view];
+            const view = v && v.id;
             const dataset = v.get.dataset();
             yield this.data_processed[dataset];
             const summaryId = dataset + measure;
@@ -865,7 +870,7 @@
             });
             const variable = this.variables[measure], m = variable.views[view];
             if (m.state[dataset] !== v.state) {
-                const s = v.selection[this.settings.settings.summary_selection], a = v.selection.all, mo = m.order[dataset], mso = m.selected_order[dataset], ny = variable.time_range[dataset][2], order = variable.info[dataset].order, levels = variable.levels, level_ids = variable.level_ids, subset = v.n_selected[this.settings.settings.summary_selection] !== v.n_selected.dataset, mss = m.selected_summaries[dataset], ms = m.summaries[dataset], is_string = 'string' === variable.type;
+                const summary_set = this.settings.settings.summary_selection, s = v.selection[summary_set], a = v.selection.all, mo = m.order[dataset], mso = m.selected_order[dataset], ny = variable.time_range[dataset][2], order = variable.info[dataset].order, levels = variable.levels, level_ids = variable.level_ids, subset = v.n_selected[summary_set] !== v.n_selected.dataset, mss = m.selected_summaries[dataset], ms = m.summaries[dataset], is_string = 'string' === variable.type;
                 for (let y = ny; y--;) {
                     mo[y] = subset ? [] : order[y];
                     mso[y] = subset ? [] : order[y];

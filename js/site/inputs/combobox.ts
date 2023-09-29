@@ -16,7 +16,7 @@ export type ComboboxSpec = {
 }
 
 export class InputCombobox extends BaseInput {
-  type: 'combobox'
+  type: 'combobox' = 'combobox'
   hover_index = -1
   cleared_selection = ''
   default: string | number
@@ -38,21 +38,25 @@ export class InputCombobox extends BaseInput {
   sensitive = false
   loader?: (...args: any) => void
   filter = options_filter
+  reformat_label = false
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
     this.set = this.set.bind(this)
+    this.reset = this.reset.bind(this)
     this.resize = this.resize.bind(this)
     this.toggle = this.toggle.bind(this)
     this.highlight = this.highlight.bind(this)
     this.filterer = this.filterer.bind(this)
     this.close = this.close.bind(this)
+    this.set_selected = this.set_selected.bind(this)
     this.settings.use_display = this.settings.search || this.settings.multi
     this.listbox = this.e.parentElement.children[1] as HTMLElement
     this.options = [...this.listbox.querySelectorAll('.combobox-option')] as HTMLDivElement[]
     if (this.options.length) {
+      this.reformat_label = true
       this.options.forEach((e, i) => {
         this.values[e.dataset.value] = i
-        this.display[e.innerText] = i
+        if (this.reformat_label) this.reformat_label = e.dataset.value === e.innerText
       })
       const group: NodeListOf<HTMLElement> = this.listbox.querySelectorAll('.combobox-group')
       if (group.length) {
@@ -162,6 +166,12 @@ export class InputCombobox extends BaseInput {
         }
       }.bind(this)
     )
+  }
+  init() {
+    this.options.forEach((e, i) => {
+      if (this.reformat_label) e.innerText = this.site.data.format_label(e.dataset.value)
+      this.display[e.innerText] = i
+    })
   }
   set_current = set_current_options
   filterer() {

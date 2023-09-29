@@ -1,4 +1,4 @@
-import type {MeasureInfo, MeasureSource, OptionSets, ResourceField} from '../types'
+import type {MeasureInfo, MeasureSource, OptionSets, ResourceField, SlimNote} from '../types'
 import type {InputCombobox} from './inputs/combobox'
 import type {SiteInputs} from './inputs/index'
 import type {InputSelect} from './inputs/select'
@@ -67,12 +67,13 @@ export function fill_ids_options(u: InputCombobox | InputSelect, d: string, out:
   let ck = !u.sensitive && !!u.current_set,
     n = 0
   if (u.settings.group) {
-    u.groups = {e: [], by_name: {}}
+    out[d].groups = {e: [], by_name: {}}
     if (combobox && u.settings.accordion) {
       u.listbox.classList.add('accordion')
       u.listbox.id = u.id + '-listbox'
     }
   }
+  const ugroup = out[d].groups
   Object.keys(u.site.data.entities).forEach(k => {
     const entity = u.site.data.entities[k]
     if (d === entity.group) {
@@ -80,12 +81,12 @@ export function fill_ids_options(u: InputCombobox | InputSelect, d: string, out:
         u.sensitive = true
         ck = false
       }
-      if (u.groups) {
+      if (ugroup) {
         let groups = entity.features[u.settings.group] || ['No Group']
         if (!Array.isArray(groups)) groups = [groups]
         for (let g = groups.length; g--; ) {
           const group: string = groups[g]
-          if (!(group in u.groups.by_name)) {
+          if (!(group in ugroup.by_name)) {
             const e = document.createElement(combobox ? 'div' : 'optgroup')
             if (combobox) {
               const id = u.id + '_' + group.replace(patterns.seps, '-')
@@ -126,15 +127,15 @@ export function fill_ids_options(u: InputCombobox | InputSelect, d: string, out:
             } else {
               e.setAttribute('aria-label', group)
             }
-            u.groups.by_name[group] = e
-            u.groups.e.push(e)
+            ugroup.by_name[group] = e
+            ugroup.e.push(e)
           }
           const o = u.add(k, entity.features.name, true)
           o.setAttribute('data-group', group)
           if (combobox && u.settings.accordion) {
-            u.groups.by_name[group].lastElementChild.lastElementChild.appendChild(o)
+            ugroup.by_name[group].lastElementChild.lastElementChild.appendChild(o)
           } else {
-            u.groups.by_name[group].appendChild(o)
+            ugroup.by_name[group].appendChild(o)
           }
         }
       } else {
@@ -146,8 +147,8 @@ export function fill_ids_options(u: InputCombobox | InputSelect, d: string, out:
   })
   if (u.settings.group) {
     n = 0
-    Object.keys(u.groups.by_name).forEach(g => {
-      u.groups.by_name[g].querySelectorAll(combobox ? '.combobox-option' : 'option').forEach((c: HTMLOptionElement) => {
+    Object.keys(ugroup.by_name).forEach(g => {
+      ugroup.by_name[g].querySelectorAll(combobox ? '.combobox-option' : 'option').forEach((c: HTMLOptionElement) => {
         s.push(c)
         values[combobox ? c.dataset.value : c.value] = n
         disp[c.innerText] = n++
@@ -167,13 +168,14 @@ export function fill_variables_options(u: InputCombobox | InputSelect, d: string
   let ck = !u.sensitive && !!u.current_set,
     n = 0
   if (u.settings.group) {
-    u.groups = {e: [], by_name: {}}
+    out[d].groups = {e: [], by_name: {}}
     if (combobox && u.settings.accordion) {
       u.listbox.classList.add('accordion')
       u.listbox.id = u.id + '-listbox'
     }
   }
-  const url_set = u.site.url_options[u.id] as string
+  const url_set = u.site.url_options[u.id] as string,
+    ugroup = out[d].groups
   let ck_suffix = false
   if (url_set && !(url_set in u.site.data.variables)) {
     u.site.url_options[u.id] = url_set.replace(patterns.pre_colon, '')
@@ -187,12 +189,12 @@ export function fill_variables_options(u: InputCombobox | InputSelect, d: string
         u.sensitive = true
         ck = false
       }
-      if (u.groups) {
+      if (ugroup) {
         let groups = (m.info && m.info[u.settings.group as keyof MeasureInfo]) || ['No Group']
         if (!Array.isArray(groups)) groups = [groups as string]
         for (let g = groups.length; g--; ) {
           const group = groups[g] as string
-          if (!(group in u.groups.by_name)) {
+          if (!(group in ugroup.by_name)) {
             const e = document.createElement(combobox ? 'div' : 'optgroup')
             if (combobox) {
               const id = u.id + '_' + group.replace(patterns.seps, '-')
@@ -232,15 +234,15 @@ export function fill_variables_options(u: InputCombobox | InputSelect, d: string
             } else {
               e.setAttribute('aria-label', group)
             }
-            u.groups.by_name[group] = e
-            u.groups.e.push(e)
+            ugroup.by_name[group] = e
+            ugroup.e.push(e)
           }
           const o = u.add(m.name, l, true, m)
           o.setAttribute('data-group', group)
           if (combobox && u.settings.accordion) {
-            u.groups.by_name[group].lastElementChild.lastElementChild.appendChild(o)
+            ugroup.by_name[group].lastElementChild.lastElementChild.appendChild(o)
           } else {
-            u.groups.by_name[group].appendChild(o)
+            ugroup.by_name[group].appendChild(o)
           }
         }
       } else {
@@ -257,8 +259,8 @@ export function fill_variables_options(u: InputCombobox | InputSelect, d: string
   })
   if (u.settings.group) {
     n = 0
-    Object.keys(u.groups.by_name).forEach(g => {
-      u.groups.by_name[g].querySelectorAll(combobox ? '.combobox-option' : 'option').forEach((c: HTMLOptionElement) => {
+    Object.keys(ugroup.by_name).forEach(g => {
+      ugroup.by_name[g].querySelectorAll(combobox ? '.combobox-option' : 'option').forEach((c: HTMLOptionElement) => {
         s.push(c)
         s[n].id = u.id + '-option' + n
         values[combobox ? c.dataset.value : c.value] = n
@@ -278,9 +280,6 @@ export function fill_overlay_properties_options(u: InputCombobox | InputSelect, 
     combobox = 'combobox' === u.type
   let ck = !u.sensitive && !!u.current_set,
     n = 0
-  if (u.settings.group) {
-    u.groups = {e: [], by_name: {}}
-  }
   Object.keys(u.site.maps.queue[source].property_summaries).forEach(v => {
     const l = u.site.data.format_label(v)
     if (ck && !(l in current)) {
@@ -324,7 +323,7 @@ export function fill_levels_options(u: InputCombobox | InputSelect, d: string, v
   }
 }
 
-export function tooltip_trigger(this: SiteInputs): void {
+export function tooltip_trigger(this: SiteInputs | SlimNote): void {
   if (this.site.spec.settings.hide_tooltips || this.id === this.site.page.tooltip.showing) return void 0
   const tooltip = this.site.page.tooltip
   tooltip.showing = this.id
@@ -334,17 +333,6 @@ export function tooltip_trigger(this: SiteInputs): void {
     t = tooltip.e.getBoundingClientRect()
   tooltip.e.style.left = Math.max(0, Math.min(p.x, p.x + p.width / 2 - t.width / 2)) + 'px'
   tooltip.e.style.top = p.y + (p.y < t.height ? p.height + 5 : -t.height - 5) + 'px'
-}
-
-export function tooltip_clear(this: SiteInputs, e: MouseEvent) {
-  const target = e.target as HTMLElement
-  if (
-    this.site.page.tooltip.showing &&
-    ('blur' === e.type || this.site.page.tooltip.showing !== (target.dataset.of || target.id))
-  ) {
-    this.site.page.tooltip.showing = ''
-    this.site.page.tooltip.e.classList.add('hidden')
-  }
 }
 
 export function make_summary_table(

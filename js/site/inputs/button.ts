@@ -4,7 +4,7 @@ import {patterns} from '../patterns'
 import type {Generic} from '../../types'
 
 export class InputButton extends BaseInput {
-  type: 'button'
+  type: 'button' = 'button'
   e: HTMLButtonElement
   target: string
   text: string

@@ -29,9 +29,11 @@ export function options_filter(this: InputCombobox | InputSelect) {
 }
 
 export function set_current_options(this: InputCombobox | InputSelect) {
-  this.values = this.option_sets[this.dataset].values
-  this.display = this.option_sets[this.dataset].display
-  this.options = this.option_sets[this.dataset].options as typeof this.options
+  const to = this.option_sets[this.dataset]
+  this.values = to.values
+  this.display = to.display
+  this.options = to.options as typeof this.options
+  this.groups = to.groups
   this.source = ''
   this.id in this.site.url_options
     ? this.set(this.site.url_options[this.id] as string)

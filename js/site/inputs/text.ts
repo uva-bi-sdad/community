@@ -2,7 +2,7 @@ import type Community from '../index'
 import {BaseInput} from './index'
 
 export class InputText extends BaseInput {
-  type: 'text'
+  type: 'text' = 'text'
   default: string | number
   e: HTMLInputElement
   source: string

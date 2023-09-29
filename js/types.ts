@@ -521,5 +521,16 @@ export type OptionSets = {
     options: (HTMLOptionElement | HTMLDivElement)[]
     values: ObjectIndex
     display: ObjectIndex
+    groups?: {
+      e: HTMLElement[]
+      by_name: {[index: string]: HTMLElement}
+    }
   }
+}
+
+export type SlimNote = {
+  id: string
+  note: string
+  site: Community
+  wrapper: HTMLElement
 }

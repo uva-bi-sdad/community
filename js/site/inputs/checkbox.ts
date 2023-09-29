@@ -2,7 +2,7 @@ import type Community from '../index'
 import {BaseInput} from './index'
 
 export class InputCheckbox extends BaseInput {
-  type: 'checkbox'
+  type: 'checkbox' = 'checkbox'
   options: NodeListOf<HTMLInputElement>
   values: (string | number)[] = []
   source: (string | number)[]

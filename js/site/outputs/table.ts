@@ -6,7 +6,7 @@ import type {DataTableSpec} from './datatables'
 import {BaseOutput} from './index'
 
 export class OutputTable extends BaseOutput {
-  type: 'table'
+  type: 'table' = 'table'
   clickto?: SiteInputs
   spec: DataTableSpec
   parsed: {
@@ -45,11 +45,11 @@ export class OutputTable extends BaseOutput {
     this.parts.head.appendChild(document.createElement('tr'))
     e.appendChild(this.parts.head)
     e.appendChild(this.parts.body)
-    if ('string' === typeof this.spec.variables) this.spec.variable_source = this.spec.variables
     Object.keys(this.spec).forEach(k => {
       const opt = this.spec[k]
       if ('string' === typeof opt && opt in site.inputs) this.reference_options[k] = opt
     })
+    if ('string' === typeof this.spec.variables) this.spec.variable_source = this.spec.variables
     e.addEventListener('mouseover', this.mouseover)
     e.addEventListener('mouseout', this.mouseout)
     if (this.tab) {

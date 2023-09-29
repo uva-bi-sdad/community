@@ -9,7 +9,7 @@ export type SelectSpec = {
 }
 
 export class InputSelect extends BaseInput {
-  type: 'select'
+  type: 'select' = 'select'
   e: HTMLSelectElement
   default: string | number
   current_filter: {[index: string]: string} = {}
@@ -17,11 +17,12 @@ export class InputSelect extends BaseInput {
   options: HTMLOptionElement[]
   values: ObjectIndex = {}
   display: ObjectIndex = {}
-  option_sets: OptionSets
+  option_sets: OptionSets = {}
   current_set = ''
   sensitive = false
   deferred = false
   filter = options_filter
+  reformat_label = false
   constructor(e: HTMLElement, site: Community) {
     super(e, site)
     this.listen = this.listen.bind(this)
@@ -39,9 +40,11 @@ export class InputSelect extends BaseInput {
       this.default = this.options[this.default].value || this.options[this.default].dataset.value
     }
     if (this.options.length) {
+      this.reformat_label = true
       this.options.forEach((e, i) => {
+        e.dataset.value = e.value
         this.values[e.value] = i
-        this.display[e.innerText] = i
+        if (this.reformat_label) this.reformat_label = e.value === e.innerText
       })
       const group: NodeListOf<HTMLOptGroupElement> = e.querySelectorAll('optgroup')
       if (group.length) {
@@ -53,6 +56,12 @@ export class InputSelect extends BaseInput {
         })
       }
     }
+  }
+  init() {
+    this.options.forEach((e, i) => {
+      if (this.reformat_label) e.innerText = this.site.data.format_label(e.value)
+      this.display[e.innerText] = i
+    })
   }
   set_current = set_current_options
   get() {

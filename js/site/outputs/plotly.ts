@@ -25,7 +25,7 @@ type PlotlyTrace = {
 }
 
 export class OutputPlotly extends BaseOutput {
-  type: 'plotly'
+  type: 'plotly' = 'plotly'
   e: PlotlyHTMLElement
   dark_theme: boolean
   clickto?: SiteInputs

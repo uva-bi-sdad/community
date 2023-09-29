@@ -48,14 +48,14 @@ export class GlobalView {
       const inputs = this.site.page.modal.filter.entity_inputs
       this.site.data.metadata.datasets.forEach(d => {
         if (d in inputs) {
-          const s = inputs[d].value() as string | string[],
+          const s = inputs[d].value() as string[],
             cs: string[] = []
           if (Array.isArray(s)) {
             s.forEach(id => {
               const e = this.site.data.entities[id]
               if (e) {
                 cs.push(id)
-                this.site.view.selected.push(id)
+                this.selected.push(id)
                 ids[id] = true
                 if (e.relations) {
                   Object.keys(e.relations.parents).forEach(k => (ids[k] = true))

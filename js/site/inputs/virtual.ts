@@ -14,22 +14,23 @@ export type VirtualSpec = {
 }
 
 export class InputVirtual extends BaseInput {
-  type: 'virtual'
-  settings: VirtualSpec
+  type: 'virtual' = 'virtual'
+  spec: VirtualSpec
   states: {
     condition: SiteCondition[]
     value: string | number
   }[] = []
   source: string | number
   values: (string | number)[] = []
+  display: Generic
   constructor(spec: VirtualSpec, site: Community) {
     const e = document.createElement('input')
     e.id = spec.id
     super(e, site)
-    this.settings = spec
     this.default = spec.default
     if (this.source) this.values.push(this.source)
-    if (this.settings.states) this.states = this.settings.states
+    if (spec.states) this.states = spec.states
+    if (spec.display) this.display = spec.display
     const p: {[index: string]: {type: 'update'; id: string}} = {}
     this.states.forEach(si => {
       this.values.push(si.value)

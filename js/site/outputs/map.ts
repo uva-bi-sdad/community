@@ -74,6 +74,7 @@ type MapParsed = {
 }
 
 export class OutputMap extends BaseOutput {
+  type: 'map' = 'map'
   time: string
   parsed: MapParsed = {}
   clickto?: SiteInputs
@@ -100,6 +101,7 @@ export class OutputMap extends BaseOutput {
     this.mouseover = this.mouseover.bind(this)
     this.mouseout = this.mouseout.bind(this)
     this.click = this.click.bind(this)
+    this.show_overlay = this.show_overlay.bind(this)
     this.color = this.e.dataset.color
     this.options = this.spec.options
     Object.keys(this.options).forEach(k => {
@@ -107,26 +109,6 @@ export class OutputMap extends BaseOutput {
       if ('string' === typeof opt && opt in site.inputs) this.reference_options[k] = opt
     })
     if (!this.e.style.height) this.e.style.height = this.options.height ? (this.options.height as string) : '400px'
-    if (site.spec.settings.overlays_from_measures && site.data.variable_info) {
-      if (!Array.isArray(this.spec.overlays)) this.spec.overlays = []
-      Object.keys(this.site.data.variable_info).forEach(variable => {
-        const info = site.data.variable_info[variable] as MeasureInfo
-        if (info.layer && info.layer.source) {
-          const source: {url: string; time: number}[] = [],
-            layer: Overlay = {variable: variable, source: source}
-          if ('string' === typeof info.layer.source && site.patterns.time_ref.test(info.layer.source)) {
-            const temp = info.layer.source
-            for (let range = site.data.meta.ranges[variable], y = range[0], max = range[1] + 1, time; y < max; y++) {
-              time = site.data.meta.overall.value[y]
-              source.push({url: temp.replace(this.site.patterns.time_ref, time + ''), time: time})
-            }
-          }
-          site.patterns.time_ref.lastIndex = 0
-          if (info.layer.filter && Array.isArray(info.layer.filter)) layer.filter = info.layer.filter
-          this.overlays.push(layer)
-        }
-      })
-    }
   }
   init() {
     const dep: Dependency = {type: 'update', id: this.id},
@@ -140,6 +122,30 @@ export class OutputMap extends BaseOutput {
     if (this.time) this.site.add_dependency(this.time, dep)
     const click_ref = this.e.dataset.click
     if (click_ref in this.site.inputs) this.clickto = this.site.inputs[click_ref]
+    if (this.options.overlays_from_measures && this.site.data.variable_info) {
+      if (Array.isArray(this.spec.overlays)) this.overlays = this.spec.overlays
+      Object.keys(this.site.data.variable_info).forEach(variable => {
+        const info = this.site.data.variable_info[variable] as MeasureInfo
+        if (info.layer && info.layer.source) {
+          const source: {url: string; time: number}[] = [],
+            layer: Overlay = {variable: variable, source: source}
+          if ('string' === typeof info.layer.source && this.site.patterns.time_ref.test(info.layer.source)) {
+            const temp = info.layer.source
+            for (
+              let range = this.site.data.meta.ranges[variable], y = range[0], max = range[1] + 1, time;
+              y < max;
+              y++
+            ) {
+              time = this.site.data.meta.overall.value[y]
+              source.push({url: temp.replace(this.site.patterns.time_ref, time + ''), time: time})
+            }
+          }
+          this.site.patterns.time_ref.lastIndex = 0
+          if (info.layer.filter && Array.isArray(info.layer.filter)) layer.filter = info.layer.filter
+          this.overlays.push(layer)
+        }
+      })
+    }
     this.queue_init()
   }
   queue_init() {
@@ -188,8 +194,8 @@ export class OutputMap extends BaseOutput {
           this.retrieve_layer(shape)
       })
       if (this.has_time) this.by_time.sort()
-      if (Array.isArray(this.spec.overlays)) {
-        this.spec.overlays.forEach(l => {
+      if (Array.isArray(this.overlays)) {
+        this.overlays.forEach(l => {
           if ('string' === typeof l.source) l.source = [{url: l.source}]
           const source = l.source
           source.forEach(s => {
@@ -550,12 +556,13 @@ export class OutputMap extends BaseOutput {
                 const e = document.createElement('table')
                 Object.keys(props).forEach(f => {
                   const v = props[f],
-                    r = document.createElement('tr')
-                  r.appendChild(document.createElement('td'))
-                  r.appendChild(document.createElement('td'))
-                  ;(r.firstElementChild as HTMLElement).innerText = f
-                  ;(r.firstElementChild as HTMLElement).innerText = v
-                  e.appendChild(r)
+                    tr = document.createElement('tr')
+                  let td = document.createElement('td')
+                  tr.appendChild(td)
+                  td.innerText = f
+                  tr.appendChild((td = document.createElement('td')))
+                  td.innerText = v
+                  e.appendChild(tr)
                 })
                 layer.bindTooltip(e)
                 layer.openTooltip()

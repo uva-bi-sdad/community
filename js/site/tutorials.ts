@@ -254,7 +254,6 @@ export class TutorialManager {
         }
       }
       const do_action = (action: string) => {
-        action = String(action)
         if ('set' === action) {
           if ('option' in step) set_value(step.option)
         } else if ('click' === action) {
@@ -265,6 +264,8 @@ export class TutorialManager {
             } else {
               u.e.click()
             }
+          } else {
+            this.current_element && this.current_element.click()
           }
         } else if ('close' === action) {
           document.querySelectorAll('[data-bs-dismiss]').forEach((close: HTMLButtonElement) => close.click())

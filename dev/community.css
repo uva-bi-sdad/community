@@ -1334,7 +1334,7 @@ tr.highlighted td {
   align-items: center;
 }
 
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 1090px) {
   .filter-dialog .cell-text {
     font-size: 1.5em;
     font-weight: bold;
@@ -1342,13 +1342,16 @@ tr.highlighted td {
   .filter-dialog .filter-header {
     display: none;
   }
-  .filter-dialog table td {
+  .filter-dialog .table .filter-body > tr > td:first-of-type {
+    display: block;
+  }
+  .filter-dialog .table .filter-body > tr > td {
     display: flex;
     margin: 0 1em;
     border: none;
     padding: 0 0 0.2em 0;
   }
-  .filter-dialog table td:first-of-type {
+  .filter-dialog .table .filter-body > tr > td:first-of-type {
     margin: 0;
   }
   .filter-dialog .filter-body .filter-form-input {

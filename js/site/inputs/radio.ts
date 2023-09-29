@@ -2,7 +2,7 @@ import type Community from '../index'
 import {BaseInput} from './index'
 
 export class InputRadio extends BaseInput {
-  type: 'radio'
+  type: 'radio' = 'radio'
   options: NodeListOf<HTMLInputElement>
   values: (string | number)[] = []
   source: string | number
@@ -14,6 +14,7 @@ export class InputRadio extends BaseInput {
       this.values.push(o.value)
       o.addEventListener('click', this.listen)
     })
+    if ('number' === typeof this.default && this.options[this.default]) this.default = this.values[this.default]
   }
   get() {
     for (let i = this.options.length; i--; ) {

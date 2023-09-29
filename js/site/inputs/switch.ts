@@ -2,7 +2,7 @@ import type Community from '../index'
 import {BaseInput} from './index'
 
 export class InputSwitch extends BaseInput {
-  type: 'switch'
+  type: 'switch' = 'switch'
   e: HTMLInputElement
   source: boolean
   constructor(e: HTMLElement, site: Community) {

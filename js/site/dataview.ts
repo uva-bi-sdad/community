@@ -8,10 +8,8 @@ export type DataViewSpec = {
   y?: string
   x?: string
   time_agg?: string
-  // time_filters?: SiteConditions
   dataset?: string
   ids?: string
-  // features?: Generic
 }
 
 export type DataViewParsed = {
@@ -35,6 +33,27 @@ type VariableCondition = {
   component?: string
 }
 type EntitySelection = {[index: string]: boolean | Entity}
+
+export type DataViewSelection = {
+  ids: Entities
+  children: Entities
+  features: Entities
+  variables: Entities
+  dataset: Entities
+  filtered: Entities
+  full_filter: Entities
+  all: Entities
+}
+type DataViewSelectionCount = {
+  ids: number
+  children: number
+  features: number
+  variables: number
+  dataset: number
+  filtered: number
+  full_filter: number
+  all: number
+}
 
 export class SiteDataView {
   id: string
@@ -84,8 +103,9 @@ export class SiteDataView {
     variable_values: new Map(),
     feature_values: {},
   }
-  selection: {[index: string]: Entities} = {
+  selection: DataViewSelection = {
     ids: {},
+    children: {},
     features: {},
     variables: {},
     dataset: {},
@@ -93,8 +113,9 @@ export class SiteDataView {
     full_filter: {},
     all: {},
   }
-  n_selected: {[index: string]: number} = {
+  n_selected: DataViewSelectionCount = {
     ids: 0,
+    children: 0,
     features: 0,
     variables: 0,
     dataset: 0,
@@ -165,13 +186,14 @@ export class SiteDataView {
         Object.keys(this.parsed.ids) +
         this.parsed.features +
         this.parsed.variables +
+        this.parsed.palette +
         this.site.spec.settings.summary_selection
       )
     }
   }
   update() {
     const state = this.value()
-    if (state !== this.state) {
+    if (state !== this.state && this.site.view.registered[this.parsed.dataset]) {
       if (this.site.data.inited[this.parsed.dataset]) {
         this.valid = true
         this.n_selected.ids = 0
@@ -287,7 +309,7 @@ export class SiteDataView {
           if (e && e.relations) Object.keys(e.relations.children).forEach(k => (ids[k] = true))
           return ids
         } else if (this.site.view.selected.length) {
-          return this.site.view.selection
+          return this.site.view.select_ids
         }
         return false
       },

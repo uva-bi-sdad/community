@@ -1,11 +1,17 @@
 import type {Entity, Order, Summary} from '../../types'
 import type Community from '../index'
 import type {SiteInputs} from '../inputs/index'
-import {summary_levels} from '../summary_levels'
 import {BaseOutput} from './index'
 
+const summary_levels: {[index: string]: string} = {
+  dataset: 'Overall',
+  filtered: 'Filtered',
+  children: 'Unfiltered selection',
+  all: 'Selection',
+}
+
 export class OutputLegend extends BaseOutput {
-  type: 'legend'
+  type: 'legend' = 'legend'
   clickto?: SiteInputs
   palette: string
   variable: string
@@ -64,9 +70,7 @@ export class OutputLegend extends BaseOutput {
       scale: this.e.querySelector('.legend-scale'),
       summary: this.e.querySelector('.legend-summary'),
     }
-    this.parts.ticks.dataset.of
-    this.parts.scale.dataset.of
-    this.parts.summary.dataset.of
+    this.parts.ticks.dataset.of = this.parts.scale.dataset.of = this.parts.summary.dataset.of = this.id
     this.parts.summary.appendChild(this.ticks.center)
     this.parts.summary.appendChild(this.ticks.min)
     this.parts.summary.appendChild(this.ticks.max)
@@ -100,17 +104,16 @@ export class OutputLegend extends BaseOutput {
     Object.keys(this.ticks).forEach((t: keyof typeof this.ticks) => {
       const div = document.createElement('div')
       let p = document.createElement('p')
-      this.ticks[t].dataset.of
+      this.ticks[t].dataset.of = this.id
       this.ticks[t].className = 'legend-tick'
       this.ticks[t].appendChild(div)
-      div.dataset.of
+      div.dataset.of = p.dataset.of = this.id
       div.appendChild(p)
-      p.dataset.of
       if ('m' !== t.substring(0, 1)) {
         div.appendChild((p = document.createElement('p')))
-        p.dataset.of
+        p.dataset.of = this.id
         div.appendChild((p = document.createElement('p')))
-        p.dataset.of
+        p.dataset.of = this.id
         if ('entity' === t) {
           this.ticks[t].firstElementChild.lastElementChild.classList.add('entity')
         } else {

@@ -93,7 +93,7 @@ class InfoPart {
 }
 
 export class OutputInfo extends BaseOutput {
-  type: 'info'
+  type: 'info' = 'info'
   dataset: string
   time_agg: number
   time: number

@@ -28,6 +28,7 @@ import {InputText} from './inputs/text'
 import {OutputDataTable} from './outputs/datatables'
 import {OutputTable} from './outputs/table'
 import {OutputLegend} from './outputs/legend'
+import {OutputText} from './outputs/text'
 
 type Queue = {
   timeout: NodeJS.Timer | number
@@ -52,6 +53,7 @@ const outputs = {
   datatable: OutputDataTable,
   table: OutputTable,
   legend: OutputLegend,
+  text: OutputText,
 }
 
 export type Dependency = {
@@ -108,7 +110,7 @@ export default class Community {
       this.spec = spec
       spec.active = this
     }
-    // if (!(window as any).dataLayer) (window as any).dataLayer = []
+    if (!('dataLayer' in window)) (window as any).dataLayer = []
     storage.copy = storage.get() as Generic
     if (storage.copy)
       for (const k in spec.settings) {
@@ -148,9 +150,28 @@ export default class Community {
       p.odd = p.colors.length % 2
     })
     this.query = window.location.search.replace('?', '')
+    if (this.query) {
+      this.query.split('&').forEach(a => {
+        const c = a.split('='),
+          k = c[0]
+        let v: string | boolean
+        if (c.length < 2) c.push('true')
+        v = patterns.bool.test(c[1]) ? !!c[1] || 'true' === c[1] : c[1].replace(patterns.url_spaces, ' ')
+        this.url_options[c[0]] = v
+        if (patterns.settings.test(c[0])) storage.set(c[0].replace(patterns.settings, ''), v)
+      })
+    }
+    if ('embedded' in this.url_options || 'hide_navbar' in this.url_options) {
+      if (!('hide_logo' in this.url_options)) this.url_options.hide_logo = true
+      if (!('hide_title' in this.url_options)) this.url_options.hide_title = true
+      if (!('hide_navcontent' in this.url_options)) this.url_options.hide_navcontent = true
+      if (!('hide_panels' in this.url_options)) this.url_options.hide_panels = true
+      if ('embedded' in this.url_options && !('close_menus' in this.url_options)) this.url_options.close_menus = true
+    }
     this.init = this.init.bind(this)
     this.request_queue = this.request_queue.bind(this)
     this.run_queue = this.run_queue.bind(this)
+    this.global_reset = this.global_reset.bind(this)
     Object.keys(conditionals).forEach(
       (k: keyof typeof conditionals) => (this.conditionals[k] = conditionals[k].bind(this))
     )
@@ -176,9 +197,10 @@ export default class Community {
         const u = new outputs[e.dataset.autotype as keyof typeof outputs](e, this)
         this.registered_outputs.set(u.id, u)
         this.outputs[u.id] = u
-        if ('subto' in u.spec) {
-          if ('string' === typeof u.spec.subto) u.spec.subto = [u.spec.subto]
-          if (Array.isArray(u.spec.subto)) u.spec.subto.forEach(v => this.subs.add(v, u))
+        const opt = 'options' in u ? u.options : u.spec
+        if ('subto' in opt) {
+          if ('string' === typeof opt.subto) opt.subto = [opt.subto]
+          if (Array.isArray(opt.subto)) opt.subto.forEach(v => this.subs.add(v, u))
         }
       }
     })
@@ -320,6 +342,9 @@ export default class Community {
         } else if ('option_sets' in o) {
           o.sensitive = false
           o.option_sets = {}
+          if (patterns.properties.test(o.optionSource)) {
+            this.maps.overlay_property_selectors.push(o)
+          }
           if (o.depends) this.add_dependency(o.depends as string, {type: 'options', id: o.id})
           if (o.dataset in this.inputs) this.add_dependency(o.dataset, {type: 'options', id: o.id})
           if (o.view) this.add_dependency(o.view, {type: 'options', id: o.id})
@@ -347,7 +372,7 @@ export default class Community {
             o.display[e.innerText] = i
           })
           if (!(o.default in o.values) && !(o.default in this.inputs)) {
-            o.default = Number(o.default)
+            o.default = +o.default
             if (isNaN(o.default)) o.default = -1
             if (-1 !== o.default && o.default < o.options.length) {
               o.default = o.options[o.default].dataset.value
@@ -574,7 +599,7 @@ export default class Community {
           for (let i = 0; i < n; i++) {
             const ck = ri.condition[i]
             pass = ck.check()
-            if (ck.any && pass) break
+            if (ck.any ? pass : !pass) break
           }
           Object.keys(ri.effects).forEach(k => {
             if (pass) {
@@ -586,7 +611,8 @@ export default class Community {
                   utils.toggle_input(u, true)
                 })
               } else if (k in this.inputs) {
-                this.inputs[k].set(this.valueOf(ri.effects[k]) as string)
+                const value = this.valueOf(ri.effects[k]) as string
+                this.inputs[k].set(value)
               }
             } else if ('display' === k) {
               const e = ri.parsed[k]
@@ -620,9 +646,9 @@ export default class Community {
   get_options_url() {
     let s = ''
     this.registered_inputs.forEach((u, k) => {
-      if (u.input && !patterns.settings.test(k) && 'range' in u) {
-        if (!u.range || u.range[0] !== u.range[1]) {
-          let v: number | string | string[] = u.value()
+      if ('virtual' !== u.type && !patterns.settings.test(k)) {
+        if (!('range' in u) || u.range[0] !== u.range[1]) {
+          let v = u.value() as number | string | string[]
           if ('off_default' in u ? u.off_default : v !== u.default) {
             if (Array.isArray(v)) v = v.join(',')
             if ('' !== v && null != v && '-1' != v) s += (s ? '&' : '?') + k + '=' + v
@@ -704,8 +730,8 @@ export default class Community {
         : 0.5,
       upper = p > (centered ? center : 0.5),
       bound_ref = upper ? 'upper_' : 'lower_',
-      value_min = (bound_ref + centered + '_min') as 'upper_mean_min',
-      value_range = (bound_ref + centered + '_range') as 'upper_mean_range'
+      value_min = (bound_ref + stat + '_min') as 'upper_mean_min',
+      value_range = (bound_ref + stat + '_range') as 'upper_mean_range'
     let v = centered ? (range ? (p + center - summary[value_min][index]) / summary[value_range][index] : 1) : p
     if (!fixed) {
       v = Math.max(0, Math.min(1, v))

@@ -5,6 +5,7 @@ import type {
   Reference,
   ReferencesParsed,
   ResourceField,
+  SlimNote,
   Summary,
   VariableFilterParsed,
 } from '../types'
@@ -12,14 +13,13 @@ import {InputCombobox} from './inputs/combobox'
 import type Community from './index'
 import {patterns} from './patterns'
 import {filter_components} from './static_refs'
-import type {TutorialManager} from './tutorials'
+import {TutorialManager} from './tutorials'
 import {
   fill_ids_options,
   make_summary_table,
   make_variable_source,
   set_description,
   toggle_input,
-  tooltip_clear,
   tooltip_trigger,
 } from './utils'
 
@@ -31,7 +31,7 @@ interface Modal {
 }
 
 interface FilterUI extends Modal {
-  conditions: HTMLElement
+  conditions: HTMLTableElement
   variable_filters: HTMLElement
   entity_filters: HTMLElement
   entity_inputs: {[index: string]: InputCombobox}
@@ -205,7 +205,7 @@ export class Page {
       e: document.createElement('div'),
       header: document.createElement('div'),
       body: document.createElement('div'),
-      conditions: document.createElement('div'),
+      conditions: document.createElement('table'),
       variable_filters: document.createElement('div'),
       entity_filters: document.createElement('div'),
       entity_inputs: {},
@@ -233,11 +233,60 @@ export class Page {
     this.site = site
     this.render_credits = this.render_credits.bind(this)
     this.show_variable_info = this.show_variable_info.bind(this)
+    this.tooltip_clear = this.tooltip_clear.bind(this)
     this.site.page = this
     this.load_screen = document.getElementById('load_screen')
     this.wrap = document.getElementById('site_wrap')
-    const navbar = document.querySelector('.navbar')
-    this.navbar = navbar ? navbar.getBoundingClientRect() : {height: 0}
+    const navbar = document.querySelector('.navbar') as HTMLElement
+    if (navbar) {
+      this.navbar = navbar.getBoundingClientRect()
+      navbar.querySelectorAll('button').forEach(b => {
+        const panel = document.querySelector(b.getAttribute('data-bs-target'))
+        if (panel && 'false' === panel.getAttribute('data-bs-backdrop')) {
+          panel.addEventListener(
+            'show.bs.offcanvas',
+            function (this: Page) {
+              this.content_bounds.outer_right = panel.getBoundingClientRect().width
+              this.resize(true)
+              setTimeout(this.trigger_resize, 200)
+            }.bind(this)
+          )
+          panel.addEventListener(
+            'hide.bs.offcanvas',
+            function (this: Page) {
+              this.content_bounds.outer_right = 0
+              this.resize(true)
+              setTimeout(this.trigger_resize, 200)
+            }.bind(this)
+          )
+        }
+      })
+      if ('navcolor' in site.url_options) {
+        if ('' === site.url_options.navcolor) site.url_options.navcolor = window.location.hash
+        navbar.style.backgroundColor = (site.url_options.navcolor as string).replace('%23', '#')
+      }
+      if (site.url_options.hide_logo && site.url_options.hide_title && site.url_options.hide_navcontent) {
+        navbar.classList.add('hidden')
+      } else {
+        const brand = document.querySelector('.navbar-brand')
+        if (brand) {
+          if (site.url_options.hide_logo && 'IMG' === brand.firstElementChild.tagName)
+            brand.firstElementChild.classList.add('hidden')
+          if (site.url_options.hide_title && 'IMG' !== brand.lastElementChild.tagName)
+            brand.lastElementChild.classList.add('hidden')
+        }
+        if (site.url_options.hide_navcontent) {
+          document.querySelector('.navbar-toggler').classList.add('hidden')
+          const nav = document.querySelector('.navbar-nav')
+          if (nav) nav.classList.add('hidden')
+        }
+      }
+      if (site.url_options.hide_panels && this.panels.length) {
+        this.panels.forEach(p => p.classList.add('hidden'))
+      }
+    } else {
+      this.navbar = {height: 0}
+    }
     this.content = document.querySelector('.content')
     this.panels = document.querySelectorAll('.panel')
     this.init_panel = this.init_panel.bind(this)
@@ -247,7 +296,7 @@ export class Page {
     this.tooltip.e.appendChild(document.createElement('p'))
     document.head.appendChild(this.script_style)
     document.body.appendChild(this.tooltip.e)
-    document.body.addEventListener('mouseover', tooltip_clear.bind(this))
+    document.body.addEventListener('mouseover', this.tooltip_clear)
     this.overlay.className = 'content-overlay'
     document.body.appendChild(this.overlay)
     document.body.className =
@@ -256,6 +305,10 @@ export class Page {
     this.init_variable_info()
     this.init_filter()
     document.querySelectorAll('[data-autotype=credits]').forEach(this.render_credits)
+    if (site.spec.tutorials) {
+      this.tutorials = new TutorialManager(site.spec.tutorials, site.inputs, site.global_reset)
+      this.overlay.appendChild(this.tutorials.container)
+    }
   }
   init() {
     this.panels.length && this.panels.forEach(this.init_panel)
@@ -298,16 +351,23 @@ export class Page {
           this.site.view.id_filter()
           this.site.request_queue('view.id')
         }
-        fill_ids_options(u, d, u.option_sets, () => {
-          u.set_current()
-          toggle_input(u, !!u.options.length)
-          Object.keys(u.values).forEach(id => {
-            u.site.view.entities.set(id, u.site.data.entities[id])
-          })
-          u.site.view.registered[d] = true
-          u.set(u.id in u.site.url_options ? (u.site.url_options[u.id] as string).split(',') : -1)
-        })
+        fill_ids_options(
+          u,
+          d,
+          u.option_sets,
+          function (this: InputCombobox) {
+            this.set_current()
+            toggle_input(u, !!this.options.length)
+            Object.keys(this.values).forEach(id => {
+              this.site.view.entities.set(id, this.site.data.entities[id])
+            })
+            this.site.view.registered[d] = true
+            this.set(this.id in this.site.url_options ? (this.site.url_options[this.id] as string).split(',') : -1)
+          }.bind(u)
+        )
         toggle_input(u, !!u.options.length)
+        this.site.registered_inputs.set(u.id, u)
+        this.site.inputs[u.id] = u
       })
   }
   init_panel(p: HTMLElement) {
@@ -519,7 +579,7 @@ export class Page {
     button.setAttribute('data-bs-dismiss', 'modal')
     button.title = 'close'
     e.header.insertAdjacentElement('afterend', e.body)
-    e.body.className = 'modal-body filter-dialog'
+    e.body.className = 'filter-dialog'
     e.body.appendChild((p = document.createElement('p')))
     p.className = 'h6'
     p.innerText = 'Time Range'
@@ -605,35 +665,37 @@ export class Page {
     e.variable_filters.appendChild((div = document.createElement('div')))
     div.className = 'hidden'
     div.appendChild(e.conditions)
-    e.conditions.className = 'table'
+    e.conditions.className = 'filter-conditions-table table'
     e.conditions.appendChild(document.createElement('thead'))
     e.conditions.lastElementChild.className = 'filter-header'
-    e.conditions.lastElementChild.appendChild(document.createElement('tbody'))
+    e.conditions.appendChild(document.createElement('tbody'))
     e.conditions.lastElementChild.className = 'filter-body'
     e.conditions.firstElementChild.appendChild(tr)
     ;['Variable', 'Result', 'Active', 'Component', 'Operator', 'Value', 'Remove'].forEach(h => {
       const th = document.createElement('th')
       tr.appendChild(th)
       if ('Component' === h || 'Result' === h) {
-        const l =
-          'Component' === h
-            ? {
-                wrapper: document.createElement('label'),
-                id: 'filter_component_header',
-                note: 'Component refers to which single value to filter on for each entity; select a dynamic time reference, or enter a time.',
-              }
-            : {
-                wrapper: document.createElement('label'),
-                id: 'filter_result_header',
-                note: 'Passing / total entities across loaded datasets.',
-              }
+        const l: SlimNote = {
+          id: '',
+          note: '',
+          site: this.site,
+          wrapper: document.createElement('label'),
+        }
+        if ('Component' === h) {
+          l.id = 'filter_component_header'
+          l.note =
+            'Component refers to which single value to filter on for each entity; select a dynamic time reference, or enter a time.'
+        } else {
+          l.id = 'filter_result_header'
+          l.note = 'Passing / total entities across loaded datasets.'
+        }
         th.appendChild(l.wrapper)
         th.className = 'has-note'
         l.wrapper.innerText = h
         l.wrapper.id = l.id
         l.wrapper.setAttribute('data-of', l.id)
         l.wrapper.setAttribute('aria-description', l.note)
-        th.addEventListener('mouseover', tooltip_trigger.bind(filter_select))
+        th.addEventListener('mouseover', tooltip_trigger.bind(l))
       } else {
         th.innerText = h
       }
@@ -675,6 +737,13 @@ export class Page {
         : this.right_menu.e.getBoundingClientRect().width) +
       'px'
   }
+  tooltip_clear(e: MouseEvent) {
+    const target = e.target as HTMLElement
+    if (this.tooltip.showing && ('blur' === e.type || this.tooltip.showing !== (target.dataset.of || target.id))) {
+      this.tooltip.showing = ''
+      this.tooltip.e.classList.add('hidden')
+    }
+  }
   add_filter_condition(variable: string, presets?: VariableFilterParsed | Filter) {
     presets = presets || {operator: '>=', value: 0}
     let tr = document.createElement('tr'),
@@ -705,12 +774,13 @@ export class Page {
     this.site.view.filters.set(f.id, f)
     if ('number' === typeof f.component) f.component = times[f.component] + ''
     // variable name
-    tr.appendChild(document.createElement('td'))
-    tr.lastElementChild.appendChild(p)
+    tr.appendChild(td)
+    td.appendChild(p)
     p.id = f.id
     p.className = 'cell-text'
     p.innerText = f.info[d].info.short_name
-    tr.lastElementChild.appendChild(document.createElement('p'))
+    td.appendChild(p)
+    td.appendChild((p = document.createElement('p')))
     f.summary = {
       f,
       update: function () {
@@ -737,9 +807,9 @@ export class Page {
       times: this.site.data.meta.overall.value,
       format: formatter,
     }
-    f.summary.table = make_summary_table(formatter, tr, f.info[d], f.summary.add)
+    f.summary.table = make_summary_table(formatter, p, f.info[d], f.summary.add)
     // filter result
-    tr.appendChild(td)
+    tr.appendChild((td = document.createElement('td')))
     td.appendChild((p = document.createElement('p')))
     p.setAttribute('aria-describedby', f.id)
     p.className = 'cell-text'
@@ -750,7 +820,7 @@ export class Page {
     label.innerText = 'Active'
     label.className = 'filter-label'
     label.id = f.id + '_switch'
-    tr.appendChild(div)
+    td.appendChild(div)
     div.className = 'form-check form-switch filter-form-input'
     div.appendChild(input)
     input.className = 'form-check-input'
@@ -863,8 +933,8 @@ export class Page {
       }.bind({filter: f, site: this.site})
     )
     this.site.request_queue('view.filter')
-    this.site.page.modal.filter.conditions.lastElementChild.appendChild(tr)
-    this.site.page.modal.filter.variable_filters.lastElementChild.classList.remove('hidden')
+    this.modal.filter.conditions.lastElementChild.appendChild(tr)
+    this.modal.filter.variable_filters.lastElementChild.classList.remove('hidden')
   }
   trigger_resize() {
     window.dispatchEvent(new Event('resize'))

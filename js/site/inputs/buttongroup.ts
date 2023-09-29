@@ -2,7 +2,7 @@ import type Community from '../index'
 import {BaseInput} from './index'
 
 export class InputButtonGroup extends BaseInput {
-  type: 'buttongroup'
+  type: 'buttongroup' = 'buttongroup'
   options: NodeListOf<HTMLInputElement>
   values: (string | number)[] = []
   source: string | number

@@ -1,4 +1,4 @@
-import {tooltip_clear, tooltip_trigger} from '../utils'
+import {tooltip_trigger} from '../utils'
 import type {LogicalObject, SiteRule, SiteSpec} from '../../types'
 import type Community from '../index'
 import type {InputButton} from './button'
@@ -89,11 +89,12 @@ export abstract class BaseInput {
       })
     }
     if (this.note) {
-      this.wrapper.addEventListener('mouseover', tooltip_trigger.bind(this))
+      const trigger = tooltip_trigger.bind(this)
+      this.wrapper.addEventListener('mouseover', trigger)
       const p = 'DIV' !== e.tagName ? e : e.querySelector('input')
       if (p) {
-        p.addEventListener('focus', tooltip_trigger.bind(this))
-        p.addEventListener('blur', tooltip_clear.bind(this))
+        p.addEventListener('focus', trigger)
+        p.addEventListener('blur', this.site.page.tooltip_clear)
       }
     }
     if (site.patterns.number.test(this.default)) this.default = +this.default
