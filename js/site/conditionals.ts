@@ -1,6 +1,6 @@
 import type Community from './index'
 import DataHandler from '../data_handler/index'
-import type {BaseInput} from './inputs/index'
+import type {BaseInput, SiteInputs} from './inputs/index'
 import type {InputCombobox} from './inputs/combobox'
 import type {InputNumber} from './inputs/number'
 import {tooltip_icon_rule} from './static_refs'
@@ -9,6 +9,7 @@ import type {DataViewSelection, SiteDataView} from './dataview'
 import type {OutputInfo} from './outputs/info'
 import type {OutputPlotly} from './outputs/plotly'
 import type {OutputMap} from './outputs/map'
+import {GlobalView} from './global_view'
 
 export function setting(this: Community, u: BaseInput) {
   const current = this.spec.settings[u.setting],
@@ -69,8 +70,7 @@ export function setting(this: Community, u: BaseInput) {
 }
 export function options(this: Community, u: InputCombobox) {
   const no_view = !u.view || !this.dataviews[u.view].selection,
-    d = (this.valueOf(u.dataset || no_view ? '' : this.spec.dataviews[u.view].dataset) ||
-      this.defaults.dataset) as string,
+    d = (this.valueOf(u.dataset || no_view || this.spec.dataviews[u.view].dataset) || this.defaults.dataset) as string,
     va = this.valueOf(u.variable) as string,
     k = d + (va ? va : ''),
     combobox = 'combobox' === u.type
@@ -117,9 +117,9 @@ export function options(this: Community, u: InputCombobox) {
             v = this.dataviews[u.view].selection[selection as keyof DataViewSelection]
           }
         }
-        u.options.forEach((si: HTMLDivElement) => {
+        u.options.forEach((si: HTMLDivElement | HTMLOptionElement) => {
           if (fresh && !u.groups) c.appendChild(si)
-          if (no_view || si.dataset.value in v) {
+          if (no_view || (combobox ? si.dataset.value : (si as HTMLOptionElement).value) in v) {
             si.classList.remove('hidden')
             ns++
           } else {
@@ -245,8 +245,8 @@ export function time_filters(this: Community, u: SiteDataView) {
       })
   }
 }
-export async function time_range(this: Community, u: SiteDataView, c?: BaseInput, passive?: boolean) {
-  const v = c && (c.value() as string),
+export async function time_range(this: Community, u: SiteDataView, c?: GlobalView | SiteInputs, passive?: boolean) {
+  const v = c && 'value' in c && (c.value() as string),
     d = u.get.dataset(),
     tv = u.time ? (this.valueOf(u.time) as string) : this.defaults.time,
     t = tv in this.data.variables ? this.data.variables[tv].info[d].min : 1,

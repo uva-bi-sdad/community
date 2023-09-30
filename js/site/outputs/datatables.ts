@@ -323,7 +323,7 @@ export class OutputDataTable extends BaseOutput {
           this.rowIds = {}
           this.table.clear()
           let redraw = true
-          if (v.valid) {
+          if (v.valid[d]) {
             this.state = state
             Object.keys(this.reference_options).forEach(
               k => (this.spec[k] = this.site.valueOf(this.reference_options[k]) as string)

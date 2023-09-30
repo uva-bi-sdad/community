@@ -65,7 +65,9 @@ class InfoPart {
         } else if ('data' in this.parsed) {
           if ('value' === this.text) {
             this.parsed.data = this.parent.site.valueOf(
-              this.parent.spec.variable || caller.color || caller.y || this.parent.site.dataviews[this.parent.view].y
+              this.parent.spec.variable ||
+                (caller && (caller.color || caller.y)) ||
+                this.parent.site.dataviews[this.parent.view].y
             ) as string
           } else if (this.text in this.parent.site.inputs)
             this.parsed.data = this.parent.site.valueOf(this.text) as string
@@ -554,7 +556,7 @@ export class OutputInfo extends BaseOutput {
     return s
   }
   fill_summary_table(table: HTMLTableElement, summary: Summary, time: number) {
-    const e = table.lastElementChild.children as HTMLCollectionOf<HTMLTableRowElement>
+    const e = table.lastElementChild.firstElementChild.children as HTMLCollectionOf<HTMLTableRowElement>
     filter_components.summary.forEach((c: keyof Summary, i) => {
       e[i].innerText = this.site.data.format_value((summary[c] as number[])[time], 0 === i) as string
     })

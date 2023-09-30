@@ -191,7 +191,7 @@ export default class Community {
         this.inputs[u.id] = u
       }
     })
-    this.subs = new Subscriptions(this.inputs)
+    this.subs = new Subscriptions(this)
     document.querySelectorAll('.auto-output').forEach((e: HTMLElement) => {
       if (e.dataset.autotype in outputs && !(e.id in this.outputs)) {
         const u = new outputs[e.dataset.autotype as keyof typeof outputs](e, this)
@@ -268,7 +268,7 @@ export default class Community {
           if ('lock' in r.effects) {
             const us = new Map()
             document
-              .querySelectorAll('#' + r.parsed.lock + ' .auto-input')
+              .querySelectorAll('#' + r.effects.lock + ' .auto-input')
               .forEach(e => us.set(e.id, this.inputs[e.id]))
             r.parsed.lock = us
           }
@@ -300,23 +300,23 @@ export default class Community {
       if (-1 === sets.indexOf(this.defaults.dataset)) this.defaults.dataset = sets[0]
       this.data = new DataHandler(this.spec, this.defaults, this.data as unknown as DataSets, {
         init: this.init,
-        onload: () => {
+        onload: function (this: Community) {
           if (this.data.inited) clearTimeout(this.data.inited.load_screen as NodeJS.Timeout)
           setTimeout(this.drop_load_screen.bind(this), 600)
           delete this.data.onload
-        },
-        data_load: () => {
+        }.bind(this),
+        data_load: function (this: Community) {
           Object.keys(this.dependencies).forEach(k => this.request_queue(false, k))
-        },
+        }.bind(this),
       })
     }
   }
   init() {
-    Object.keys(this.spec.dataviews).forEach(id => new SiteDataView(this, id, this.spec.dataviews[id]))
     if (this.data.variables) {
       const variable = Object.keys(this.data.variables)
       this.defaults.variable = variable[variable.length - 1]
     }
+    Object.keys(this.spec.dataviews).forEach(id => new SiteDataView(this, id, this.spec.dataviews[id]))
     this.view.init()
     this.page.init()
     if (this.query) {
@@ -328,6 +328,7 @@ export default class Community {
         })
       }
     }
+    this.run_queue()
     this.registered_inputs.forEach(async o => {
       const combobox = 'combobox' === o.type
       if (o.optionSource && 'options' in o) {
@@ -341,7 +342,6 @@ export default class Community {
           this.spec.metadata.datasets.forEach(d => o.add(d))
         } else if ('option_sets' in o) {
           o.sensitive = false
-          o.option_sets = {}
           if (patterns.properties.test(o.optionSource)) {
             this.maps.overlay_property_selectors.push(o)
           }
@@ -476,6 +476,14 @@ export default class Community {
           }
         }
       }
+      if ('select' === o.type || 'number' === o.type || 'text' === o.type) {
+        if (
+          o.e.parentElement.lastElementChild &&
+          o.e.parentElement.lastElementChild.classList.contains('select-reset')
+        ) {
+          o.e.parentElement.lastElementChild.addEventListener('click', o.reset.bind(o))
+        }
+      }
       if (patterns.settings.test(o.id)) {
         o.setting = o.id.replace(patterns.settings, '')
         if (null == o.default && o.setting in this.spec.settings) o.default = this.spec.settings[o.setting] as string
@@ -497,13 +505,14 @@ export default class Community {
   global_update() {
     this.meta.retain_state = false
     this.queue.elements.forEach(this.request_queue)
+    this.registered_outputs.forEach(u => u.update())
   }
   global_reset() {
     this.meta.retain_state = false
     this.registered_inputs.forEach((u, k) => {
       if (!u.setting && u.reset) {
         u.reset()
-        this.request_queue(k)
+        this.request_queue(false, k)
       }
     })
   }
@@ -516,7 +525,7 @@ export default class Community {
       id = waiting as string
       waiting = false
     }
-    if (!waiting && !this.queue.elements.get(id)) {
+    if (!waiting && (-1 === this.queue.timeout || !this.queue.elements.get(id))) {
       this.queue.elements.set(id, true)
       if ((this.queue.timeout as number) > 0) clearTimeout(this.queue.timeout as number)
       this.queue.timeout = setTimeout(this.run_queue, 20)
@@ -554,10 +563,10 @@ export default class Community {
     if (id in this.dependencies) {
       const d = this.dependencies[id],
         r: number[] = [],
-        c = 'view' === id.substring(0, 4) ? this.view : id in this.dataviews ? this.dataviews[id] : this.inputs[id],
+        c = 'view.' === id.substring(0, 5) ? this.view : id in this.dataviews ? this.dataviews[id] : this.inputs[id],
         is_view = c instanceof SiteDataView,
         is_global = c instanceof GlobalView,
-        part = 'id' === id.substring(5) ? 'id_state' : 'filter_state',
+        part = 'id' === id.substring(6) ? 'id_state' : 'filter_state',
         v = is_global ? c[part]() : c && c.value() + '',
         state = is_global ? c.states[part] : c && c.state
       if (c && (!this.meta.retain_state || state !== v)) {
@@ -601,7 +610,7 @@ export default class Community {
             pass = ck.check()
             if (ck.any ? pass : !pass) break
           }
-          Object.keys(ri.effects).forEach(k => {
+          Object.keys(ri.parsed).forEach(k => {
             if (pass) {
               if ('display' === k) {
                 ri.parsed[k].e.classList.remove('hidden')
@@ -695,7 +704,7 @@ export default class Community {
         ? -Infinity
         : this.tree[a.id]._n.children - this.tree[b.id]._n.children
     })
-    this.request_queue(false, id)
+    this.request_queue(true, id)
   }
   get_color(value: number, which: string, summary: Summary, index: number, rank: number, total: number) {
     const pal = palettes[which]

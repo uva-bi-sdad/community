@@ -1,15 +1,25 @@
 import DataHandler from '../data_handler/index'
-import type {Entities, Entity, Filter, Generic, VariableFilterParsed} from '../types'
+import type {Entities, Entity, Filter, Generic, SiteCondition, VariableFilterParsed} from '../types'
 import Community from './index'
 import {component_fun} from './time_funs'
 
+type VariableCondition = {
+  variable: string
+  type?: string
+  value?: string | number
+  operator?: string
+  component?: string
+}
+
 export type DataViewSpec = {
-  palette?: string
-  y?: string
-  x?: string
-  time_agg?: string
   dataset?: string
   ids?: string
+  palette?: string
+  time?: string
+  time_agg?: string
+  time_filters?: VariableCondition[]
+  x?: string
+  y?: string
 }
 
 export type DataViewParsed = {
@@ -25,13 +35,6 @@ export type DataViewParsed = {
   feature_values: {[index: string]: Filter}
 }
 
-type VariableCondition = {
-  variable: string
-  type?: string
-  value?: string | number
-  operator?: string
-  component?: string
-}
 type EntitySelection = {[index: string]: boolean | Entity}
 
 export type DataViewSelection = {
@@ -74,8 +77,8 @@ export class SiteDataView {
   dataset: string
   ids: string
   features: Generic
-  state: string
-  valid: boolean
+  state = 'initial'
+  valid: {[index: string]: boolean} = {}
   get: {
     dataset: () => string
     single_id: () => string
@@ -132,7 +135,7 @@ export class SiteDataView {
     site.dataviews[id] = this
     if (spec)
       Object.keys(spec).forEach((k: keyof DataViewSpec) => {
-        this[k] = spec[k]
+        ;(this as any)[k] = spec[k]
       })
     if ('string' === typeof this.palette && this.palette in this.site.inputs) {
       this.site.add_dependency(this.palette, {type: 'dataview', id: id})
@@ -172,7 +175,6 @@ export class SiteDataView {
       })
     }
     this.compile()
-    // this.reparse()
   }
   value() {
     if (this.get) {
@@ -195,7 +197,7 @@ export class SiteDataView {
     const state = this.value()
     if (state !== this.state && this.site.view.registered[this.parsed.dataset]) {
       if (this.site.data.inited[this.parsed.dataset]) {
-        this.valid = true
+        this.valid[this.parsed.dataset] = true
         this.n_selected.ids = 0
         this.n_selected.children = 0
         this.n_selected.features = 0
@@ -258,7 +260,7 @@ export class SiteDataView {
         })
         this.site.request_queue(this.id)
       } else {
-        this.valid = false
+        this.valid[this.parsed.dataset] = false
         this.site.data.data_queue[this.parsed.dataset][this.id] = this.update
       }
     }
@@ -369,7 +371,7 @@ export class SiteDataView {
           this.parsed.variable_values.forEach(v => {
             if (v.active && !isNaN(+v.value)) {
               const ev = e.get_value(v.name, v.comp_fun(v, this.parsed)),
-                ck = !isNaN(ev) && DataHandler.checks[v.operator](ev, this.value)
+                ck = !isNaN(ev) && DataHandler.checks[v.operator](ev, v.value)
               v.filter[ck ? 'passed' : 'failed']++
               if (pass && !ck) pass = false
             } else {

@@ -1,5 +1,4 @@
 import {describe, expect, test} from '@jest/globals'
-import {RegisteredElements} from '../../js/types'
 import {TutorialManager, Tutorials} from '../../js/site/tutorials'
 
 const button_wrap = document.createElement('div'),
@@ -13,7 +12,7 @@ button.addEventListener('click', function () {
 button_wrap.appendChild(button)
 document.body.appendChild(button_wrap)
 
-const _u: RegisteredElements = {
+const _u = {
   registered_element: {
     id: 'registered_element',
     e: document.createElement('div'),

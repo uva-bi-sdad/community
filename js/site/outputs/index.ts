@@ -37,7 +37,7 @@ export abstract class BaseOutput {
     this.e = e
     this.tab = 'tabpanel' === e.parentElement.getAttribute('role') ? e.parentElement : void 0
     this.site = site
-    this.view = e.dataset.view
+    this.view = e.dataset.view || site.defaults.dataview
     this.id = e.id || 'ui' + site.page.elementCount++
     this.note = e.getAttribute('aria-description') || ''
     this.type = e.dataset.autotype as OutputTypes

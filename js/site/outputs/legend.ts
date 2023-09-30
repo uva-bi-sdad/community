@@ -180,7 +180,7 @@ export class OutputLegend extends BaseOutput {
       var_info = await this.site.data.get_variable(variable, view),
       time = this.site.valueOf(view.time_agg),
       palettes = this.site.palettes
-    if (null !== time && view.valid && var_info && this.view in var_info.views) {
+    if (null !== time && view.valid[d] && var_info && this.view in var_info.views) {
       const y =
           ('number' === typeof time ? time - this.site.data.meta.times[d].range[0] : 0) - var_info.time_range[d][0],
         summary = var_info.views[this.view].summaries[d],

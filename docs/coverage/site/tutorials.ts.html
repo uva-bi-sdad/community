@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90.21% </span>
+                <span class="strong">89.56% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>249/276</span>
+                <span class='fraction'>249/278</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">67.04% </span>
+                <span class="strong">65.16% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>59/88</span>
+                <span class='fraction'>58/89</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">92.04% </span>
+                <span class="strong">91.35% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>243/264</span>
+                <span class='fraction'>243/266</span>
             </div>
         
             
@@ -426,8 +426,8 @@
 <a name='L361'></a><a href='#L361'>361</a>
 <a name='L362'></a><a href='#L362'>362</a>
 <a name='L363'></a><a href='#L363'>363</a>
-<a name='L364'></a><a href='#L364'>364</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L364'></a><a href='#L364'>364</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -683,15 +683,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -702,20 +702,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
@@ -789,8 +789,8 @@
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import {patterns} from './patterns'
-import type {ActiveElement, RegisteredElements} from '../types'
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type {RegisteredInputs, SiteInputs} from './inputs/index'
+import {patterns} from './patterns'
 &nbsp;
 type Actions = string[] | {[index: string]: string}
 type TutorialStep = {
@@ -818,7 +818,7 @@ export type Tutorials = {[index: string]: Tutorial}
 &nbsp;
 export class TutorialManager {
   tutorials: Tutorials
-  site_elements: RegisteredElements
+  site_elements: RegisteredInputs
   container = document.createElement('div')
   backdrop = document.createElement('div')
   highlight = document.createElement('div')
@@ -836,9 +836,9 @@ export class TutorialManager {
   current_step = 0
   current_time = 0
   current_element: HTMLElement
-  current_site_element: ActiveElement
+  current_site_element: SiteInputs
   site_reset: Function
-  constructor(tutorials: Tutorials, elements?: RegisteredElements, resetter?: Function) {
+  constructor(tutorials: Tutorials, elements?: RegisteredInputs, resetter?: Function) {
     this.tutorials = tutorials
     this.site_elements = elements || <span class="branch-1 cbranch-no" title="branch not covered" >{}</span>
     this.site_reset = resetter || (() =&gt; {})
@@ -1016,8 +1016,8 @@ export class TutorialManager {
     <span class="missing-if-branch" title="if path not taken" >I</span>if (!isClick &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >'Escape' === event.code)</span> <span class="cstat-no" title="statement not covered" >this.end_tutorial()</span>
     if (this.in_progress &amp;&amp; !this.waiting &amp;&amp; (isClick || <span class="branch-3 cbranch-no" title="branch not covered" >'Enter' === event.code </span>|| <span class="branch-4 cbranch-no" title="branch not covered" >'ArrowRight' === event.code)</span>) {
       this.waiting = true
-      clearTimeout(this.focuser)
-      clearInterval(this.running_timer)
+      clearTimeout(this.focuser as number)
+      clearInterval(this.running_timer as number)
       const t = this.tutorials[this.in_progress]
       let step: TutorialStep
       const handle_object = (obj: {[index: string]: string}) =&gt; {
@@ -1033,7 +1033,7 @@ export class TutorialManager {
       }
       const set_value = (value: string | string[]) =&gt; {
         if (this.current_site_element &amp;&amp; this.current_site_element.set) {
-          this.current_site_element.set(value)
+          this.current_site_element.set(value as string)
         } else <span class="missing-if-branch" title="else path not taken" >E</span>{
           const input =
 <span class="cstat-no" title="statement not covered" >            'value' in this.current_element ? this.current_element : this.current_element.querySelector('input')</span>
@@ -1045,16 +1045,16 @@ export class TutorialManager {
         }
       }
       const do_action = (action: string) =&gt; {
-        action = String(action)
         if ('set' === action) {
           if ('option' in step) set_value(step.option)
         } else if ('click' === action) {
-          <span class="missing-if-branch" title="if path not taken" >I</span>if (
-            this.current_site_element &amp;&amp;
-<span class="branch-1 cbranch-no" title="branch not covered" >            this.current_site_element.toggle </span>&amp;&amp;
-<span class="branch-2 cbranch-no" title="branch not covered" >            action === this.current_site_element.id</span>
-          ) {
-<span class="cstat-no" title="statement not covered" >            <span class="missing-if-branch" title="if path not taken" >I</span>if (!this.current_site_element.expanded) <span class="cstat-no" title="statement not covered" >this.current_site_element.toggle({target: this.current_element})</span></span>
+          const u = this.current_site_element
+          <span class="missing-if-branch" title="if path not taken" >I</span>if (u) {
+<span class="cstat-no" title="statement not covered" >            if (action === u.id &amp;&amp; 'toggle' in u) {</span>
+<span class="cstat-no" title="statement not covered" >              <span class="missing-if-branch" title="if path not taken" >I</span>if (!u.expanded) <span class="cstat-no" title="statement not covered" >u.toggle(void 0, u.e)</span></span>
+            } else {
+<span class="cstat-no" title="statement not covered" >              u.e.click()</span>
+            }
           } else {
             this.current_element &amp;&amp; this.current_element.click()
           }
@@ -1130,7 +1130,7 @@ export class TutorialManager {
           this.current_time--
           this.timer.innerText = this.current_time + ''
           if (this.current_time &lt;= 0) {
-            clearInterval(this.running_timer)
+            clearInterval(this.running_timer as number)
             this.progress_tutorial()
           }
         }, 1e3)
@@ -1149,7 +1149,7 @@ export class TutorialManager {
     this.current_step = 0
     this.container.classList.add('hidden')
     this.waiting = false
-    clearTimeout(this.focuser)
+    clearTimeout(this.focuser as number)
   }
 }
 &nbsp;</pre></td></tr></table></pre>
@@ -1159,7 +1159,7 @@ export class TutorialManager {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-09-11T22:01:00.781Z
+                at 2023-09-30T22:04:44.634Z
             </div>
         <script src="../prettify.js"></script>
         <script>

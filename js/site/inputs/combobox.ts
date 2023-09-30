@@ -2,7 +2,7 @@ import {BaseInput} from './index'
 import type Community from '../index'
 import type {Generic, ObjectIndex, OptionSets, ResourceField} from '../../types'
 import {keymap} from '../static_refs'
-import {options_filter, set_current_options} from '../common_methods'
+import {loader, options_filter, set_current_options} from '../common_methods'
 import {patterns} from '../patterns'
 
 export type ComboboxSpec = {
@@ -52,6 +52,11 @@ export class InputCombobox extends BaseInput {
     this.settings.use_display = this.settings.search || this.settings.multi
     this.listbox = this.e.parentElement.children[1] as HTMLElement
     this.options = [...this.listbox.querySelectorAll('.combobox-option')] as HTMLDivElement[]
+    if (this.optionSource && this.site.patterns.ids.test(this.optionSource)) {
+      this.loader = loader.bind(this)
+      e.addEventListener('click', this.loader)
+      this.deferred = true
+    }
     if (this.options.length) {
       this.reformat_label = true
       this.options.forEach((e, i) => {
@@ -346,7 +351,6 @@ export class InputCombobox extends BaseInput {
     let e = document.createElement('div'),
       div = document.createElement('div'),
       input = document.createElement('input'),
-      button = document.createElement('button'),
       lab = document.createElement('label')
     if (settings) {
       if (!site.spec.combobox) site.spec.combobox = {}
@@ -381,6 +385,7 @@ export class InputCombobox extends BaseInput {
     input.id = id + '-input'
     input.autocomplete = 'off'
     if (settings && settings.clearable) {
+      const button = document.createElement('button')
       e.firstElementChild.appendChild(button)
       button.type = 'button'
       button.className = 'btn-close'
@@ -399,15 +404,13 @@ export class InputCombobox extends BaseInput {
     const u = new InputCombobox(main, site)
     site.inputs[id] = u
     let n = 0
-    const opts: HTMLDivElement[] = []
-    u.options = opts
     if (options)
       if (Array.isArray(options)) {
         options.forEach(o => {
           const l = site.data.format_label(o)
           u.display[l] = n
           u.values[o] = n++
-          opts.push(u.add(o, l))
+          u.add(o, l)
         })
       } else {
         u.groups = {e: [], by_name: {}}

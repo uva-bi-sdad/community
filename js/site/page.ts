@@ -338,7 +338,6 @@ export class Page {
         div.appendChild(u.e.parentElement)
         u.e.parentElement.classList.add('form-floating')
         u.listbox.classList.add('multi')
-        u.option_sets = {}
         u.dataset = d
         u.loader = () => {
           u.site.data.retrieve(u.dataset, u.site.data.info[u.dataset].site_file)
@@ -657,7 +656,6 @@ export class Page {
       }
     }
     filter_select.view = this.site.defaults.dataview
-    filter_select.option_sets = {}
     filter_select.optionSource = 'variables'
     this.site.add_dependency(this.site.defaults.dataview, {type: 'options', id: filter_select.id})
     div.appendChild(filter_select.e.parentElement)
@@ -791,9 +789,10 @@ export class Page {
           this.add.First = this.times[range[0]] + '' || 'NA'
           this.add.Last = this.times[range[1]] + '' || 'NA'
           const s = this.f.info[d],
-            cells = this.table.firstElementChild.children as HTMLCollectionOf<HTMLTableCellElement>
+            heads = this.table.firstElementChild.firstElementChild.children as HTMLCollectionOf<HTMLTableCellElement>,
+            cells = this.table.lastElementChild.firstElementChild.children as HTMLCollectionOf<HTMLTableCellElement>
           for (let i = cells.length; i--; ) {
-            const h = cells[i].innerText as keyof typeof this.add,
+            const h = heads[i].innerText as keyof typeof this.add,
               n = h.toLowerCase() as keyof ResourceField
             cells[i].innerText = n in s ? this.format(s[n] as number) + '' : this.add[h]
           }

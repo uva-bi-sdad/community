@@ -41,3 +41,11 @@ export function set_current_options(this: InputCombobox | InputSelect) {
     ? this.set(this.state)
     : this.reset()
 }
+
+export function loader(this: InputCombobox | InputSelect) {
+  if (!this.e.classList.contains('locked')) {
+    this.deferred = false
+    this.e.removeEventListener('click', this.loader)
+    this.site.request_queue(false, this.id)
+  }
+}

@@ -11,7 +11,7 @@
   "scripts": {
     "start": "rollup --config --watch --bundleConfigAsCjs",
     "build": "rollup --config rollup.prod.js --bundleConfigAsCjs",
-    "build-v1": "rollup --config rollup.prod.js --environment community_dist_version:v1 --bundleConfigAsCjs",
+    "build-stable": "rollup --config rollup.prod.js --environment community_dist_version:v2 --bundleConfigAsCjs",
     "test": "npx jest --config jest.config.js",
     "find-deadcode": "ts-prune"
   },

@@ -14,7 +14,7 @@ export class InputButton extends BaseInput {
     super(e, site)
     this.update = this.update.bind(this)
     this.target = this.e.dataset.target
-    if ('copy' === this.target) this.settings.endpoint = site.endpoint
+    if ('copy' === this.target) this.settings.endpoint = site.spec.endpoint
     if ('filter' === this.target) {
       e.setAttribute('data-bs-toggle', 'modal')
       e.setAttribute('data-bs-target', '#filter_display')

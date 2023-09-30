@@ -141,7 +141,8 @@ export class OutputMap extends BaseOutput {
             }
           }
           this.site.patterns.time_ref.lastIndex = 0
-          if (info.layer.filter && Array.isArray(info.layer.filter)) layer.filter = info.layer.filter
+          if (info.layer.filter && (Array.isArray(info.layer.filter) || 'feature' in info.layer.filter))
+            layer.filter = info.layer.filter
           this.overlays.push(layer)
         }
       })
@@ -214,6 +215,7 @@ export class OutputMap extends BaseOutput {
           }
         })
       }
+      this.update()
     } else {
       this.deferred = true
       setTimeout(this.queue_init, showing ? 0 : 2000)
@@ -311,7 +313,7 @@ export class OutputMap extends BaseOutput {
             this.retrieve_layer(this.site.maps.queue[mapId], () => this.update(void 0, void 0, true))
           return
         }
-        if (!view.valid && this.site.data.inited[d]) {
+        if (!view.valid[d] && this.site.data.inited[d]) {
           view.state = ''
           view.update()
         }
@@ -334,7 +336,7 @@ export class OutputMap extends BaseOutput {
           this.overlay_control.remove()
           this.overlay.clearLayers()
         }
-        if (this.site.data.inited[mapId + this.id] && s && view.valid) {
+        if (this.site.data.inited[mapId + this.id] && view.valid[d]) {
           const ys = this.time
               ? (this.site.inputs[this.time] as InputNumber)
               : view.time_agg
@@ -513,8 +515,7 @@ export class OutputMap extends BaseOutput {
   }
   show_overlay(o: MeasureLayer, time: number) {
     let i = 0,
-      source = '',
-      s = o.source
+      source = ''
     if ('string' === typeof o.source) {
       source = o.source
     } else {
@@ -613,7 +614,7 @@ export class OutputMap extends BaseOutput {
           l.addTo(this.overlay)
         })
         if (n) this.overlay_control.addTo(this.map)
-      } else return this.retrieve_layer(o.source[i] as LayerSource, this.show_overlay.bind(null, o, time))
+      } else return this.retrieve_layer(o.source[i] as LayerSource, () => this.show_overlay(o, time))
     }
   }
 }

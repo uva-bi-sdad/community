@@ -1,7 +1,7 @@
 import {BaseInput} from './index'
 import type Community from '../index'
 import type {Generic, ObjectIndex, OptionSets, ResourceField} from '../../types'
-import {options_filter, set_current_options} from '../common_methods'
+import {loader, options_filter, set_current_options} from '../common_methods'
 
 export type SelectSpec = {
   group?: string
@@ -20,7 +20,7 @@ export class InputSelect extends BaseInput {
   option_sets: OptionSets = {}
   current_set = ''
   sensitive = false
-  deferred = false
+  loader?: (...args: any) => void
   filter = options_filter
   reformat_label = false
   constructor(e: HTMLElement, site: Community) {
@@ -29,6 +29,7 @@ export class InputSelect extends BaseInput {
     e.addEventListener('change', this.listen)
     this.options = [...e.querySelectorAll('option')]
     if (this.optionSource && this.site.patterns.ids.test(this.optionSource)) {
+      this.loader = loader.bind(this)
       e.addEventListener('click', this.loader)
       this.deferred = true
     } else if (
@@ -88,14 +89,8 @@ export class InputSelect extends BaseInput {
       e.title = (meta.info.description || meta.info.short_description) as string
     }
     if (!noadd) this.e.appendChild(e)
+    this.values[value] = this.display[e.innerText] = this.options.length
     this.options.push(e)
     return e
-  }
-  loader() {
-    if (!this.e.classList.contains('locked')) {
-      this.deferred = false
-      this.e.removeEventListener('click', this.loader)
-      this.site.request_queue(this.id)
-    }
   }
 }

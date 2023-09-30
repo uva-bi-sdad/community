@@ -342,17 +342,21 @@ export function make_summary_table(
   additional?: {[index: string]: string}
 ) {
   parent.classList.add('info-summary-wrapper')
-  const e = document.createElement('table')
-  e.className = 'info-summary'
-  e.appendChild(document.createElement('tr'))
-  e.appendChild(document.createElement('tr'))
+  const table = document.createElement('table'),
+    headers = document.createElement('tr'),
+    row = document.createElement('tr')
+  table.className = 'info-summary'
+  table.appendChild(document.createElement('thead'))
+  table.appendChild(document.createElement('tbody'))
+  table.firstElementChild.appendChild(headers)
+  table.lastElementChild.appendChild(row)
   if (additional) {
     Object.keys(additional).forEach(h => {
       const th = document.createElement('th'),
         td = document.createElement('td')
-      e.firstElementChild.appendChild(th)
+      headers.appendChild(th)
       th.innerText = h
-      e.lastElementChild.appendChild(td)
+      row.appendChild(td)
       td.innerText = additional[h]
     })
   }
@@ -361,14 +365,14 @@ export function make_summary_table(
     if (!summary || lower in summary) {
       const th = document.createElement('th'),
         td = document.createElement('td')
-      e.firstElementChild.appendChild(th)
+      headers.appendChild(th)
       th.innerText = h
-      e.lastElementChild.appendChild(td)
+      row.appendChild(td)
       td.innerText = summary ? formatter(summary[lower] as number) + '' : 'NA'
     }
   })
-  parent.appendChild(e)
-  return e
+  parent.appendChild(table)
+  return table
 }
 
 export function make_variable_source(s: MeasureSource, table?: boolean) {

@@ -13,8 +13,8 @@ export class GlobalView {
   times: number[]
   dataview: DataViewParsed
   states = {
-    id_state: '',
-    filter_state: '',
+    id_state: 'initial',
+    filter_state: 'initial',
   }
   constructor(site: Community) {
     this.site = site

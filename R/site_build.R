@@ -28,7 +28,7 @@
 #' @param sparse_time Logical; if \code{FALSE}, will not trim times from a variable that are all missing.
 #' @param force Logical; if \code{TRUE}, will reprocess data even if the source data is older than the existing
 #' processed version.
-#' @param version Version of the base script and stylesheet: \code{"v1"} (default) for the version 1 stable release,
+#' @param version Version of the base script and stylesheet: \code{"stable"} (default) for the current stable release,
 #' \code{"dev"} for the current unstable release, or \code{"local"} for a copy of the development files
 #' (\code{community.js} and \code{community.css}) served from \code{http://localhost:8000}. Can also
 #' be a URL where files can be found (\code{{version}/community.js} and \code{{version}/community.css}).
@@ -58,7 +58,7 @@
 site_build <- function(dir, file = "site.R", name = "index.html", variables = NULL,
                        options = list(), bundle_data = FALSE, bundle_package = FALSE, bundle_libs = FALSE, libs_overwrite = FALSE,
                        libs_base_only = FALSE, remote_data_handler = TRUE, open_after = FALSE, aggregate = TRUE, sparse_time = TRUE,
-                       force = FALSE, version = "v1", parent = NULL, include_api = FALSE, endpoint = NULL, tag_id = NULL,
+                       force = FALSE, version = "stable", parent = NULL, include_api = FALSE, endpoint = NULL, tag_id = NULL,
                        serve = FALSE, host = "127.0.0.1", port = 3000, verbose = TRUE) {
   if (missing(dir)) cli_abort('{.arg dir} must be specified (e.g., dir = ".")')
   page <- paste0(dir, "/", file)
@@ -376,12 +376,12 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     }
   }
   parts <- make_build_environment()
-  stable <- version == "v1" || version == "stable"
+  stable <- version == "stable" || grepl("^[Vv]\\d", version)
   parts$dependencies <- c(
     if (stable) {
       list(
-        base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.v1.min.css"),
-        base = list(type = "script", loading = "", src = "https://uva-bi-sdad.github.io/community/dist/js/community.v1.min.js")
+        base_style = list(type = "stylesheet", src = "https://uva-bi-sdad.github.io/community/dist/css/community.v2.min.css"),
+        base = list(type = "script", loading = "", src = "https://uva-bi-sdad.github.io/community/dist/js/community.v2.min.js")
       )
     } else if (version == "dev") {
       list(
@@ -404,7 +404,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
       lapply(structure(names(cache_scripts), names = names(cache_scripts)), function(f) {
         cached <- cache_scripts[[f]][[if (stable) "stable" else "dev"]]
         dir.create(paste0(dir, "/", cached$location), FALSE, TRUE)
-        scripts <- paste0(sub("(?:\\.v1)?(?:\\.min)?\\.js", "", basename(cached$source)), c("", ".min", ".v1.min"), ".js")
+        scripts <- paste0(sub("(?:\\.v2)?(?:\\.min)?\\.js", "", basename(cached$source)), c("", ".min", ".v2.min"), ".js")
         script <- scripts[stable + 2]
         lf <- paste0(dir, "/", cached$location, "/", script)
         lff <- paste0("dist/dev/", sub(".min", "", script, fixed = TRUE))
@@ -440,13 +440,13 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
         custom = list(type = "script", src = "script.js"),
         bootstrap_style = list(
           type = "stylesheet",
-          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css",
-          hash = "sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9"
+          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css",
+          hash = "sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
         ),
         bootstrap = list(
           type = "script",
-          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js",
-          hash = "sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js",
+          hash = "sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
         )
       )
     )
@@ -454,7 +454,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
   parts$credits$bootstrap <- list(
     name = "Bootstrap",
     url = "https://getbootstrap.com",
-    version = "5.3.1"
+    version = "5.3.2"
   )
   parts$credits$colorbrewer <- list(
     name = "ColorBrewer",
@@ -598,7 +598,7 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     '<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />',
     '<meta name="viewport" content="width=device-width,initial-scale=1" />',
     if (bundle_data) {
-      settings$data = structure(lapply(
+      settings$data <- structure(lapply(
         settings$metadata$datasets,
         function(f) jsonlite::read_json(paste0(dir, "/docs/", f, ".json"))
       ), names = settings$metadata$datasets)

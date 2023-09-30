@@ -56,7 +56,7 @@ export abstract class BaseInput {
   note: string
   current_index: number | number[] = -1
   previous: boolean | string | number | (string | number)[] = ''
-  state = ''
+  state = 'initial'
   setting?: string
   deferred?: boolean
   rule?: SiteRule

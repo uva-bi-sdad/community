@@ -869,7 +869,7 @@
                 this.summary_ready[summaryId] = resolve;
             });
             const variable = this.variables[measure], m = variable.views[view];
-            if (m.state[dataset] !== v.state) {
+            if (v.valid[dataset] && m.state[dataset] !== v.state) {
                 const summary_set = this.settings.settings.summary_selection, s = v.selection[summary_set], a = v.selection.all, mo = m.order[dataset], mso = m.selected_order[dataset], ny = variable.time_range[dataset][2], order = variable.info[dataset].order, levels = variable.levels, level_ids = variable.level_ids, subset = v.n_selected[summary_set] !== v.n_selected.dataset, mss = m.selected_summaries[dataset], ms = m.summaries[dataset], is_string = 'string' === variable.type;
                 for (let y = ny; y--;) {
                     mo[y] = subset ? [] : order[y];
@@ -1477,6 +1477,8 @@
             this.export = exporter;
             this.get_variable = function (variable, view) {
                 return __awaiter(this, void 0, void 0, function* () {
+                    if (view.dataset in this.data_processed)
+                        yield this.data_processed[view.dataset];
                     if (variable in this.variables)
                         yield this.calculate_summary(variable, view, true);
                     return this.variables[variable];
@@ -1610,8 +1612,8 @@
             this.select_ids = {};
             this.filters = new Map();
             this.states = {
-                id_state: '',
-                filter_state: '',
+                id_state: 'initial',
+                filter_state: 'initial',
             };
             this.site = site;
         }
@@ -1727,8 +1729,8 @@
     };
 
     class Subscriptions {
-        constructor(elements) {
-            this.elements = elements;
+        constructor(site) {
+            this.site = site;
             this.subs = {};
         }
         add(id, o) {
@@ -1738,7 +1740,7 @@
         }
         update(id, fun, e) {
             if (id in this.subs) {
-                const tu = this.elements[id];
+                const tu = this.site.outputs[id];
                 this.subs[id].forEach(u => {
                     if (fun in u)
                         u[fun](e, tu);
@@ -2087,16 +2089,18 @@
     }
     function make_summary_table(formatter, parent, summary, additional) {
         parent.classList.add('info-summary-wrapper');
-        const e = document.createElement('table');
-        e.className = 'info-summary';
-        e.appendChild(document.createElement('tr'));
-        e.appendChild(document.createElement('tr'));
+        const table = document.createElement('table'), headers = document.createElement('tr'), row = document.createElement('tr');
+        table.className = 'info-summary';
+        table.appendChild(document.createElement('thead'));
+        table.appendChild(document.createElement('tbody'));
+        table.firstElementChild.appendChild(headers);
+        table.lastElementChild.appendChild(row);
         if (additional) {
             Object.keys(additional).forEach(h => {
                 const th = document.createElement('th'), td = document.createElement('td');
-                e.firstElementChild.appendChild(th);
+                headers.appendChild(th);
                 th.innerText = h;
-                e.lastElementChild.appendChild(td);
+                row.appendChild(td);
                 td.innerText = additional[h];
             });
         }
@@ -2104,14 +2108,14 @@
             const lower = h.toLowerCase();
             if (!summary || lower in summary) {
                 const th = document.createElement('th'), td = document.createElement('td');
-                e.firstElementChild.appendChild(th);
+                headers.appendChild(th);
                 th.innerText = h;
-                e.lastElementChild.appendChild(td);
+                row.appendChild(td);
                 td.innerText = summary ? formatter(summary[lower]) + '' : 'NA';
             }
         });
-        parent.appendChild(e);
-        return e;
+        parent.appendChild(table);
+        return table;
     }
     function make_variable_source(s, table) {
         const e = document.createElement(table ? 'tr' : 'div');
@@ -2243,8 +2247,7 @@
         }
     }
     function options(u) {
-        const no_view = !u.view || !this.dataviews[u.view].selection, d = (this.valueOf(u.dataset || no_view ? '' : this.spec.dataviews[u.view].dataset) ||
-            this.defaults.dataset), va = this.valueOf(u.variable), k = d + (va ? va : ''), combobox = 'combobox' === u.type;
+        const no_view = !u.view || !this.dataviews[u.view].selection, d = (this.valueOf(u.dataset || no_view || this.spec.dataviews[u.view].dataset) || this.defaults.dataset), va = this.valueOf(u.variable), k = d + (va ? va : ''), combobox = 'combobox' === u.type;
         if (!(k in u.option_sets)) {
             if (this.patterns.variable.test(u.optionSource)) {
                 if ('number' === typeof u.default && -1 === u.default)
@@ -2295,7 +2298,7 @@
                     u.options.forEach((si) => {
                         if (fresh && !u.groups)
                             c.appendChild(si);
-                        if (no_view || si.dataset.value in v) {
+                        if (no_view || (combobox ? si.dataset.value : si.value) in v) {
                             si.classList.remove('hidden');
                             ns++;
                         }
@@ -2439,7 +2442,7 @@
     }
     function time_range(u, c, passive) {
         return __awaiter(this, void 0, void 0, function* () {
-            const v = c && c.value(), d = u.get.dataset(), tv = u.time ? this.valueOf(u.time) : this.defaults.time, t = tv in this.data.variables ? this.data.variables[tv].info[d].min : 1, s = this.dependencies[u.id + '_time'], variable = v in this.data.variables ? v : this.valueOf(u.y);
+            const v = c && 'value' in c && c.value(), d = u.get.dataset(), tv = u.time ? this.valueOf(u.time) : this.defaults.time, t = tv in this.data.variables ? this.data.variables[tv].info[d].min : 1, s = this.dependencies[u.id + '_time'], variable = v in this.data.variables ? v : this.valueOf(u.y);
             let r = variable && (yield this.data.get_variable(variable, u));
             if (r) {
                 const reset = d + variable != u.time_range.dataset + u.time_range.variable;
@@ -2672,7 +2675,7 @@
             this.settings = {};
             this.current_index = -1;
             this.previous = '';
-            this.state = '';
+            this.state = 'initial';
             this.e = e;
             this.site = site;
             this.default = e.dataset.default;
@@ -2769,6 +2772,13 @@
                 ? this.set(this.state)
                 : this.reset();
     }
+    function loader() {
+        if (!this.e.classList.contains('locked')) {
+            this.deferred = false;
+            this.e.removeEventListener('click', this.loader);
+            this.site.request_queue(false, this.id);
+        }
+    }
 
     class InputSelect extends BaseInput {
         constructor(e, site) {
@@ -2780,7 +2790,6 @@
             this.option_sets = {};
             this.current_set = '';
             this.sensitive = false;
-            this.deferred = false;
             this.filter = options_filter;
             this.reformat_label = false;
             this.set_current = set_current_options;
@@ -2788,6 +2797,7 @@
             e.addEventListener('change', this.listen);
             this.options = [...e.querySelectorAll('option')];
             if (this.optionSource && this.site.patterns.ids.test(this.optionSource)) {
+                this.loader = loader.bind(this);
                 e.addEventListener('click', this.loader);
                 this.deferred = true;
             }
@@ -2851,15 +2861,9 @@
             }
             if (!noadd)
                 this.e.appendChild(e);
+            this.values[value] = this.display[e.innerText] = this.options.length;
             this.options.push(e);
             return e;
-        }
-        loader() {
-            if (!this.e.classList.contains('locked')) {
-                this.deferred = false;
-                this.e.removeEventListener('click', this.loader);
-                this.site.request_queue(this.id);
-            }
         }
     }
 
@@ -3014,6 +3018,8 @@
                 index: [-Infinity, Infinity],
                 time: [-Infinity, Infinity],
             };
+            this.state = 'initial';
+            this.valid = {};
             this.parsed = {
                 dataset: '',
                 ids: false,
@@ -3096,7 +3102,6 @@
                 });
             }
             this.compile();
-            // this.reparse()
         }
         value() {
             if (this.get) {
@@ -3117,7 +3122,7 @@
             const state = this.value();
             if (state !== this.state && this.site.view.registered[this.parsed.dataset]) {
                 if (this.site.data.inited[this.parsed.dataset]) {
-                    this.valid = true;
+                    this.valid[this.parsed.dataset] = true;
                     this.n_selected.ids = 0;
                     this.n_selected.children = 0;
                     this.n_selected.features = 0;
@@ -3180,7 +3185,7 @@
                     this.site.request_queue(this.id);
                 }
                 else {
-                    this.valid = false;
+                    this.valid[this.parsed.dataset] = false;
                     this.site.data.data_queue[this.parsed.dataset][this.id] = this.update;
                 }
             }
@@ -3292,7 +3297,7 @@
                         let pass = true;
                         this.parsed.variable_values.forEach(v => {
                             if (v.active && !isNaN(+v.value)) {
-                                const ev = e.get_value(v.name, v.comp_fun(v, this.parsed)), ck = !isNaN(ev) && DataHandler.checks[v.operator](ev, this.value);
+                                const ev = e.get_value(v.name, v.comp_fun(v, this.parsed)), ck = !isNaN(ev) && DataHandler.checks[v.operator](ev, v.value);
                                 v.filter[ck ? 'passed' : 'failed']++;
                                 if (pass && !ck)
                                     pass = false;
@@ -3417,6 +3422,11 @@
             this.settings.use_display = this.settings.search || this.settings.multi;
             this.listbox = this.e.parentElement.children[1];
             this.options = [...this.listbox.querySelectorAll('.combobox-option')];
+            if (this.optionSource && this.site.patterns.ids.test(this.optionSource)) {
+                this.loader = loader.bind(this);
+                e.addEventListener('click', this.loader);
+                this.deferred = true;
+            }
             if (this.options.length) {
                 this.reformat_label = true;
                 this.options.forEach((e, i) => {
@@ -3715,7 +3725,7 @@
         static create(site, label, options, settings, id) {
             id = id || 'created_combobox_' + ++site.page.elementCount;
             const main = document.createElement('div');
-            let e = document.createElement('div'), div = document.createElement('div'), input = document.createElement('input'), button = document.createElement('button'), lab = document.createElement('label');
+            let e = document.createElement('div'), div = document.createElement('div'), input = document.createElement('input'), lab = document.createElement('label');
             if (settings) {
                 if (!site.spec.combobox)
                     site.spec.combobox = {};
@@ -3750,6 +3760,7 @@
             input.id = id + '-input';
             input.autocomplete = 'off';
             if (settings && settings.clearable) {
+                const button = document.createElement('button');
                 e.firstElementChild.appendChild(button);
                 button.type = 'button';
                 button.className = 'btn-close';
@@ -3768,15 +3779,13 @@
             const u = new InputCombobox(main, site);
             site.inputs[id] = u;
             let n = 0;
-            const opts = [];
-            u.options = opts;
             if (options)
                 if (Array.isArray(options)) {
                     options.forEach(o => {
                         const l = site.data.format_label(o);
                         u.display[l] = n;
                         u.values[o] = n++;
-                        opts.push(u.add(o, l));
+                        u.add(o, l);
                     });
                 }
                 else {
@@ -4549,7 +4558,6 @@
                 div.appendChild(u.e.parentElement);
                 u.e.parentElement.classList.add('form-floating');
                 u.listbox.classList.add('multi');
-                u.option_sets = {};
                 u.dataset = d;
                 u.loader = () => {
                     u.site.data.retrieve(u.dataset, u.site.data.info[u.dataset].site_file);
@@ -4847,7 +4855,6 @@
                 }
             };
             filter_select.view = this.site.defaults.dataview;
-            filter_select.option_sets = {};
             filter_select.optionSource = 'variables';
             this.site.add_dependency(this.site.defaults.dataview, { type: 'options', id: filter_select.id });
             div.appendChild(filter_select.e.parentElement);
@@ -4970,9 +4977,9 @@
                         this.add.Dataset = d;
                         this.add.First = this.times[range[0]] + '' || 'NA';
                         this.add.Last = this.times[range[1]] + '' || 'NA';
-                        const s = this.f.info[d], cells = this.table.firstElementChild.children;
+                        const s = this.f.info[d], heads = this.table.firstElementChild.firstElementChild.children, cells = this.table.lastElementChild.firstElementChild.children;
                         for (let i = cells.length; i--;) {
-                            const h = cells[i].innerText, n = h.toLowerCase();
+                            const h = heads[i].innerText, n = h.toLowerCase();
                             cells[i].innerText = n in s ? this.format(s[n]) + '' : this.add[h];
                         }
                     }
@@ -5157,7 +5164,7 @@
             this.type = 'virtual';
             this.states = [];
             this.values = [];
-            this.default = spec.default;
+            this.source = this.default = spec.default;
             if (this.source)
                 this.values.push(this.source);
             if (spec.states)
@@ -5240,7 +5247,7 @@
             this.update = this.update.bind(this);
             this.target = this.e.dataset.target;
             if ('copy' === this.target)
-                this.settings.endpoint = site.endpoint;
+                this.settings.endpoint = site.spec.endpoint;
             if ('filter' === this.target) {
                 e.setAttribute('data-bs-toggle', 'modal');
                 e.setAttribute('data-bs-target', '#filter_display');
@@ -5562,7 +5569,7 @@
             this.e = e;
             this.tab = 'tabpanel' === e.parentElement.getAttribute('role') ? e.parentElement : void 0;
             this.site = site;
-            this.view = e.dataset.view;
+            this.view = e.dataset.view || site.defaults.dataview;
             this.id = e.id || 'ui' + site.page.elementCount++;
             this.note = e.getAttribute('aria-description') || '';
             this.type = e.dataset.autotype;
@@ -5613,7 +5620,9 @@
                     }
                     else if ('data' in this.parsed) {
                         if ('value' === this.text) {
-                            this.parsed.data = this.parent.site.valueOf(this.parent.spec.variable || caller.color || caller.y || this.parent.site.dataviews[this.parent.view].y);
+                            this.parsed.data = this.parent.site.valueOf(this.parent.spec.variable ||
+                                (caller && (caller.color || caller.y)) ||
+                                this.parent.site.dataviews[this.parent.view].y);
                         }
                         else if (this.text in this.parent.site.inputs)
                             this.parsed.data = this.parent.site.valueOf(this.text);
@@ -6091,7 +6100,7 @@
             return s;
         }
         fill_summary_table(table, summary, time) {
-            const e = table.lastElementChild.children;
+            const e = table.lastElementChild.firstElementChild.children;
             filter_components.summary.forEach((c, i) => {
                 e[i].innerText = this.site.data.format_value(summary[c][time], 0 === i);
             });
@@ -6161,7 +6170,7 @@
                             }
                         }
                         this.site.patterns.time_ref.lastIndex = 0;
-                        if (info.layer.filter && Array.isArray(info.layer.filter))
+                        if (info.layer.filter && (Array.isArray(info.layer.filter) || 'feature' in info.layer.filter))
                             layer.filter = info.layer.filter;
                         this.overlays.push(layer);
                     }
@@ -6238,6 +6247,7 @@
                         }
                     });
                 }
+                this.update();
             }
             else {
                 this.deferred = true;
@@ -6322,7 +6332,7 @@
                                 this.retrieve_layer(this.site.maps.queue[mapId], () => this.update(void 0, void 0, true));
                             return;
                         }
-                        if (!view.valid && this.site.data.inited[d]) {
+                        if (!view.valid[d] && this.site.data.inited[d]) {
                             view.state = '';
                             view.update();
                         }
@@ -6341,7 +6351,7 @@
                             this.overlay_control.remove();
                             this.overlay.clearLayers();
                         }
-                        if (this.site.data.inited[mapId + this.id] && s && view.valid) {
+                        if (this.site.data.inited[mapId + this.id] && view.valid[d]) {
                             const ys = this.time
                                 ? this.site.inputs[this.time]
                                 : view.time_agg
@@ -6529,7 +6539,7 @@
             }
         }
         show_overlay(o, time) {
-            let i = 0, source = ''; o.source;
+            let i = 0, source = '';
             if ('string' === typeof o.source) {
                 source = o.source;
             }
@@ -6634,7 +6644,7 @@
                         this.overlay_control.addTo(this.map);
                 }
                 else
-                    return this.retrieve_layer(o.source[i], this.show_overlay.bind(null, o, time));
+                    return this.retrieve_layer(o.source[i], () => this.show_overlay(o, time));
             }
         }
     }
@@ -6794,7 +6804,7 @@
                 else {
                     if (this.e.layout) {
                         const v = this.site.dataviews[this.view], s = v.selection && v.selection.all, d = v.get.dataset(), y = this.site.inputs[this.time || v.time_agg], parsed = this.parsed;
-                        if (this.site.data.inited[d] && s && v.time_range.filtered.length) {
+                        if (this.site.data.inited[d] && v.valid[d] && v.time_range.filtered.length) {
                             parsed.base_trace = this.site.valueOf(this.base_trace);
                             parsed.x = this.site.valueOf(this.x);
                             parsed.y = this.site.valueOf(this.y);
@@ -7357,7 +7367,7 @@
                             this.rows = {};
                             this.rowIds = {};
                             this.table.clear();
-                            if (v.valid) {
+                            if (v.valid[d]) {
                                 this.state = state;
                                 Object.keys(this.reference_options).forEach(k => (this.spec[k] = this.site.valueOf(this.reference_options[k])));
                                 if (!Array.isArray(this.variables)) {
@@ -7903,7 +7913,7 @@
         update() {
             return __awaiter(this, void 0, void 0, function* () {
                 const view = this.site.dataviews[this.view], variable = this.site.valueOf(this.variable || view.y), d = view.get.dataset(), var_info = yield this.site.data.get_variable(variable, view), time = this.site.valueOf(view.time_agg), palettes = this.site.palettes;
-                if (null !== time && view.valid && var_info && this.view in var_info.views) {
+                if (null !== time && view.valid[d] && var_info && this.view in var_info.views) {
                     const y = ('number' === typeof time ? time - this.site.data.meta.times[d].range[0] : 0) - var_info.time_range[d][0], summary = var_info.views[this.view].summaries[d], ep = this.site.valueOf(this.palette).toLowerCase(), pn = ep in palettes
                         ? ep
                         : this.site.spec.settings.palette in palettes
@@ -8450,7 +8460,7 @@
                     this.inputs[u.id] = u;
                 }
             });
-            this.subs = new Subscriptions(this.inputs);
+            this.subs = new Subscriptions(this);
             document.querySelectorAll('.auto-output').forEach((e) => {
                 if (e.dataset.autotype in outputs && !(e.id in this.outputs)) {
                     const u = new outputs[e.dataset.autotype](e, this);
@@ -8533,7 +8543,7 @@
                         if ('lock' in r.effects) {
                             const us = new Map();
                             document
-                                .querySelectorAll('#' + r.parsed.lock + ' .auto-input')
+                                .querySelectorAll('#' + r.effects.lock + ' .auto-input')
                                 .forEach(e => us.set(e.id, this.inputs[e.id]));
                             r.parsed.lock = us;
                         }
@@ -8570,24 +8580,24 @@
                     this.defaults.dataset = sets[0];
                 this.data = new DataHandler(this.spec, this.defaults, this.data, {
                     init: this.init,
-                    onload: () => {
+                    onload: function () {
                         if (this.data.inited)
                             clearTimeout(this.data.inited.load_screen);
                         setTimeout(this.drop_load_screen.bind(this), 600);
                         delete this.data.onload;
-                    },
-                    data_load: () => {
+                    }.bind(this),
+                    data_load: function () {
                         Object.keys(this.dependencies).forEach(k => this.request_queue(false, k));
-                    },
+                    }.bind(this),
                 });
             }
         }
         init() {
-            Object.keys(this.spec.dataviews).forEach(id => new SiteDataView(this, id, this.spec.dataviews[id]));
             if (this.data.variables) {
                 const variable = Object.keys(this.data.variables);
                 this.defaults.variable = variable[variable.length - 1];
             }
+            Object.keys(this.spec.dataviews).forEach(id => new SiteDataView(this, id, this.spec.dataviews[id]));
             this.view.init();
             this.page.init();
             if (this.query) {
@@ -8600,6 +8610,7 @@
                     });
                 }
             }
+            this.run_queue();
             this.registered_inputs.forEach((o) => __awaiter(this, void 0, void 0, function* () {
                 const combobox = 'combobox' === o.type;
                 if (o.optionSource && 'options' in o) {
@@ -8617,7 +8628,6 @@
                     }
                     else if ('option_sets' in o) {
                         o.sensitive = false;
-                        o.option_sets = {};
                         if (patterns.properties.test(o.optionSource)) {
                             this.maps.overlay_property_selectors.push(o);
                         }
@@ -8766,6 +8776,12 @@
                         }
                     }
                 }
+                if ('select' === o.type || 'number' === o.type || 'text' === o.type) {
+                    if (o.e.parentElement.lastElementChild &&
+                        o.e.parentElement.lastElementChild.classList.contains('select-reset')) {
+                        o.e.parentElement.lastElementChild.addEventListener('click', o.reset.bind(o));
+                    }
+                }
                 if (patterns.settings.test(o.id)) {
                     o.setting = o.id.replace(patterns.settings, '');
                     if (null == o.default && o.setting in this.spec.settings)
@@ -8792,13 +8808,14 @@
         global_update() {
             this.meta.retain_state = false;
             this.queue.elements.forEach(this.request_queue);
+            this.registered_outputs.forEach(u => u.update());
         }
         global_reset() {
             this.meta.retain_state = false;
             this.registered_inputs.forEach((u, k) => {
                 if (!u.setting && u.reset) {
                     u.reset();
-                    this.request_queue(k);
+                    this.request_queue(false, k);
                 }
             });
         }
@@ -8812,7 +8829,7 @@
                 id = waiting;
                 waiting = false;
             }
-            if (!waiting && !this.queue.elements.get(id)) {
+            if (!waiting && (-1 === this.queue.timeout || !this.queue.elements.get(id))) {
                 this.queue.elements.set(id, true);
                 if (this.queue.timeout > 0)
                     clearTimeout(this.queue.timeout);
@@ -8851,7 +8868,7 @@
         }
         refresh_conditions(id) {
             if (id in this.dependencies) {
-                const d = this.dependencies[id], r = [], c = 'view' === id.substring(0, 4) ? this.view : id in this.dataviews ? this.dataviews[id] : this.inputs[id], is_view = c instanceof SiteDataView, is_global = c instanceof GlobalView, part = 'id' === id.substring(5) ? 'id_state' : 'filter_state', v = is_global ? c[part]() : c && c.value() + '', state = is_global ? c.states[part] : c && c.state;
+                const d = this.dependencies[id], r = [], c = 'view.' === id.substring(0, 5) ? this.view : id in this.dataviews ? this.dataviews[id] : this.inputs[id], is_view = c instanceof SiteDataView, is_global = c instanceof GlobalView, part = 'id' === id.substring(6) ? 'id_state' : 'filter_state', v = is_global ? c[part]() : c && c.value() + '', state = is_global ? c.states[part] : c && c.state;
                 if (c && (!this.meta.retain_state || state !== v)) {
                     if (is_global) {
                         c.states[part] = v;
@@ -8898,7 +8915,7 @@
                             if (ck.any ? pass : !pass)
                                 break;
                         }
-                        Object.keys(ri.effects).forEach(k => {
+                        Object.keys(ri.parsed).forEach(k => {
                             if (pass) {
                                 if ('display' === k) {
                                     ri.parsed[k].e.classList.remove('hidden');
@@ -9008,7 +9025,7 @@
                     ? -Infinity
                     : this.tree[a.id]._n.children - this.tree[b.id]._n.children;
             });
-            this.request_queue(false, id);
+            this.request_queue(true, id);
         }
         get_color(value, which, summary, index, rank, total) {
             const pal = palettes[which];

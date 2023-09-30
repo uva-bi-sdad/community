@@ -27,7 +27,7 @@ export class InputVirtual extends BaseInput {
     const e = document.createElement('input')
     e.id = spec.id
     super(e, site)
-    this.default = spec.default
+    this.source = this.default = spec.default
     if (this.source) this.values.push(this.source)
     if (spec.states) this.states = spec.states
     if (spec.display) this.display = spec.display

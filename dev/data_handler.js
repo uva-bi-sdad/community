@@ -869,7 +869,7 @@
                 this.summary_ready[summaryId] = resolve;
             });
             const variable = this.variables[measure], m = variable.views[view];
-            if (m.state[dataset] !== v.state) {
+            if (v.valid[dataset] && m.state[dataset] !== v.state) {
                 const summary_set = this.settings.settings.summary_selection, s = v.selection[summary_set], a = v.selection.all, mo = m.order[dataset], mso = m.selected_order[dataset], ny = variable.time_range[dataset][2], order = variable.info[dataset].order, levels = variable.levels, level_ids = variable.level_ids, subset = v.n_selected[summary_set] !== v.n_selected.dataset, mss = m.selected_summaries[dataset], ms = m.summaries[dataset], is_string = 'string' === variable.type;
                 for (let y = ny; y--;) {
                     mo[y] = subset ? [] : order[y];
@@ -1477,6 +1477,8 @@
             this.export = exporter;
             this.get_variable = function (variable, view) {
                 return __awaiter(this, void 0, void 0, function* () {
+                    if (view.dataset in this.data_processed)
+                        yield this.data_processed[view.dataset];
                     if (variable in this.variables)
                         yield this.calculate_summary(variable, view, true);
                     return this.variables[variable];

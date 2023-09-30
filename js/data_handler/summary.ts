@@ -1,6 +1,6 @@
 import DataHandler from './index'
 import type {Order, Data, Variable, VariableView, EntityData, Summary, MeasureInfo} from '../types'
-import {SiteDataView} from '../site/dataview'
+import {DataViewSelection, SiteDataView} from '../site/dataview'
 
 function sort_a1(a: [string, number], b: [string, number]): number {
   return isNaN(a[1]) ? (isNaN(b[1]) ? 0 : -1) : isNaN(b[1]) ? 1 : a[1] - b[1]
@@ -199,8 +199,8 @@ export async function calculate(this: DataHandler, measure: string, v: SiteDataV
   })
   const variable = this.variables[measure],
     m = variable.views[view]
-  if (m.state[dataset] !== v.state) {
-    const summary_set = this.settings.settings.summary_selection as string,
+  if (v.valid[dataset] && m.state[dataset] !== v.state) {
+    const summary_set = this.settings.settings.summary_selection as keyof DataViewSelection,
       s = v.selection[summary_set],
       a = v.selection.all,
       mo = m.order[dataset],

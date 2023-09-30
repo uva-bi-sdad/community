@@ -190,7 +190,7 @@ export class OutputPlotly extends BaseOutput {
           d = v.get.dataset(),
           y = this.site.inputs[this.time || v.time_agg],
           parsed = this.parsed
-        if (this.site.data.inited[d] && s && v.time_range.filtered.length) {
+        if (this.site.data.inited[d] && v.valid[d] && v.time_range.filtered.length) {
           parsed.base_trace = this.site.valueOf(this.base_trace) as string
           parsed.x = this.site.valueOf(this.x) as string
           parsed.y = this.site.valueOf(this.y) as string
