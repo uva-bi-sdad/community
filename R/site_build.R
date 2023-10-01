@@ -593,6 +593,12 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     ), paste0(dir, "/docs/functions/api.js"))
   }
   last_deps <- grep("^(?:custom|base)", names(parts$dependencies))
+  if (bundle_data) {
+    settings$data <- structure(lapply(
+      settings$metadata$datasets,
+      function(f) jsonlite::read_json(paste0(dir, "/docs/", f, ".json"))
+    ), names = settings$metadata$datasets)
+  }
   r <- c(
     "<!doctype html>",
     paste("<!-- page generated from", sub("^.*/", "", file), "by community::site_build() -->"),
@@ -601,12 +607,6 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
     '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />',
     '<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />',
     '<meta name="viewport" content="width=device-width,initial-scale=1" />',
-    if (bundle_data) {
-      settings$data <- structure(lapply(
-        settings$metadata$datasets,
-        function(f) jsonlite::read_json(paste0(dir, "/docs/", f, ".json"))
-      ), names = settings$metadata$datasets)
-    },
     unlist(lapply(parts$dependencies[c(seq_along(parts$dependencies)[-last_deps], last_deps)], head_import, dir = dir)),
     paste0('<meta name="generator" content="community v', packageVersion("community"), '" />'),
     unlist(parts$head[!duplicated(names(parts$head))], use.names = FALSE),
