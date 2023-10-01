@@ -170,7 +170,7 @@ export function query(this: DataHandler, q: any): Query {
           f.dataset = tf
         } else if (tf.name in this.features) {
           if ('id' === tf.name && !tf.value) tf.value = (tf.value + '').split(',')
-          tf.check = group_checks[tf.operator].bind(tf.value)
+          tf.check = group_checks[tf.operator].bind('number' === typeof tf.value ? tf.value + '' : tf.value)
           f.feature_conditions.push(tf)
         } else if (tf.name in this.variables) {
           tf.check = (

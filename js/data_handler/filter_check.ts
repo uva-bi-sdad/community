@@ -70,23 +70,27 @@ export function passes_feature_filter(entities: {[index: string]: Entity}, id: s
   for (let i = filter.length; i--; ) {
     const value = filter[i].value
     if (value !== '-1') {
+      let pass = false
+      const ck = (id: string) => {
+        if (!pass) {
+          const group = id in entities && entities[id].group
+          if (
+            group && group in entity.features
+              ? id === entity.features[group]
+              : id.length < entity.features.id.length
+              ? id === entity.features.id.substring(0, id.length)
+              : id === entity.features.id
+          )
+            pass = true
+        }
+      }
       if ('id' === filter[i].name && Array.isArray(value)) {
-        let pass = false
-        value.forEach((id: string) => {
-          if (!pass) {
-            const group = id in entities && entities[id].group
-            if (
-              group && group in entity.features
-                ? id === entity.features[group]
-                : id.length < entity.features.id.length
-                ? id === entity.features.id.substring(0, id.length)
-                : id === entity.features.id
-            )
-              pass = true
-          }
-        })
+        value.forEach(ck)
         return pass
-      } else if (!filter[i].check(entity.features[filter[i].name])) return false
+      } else {
+        ck(value + '')
+        return pass
+      }
     }
   }
   return true

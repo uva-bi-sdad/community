@@ -1,16 +1,16 @@
 import {options} from './export_params'
 
 export const group_checks: {[index: string]: Function} = {
-  '!': function (this: number, v: number): boolean {
+  '!': function (this: string, v: string): boolean {
     return this !== v
   },
-  '=': function (this: number, v: number): boolean {
+  '=': function (this: string, v: string): boolean {
     return this === v
   },
-  includes: function (v: number): boolean {
+  includes: function (v: string): boolean {
     return -1 !== this.indexOf(v)
   },
-  excludes: function (v: number): boolean {
+  excludes: function (v: string): boolean {
     return -1 === this.indexOf(v)
   },
 }

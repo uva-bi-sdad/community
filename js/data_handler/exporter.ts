@@ -42,7 +42,9 @@ export async function exporter(
     no_feature_filter = !query.feature_conditions.length,
     in_group: Function = !('dataset' in query)
       ? () => true
-      : group_checks[query.dataset.operator].bind(query.dataset.value)
+      : group_checks[query.dataset.operator].bind(
+          'number' === typeof query.dataset.value ? query.dataset.value + '' : query.dataset.value
+        )
   let malformed = ''
   inc.forEach(ii => {
     if (ii in this.features && !(ii in feats)) {

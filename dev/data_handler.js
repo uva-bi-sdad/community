@@ -183,23 +183,26 @@
         for (let i = filter.length; i--;) {
             const value = filter[i].value;
             if (value !== '-1') {
+                let pass = false;
+                const ck = (id) => {
+                    if (!pass) {
+                        const group = id in entities && entities[id].group;
+                        if (group && group in entity.features
+                            ? id === entity.features[group]
+                            : id.length < entity.features.id.length
+                                ? id === entity.features.id.substring(0, id.length)
+                                : id === entity.features.id)
+                            pass = true;
+                    }
+                };
                 if ('id' === filter[i].name && Array.isArray(value)) {
-                    let pass = false;
-                    value.forEach((id) => {
-                        if (!pass) {
-                            const group = id in entities && entities[id].group;
-                            if (group && group in entity.features
-                                ? id === entity.features[group]
-                                : id.length < entity.features.id.length
-                                    ? id === entity.features.id.substring(0, id.length)
-                                    : id === entity.features.id)
-                                pass = true;
-                        }
-                    });
+                    value.forEach(ck);
                     return pass;
                 }
-                else if (!filter[i].check(entity.features[filter[i].name]))
-                    return false;
+                else {
+                    ck(value + '');
+                    return pass;
+                }
             }
         }
         return true;
@@ -346,7 +349,7 @@
                     : query.include
                 : Object.keys(this.variables), exc = query.exclude || [], vars = [], feats = query.features || JSON.parse(JSON.stringify(defaults.features)), rows = [], range = [Infinity, -Infinity], sep = 'csv' === query.file_format ? ',' : '\t', rw = row_writers[query.table_format].bind(this), no_filter = !query.variables.filter_by.length, no_feature_filter = !query.feature_conditions.length, in_group = !('dataset' in query)
                 ? () => true
-                : group_checks[query.dataset.operator].bind(query.dataset.value);
+                : group_checks[query.dataset.operator].bind('number' === typeof query.dataset.value ? query.dataset.value + '' : query.dataset.value);
             let malformed = '';
             inc.forEach(ii => {
                 if (ii in this.features && !(ii in feats)) {
@@ -1378,7 +1381,7 @@
                     else if (tf.name in this.features) {
                         if ('id' === tf.name && !tf.value)
                             tf.value = (tf.value + '').split(',');
-                        tf.check = group_checks[tf.operator].bind(tf.value);
+                        tf.check = group_checks[tf.operator].bind('number' === typeof tf.value ? tf.value + '' : tf.value);
                         f.feature_conditions.push(tf);
                     }
                     else if (tf.name in this.variables) {

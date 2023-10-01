@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">58.62% </span>
+                <span class="strong">59.32% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>34/58</span>
+                <span class='fraction'>35/59</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">51.42% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>18/36</span>
+                <span class='fraction'>18/35</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">64.58% </span>
+                <span class="strong">64% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>31/48</span>
+                <span class='fraction'>32/50</span>
             </div>
         
             
@@ -156,7 +156,11 @@
 <a name='L91'></a><a href='#L91'>91</a>
 <a name='L92'></a><a href='#L92'>92</a>
 <a name='L93'></a><a href='#L93'>93</a>
-<a name='L94'></a><a href='#L94'>94</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
@@ -223,7 +227,6 @@
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
@@ -244,7 +247,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -321,23 +329,27 @@ export function passes_feature_filter(entities: {[index: string]: Entity}, id: s
   for (let i = filter.length; i--; ) {
     const value = filter[i].value
     if (value !== '-1') {
+      let pass = false
+      const ck = (id: string) =&gt; {
+        if (!pass) {
+          const group = id in entities &amp;&amp; entities[id].group
+          if (
+            group &amp;&amp; group in entity.features
+              ? <span class="branch-0 cbranch-no" title="branch not covered" >id === entity.features[group]</span>
+              : id.length &lt; entity.features.id.length
+              ? <span class="branch-0 cbranch-no" title="branch not covered" >id === entity.features.id.substring(0, id.length)</span>
+              : id === entity.features.id
+          )
+            pass = true
+        }
+      }
       if ('id' === filter[i].name &amp;&amp; Array.isArray(value)) {
-        let pass = false
-        value.forEach((id: string) =&gt; {
-          if (!pass) {
-            const group = id in entities &amp;&amp; entities[id].group
-            if (
-              group &amp;&amp; group in entity.features
-                ? <span class="branch-0 cbranch-no" title="branch not covered" >id === entity.features[group]</span>
-                : id.length &lt; entity.features.id.length
-                ? <span class="branch-0 cbranch-no" title="branch not covered" >id === entity.features.id.substring(0, id.length)</span>
-                : id === entity.features.id
-            )
-              pass = true
-          }
-        })
+        value.forEach(ck)
         return pass
-      } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="if path not taken" >I</span><span class="missing-if-branch" title="else path not taken" >E</span>if (!filter[i].check(entity.features[filter[i].name])) <span class="cstat-no" title="statement not covered" >return false</span></span>
+      } else <span class="missing-if-branch" title="else path not taken" >E</span>{
+<span class="cstat-no" title="statement not covered" >        ck(value + '')</span>
+<span class="cstat-no" title="statement not covered" >        return pass</span>
+      }
     }
   }
 <span class="cstat-no" title="statement not covered" >  return true</span>
@@ -349,7 +361,7 @@ export function passes_feature_filter(entities: {[index: string]: Entity}, id: s
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-10-01T14:02:59.998Z
+                at 2023-10-01T16:05:43.991Z
             </div>
         <script src="../prettify.js"></script>
         <script>
