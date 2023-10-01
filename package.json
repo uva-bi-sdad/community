@@ -32,7 +32,6 @@
     "@types/datatables.net": "latest",
     "@types/jest": "latest",
     "@types/leaflet": "latest",
-    "@types/plotly.js": "latest",
     "csso": "latest",
     "jest": "latest",
     "jest-environment-jsdom": "latest",

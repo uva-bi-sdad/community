@@ -2,26 +2,95 @@ import type {SiteInputs} from '../inputs/index'
 import {BaseOutput} from './index'
 import Community from '../index'
 import {Entity, Summary} from '../../types'
-import type {Layout, Config, Data, PlotData, PlotlyHTMLElement} from 'plotly.js'
 import {SiteDataView} from '../dataview'
 
-export type PlotlySpec = {
-  [index: string]: Layout | Config | Data | string[] | string
-  layout: Layout
-  config: Config
-  data: Data
-  subto?: string[]
+type PlotlyAxis = {
+  title?: string
+  range?: number[]
+  gridcolor?: string
+  autorange?: boolean
+  type?: string
+  dtick?: number
+  showgrid?: boolean
 }
 
-type PlotlyTrace = {
+type Layout = {
+  paper_bgcolor?: string
+  plot_bgcolor?: string
+  font?: {
+    color?: string
+  }
+  modebar?: {
+    bgcolor?: string
+    color?: string
+  }
+  xaxis?: PlotlyAxis
+  yaxis?: PlotlyAxis
+}
+
+type Data = {
+  name?: string
+  id?: string
+  color?: string
+  hoverinfo?: string
+  line?: {
+    color?: string
+    width?: number
+  }
+  marker?: {
+    color?: string
+    line?: {width?: number; color?: string}
+    size?: number
+  }
+  'marker.line.color'?: string
+  'marker.line.width'?: number
+  showlegend?: boolean
+  text?: string[]
+  textfont?: {color?: string}
+  type?: string
   x?: number[]
   y?: number[]
-  line?: {color: string}
   median?: number[]
   q3?: number[]
   q1?: number[]
   upperfence: number[]
   lowerfence: number[]
+}
+
+type Config = {
+  [index: string]: string
+}
+
+interface PlotlyHTMLElement extends HTMLElement {
+  data: Data[]
+  config: Config
+  layout: Layout
+  _fullLayout: Layout
+  on: (even_type: string, fun: (d: PlotlyMouseEvent) => void) => PlotlyHTMLElement
+}
+
+declare class Plotly {
+  static newPlot: (e: HTMLElement, data: Data[], layout: Layout, config: Config) => void
+  static react: (e: PlotlyHTMLElement, data: Data[], layout: Layout, config: Config) => void
+  static addTraces: (e: PlotlyHTMLElement, trace: Data, position: number) => void
+  static deleteTraces: (e: PlotlyHTMLElement, position: number) => void
+  static restyle: (e: PlotlyHTMLElement, fragment: {[index: string]: string | number}, position: number) => void
+  static relayout: (e: PlotlyHTMLElement, layout: Layout) => void
+}
+
+export type PlotlySpec = {
+  [index: string]: Layout | Config | Data[] | string[] | string
+  layout: Layout
+  config: Config
+  data: Data[]
+  subto?: string[]
+}
+
+type PlotlyMouseEvent = {
+  points: {
+    fullData: {index: number}
+    data: {id: string}
+  }[]
 }
 
 export class OutputPlotly extends BaseOutput {
@@ -96,14 +165,14 @@ export class OutputPlotly extends BaseOutput {
       if (this.site.dataviews[this.view].time_agg in this.site.dataviews)
         this.site.add_dependency(this.site.dataviews[this.view].time_agg as string, {type: 'update', id: this.id})
     } else this.view = this.site.defaults.dataview
-    this.spec.data.forEach((p: PlotData, i: number) => {
-      Object.keys(p).forEach(k => {
+    this.spec.data.forEach((p: Data, i: number) => {
+      Object.keys(p).forEach((k: keyof Data) => {
         if (this.site.patterns.period.test(k)) {
-          const es = k.split('.'),
+          const es = k.split('.') as (keyof Data)[],
             n = es.length - 1
-          let pl: {[index: string]: string | {[index: string]: string}} = null
+          let pl: {[index: string]: string | {[index: string]: string}}
           es.forEach((e, ei) => {
-            pl = pl ? (pl[e] = ei === n ? p[k] : {}) : (p[e] = {})
+            pl = pl ? (pl[e] = ei === n ? (p[k] as {[index: string]: string}) : {}) : ((p as any)[e] = {})
           })
         }
       })
@@ -153,9 +222,11 @@ export class OutputPlotly extends BaseOutput {
   }
   queue_init() {
     const showing = this.deferred || !this.tab || this.tab.classList.contains('show')
-    if (showing && window.Plotly) {
+    if (showing && 'Plotly' in window) {
       Plotly.newPlot(this.e, this.spec.data, this.spec.layout, this.spec.config)
-      this.e.on('plotly_hover', this.mouseover).on('plotly_unhover', this.mouseout).on('plotly_click', this.click)
+      this.e.on('plotly_hover', this.mouseover)
+      this.e.on('plotly_unhover', this.mouseout)
+      this.e.on('plotly_click', this.click)
       this.update_theme()
       this.update()
     } else {
@@ -163,19 +234,19 @@ export class OutputPlotly extends BaseOutput {
       setTimeout(this.queue_init, showing ? 0 : 2000)
     }
   }
-  mouseover(d: PlotMouseEvent) {
+  mouseover(d: PlotlyMouseEvent) {
     if (d.points && 1 === d.points.length && this.e.data[d.points[0].fullData.index]) {
       Plotly.restyle(this.e, {'line.width': 5}, d.points[0].fullData.index)
       this.site.subs.update(this.id, 'show', this.site.data.entities[d.points[0].data.id])
     }
   }
-  mouseout(d: PlotMouseEvent) {
+  mouseout(d: PlotlyMouseEvent) {
     if (d.points && 1 === d.points.length && this.e.data[d.points[0].fullData.index]) {
       Plotly.restyle(this.e, {'line.width': 2}, d.points[0].fullData.index)
       this.site.subs.update(this.id, 'revert', this.site.data.entities[d.points[0].data.id])
     }
   }
-  click(d: PlotMouseEvent) {
+  click(d: PlotlyMouseEvent) {
     this.clickto && this.clickto.set(d.points[0].data.id)
   }
   async update(pass?: boolean) {
@@ -214,10 +285,10 @@ export class OutputPlotly extends BaseOutput {
             subset = n !== v.n_selected.dataset,
             rank = subset ? 'subset_rank' : 'rank',
             order = subset ? varcol.views[this.view].order[d][display_time] : varcol.info[d].order[display_time],
-            traces = []
+            traces: Data[] = []
           let i = parsed.summary.missing[display_time],
             k: string,
-            b: PlotlyTrace,
+            b: Data,
             fn = order ? order.length : 0,
             settings = this.site.spec.settings,
             lim = (settings.trace_limit as number) || 0,
@@ -238,7 +309,7 @@ export class OutputPlotly extends BaseOutput {
               settings.show_empty_times
           lim = jump = lim && lim < n ? Math.ceil(Math.min(lim / 2, n / 2)) : 0
           Object.keys(this.reference_options).forEach(
-            (k: keyof PlotlySpec) => (this.spec[k] = this.site.valueOf(this.reference_options[k]))
+            (k: keyof PlotlySpec) => (this.spec[k] = this.site.valueOf(this.reference_options[k]) as string)
           )
           for (; i < fn; i++) {
             if (order[i][0] in s) {
@@ -358,7 +429,7 @@ export class OutputPlotly extends BaseOutput {
     if (e.data && this.parsed.x in data.variables) {
       const x = data.get_value({variable: this.parsed.x, entity: e}),
         y = data.get_value({variable: this.parsed.y, entity: e}),
-        t = JSON.parse(this.traces[this.base_trace]),
+        t: Data = JSON.parse(this.traces[this.base_trace]),
         yr = data.variables[this.parsed.y].time_range[this.parsed.dataset],
         xr = data.variables[this.parsed.x].time_range[this.parsed.dataset],
         n = Math.min(yr[1], xr[1]) + 1,
@@ -399,8 +470,6 @@ export class OutputPlotly extends BaseOutput {
         this.style = this.spec.layout
         if (!('font' in this.style)) this.style.font = {}
         if (!('modebar' in this.style)) this.style.modebar = {}
-        if (!('font' in this.style.xaxis)) this.style.xaxis.font = {}
-        if (!('font' in this.style.yaxis)) this.style.yaxis.font = {}
       }
       this.style.paper_bgcolor = s.backgroundColor
       this.style.plot_bgcolor = s.backgroundColor
@@ -409,8 +478,6 @@ export class OutputPlotly extends BaseOutput {
       this.style.modebar.color = s.color
       if (this.e._fullLayout.xaxis.showgrid) this.style.xaxis.gridcolor = s.borderColor
       if (this.e._fullLayout.yaxis.showgrid) this.style.yaxis.gridcolor = s.borderColor
-      this.style.xaxis.font.color = s.color
-      this.style.yaxis.font.color = s.color
       Plotly.relayout(this.e, this.spec.layout)
     }
   }

@@ -483,10 +483,10 @@ type SiteCredits = {
 }
 
 export type SiteSpec = {
-  settings: Generic
-  metadata: Metadata
-  endpoint: string
-  aggregated: boolean
+  settings?: Generic
+  metadata?: Metadata
+  endpoint?: string
+  aggregated?: boolean
   rules?: SiteRule[]
   variables?: VirtualSpec[]
   dataviews?: {[index: string]: DataViewSpec}

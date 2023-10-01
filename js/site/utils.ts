@@ -200,7 +200,7 @@ export function fill_variables_options(u: InputCombobox | InputSelect, d: string
               const id = u.id + '_' + group.replace(patterns.seps, '-')
               let ee
               if (u.settings.accordion) {
-                e.setAttribute('data-group', group)
+                e.dataset.group = group
                 e.className = 'combobox-group accordion-item combobox-component'
                 e.appendChild((ee = document.createElement('div')))
                 ee.className = 'accordion-header combobox-component'
@@ -238,7 +238,7 @@ export function fill_variables_options(u: InputCombobox | InputSelect, d: string
             ugroup.e.push(e)
           }
           const o = u.add(m.name, l, true, m)
-          o.setAttribute('data-group', group)
+          o.dataset.group = group
           if (combobox && u.settings.accordion) {
             ugroup.by_name[group].lastElementChild.lastElementChild.appendChild(o)
           } else {

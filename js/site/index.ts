@@ -105,11 +105,12 @@ export default class Community {
   parsed_query: Query = {}
   endpoint?: string
   rule_conditions: {[index: string]: SiteRule[]} = {}
-  constructor(spec: SiteSpec) {
+  constructor(spec?: SiteSpec) {
     if (spec) {
       this.spec = spec
       spec.active = this
     }
+    if (!spec.settings) spec.settings = {}
     if (!('dataLayer' in window)) (window as any).dataLayer = []
     storage.copy = storage.get() as Generic
     if (storage.copy)
@@ -211,105 +212,100 @@ export default class Community {
         this.inputs[v.id] = u
       })
     this.defaults.dataset = this.spec.dataviews[defaults.dataview].dataset
+    if (!this.spec.metadata) this.spec.metadata = {datasets: []}
     const sets = this.spec.metadata.datasets
-    if (!sets || !sets.length) {
-      this.drop_load_screen()
-    } else {
-      if (sets.length && -1 === sets.indexOf(this.defaults.dataset)) {
-        if (1 === sets.length) {
-          this.defaults.dataset = sets[0]
-        } else {
-          this.registered_inputs.forEach(u => {
-            if (!this.defaults.dataset) {
-              const d = u.default
-              if (-1 !== sets.indexOf(u.dataset)) {
-                this.defaults.dataset = u.dataset
-              } else if ('string' === typeof d && -1 !== sets.indexOf(d)) {
-                this.defaults.dataset = d
-              } else if (
-                'select' === u.type &&
-                'number' === typeof d &&
-                u.options[d] &&
-                -1 !== sets.indexOf(u.options[d].value)
-              ) {
-                this.defaults.dataset = u.options[d].value
-              } else if (
-                ('select' === u.type || 'combobox' === u.type) &&
-                Array.isArray(u.values) &&
-                u.values[u.default] &&
-                -1 !== sets.indexOf(u.values[u.default])
-              ) {
-                this.defaults.dataset = u.values[u.default]
-              }
-            }
-          })
-          if (!this.defaults.dataset) this.defaults.dataset = sets[sets.length - 1]
-        }
-        this.defaults.dataset = this.valueOf(this.defaults.dataset) as string
-        if (-1 === sets.indexOf(this.defaults.dataset)) this.defaults.dataset = sets[0]
+    if (sets && sets.length && -1 === sets.indexOf(this.defaults.dataset)) {
+      if (1 === sets.length) {
+        this.defaults.dataset = sets[0]
+      } else {
         this.registered_inputs.forEach(u => {
-          if (!u.dataset) u.dataset = this.defaults.dataset
-        })
-        if (!this.spec.dataviews[defaults.dataview].dataset)
-          this.spec.dataviews[defaults.dataview].dataset = this.defaults.dataset
-      }
-      if (spec.rules && spec.rules.length) {
-        spec.rules.forEach((r, i) => {
-          r.parsed = {}
-          if ('display' in r.effects) {
-            r.parsed.display = {e: document.getElementById(r.effects.display)}
-            const e = r.parsed.display.e.querySelector('.auto-input')
-            if (e) {
-              const u = this.inputs[e.id]
-              u.rule = r
-              r.parsed.display.u = u
+          if (!this.defaults.dataset) {
+            const d = u.default
+            if (-1 !== sets.indexOf(u.dataset)) {
+              this.defaults.dataset = u.dataset
+            } else if ('string' === typeof d && -1 !== sets.indexOf(d)) {
+              this.defaults.dataset = d
+            } else if (
+              'select' === u.type &&
+              'number' === typeof d &&
+              u.options[d] &&
+              -1 !== sets.indexOf(u.options[d].value)
+            ) {
+              this.defaults.dataset = u.options[d].value
+            } else if (
+              ('select' === u.type || 'combobox' === u.type) &&
+              Array.isArray(u.values) &&
+              u.values[u.default] &&
+              -1 !== sets.indexOf(u.values[u.default])
+            ) {
+              this.defaults.dataset = u.values[u.default]
             }
           }
-          if ('lock' in r.effects) {
-            const us = new Map()
-            document
-              .querySelectorAll('#' + r.effects.lock + ' .auto-input')
-              .forEach(e => us.set(e.id, this.inputs[e.id]))
-            r.parsed.lock = us
-          }
-          r.condition.forEach(c => {
-            if (c.type in DataHandler.checks) {
-              c.check = function (this: {c: SiteCondition; site: Community}) {
-                return DataHandler.checks[this.c.type](this.site.valueOf(this.c.id), this.site.valueOf(this.c.value))
-              }.bind({c, site: this})
-              if (c.id in this.inputs) {
-                this.add_dependency(c.id, {type: 'rule', id: c.id, condition: c, rule: i})
-                if (!(c.id in this.rule_conditions)) this.rule_conditions[c.id] = []
-                this.rule_conditions[c.id][i] = r
-              }
-              if (c.check()) {
-                Object.keys(r.effects).forEach(k => {
-                  if (k in this.inputs) this.inputs[k].set(this.valueOf(r.effects[k]) as string)
-                })
-              } else if (c.default) {
-                Object.keys(r.effects).forEach(k => {
-                  if (k in this.inputs) this.inputs[k].set(this.valueOf(c.default) as string)
-                })
-              }
-            }
-          })
         })
+        if (!this.defaults.dataset) this.defaults.dataset = sets[sets.length - 1]
       }
-      const dataset = this.valueOf(this.spec.dataviews[this.defaults.dataview].dataset) as string | number
-      this.defaults.dataset = 'number' === typeof dataset ? sets[dataset] : dataset
+      this.defaults.dataset = this.valueOf(this.defaults.dataset) as string
       if (-1 === sets.indexOf(this.defaults.dataset)) this.defaults.dataset = sets[0]
-      this.data = new DataHandler(this.spec, this.defaults, this.data as unknown as DataSets, {
-        init: this.init,
-        onload: function (this: Community) {
-          if (this.data.inited) clearTimeout(this.data.inited.load_screen as NodeJS.Timeout)
-          setTimeout(this.drop_load_screen.bind(this), 600)
-          delete this.data.onload
-        }.bind(this),
-        data_load: function (this: Community) {
-          Object.keys(this.dependencies).forEach(k => this.request_queue(false, k))
-        }.bind(this),
+      this.registered_inputs.forEach(u => {
+        if (!u.dataset) u.dataset = this.defaults.dataset
+      })
+      if (!this.spec.dataviews[defaults.dataview].dataset)
+        this.spec.dataviews[defaults.dataview].dataset = this.defaults.dataset
+    }
+    if (spec.rules && spec.rules.length) {
+      spec.rules.forEach((r, i) => {
+        r.parsed = {}
+        if ('display' in r.effects) {
+          r.parsed.display = {e: document.getElementById(r.effects.display)}
+          const e = r.parsed.display.e.querySelector('.auto-input')
+          if (e) {
+            const u = this.inputs[e.id]
+            u.rule = r
+            r.parsed.display.u = u
+          }
+        }
+        if ('lock' in r.effects) {
+          const us = new Map()
+          document.querySelectorAll('#' + r.effects.lock + ' .auto-input').forEach(e => us.set(e.id, this.inputs[e.id]))
+          r.parsed.lock = us
+        }
+        r.condition.forEach(c => {
+          if (c.type in DataHandler.checks) {
+            c.check = function (this: {c: SiteCondition; site: Community}) {
+              return DataHandler.checks[this.c.type](this.site.valueOf(this.c.id), this.site.valueOf(this.c.value))
+            }.bind({c, site: this})
+            if (c.id in this.inputs) {
+              this.add_dependency(c.id, {type: 'rule', id: c.id, condition: c, rule: i})
+              if (!(c.id in this.rule_conditions)) this.rule_conditions[c.id] = []
+              this.rule_conditions[c.id][i] = r
+            }
+            if (c.check()) {
+              Object.keys(r.effects).forEach(k => {
+                if (k in this.inputs) this.inputs[k].set(this.valueOf(r.effects[k]) as string)
+              })
+            } else if (c.default) {
+              Object.keys(r.effects).forEach(k => {
+                if (k in this.inputs) this.inputs[k].set(this.valueOf(c.default) as string)
+              })
+            }
+          }
+        })
       })
     }
+    const dataset = this.valueOf(this.spec.dataviews[this.defaults.dataview].dataset) as string | number
+    this.defaults.dataset = 'number' === typeof dataset ? sets[dataset] : dataset
+    if (-1 === sets.indexOf(this.defaults.dataset)) this.defaults.dataset = sets[0]
+    this.data = new DataHandler(this.spec, this.defaults, this.data as unknown as DataSets, {
+      init: this.init,
+      onload: function (this: Community) {
+        if (this.data.inited) clearTimeout(this.data.inited.load_screen as NodeJS.Timeout)
+        setTimeout(this.drop_load_screen.bind(this), 600)
+        delete this.data.onload
+      }.bind(this),
+      data_load: function (this: Community) {
+        Object.keys(this.dependencies).forEach(k => this.request_queue(false, k))
+      }.bind(this),
+    })
   }
   init() {
     if (this.data.variables) {
@@ -566,7 +562,7 @@ export default class Community {
         c = 'view.' === id.substring(0, 5) ? this.view : id in this.dataviews ? this.dataviews[id] : this.inputs[id],
         is_view = c instanceof SiteDataView,
         is_global = c instanceof GlobalView,
-        part = 'id' === id.substring(6) ? 'id_state' : 'filter_state',
+        part = 'id' === id.substring(5) ? 'id_state' : 'filter_state',
         v = is_global ? c[part]() : c && c.value() + '',
         state = is_global ? c.states[part] : c && c.state
       if (c && (!this.meta.retain_state || state !== v)) {
@@ -672,7 +668,7 @@ export default class Community {
     if (this.spec.settings.tracking) (window as any).dataLayer.push(arguments)
   }
   drop_load_screen() {
-    if (!this.data || this.data.inited) clearTimeout(+this.data.inited.load_screen)
+    if (this.data && this.data.inited) clearTimeout(+this.data.inited.load_screen)
     this.page.wrap.style.visibility = 'visible'
     this.page.load_screen.style.display = 'none'
     if (this.spec.tutorials && 'tutorial' in this.url_options) {
@@ -741,7 +737,11 @@ export default class Community {
       bound_ref = upper ? 'upper_' : 'lower_',
       value_min = (bound_ref + stat + '_min') as 'upper_mean_min',
       value_range = (bound_ref + stat + '_range') as 'upper_mean_range'
-    let v = centered ? (range ? (p + center - summary[value_min][index]) / summary[value_range][index] : 1) : p
+    let v = centered
+      ? range
+        ? ((upper ? p - center : p + center) - summary[value_min][index]) / summary[value_range][index]
+        : 1
+      : p
     if (!fixed) {
       v = Math.max(0, Math.min(1, v))
       if (upper) v = 1 - v

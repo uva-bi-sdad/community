@@ -1477,8 +1477,6 @@
             this.export = exporter;
             this.get_variable = function (variable, view) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    if (view.dataset in this.data_processed)
-                        yield this.data_processed[view.dataset];
                     if (variable in this.variables)
                         yield this.calculate_summary(variable, view, true);
                     return this.variables[variable];
@@ -1493,16 +1491,11 @@
                     return (v in r.entity.data ? (Array.isArray(r.entity.data[v]) ? r.entity.data[v] : [r.entity.data[v]]) : [NaN]);
                 }
             };
-            if (hooks)
-                this.hooks = hooks;
-            if (defaults)
-                this.defaults = defaults;
-            if (settings)
-                this.settings = settings;
-            if (this.settings.metadata)
-                this.metadata = this.settings.metadata;
-            if (data$1)
-                this.sets = data$1;
+            this.defaults = defaults || {};
+            this.settings = settings || {};
+            this.metadata = this.settings.metadata || { datasets: [] };
+            this.sets = data$1 || {};
+            this.hooks = hooks || {};
             this.get_value = this.get_value.bind(this);
             this.dynamic_load = 'dataviews' in this.settings && this.settings.settings && !!this.settings.settings.partial_init;
             this.settings.view_names = this.dynamic_load ? Object.keys(this.settings.dataviews) : ['default_view'];
@@ -1524,23 +1517,33 @@
                     });
                 }
                 this.map_variables();
-                this.metadata.datasets.forEach((k) => {
-                    this.loaded[k] = k in this.sets;
-                    this.inited[k] = false;
-                    this.data_processed[k] = new Promise(resolve => {
-                        this.data_promise[k] = resolve;
+                if (this.metadata.datasets.length) {
+                    this.metadata.datasets.forEach((k) => {
+                        this.loaded[k] = k in this.sets;
+                        this.inited[k] = false;
+                        this.data_processed[k] = new Promise(resolve => {
+                            this.data_promise[k] = resolve;
+                        });
+                        if (k in this.info)
+                            this.info[k].site_file = (this.metadata.url ? this.metadata.url + '/' : '') + this.info[k].name + '.json';
+                        if (this.loaded[k]) {
+                            this.ingest_data(this.sets[k], k);
+                        }
+                        else if (!this.dynamic_load ||
+                            (this.settings.settings && !this.settings.settings.partial_init) ||
+                            !this.defaults.dataset ||
+                            k === this.defaults.dataset) {
+                            this.retrieve(k, this.info[k].site_file);
+                        }
                     });
-                    if (k in this.info)
-                        this.info[k].site_file = (this.metadata.url ? this.metadata.url + '/' : '') + this.info[k].name + '.json';
-                    if (this.loaded[k]) {
-                        this.ingest_data(this.sets[k], k);
-                    }
-                    else if (!this.dynamic_load ||
-                        (this.settings.settings && !this.settings.settings.partial_init) ||
-                        !this.defaults.dataset ||
-                        k === this.defaults.dataset)
-                        this.retrieve(k, this.info[k].site_file);
-                });
+                }
+                else {
+                    setTimeout(() => {
+                        this.inited.first = true;
+                        this.hooks.init && this.hooks.init();
+                        this.hooks.onload && this.hooks.onload();
+                    }, 0);
+                }
             };
             if (this.metadata.package && !this.metadata.info) {
                 if ('undefined' === typeof window) {
@@ -1961,7 +1964,7 @@
                                 const id = u.id + '_' + group.replace(patterns.seps, '-');
                                 let ee;
                                 if (u.settings.accordion) {
-                                    e.setAttribute('data-group', group);
+                                    e.dataset.group = group;
                                     e.className = 'combobox-group accordion-item combobox-component';
                                     e.appendChild((ee = document.createElement('div')));
                                     ee.className = 'accordion-header combobox-component';
@@ -2001,7 +2004,7 @@
                             ugroup.e.push(e);
                         }
                         const o = u.add(m.name, l, true, m);
-                        o.setAttribute('data-group', group);
+                        o.dataset.group = group;
                         if (combobox && u.settings.accordion) {
                             ugroup.by_name[group].lastElementChild.lastElementChild.appendChild(o);
                         }
@@ -3706,7 +3709,9 @@
         }
         filter_reset() {
             if (this.groups)
-                this.groups.e.forEach(g => g.firstElementChild.firstElementChild.classList.remove('hidden'));
+                this.groups.e.forEach(g => {
+                    (this.settings.accordion ? g.firstElementChild.firstElementChild : g).classList.remove('hidden');
+                });
             this.input_element.value = '';
             this.filter_index = [];
             this.options.forEach((o, i) => {
@@ -3749,7 +3754,7 @@
             div.lastElementChild.className = 'combobox-component';
             div.lastElementChild.setAttribute('aria-live', 'assertive');
             div.lastElementChild.setAttribute('aria-atomic', 'true');
-            div.lastElementChild.setAttribute('aria-role', 'log');
+            div.lastElementChild.role = 'log';
             div.appendChild(input);
             input.setAttribute('aria-haspopup', 'listbox');
             input.setAttribute('aria-expanded', 'false');
@@ -3793,21 +3798,23 @@
                     Object.keys(options).forEach(k => {
                         const g = options[k];
                         const e = document.createElement('div'), id = u.id + '_group_' + k.replace(patterns.seps, '-');
+                        e.dataset.group = k;
                         e.className = 'combobox-group combobox-component';
                         e.setAttribute('aria-labelledby', id);
                         e.appendChild((lab = document.createElement('label')));
+                        lab.dataset.for = id;
                         lab.innerText = k;
                         lab.id = id;
                         lab.className = 'combobox-group-label combobox-component';
                         u.groups.by_name[k] = e;
                         u.groups.e.push(e);
-                        g.forEach(o => u.groups.by_name[k].appendChild(u.add(o, o, true)));
+                        g.forEach(o => e.appendChild(u.add(o, o, true)));
                         u.listbox.appendChild(e);
                     });
                     Object.keys(u.groups.by_name).forEach(g => {
                         u.groups.by_name[g].querySelectorAll('.combobox-option').forEach((c) => {
                             u.options.push(c);
-                            c.setAttribute('data-group', g);
+                            c.dataset.group = g;
                             u.values[c.dataset.value] = n;
                             u.display[c.innerText] = n++;
                         });
@@ -3822,7 +3829,7 @@
             this.site.request_queue(false, this.id);
         }
         set(v, toggle) {
-            if (!v)
+            if ('number' !== typeof v && !v)
                 v = this.input_element.value;
             let update = false, i = -1;
             if (!Array.isArray(v) && 'object' === typeof v) {
@@ -3906,15 +3913,18 @@
                 this.close();
                 this.filter_reset();
             }
-            const display = this.source.length
+            let display = this.source.length
                 ? this.settings.multi
                     ? this.source.length + ' of ' + this.options.length + ' selected'
                     : this.source[0] in this.values
-                        ? this.options[this.values[this.source[0]]].firstChild.textContent
+                        ? this.options[this.values[this.source[0]]]
                         : this.settings.strict || -1 === this.source[0]
                             ? ''
                             : this.source[0] + ''
                 : '';
+            if ('string' !== typeof display) {
+                display = display.firstChild ? display.firstChild.textContent : display.innerText;
+            }
             if (this.settings.use_display) {
                 this.selection.innerText = display;
             }
@@ -3940,9 +3950,10 @@
                 e.lastElementChild.className = 'combobox-option-description combobox-component';
                 e.lastElementChild.innerText = meta.info.description || meta.info.short_description || '';
             }
-            if (!noadd)
+            if (!noadd) {
                 this.listbox.appendChild(e);
-            this.options.push(e);
+                this.options.push(e);
+            }
             return e;
         }
     }
@@ -4463,8 +4474,8 @@
             this.show_variable_info = this.show_variable_info.bind(this);
             this.tooltip_clear = this.tooltip_clear.bind(this);
             this.site.page = this;
-            this.load_screen = document.getElementById('load_screen');
-            this.wrap = document.getElementById('site_wrap');
+            this.load_screen = document.getElementById('load_screen') || document.createElement('div');
+            this.wrap = document.getElementById('site_wrap') || document.createElement('div');
             const navbar = document.querySelector('.navbar');
             if (navbar) {
                 this.navbar = navbar.getBoundingClientRect();
@@ -4513,7 +4524,7 @@
             else {
                 this.navbar = { height: 0 };
             }
-            this.content = document.querySelector('.content');
+            this.content = document.querySelector('.content') || document.createElement('div');
             this.panels = document.querySelectorAll('.panel');
             this.init_panel = this.init_panel.bind(this);
             this.resize = this.resize.bind(this);
@@ -6703,10 +6714,10 @@
             else
                 this.view = this.site.defaults.dataview;
             this.spec.data.forEach((p, i) => {
-                Object.keys(p).forEach(k => {
+                Object.keys(p).forEach((k) => {
                     if (this.site.patterns.period.test(k)) {
                         const es = k.split('.'), n = es.length - 1;
-                        let pl = null;
+                        let pl;
                         es.forEach((e, ei) => {
                             pl = pl ? (pl[e] = ei === n ? p[k] : {}) : (p[e] = {});
                         });
@@ -6766,9 +6777,11 @@
         }
         queue_init() {
             const showing = this.deferred || !this.tab || this.tab.classList.contains('show');
-            if (showing && window.Plotly) {
+            if (showing && 'Plotly' in window) {
                 Plotly.newPlot(this.e, this.spec.data, this.spec.layout, this.spec.config);
-                this.e.on('plotly_hover', this.mouseover).on('plotly_unhover', this.mouseout).on('plotly_click', this.click);
+                this.e.on('plotly_hover', this.mouseover);
+                this.e.on('plotly_unhover', this.mouseout);
+                this.e.on('plotly_click', this.click);
                 this.update_theme();
                 this.update();
             }
@@ -6995,10 +7008,6 @@
                         this.style.font = {};
                     if (!('modebar' in this.style))
                         this.style.modebar = {};
-                    if (!('font' in this.style.xaxis))
-                        this.style.xaxis.font = {};
-                    if (!('font' in this.style.yaxis))
-                        this.style.yaxis.font = {};
                 }
                 this.style.paper_bgcolor = s.backgroundColor;
                 this.style.plot_bgcolor = s.backgroundColor;
@@ -7009,8 +7018,6 @@
                     this.style.xaxis.gridcolor = s.borderColor;
                 if (this.e._fullLayout.yaxis.showgrid)
                     this.style.yaxis.gridcolor = s.borderColor;
-                this.style.xaxis.font.color = s.color;
-                this.style.yaxis.font.color = s.color;
                 Plotly.relayout(this.e, this.spec.layout);
             }
         }
@@ -8374,6 +8381,8 @@
                 this.spec = spec;
                 spec.active = this;
             }
+            if (!spec.settings)
+                spec.settings = {};
             if (!('dataLayer' in window))
                 window.dataLayer = [];
             storage.copy = storage.get();
@@ -8482,115 +8491,110 @@
                     this.inputs[v.id] = u;
                 });
             this.defaults.dataset = this.spec.dataviews[defaults.dataview].dataset;
+            if (!this.spec.metadata)
+                this.spec.metadata = { datasets: [] };
             const sets = this.spec.metadata.datasets;
-            if (!sets || !sets.length) {
-                this.drop_load_screen();
-            }
-            else {
-                if (sets.length && -1 === sets.indexOf(this.defaults.dataset)) {
-                    if (1 === sets.length) {
-                        this.defaults.dataset = sets[0];
-                    }
-                    else {
-                        this.registered_inputs.forEach(u => {
-                            if (!this.defaults.dataset) {
-                                const d = u.default;
-                                if (-1 !== sets.indexOf(u.dataset)) {
-                                    this.defaults.dataset = u.dataset;
-                                }
-                                else if ('string' === typeof d && -1 !== sets.indexOf(d)) {
-                                    this.defaults.dataset = d;
-                                }
-                                else if ('select' === u.type &&
-                                    'number' === typeof d &&
-                                    u.options[d] &&
-                                    -1 !== sets.indexOf(u.options[d].value)) {
-                                    this.defaults.dataset = u.options[d].value;
-                                }
-                                else if (('select' === u.type || 'combobox' === u.type) &&
-                                    Array.isArray(u.values) &&
-                                    u.values[u.default] &&
-                                    -1 !== sets.indexOf(u.values[u.default])) {
-                                    this.defaults.dataset = u.values[u.default];
-                                }
-                            }
-                        });
-                        if (!this.defaults.dataset)
-                            this.defaults.dataset = sets[sets.length - 1];
-                    }
-                    this.defaults.dataset = this.valueOf(this.defaults.dataset);
-                    if (-1 === sets.indexOf(this.defaults.dataset))
-                        this.defaults.dataset = sets[0];
+            if (sets && sets.length && -1 === sets.indexOf(this.defaults.dataset)) {
+                if (1 === sets.length) {
+                    this.defaults.dataset = sets[0];
+                }
+                else {
                     this.registered_inputs.forEach(u => {
-                        if (!u.dataset)
-                            u.dataset = this.defaults.dataset;
-                    });
-                    if (!this.spec.dataviews[defaults.dataview].dataset)
-                        this.spec.dataviews[defaults.dataview].dataset = this.defaults.dataset;
-                }
-                if (spec.rules && spec.rules.length) {
-                    spec.rules.forEach((r, i) => {
-                        r.parsed = {};
-                        if ('display' in r.effects) {
-                            r.parsed.display = { e: document.getElementById(r.effects.display) };
-                            const e = r.parsed.display.e.querySelector('.auto-input');
-                            if (e) {
-                                const u = this.inputs[e.id];
-                                u.rule = r;
-                                r.parsed.display.u = u;
+                        if (!this.defaults.dataset) {
+                            const d = u.default;
+                            if (-1 !== sets.indexOf(u.dataset)) {
+                                this.defaults.dataset = u.dataset;
+                            }
+                            else if ('string' === typeof d && -1 !== sets.indexOf(d)) {
+                                this.defaults.dataset = d;
+                            }
+                            else if ('select' === u.type &&
+                                'number' === typeof d &&
+                                u.options[d] &&
+                                -1 !== sets.indexOf(u.options[d].value)) {
+                                this.defaults.dataset = u.options[d].value;
+                            }
+                            else if (('select' === u.type || 'combobox' === u.type) &&
+                                Array.isArray(u.values) &&
+                                u.values[u.default] &&
+                                -1 !== sets.indexOf(u.values[u.default])) {
+                                this.defaults.dataset = u.values[u.default];
                             }
                         }
-                        if ('lock' in r.effects) {
-                            const us = new Map();
-                            document
-                                .querySelectorAll('#' + r.effects.lock + ' .auto-input')
-                                .forEach(e => us.set(e.id, this.inputs[e.id]));
-                            r.parsed.lock = us;
-                        }
-                        r.condition.forEach(c => {
-                            if (c.type in DataHandler.checks) {
-                                c.check = function () {
-                                    return DataHandler.checks[this.c.type](this.site.valueOf(this.c.id), this.site.valueOf(this.c.value));
-                                }.bind({ c, site: this });
-                                if (c.id in this.inputs) {
-                                    this.add_dependency(c.id, { type: 'rule', id: c.id, condition: c, rule: i });
-                                    if (!(c.id in this.rule_conditions))
-                                        this.rule_conditions[c.id] = [];
-                                    this.rule_conditions[c.id][i] = r;
-                                }
-                                if (c.check()) {
-                                    Object.keys(r.effects).forEach(k => {
-                                        if (k in this.inputs)
-                                            this.inputs[k].set(this.valueOf(r.effects[k]));
-                                    });
-                                }
-                                else if (c.default) {
-                                    Object.keys(r.effects).forEach(k => {
-                                        if (k in this.inputs)
-                                            this.inputs[k].set(this.valueOf(c.default));
-                                    });
-                                }
-                            }
-                        });
                     });
+                    if (!this.defaults.dataset)
+                        this.defaults.dataset = sets[sets.length - 1];
                 }
-                const dataset = this.valueOf(this.spec.dataviews[this.defaults.dataview].dataset);
-                this.defaults.dataset = 'number' === typeof dataset ? sets[dataset] : dataset;
+                this.defaults.dataset = this.valueOf(this.defaults.dataset);
                 if (-1 === sets.indexOf(this.defaults.dataset))
                     this.defaults.dataset = sets[0];
-                this.data = new DataHandler(this.spec, this.defaults, this.data, {
-                    init: this.init,
-                    onload: function () {
-                        if (this.data.inited)
-                            clearTimeout(this.data.inited.load_screen);
-                        setTimeout(this.drop_load_screen.bind(this), 600);
-                        delete this.data.onload;
-                    }.bind(this),
-                    data_load: function () {
-                        Object.keys(this.dependencies).forEach(k => this.request_queue(false, k));
-                    }.bind(this),
+                this.registered_inputs.forEach(u => {
+                    if (!u.dataset)
+                        u.dataset = this.defaults.dataset;
+                });
+                if (!this.spec.dataviews[defaults.dataview].dataset)
+                    this.spec.dataviews[defaults.dataview].dataset = this.defaults.dataset;
+            }
+            if (spec.rules && spec.rules.length) {
+                spec.rules.forEach((r, i) => {
+                    r.parsed = {};
+                    if ('display' in r.effects) {
+                        r.parsed.display = { e: document.getElementById(r.effects.display) };
+                        const e = r.parsed.display.e.querySelector('.auto-input');
+                        if (e) {
+                            const u = this.inputs[e.id];
+                            u.rule = r;
+                            r.parsed.display.u = u;
+                        }
+                    }
+                    if ('lock' in r.effects) {
+                        const us = new Map();
+                        document.querySelectorAll('#' + r.effects.lock + ' .auto-input').forEach(e => us.set(e.id, this.inputs[e.id]));
+                        r.parsed.lock = us;
+                    }
+                    r.condition.forEach(c => {
+                        if (c.type in DataHandler.checks) {
+                            c.check = function () {
+                                return DataHandler.checks[this.c.type](this.site.valueOf(this.c.id), this.site.valueOf(this.c.value));
+                            }.bind({ c, site: this });
+                            if (c.id in this.inputs) {
+                                this.add_dependency(c.id, { type: 'rule', id: c.id, condition: c, rule: i });
+                                if (!(c.id in this.rule_conditions))
+                                    this.rule_conditions[c.id] = [];
+                                this.rule_conditions[c.id][i] = r;
+                            }
+                            if (c.check()) {
+                                Object.keys(r.effects).forEach(k => {
+                                    if (k in this.inputs)
+                                        this.inputs[k].set(this.valueOf(r.effects[k]));
+                                });
+                            }
+                            else if (c.default) {
+                                Object.keys(r.effects).forEach(k => {
+                                    if (k in this.inputs)
+                                        this.inputs[k].set(this.valueOf(c.default));
+                                });
+                            }
+                        }
+                    });
                 });
             }
+            const dataset = this.valueOf(this.spec.dataviews[this.defaults.dataview].dataset);
+            this.defaults.dataset = 'number' === typeof dataset ? sets[dataset] : dataset;
+            if (-1 === sets.indexOf(this.defaults.dataset))
+                this.defaults.dataset = sets[0];
+            this.data = new DataHandler(this.spec, this.defaults, this.data, {
+                init: this.init,
+                onload: function () {
+                    if (this.data.inited)
+                        clearTimeout(this.data.inited.load_screen);
+                    setTimeout(this.drop_load_screen.bind(this), 600);
+                    delete this.data.onload;
+                }.bind(this),
+                data_load: function () {
+                    Object.keys(this.dependencies).forEach(k => this.request_queue(false, k));
+                }.bind(this),
+            });
         }
         init() {
             if (this.data.variables) {
@@ -8868,7 +8872,7 @@
         }
         refresh_conditions(id) {
             if (id in this.dependencies) {
-                const d = this.dependencies[id], r = [], c = 'view.' === id.substring(0, 5) ? this.view : id in this.dataviews ? this.dataviews[id] : this.inputs[id], is_view = c instanceof SiteDataView, is_global = c instanceof GlobalView, part = 'id' === id.substring(6) ? 'id_state' : 'filter_state', v = is_global ? c[part]() : c && c.value() + '', state = is_global ? c.states[part] : c && c.state;
+                const d = this.dependencies[id], r = [], c = 'view.' === id.substring(0, 5) ? this.view : id in this.dataviews ? this.dataviews[id] : this.inputs[id], is_view = c instanceof SiteDataView, is_global = c instanceof GlobalView, part = 'id' === id.substring(5) ? 'id_state' : 'filter_state', v = is_global ? c[part]() : c && c.value() + '', state = is_global ? c.states[part] : c && c.state;
                 if (c && (!this.meta.retain_state || state !== v)) {
                     if (is_global) {
                         c.states[part] = v;
@@ -8989,7 +8993,7 @@
                 window.dataLayer.push(arguments);
         }
         drop_load_screen() {
-            if (!this.data || this.data.inited)
+            if (this.data && this.data.inited)
                 clearTimeout(+this.data.inited.load_screen);
             this.page.wrap.style.visibility = 'visible';
             this.page.load_screen.style.display = 'none';
@@ -9048,7 +9052,11 @@
                 : range
                     ? ((string ? summary.level_ids[value] : value) - min) / range
                     : 0.5, upper = p > (centered ? center : 0.5), bound_ref = upper ? 'upper_' : 'lower_', value_min = (bound_ref + stat + '_min'), value_range = (bound_ref + stat + '_range');
-            let v = centered ? (range ? (p + center - summary[value_min][index]) / summary[value_range][index] : 1) : p;
+            let v = centered
+                ? range
+                    ? ((upper ? p - center : p + center) - summary[value_min][index]) / summary[value_range][index]
+                    : 1
+                : p;
             if (!fixed) {
                 v = Math.max(0, Math.min(1, v));
                 if (upper)

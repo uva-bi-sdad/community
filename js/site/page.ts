@@ -235,8 +235,8 @@ export class Page {
     this.show_variable_info = this.show_variable_info.bind(this)
     this.tooltip_clear = this.tooltip_clear.bind(this)
     this.site.page = this
-    this.load_screen = document.getElementById('load_screen')
-    this.wrap = document.getElementById('site_wrap')
+    this.load_screen = document.getElementById('load_screen') || document.createElement('div')
+    this.wrap = document.getElementById('site_wrap') || document.createElement('div')
     const navbar = document.querySelector('.navbar') as HTMLElement
     if (navbar) {
       this.navbar = navbar.getBoundingClientRect()
@@ -287,7 +287,7 @@ export class Page {
     } else {
       this.navbar = {height: 0}
     }
-    this.content = document.querySelector('.content')
+    this.content = document.querySelector('.content') || document.createElement('div')
     this.panels = document.querySelectorAll('.panel')
     this.init_panel = this.init_panel.bind(this)
     this.resize = this.resize.bind(this)

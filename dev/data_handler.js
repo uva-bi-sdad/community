@@ -1477,8 +1477,6 @@
             this.export = exporter;
             this.get_variable = function (variable, view) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    if (view.dataset in this.data_processed)
-                        yield this.data_processed[view.dataset];
                     if (variable in this.variables)
                         yield this.calculate_summary(variable, view, true);
                     return this.variables[variable];
@@ -1493,16 +1491,11 @@
                     return (v in r.entity.data ? (Array.isArray(r.entity.data[v]) ? r.entity.data[v] : [r.entity.data[v]]) : [NaN]);
                 }
             };
-            if (hooks)
-                this.hooks = hooks;
-            if (defaults)
-                this.defaults = defaults;
-            if (settings)
-                this.settings = settings;
-            if (this.settings.metadata)
-                this.metadata = this.settings.metadata;
-            if (data$1)
-                this.sets = data$1;
+            this.defaults = defaults || {};
+            this.settings = settings || {};
+            this.metadata = this.settings.metadata || { datasets: [] };
+            this.sets = data$1 || {};
+            this.hooks = hooks || {};
             this.get_value = this.get_value.bind(this);
             this.dynamic_load = 'dataviews' in this.settings && this.settings.settings && !!this.settings.settings.partial_init;
             this.settings.view_names = this.dynamic_load ? Object.keys(this.settings.dataviews) : ['default_view'];
@@ -1524,23 +1517,33 @@
                     });
                 }
                 this.map_variables();
-                this.metadata.datasets.forEach((k) => {
-                    this.loaded[k] = k in this.sets;
-                    this.inited[k] = false;
-                    this.data_processed[k] = new Promise(resolve => {
-                        this.data_promise[k] = resolve;
+                if (this.metadata.datasets.length) {
+                    this.metadata.datasets.forEach((k) => {
+                        this.loaded[k] = k in this.sets;
+                        this.inited[k] = false;
+                        this.data_processed[k] = new Promise(resolve => {
+                            this.data_promise[k] = resolve;
+                        });
+                        if (k in this.info)
+                            this.info[k].site_file = (this.metadata.url ? this.metadata.url + '/' : '') + this.info[k].name + '.json';
+                        if (this.loaded[k]) {
+                            this.ingest_data(this.sets[k], k);
+                        }
+                        else if (!this.dynamic_load ||
+                            (this.settings.settings && !this.settings.settings.partial_init) ||
+                            !this.defaults.dataset ||
+                            k === this.defaults.dataset) {
+                            this.retrieve(k, this.info[k].site_file);
+                        }
                     });
-                    if (k in this.info)
-                        this.info[k].site_file = (this.metadata.url ? this.metadata.url + '/' : '') + this.info[k].name + '.json';
-                    if (this.loaded[k]) {
-                        this.ingest_data(this.sets[k], k);
-                    }
-                    else if (!this.dynamic_load ||
-                        (this.settings.settings && !this.settings.settings.partial_init) ||
-                        !this.defaults.dataset ||
-                        k === this.defaults.dataset)
-                        this.retrieve(k, this.info[k].site_file);
-                });
+                }
+                else {
+                    setTimeout(() => {
+                        this.inited.first = true;
+                        this.hooks.init && this.hooks.init();
+                        this.hooks.onload && this.hooks.onload();
+                    }, 0);
+                }
             };
             if (this.metadata.package && !this.metadata.info) {
                 if ('undefined' === typeof window) {

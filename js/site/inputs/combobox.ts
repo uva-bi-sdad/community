@@ -324,7 +324,10 @@ export class InputCombobox extends BaseInput {
     }
   }
   filter_reset() {
-    if (this.groups) this.groups.e.forEach(g => g.firstElementChild.firstElementChild.classList.remove('hidden'))
+    if (this.groups)
+      this.groups.e.forEach(g => {
+        ;(this.settings.accordion ? g.firstElementChild.firstElementChild : g).classList.remove('hidden')
+      })
     this.input_element.value = ''
     this.filter_index = []
     this.options.forEach((o, i) => {
@@ -374,7 +377,7 @@ export class InputCombobox extends BaseInput {
     div.lastElementChild.className = 'combobox-component'
     div.lastElementChild.setAttribute('aria-live', 'assertive')
     div.lastElementChild.setAttribute('aria-atomic', 'true')
-    div.lastElementChild.setAttribute('aria-role', 'log')
+    div.lastElementChild.role = 'log'
     div.appendChild(input)
     input.setAttribute('aria-haspopup', 'listbox')
     input.setAttribute('aria-expanded', 'false')
@@ -418,21 +421,23 @@ export class InputCombobox extends BaseInput {
           const g = options[k]
           const e = document.createElement('div'),
             id = u.id + '_group_' + k.replace(patterns.seps, '-')
+          e.dataset.group = k
           e.className = 'combobox-group combobox-component'
           e.setAttribute('aria-labelledby', id)
           e.appendChild((lab = document.createElement('label')))
+          lab.dataset.for = id
           lab.innerText = k
           lab.id = id
           lab.className = 'combobox-group-label combobox-component'
           u.groups.by_name[k] = e
           u.groups.e.push(e)
-          g.forEach(o => u.groups.by_name[k].appendChild(u.add(o, o, true)))
+          g.forEach(o => e.appendChild(u.add(o, o, true)))
           u.listbox.appendChild(e)
         })
         Object.keys(u.groups.by_name).forEach(g => {
           u.groups.by_name[g].querySelectorAll('.combobox-option').forEach((c: HTMLElement) => {
             ;(u.options as HTMLElement[]).push(c)
-            c.setAttribute('data-group', g)
+            c.dataset.group = g
             u.values[c.dataset.value] = n
             u.display[c.innerText] = n++
           })
@@ -447,7 +452,7 @@ export class InputCombobox extends BaseInput {
     this.site.request_queue(false, this.id)
   }
   set(v?: MouseEvent | KeyboardEvent | string | number | (string | number)[], toggle?: boolean): void {
-    if (!v) v = this.input_element.value
+    if ('number' !== typeof v && !v) v = this.input_element.value
     let update = false,
       i = -1
     if (!Array.isArray(v) && 'object' === typeof v) {
@@ -523,15 +528,18 @@ export class InputCombobox extends BaseInput {
       this.close()
       this.filter_reset()
     }
-    const display = this.source.length
+    let display: string | HTMLElement = this.source.length
       ? this.settings.multi
         ? this.source.length + ' of ' + this.options.length + ' selected'
         : this.source[0] in this.values
-        ? this.options[this.values[this.source[0]]].firstChild.textContent
+        ? this.options[this.values[this.source[0]]]
         : this.settings.strict || -1 === this.source[0]
         ? ''
         : this.source[0] + ''
       : ''
+    if ('string' !== typeof display) {
+      display = display.firstChild ? display.firstChild.textContent : display.innerText
+    }
     if (this.settings.use_display) {
       this.selection.innerText = display
     } else {
@@ -554,8 +562,10 @@ export class InputCombobox extends BaseInput {
       e.lastElementChild.className = 'combobox-option-description combobox-component'
       ;(e.lastElementChild as HTMLElement).innerText = meta.info.description || meta.info.short_description || ''
     }
-    if (!noadd) this.listbox.appendChild(e)
-    this.options.push(e)
+    if (!noadd) {
+      this.listbox.appendChild(e)
+      this.options.push(e)
+    }
     return e
   }
 }
