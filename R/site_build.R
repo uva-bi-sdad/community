@@ -451,6 +451,10 @@ site_build <- function(dir, file = "site.R", name = "index.html", variables = NU
       )
     )
   )
+  data_handlers <- list.files(paste0(dir, "/docs"), "data_handler")
+  unlink(paste0(dir, "/docs/", data_handlers[
+    !data_handlers %in% paste0(parts$dependencies$data_handler$src, c("", ".map"))
+  ]))
   parts$credits$bootstrap <- list(
     name = "Bootstrap",
     url = "https://getbootstrap.com",
