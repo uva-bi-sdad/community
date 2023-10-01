@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">93.5% </span>
+                <span class="strong">93.42% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>72/77</span>
+                <span class='fraction'>71/76</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">76% </span>
+                <span class="strong">92.1% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>38/50</span>
+                <span class='fraction'>35/38</span>
             </div>
         
             
@@ -183,7 +183,7 @@
 <a name='L118'></a><a href='#L118'>118</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -219,9 +219,9 @@
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -237,7 +237,7 @@
 <span class="cline-any cline-yes">48x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">24x</span>
-<span class="cline-any cline-yes">44x</span>
+<span class="cline-any cline-yes">24x</span>
 <span class="cline-any cline-yes">44x</span>
 <span class="cline-any cline-yes">44x</span>
 <span class="cline-any cline-yes">72x</span>
@@ -258,9 +258,9 @@
 <span class="cline-any cline-yes">24x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">24x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -296,8 +296,8 @@
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import DataHandler from '.'
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import DataHandler from './index'
 import {Entity, Features} from '../types'
 &nbsp;
 export function tall(
@@ -308,7 +308,7 @@ export function tall(
   vars: string[],
   sep: string
 ): string {
-  <span class="missing-if-branch" title="else path not taken" >E</span>if (entity.group in this.meta.times) {
+  if (entity.group in this.meta.times) {
     const op: string[] = [],
       time = this.meta.times[entity.group].value as number[]
     let tr = ''
@@ -317,7 +317,7 @@ export function tall(
     })
     vars.forEach(k =&gt; {
       const vc = entity.variables[k].code
-      <span class="missing-if-branch" title="else path not taken" >E</span>if (vc in entity.data) {
+      if (vc in entity.data) {
         const range: [number, number] = this.meta.variables[entity.group][k].time_range
         let r = ''
         const yn = time_range[1] + 1
@@ -325,7 +325,7 @@ export function tall(
           if (y &gt;= range[0] &amp;&amp; y &lt;= range[1]) {
             const vec = entity.data[vc]
             const value = Array.isArray(vec) ? vec[y - range[0]] : vec
-            <span class="missing-if-branch" title="else path not taken" >E</span>if (!isNaN(value)) {
+            if (!isNaN(value)) {
               r += (r ? '\n' : '') + tr + time[y] + sep + '"' + k + '"' + sep + value
             }
           }
@@ -346,7 +346,7 @@ export function mixed(
   vars: string[],
   sep: string
 ): string {
-  <span class="missing-if-branch" title="else path not taken" >E</span>if (entity.group in this.meta.times) {
+  if (entity.group in this.meta.times) {
     const op: string[] = [],
       time = this.meta.times[entity.group].value as number[]
     let tr = ''
@@ -358,17 +358,17 @@ export function mixed(
       let r = tr + time[y]
       vars.forEach((k: string) =&gt; {
         const vc = entity.variables[k].code
-        <span class="missing-if-branch" title="else path not taken" >E</span>if (vc in entity.data) {
+        if (vc in entity.data) {
           const trange = this.meta.variables[entity.group][k].time_range
           const vec = entity.data[vc]
           let value = NaN
           if (Array.isArray(vec)) {
-            <span class="missing-if-branch" title="else path not taken" >E</span>if (y &gt;= trange[0] &amp;&amp; y &lt;= trange[1]) value = vec[y - trange[0]]
+            if (y &gt;= trange[0] &amp;&amp; y &lt;= trange[1]) value = vec[y - trange[0]]
           } else if (y === trange[0]) {
             value = vec
           }
           r += sep + (isNaN(value) ? 'NA' : value)
-        } else <span class="cstat-no" title="statement not covered" >r += sep + 'NA'</span>
+        } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="else path not taken" >E</span>r += sep + 'NA'</span>
       })
       op.push(r)
     }
@@ -385,7 +385,7 @@ export function wide(
   vars: string[],
   sep: string
 ): string {
-  <span class="missing-if-branch" title="else path not taken" >E</span>if (entity.group in this.meta.times) {
+  if (entity.group in this.meta.times) {
     let r = ''
     Object.keys(feats).forEach(f =&gt; {
       r += (r ? sep : '') + '"' + entity.features[feats[f]] + '"'
@@ -396,17 +396,17 @@ export function wide(
       const trange: [number, number] = this.meta.variables[entity.group][k].time_range
       const yn = time_range[1] + 1
       for (let y = time_range[0]; y &lt; yn; y++) {
-        <span class="missing-if-branch" title="else path not taken" >E</span>if (y &gt;= range[0] &amp;&amp; y &lt;= range[1]) {
-          <span class="missing-if-branch" title="else path not taken" >E</span>if (vc in entity.data) {
+        if (y &gt;= range[0] &amp;&amp; y &lt;= range[1]) {
+          if (vc in entity.data) {
             const vec = entity.data[vc]
             let value = NaN
             if (Array.isArray(vec)) {
-              <span class="missing-if-branch" title="else path not taken" >E</span>if (y &gt;= trange[0] &amp;&amp; y &lt;= trange[1]) value = vec[y - trange[0]]
-            } else <span class="missing-if-branch" title="else path not taken" >E</span>if (y === trange[0]) {
+              if (y &gt;= trange[0] &amp;&amp; y &lt;= trange[1]) value = vec[y - trange[0]]
+            } else if (y === trange[0]) {
               value = vec
             }
             r += sep + (isNaN(value) ? <span class="branch-0 cbranch-no" title="branch not covered" >'NA' </span>: value)
-          } else <span class="cstat-no" title="statement not covered" >r += sep + 'NA'</span>
+          } else <span class="cstat-no" title="statement not covered" ><span class="missing-if-branch" title="else path not taken" >E</span>r += sep + 'NA'</span>
         }
       }
     })
@@ -421,7 +421,7 @@ export function wide(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-06-02T23:28:55.393Z
+                at 2023-09-30T22:00:29.529Z
             </div>
         <script src="prettify.js"></script>
         <script>

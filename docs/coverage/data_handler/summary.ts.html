@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0.73% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>2/271</span>
+                <span class='fraction'>2/272</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/106</span>
+                <span class='fraction'>0/110</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0.8% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>2/247</span>
+                <span class='fraction'>2/248</span>
             </div>
         
             
@@ -420,10 +420,13 @@
 <a name='L355'></a><a href='#L355'>355</a>
 <a name='L356'></a><a href='#L356'>356</a>
 <a name='L357'></a><a href='#L357'>357</a>
-<a name='L358'></a><a href='#L358'>358</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L358'></a><a href='#L358'>358</a>
+<a name='L359'></a><a href='#L359'>359</a>
+<a name='L360'></a><a href='#L360'>360</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -459,7 +462,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -609,7 +612,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -618,6 +621,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -779,6 +783,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import DataHandler from './index'
 import type {Order, Data, Variable, VariableView, EntityData, Summary, MeasureInfo} from '../types'
+import {DataViewSelection, SiteDataView} from '../site/dataview'
 &nbsp;
 function <span class="fstat-no" title="function not covered" >sort_a1(</span>a: [string, number], b: [string, number]): number {
 <span class="cstat-no" title="statement not covered" >  return isNaN(a[1]) ? (isNaN(b[1]) ? 0 : -1) : isNaN(b[1]) ? 1 : a[1] - b[1]</span>
@@ -966,8 +971,8 @@ function <span class="fstat-no" title="function not covered" >quantile(</span>p:
 <span class="cstat-no" title="statement not covered" >  return x[i][1] * ap + x[b][1] * bp</span>
 }
 &nbsp;
-export async function <span class="fstat-no" title="function not covered" >calculate(</span>this: DataHandler, measure: string, view: string, full: boolean): Promise&lt;void&gt; {
-  const v = <span class="cstat-no" title="statement not covered" >this.settings.dataviews[view]</span>
+export async function <span class="fstat-no" title="function not covered" >calculate(</span>this: DataHandler, measure: string, v: SiteDataView, full: boolean): Promise&lt;void&gt; {
+  const view = <span class="cstat-no" title="statement not covered" >v &amp;&amp; v.id</span>
   const dataset: string = <span class="cstat-no" title="statement not covered" >v.get.dataset()</span>
 <span class="cstat-no" title="statement not covered" >  await this.data_processed[dataset]</span>
   const summaryId = <span class="cstat-no" title="statement not covered" >dataset + measure</span>
@@ -977,8 +982,9 @@ export async function <span class="fstat-no" title="function not covered" >calcu
   })
   const variable = <span class="cstat-no" title="statement not covered" >this.variables[measure],</span>
     m = <span class="cstat-no" title="statement not covered" >variable.views[view]</span>
-<span class="cstat-no" title="statement not covered" >  if (m.state[dataset] !== v.state) {</span>
-    const s = <span class="cstat-no" title="statement not covered" >v.selection[this.settings.settings.summary_selection],</span>
+<span class="cstat-no" title="statement not covered" >  if (v.valid[dataset] &amp;&amp; m.state[dataset] !== v.state) {</span>
+    const summary_set = <span class="cstat-no" title="statement not covered" >this.settings.settings.summary_selection as keyof DataViewSelection,</span>
+      s = <span class="cstat-no" title="statement not covered" >v.selection[summary_set],</span>
       a = <span class="cstat-no" title="statement not covered" >v.selection.all,</span>
       mo = <span class="cstat-no" title="statement not covered" >m.order[dataset],</span>
       mso = <span class="cstat-no" title="statement not covered" >m.selected_order[dataset],</span>
@@ -986,7 +992,7 @@ export async function <span class="fstat-no" title="function not covered" >calcu
       order = <span class="cstat-no" title="statement not covered" >variable.info[dataset].order,</span>
       levels = <span class="cstat-no" title="statement not covered" >variable.levels,</span>
       level_ids = <span class="cstat-no" title="statement not covered" >variable.level_ids,</span>
-      subset = <span class="cstat-no" title="statement not covered" >v.n_selected[this.settings.settings.summary_selection] !== v.n_selected.dataset,</span>
+      subset = <span class="cstat-no" title="statement not covered" >v.n_selected[summary_set] !== v.n_selected.dataset,</span>
       mss = <span class="cstat-no" title="statement not covered" >m.selected_summaries[dataset],</span>
       ms = <span class="cstat-no" title="statement not covered" >m.summaries[dataset],</span>
       is_string = <span class="cstat-no" title="statement not covered" >'string' === variable.type</span>
@@ -1141,7 +1147,7 @@ export async function <span class="fstat-no" title="function not covered" >calcu
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-09-11T22:01:00.781Z
+                at 2023-10-01T14:02:59.998Z
             </div>
         <script src="../prettify.js"></script>
         <script>

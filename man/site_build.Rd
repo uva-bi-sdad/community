@@ -9,7 +9,7 @@ site_build(dir, file = "site.R", name = "index.html", variables = NULL,
   options = list(), bundle_data = FALSE, bundle_package = FALSE,
   bundle_libs = FALSE, libs_overwrite = FALSE, libs_base_only = FALSE,
   remote_data_handler = TRUE, open_after = FALSE, aggregate = TRUE,
-  sparse_time = TRUE, force = FALSE, version = "v1", parent = NULL,
+  sparse_time = TRUE, force = FALSE, version = "stable", parent = NULL,
   include_api = FALSE, endpoint = NULL, tag_id = NULL, serve = FALSE,
   host = "127.0.0.1", port = 3000, verbose = TRUE)
 
@@ -57,7 +57,7 @@ attempt to fill NAs with averages from the larger dataset.}
 \item{force}{Logical; if \code{TRUE}, will reprocess data even if the source data is older than the existing
 processed version.}
 
-\item{version}{Version of the base script and stylesheet: \code{"v1"} (default) for the version 1 stable release,
+\item{version}{Version of the base script and stylesheet: \code{"stable"} (default) for the current stable release,
 \code{"dev"} for the current unstable release, or \code{"local"} for a copy of the development files
 (\code{community.js} and \code{community.css}) served from \code{http://localhost:8000}. Can also
 be a URL where files can be found (\code{{version}/community.js} and \code{{version}/community.css}).}

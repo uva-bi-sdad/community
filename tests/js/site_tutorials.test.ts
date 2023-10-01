@@ -1,6 +1,6 @@
 import {describe, expect, test} from '@jest/globals'
-import {RegisteredElements} from '../../js/types'
 import {TutorialManager, Tutorials} from '../../js/site/tutorials'
+import {RegisteredInputs} from '../../js/site/inputs'
 
 const button_wrap = document.createElement('div'),
   button = document.createElement('button')
@@ -13,14 +13,14 @@ button.addEventListener('click', function () {
 button_wrap.appendChild(button)
 document.body.appendChild(button_wrap)
 
-const _u: RegisteredElements = {
-  registered_element: {
-    id: 'registered_element',
+const inputs: RegisteredInputs = {
+  registered_input: {
+    id: 'registered_input',
     e: document.createElement('div'),
     set: function (value: string) {
       this.e.innerText = value
     },
-  },
+  } as any,
 }
 
 const example: Tutorials = {
@@ -59,7 +59,7 @@ const example: Tutorials = {
         before: ['click'],
       },
       {
-        focus: 'registered_element',
+        focus: 'registered_input',
         description: 'Focus registered element.',
         before: ['value:a'],
         option: 'b',
@@ -69,12 +69,12 @@ const example: Tutorials = {
       {
         focus: 'nav:Menu Button',
         description: 'Focus nav button.',
-        after: {registered_element: 'c', 1: 'click'},
+        after: {registered_input: 'c', 1: 'click'},
       },
     ],
   },
 }
-const manager = new TutorialManager(example, _u)
+const manager = new TutorialManager(example, inputs)
 
 describe('when initialized', () => {
   test('entries are initialized', async () => {
@@ -108,21 +108,21 @@ describe('when running a tutorial', () => {
     manager.progress_tutorial()
     jest.runOnlyPendingTimers()
     expect(manager.dialog.innerText).toEqual(example.running.steps[1].description)
-    expect(manager.current_site_element).toStrictEqual(_u.registered_element)
-    expect(manager.current_element).toStrictEqual(_u.registered_element.e)
-    expect(_u.registered_element.e.innerText).toEqual('a')
+    expect(manager.current_site_element).toStrictEqual(inputs.registered_input)
+    expect(manager.current_element).toStrictEqual(inputs.registered_input.e)
+    expect(inputs.registered_input.e.innerText).toEqual('a')
 
     // step 3
     manager.current_time = 0
     jest.runAllTimers()
     expect(manager.dialog.innerText).toEqual(example.running.steps[2].description)
     expect(manager.current_element).toStrictEqual(button)
-    expect(_u.registered_element.e.innerText).toEqual('b')
+    expect(inputs.registered_input.e.innerText).toEqual('b')
 
     // end
     manager.progress_tutorial()
     jest.runOnlyPendingTimers()
-    expect(_u.registered_element.e.innerText).toEqual('c')
+    expect(inputs.registered_input.e.innerText).toEqual('c')
     expect(manager.container.classList).toContain('hidden')
     expect(manager.in_progress).toEqual('')
   })

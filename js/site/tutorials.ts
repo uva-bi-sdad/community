@@ -1,5 +1,5 @@
+import type {RegisteredInputs, SiteInputs} from './inputs/index'
 import {patterns} from './patterns'
-import type {ActiveElement, RegisteredElements} from '../types'
 
 type Actions = string[] | {[index: string]: string}
 type TutorialStep = {
@@ -27,7 +27,7 @@ export type Tutorials = {[index: string]: Tutorial}
 
 export class TutorialManager {
   tutorials: Tutorials
-  site_elements: RegisteredElements
+  site_elements: RegisteredInputs
   container = document.createElement('div')
   backdrop = document.createElement('div')
   highlight = document.createElement('div')
@@ -45,9 +45,9 @@ export class TutorialManager {
   current_step = 0
   current_time = 0
   current_element: HTMLElement
-  current_site_element: ActiveElement
+  current_site_element: SiteInputs
   site_reset: Function
-  constructor(tutorials: Tutorials, elements?: RegisteredElements, resetter?: Function) {
+  constructor(tutorials: Tutorials, elements?: RegisteredInputs, resetter?: Function) {
     this.tutorials = tutorials
     this.site_elements = elements || {}
     this.site_reset = resetter || (() => {})
@@ -225,8 +225,8 @@ export class TutorialManager {
     if (!isClick && 'Escape' === event.code) this.end_tutorial()
     if (this.in_progress && !this.waiting && (isClick || 'Enter' === event.code || 'ArrowRight' === event.code)) {
       this.waiting = true
-      clearTimeout(this.focuser)
-      clearInterval(this.running_timer)
+      clearTimeout(this.focuser as number)
+      clearInterval(this.running_timer as number)
       const t = this.tutorials[this.in_progress]
       let step: TutorialStep
       const handle_object = (obj: {[index: string]: string}) => {
@@ -242,7 +242,7 @@ export class TutorialManager {
       }
       const set_value = (value: string | string[]) => {
         if (this.current_site_element && this.current_site_element.set) {
-          this.current_site_element.set(value)
+          this.current_site_element.set(value as string)
         } else {
           const input =
             'value' in this.current_element ? this.current_element : this.current_element.querySelector('input')
@@ -254,16 +254,16 @@ export class TutorialManager {
         }
       }
       const do_action = (action: string) => {
-        action = String(action)
         if ('set' === action) {
           if ('option' in step) set_value(step.option)
         } else if ('click' === action) {
-          if (
-            this.current_site_element &&
-            this.current_site_element.toggle &&
-            action === this.current_site_element.id
-          ) {
-            if (!this.current_site_element.expanded) this.current_site_element.toggle({target: this.current_element})
+          const u = this.current_site_element
+          if (u) {
+            if (action === u.id && 'toggle' in u) {
+              if (!u.expanded) u.toggle(void 0, u.e)
+            } else {
+              u.e.click()
+            }
           } else {
             this.current_element && this.current_element.click()
           }
@@ -339,7 +339,7 @@ export class TutorialManager {
           this.current_time--
           this.timer.innerText = this.current_time + ''
           if (this.current_time <= 0) {
-            clearInterval(this.running_timer)
+            clearInterval(this.running_timer as number)
             this.progress_tutorial()
           }
         }, 1e3)
@@ -358,6 +358,6 @@ export class TutorialManager {
     this.current_step = 0
     this.container.classList.add('hidden')
     this.waiting = false
-    clearTimeout(this.focuser)
+    clearTimeout(this.focuser as number)
   }
 }

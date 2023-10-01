@@ -1,4 +1,26 @@
-export const palettes: {[index: string]: {name: string; type: string; colors: string[] | (number[] | number[][])[]}} = {
+interface BasePalette {
+  name: string
+  odd?: number
+}
+export interface DiscretePalette extends BasePalette {
+  type: 'discrete'
+  colors: string[]
+}
+type triple = [number, number, number]
+interface ContinuousPalette extends BasePalette {
+  type: 'continuous' | 'continuous-divergent'
+  colors: [[triple, triple], triple, [triple, triple]]
+}
+interface PolynomialPalette extends BasePalette {
+  type: 'continuous-polynomial'
+  colors: triple[]
+}
+
+type SitePalette = {
+  [index: string]: DiscretePalette | ContinuousPalette | PolynomialPalette
+}
+
+export const palettes: SitePalette = {
   // discrete palettes from https://colorbrewer2.org
   rdylbu7: {
     name: 'Red-Yellow-Blue (7)',

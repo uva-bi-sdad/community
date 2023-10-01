@@ -9,8 +9,8 @@ pkgdown::build_site(lazy = TRUE)
 ## rebuild minified files
 system2("npm", "run build")
 
-## rebuild v1 scripts (if dev should be v1)
-if (FALSE) system2("npm", "run build-v1")
+## rebuild stable scripts (if dev should be stable)
+if (FALSE) system2("npm", "run build-stable")
 
 ## update cache script information
 cache_scripts <- list(
@@ -21,9 +21,9 @@ cache_scripts <- list(
       md5 = tools::md5sum("docs/dist/js/data_handler.min.js")[[1]]
     ),
     stable = list(
-      source = "https://uva-bi-sdad.github.io/community/dist/js/data_handler.v1.min.js",
+      source = "https://uva-bi-sdad.github.io/community/dist/js/data_handler.v2.min.js",
       location = "docs",
-      md5 = tools::md5sum("docs/dist/js/data_handler.v1.min.js")[[1]]
+      md5 = tools::md5sum("docs/dist/js/data_handler.v2.min.js")[[1]]
     )
   )
 )
@@ -40,6 +40,6 @@ covr::report(file = "docs/coverage/package.html", browse = FALSE)
 description <- readLines("DESCRIPTION")
 description[3] <- paste0(
   sub("\\d+$", "", description[3]),
-  as.numeric(substring(description[3], nchar(description[3]) - 2)) + 1
+  as.numeric(sub("^.*\\.", "", description[3])) + 1
 )
 writeLines(description, "DESCRIPTION")

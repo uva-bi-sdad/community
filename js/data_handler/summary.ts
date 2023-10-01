@@ -1,5 +1,6 @@
 import DataHandler from './index'
 import type {Order, Data, Variable, VariableView, EntityData, Summary, MeasureInfo} from '../types'
+import {DataViewSelection, SiteDataView} from '../site/dataview'
 
 function sort_a1(a: [string, number], b: [string, number]): number {
   return isNaN(a[1]) ? (isNaN(b[1]) ? 0 : -1) : isNaN(b[1]) ? 1 : a[1] - b[1]
@@ -187,8 +188,8 @@ function quantile(p: number, n: number, o: number, x: Order): number {
   return x[i][1] * ap + x[b][1] * bp
 }
 
-export async function calculate(this: DataHandler, measure: string, view: string, full: boolean): Promise<void> {
-  const v = this.settings.dataviews[view]
+export async function calculate(this: DataHandler, measure: string, v: SiteDataView, full: boolean): Promise<void> {
+  const view = v && v.id
   const dataset: string = v.get.dataset()
   await this.data_processed[dataset]
   const summaryId = dataset + measure
@@ -198,8 +199,9 @@ export async function calculate(this: DataHandler, measure: string, view: string
   })
   const variable = this.variables[measure],
     m = variable.views[view]
-  if (m.state[dataset] !== v.state) {
-    const s = v.selection[this.settings.settings.summary_selection],
+  if (v.valid[dataset] && m.state[dataset] !== v.state) {
+    const summary_set = this.settings.settings.summary_selection as keyof DataViewSelection,
+      s = v.selection[summary_set],
       a = v.selection.all,
       mo = m.order[dataset],
       mso = m.selected_order[dataset],
@@ -207,7 +209,7 @@ export async function calculate(this: DataHandler, measure: string, view: string
       order = variable.info[dataset].order,
       levels = variable.levels,
       level_ids = variable.level_ids,
-      subset = v.n_selected[this.settings.settings.summary_selection] !== v.n_selected.dataset,
+      subset = v.n_selected[summary_set] !== v.n_selected.dataset,
       mss = m.selected_summaries[dataset],
       ms = m.summaries[dataset],
       is_string = 'string' === variable.type

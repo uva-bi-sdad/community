@@ -60,6 +60,7 @@ source("../example_site/build.R", chdir = TRUE)
 
 After the initial site is build, you can edit `../example_site/site.R`,
 then rebuild the site and reload the page to see changes:
+
 ```R
 site_build("../example_site", serve = TRUE)
 ```
@@ -106,4 +107,4 @@ This will rebuild the distributed, minified JavaScript and CSS files that are us
 npm run build
 ```
 
-That updates the "dev" versions of the distribution assets, where `build-v1` will update the "v1" assets.
+That updates the "dev" versions of the distribution assets, where `build-stable` will update the "stable" assets.
